@@ -55,10 +55,9 @@ Quartermaster are listed but not sold until their phase 5 behaviours exist.
 
 Pads were dropped the same day at the user's request: towers go **anywhere off the track,
 never overlapping**, placed with a ghost preview (`Shared/Placement` is the one rule, used by
-the client ghost and enforced by the server). Placement is statically checked, not yet
-playtested.
+the client ghost and enforced by the server). Confirmed in Studio 2026-09-28.
 
-Next: playtest placement, then phase 3 (upgrade paths).
+Next: phase 3 (upgrade paths).
 
 ## Open issues
 

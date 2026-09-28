@@ -138,7 +138,7 @@ second test client.
 | Phase | Modules | Status |
 |---|---|---|
 | **1** — track, enemies, towers, lives | `Track`, `Path`, `MapBuilder`, `Enemies`, `Towers`, `Waves`, `Lives`, `Hud` | **Written and verified headlessly.** Includes splitting and the cap, which the UEFN plan had deferred to phase 3. |
-| **2** — cash, placement, shop | `Economy` (replaces `Lives`), `Shop` (RemoteFunction + validation), free placement anywhere off the track with a ghost preview (pads dropped 2026-09-28 at the user's request), sell via tower prompts, build phase + Start button | **Written, statically checked** (`tools/check.sh`). Sells Scout, Sniper, Grenadier; Chiller and Quartermaster wait for phase 5. |
+| **2** — cash, placement, shop | `Economy` (replaces `Lives`), `Shop` (RemoteFunction + validation), free placement anywhere off the track with a ghost preview (pads dropped 2026-09-28 at the user's request), sell via tower prompts, build phase + Start button | **Done, confirmed in Studio.** Sells Scout, Sniper, Grenadier; Chiller and Quartermaster wait for phase 5. |
 | **3** — upgrade paths | Shop calls `Towers.upgrade()`; model swaps at tiers 3 and 5 | Next. `canUpgrade()` done and tested |
 | **4** — weapons and abilities | `Weapons` (Tools, server-validated hits), `Abilities` | |
 | **5** — roster and rounds | Remaining towers' behaviours (Chiller slow, Quartermaster income) | Numbers already in `Config` |
@@ -152,7 +152,7 @@ second test client.
       the three hardcoded Scouts (confirmed 2026-09-28).
 - [x] Round summary lines appear in Output with peak enemies and script cost.
 - [x] Phase 2 economy: buying, selling (70%), kill and round income (confirmed with pads).
-- [ ] Phase 2 placement: ghost is green off-track and red on the track / overlapping / too far;
+- [x] Phase 2 placement (confirmed 2026-09-28): ghost is green off-track and red on the track / overlapping / too far;
       the server refuses the same spots.
 - [ ] Network stats during round 30+ with two clients (see §7).
 - [ ] Mobile: enemy part count on a low-end device. Most Roblox players are on phones.
