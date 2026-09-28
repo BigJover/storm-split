@@ -48,13 +48,17 @@ Phase 1 written and verified headlessly (map, enemies with splitting and the liv
 towers, 40-round wave runner, lives, HUD). Confirmed running in Studio 2026-09-28: enemies
 follow the track and towers fire.
 
-Phase 2 written 2026-09-28 and statically checked, not yet playtested: `Economy` (shared cash
-+ lives), `Shop` (pad prompts, one validated RemoteFunction for build/sell), shop panel, build
-phase with a Start button. The free Scouts are gone: the map starts empty and Starting cash
-(450) buys 2 Scouts or 1 mid-priced tower. Chiller and Quartermaster are listed but not sold
-until their phase 5 behaviours exist.
+Phase 2: `Economy` (shared cash + lives), `Shop` (one validated RemoteFunction for
+build/sell), build phase with a Start button. Buy/sell/income confirmed in Studio 2026-09-28.
+The map starts empty; Starting cash (450) buys 2 Scouts or 1 mid-priced tower. Chiller and
+Quartermaster are listed but not sold until their phase 5 behaviours exist.
 
-Next: playtest phase 2 in Studio, then phase 3 (upgrade paths).
+Pads were dropped the same day at the user's request: towers go **anywhere off the track,
+never overlapping**, placed with a ghost preview (`Shared/Placement` is the one rule, used by
+the client ghost and enforced by the server). Placement is statically checked, not yet
+playtested.
+
+Next: playtest placement, then phase 3 (upgrade paths).
 
 ## Open issues
 

@@ -11,6 +11,10 @@ return table.freeze({
 		QUARTERMASTER = true,
 	}),
 
-	-- How close (studs) a player must be to a pad to open its shop.
+	-- How far (studs) from your character you can place a tower. Keeps
+	-- placement walk-up: you go to where you want to build.
+	PlaceRange = 40,
+
+	-- How close (studs) you must be to a tower to manage it.
 	PromptDistance = 10,
 })

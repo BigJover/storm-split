@@ -51,10 +51,12 @@ ReplicatedStorage, ServerScriptService and StarterPlayerScripts.
 
 Press **Play**. You should see:
 
-- A purple serpentine track with a green spawn and red exit, and nine empty gold pads
+- A purple serpentine track on a green build area, with a green spawn and red exit
 - A status bar at the top with your cash (450) and lives, and a green **Start round 1** button
-- Walk onto a pad and press **E** (or tap the prompt): a shop panel lists the towers
-- Buy towers, press **Start**, and enemies spawn; kills and cleared rounds add cash
+- **Build (B)** bottom-right: pick a tower, move the see-through ghost (green = fits, red =
+  on the track, overlapping or too far), click to place, **Q** to cancel
+- Walk up to a built tower and press **E** to sell it
+- Press **Start** and enemies spawn; kills and cleared rounds add cash
 - One line per cleared round in **Output** (**Window → Output**):
   `Round 3 cleared | lives 40 | cash 212 | peak enemies 14 | script cost avg … ms`
 

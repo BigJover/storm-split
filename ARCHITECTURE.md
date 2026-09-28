@@ -26,9 +26,11 @@ default.project.json         Rojo mapping (below)
 src/
 ├── shared/   → ReplicatedStorage.Shared
 │   ├── Config.luau          GENERATED from the spreadsheet. Never hand-edit.
-│   ├── Track.luau           Level layout: waypoints, pads, sizes. Hand-authored.
+│   ├── Track.luau           Level layout: waypoints, build area, sizes. Hand-authored.
 │   ├── Path.luau            Distance-along-path math
-│   └── ShopRules.luau       Which towers are for sale yet; pad interaction distance
+│   ├── Placement.luau       Where a tower may stand (off track, no overlap) — client ghost + server
+│   ├── TowerLook.luau       Tower models, shared by real towers and the placement ghost
+│   └── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
 ├── server/   → ServerScriptService.Server
 │   ├── Main.server.luau     Entry point and wiring. Only file that knows every module.
 │   ├── MapBuilder.luau      Builds the map at runtime from Track
@@ -36,10 +38,10 @@ src/
 │   ├── Towers.luau          Placement, stats, crossover rule, targeting, firing
 │   ├── Waves.luau           Runs the 40-round table
 │   ├── Economy.luau         The team's shared cash and lives
-│   └── Shop.luau            Pad prompts + the one validated RemoteFunction for build/sell
+│   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
 └── client/   → StarterPlayer.StarterPlayerScripts.Client
     ├── Hud.client.luau      Round / cash / lives / enemies label, Start button
-    └── Shop.client.luau     Pad shop panel (requests only; the server decides)
+    └── Shop.client.luau     Build button, placement ghost, sell panel (requests only)
 ```
 
 Dependencies point one way: `shared` imports nothing from `server` or `client`. `Main` imports
@@ -136,7 +138,7 @@ second test client.
 | Phase | Modules | Status |
 |---|---|---|
 | **1** — track, enemies, towers, lives | `Track`, `Path`, `MapBuilder`, `Enemies`, `Towers`, `Waves`, `Lives`, `Hud` | **Written and verified headlessly.** Includes splitting and the cap, which the UEFN plan had deferred to phase 3. |
-| **2** — cash, pads, shop | `Economy` (replaces `Lives`), `Shop` (RemoteFunction + validation), shop UI, `ProximityPrompt` on pads, build phase + Start button | **Written, statically checked** (`tools/check.sh`). Sells Scout, Sniper, Grenadier; Chiller and Quartermaster wait for phase 5. |
+| **2** — cash, placement, shop | `Economy` (replaces `Lives`), `Shop` (RemoteFunction + validation), free placement anywhere off the track with a ghost preview (pads dropped 2026-09-28 at the user's request), sell via tower prompts, build phase + Start button | **Written, statically checked** (`tools/check.sh`). Sells Scout, Sniper, Grenadier; Chiller and Quartermaster wait for phase 5. |
 | **3** — upgrade paths | Shop calls `Towers.upgrade()`; model swaps at tiers 3 and 5 | Next. `canUpgrade()` done and tested |
 | **4** — weapons and abilities | `Weapons` (Tools, server-validated hits), `Abilities` | |
 | **5** — roster and rounds | Remaining towers' behaviours (Chiller slow, Quartermaster income) | Numbers already in `Config` |
@@ -149,7 +151,8 @@ second test client.
 - [x] Phase 1 runs: map builds, towers fire, rounds advance, game ends around round 11 with
       the three hardcoded Scouts (confirmed 2026-09-28).
 - [x] Round summary lines appear in Output with peak enemies and script cost.
-- [ ] Phase 2: build on a pad, cash drops by the price, kills and round ends pay, selling
-      refunds 70%, too-poor and too-far requests are refused.
+- [x] Phase 2 economy: buying, selling (70%), kill and round income (confirmed with pads).
+- [ ] Phase 2 placement: ghost is green off-track and red on the track / overlapping / too far;
+      the server refuses the same spots.
 - [ ] Network stats during round 30+ with two clients (see §7).
 - [ ] Mobile: enemy part count on a low-end device. Most Roblox players are on phones.

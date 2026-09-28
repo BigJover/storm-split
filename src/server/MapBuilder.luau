@@ -4,7 +4,7 @@
 	Doing this in code (instead of hand-building in Studio) keeps the whole
 	level in git and means a fresh Baseplate place works immediately. Swap in
 	a hand-built map later by giving MapBuilder a Workspace model to read
-	waypoints and pads from instead.
+	waypoints from instead.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -42,7 +42,6 @@ end
 export type Map = {
 	root: Folder,
 	path: Path.Path,
-	pads: { BasePart },
 	enemyFolder: Folder,
 	towerFolder: Folder,
 }
@@ -58,6 +57,20 @@ function MapBuilder.build(): Map
 
 	local points = table.clone(Track.Waypoints)
 	local path = Path.new(points)
+
+	-- Build-area floor: everything on it that isn't track can hold a tower.
+	local area = Track.BuildArea
+	local areaSize = area.Max - area.Min
+	local areaCentre = (area.Min + area.Max) / 2
+	local floorThickness = 0.2
+	local floor = makePart(
+		"BuildArea",
+		Vector3.new(areaSize.X, floorThickness, areaSize.Y),
+		CFrame.new(areaCentre.X, Track.GroundTop - floorThickness / 2, areaCentre.Y),
+		Track.Colors.BuildGround,
+		root
+	)
+	floor.Material = Enum.Material.Grass
 
 	-- Lanes. Each segment is lengthened by one lane width so corners overlap cleanly.
 	local lanes = folder("Lanes", root)
@@ -75,28 +88,13 @@ function MapBuilder.build(): Map
 
 	-- Spawn and exit markers.
 	local first, last = points[1], points[#points]
-	local spawnMarker = makePart("Spawn", Vector3.new(12, 1, 12), CFrame.new(first + Vector3.new(0, 0.5, 0)), Track.Colors.Spawn, root)
+	local markerSize = Vector3.new(Track.MarkerSize, 1, Track.MarkerSize)
+	local spawnMarker = makePart("Spawn", markerSize, CFrame.new(first + Vector3.new(0, 0.5, 0)), Track.Colors.Spawn, root)
 	spawnMarker.Material = Enum.Material.Neon
 	spawnMarker.CanCollide = false
-	local exitMarker = makePart("Exit", Vector3.new(12, 1, 12), CFrame.new(last + Vector3.new(0, 0.5, 0)), Track.Colors.Exit, root)
+	local exitMarker = makePart("Exit", markerSize, CFrame.new(last + Vector3.new(0, 0.5, 0)), Track.Colors.Exit, root)
 	exitMarker.Material = Enum.Material.Neon
 	exitMarker.CanCollide = false
-
-	-- Tower pads.
-	local padFolder = folder("Pads", root)
-	local pads = {}
-	for i, position in Track.Pads do
-		local pad = makePart(
-			`Pad{i}`,
-			Vector3.new(Track.PadSize, 0.6, Track.PadSize),
-			CFrame.new(position + Vector3.new(0, 0.3, 0)),
-			Track.Colors.Pad,
-			padFolder
-		)
-		pad:SetAttribute("PadIndex", i)
-		pad:SetAttribute("Occupied", false)
-		pads[i] = pad
-	end
 
 	local enemyFolder = folder("Enemies", root)
 	local towerFolder = folder("Towers", root)
@@ -106,7 +104,6 @@ function MapBuilder.build(): Map
 	return {
 		root = root,
 		path = path,
-		pads = pads,
 		enemyFolder = enemyFolder,
 		towerFolder = towerFolder,
 	}

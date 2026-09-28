@@ -1,42 +1,75 @@
 --[[
-	Shop panel. Opens when the player triggers a pad's ProximityPrompt and
-	closes when they walk out of range.
+	Building and managing towers.
 
-	Empty pad: every tower with its price. Built pad: the tower and a Sell
-	button. Buttons only send requests; the server validates, answers with a
-	message, and updates the pad and cash attributes that drive this panel.
-	Prices shown here come from Config for display only; the server charges
-	from its own copy.
+	Build: the Build button (or B) opens the tower list. Picking one starts
+	placement: a see-through ghost follows the mouse (or the last tap), green
+	where Shared/Placement says it fits and red where it doesn't. Click or tap
+	to place; Q or Cancel to stop.
+
+	Manage: walking up to a tower shows its prompt; triggering it opens a panel
+	with Sell.
+
+	Everything here is a request. The server re-checks the spot, the distance
+	and the cash with the same rules and has the final say. Prices shown come
+	from Config for display only.
 ]]
 
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local Placement = require(Shared:WaitForChild("Placement"))
 local ShopRules = require(Shared:WaitForChild("ShopRules"))
+local TowerLook = require(Shared:WaitForChild("TowerLook"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local request = remotes:WaitForChild("ShopRequest") :: RemoteFunction
 
 local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
 
 -- Visuals only.
 local PANEL_COLOR = Color3.fromRGB(24, 20, 34)
 local BUY_COLOR = Color3.fromRGB(60, 110, 190)
 local SELL_COLOR = Color3.fromRGB(190, 80, 90)
 local LOCKED_COLOR = Color3.fromRGB(70, 66, 82)
+local BUILD_COLOR = Color3.fromRGB(70, 180, 110)
 local TEXT = Color3.fromRGB(240, 236, 250)
 local TEXT_DIM = Color3.fromRGB(150, 145, 165)
 local GOOD = Color3.fromRGB(140, 240, 170)
 local BAD = Color3.fromRGB(255, 120, 140)
+local GHOST_OK = Color3.fromRGB(90, 230, 120)
+local GHOST_BAD = Color3.fromRGB(240, 70, 80)
+local GHOST_TRANSPARENCY = 0.5
 
 ------------------------------------------------------------------ layout
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "StormSplitShop"
 gui.ResetOnSpawn = false
+
+local function corner(parent: Instance, radius: number)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, radius)
+	c.Parent = parent
+end
+
+local buildButton = Instance.new("TextButton")
+buildButton.Name = "Build"
+buildButton.AnchorPoint = Vector2.new(1, 1)
+buildButton.Position = UDim2.new(1, -24, 1, -24)
+buildButton.Size = UDim2.fromOffset(140, 48)
+buildButton.BackgroundColor3 = BUILD_COLOR
+buildButton.Font = Enum.Font.GothamBold
+buildButton.TextSize = 20
+buildButton.TextColor3 = TEXT
+buildButton.Text = "Build  (B)"
+buildButton.Parent = gui
+corner(buildButton, 8)
 
 local panel = Instance.new("Frame")
 panel.Name = "Panel"
@@ -48,12 +81,9 @@ panel.BackgroundColor3 = PANEL_COLOR
 panel.BackgroundTransparency = 0.1
 panel.Visible = false
 panel.Parent = gui
+corner(panel, 10)
 
 do
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 10)
-	corner.Parent = panel
-
 	local padding = Instance.new("UIPadding")
 	padding.PaddingTop = UDim.new(0, 12)
 	padding.PaddingBottom = UDim.new(0, 12)
@@ -95,12 +125,7 @@ closeButton.TextSize = 16
 closeButton.TextColor3 = TEXT
 closeButton.Text = "X"
 closeButton.Parent = header
-
-do
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 6)
-	corner.Parent = closeButton
-end
+corner(closeButton, 6)
 
 local list = Instance.new("Frame")
 list.Name = "List"
@@ -131,13 +156,25 @@ message.Parent = panel
 
 ------------------------------------------------------------------ state
 
-local currentPad: BasePart? = nil
-local currentPrompt: ProximityPrompt? = nil
-local padConnections: { RBXScriptConnection } = {}
+type Mode = "closed" | "list" | "placing" | "manage"
+
+local mode: Mode = "closed"
+local placingKey: string? = nil
+local ghost: Model? = nil
+local ghostSpot: Vector3? = nil
+local ghostFits = false
+local managed: BasePart? = nil -- body of the tower being managed
+local managedPrompt: ProximityPrompt? = nil
+local managedConnections: { RBXScriptConnection } = {}
 local busy = false
 
 local function escape(text: string): string
 	return (text:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"))
+end
+
+local function say(text: string, color: Color3?)
+	message.Text = text
+	message.TextColor3 = color or TEXT_DIM
 end
 
 local function addRow(order: number, text: string, color: Color3, enabled: boolean, onClick: (() -> ())?)
@@ -153,10 +190,7 @@ local function addRow(order: number, text: string, color: Color3, enabled: boole
 	button.TextXAlignment = Enum.TextXAlignment.Left
 	button.Text = text
 	button.LayoutOrder = order
-
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 8)
-	corner.Parent = button
+	corner(button, 8)
 
 	local padding = Instance.new("UIPadding")
 	padding.PaddingLeft = UDim.new(0, 12)
@@ -168,29 +202,172 @@ local function addRow(order: number, text: string, color: Color3, enabled: boole
 	button.Parent = list
 end
 
-local render: () -> ()
+------------------------------------------------------------------ ghost
 
-local function send(action: string, padIndex: number, towerKey: string?)
-	if busy then
+local function mapFolder(name: string): Instance?
+	local map = workspace:FindFirstChild("StormSplitMap")
+	return map and map:FindFirstChild(name)
+end
+
+local function towerFolder(): Instance?
+	return mapFolder("Towers")
+end
+
+local function builtPositions(): { Vector3 }
+	local positions = {}
+	local folder = towerFolder()
+	if folder then
+		for _, model in folder:GetChildren() do
+			if model:IsA("Model") and model.PrimaryPart then
+				table.insert(positions, Placement.ground(model.PrimaryPart.Position))
+			end
+		end
+	end
+	return positions
+end
+
+local function characterRoot(): BasePart?
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	return if root and root:IsA("BasePart") then root else nil
+end
+
+local function destroyGhost()
+	if ghost then
+		ghost:Destroy()
+	end
+	ghost, ghostSpot, ghostFits = nil, nil, false
+end
+
+local function makeGhost(key: string)
+	destroyGhost()
+	local def = Config.Towers[key]
+	local model = TowerLook.build(key, def.range, Vector3.zero)
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") then
+			part.CanCollide = false
+			part.CanQuery = false
+			part.CanTouch = false
+			part.CastShadow = false
+			if part.Name == "Body" then
+				part.Transparency = GHOST_TRANSPARENCY
+			end
+		end
+	end
+	model.Parent = camera -- local only; never replicates
+	ghost = model
+end
+
+-- Where a screen point lands on the ground, ignoring enemies, towers and us.
+local function groundUnder(screenPoint: Vector2, includesInset: boolean): Vector3?
+	local ray = if includesInset
+		then camera:ViewportPointToRay(screenPoint.X, screenPoint.Y)
+		else camera:ScreenPointToRay(screenPoint.X, screenPoint.Y)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local ignore: { Instance } = {}
+	for _, instance in { player.Character, ghost, mapFolder("Enemies"), towerFolder() } do
+		if instance then
+			table.insert(ignore, instance)
+		end
+	end
+	params.FilterDescendantsInstances = ignore
+	local hit = workspace:Raycast(ray.Origin, ray.Direction * 1000, params)
+	return hit and Placement.ground(hit.Position)
+end
+
+local function moveGhost(spot: Vector3?)
+	if not ghost or not ghost.PrimaryPart then
 		return
 	end
+	ghostSpot = spot
+	if not spot then
+		ghostFits = false
+		ghost.Parent = nil
+		return
+	end
+	ghost.Parent = camera
+
+	local fits, reason = Placement.check(spot, builtPositions())
+	local root = characterRoot()
+	if fits and root then
+		local offset = root.Position - spot
+		if Vector2.new(offset.X, offset.Z).Magnitude > ShopRules.PlaceRange then
+			fits, reason = false, "Too far from you — walk closer"
+		end
+	end
+	ghostFits = fits
+
+	ghost:PivotTo(CFrame.new(spot + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0)))
+	local color = if fits then GHOST_OK else GHOST_BAD
+	for _, part in ghost:GetDescendants() do
+		if part:IsA("BasePart") then
+			part.Color = color
+		end
+	end
+	if not busy then
+		say(if fits then "Click or tap to place  ·  Q to cancel" else (reason or "Can't build here"), if fits then TEXT_DIM else BAD)
+	end
+end
+
+------------------------------------------------------------------ panel
+
+local render: () -> ()
+
+local function setMode(newMode: Mode)
+	if newMode ~= "placing" then
+		destroyGhost()
+		placingKey = nil
+	end
+	if newMode ~= "manage" then
+		for _, connection in managedConnections do
+			connection:Disconnect()
+		end
+		table.clear(managedConnections)
+		managed, managedPrompt = nil, nil
+	end
+	mode = newMode
+	say("")
+	render()
+end
+
+local function send(action: string, a: any, b: any): boolean
+	if busy then
+		return false
+	end
 	busy = true
-	message.TextColor3 = TEXT_DIM
-	message.Text = "…"
-
+	say("…")
 	local ok, success, text = pcall(function()
-		return request:InvokeServer(action, padIndex, towerKey)
+		return request:InvokeServer(action, a, b)
 	end)
-
 	busy = false
 	if not ok then
-		message.TextColor3 = BAD
-		message.Text = "Couldn't reach the server"
-	else
-		message.TextColor3 = if success then GOOD else BAD
-		message.Text = tostring(text)
+		say("Couldn't reach the server", BAD)
+		return false
 	end
+	say(tostring(text), if success then GOOD else BAD)
+	return success == true
+end
+
+local function startPlacing(key: string)
+	setMode("placing")
+	placingKey = key
+	makeGhost(key)
 	render()
+	moveGhost(groundUnder(UserInputService:GetMouseLocation(), true))
+end
+
+local function tryPlace()
+	local key, spot = placingKey, ghostSpot
+	if busy or not key or not spot then
+		return
+	end
+	if not ghostFits then
+		return -- the message already says why
+	end
+	if send("build", key, spot) then
+		setMode("closed")
+	end
 end
 
 render = function()
@@ -200,27 +377,12 @@ render = function()
 		end
 	end
 
-	local pad = currentPad
-	if not pad then
-		panel.Visible = false
-		return
-	end
-	panel.Visible = true
-
-	local padIndex = pad:GetAttribute("PadIndex") :: number
-	local towerKey = pad:GetAttribute("Tower") :: string?
+	panel.Visible = mode ~= "closed"
+	buildButton.Text = if mode == "closed" then "Build  (B)" else "Close  (B)"
 	local cash = math.floor(ReplicatedStorage:GetAttribute("Cash") or 0)
 
-	if towerKey then
-		local def = Config.Towers[towerKey]
-		local refund = math.floor((pad:GetAttribute("Spent") or 0) * Config.Tuning.SellRefund)
-		title.Text = `{def.display}  ·  Pad {padIndex}`
-		addRow(1, `<b>Sell</b>  for {refund}`, SELL_COLOR, true, function()
-			send("sell", padIndex)
-		end)
-		addRow(2, "Upgrades are coming soon", LOCKED_COLOR, false)
-	else
-		title.Text = `Build on pad {padIndex}  ·  Cash {cash}`
+	if mode == "list" then
+		title.Text = `Build  ·  Cash {cash}`
 		for order, key in Config.TowerOrder do
 			local def = Config.Towers[key]
 			local name = escape(def.display)
@@ -230,58 +392,101 @@ render = function()
 				local affordable = cash >= def.baseCost
 				local text = `<b>{name}</b>  ·  {def.baseCost}\n<font size="13">{escape(def.role)}</font>`
 				addRow(order, text, if affordable then BUY_COLOR else LOCKED_COLOR, affordable, function()
-					send("build", padIndex, key)
+					startPlacing(key)
 				end)
 			end
 		end
+	elseif mode == "placing" and placingKey then
+		local def = Config.Towers[placingKey]
+		title.Text = `Placing {def.display}  ·  {def.baseCost}`
+		addRow(1, "<b>Cancel</b>  (Q)", LOCKED_COLOR, true, function()
+			setMode("list")
+		end)
+	elseif mode == "manage" and managed then
+		local key = managed:GetAttribute("Tower") :: string
+		local def = Config.Towers[key]
+		local refund = math.floor((managed:GetAttribute("Spent") or 0) * Config.Tuning.SellRefund)
+		title.Text = if def then def.display else "Tower"
+		local towerId = managed:GetAttribute("TowerId")
+		addRow(1, `<b>Sell</b>  for {refund}`, SELL_COLOR, true, function()
+			if send("sell", towerId) then
+				setMode("closed")
+			end
+		end)
+		addRow(2, "Upgrades are coming soon", LOCKED_COLOR, false)
 	end
 end
 
-local function close()
-	for _, connection in padConnections do
-		connection:Disconnect()
+local function openManage(body: BasePart, prompt: ProximityPrompt)
+	setMode("manage")
+	managed, managedPrompt = body, prompt
+	for _, name in { "Spent", "Tower" } do
+		table.insert(managedConnections, body:GetAttributeChangedSignal(name):Connect(render))
 	end
-	table.clear(padConnections)
-	currentPad = nil
-	currentPrompt = nil
-	message.Text = ""
+	table.insert(managedConnections, body.AncestryChanged:Connect(function()
+		if not body:IsDescendantOf(workspace) then
+			setMode("closed") -- sold, possibly by a teammate
+		end
+	end))
 	render()
 end
 
-local function open(pad: BasePart, prompt: ProximityPrompt)
-	close()
-	currentPad = pad
-	currentPrompt = prompt
-	for _, name in { "Tower", "Spent" } do
-		table.insert(padConnections, pad:GetAttributeChangedSignal(name):Connect(render))
-	end
-	render()
+------------------------------------------------------------------ input
+
+local function toggleBuild()
+	setMode(if mode == "closed" or mode == "manage" then "list" else "closed")
 end
 
------------------------------------------------------------------- wiring
+buildButton.Activated:Connect(toggleBuild)
+closeButton.Activated:Connect(function()
+	setMode("closed")
+end)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed then
+		return -- typing in chat, or clicking our own buttons
+	end
+	if input.KeyCode == Enum.KeyCode.B then
+		toggleBuild()
+	elseif mode == "placing" then
+		if input.KeyCode == Enum.KeyCode.Q then
+			setMode("list")
+		elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+			tryPlace()
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			moveGhost(groundUnder(Vector2.new(input.Position.X, input.Position.Y), false))
+			tryPlace()
+		end
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if mode == "placing" and ghost and UserInputService.MouseEnabled then
+		moveGhost(groundUnder(UserInputService:GetMouseLocation(), true))
+	end
+end)
 
 ProximityPromptService.PromptTriggered:Connect(function(prompt, who)
-	if who ~= player then
+	if who ~= player or mode == "placing" then
 		return
 	end
-	local pad = prompt.Parent
-	if pad and pad:IsA("BasePart") and pad:GetAttribute("PadIndex") then
-		open(pad, prompt)
+	local body = prompt.Parent
+	if body and body:IsA("BasePart") and body:GetAttribute("TowerId") then
+		openManage(body, prompt)
 	end
 end)
 
 ProximityPromptService.PromptHidden:Connect(function(prompt)
-	if prompt == currentPrompt then
-		close()
+	if mode == "manage" and prompt == managedPrompt then
+		setMode("closed")
 	end
 end)
 
-closeButton.Activated:Connect(close)
-
 ReplicatedStorage:GetAttributeChangedSignal("Cash"):Connect(function()
-	if currentPad then
+	if mode == "list" or mode == "manage" then
 		render()
 	end
 end)
 
+render()
 gui.Parent = player:WaitForChild("PlayerGui")

@@ -1,8 +1,8 @@
 --[[
 	Storm Split — server entry point (phase 2).
 
-	The map starts empty. Players walk to pads, buy towers with the team's
-	shared cash, and press Start. Kills and round ends pay cash; leaks cost lives.
+	The map starts empty. Players place towers anywhere off the track with the
+	team's shared cash, and press Start. Kills and round ends pay cash; leaks cost lives.
 
 	Every round prints peak live enemies and how many milliseconds our own code
 	costs per frame (ARCHITECTURE.md §7). Watch the Output window.
@@ -59,7 +59,7 @@ Enemies.init(map.path, map.enemyFolder, {
 })
 
 Towers.init(map.towerFolder)
-Shop.init(map.pads, remotes)
+Shop.init(remotes)
 
 ------------------------------------------------------------------ simulation loop
 
