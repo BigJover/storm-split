@@ -1,0 +1,15 @@
+# Roblox place files — the map is built by code at runtime, so nothing here needs versioning
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
+
+# Rojo / tooling
+sourcemap.json
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

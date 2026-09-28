@@ -1,0 +1,2006 @@
+{
+  "source": "Storm-Split-Balance.xlsx",
+  "tuning": {
+    "Starting cash": 650,
+    "Starting lives": 40,
+    "Cash per effective HP": 0.43,
+    "Round bonus base": 60,
+    "Round bonus per round": 1,
+    "Tier cost growth": 2.3,
+    "Tier damage growth": 1.9,
+    "Sell refund": 0.7,
+    "Global HP scalar": 1,
+    "Round HP ramp": 1.052,
+    "Max concurrent enemies": 130,
+    "Global speed scalar": 1,
+    "Weapon tier 1 cost": 300,
+    "Weapon cost growth": 2.35,
+    "Weapon damage growth": 1.35,
+    "Core payout base": 5,
+    "Core payout per round": 1.5,
+    "Mastery cost base": 25,
+    "Mastery cost growth": 1.18,
+    "Assumed spend on towers": 0.75,
+    "Expected efficiency": 0.6,
+    "Rounds per tier": 8
+  },
+  "towers": [
+    {
+      "id": "SCOUT",
+      "display": "Scout",
+      "role": "Cheap single-target DPS",
+      "baseCost": 200,
+      "baseDamage": 1,
+      "baseRate": 3,
+      "baseTargets": 1,
+      "baseDps": 3,
+      "range": 20,
+      "hitsAir": true,
+      "incomePerRound": 0
+    },
+    {
+      "id": "SNIPER",
+      "display": "Sniper",
+      "role": "Global range, slow",
+      "baseCost": 350,
+      "baseDamage": 9,
+      "baseRate": 0.45,
+      "baseTargets": 1,
+      "baseDps": 4.05,
+      "range": 999,
+      "hitsAir": true,
+      "incomePerRound": 0
+    },
+    {
+      "id": "GRENADIER",
+      "display": "Grenadier",
+      "role": "Area damage, ground only",
+      "baseCost": 550,
+      "baseDamage": 5,
+      "baseRate": 1,
+      "baseTargets": 3,
+      "baseDps": 15,
+      "range": 18,
+      "hitsAir": false,
+      "incomePerRound": 0
+    },
+    {
+      "id": "CHILLER",
+      "display": "Chiller",
+      "role": "Support / crowd control",
+      "baseCost": 400,
+      "baseDamage": 0.5,
+      "baseRate": 1,
+      "baseTargets": 4,
+      "baseDps": 2,
+      "range": 12,
+      "hitsAir": true,
+      "incomePerRound": 0
+    },
+    {
+      "id": "QUARTERMASTER",
+      "display": "Quartermaster",
+      "role": "Economy, no attack",
+      "baseCost": 1000,
+      "baseDamage": 0,
+      "baseRate": 0,
+      "baseTargets": 0,
+      "baseDps": 0,
+      "range": 0,
+      "hitsAir": false,
+      "incomePerRound": 150
+    }
+  ],
+  "towerUpgrades": [
+    {
+      "tower": "SCOUT",
+      "path": "Range",
+      "focus": "range",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 460,
+          "cumulative": 660,
+          "damageMult": 1.3,
+          "rateMult": 1.15,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 1058,
+          "cumulative": 1718,
+          "damageMult": 1.69,
+          "rateMult": 1.32,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 2433,
+          "cumulative": 4151,
+          "damageMult": 2.2,
+          "rateMult": 1.52,
+          "targetsMult": 1,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 5597,
+          "cumulative": 9748,
+          "damageMult": 2.86,
+          "rateMult": 1.75,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 12873,
+          "cumulative": 22621,
+          "damageMult": 3.71,
+          "rateMult": 2.01,
+          "targetsMult": 1,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "SCOUT",
+      "path": "Rate",
+      "focus": "rate",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 460,
+          "cumulative": 660,
+          "damageMult": 1.35,
+          "rateMult": 1.42,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 1058,
+          "cumulative": 1718,
+          "damageMult": 1.82,
+          "rateMult": 2.02,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 2433,
+          "cumulative": 4151,
+          "damageMult": 2.46,
+          "rateMult": 2.86,
+          "targetsMult": 1,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 5597,
+          "cumulative": 9748,
+          "damageMult": 3.32,
+          "rateMult": 4.07,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 12873,
+          "cumulative": 22621,
+          "damageMult": 4.48,
+          "rateMult": 5.77,
+          "targetsMult": 1,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "SCOUT",
+      "path": "Damage",
+      "focus": "damage",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 460,
+          "cumulative": 660,
+          "damageMult": 1.9,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 1058,
+          "cumulative": 1718,
+          "damageMult": 3.61,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 2433,
+          "cumulative": 4151,
+          "damageMult": 6.86,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 5597,
+          "cumulative": 9748,
+          "damageMult": 13.03,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 12873,
+          "cumulative": 22621,
+          "damageMult": 24.76,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "SNIPER",
+      "path": "Pierce",
+      "focus": "targets",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 805,
+          "cumulative": 1155,
+          "damageMult": 1.45,
+          "rateMult": 1,
+          "targetsMult": 1.32,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 1851,
+          "cumulative": 3006,
+          "damageMult": 2.1,
+          "rateMult": 1,
+          "targetsMult": 1.74,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 4258,
+          "cumulative": 7264,
+          "damageMult": 3.05,
+          "rateMult": 1,
+          "targetsMult": 2.3,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 9794,
+          "cumulative": 17058,
+          "damageMult": 4.42,
+          "rateMult": 1,
+          "targetsMult": 3.04,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 22527,
+          "cumulative": 39585,
+          "damageMult": 6.41,
+          "rateMult": 1,
+          "targetsMult": 4.01,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "SNIPER",
+      "path": "Spotter",
+      "focus": "rate",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 805,
+          "cumulative": 1155,
+          "damageMult": 1.35,
+          "rateMult": 1.42,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 1851,
+          "cumulative": 3006,
+          "damageMult": 1.82,
+          "rateMult": 2.02,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 4258,
+          "cumulative": 7264,
+          "damageMult": 2.46,
+          "rateMult": 2.86,
+          "targetsMult": 1,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 9794,
+          "cumulative": 17058,
+          "damageMult": 3.32,
+          "rateMult": 4.07,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 22527,
+          "cumulative": 39585,
+          "damageMult": 4.48,
+          "rateMult": 5.77,
+          "targetsMult": 1,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "SNIPER",
+      "path": "Siege",
+      "focus": "damage",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 805,
+          "cumulative": 1155,
+          "damageMult": 1.9,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 1851,
+          "cumulative": 3006,
+          "damageMult": 3.61,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 4258,
+          "cumulative": 7264,
+          "damageMult": 6.86,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 9794,
+          "cumulative": 17058,
+          "damageMult": 13.03,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 22527,
+          "cumulative": 39585,
+          "damageMult": 24.76,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "GRENADIER",
+      "path": "Blast",
+      "focus": "targets",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 1265,
+          "cumulative": 1815,
+          "damageMult": 1.45,
+          "rateMult": 1,
+          "targetsMult": 1.32,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 2909,
+          "cumulative": 4724,
+          "damageMult": 2.1,
+          "rateMult": 1,
+          "targetsMult": 1.74,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 6692,
+          "cumulative": 11416,
+          "damageMult": 3.05,
+          "rateMult": 1,
+          "targetsMult": 2.3,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 15391,
+          "cumulative": 26807,
+          "damageMult": 4.42,
+          "rateMult": 1,
+          "targetsMult": 3.04,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 35400,
+          "cumulative": 62207,
+          "damageMult": 6.41,
+          "rateMult": 1,
+          "targetsMult": 4.01,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "GRENADIER",
+      "path": "Cluster",
+      "focus": "targets",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 1265,
+          "cumulative": 1815,
+          "damageMult": 1.45,
+          "rateMult": 1,
+          "targetsMult": 1.32,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 2909,
+          "cumulative": 4724,
+          "damageMult": 2.1,
+          "rateMult": 1,
+          "targetsMult": 1.74,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 6692,
+          "cumulative": 11416,
+          "damageMult": 3.05,
+          "rateMult": 1,
+          "targetsMult": 2.3,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 15391,
+          "cumulative": 26807,
+          "damageMult": 4.42,
+          "rateMult": 1,
+          "targetsMult": 3.04,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 35400,
+          "cumulative": 62207,
+          "damageMult": 6.41,
+          "rateMult": 1,
+          "targetsMult": 4.01,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "GRENADIER",
+      "path": "Concussive",
+      "focus": "damage",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 1265,
+          "cumulative": 1815,
+          "damageMult": 1.9,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 2909,
+          "cumulative": 4724,
+          "damageMult": 3.61,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 6692,
+          "cumulative": 11416,
+          "damageMult": 6.86,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 15391,
+          "cumulative": 26807,
+          "damageMult": 13.03,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 35400,
+          "cumulative": 62207,
+          "damageMult": 24.76,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "CHILLER",
+      "path": "Field",
+      "focus": "range",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 920,
+          "cumulative": 1320,
+          "damageMult": 1.3,
+          "rateMult": 1.15,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 2116,
+          "cumulative": 3436,
+          "damageMult": 1.69,
+          "rateMult": 1.32,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 4867,
+          "cumulative": 8303,
+          "damageMult": 2.2,
+          "rateMult": 1.52,
+          "targetsMult": 1,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 11194,
+          "cumulative": 19497,
+          "damageMult": 2.86,
+          "rateMult": 1.75,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 25745,
+          "cumulative": 45242,
+          "damageMult": 3.71,
+          "rateMult": 2.01,
+          "targetsMult": 1,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "CHILLER",
+      "path": "Freeze",
+      "focus": "rate",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 920,
+          "cumulative": 1320,
+          "damageMult": 1.35,
+          "rateMult": 1.42,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 2116,
+          "cumulative": 3436,
+          "damageMult": 1.82,
+          "rateMult": 2.02,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 4867,
+          "cumulative": 8303,
+          "damageMult": 2.46,
+          "rateMult": 2.86,
+          "targetsMult": 1,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 11194,
+          "cumulative": 19497,
+          "damageMult": 3.32,
+          "rateMult": 4.07,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 25745,
+          "cumulative": 45242,
+          "damageMult": 4.48,
+          "rateMult": 5.77,
+          "targetsMult": 1,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "CHILLER",
+      "path": "Brittle",
+      "focus": "damage",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 920,
+          "cumulative": 1320,
+          "damageMult": 1.9,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 2116,
+          "cumulative": 3436,
+          "damageMult": 3.61,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 4867,
+          "cumulative": 8303,
+          "damageMult": 6.86,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 11194,
+          "cumulative": 19497,
+          "damageMult": 13.03,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 25745,
+          "cumulative": 45242,
+          "damageMult": 24.76,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "QUARTERMASTER",
+      "path": "Yield",
+      "focus": "economy",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 2300,
+          "cumulative": 3300,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 5290,
+          "cumulative": 8590,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 12167,
+          "cumulative": 20757,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 27984,
+          "cumulative": 48741,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 64363,
+          "cumulative": 113104,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "QUARTERMASTER",
+      "path": "Airdrop",
+      "focus": "economy",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 2300,
+          "cumulative": 3300,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 5290,
+          "cumulative": 8590,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 12167,
+          "cumulative": 20757,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 27984,
+          "cumulative": 48741,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 64363,
+          "cumulative": 113104,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        }
+      ]
+    },
+    {
+      "tower": "QUARTERMASTER",
+      "path": "Logistics",
+      "focus": "economy",
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 2300,
+          "cumulative": 3300,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 2,
+          "cost": 5290,
+          "cumulative": 8590,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 3,
+          "cost": 12167,
+          "cumulative": 20757,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        },
+        {
+          "tier": 4,
+          "cost": 27984,
+          "cumulative": 48741,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": false
+        },
+        {
+          "tier": 5,
+          "cost": 64363,
+          "cumulative": 113104,
+          "damageMult": 1,
+          "rateMult": 1,
+          "targetsMult": 1,
+          "swapsSkin": true
+        }
+      ]
+    }
+  ],
+  "weapons": [
+    {
+      "id": "PRECISION",
+      "display": "Precision",
+      "ability": "Mark",
+      "tiers": [
+        {
+          "tier": 1,
+          "weapon": "Scoped pistol",
+          "cost": 300,
+          "cumulative": 300,
+          "damage": 6,
+          "rate": 1.1,
+          "targets": 1,
+          "dps": 6.6,
+          "cooldown": null
+        },
+        {
+          "tier": 2,
+          "weapon": "Marksman rifle",
+          "cost": 705,
+          "cumulative": 1005,
+          "damage": 8.1,
+          "rate": 1.1,
+          "targets": 1,
+          "dps": 8.91,
+          "cooldown": 40
+        },
+        {
+          "tier": 3,
+          "weapon": "Heavy marksman",
+          "cost": 1657,
+          "cumulative": 2662,
+          "damage": 10.9,
+          "rate": 1.1,
+          "targets": 1,
+          "dps": 11.99,
+          "cooldown": 35
+        },
+        {
+          "tier": 4,
+          "weapon": "Anti-materiel rifle",
+          "cost": 3893,
+          "cumulative": 6555,
+          "damage": 14.8,
+          "rate": 1.1,
+          "targets": 1,
+          "dps": 16.28,
+          "cooldown": 30
+        },
+        {
+          "tier": 5,
+          "weapon": "Railgun",
+          "cost": 9149,
+          "cumulative": 15704,
+          "damage": 19.9,
+          "rate": 1.1,
+          "targets": 2,
+          "dps": 43.78,
+          "cooldown": 25
+        }
+      ]
+    },
+    {
+      "id": "SUSTAINED",
+      "display": "Sustained",
+      "ability": "Overdrive",
+      "tiers": [
+        {
+          "tier": 1,
+          "weapon": "SMG",
+          "cost": 300,
+          "cumulative": 300,
+          "damage": 1.2,
+          "rate": 8,
+          "targets": 1,
+          "dps": 9.6,
+          "cooldown": null
+        },
+        {
+          "tier": 2,
+          "weapon": "Assault rifle",
+          "cost": 705,
+          "cumulative": 1005,
+          "damage": 1.6,
+          "rate": 8,
+          "targets": 1,
+          "dps": 12.8,
+          "cooldown": 40
+        },
+        {
+          "tier": 3,
+          "weapon": "Heavy AR",
+          "cost": 1657,
+          "cumulative": 2662,
+          "damage": 2.2,
+          "rate": 8,
+          "targets": 1,
+          "dps": 17.6,
+          "cooldown": 35
+        },
+        {
+          "tier": 4,
+          "weapon": "LMG",
+          "cost": 3893,
+          "cumulative": 6555,
+          "damage": 3,
+          "rate": 8,
+          "targets": 1,
+          "dps": 24,
+          "cooldown": 30
+        },
+        {
+          "tier": 5,
+          "weapon": "Minigun",
+          "cost": 9149,
+          "cumulative": 15704,
+          "damage": 4,
+          "rate": 8,
+          "targets": 1,
+          "dps": 32,
+          "cooldown": 25
+        }
+      ]
+    },
+    {
+      "id": "ORDNANCE",
+      "display": "Ordnance",
+      "ability": "Airburst",
+      "tiers": [
+        {
+          "tier": 1,
+          "weapon": "Shotgun",
+          "cost": 300,
+          "cumulative": 300,
+          "damage": 4,
+          "rate": 1.3,
+          "targets": 2,
+          "dps": 10.4,
+          "cooldown": null
+        },
+        {
+          "tier": 2,
+          "weapon": "Grenade launcher",
+          "cost": 705,
+          "cumulative": 1005,
+          "damage": 5.4,
+          "rate": 1.3,
+          "targets": 2,
+          "dps": 14.04,
+          "cooldown": 40
+        },
+        {
+          "tier": 3,
+          "weapon": "Twin launcher",
+          "cost": 1657,
+          "cumulative": 2662,
+          "damage": 7.3,
+          "rate": 1.3,
+          "targets": 3,
+          "dps": 28.47,
+          "cooldown": 35
+        },
+        {
+          "tier": 4,
+          "weapon": "Mortar",
+          "cost": 3893,
+          "cumulative": 6555,
+          "damage": 9.8,
+          "rate": 1.3,
+          "targets": 3,
+          "dps": 38.22,
+          "cooldown": 30
+        },
+        {
+          "tier": 5,
+          "weapon": "Rocket launcher",
+          "cost": 9149,
+          "cumulative": 15704,
+          "damage": 13.3,
+          "rate": 1.3,
+          "targets": 3,
+          "dps": 51.87,
+          "cooldown": 25
+        }
+      ]
+    }
+  ],
+  "mastery": [
+    {
+      "level": 1,
+      "coreCost": 25,
+      "cumulativeCores": 25,
+      "unlock": "-5% on this weapon's in-round upgrade costs"
+    },
+    {
+      "level": 2,
+      "coreCost": 30,
+      "cumulativeCores": 55,
+      "unlock": "-10% cumulative"
+    },
+    {
+      "level": 3,
+      "coreCost": 35,
+      "cumulativeCores": 90,
+      "unlock": "-15% cumulative"
+    },
+    {
+      "level": 4,
+      "coreCost": 41,
+      "cumulativeCores": 131,
+      "unlock": "-20% cumulative (cap on cost reduction)"
+    },
+    {
+      "level": 5,
+      "coreCost": 48,
+      "cumulativeCores": 179,
+      "unlock": "Ability cooldown -15%"
+    },
+    {
+      "level": 6,
+      "coreCost": 57,
+      "cumulativeCores": 236,
+      "unlock": ""
+    },
+    {
+      "level": 7,
+      "coreCost": 67,
+      "cumulativeCores": 303,
+      "unlock": ""
+    },
+    {
+      "level": 8,
+      "coreCost": 80,
+      "cumulativeCores": 383,
+      "unlock": ""
+    },
+    {
+      "level": 9,
+      "coreCost": 94,
+      "cumulativeCores": 477,
+      "unlock": ""
+    },
+    {
+      "level": 10,
+      "coreCost": 111,
+      "cumulativeCores": 588,
+      "unlock": "Start every match at tier 1, and unlock a second ability variant chosen at match start"
+    },
+    {
+      "level": 11,
+      "coreCost": 131,
+      "cumulativeCores": 719,
+      "unlock": ""
+    },
+    {
+      "level": 12,
+      "coreCost": 154,
+      "cumulativeCores": 873,
+      "unlock": ""
+    },
+    {
+      "level": 13,
+      "coreCost": 182,
+      "cumulativeCores": 1055,
+      "unlock": ""
+    },
+    {
+      "level": 14,
+      "coreCost": 215,
+      "cumulativeCores": 1270,
+      "unlock": ""
+    },
+    {
+      "level": 15,
+      "coreCost": 254,
+      "cumulativeCores": 1524,
+      "unlock": "Ability cooldown -30%, and the ability gains a secondary effect"
+    },
+    {
+      "level": 16,
+      "coreCost": 299,
+      "cumulativeCores": 1823,
+      "unlock": ""
+    },
+    {
+      "level": 17,
+      "coreCost": 353,
+      "cumulativeCores": 2176,
+      "unlock": ""
+    },
+    {
+      "level": 18,
+      "coreCost": 417,
+      "cumulativeCores": 2593,
+      "unlock": ""
+    },
+    {
+      "level": 19,
+      "coreCost": 492,
+      "cumulativeCores": 3085,
+      "unlock": ""
+    },
+    {
+      "level": 20,
+      "coreCost": 580,
+      "cumulativeCores": 3665,
+      "unlock": "Mastery skin, and the crossover cap rises to tier 3 for this weapon only"
+    }
+  ],
+  "enemies": [
+    {
+      "id": "HUSK",
+      "display": "Husk",
+      "baseHp": 1,
+      "scaledHp": 1,
+      "speedMult": 1,
+      "splitsInto": "",
+      "splitCount": 0,
+      "effectiveHp": 1,
+      "cashValue": 0,
+      "flying": false
+    },
+    {
+      "id": "BRUTE",
+      "display": "Brute Husk",
+      "baseHp": 1,
+      "scaledHp": 1,
+      "speedMult": 1.2,
+      "splitsInto": "HUSK",
+      "splitCount": 2,
+      "effectiveHp": 3,
+      "cashValue": 1,
+      "flying": false
+    },
+    {
+      "id": "SHIELD",
+      "display": "Shielded Husk",
+      "baseHp": 2,
+      "scaledHp": 2,
+      "speedMult": 1,
+      "splitsInto": "BRUTE",
+      "splitCount": 2,
+      "effectiveHp": 8,
+      "cashValue": 3,
+      "flying": false
+    },
+    {
+      "id": "ARMOR",
+      "display": "Armored Husk",
+      "baseHp": 3,
+      "scaledHp": 3,
+      "speedMult": 0.8,
+      "splitsInto": "SHIELD",
+      "splitCount": 2,
+      "effectiveHp": 19,
+      "cashValue": 8,
+      "flying": false
+    },
+    {
+      "id": "STORM",
+      "display": "Storm Husk",
+      "baseHp": 4,
+      "scaledHp": 4,
+      "speedMult": 1.4,
+      "splitsInto": "ARMOR",
+      "splitCount": 3,
+      "effectiveHp": 61,
+      "cashValue": 26,
+      "flying": false
+    },
+    {
+      "id": "LLAMA",
+      "display": "Drifter Llama",
+      "baseHp": 4,
+      "scaledHp": 4,
+      "speedMult": 0.9,
+      "splitsInto": "SHIELD",
+      "splitCount": 2,
+      "effectiveHp": 20,
+      "cashValue": 9,
+      "flying": true
+    },
+    {
+      "id": "ZEP",
+      "display": "Loot Zeppelin",
+      "baseHp": 200,
+      "scaledHp": 200,
+      "speedMult": 0.5,
+      "splitsInto": "LLAMA",
+      "splitCount": 4,
+      "effectiveHp": 280,
+      "cashValue": 120,
+      "flying": true
+    },
+    {
+      "id": "BARGE",
+      "display": "Storm Barge",
+      "baseHp": 700,
+      "scaledHp": 700,
+      "speedMult": 0.4,
+      "splitsInto": "ZEP",
+      "splitCount": 4,
+      "effectiveHp": 1820,
+      "cashValue": 783,
+      "flying": true
+    }
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "counts": {
+        "HUSK": 17,
+        "BRUTE": 7
+      },
+      "totalEnemies": 24,
+      "hpMult": 1,
+      "spawnGap": 1.19,
+      "totalEffectiveHp": 38,
+      "roundLength": 43,
+      "requiredDps": 0.9,
+      "killIncome": 16,
+      "roundBonus": 61
+    },
+    {
+      "round": 2,
+      "counts": {
+        "HUSK": 20,
+        "BRUTE": 8
+      },
+      "totalEnemies": 28,
+      "hpMult": 1.052,
+      "spawnGap": 1.17,
+      "totalEffectiveHp": 46,
+      "roundLength": 47,
+      "requiredDps": 1,
+      "killIncome": 20,
+      "roundBonus": 62
+    },
+    {
+      "round": 3,
+      "counts": {
+        "HUSK": 23,
+        "BRUTE": 9
+      },
+      "totalEnemies": 32,
+      "hpMult": 1.107,
+      "spawnGap": 1.16,
+      "totalEffectiveHp": 55,
+      "roundLength": 51,
+      "requiredDps": 1.1,
+      "killIncome": 24,
+      "roundBonus": 63
+    },
+    {
+      "round": 4,
+      "counts": {
+        "HUSK": 26,
+        "BRUTE": 10
+      },
+      "totalEnemies": 36,
+      "hpMult": 1.164,
+      "spawnGap": 1.14,
+      "totalEffectiveHp": 65,
+      "roundLength": 55,
+      "requiredDps": 1.2,
+      "killIncome": 28,
+      "roundBonus": 64
+    },
+    {
+      "round": 5,
+      "counts": {
+        "HUSK": 29,
+        "BRUTE": 11
+      },
+      "totalEnemies": 40,
+      "hpMult": 1.225,
+      "spawnGap": 1.13,
+      "totalEffectiveHp": 76,
+      "roundLength": 59,
+      "requiredDps": 1.3,
+      "killIncome": 33,
+      "roundBonus": 65
+    },
+    {
+      "round": 6,
+      "counts": {
+        "HUSK": 32,
+        "BRUTE": 12
+      },
+      "totalEnemies": 44,
+      "hpMult": 1.288,
+      "spawnGap": 1.12,
+      "totalEffectiveHp": 88,
+      "roundLength": 63,
+      "requiredDps": 1.4,
+      "killIncome": 38,
+      "roundBonus": 66
+    },
+    {
+      "round": 7,
+      "counts": {
+        "HUSK": 35,
+        "BRUTE": 13
+      },
+      "totalEnemies": 48,
+      "hpMult": 1.355,
+      "spawnGap": 1.1,
+      "totalEffectiveHp": 100,
+      "roundLength": 67,
+      "requiredDps": 1.5,
+      "killIncome": 43,
+      "roundBonus": 67
+    },
+    {
+      "round": 8,
+      "counts": {
+        "HUSK": 37,
+        "BRUTE": 15
+      },
+      "totalEnemies": 52,
+      "hpMult": 1.426,
+      "spawnGap": 1.09,
+      "totalEffectiveHp": 117,
+      "roundLength": 71,
+      "requiredDps": 1.6,
+      "killIncome": 50,
+      "roundBonus": 68
+    },
+    {
+      "round": 9,
+      "counts": {
+        "HUSK": 40,
+        "BRUTE": 16
+      },
+      "totalEnemies": 56,
+      "hpMult": 1.5,
+      "spawnGap": 1.07,
+      "totalEffectiveHp": 132,
+      "roundLength": 74,
+      "requiredDps": 1.8,
+      "killIncome": 57,
+      "roundBonus": 69
+    },
+    {
+      "round": 10,
+      "counts": {
+        "HUSK": 43,
+        "BRUTE": 17
+      },
+      "totalEnemies": 60,
+      "hpMult": 1.578,
+      "spawnGap": 1.06,
+      "totalEffectiveHp": 148,
+      "roundLength": 78,
+      "requiredDps": 1.9,
+      "killIncome": 64,
+      "roundBonus": 70
+    },
+    {
+      "round": 11,
+      "counts": {
+        "HUSK": 19,
+        "BRUTE": 16,
+        "SHIELD": 16,
+        "ARMOR": 8,
+        "LLAMA": 5
+      },
+      "totalEnemies": 64,
+      "hpMult": 1.66,
+      "spawnGap": 1.05,
+      "totalEffectiveHp": 742,
+      "roundLength": 81,
+      "requiredDps": 9.2,
+      "killIncome": 319,
+      "roundBonus": 71
+    },
+    {
+      "round": 12,
+      "counts": {
+        "HUSK": 20,
+        "BRUTE": 17,
+        "SHIELD": 17,
+        "ARMOR": 8,
+        "LLAMA": 5
+      },
+      "totalEnemies": 67,
+      "hpMult": 1.747,
+      "spawnGap": 1.03,
+      "totalEffectiveHp": 802,
+      "roundLength": 83,
+      "requiredDps": 9.7,
+      "killIncome": 345,
+      "roundBonus": 72
+    },
+    {
+      "round": 13,
+      "counts": {
+        "HUSK": 22,
+        "BRUTE": 18,
+        "SHIELD": 18,
+        "ARMOR": 9,
+        "LLAMA": 6
+      },
+      "totalEnemies": 73,
+      "hpMult": 1.837,
+      "spawnGap": 1.02,
+      "totalEffectiveHp": 939,
+      "roundLength": 88,
+      "requiredDps": 10.7,
+      "killIncome": 404,
+      "roundBonus": 73
+    },
+    {
+      "round": 14,
+      "counts": {
+        "HUSK": 23,
+        "BRUTE": 19,
+        "SHIELD": 19,
+        "ARMOR": 9,
+        "LLAMA": 6
+      },
+      "totalEnemies": 76,
+      "hpMult": 1.933,
+      "spawnGap": 1,
+      "totalEffectiveHp": 1011,
+      "roundLength": 90,
+      "requiredDps": 11.2,
+      "killIncome": 435,
+      "roundBonus": 74
+    },
+    {
+      "round": 15,
+      "counts": {
+        "HUSK": 24,
+        "BRUTE": 20,
+        "SHIELD": 20,
+        "ARMOR": 10,
+        "LLAMA": 6
+      },
+      "totalEnemies": 80,
+      "hpMult": 2.033,
+      "spawnGap": 0.99,
+      "totalEffectiveHp": 1126,
+      "roundLength": 93,
+      "requiredDps": 12.1,
+      "killIncome": 484,
+      "roundBonus": 75
+    },
+    {
+      "round": 16,
+      "counts": {
+        "HUSK": 25,
+        "BRUTE": 21,
+        "SHIELD": 21,
+        "ARMOR": 10,
+        "LLAMA": 7
+      },
+      "totalEnemies": 84,
+      "hpMult": 2.139,
+      "spawnGap": 0.98,
+      "totalEffectiveHp": 1253,
+      "roundLength": 96,
+      "requiredDps": 13.1,
+      "killIncome": 539,
+      "roundBonus": 76
+    },
+    {
+      "round": 17,
+      "counts": {
+        "HUSK": 26,
+        "BRUTE": 22,
+        "SHIELD": 22,
+        "ARMOR": 11,
+        "LLAMA": 7
+      },
+      "totalEnemies": 88,
+      "hpMult": 2.25,
+      "spawnGap": 0.96,
+      "totalEffectiveHp": 1388,
+      "roundLength": 98,
+      "requiredDps": 14.2,
+      "killIncome": 597,
+      "roundBonus": 77
+    },
+    {
+      "round": 18,
+      "counts": {
+        "HUSK": 28,
+        "BRUTE": 23,
+        "SHIELD": 23,
+        "ARMOR": 11,
+        "LLAMA": 7
+      },
+      "totalEnemies": 92,
+      "hpMult": 2.367,
+      "spawnGap": 0.95,
+      "totalEffectiveHp": 1491,
+      "roundLength": 101,
+      "requiredDps": 14.8,
+      "killIncome": 641,
+      "roundBonus": 78
+    },
+    {
+      "round": 19,
+      "counts": {
+        "HUSK": 29,
+        "BRUTE": 24,
+        "SHIELD": 24,
+        "ARMOR": 12,
+        "LLAMA": 8
+      },
+      "totalEnemies": 97,
+      "hpMult": 2.49,
+      "spawnGap": 0.93,
+      "totalEffectiveHp": 1696,
+      "roundLength": 104,
+      "requiredDps": 16.3,
+      "killIncome": 729,
+      "roundBonus": 79
+    },
+    {
+      "round": 20,
+      "counts": {
+        "HUSK": 30,
+        "BRUTE": 25,
+        "SHIELD": 25,
+        "ARMOR": 12,
+        "LLAMA": 8
+      },
+      "totalEnemies": 100,
+      "hpMult": 2.62,
+      "spawnGap": 0.92,
+      "totalEffectiveHp": 1816,
+      "roundLength": 106,
+      "requiredDps": 17.1,
+      "killIncome": 781,
+      "roundBonus": 80
+    },
+    {
+      "round": 21,
+      "counts": {
+        "HUSK": 17,
+        "BRUTE": 21,
+        "SHIELD": 25,
+        "ARMOR": 21,
+        "STORM": 12,
+        "LLAMA": 8
+      },
+      "totalEnemies": 104,
+      "hpMult": 2.756,
+      "spawnGap": 0.91,
+      "totalEffectiveHp": 4330,
+      "roundLength": 109,
+      "requiredDps": 39.7,
+      "killIncome": 1862,
+      "roundBonus": 81
+    },
+    {
+      "round": 22,
+      "counts": {
+        "HUSK": 17,
+        "BRUTE": 22,
+        "SHIELD": 26,
+        "ARMOR": 22,
+        "STORM": 13,
+        "LLAMA": 9
+      },
+      "totalEnemies": 109,
+      "hpMult": 2.9,
+      "spawnGap": 0.89,
+      "totalEffectiveHp": 4878,
+      "roundLength": 111,
+      "requiredDps": 43.9,
+      "killIncome": 2098,
+      "roundBonus": 82
+    },
+    {
+      "round": 23,
+      "counts": {
+        "HUSK": 18,
+        "BRUTE": 22,
+        "SHIELD": 27,
+        "ARMOR": 22,
+        "STORM": 13,
+        "LLAMA": 9
+      },
+      "totalEnemies": 111,
+      "hpMult": 3.05,
+      "spawnGap": 0.88,
+      "totalEffectiveHp": 5158,
+      "roundLength": 112,
+      "requiredDps": 46.1,
+      "killIncome": 2218,
+      "roundBonus": 83
+    },
+    {
+      "round": 24,
+      "counts": {
+        "HUSK": 19,
+        "BRUTE": 23,
+        "SHIELD": 28,
+        "ARMOR": 23,
+        "STORM": 14,
+        "LLAMA": 9
+      },
+      "totalEnemies": 116,
+      "hpMult": 3.209,
+      "spawnGap": 0.86,
+      "totalEffectiveHp": 5722,
+      "roundLength": 114,
+      "requiredDps": 50.2,
+      "killIncome": 2460,
+      "roundBonus": 84
+    },
+    {
+      "round": 25,
+      "counts": {
+        "HUSK": 19,
+        "BRUTE": 24,
+        "SHIELD": 29,
+        "ARMOR": 24,
+        "STORM": 14,
+        "LLAMA": 10
+      },
+      "totalEnemies": 120,
+      "hpMult": 3.376,
+      "spawnGap": 0.85,
+      "totalEffectiveHp": 6188,
+      "roundLength": 116,
+      "requiredDps": 53.3,
+      "killIncome": 2661,
+      "roundBonus": 85
+    },
+    {
+      "round": 26,
+      "counts": {
+        "HUSK": 20,
+        "BRUTE": 25,
+        "SHIELD": 30,
+        "ARMOR": 25,
+        "STORM": 15,
+        "LLAMA": 10
+      },
+      "totalEnemies": 125,
+      "hpMult": 3.551,
+      "spawnGap": 0.84,
+      "totalEffectiveHp": 6836,
+      "roundLength": 119,
+      "requiredDps": 57.4,
+      "killIncome": 2939,
+      "roundBonus": 86
+    },
+    {
+      "round": 27,
+      "counts": {
+        "HUSK": 20,
+        "BRUTE": 26,
+        "SHIELD": 31,
+        "ARMOR": 26,
+        "STORM": 15,
+        "LLAMA": 10
+      },
+      "totalEnemies": 128,
+      "hpMult": 3.736,
+      "spawnGap": 0.82,
+      "totalEffectiveHp": 7304,
+      "roundLength": 119,
+      "requiredDps": 61.4,
+      "killIncome": 3141,
+      "roundBonus": 87
+    },
+    {
+      "round": 28,
+      "counts": {
+        "HUSK": 21,
+        "BRUTE": 26,
+        "SHIELD": 31,
+        "ARMOR": 26,
+        "STORM": 16,
+        "LLAMA": 10
+      },
+      "totalEnemies": 130,
+      "hpMult": 3.93,
+      "spawnGap": 0.81,
+      "totalEffectiveHp": 7927,
+      "roundLength": 119,
+      "requiredDps": 66.6,
+      "killIncome": 3409,
+      "roundBonus": 88
+    },
+    {
+      "round": 29,
+      "counts": {
+        "HUSK": 21,
+        "BRUTE": 26,
+        "SHIELD": 31,
+        "ARMOR": 26,
+        "STORM": 16,
+        "LLAMA": 10
+      },
+      "totalEnemies": 130,
+      "hpMult": 4.135,
+      "spawnGap": 0.79,
+      "totalEffectiveHp": 8340,
+      "roundLength": 117,
+      "requiredDps": 71.3,
+      "killIncome": 3586,
+      "roundBonus": 89
+    },
+    {
+      "round": 30,
+      "counts": {
+        "HUSK": 21,
+        "BRUTE": 26,
+        "SHIELD": 31,
+        "ARMOR": 26,
+        "STORM": 16,
+        "LLAMA": 10
+      },
+      "totalEnemies": 130,
+      "hpMult": 4.35,
+      "spawnGap": 0.78,
+      "totalEffectiveHp": 8774,
+      "roundLength": 115,
+      "requiredDps": 76.3,
+      "killIncome": 3773,
+      "roundBonus": 90
+    },
+    {
+      "round": 31,
+      "counts": {
+        "BRUTE": 16,
+        "SHIELD": 26,
+        "ARMOR": 31,
+        "STORM": 31,
+        "LLAMA": 18,
+        "ZEP": 8
+      },
+      "totalEnemies": 130,
+      "hpMult": 4.576,
+      "spawnGap": 0.77,
+      "totalEffectiveHp": 24418,
+      "roundLength": 114,
+      "requiredDps": 214.2,
+      "killIncome": 10500,
+      "roundBonus": 91
+    },
+    {
+      "round": 32,
+      "counts": {
+        "BRUTE": 16,
+        "SHIELD": 26,
+        "ARMOR": 31,
+        "STORM": 31,
+        "LLAMA": 18,
+        "ZEP": 8
+      },
+      "totalEnemies": 130,
+      "hpMult": 4.814,
+      "spawnGap": 0.75,
+      "totalEffectiveHp": 25688,
+      "roundLength": 112,
+      "requiredDps": 229.4,
+      "killIncome": 11046,
+      "roundBonus": 92
+    },
+    {
+      "round": 33,
+      "counts": {
+        "BRUTE": 16,
+        "SHIELD": 26,
+        "ARMOR": 31,
+        "STORM": 31,
+        "LLAMA": 18,
+        "ZEP": 8
+      },
+      "totalEnemies": 130,
+      "hpMult": 5.064,
+      "spawnGap": 0.74,
+      "totalEffectiveHp": 27022,
+      "roundLength": 110,
+      "requiredDps": 245.7,
+      "killIncome": 11619,
+      "roundBonus": 93
+    },
+    {
+      "round": 34,
+      "counts": {
+        "BRUTE": 16,
+        "SHIELD": 26,
+        "ARMOR": 31,
+        "STORM": 31,
+        "LLAMA": 18,
+        "ZEP": 8
+      },
+      "totalEnemies": 130,
+      "hpMult": 5.327,
+      "spawnGap": 0.72,
+      "totalEffectiveHp": 28425,
+      "roundLength": 108,
+      "requiredDps": 263.2,
+      "killIncome": 12223,
+      "roundBonus": 94
+    },
+    {
+      "round": 35,
+      "counts": {
+        "BRUTE": 16,
+        "SHIELD": 26,
+        "ARMOR": 31,
+        "STORM": 31,
+        "LLAMA": 18,
+        "ZEP": 8
+      },
+      "totalEnemies": 130,
+      "hpMult": 5.604,
+      "spawnGap": 0.71,
+      "totalEffectiveHp": 29903,
+      "roundLength": 106,
+      "requiredDps": 282.1,
+      "killIncome": 12858,
+      "roundBonus": 95
+    },
+    {
+      "round": 36,
+      "counts": {
+        "BRUTE": 16,
+        "SHIELD": 26,
+        "ARMOR": 31,
+        "STORM": 31,
+        "LLAMA": 18,
+        "ZEP": 8
+      },
+      "totalEnemies": 130,
+      "hpMult": 5.896,
+      "spawnGap": 0.7,
+      "totalEffectiveHp": 31461,
+      "roundLength": 105,
+      "requiredDps": 299.6,
+      "killIncome": 13528,
+      "roundBonus": 96
+    },
+    {
+      "round": 37,
+      "counts": {
+        "BRUTE": 16,
+        "SHIELD": 26,
+        "ARMOR": 31,
+        "STORM": 31,
+        "LLAMA": 18,
+        "ZEP": 8
+      },
+      "totalEnemies": 130,
+      "hpMult": 6.202,
+      "spawnGap": 0.68,
+      "totalEffectiveHp": 33094,
+      "roundLength": 102,
+      "requiredDps": 324.5,
+      "killIncome": 14230,
+      "roundBonus": 97
+    },
+    {
+      "round": 38,
+      "counts": {
+        "BRUTE": 16,
+        "SHIELD": 26,
+        "ARMOR": 31,
+        "STORM": 31,
+        "LLAMA": 18,
+        "ZEP": 8
+      },
+      "totalEnemies": 130,
+      "hpMult": 6.525,
+      "spawnGap": 0.67,
+      "totalEffectiveHp": 34817,
+      "roundLength": 101,
+      "requiredDps": 344.7,
+      "killIncome": 14971,
+      "roundBonus": 98
+    },
+    {
+      "round": 39,
+      "counts": {
+        "BRUTE": 16,
+        "SHIELD": 26,
+        "ARMOR": 31,
+        "STORM": 31,
+        "LLAMA": 18,
+        "ZEP": 8
+      },
+      "totalEnemies": 130,
+      "hpMult": 6.864,
+      "spawnGap": 0.65,
+      "totalEffectiveHp": 36626,
+      "roundLength": 99,
+      "requiredDps": 370,
+      "killIncome": 15749,
+      "roundBonus": 99
+    },
+    {
+      "round": 40,
+      "counts": {
+        "BRUTE": 16,
+        "SHIELD": 26,
+        "ARMOR": 31,
+        "STORM": 31,
+        "LLAMA": 18,
+        "ZEP": 8,
+        "BARGE": 1
+      },
+      "totalEnemies": 131,
+      "hpMult": 7.221,
+      "spawnGap": 0.64,
+      "totalEffectiveHp": 51673,
+      "roundLength": 98,
+      "requiredDps": 527.3,
+      "killIncome": 22219,
+      "roundBonus": 100
+    }
+  ],
+  "worstCaseCascade": {
+    "count": 244,
+    "from": "BARGE"
+  },
+  "dpsCheck": {
+    "maxTowerDps": 385.6,
+    "maxWeaponDps": 51.9,
+    "ratio": 0.13
+  }
+}
