@@ -44,7 +44,9 @@ towers, 40-round wave runner, lives, HUD). Confirmed running in Studio 2026-09-2
 follow the track and towers fire.
 
 Next: phase 2 — `Economy` (cash + lives), the shop over validated RemoteEvents, and
-ProximityPrompts on pads.
+ProximityPrompts on pads. Phase 2 must also delete the three free Scouts in
+`Main.server.luau` (temporary test scaffolding): players start with an empty map and enough
+cash for 2 Scouts or 1 mid-priced tower (Starting cash = 450).
 
 ## Open issues
 

@@ -10,7 +10,7 @@
 
 return table.freeze({
 	Tuning = {
-		StartingCash = 650,
+		StartingCash = 450,
 		StartingLives = 40,
 		CashPerEffectiveHP = 0.43,
 		RoundBonusBase = 60,
@@ -193,7 +193,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
-							cost = 1851,
+							cost = 1852,
 							damageMult = 2.1,
 							rateMult = 1,
 							targetsMult = 1.74,
@@ -234,7 +234,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
-							cost = 1851,
+							cost = 1852,
 							damageMult = 1.82,
 							rateMult = 2.02,
 							targetsMult = 1,
@@ -275,7 +275,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
-							cost = 1851,
+							cost = 1852,
 							damageMult = 3.61,
 							rateMult = 1,
 							targetsMult = 1,
@@ -329,7 +329,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
-							cost = 2909,
+							cost = 2910,
 							damageMult = 2.1,
 							rateMult = 1,
 							targetsMult = 1.74,
@@ -370,7 +370,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
-							cost = 2909,
+							cost = 2910,
 							damageMult = 2.1,
 							rateMult = 1,
 							targetsMult = 1.74,
@@ -411,7 +411,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
-							cost = 2909,
+							cost = 2910,
 							damageMult = 3.61,
 							rateMult = 1,
 							targetsMult = 1,

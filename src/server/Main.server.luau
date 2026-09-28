@@ -25,6 +25,10 @@ local Lives = require(script.Parent.Lives)
 
 ------------------------------------------------------------------ phase 1 test setup
 
+-- TEMPORARY. These free towers exist only so phase 1 can be playtested without a shop.
+-- Remove them in phase 2: the real game starts with an empty map and Starting cash
+-- (spreadsheet Tuning!B6) that buys 2 Scouts or 1 mid-priced tower, never three.
+
 local PHASE1 = {
 	StartRound = 1,
 	-- Pads are numbered row by row (see Shared/Track). 2, 5, 8 is the centre column.

@@ -90,7 +90,11 @@ Then create an empty repo on GitHub and push to it. On another machine, clone it
 ## Changing balance numbers
 
 1. Edit blue cells in `Storm-Split-Balance.xlsx` and **save** (openpyxl reads the values
-   your spreadsheet app last calculated).
+   your spreadsheet app last calculated). With **Numbers**: open the `.xlsx`, edit, press
+   Enter, then **File → Export To → Excel…** over `~/Fortnite/Storm-Split-Balance.xlsx`
+   (untick "Include a summary worksheet"). Cmd+S only saves a `.numbers` copy, which the
+   exporter can't read. Numbers rounds exact .5 results up where Excel sometimes rounds
+   down, so a few upgrade costs can differ by 1.
 2. `python3 tools/export_constants.py`
 3. `Config.luau` regenerates and Rojo syncs it. Stop and restart the playtest to pick it up.
 

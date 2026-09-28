@@ -13,3 +13,6 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Numbers working copies (the .xlsx is the source of truth)
+*.numbers
