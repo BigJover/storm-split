@@ -35,7 +35,12 @@ design in the PDF still holds; its UEFN-specific sections don't. Old UEFN materi
 ```bash
 rojo serve                              # live-sync src/ into Studio
 python3 tools/export_constants.py       # after any spreadsheet change
+tools/check.sh                          # static type-check of src/ (luau-lsp via Rokit)
 ```
+
+On this Mac `/usr/bin/git` and `/usr/bin/python3` may fail on the Xcode licence; use
+`/Library/Developer/CommandLineTools/usr/bin/` instead. No Excel licence: edit the
+spreadsheet in Numbers and **Export To → Excel** (see SETUP.md).
 
 ## Status
 
@@ -43,14 +48,19 @@ Phase 1 written and verified headlessly (map, enemies with splitting and the liv
 towers, 40-round wave runner, lives, HUD). Confirmed running in Studio 2026-09-28: enemies
 follow the track and towers fire.
 
-Next: phase 2 — `Economy` (cash + lives), the shop over validated RemoteEvents, and
-ProximityPrompts on pads. Phase 2 must also delete the three free Scouts in
-`Main.server.luau` (temporary test scaffolding): players start with an empty map and enough
-cash for 2 Scouts or 1 mid-priced tower (Starting cash = 450).
+Phase 2 written 2026-09-28 and statically checked, not yet playtested: `Economy` (shared cash
++ lives), `Shop` (pad prompts, one validated RemoteFunction for build/sell), shop panel, build
+phase with a Start button. The free Scouts are gone: the map starts empty and Starting cash
+(450) buys 2 Scouts or 1 mid-priced tower. Chiller and Quartermaster are listed but not sold
+until their phase 5 behaviours exist.
+
+Next: playtest phase 2 in Studio, then phase 3 (upgrade paths).
 
 ## Open issues
 
-- Spreadsheet assumes 14s walk time; real track is ~44s. Reconcile after measuring.
+- "14s walk time" in the spreadsheet's round length: measured 2026-09-28, rounds end ~14s
+  after the last spawn when nothing leaks, so it holds as *clear time*; the full ~44s walk only
+  matters for leaks. Relabel the note at Rounds!A48 next time the sheet is edited.
 - Leak cost is effective HP (BTD6-style), so 40 starting lives is likely too few.
 - Spreadsheet has no range multiplier, so "Range" paths don't increase range yet.
 - Enemy names are Fortnite-flavoured placeholders; needs an original theme.

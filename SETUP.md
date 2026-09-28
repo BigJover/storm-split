@@ -51,15 +51,12 @@ ReplicatedStorage, ServerScriptService and StarterPlayerScripts.
 
 Press **Play**. You should see:
 
-- A purple serpentine track with a green spawn and red exit
-- Nine gold pads, three with blue Scout towers and range rings
-- Enemies spawning after ~3 seconds, tracers from the towers
-- A status bar at the top: round, lives, enemies alive
-- One line per cleared round in **Output**:
-  `Round 3 cleared | lives 40 | peak enemies 14 | script cost avg … ms`
-
-**The game ending around round 11 is expected.** Three Scouts with no economy can't handle the
-first difficulty spike, which is when armored enemies and flyers arrive. Phase 2 adds the shop.
+- A purple serpentine track with a green spawn and red exit, and nine empty gold pads
+- A status bar at the top with your cash (450) and lives, and a green **Start round 1** button
+- Walk onto a pad and press **E** (or tap the prompt): a shop panel lists the towers
+- Buy towers, press **Start**, and enemies spawn; kills and cleared rounds add cash
+- One line per cleared round in **Output** (**Window → Output**):
+  `Round 3 cleared | lives 40 | cash 212 | peak enemies 14 | script cost avg … ms`
 
 Leave `rojo serve` running. Edits to any `.luau` file sync into Studio instantly.
 

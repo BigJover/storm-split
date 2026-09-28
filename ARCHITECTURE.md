@@ -27,16 +27,19 @@ src/
 ├── shared/   → ReplicatedStorage.Shared
 │   ├── Config.luau          GENERATED from the spreadsheet. Never hand-edit.
 │   ├── Track.luau           Level layout: waypoints, pads, sizes. Hand-authored.
-│   └── Path.luau            Distance-along-path math
+│   ├── Path.luau            Distance-along-path math
+│   └── ShopRules.luau       Which towers are for sale yet; pad interaction distance
 ├── server/   → ServerScriptService.Server
 │   ├── Main.server.luau     Entry point and wiring. Only file that knows every module.
 │   ├── MapBuilder.luau      Builds the map at runtime from Track
 │   ├── Enemies.luau         Spawning, movement, damage, splitting, live cap
 │   ├── Towers.luau          Placement, stats, crossover rule, targeting, firing
 │   ├── Waves.luau           Runs the 40-round table
-│   └── Lives.luau           Phase 1 stand-in; folds into Economy in phase 2
+│   ├── Economy.luau         The team's shared cash and lives
+│   └── Shop.luau            Pad prompts + the one validated RemoteFunction for build/sell
 └── client/   → StarterPlayer.StarterPlayerScripts.Client
-    └── Hud.client.luau      Round / lives / enemies label
+    ├── Hud.client.luau      Round / cash / lives / enemies label, Start button
+    └── Shop.client.luau     Pad shop panel (requests only; the server decides)
 ```
 
 Dependencies point one way: `shared` imports nothing from `server` or `client`. `Main` imports
@@ -68,7 +71,8 @@ This dissolves most of the problems the UEFN plan was built around:
 |---|---|---|
 | Enemies (create / move / damage / remove) | `Enemies` | Read `getLive()`, call `damage()` |
 | A tower's tiers and stats | `Towers` | Call `upgrade()` after paying |
-| Lives *(phase 2: and cash)* | `Lives` → `Economy` | Call `lose()` / `TrySpend()` |
+| Cash and lives | `Economy` | Call `trySpend()` / `earn()` / `lose()` |
+| What a tower cost (for refunds) | `Shop` | — |
 | Current round | `Waves` | Read the `Round` attribute |
 | Saved progression *(phase 6)* | `Progression` | Snapshot at match start only |
 
@@ -92,7 +96,7 @@ leaking a boss *cheaper* than killing it, since its children never spawn. `Enemi
 charges the enemy's effective HP instead — what BTD6 does. A leaked Armored Husk now costs 19
 lives, so `StartingLives = 40` is probably too low. Tune it in the spreadsheet.
 
-**5.3 One cash mutator (phase 2).** Every spend goes through `Economy.TrySpend()`, which checks
+**5.3 One cash mutator.** Every spend goes through `Economy.trySpend()`, which checks
 and deducts in one step. Four players clicking at once must not all pass the same check.
 
 **5.4 Towers never charge money.** `Towers.upgrade()` applies an upgrade and nothing else. The
@@ -102,8 +106,9 @@ caller pays first. Keeps money logic in exactly one place.
 
 ## 6. Known mismatches to reconcile
 
-- **Walk time.** The spreadsheet's round-length formula assumes 14s of walk time. The real
-  track is ~610 studs at 14 studs/s ≈ **44s**. Measure in Studio, then fix the spreadsheet.
+- **Walk time.** The round-length formula's 14s is really *clear time after the last spawn*:
+  measured in Studio at 13.8–14.3s for rounds 2–10 with no leaks. A leaking enemy walks the
+  full ~610 studs at 14 studs/s ≈ 44s. Re-measure once players buy their own towers.
 - **Range paths don't increase range.** The spreadsheet has no range-multiplier column, so
   the Scout's "Range" path only buffs damage and rate. Add a column when towers get tuned.
 - **Fire rate ceiling.** Towers fire at most once per frame, so anything above ~60 shots/s is
@@ -131,8 +136,8 @@ second test client.
 | Phase | Modules | Status |
 |---|---|---|
 | **1** — track, enemies, towers, lives | `Track`, `Path`, `MapBuilder`, `Enemies`, `Towers`, `Waves`, `Lives`, `Hud` | **Written and verified headlessly.** Includes splitting and the cap, which the UEFN plan had deferred to phase 3. |
-| **2** — cash, pads, shop | `Economy` (replaces `Lives`), `Shop` (RemoteEvents + validation), shop UI, `ProximityPrompt` on pads | Next |
-| **3** — upgrade paths | Shop calls `Towers.upgrade()`; model swaps at tiers 3 and 5 | `canUpgrade()` done and tested |
+| **2** — cash, pads, shop | `Economy` (replaces `Lives`), `Shop` (RemoteFunction + validation), shop UI, `ProximityPrompt` on pads, build phase + Start button | **Written, statically checked** (`tools/check.sh`). Sells Scout, Sniper, Grenadier; Chiller and Quartermaster wait for phase 5. |
+| **3** — upgrade paths | Shop calls `Towers.upgrade()`; model swaps at tiers 3 and 5 | Next. `canUpgrade()` done and tested |
 | **4** — weapons and abilities | `Weapons` (Tools, server-validated hits), `Abilities` | |
 | **5** — roster and rounds | Remaining towers' behaviours (Chiller slow, Quartermaster income) | Numbers already in `Config` |
 | **6** — co-op, mastery, publish | `Progression` (DataStoreService), mastery effects, lobby | |
@@ -141,8 +146,10 @@ second test client.
 
 ## 9. Verify in Studio
 
-- [ ] Phase 1 runs: map builds, towers fire, rounds advance, game ends around round 11 with
-      the three hardcoded Scouts (expected — that's the first difficulty spike).
-- [ ] Round summary lines appear in Output with peak enemies and script cost.
+- [x] Phase 1 runs: map builds, towers fire, rounds advance, game ends around round 11 with
+      the three hardcoded Scouts (confirmed 2026-09-28).
+- [x] Round summary lines appear in Output with peak enemies and script cost.
+- [ ] Phase 2: build on a pad, cash drops by the price, kills and round ends pay, selling
+      refunds 70%, too-poor and too-far requests are refused.
 - [ ] Network stats during round 30+ with two clients (see §7).
 - [ ] Mobile: enemy part count on a low-end device. Most Roblox players are on phones.

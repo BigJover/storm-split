@@ -6,8 +6,8 @@
 	recompute cached stats; the model can be swapped freely without losing
 	anything.
 
-	Phase 1 only places towers. Upgrade and sell arrive in phase 2/3 and go
-	through Towers.upgrade() / Towers.sell(), which the shop will call.
+	Towers never touch cash (ARCHITECTURE.md §5.4). The shop pays first, then
+	calls place() / upgrade() / remove().
 ]]
 
 local Debris = game:GetService("Debris")
@@ -263,6 +263,26 @@ function Towers.step(dt: number)
 
 		tower.cooldown += 1 / stats.rate
 	end
+end
+
+function Towers.atPad(pad: BasePart): Tower?
+	for _, tower in towers do
+		if tower.pad == pad then
+			return tower
+		end
+	end
+	return nil
+end
+
+-- Takes the tower off the map and frees its pad. Refunds are the caller's job.
+function Towers.remove(tower: Tower)
+	local index = table.find(towers, tower)
+	if not index then
+		return
+	end
+	table.remove(towers, index)
+	tower.model:Destroy()
+	tower.pad:SetAttribute("Occupied", false)
 end
 
 function Towers.all(): { Tower }

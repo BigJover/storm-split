@@ -3,7 +3,7 @@
 
 	Spawns each round weakest-tier first at the round's spawn gap, waits for
 	every enemy (including queued split children) to be dealt with, then
-	moves on. Round income arrives with Economy in phase 2.
+	moves on. Main pays the round-end bonus from onRoundEnd.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
