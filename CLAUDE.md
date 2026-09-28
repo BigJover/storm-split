@@ -1,6 +1,6 @@
 # Storm Split
 
-Co-op (2–4 player) tower defense for **Roblox**, built by Jovan and a friend. BTD6-style towers
+Co-op (2–4 player) tower defense for **Roblox**, built solo by Jovan as a first game. BTD6-style towers
 with three upgrade paths, splitting enemies, and one original twist: the player's weapon *is*
 the hero — each weapon type grants an ability and levels on an in-round track and a permanent
 mastery track.
@@ -40,7 +40,8 @@ python3 tools/export_constants.py       # after any spreadsheet change
 ## Status
 
 Phase 1 written and verified headlessly (map, enemies with splitting and the live cap, Scout
-towers, 40-round wave runner, lives, HUD). Not yet run inside Studio.
+towers, 40-round wave runner, lives, HUD). Confirmed running in Studio 2026-09-28: enemies
+follow the track and towers fire.
 
 Next: phase 2 — `Economy` (cash + lives), the shop over validated RemoteEvents, and
 ProximityPrompts on pads.

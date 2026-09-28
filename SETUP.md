@@ -23,7 +23,7 @@ rokit add rojo-rbx/rojo
 rojo plugin install
 ```
 
-That pins Rojo's version in `rokit.toml` (commit it, so your friend gets the same version)
+That pins Rojo's version in `rokit.toml` (commit it, so any other machine gets the same version)
 and installs the Rojo plugin into Studio.
 
 **openpyxl** — only needed when you re-export balance numbers:
@@ -84,8 +84,8 @@ git add -A
 git commit -m "Storm Split phase 1: track, enemies, towers, waves"
 ```
 
-Then create an empty repo on GitHub and push to it. Your friend clones it, runs step 1, and
-`rojo serve`s the same code.
+Then create an empty repo on GitHub and push to it. On another machine, clone it, run step 1, and
+`rojo serve` the same code.
 
 ## Changing balance numbers
 
