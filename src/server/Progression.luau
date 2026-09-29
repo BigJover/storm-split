@@ -325,8 +325,9 @@ function Progression.init(remotes: Folder, hooks: { onMasteryChanged: ((Player) 
 	end
 	request.Parent = remotes
 
-	-- Studio-only test shortcut (J): Cores and every hero and tower owned for
-	-- this session. Never saved, never present in a published game.
+	-- Studio-only test shortcut (J): +100 Cores for this session, so buying
+	-- unlocks and mastery can be tried. Never saved, never present in a
+	-- published game.
 	if RunService:IsStudio() then
 		local studio = Instance.new("RemoteEvent")
 		studio.Name = "StudioProgress"
@@ -335,12 +336,6 @@ function Progression.init(remotes: Folder, hooks: { onMasteryChanged: ((Player) 
 			if profile then
 				canSave[player] = false -- keep test progress out of the real save
 				profile.cores += 100
-				for towerKey in Config.Towers do
-					profile.owned[`tower:{towerKey}`] = true
-				end
-				for heroKey in Config.Heroes do
-					profile.owned[`hero:{heroKey}`] = true
-				end
 				publish(player)
 			end
 		end)

@@ -862,37 +862,25 @@ render = function()
 		local UNLOCK_COLOR = Color3.fromRGB(70, 150, 120)
 		local order = 0
 
-		-- Unlocks: everything you don't own yet.
-		for _, key in Config.HeroOrder do
-			if not ownsHero(key) then
-				local hero = Config.Heroes[key]
-				order += 1
-				local affordable = between and cores >= hero.unlockCost
-				addRow(order, `<b>Unlock {escape(hero.display)}</b>  ·  {hero.unlockCost} cores\n<font size="13">Hero · {escape(hero.role)} · {escape(hero.ability)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
-					send("unlock", "hero", key, progressRequest)
-				end)
-			end
-		end
-		for _, key in Config.TowerOrder do
-			if not ownsTower(key) then
-				local def = Config.Towers[key]
-				order += 1
-				local affordable = between and cores >= def.unlockCost
-				addRow(order, `<b>Unlock {escape(def.display)}</b>  ·  {def.unlockCost} cores\n<font size="13">Tower · {escape(def.role)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
-					send("unlock", "tower", key, progressRequest)
-				end)
-			end
+		local function section(label: string)
+			order += 1
+			addRow(order, `<b>{label}</b>`, PANEL_COLOR, false)
 		end
 
-		-- Mastery: heroes you own.
+		-- HEROES: buy the ones you don't own; mastery for the ones you do.
+		section("Heroes")
 		for _, key in Config.HeroOrder do
-			if not ownsHero(key) then
-				continue
-			end
 			order += 1
 			local hero = Config.Heroes[key]
-			local level = player:GetAttribute(`Mastery_{key}`) or 0
 			local name = escape(hero.display)
+			if not ownsHero(key) then
+				local affordable = between and cores >= hero.unlockCost
+				addRow(order, `<b>{name}</b>  ·  unlock  ·  {hero.unlockCost} cores\n<font size="13">{escape(hero.role)} · {escape(hero.ability)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
+					send("unlock", "hero", key, progressRequest)
+				end)
+				continue
+			end
+			local level = player:GetAttribute(`Mastery_{key}`) or 0
 			local nextLevel = Config.Mastery[level + 1]
 			if not nextLevel then
 				addRow(order, `<b>{name}</b>  ·  mastery {level}  ·  maxed`, LOCKED_COLOR, false)
@@ -909,6 +897,26 @@ render = function()
 				end)
 			end
 		end
+
+		-- TOWERS: every tower that has to be bought, owned or not.
+		section("Towers")
+		for _, key in Config.TowerOrder do
+			local def = Config.Towers[key]
+			if (def.unlockCost or 0) <= 0 then
+				continue -- free for everyone
+			end
+			order += 1
+			local name = escape(def.display)
+			if ownsTower(key) then
+				addRow(order, `<b>{name}</b>  ·  owned\n<font size="13">{escape(def.role)}</font>`, LOCKED_COLOR, false)
+			else
+				local affordable = between and cores >= def.unlockCost
+				addRow(order, `<b>{name}</b>  ·  unlock  ·  {def.unlockCost} cores\n<font size="13">{escape(def.role)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
+					send("unlock", "tower", key, progressRequest)
+				end)
+			end
+		end
+
 		local note = if status == "offline"
 			then "Progress isn't saving: publish the place to Roblox to keep it (SETUP.md)."
 			else "Clear a track to earn Cores (more on harder difficulties). Mastery never adds damage."

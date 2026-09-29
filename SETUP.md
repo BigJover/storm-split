@@ -84,7 +84,7 @@ Mastery screen (M) says so.
 3. **Game Settings → Places** (or on create.roblox.com) → set **Max Players** to **10**.
 
 Studio test keys (never in a published game): **K** = +1000 cash, **J** = +100 Storm Cores
-and every hero and tower owned. J switches that session to "not saving" so test progress never
+(then buy unlocks and mastery with M). J switches that session to "not saving" so test progress never
 reaches your real save.
 
 ## 4. Connect Claude to Studio (MCP)

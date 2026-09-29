@@ -219,7 +219,7 @@ if studioCash and studioCash:IsA("RemoteEvent") then
 		if input.KeyCode == Enum.KeyCode.K then
 			studioCash:FireServer()
 		elseif input.KeyCode == Enum.KeyCode.J and studioProgress and studioProgress:IsA("RemoteEvent") then
-			studioProgress:FireServer() -- +100 Storm Cores, all towers unlocked (never saved)
+			studioProgress:FireServer() -- +100 Storm Cores (never saved)
 		end
 	end)
 end
