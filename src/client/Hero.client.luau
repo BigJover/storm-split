@@ -221,12 +221,22 @@ local function setScope(on: boolean)
 	camera.FieldOfView = if on then SCOPE_FOV else defaultFov
 end
 
+-- The mouse is free (a Modal button is showing) while a panel is open, during
+-- the build phase (Start, difficulty, Choose hero), and for anyone who still
+-- has to pick a hero. Must match the Modal buttons in Shop.client and Hud.client.
+local function mouseFree(): boolean
+	return player:GetAttribute("PanelOpen") == true
+		or ReplicatedStorage:GetAttribute("State") ~= "Playing"
+		or heroKey() == nil
+end
+
 local function applyCamera()
 	local wantFirst = player:GetAttribute("Placing") ~= true
-	local panelOpen = player:GetAttribute("PanelOpen") == true
-	-- Crosshair only when the gun is up and the mouse is locked to it.
-	crosshair.Visible = wantFirst and not panelOpen and equippedGun() ~= nil
-	UserInputService.MouseIconEnabled = not wantFirst or panelOpen
+	local free = mouseFree()
+	-- Crosshair only when the gun is up and the mouse is locked to it;
+	-- otherwise show the normal cursor.
+	crosshair.Visible = wantFirst and not free and equippedGun() ~= nil
+	UserInputService.MouseIconEnabled = not wantFirst or free
 	if wantFirst == inFirstPerson then
 		return
 	end
@@ -249,6 +259,8 @@ end
 
 player:GetAttributeChangedSignal("Placing"):Connect(applyCamera)
 player:GetAttributeChangedSignal("PanelOpen"):Connect(applyCamera)
+player:GetAttributeChangedSignal("Hero"):Connect(applyCamera)
+ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(applyCamera)
 player.CharacterAdded:Connect(function()
 	task.defer(applyCamera)
 end)
