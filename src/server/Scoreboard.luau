@@ -51,6 +51,13 @@ function Scoreboard.init()
 	end)
 end
 
+-- Pops count per match.
+function Scoreboard.resetPops()
+	for _, value in pops do
+		value.Value = 0
+	end
+end
+
 function Scoreboard.addPop(player: Player)
 	local value = pops[player]
 	if value then

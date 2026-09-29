@@ -79,6 +79,11 @@ local function stepFires(now: number, live)
 	end
 end
 
+-- Between matches: no burning patches left over.
+function Hazards.clear()
+	table.clear(burns)
+end
+
 -- Called every Heartbeat by Main.
 function Hazards.step(dt: number)
 	local now = os.clock()

@@ -1,10 +1,18 @@
 --[[
-	Storm Split — server entry point (phase 2).
+	Storm Split — server entry point.
 
-	The map starts empty. Players place towers anywhere off the track with the
-	team's shared cash, pick a difficulty and press Start. Kills and round ends
-	pay cash; leaks cost lives. Every round scales with the difficulty and the
-	number of players in the game (VISION.md).
+	The server runs matches in a loop:
+
+	  Lobby     the home screen. No characters. The host (first player in the
+	            server) picks the mode, track and difficulty and presses Play.
+	  Building  everyone spawns on the track with the team's starting cash,
+	            picks a hero, places towers; anyone presses Start.
+	  Playing   the rounds. Kills and round ends pay cash; leaks cost lives.
+	            Every round scales with the difficulty and the number of players
+	            (VISION.md). Dead players respawn after RespawnTime.
+	  GameOver / Victory
+	            Storm Cores are paid out (Server/Progression); the result shows
+	            for ResultsTime, then the board resets and everyone goes home.
 
 	Every round prints peak live enemies and how many milliseconds our own code
 	costs per frame (ARCHITECTURE.md §7). Watch the Output window.
@@ -16,6 +24,7 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local Modes = require(Shared:WaitForChild("Modes"))
 
 local MapBuilder = require(script.Parent.MapBuilder)
 local Enemies = require(script.Parent.Enemies)
@@ -38,21 +47,29 @@ local STUDIO_CASH_GRANT = 1000
 
 ------------------------------------------------------------------ setup
 
-local map = MapBuilder.build()
-local over = false
+Players.CharacterAutoLoads = false -- the match loop decides when people spawn
 
-ReplicatedStorage:SetAttribute("State", "Waiting")
+local map = MapBuilder.build()
+
+local function setState(state: string)
+	ReplicatedStorage:SetAttribute("State", state)
+end
+
+setState("Lobby")
 ReplicatedStorage:SetAttribute("Round", 0)
 ReplicatedStorage:SetAttribute("Alive", 0)
+ReplicatedStorage:SetAttribute("Mode", Modes.ModeOrder[1])
+ReplicatedStorage:SetAttribute("Track", Modes.TrackOrder[1])
 
 local remotes = Instance.new("Folder")
 remotes.Name = "Remotes"
 local startGame = Instance.new("RemoteEvent")
 startGame.Name = "StartGame"
 startGame.Parent = remotes
-local chooseDifficulty = Instance.new("RemoteEvent")
-chooseDifficulty.Name = "ChooseDifficulty"
-chooseDifficulty.Parent = remotes
+-- Home screen, host only: ("mode" | "track" | "difficulty", key) or ("play")
+local lobby = Instance.new("RemoteEvent")
+lobby.Name = "Lobby"
+lobby.Parent = remotes
 if RunService:IsStudio() then
 	local studioCash = Instance.new("RemoteEvent")
 	studioCash.Name = "StudioCash"
@@ -70,13 +87,7 @@ local function difficulty()
 	return Config.Difficulties[ReplicatedStorage:GetAttribute("Difficulty")] or Config.Difficulties[EASY]
 end
 
-Economy.init(Config.Tuning.StartingCash, Config.Tuning.StartingLives, function()
-	over = true
-	ReplicatedStorage:SetAttribute("State", "GameOver")
-	local round = ReplicatedStorage:GetAttribute("Round") or 0
-	print(`[StormSplit] GAME OVER on round {round}`)
-	Progression.endMatch({ cleared = false, roundReached = round, difficulty = ReplicatedStorage:GetAttribute("Difficulty") })
-end)
+local over = false -- this match has been lost
 
 Enemies.init(map.path, map.enemyFolder, {
 	onLeak = function(enemy)
@@ -103,23 +114,95 @@ Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged })
 Shop.init(remotes)
 Hero.init(remotes, { onPop = Scoreboard.addPop })
 
--- Each player beyond the first adds to the shared pot once, whenever they join
--- (a rejoin doesn't pay twice).
-local joined: { [number]: boolean } = {}
-local joinCount = 0
-local function onJoin(player: Player)
-	if joined[player.UserId] then
+------------------------------------------------------------------ host
+
+-- The host is the longest-connected player; if they leave, the next one is.
+local function refreshHost()
+	local host = Players:GetPlayers()[1]
+	ReplicatedStorage:SetAttribute("Host", if host then host.UserId else 0)
+end
+Players.PlayerAdded:Connect(refreshHost)
+Players.PlayerRemoving:Connect(function()
+	task.defer(refreshHost)
+end)
+refreshHost()
+
+local function isHost(player: Player): boolean
+	return ReplicatedStorage:GetAttribute("Host") == player.UserId
+end
+
+local playPressed = false
+lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
+	if ReplicatedStorage:GetAttribute("State") ~= "Lobby" or not isHost(player) then
 		return
 	end
-	joined[player.UserId] = true
-	joinCount += 1
-	if joinCount > 1 then
-		Economy.earn(Config.Tuning.StartingCashPerExtraPlayer)
+	if action == "mode" and typeof(key) == "string" and Modes.Modes[key] and Modes.Modes[key].available then
+		ReplicatedStorage:SetAttribute("Mode", key)
+	elseif action == "track" and typeof(key) == "string" and Modes.Tracks[key] then
+		ReplicatedStorage:SetAttribute("Track", key)
+	elseif action == "difficulty" and typeof(key) == "string" and Config.Difficulties[key] then
+		ReplicatedStorage:SetAttribute("Difficulty", key)
+	elseif action == "play" then
+		playPressed = true
+	end
+end)
+
+------------------------------------------------------------------ spawning
+
+local function inMatch(): boolean
+	local state = ReplicatedStorage:GetAttribute("State")
+	return state == "Building" or state == "Playing"
+end
+
+local function spawn(player: Player)
+	if player.Parent and inMatch() then
+		task.spawn(function()
+			local ok, err = pcall(function()
+				player:LoadCharacterAsync()
+			end)
+			if not ok then
+				warn(`[StormSplit] Couldn't spawn {player.Name}: {err}`)
+			end
+		end)
 	end
 end
-Players.PlayerAdded:Connect(onJoin)
+
+-- During a match, the dead come back after RespawnTime.
+local function watchCharacter(player: Player)
+	player.CharacterAdded:Connect(function(character)
+		local humanoid = character:WaitForChild("Humanoid") :: Humanoid
+		humanoid.Died:Connect(function()
+			task.delay(Config.Tuning.RespawnTime, function()
+				if player.Character == character then
+					spawn(player)
+				end
+			end)
+		end)
+	end)
+end
+
+-- Starting cash: each player beyond the first adds to the pot, once per match.
+local joinedThisMatch: { [number]: boolean } = {}
+
+local function joinMatch(player: Player)
+	if not joinedThisMatch[player.UserId] then
+		local first = next(joinedThisMatch) == nil
+		joinedThisMatch[player.UserId] = true
+		if not first then
+			Economy.earn(Config.Tuning.StartingCashPerExtraPlayer)
+		end
+	end
+	spawn(player)
+end
+
+Players.PlayerAdded:Connect(function(player)
+	watchCharacter(player)
+	if inMatch() then
+		joinMatch(player) -- dropped in mid-match: straight onto the track
+	end
+end)
 for _, player in Players:GetPlayers() do
-	onJoin(player)
+	watchCharacter(player)
 end
 
 ------------------------------------------------------------------ simulation loop
@@ -147,98 +230,138 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 end)
 
------------------------------------------------------------------- run
+------------------------------------------------------------------ one match
 
-if #Players:GetPlayers() == 0 then
-	Players.PlayerAdded:Wait()
-end
-
--- Build phase: anyone can pick the difficulty or press Start. Both lock once
--- the game begins.
-local startPressed = false
-startGame.OnServerEvent:Connect(function()
-	if ReplicatedStorage:GetAttribute("State") == "Building" then
-		startPressed = true
-	end
-end)
-chooseDifficulty.OnServerEvent:Connect(function(_player, key: unknown)
-	if ReplicatedStorage:GetAttribute("State") == "Building" and typeof(key) == "string" and Config.Difficulties[key] then
-		ReplicatedStorage:SetAttribute("Difficulty", key)
-		Economy.setLives(Config.Difficulties[key].startingLives)
-	end
-end)
-Economy.setLives(difficulty().startingLives)
-ReplicatedStorage:SetAttribute("State", "Building")
-while not startPressed do
-	task.wait(0.1)
-end
-ReplicatedStorage:SetAttribute("State", "Playing")
-
--- Levels: heroes and towers get stronger every RoundsPerLevel rounds cleared.
 local function levelAfter(roundsCleared: number): number
 	return 1 + math.floor(roundsCleared / Config.Tuning.RoundsPerLevel)
 end
-local level = levelAfter(START_ROUND - 1)
-ReplicatedStorage:SetAttribute("Level", level)
-Hero.setLevel(level)
-Towers.setLevel(level)
 
-local chosen = difficulty()
-Economy.setLives(chosen.startingLives)
-Enemies.setSpeedMult(chosen.speedMult)
-print(`[StormSplit] {chosen.display} with {#Players:GetPlayers()} player(s)`)
-
--- Difficulty x player count, re-read every round so drop-in players count.
-local function roundScale(): Waves.Scale
-	local extraPlayers = math.max(0, #Players:GetPlayers() - 1)
-	return {
-		countMult = chosen.countMult * (1 + Config.Tuning.ExtraEnemiesPerPlayer * extraPlayers),
-		hpMult = chosen.hpMult * (1 + Config.Tuning.ExtraHPPerPlayer * extraPlayers),
-		promoteChance = chosen.promoteChance,
-	}
+-- Back to a clean board. Unlocks, mastery and hero picks are kept.
+local function resetBoard()
+	Enemies.clearAll()
+	Towers.clearAll()
+	Shop.reset()
+	Hazards.clear()
+	Effects.clear()
+	Hero.resetMatch()
+	Scoreboard.resetPops()
+	table.clear(joinedThisMatch)
+	over = false
+	ReplicatedStorage:SetAttribute("Round", 0)
+	ReplicatedStorage:SetAttribute("Level", 1)
+	for _, player in Players:GetPlayers() do
+		if player.Character then
+			player.Character:Destroy()
+		end
+		player:SetAttribute("LastPayout", nil)
+	end
 end
 
-local won = Waves.run({
-	startRound = START_ROUND,
-	isOver = function()
-		return over
-	end,
-	scale = roundScale,
-	onRoundStart = function()
-		frames, costSum, costWorst = 0, 0, 0
-		Enemies.resetPeak()
-		Airdrops.drop()
-	end,
-	onRoundEnd = function(index)
-		Economy.earn((Config.Tuning.RoundBonusBase + Config.Tuning.RoundBonusPerRound * index) * chosen.cashMult)
-		Economy.earn(Towers.roundIncome(Economy.cash()) * chosen.cashMult) -- Quartermasters
+local function playMatch()
+	local chosen = difficulty()
 
-		local newLevel = levelAfter(index)
-		if newLevel > level then
-			level = newLevel
-			Hero.setLevel(level)
-			Towers.setLevel(level)
-			ReplicatedStorage:SetAttribute("Level", level) -- the HUD announces it
-			print(`[StormSplit] Level {level}: heroes and towers hit harder`)
+	-- Building: fresh economy, everyone on the track.
+	Economy.init(Config.Tuning.StartingCash, chosen.startingLives, function()
+		over = true
+	end)
+	setState("Building")
+	for _, player in Players:GetPlayers() do
+		joinMatch(player)
+	end
+
+	local startPressed = false
+	local connection = startGame.OnServerEvent:Connect(function()
+		if ReplicatedStorage:GetAttribute("State") == "Building" then
+			startPressed = true
 		end
+	end)
+	while not startPressed and #Players:GetPlayers() > 0 do
+		task.wait(0.1)
+	end
+	connection:Disconnect()
+	if #Players:GetPlayers() == 0 then
+		return -- everyone left before starting
+	end
 
-		local average = if frames > 0 then costSum / frames else 0
-		print(string.format(
-			"[StormSplit] Round %d cleared | %s, %d player(s) | lives %d | cash %d | peak enemies %d | script cost avg %.2f ms, worst %.2f ms",
-			index,
-			chosen.display,
-			#Players:GetPlayers(),
-			Economy.lives(),
-			math.floor(Economy.cash()),
-			Enemies.peak(),
-			average * 1000,
-			costWorst * 1000
-		))
-	end,
-})
+	-- Playing.
+	setState("Playing")
+	local level = levelAfter(START_ROUND - 1)
+	ReplicatedStorage:SetAttribute("Level", level)
+	Hero.setLevel(level)
+	Towers.setLevel(level)
+	Enemies.setSpeedMult(chosen.speedMult)
+	print(`[StormSplit] {Modes.Modes[ReplicatedStorage:GetAttribute("Mode")].display} on {chosen.display} with {#Players:GetPlayers()} player(s)`)
 
-if won then
-	ReplicatedStorage:SetAttribute("State", "Victory")
-	print("[StormSplit] VICTORY — all rounds cleared")
-	Progression.endMatch({ cleared = true, roundReached = #Config.Rounds, difficulty = ReplicatedStorage:GetAttribute("Difficulty") })
+	-- Difficulty x player count, re-read every round so drop-in players count.
+	local function roundScale(): Waves.Scale
+		local extraPlayers = math.max(0, #Players:GetPlayers() - 1)
+		return {
+			countMult = chosen.countMult * (1 + Config.Tuning.ExtraEnemiesPerPlayer * extraPlayers),
+			hpMult = chosen.hpMult * (1 + Config.Tuning.ExtraHPPerPlayer * extraPlayers),
+			promoteChance = chosen.promoteChance,
+		}
+	end
+
+	local won = Waves.run({
+		startRound = START_ROUND,
+		isOver = function()
+			return over or #Players:GetPlayers() == 0
+		end,
+		scale = roundScale,
+		onRoundStart = function()
+			frames, costSum, costWorst = 0, 0, 0
+			Enemies.resetPeak()
+			Airdrops.drop()
+		end,
+		onRoundEnd = function(index)
+			Economy.earn((Config.Tuning.RoundBonusBase + Config.Tuning.RoundBonusPerRound * index) * chosen.cashMult)
+			Economy.earn(Towers.roundIncome(Economy.cash()) * chosen.cashMult) -- Quartermasters
+
+			local newLevel = levelAfter(index)
+			if newLevel > level then
+				level = newLevel
+				Hero.setLevel(level)
+				Towers.setLevel(level)
+				ReplicatedStorage:SetAttribute("Level", level) -- the HUD announces it
+				print(`[StormSplit] Level {level}: heroes and towers hit harder`)
+			end
+
+			local average = if frames > 0 then costSum / frames else 0
+			print(string.format(
+				"[StormSplit] Round %d cleared | %s, %d player(s) | lives %d | cash %d | peak enemies %d | script cost avg %.2f ms, worst %.2f ms",
+				index,
+				chosen.display,
+				#Players:GetPlayers(),
+				Economy.lives(),
+				math.floor(Economy.cash()),
+				Enemies.peak(),
+				average * 1000,
+				costWorst * 1000
+			))
+		end,
+	})
+
+	-- Result: pay out, show it, then home.
+	local round = ReplicatedStorage:GetAttribute("Round") or 0
+	setState(if won then "Victory" else "GameOver")
+	print(if won then "[StormSplit] VICTORY — all rounds cleared" else `[StormSplit] GAME OVER on round {round}`)
+	Progression.endMatch({
+		cleared = won,
+		roundReached = if won then #Config.Rounds else round,
+		difficulty = ReplicatedStorage:GetAttribute("Difficulty"),
+	})
+	ReplicatedStorage:SetAttribute("HomeAt", workspace:GetServerTimeNow() + Config.Tuning.ResultsTime)
+	task.wait(Config.Tuning.ResultsTime)
+end
+
+------------------------------------------------------------------ the loop
+
+while true do
+	resetBoard()
+	playPressed = false
+	setState("Lobby")
+	while not playPressed or #Players:GetPlayers() == 0 do
+		task.wait(0.1)
+	end
+	playMatch()
 end

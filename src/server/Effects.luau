@@ -35,6 +35,13 @@ function Effects.part(size: Vector3, cframe: CFrame, color: Color3, lifetime: nu
 	return part
 end
 
+-- Between matches: clear anything still showing (patches, chests, blasts).
+function Effects.clear()
+	if folder then
+		folder:ClearAllChildren()
+	end
+end
+
 function Effects.tracer(from: Vector3, to: Vector3, color: Color3)
 	local length = (to - from).Magnitude
 	if length < 0.1 then

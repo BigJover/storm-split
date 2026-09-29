@@ -383,7 +383,7 @@ def validate(data):
         "StartingCashPerExtraPlayer", "WeaponAimAssist", "OverdriveFireRateX", "AirburstDelay",
         "AirburstReach", "SpinUpTime", "RicochetReach", "StillSpeed", "HeroUpgradeBaseCost",
         "HeroUpgradeCostGrowth", "ChestLifetime", "ChestSpread", "RoundsPerLevel",
-        "HeroDamagePerLevel", "TowerDamagePerLevel", "MultiplayerLossPayout",
+        "HeroDamagePerLevel", "TowerDamagePerLevel", "MultiplayerLossPayout", "RespawnTime", "ResultsTime",
     ]
     for key in needed:
         if key not in data["Tuning"]:

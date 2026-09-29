@@ -1,8 +1,9 @@
 --[[
-	Minimal HUD: round, difficulty, cash, lives, enemies alive; in the build
-	phase, the difficulty picker and the Start button. Reads ReplicatedStorage
-	attributes set by the server. Picking and starting are only requests; the
-	server decides.
+	Minimal HUD: round, difficulty, level, cash, lives, enemies alive; the
+	Start button in the build phase; the result screen after a match (with the
+	Storm Cores earned and a countdown home). Hidden on the home screen
+	(Home.client). Reads ReplicatedStorage attributes set by the server;
+	pressing Start is only a request.
 ]]
 
 local Players = game:GetService("Players")
@@ -11,7 +12,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local startGame = remotes:WaitForChild("StartGame") :: RemoteEvent
-local chooseDifficulty = remotes:WaitForChild("ChooseDifficulty") :: RemoteEvent
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 
@@ -52,8 +52,8 @@ startButton.Font = Enum.Font.GothamBold
 startButton.TextSize = 20
 startButton.Text = "Start round 1"
 startButton.Visible = false
--- Modal: during the build phase the mouse is free in first person, so Start and
--- the difficulty buttons can be clicked. Gone once the game starts.
+-- Modal: during the build phase the mouse is free in first person, so Start
+-- can be clicked. Gone once the game starts.
 startButton.Modal = true
 startButton.Parent = gui
 
@@ -65,43 +65,25 @@ startButton.Activated:Connect(function()
 	startGame:FireServer()
 end)
 
--- Difficulty picker, shown during the build phase under the Start button.
-local picker = Instance.new("Frame")
-picker.Name = "Difficulty"
-picker.AnchorPoint = Vector2.new(0.5, 0)
-picker.Position = UDim2.new(0.5, 0, 0, 112)
-picker.Size = UDim2.fromOffset(0, 36)
-picker.AutomaticSize = Enum.AutomaticSize.X
-picker.BackgroundTransparency = 1
-picker.Visible = false
-picker.Parent = gui
-
+-- Result screen: shown on Victory / Game Over until everyone goes home.
+local results = Instance.new("TextLabel")
+results.Name = "Results"
+results.AnchorPoint = Vector2.new(0.5, 0.5)
+results.Position = UDim2.fromScale(0.5, 0.4)
+results.Size = UDim2.fromOffset(460, 150)
+results.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
+results.BackgroundTransparency = 0.1
+results.TextColor3 = Color3.fromRGB(240, 236, 250)
+results.Font = Enum.Font.GothamBlack
+results.TextSize = 24
+results.RichText = true
+results.TextWrapped = true
+results.Visible = false
+results.Parent = gui
 do
-	local layout = Instance.new("UIListLayout")
-	layout.FillDirection = Enum.FillDirection.Horizontal
-	layout.Padding = UDim.new(0, 6)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Parent = picker
-end
-
-local difficultyButtons: { [string]: TextButton } = {}
-for order, key in Config.DifficultyOrder do
-	local button = Instance.new("TextButton")
-	button.Name = key
-	button.LayoutOrder = order
-	button.Size = UDim2.fromOffset(96, 36)
-	button.Font = Enum.Font.GothamBold
-	button.TextSize = 16
-	button.TextColor3 = Color3.fromRGB(240, 236, 250)
-	button.Text = Config.Difficulties[key].display
 	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, 8)
-	c.Parent = button
-	button.Activated:Connect(function()
-		chooseDifficulty:FireServer(key)
-	end)
-	button.Parent = picker
-	difficultyButtons[key] = button
+	c.CornerRadius = UDim.new(0, 12)
+	c.Parent = results
 end
 
 local function attr(name: string, default: any): any
@@ -120,26 +102,24 @@ local function refresh()
 	local cash = math.floor(attr("Cash", 0))
 
 	startButton.Visible = state == "Building"
-	picker.Visible = state == "Building"
+	label.Visible = state ~= "Lobby" -- the home screen has its own layout
+	results.Visible = state == "GameOver" or state == "Victory"
+	label.TextColor3 = Color3.fromRGB(240, 236, 250)
 
 	local difficultyKey = attr("Difficulty", Config.DifficultyOrder[1])
 	local difficultyName = Config.Difficulties[difficultyKey] and Config.Difficulties[difficultyKey].display or ""
-	for key, button in difficultyButtons do
-		local selected = key == difficultyKey
-		button.BackgroundColor3 = if selected then Color3.fromRGB(200, 90, 110) else Color3.fromRGB(60, 56, 72)
-		button.BackgroundTransparency = if selected then 0 else 0.2
-	end
 
-	if state == "GameOver" then
-		label.Text = `GAME OVER  ·  reached round {round}`
-		label.TextColor3 = Color3.fromRGB(255, 120, 140)
-	elseif state == "Victory" then
-		label.Text = "VICTORY  ·  all rounds cleared"
-		label.TextColor3 = Color3.fromRGB(140, 240, 170)
-	elseif state == "Waiting" then
-		label.Text = "Starting…"
+	if state == "GameOver" or state == "Victory" then
+		local won = state == "Victory"
+		local payout = player:GetAttribute("LastPayout")
+		local cores = if payout == nil then "" elseif payout > 0 then `+{payout} Storm Cores` else "No Storm Cores (solo pays on a clear)"
+		results.Text = `<font color="{if won then "#8cf0aa" else "#ff788c"}">{if won then "VICTORY" else "GAME OVER"}</font>\n<font size="18">{if won then `{difficultyName} cleared` else `Reached round {round} on {difficultyName}`}\n{cores}</font>`
+		label.Text = if won then "VICTORY" else `GAME OVER  ·  round {round}`
+		label.TextColor3 = if won then Color3.fromRGB(140, 240, 170) else Color3.fromRGB(255, 120, 140)
+	elseif state == "Lobby" then
+		label.Text = ""
 	elseif state == "Building" then
-		label.Text = `Build (B), pick a difficulty, then Start  ·  Cash {cash}  ·  Lives {lives}`
+		label.Text = `Build (B), choose a hero (H), then Start  ·  {difficultyName}  ·  Cash {cash}  ·  Lives {lives}`
 	else
 		label.Text = `Round {round}  ·  {difficultyName}  ·  Lv {math.floor(attr("Level", 1))}  ·  Cash {cash}  ·  Lives {lives}  ·  Enemies {alive}`
 	end
@@ -223,6 +203,22 @@ if studioCash and studioCash:IsA("RemoteEvent") then
 		end
 	end)
 end
+
+player:GetAttributeChangedSignal("LastPayout"):Connect(function()
+	refresh()
+end)
+
+-- Countdown home on the result screen.
+task.spawn(function()
+	while true do
+		task.wait(0.25)
+		local state = attr("State", "")
+		if state == "GameOver" or state == "Victory" then
+			local left = math.max(0, math.ceil(attr("HomeAt", 0) - workspace:GetServerTimeNow()))
+			label.Text = `{if state == "Victory" then "VICTORY" else "GAME OVER"}  ·  home in {left}s`
+		end
+	end
+end)
 
 for _, name in { "State", "Round", "Lives", "Alive", "Cash", "Difficulty", "Level" } do
 	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refresh)

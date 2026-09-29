@@ -615,6 +615,25 @@ end
 
 ------------------------------------------------------------------ public
 
+-- Between matches: everyone keeps their hero pick but starts over — no
+-- upgrades, a full magazine, level 1, ability ready, first upgrade free again
+-- with mastery 10+.
+function Hero.resetMatch()
+	teamLevel = 1
+	for player, s in states do
+		s.tiers = { 0, 0, 0 }
+		s.spent = 0
+		s.bloom = 0
+		s.level = 1
+		s.abilityReadyAt = 0
+		s.overdriveUntil = 0
+		local rewards = mastery(player, s)
+		s.freeUpgrade = rewards ~= nil and rewards.freeFirstUpgrade == true
+		player:SetAttribute("OverdriveUntil", 0)
+		refresh(player, true)
+	end
+end
+
 -- Mastery was just bought: apply a new free first upgrade (if nothing has
 -- been bought yet this match) and the gold gun right away.
 function Hero.masteryChanged(player: Player)

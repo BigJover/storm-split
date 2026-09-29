@@ -215,6 +215,11 @@ end
 
 ------------------------------------------------------------------ public
 
+-- Between matches (after Towers.clearAll): forget what every tower cost.
+function Shop.reset()
+	table.clear(spent)
+end
+
 function Shop.init(remotes: Folder)
 	local request = Instance.new("RemoteFunction")
 	request.Name = "ShopRequest"

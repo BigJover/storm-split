@@ -634,6 +634,15 @@ function Towers.airdrops(): { Airdrop }
 	return drops
 end
 
+-- Between matches: every tower off the map.
+function Towers.clearAll()
+	for i = #towers, 1, -1 do
+		towers[i].model:Destroy()
+		towers[i] = nil
+	end
+	levelScale = 1
+end
+
 function Towers.all(): { Tower }
 	return towers
 end

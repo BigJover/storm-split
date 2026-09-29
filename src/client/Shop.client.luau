@@ -772,11 +772,15 @@ render = function()
 
 	panel.Visible = mode ~= "closed"
 	buildButton.Text = if mode == "list" or mode == "placing" then "Close  (B)" else "Build  (B)"
-	heroButton.Visible = canPickHero()
+	local state = ReplicatedStorage:GetAttribute("State")
+	local inMatch = state == "Building" or state == "Playing"
+	-- The home screen (Home.client) has its own buttons for heroes and unlocks.
+	buildButton.Visible = inMatch
+	heroButton.Visible = canPickHero() and inMatch
 	heroButton.Text = if mode == "heroPick" then "Close  (H)" else "Choose hero  (H)"
-	upgradesButton.Visible = myHero() ~= nil
+	upgradesButton.Visible = myHero() ~= nil and inMatch
 	upgradesButton.Text = if mode == "heroUpgrade" then "Close  (U)" else "Upgrades  (U)"
-	masteryButton.Visible = ReplicatedStorage:GetAttribute("State") ~= "Playing"
+	masteryButton.Visible = state == "Building"
 	masteryButton.Text = if mode == "mastery" then "Close  (M)" else "Unlocks & Mastery  (M)"
 	local cash = math.floor(ReplicatedStorage:GetAttribute("Cash") or 0)
 
@@ -993,6 +997,10 @@ end
 ------------------------------------------------------------------ input
 
 local function toggleBuild()
+	local state = ReplicatedStorage:GetAttribute("State")
+	if state ~= "Building" and state ~= "Playing" then
+		return -- nothing to build on from the home screen
+	end
 	setMode(if mode == "list" or mode == "placing" then "closed" else "list")
 end
 
@@ -1081,7 +1089,12 @@ ReplicatedStorage:GetAttributeChangedSignal("Cash"):Connect(function()
 end)
 
 ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(function()
-	if (mode == "heroPick" and not canPickHero()) or (mode == "mastery" and ReplicatedStorage:GetAttribute("State") == "Playing") then
+	local state = ReplicatedStorage:GetAttribute("State")
+	if
+		(mode == "heroPick" and not canPickHero())
+		or (mode == "mastery" and state == "Playing")
+		or ((state == "GameOver" or state == "Victory") and mode ~= "closed")
+	then
 		setMode("closed") -- heroes and mastery lock when the game starts
 	else
 		render() -- button visibility
@@ -1101,5 +1114,20 @@ player.AttributeChanged:Connect(function(name)
 	end
 end)
 
+-- The home screen asks for a panel by setting this local attribute.
+player:GetAttributeChangedSignal("OpenPanel"):Connect(function()
+	local wanted = player:GetAttribute("OpenPanel")
+	if wanted == nil or wanted == "" then
+		return
+	end
+	player:SetAttribute("OpenPanel", "")
+	if wanted == "heroPick" and canPickHero() then
+		setMode("heroPick")
+	elseif wanted == "mastery" then
+		setMode("mastery")
+	end
+end)
+
+gui.DisplayOrder = 10 -- panels draw above the home screen
 render()
 gui.Parent = player:WaitForChild("PlayerGui")

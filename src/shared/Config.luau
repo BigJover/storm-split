@@ -50,6 +50,8 @@ return table.freeze({
 		RoundsPerLevel = 5,
 		HeroDamagePerLevel = 0.25,
 		TowerDamagePerLevel = 0.1,
+		RespawnTime = 3,
+		ResultsTime = 8,
 	},
 	Towers = {
 		SCOUT = {

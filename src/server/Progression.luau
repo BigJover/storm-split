@@ -295,6 +295,7 @@ function Progression.endMatch(result: MatchResult)
 	for player, profile in profiles do
 		profile.cores += payout
 		profile.highestRound = math.max(profile.highestRound, result.roundReached)
+		player:SetAttribute("LastPayout", payout) -- the results screen shows it
 		publish(player)
 		task.spawn(save, player)
 	end
