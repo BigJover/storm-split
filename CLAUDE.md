@@ -129,11 +129,12 @@ Phase 5 playtested 2026-09-29 (Chiller slow buffed; Dragon's Breath ignite rewor
 now a fire that passes to split children and ticks 35% of the shot). Studio-only K = +1000
 cash for testing.
 
-Levels (written 2026-09-29, not yet playtested): heroes +25% and towers +10% damage per
+Levels (confirmed in Studio 2026-09-29): heroes +25% and towers +10% damage per
 level, one level per 5 rounds cleared, banner + "Lv" on the HUD. Planned: hero XP from pops
 drives levels instead (HEROES.md) — levels are already per player.
 
-Next: playtest levels.
+Next: phase 6 (saved progression: Storm Cores, weapon mastery, 10-player servers) or a
+balance / theme pass — user's call.
 
 ## Open issues
 
