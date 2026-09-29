@@ -3409,6 +3409,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Hair Trigger",
@@ -3440,6 +3441,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Dual Pistols",
@@ -3471,6 +3473,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Fan the Hammer",
@@ -3502,6 +3505,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Akimbo Storm",
@@ -3533,6 +3537,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 					},
 				},
@@ -3570,6 +3575,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Steady Hands",
@@ -3601,6 +3607,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Scope",
@@ -3632,6 +3639,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = true,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Hollow Tips",
@@ -3663,6 +3671,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = true,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Deadshot",
@@ -3694,6 +3703,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = true,
+							igniteSeconds = 0,
 						},
 					},
 				},
@@ -3731,6 +3741,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Extended Mag",
@@ -3762,6 +3773,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Ricochet",
@@ -3793,6 +3805,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Quick Mark",
@@ -3824,6 +3837,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Chain Shot",
@@ -3855,6 +3869,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 					},
 				},
@@ -3917,6 +3932,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Compensator",
@@ -3948,6 +3964,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Burst Fire",
@@ -3979,6 +3996,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Trigger Discipline",
@@ -4010,6 +4028,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Precision Burst",
@@ -4041,6 +4060,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 					},
 				},
@@ -4078,6 +4098,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Fast Hands",
@@ -4109,6 +4130,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Belt Fed",
@@ -4140,6 +4162,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Bipod",
@@ -4171,6 +4194,7 @@ return table.freeze({
 							stillRecoilMult = 0.3,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Spin-Up",
@@ -4202,6 +4226,7 @@ return table.freeze({
 							stillRecoilMult = 0.3,
 							spinUp = 2.5,
 							scope = false,
+							igniteSeconds = 0,
 						},
 					},
 				},
@@ -4239,6 +4264,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Incendiary",
@@ -4270,6 +4296,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "AP Rounds",
@@ -4301,6 +4328,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Hot Load",
@@ -4332,6 +4360,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Explosive Tips",
@@ -4363,6 +4392,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 					},
 				},
@@ -4425,6 +4455,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Rifled Barrel",
@@ -4456,6 +4487,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Sabot",
@@ -4487,6 +4519,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Long Barrel",
@@ -4518,6 +4551,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Railslug",
@@ -4549,6 +4583,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 					},
 				},
@@ -4586,6 +4621,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Extra Pellets",
@@ -4617,6 +4653,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Dragon's Breath",
@@ -4648,6 +4685,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 1.5,
 						},
 						{
 							name = "Auto-Loader",
@@ -4679,6 +4717,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 1.5,
 						},
 						{
 							name = "Street Sweeper",
@@ -4710,6 +4749,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 1.5,
 						},
 					},
 				},
@@ -4747,6 +4787,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Extended Tube",
@@ -4778,6 +4819,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Double Barrel",
@@ -4809,6 +4851,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Kickback",
@@ -4840,6 +4883,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 						{
 							name = "Frag Shells",
@@ -4871,6 +4915,7 @@ return table.freeze({
 							stillRecoilMult = 1,
 							spinUp = 1,
 							scope = false,
+							igniteSeconds = 0,
 						},
 					},
 				},

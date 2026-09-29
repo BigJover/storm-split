@@ -317,6 +317,22 @@ function Enemies.mark(enemy: Enemy, percent: number, seconds: number)
 	enemy.markedUntil = now + seconds
 end
 
+-- Visual only: flames on a burning enemy (Hazards decides who burns).
+function Enemies.showBurning(enemy: Enemy, on: boolean)
+	if not enemy.alive then
+		return
+	end
+	local fire = enemy.part:FindFirstChildOfClass("Fire")
+	if on and not fire then
+		local flames = Instance.new("Fire")
+		flames.Size = enemy.part.Size.Magnitude
+		flames.Heat = 4
+		flames.Parent = enemy.part
+	elseif not on and fire then
+		fire:Destroy()
+	end
+end
+
 -- Lives lost when this enemy leaks.
 -- DESIGN NOTE: the design doc says "one life per leak". That makes leaking a
 -- boss cheaper than killing it, because its children never spawn. Charging

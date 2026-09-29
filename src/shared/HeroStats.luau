@@ -47,6 +47,7 @@ export type Stats = {
 	beltFed: boolean,
 	spinUp: number,
 	scope: boolean,
+	igniteSeconds: number,
 	abilityPower: number,
 	abilitySeconds: number,
 	abilityRadius: number,
@@ -66,7 +67,18 @@ local MULTIPLY = {
 	"stillRecoilMult",
 	"spinUp",
 }
-local HIGHEST = { "guns", "shotsPerTrigger", "pierce", "bounces", "burnDps", "burnSeconds", "splashRadius", "knockback", "markPercent" }
+local HIGHEST = {
+	"guns",
+	"shotsPerTrigger",
+	"pierce",
+	"bounces",
+	"burnDps",
+	"burnSeconds",
+	"splashRadius",
+	"knockback",
+	"markPercent",
+	"igniteSeconds",
+}
 local FLAGS = { "piercesArmor", "hitsAir", "beltFed", "scope" }
 
 function HeroStats.compute(heroKey: string, tiers: { number }): Stats?
@@ -147,6 +159,7 @@ function HeroStats.compute(heroKey: string, tiers: { number }): Stats?
 		beltFed = flag.beltFed == true,
 		spinUp = mult.spinUp,
 		scope = flag.scope == true,
+		igniteSeconds = high.igniteSeconds or 0,
 		abilityPower = hero.abilityPower,
 		abilitySeconds = hero.abilitySeconds,
 		abilityRadius = hero.abilityRadius,

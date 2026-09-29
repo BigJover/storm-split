@@ -464,6 +464,9 @@ local function describeHeroStep(path, current: number): string
 	if burn then
 		table.insert(parts, `burning ground {burn}/s`)
 	end
+	if newly("igniteSeconds", 0) then
+		table.insert(parts, "sets enemies on fire (burns off a layer)")
+	end
 	local splash = newly("splashRadius", 0)
 	if splash then
 		table.insert(parts, `explodes ({splash} studs)`)
