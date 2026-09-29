@@ -36,8 +36,10 @@ src/
 ├── server/   → ServerScriptService.Server
 │   ├── Main.server.luau     Entry point and wiring. Only file that knows every module.
 │   ├── MapBuilder.luau      Builds the map at runtime from Track
-│   ├── Enemies.luau         Spawning, movement, damage, splitting, live cap
-│   ├── Towers.luau          Placement, stats, crossover rule, targeting, firing
+│   ├── Enemies.luau         Spawning, movement, damage, splitting, live cap; armour, stun,
+│   │                        knockback, marks
+│   ├── Towers.luau          Placement, stats, abilities (multi-shot, pierce, bomblets,
+│   │                        burn, auras), targeting, firing
 │   ├── Waves.luau           Runs the 40-round table
 │   ├── Economy.luau         The team's shared cash and lives
 │   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
@@ -143,7 +145,7 @@ second test client.
 | **1** — track, enemies, towers, lives | `Track`, `Path`, `MapBuilder`, `Enemies`, `Towers`, `Waves`, `Lives`, `Hud` | **Written and verified headlessly.** Includes splitting and the cap, which the UEFN plan had deferred to phase 3. |
 | **2** — cash, placement, shop | `Economy` (replaces `Lives`), `Shop` (RemoteFunction + validation), free placement anywhere off the track with a ghost preview (pads dropped 2026-09-28 at the user's request), sell via tower prompts, build phase + Start button | **Done, confirmed in Studio.** Sells Scout, Sniper, Grenadier; Chiller and Quartermaster wait for phase 5. |
 | **3** — upgrade paths | Shop calls `Towers.upgrade()`; model swaps at tiers 3 and 5; range multipliers; tier names | **Done, confirmed in Studio** |
-| **3b** — tower abilities | Armored/Boss enemy flags, then the Scout, Sniper and Grenadier mechanics in `UPGRADES.md` (multi-shot, pierce, mark, stun, knockback, burn, cluster, auras) | Next |
+| **3b** — tower abilities | Armored/Boss enemy flags, then the Scout, Sniper and Grenadier mechanics in `UPGRADES.md` (multi-shot, pierce, mark, stun, knockback, burn, cluster, auras) | **Written, statically checked**, not yet playtested |
 | **4** — the hero: weapons and abilities | `Weapons` (Tools, server-validated hits), `Abilities`. The player character is the hero, with its own upgrade track separate from tower paths (user, 2026-09-28) | |
 | **5** — roster and rounds | Chiller and Quartermaster mechanics per `UPGRADES.md` (slow, freeze, damage amp, income, chests, discounts) | Numbers already in `Config` |
 | **6** — co-op, mastery, publish | `Progression` (DataStoreService), mastery effects, lobby | |

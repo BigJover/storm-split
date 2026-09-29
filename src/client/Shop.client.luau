@@ -77,7 +77,7 @@ local panel = Instance.new("Frame")
 panel.Name = "Panel"
 panel.AnchorPoint = Vector2.new(0.5, 1)
 panel.Position = UDim2.new(0.5, 0, 1, -24)
-panel.Size = UDim2.fromOffset(360, 0)
+panel.Size = UDim2.fromOffset(400, 0)
 panel.AutomaticSize = Enum.AutomaticSize.Y
 panel.BackgroundColor3 = PANEL_COLOR
 panel.BackgroundTransparency = 0.1
@@ -184,12 +184,87 @@ local LOCK_REASONS = {
 	crossover = "locked · only one path past tier 2",
 }
 
--- "+30% damage · +15% rate" for going from `current` to `current + 1` on a path.
+-- Ability text for what a tier newly grants (UPGRADES.md). Only fields that
+-- change from the previous tier are mentioned.
+local function describeAbilities(now, nextStep, parts: { string })
+	local function changed(field: string, default: any): any?
+		local before = if now then now[field] else nil
+		local after = nextStep[field]
+		if after == nil or after == default or after == before then
+			return nil
+		end
+		return after
+	end
+	local function fmt(n: number): string
+		return if n == math.floor(n) then tostring(n) else string.format("%.1f", n)
+	end
+
+	if changed("piercesArmor", false) then
+		table.insert(parts, "pierces armour")
+	end
+	local shots = changed("shots", 1)
+	if shots then
+		table.insert(parts, `{shots} shots per trigger`)
+	end
+	local line = changed("lineHits", 1)
+	if line then
+		table.insert(parts, `hits {line} in a line`)
+	end
+	local armored = changed("armoredMult", 1)
+	if armored then
+		table.insert(parts, `x{fmt(armored)} vs armoured`)
+	end
+	local boss = changed("bossMult", 1)
+	if boss then
+		table.insert(parts, `x{fmt(boss)} vs bosses`)
+	end
+	local mark = changed("markPercent", 0)
+	if mark then
+		table.insert(parts, `marks target +{mark}% damage taken`)
+	end
+	local stun = changed("stunSeconds", 0)
+	if stun then
+		table.insert(parts, `stuns {fmt(stun)}s`)
+	end
+	if changed("stunsBosses", false) then
+		table.insert(parts, "stuns bosses")
+	end
+	local knock = changed("knockback", 0)
+	if knock then
+		table.insert(parts, `knockback {fmt(knock)}`)
+	end
+	local burn = changed("burnDps", 0)
+	if burn then
+		table.insert(parts, `burning patch {fmt(burn)}/s for {fmt(nextStep.burnSeconds or 0)}s`)
+	end
+	local bomb = changed("bomblets", 0)
+	if bomb then
+		table.insert(parts, `{bomb} bomblets`)
+	end
+	if changed("bombletGenerations", 0) and (nextStep.bombletGenerations or 0) > 1 then
+		table.insert(parts, "bomblets split again")
+	end
+	local auraRate = changed("auraRatePercent", 0)
+	if auraRate then
+		table.insert(parts, `towers in range +{auraRate}% attack speed`)
+	end
+	local auraDamage = changed("auraDamagePercent", 0)
+	if auraDamage then
+		table.insert(parts, `towers in range +{auraDamage}% damage`)
+	end
+	if changed("auraPiercesArmor", false) then
+		table.insert(parts, "towers in range pierce armour")
+	end
+end
+
+-- "+30% damage · +15% rate · 2 shots per trigger" for going from `current`
+-- to `current + 1` on a path.
 local function describeStep(path, current: number): string
 	local now = if current > 0 then path.tiers[current] else nil
 	local nextStep = path.tiers[current + 1]
 	local parts = {}
-	for _, stat in { { "damageMult", "damage" }, { "rateMult", "rate" }, { "targetsMult", "targets" }, { "rangeMult", "range" } } do
+	describeAbilities(now, nextStep, parts)
+	for _, stat in { { "damageMult", "damage" }, { "rateMult", "rate" }, { "targetsMult", "targets" }, { "rangeMult", "range" }, { "splashMult", "blast radius" } } do
 		local before = if now then (now[stat[1]] or 1) else 1
 		local after = nextStep[stat[1]] or 1
 		local change = after / before - 1
@@ -211,12 +286,17 @@ local function addRow(order: number, text: string, color: Color3, enabled: boole
 	button.TextSize = 16
 	button.TextColor3 = if enabled then TEXT else TEXT_DIM
 	button.TextXAlignment = Enum.TextXAlignment.Left
+	button.TextWrapped = true
+	button.AutomaticSize = Enum.AutomaticSize.Y -- grows past 48 for long ability text
 	button.Text = text
 	button.LayoutOrder = order
 	corner(button, 8)
 
 	local padding = Instance.new("UIPadding")
 	padding.PaddingLeft = UDim.new(0, 12)
+	padding.PaddingRight = UDim.new(0, 12)
+	padding.PaddingTop = UDim.new(0, 6)
+	padding.PaddingBottom = UDim.new(0, 6)
 	padding.Parent = button
 
 	if enabled and onClick then

@@ -3,7 +3,12 @@
 
 	OWNERSHIP: this module is the only thing that creates, moves, damages or
 	removes enemies. Towers and weapons read the live list and call
-	Enemies.damage(); they never touch an enemy's fields directly.
+	Enemies.damage() / stun() / knockback() / mark(); they never touch an
+	enemy's fields directly.
+
+	ARMOUR (UPGRADES.md): an Armored enemy takes no damage from a hit that
+	doesn't pierce armour. Bosses shrug off stun and knockback unless a hit
+	says otherwise.
 
 	THE CAP (ARCHITECTURE.md §5): one Barge death cascades into 244 enemies.
 	Nothing ever spawns directly — everything goes through a queue, and the
@@ -33,6 +38,9 @@ export type Enemy = {
 	height: number,
 	part: BasePart,
 	alive: boolean,
+	stunnedUntil: number,
+	markPercent: number,
+	markedUntil: number,
 }
 
 type Pending = { key: string, distance: number, hpMult: number }
@@ -133,7 +141,8 @@ local function spawnNow(item: Pending)
 	part.CFrame = cframeAt(item.distance, height)
 	part.Parent = enemyFolder
 
-	local hp = def.hp * Config.Tuning.GlobalHPScalar * item.hpMult
+	-- def.hp is the spreadsheet's Scaled HP, which already includes GlobalHPScalar.
+	local hp = def.hp * item.hpMult
 	local enemy: Enemy = {
 		id = nextId,
 		key = item.key,
@@ -146,6 +155,9 @@ local function spawnNow(item: Pending)
 		height = height,
 		part = part,
 		alive = true,
+		stunnedUntil = 0,
+		markPercent = 0,
+		markedUntil = 0,
 	}
 
 	live[enemy.id] = enemy
@@ -178,11 +190,20 @@ function Enemies.enqueue(key: string, hpMult: number)
 	push(spawnQueue, { key = key, distance = 0, hpMult = hpMult })
 end
 
--- Apply damage. Returns true if this hit killed it.
+-- Whether a hit with these properties can hurt this enemy at all.
+function Enemies.canHurt(enemy: Enemy, piercesArmor: boolean): boolean
+	return piercesArmor or not enemy.def.armored
+end
+
+-- Apply damage. Returns true if this hit killed it. A hit that can't pierce
+-- an Armored enemy does nothing. An active mark adds its percentage.
 -- Excess damage does NOT carry into split children (BTD6 does; add it later if wanted).
-function Enemies.damage(enemy: Enemy, amount: number): boolean
-	if not enemy.alive then
+function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?): boolean
+	if not enemy.alive or not Enemies.canHurt(enemy, piercesArmor == true) then
 		return false
+	end
+	if enemy.markPercent > 0 and os.clock() < enemy.markedUntil then
+		amount *= 1 + enemy.markPercent / 100
 	end
 	enemy.hp -= amount
 	if enemy.hp > 0 then
@@ -210,6 +231,34 @@ function Enemies.damage(enemy: Enemy, amount: number): boolean
 	return true
 end
 
+function Enemies.stun(enemy: Enemy, seconds: number, affectsBosses: boolean?)
+	if not enemy.alive or seconds <= 0 or (enemy.def.boss and not affectsBosses) then
+		return
+	end
+	enemy.stunnedUntil = math.max(enemy.stunnedUntil, os.clock() + seconds)
+end
+
+-- Pushes an enemy back along the track. Bosses are too heavy to move.
+function Enemies.knockback(enemy: Enemy, studs: number)
+	if not enemy.alive or studs <= 0 or enemy.def.boss then
+		return
+	end
+	enemy.distance = math.max(0, enemy.distance - studs)
+end
+
+-- Marked enemies take +percent damage from every source until the mark expires.
+-- A stronger mark replaces a weaker one; any mark refreshes the timer.
+function Enemies.mark(enemy: Enemy, percent: number, seconds: number)
+	if not enemy.alive or percent <= 0 then
+		return
+	end
+	local now = os.clock()
+	if now >= enemy.markedUntil or percent >= enemy.markPercent then
+		enemy.markPercent = percent
+	end
+	enemy.markedUntil = now + seconds
+end
+
 -- Lives lost when this enemy leaks.
 -- DESIGN NOTE: the design doc says "one life per leak". That makes leaking a
 -- boss cheaper than killing it, because its children never spawn. Charging
@@ -229,8 +278,11 @@ function Enemies.step(dt: number)
 		spawnNow(item)
 	end
 
+	local now = os.clock()
 	for _, enemy in live do
-		enemy.distance += enemy.speed * dt
+		if now >= enemy.stunnedUntil then
+			enemy.distance += enemy.speed * dt
+		end
 		if enemy.distance >= path.length then
 			remove(enemy)
 			if callbacks.onLeak then
@@ -240,6 +292,12 @@ function Enemies.step(dt: number)
 			enemy.part.CFrame = cframeAt(enemy.distance, enemy.height)
 		end
 	end
+end
+
+-- World position of a point `distance` studs along the track (for visuals).
+function Enemies.pointAt(distance: number): Vector3
+	local position = path:sample(math.clamp(distance, 0, path.length))
+	return position
 end
 
 -- Read-only view for targeting. Do not mutate what you get back.

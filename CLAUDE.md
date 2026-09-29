@@ -41,8 +41,10 @@ tools/check.sh                          # static type-check of src/ (luau-lsp vi
 ```
 
 On this Mac `/usr/bin/git` and `/usr/bin/python3` may fail on the Xcode licence; use
-`/Library/Developer/CommandLineTools/usr/bin/` instead. No Excel licence: edit the
-spreadsheet in Numbers and **Export To → Excel** (see SETUP.md).
+`/Library/Developer/CommandLineTools/usr/bin/` instead. No Excel licence: the user edits the
+spreadsheet in Numbers and **Export To → Excel** (see SETUP.md). Claude can edit it with
+openpyxl directly — the exporter recalculates formulas itself (pycel), so no Numbers step.
+Verify every spreadsheet change by diffing `Config.luau`.
 
 ## Status
 
@@ -69,9 +71,14 @@ paths (attack speed, anti-armour, support…) instead of generic +% tracks: the 
 is `UPGRADES.md`, tier names are in the spreadsheet (Tower Upgrades, column M) and shown in
 the tower panel.
 
-Next: phase 3b — armour and the Scout/Sniper/Grenadier abilities from `UPGRADES.md` — then
-phase 4, the player character as the hero with its own upgrade track, weapons and abilities
-(separate from tower paths). Build each mechanic where it fits, keeping to the vision.
+Phase 3b written 2026-09-28, not yet playtested: armour (no damage without a piercing
+upgrade), boss flag, and the Scout/Sniper/Grenadier abilities — multi-shot, line pierce,
+bonus vs armoured/bosses, mark, stun, knockback, burn patches, cluster bomblets, support
+auras. Numbers are seeds in the spreadsheet; expect a tuning pass.
+
+Next: playtest 3b, then phase 4 — the player character as the hero with its own upgrade
+track, weapons and abilities (separate from tower paths). Build each mechanic where it
+fits, keeping to the vision in `UPGRADES.md`.
 
 ## Open issues
 

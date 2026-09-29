@@ -80,17 +80,23 @@ built). Change a name there, not in code.
 |---|---|---|
 | Upgrade names in the tower panel | all | ✅ phase 3 |
 | Range multiplier | Lookout, Field | ✅ phase 3 |
-| **Armored** and **Boss** enemy flags; armour blocks damage without pierce | enemies | 🔜 phase 3b |
-| Armour pierce, bonus vs armoured, bonus vs bosses | Hardliner, Deadeye, Siege, Concussive, Signal Tower | 🔜 phase 3b |
-| Multi-shot per trigger | Double Tap, Stormgunner | 🔜 phase 3b |
-| Line pierce (hits N in a line) | Railshot, Deadeye | 🔜 phase 3b |
-| Mark (target takes +X% from all towers) | Marked Target, Eye in the Sky | 🔜 phase 3b |
-| Stun, knockback | Concussion Round, Skybreaker, Shockwave, Stun Grenade, Tectonic Slam | 🔜 phase 3b |
-| Burn patch on the track | Napalm, Scorched Earth | 🔜 phase 3b |
-| Cluster bomblets | Cluster Shell, Chain Reaction | 🔜 phase 3b |
-| Support auras (buff nearby towers) | Flare Gun, Signal Tower, Eye in the Sky | 🔜 phase 3b |
+| **Armored** and **Boss** enemy flags; armour blocks damage without pierce | enemies | ✅ phase 3b |
+| Armour pierce, bonus vs armoured, bonus vs bosses | Hardliner, Deadeye, Siege, Concussive, Signal Tower | ✅ phase 3b |
+| Multi-shot per trigger | Double Tap, Stormgunner | ✅ phase 3b |
+| Line pierce (hits N in a line) | Railshot, Deadeye | ✅ phase 3b |
+| Mark (target takes +X% from all towers) | Marked Target, Eye in the Sky | ✅ phase 3b |
+| Stun, knockback | Concussion Round, Skybreaker, Shockwave, Stun Grenade, Tectonic Slam | ✅ phase 3b |
+| Burn patch on the track | Napalm, Scorched Earth | ✅ phase 3b |
+| Cluster bomblets | Cluster Shell, Chain Reaction | ✅ phase 3b |
+| Support auras (buff nearby towers) | Flare Gun, Signal Tower, Eye in the Sky | ✅ phase 3b |
 | Slow, freeze, damage-taken amp | Chiller | ⏳ phase 5 |
 | Round income, chests, discounts, refunds | Quartermaster | ⏳ phase 5 |
 
 When a mechanic lands, its numbers get a column on `Tower Upgrades` and the stat-only
 multipliers get rebalanced around it — expect a tuning pass per mechanic.
+
+**Phase 3b rules (2026-09-28):** no tower damages an Armored Husk until it has an
+armour-piercing upgrade (Armor Breaker, Through-and-Through, Armor Crack) or stands in a
+Signal Tower's aura; towers ignore enemies they can't hurt. Bosses ignore stun unless the
+hit says "stuns bosses", and are never knocked back. Auras don't stack — the strongest wins.
+Ability numbers are seeds on `Tower Upgrades` (columns N–AD) and `Tuning` (ABILITIES).

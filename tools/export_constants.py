@@ -52,6 +52,32 @@ def num(x, default=0):
     return x
 
 
+def yes(x):
+    return str(x).strip().lower() == "yes"
+
+
+# Tower Upgrades ability columns (N onwards): (key, column, kind, default)
+ABILITY_COLUMNS = [
+    ("piercesArmor", 14, "bool", False),
+    ("armoredMult", 15, "num", 1),
+    ("bossMult", 16, "num", 1),
+    ("shots", 17, "num", 1),
+    ("lineHits", 18, "num", 1),
+    ("splashMult", 19, "num", 1),
+    ("markPercent", 20, "num", 0),
+    ("stunSeconds", 21, "num", 0),
+    ("stunsBosses", 22, "bool", False),
+    ("knockback", 23, "num", 0),
+    ("burnDps", 24, "num", 0),
+    ("burnSeconds", 25, "num", 0),
+    ("bomblets", 26, "num", 0),
+    ("bombletGenerations", 27, "num", 0),
+    ("auraRatePercent", 28, "num", 0),
+    ("auraDamagePercent", 29, "num", 0),
+    ("auraPiercesArmor", 30, "bool", False),
+]
+
+
 def read_tuning(ws):
     out = {}
     for r in range(5, 200):
@@ -79,6 +105,7 @@ def read_towers(ws):
             "range": num(v(ws, r, 8)),
             "hitsAir": str(v(ws, r, 9)).strip().lower() == "yes",
             "incomePerRound": num(v(ws, r, 10)),
+            "splashRadius": num(v(ws, r, 12)),
             "paths": [],
         }
         order.append(key)
@@ -108,6 +135,10 @@ def attach_paths(ws, towers):
             "targetsMult": num(v(ws, r, 9), 1),
             "rangeMult": num(v(ws, r, 12), 1),
             "swapsModel": tier in (3, 5),
+            **{
+                key: (yes(v(ws, r, col)) if kind == "bool" else num(v(ws, r, col), default))
+                for key, col, kind, default in ABILITY_COLUMNS
+            },
         })
         r += 1
 
@@ -165,6 +196,8 @@ def read_enemies(ws):
             "effectiveHp": num(v(ws, r, 8)),
             "cashValue": num(v(ws, r, 9)),
             "flying": str(v(ws, r, 10)).strip().lower() == "yes",
+            "armored": yes(v(ws, r, 12)),
+            "boss": yes(v(ws, r, 13)),
         }
         r += 1
     return enemies
@@ -238,6 +271,12 @@ def validate(data):
                     problems.append(f"{key} {p['id']} tier {i} has no Name (Tower Upgrades, column M)")
                 if not isinstance(step["rangeMult"], (int, float)) or step["rangeMult"] <= 0:
                     problems.append(f"{key} {p['id']} tier {i}: Range x must be a positive number")
+                for field, _, kind, _ in ABILITY_COLUMNS:
+                    if kind == "num" and (not isinstance(step[field], (int, float)) or step[field] < 0):
+                        problems.append(f"{key} {p['id']} tier {i}: {field} must be a number >= 0")
+                for field in ("shots", "lineHits"):
+                    if step[field] < 1 or step[field] != int(step[field]):
+                        problems.append(f"{key} {p['id']} tier {i}: {field} must be a whole number >= 1")
 
     best_tower = 0.0
     for t in data["Towers"].values():
@@ -319,6 +358,39 @@ def emit(data, source_name):
 
 # ---------------------------------------------------------------- main
 
+def recalculated(xlsx):
+    """The workbook with every formula replaced by its value, computed by pycel.
+
+    Verified 2026-09-28 to match Numbers on all 1100 formulas, including how
+    exact .5 results round. Only used when the file has no stored results.
+    """
+    try:
+        from pycel import ExcelCompiler
+    except ImportError:
+        sys.exit(
+            "Formula results are missing from the spreadsheet and pycel isn't installed.\n"
+            "Run: pip3 install pycel   (or open the file in Numbers and Export To Excel)"
+        )
+    import warnings
+    warnings.filterwarnings("ignore")
+
+    wb = load_workbook(xlsx)
+    compiler = ExcelCompiler(filename=xlsx)
+    count = 0
+    for ws in wb:
+        for row in ws.iter_rows():
+            for cell in row:
+                formula = getattr(cell.value, "text", cell.value)
+                if isinstance(formula, str) and formula.startswith("="):
+                    value = compiler.evaluate(f"{ws.title}!{cell.coordinate}")
+                    if isinstance(value, str) and value.startswith("#"):
+                        sys.exit(f"Formula error {value} in {ws.title}!{cell.coordinate}: {formula}")
+                    cell.value = value
+                    count += 1
+    print(f"Recalculated {count} formulas (no stored results in the file)")
+    return wb
+
+
 def main():
     xlsx = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_XLSX
     if not os.path.exists(xlsx):
@@ -326,10 +398,8 @@ def main():
 
     wb = load_workbook(xlsx, data_only=True)
     if wb["Rounds"].cell(row=5, column=13).value is None:
-        sys.exit(
-            "Formula results are missing from the spreadsheet. Open it in Excel, Numbers\n"
-            "or LibreOffice, save it once, then re-run this script."
-        )
+        # Saved by a script (openpyxl drops calculated results): work them out here.
+        wb = recalculated(xlsx)
 
     towers, tower_order = read_towers(wb["Towers"])
     attach_paths(wb["Tower Upgrades"], towers)
