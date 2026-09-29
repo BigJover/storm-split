@@ -54,6 +54,7 @@ return table.freeze({
 							damageMult = 1.3,
 							rateMult = 1.15,
 							targetsMult = 1,
+							rangeMult = 1.15,
 							swapsModel = false,
 						},
 						{
@@ -61,6 +62,7 @@ return table.freeze({
 							damageMult = 1.69,
 							rateMult = 1.32,
 							targetsMult = 1,
+							rangeMult = 1.3,
 							swapsModel = false,
 						},
 						{
@@ -68,6 +70,7 @@ return table.freeze({
 							damageMult = 2.2,
 							rateMult = 1.52,
 							targetsMult = 1,
+							rangeMult = 1.5,
 							swapsModel = true,
 						},
 						{
@@ -75,6 +78,7 @@ return table.freeze({
 							damageMult = 2.86,
 							rateMult = 1.75,
 							targetsMult = 1,
+							rangeMult = 1.75,
 							swapsModel = false,
 						},
 						{
@@ -82,6 +86,7 @@ return table.freeze({
 							damageMult = 3.71,
 							rateMult = 2.01,
 							targetsMult = 1,
+							rangeMult = 2,
 							swapsModel = true,
 						},
 					},
@@ -95,6 +100,7 @@ return table.freeze({
 							damageMult = 1.35,
 							rateMult = 1.42,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -102,6 +108,7 @@ return table.freeze({
 							damageMult = 1.82,
 							rateMult = 2.02,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -109,6 +116,7 @@ return table.freeze({
 							damageMult = 2.46,
 							rateMult = 2.86,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 						{
@@ -116,6 +124,7 @@ return table.freeze({
 							damageMult = 3.32,
 							rateMult = 4.07,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -123,6 +132,7 @@ return table.freeze({
 							damageMult = 4.48,
 							rateMult = 5.77,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 					},
@@ -136,6 +146,7 @@ return table.freeze({
 							damageMult = 1.9,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -143,6 +154,7 @@ return table.freeze({
 							damageMult = 3.61,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -150,6 +162,7 @@ return table.freeze({
 							damageMult = 6.86,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 						{
@@ -157,6 +170,7 @@ return table.freeze({
 							damageMult = 13.03,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -164,6 +178,7 @@ return table.freeze({
 							damageMult = 24.76,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 					},
@@ -190,6 +205,7 @@ return table.freeze({
 							damageMult = 1.45,
 							rateMult = 1,
 							targetsMult = 1.32,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -197,6 +213,7 @@ return table.freeze({
 							damageMult = 2.1,
 							rateMult = 1,
 							targetsMult = 1.74,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -204,6 +221,7 @@ return table.freeze({
 							damageMult = 3.05,
 							rateMult = 1,
 							targetsMult = 2.3,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 						{
@@ -211,6 +229,7 @@ return table.freeze({
 							damageMult = 4.42,
 							rateMult = 1,
 							targetsMult = 3.04,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -218,6 +237,7 @@ return table.freeze({
 							damageMult = 6.41,
 							rateMult = 1,
 							targetsMult = 4.01,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 					},
@@ -231,6 +251,7 @@ return table.freeze({
 							damageMult = 1.35,
 							rateMult = 1.42,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -238,6 +259,7 @@ return table.freeze({
 							damageMult = 1.82,
 							rateMult = 2.02,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -245,6 +267,7 @@ return table.freeze({
 							damageMult = 2.46,
 							rateMult = 2.86,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 						{
@@ -252,6 +275,7 @@ return table.freeze({
 							damageMult = 3.32,
 							rateMult = 4.07,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -259,6 +283,7 @@ return table.freeze({
 							damageMult = 4.48,
 							rateMult = 5.77,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 					},
@@ -272,6 +297,7 @@ return table.freeze({
 							damageMult = 1.9,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -279,6 +305,7 @@ return table.freeze({
 							damageMult = 3.61,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -286,6 +313,7 @@ return table.freeze({
 							damageMult = 6.86,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 						{
@@ -293,6 +321,7 @@ return table.freeze({
 							damageMult = 13.03,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -300,6 +329,7 @@ return table.freeze({
 							damageMult = 24.76,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 					},
@@ -326,6 +356,7 @@ return table.freeze({
 							damageMult = 1.45,
 							rateMult = 1,
 							targetsMult = 1.32,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -333,6 +364,7 @@ return table.freeze({
 							damageMult = 2.1,
 							rateMult = 1,
 							targetsMult = 1.74,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -340,6 +372,7 @@ return table.freeze({
 							damageMult = 3.05,
 							rateMult = 1,
 							targetsMult = 2.3,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 						{
@@ -347,6 +380,7 @@ return table.freeze({
 							damageMult = 4.42,
 							rateMult = 1,
 							targetsMult = 3.04,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -354,6 +388,7 @@ return table.freeze({
 							damageMult = 6.41,
 							rateMult = 1,
 							targetsMult = 4.01,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 					},
@@ -367,6 +402,7 @@ return table.freeze({
 							damageMult = 1.45,
 							rateMult = 1,
 							targetsMult = 1.32,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -374,6 +410,7 @@ return table.freeze({
 							damageMult = 2.1,
 							rateMult = 1,
 							targetsMult = 1.74,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -381,6 +418,7 @@ return table.freeze({
 							damageMult = 3.05,
 							rateMult = 1,
 							targetsMult = 2.3,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 						{
@@ -388,6 +426,7 @@ return table.freeze({
 							damageMult = 4.42,
 							rateMult = 1,
 							targetsMult = 3.04,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -395,6 +434,7 @@ return table.freeze({
 							damageMult = 6.41,
 							rateMult = 1,
 							targetsMult = 4.01,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 					},
@@ -408,6 +448,7 @@ return table.freeze({
 							damageMult = 1.9,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -415,6 +456,7 @@ return table.freeze({
 							damageMult = 3.61,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -422,6 +464,7 @@ return table.freeze({
 							damageMult = 6.86,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 						{
@@ -429,6 +472,7 @@ return table.freeze({
 							damageMult = 13.03,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -436,6 +480,7 @@ return table.freeze({
 							damageMult = 24.76,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 					},
@@ -462,6 +507,7 @@ return table.freeze({
 							damageMult = 1.3,
 							rateMult = 1.15,
 							targetsMult = 1,
+							rangeMult = 1.15,
 							swapsModel = false,
 						},
 						{
@@ -469,6 +515,7 @@ return table.freeze({
 							damageMult = 1.69,
 							rateMult = 1.32,
 							targetsMult = 1,
+							rangeMult = 1.3,
 							swapsModel = false,
 						},
 						{
@@ -476,6 +523,7 @@ return table.freeze({
 							damageMult = 2.2,
 							rateMult = 1.52,
 							targetsMult = 1,
+							rangeMult = 1.5,
 							swapsModel = true,
 						},
 						{
@@ -483,6 +531,7 @@ return table.freeze({
 							damageMult = 2.86,
 							rateMult = 1.75,
 							targetsMult = 1,
+							rangeMult = 1.75,
 							swapsModel = false,
 						},
 						{
@@ -490,6 +539,7 @@ return table.freeze({
 							damageMult = 3.71,
 							rateMult = 2.01,
 							targetsMult = 1,
+							rangeMult = 2,
 							swapsModel = true,
 						},
 					},
@@ -503,6 +553,7 @@ return table.freeze({
 							damageMult = 1.35,
 							rateMult = 1.42,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -510,6 +561,7 @@ return table.freeze({
 							damageMult = 1.82,
 							rateMult = 2.02,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -517,6 +569,7 @@ return table.freeze({
 							damageMult = 2.46,
 							rateMult = 2.86,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 						{
@@ -524,6 +577,7 @@ return table.freeze({
 							damageMult = 3.32,
 							rateMult = 4.07,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -531,6 +585,7 @@ return table.freeze({
 							damageMult = 4.48,
 							rateMult = 5.77,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 					},
@@ -544,6 +599,7 @@ return table.freeze({
 							damageMult = 1.9,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -551,6 +607,7 @@ return table.freeze({
 							damageMult = 3.61,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -558,6 +615,7 @@ return table.freeze({
 							damageMult = 6.86,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 						{
@@ -565,6 +623,7 @@ return table.freeze({
 							damageMult = 13.03,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -572,6 +631,7 @@ return table.freeze({
 							damageMult = 24.76,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 					},
@@ -598,6 +658,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -605,6 +666,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -612,6 +674,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 						{
@@ -619,6 +682,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -626,6 +690,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 					},
@@ -639,6 +704,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -646,6 +712,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -653,6 +720,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 						{
@@ -660,6 +728,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -667,6 +736,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 					},
@@ -680,6 +750,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -687,6 +758,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -694,6 +766,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 						{
@@ -701,6 +774,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = false,
 						},
 						{
@@ -708,6 +782,7 @@ return table.freeze({
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
+							rangeMult = 1,
 							swapsModel = true,
 						},
 					},

@@ -57,7 +57,13 @@ Pads were dropped the same day at the user's request: towers go **anywhere off t
 never overlapping**, placed with a ghost preview (`Shared/Placement` is the one rule, used by
 the client ghost and enforced by the server). Confirmed in Studio 2026-09-28.
 
-Next: phase 3 (upgrade paths).
+Phase 3 written 2026-09-28 and statically checked, not yet playtested: upgrade buttons in the
+tower panel (crossover rule shared via `Shared/Upgrades`), cost added to the sell refund, tier
+label, crown at tier 3 and glow at tier 5, and a `Range x` spreadsheet column so range paths
+grow range.
+
+Next: playtest phase 3, then phase 4 — the player character as the hero, with its own upgrade
+track, weapons and abilities (separate from tower paths).
 
 ## Open issues
 
@@ -65,6 +71,6 @@ Next: phase 3 (upgrade paths).
   after the last spawn when nothing leaks, so it holds as *clear time*; the full ~44s walk only
   matters for leaks. Relabel the note at Rounds!A48 next time the sheet is edited.
 - Leak cost is effective HP (BTD6-style), so 40 starting lives is likely too few.
-- Spreadsheet has no range multiplier, so "Range" paths don't increase range yet.
+- Scout Range path has range *and* its old damage/rate boosts — likely too strong; trim.
 - Enemy names are Fortnite-flavoured placeholders; needs an original theme.
 - Folder is still named `~/Fortnite`.

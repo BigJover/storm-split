@@ -105,6 +105,7 @@ def attach_paths(ws, towers):
             "damageMult": num(v(ws, r, 7), 1),
             "rateMult": num(v(ws, r, 8), 1),
             "targetsMult": num(v(ws, r, 9), 1),
+            "rangeMult": num(v(ws, r, 12), 1),
             "swapsModel": tier in (3, 5),
         })
         r += 1
@@ -223,6 +224,17 @@ def validate(data):
         for k in rd["counts"]:
             if k not in enemies:
                 problems.append(f"Round {i} references unknown tier '{k}'")
+
+    for key, t in data["Towers"].items():
+        for p in t["paths"]:
+            for i, step in enumerate(p["tiers"], start=1):
+                if not isinstance(step["cost"], (int, float)) or step["cost"] <= 0:
+                    problems.append(
+                        f"{key} {p['id']} tier {i} has no upgrade cost. If the spreadsheet was saved by a "
+                        "script, open it in Numbers and Export To Excel so formulas are recalculated."
+                    )
+                if not isinstance(step["rangeMult"], (int, float)) or step["rangeMult"] <= 0:
+                    problems.append(f"{key} {p['id']} tier {i}: Range x must be a positive number")
 
     best_tower = 0.0
     for t in data["Towers"].values():

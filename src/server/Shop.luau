@@ -1,15 +1,16 @@
 --[[
 	Shop: the only way clients reach cash and towers (ARCHITECTURE.md §4).
 
-	Clients REQUEST ("build a SCOUT here", "sell tower 7"). The server checks
+	Clients REQUEST ("build a SCOUT here", "upgrade tower 7 path 2", "sell tower 7"). The server checks
 	everything itself — the spot (Shared/Placement, the same rule the client's
 	ghost uses), the player's distance to it, the tower, the cash — and prices
 	come only from Config. A client sends a tower key and a position, or a tower
 	id; never a price or a result.
 
 	Money flow: Economy.trySpend() first, then Towers.place(). Towers never touch
-	cash (§5.4). The shop remembers what each tower cost so selling refunds
-	SellRefund of it; phase 3 upgrades add to the same total.
+	cash (§5.4); upgrades likewise pay first, then call Towers.upgrade(). The
+	shop remembers what each tower cost, upgrades included, so selling refunds
+	SellRefund of all of it.
 
 	Each built tower gets a ProximityPrompt for managing it. The server never
 	trusts that the prompt was used and re-checks distance on every request.
@@ -22,6 +23,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local ShopRules = require(Shared:WaitForChild("ShopRules"))
 local Placement = require(Shared:WaitForChild("Placement"))
+local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local Economy = require(script.Parent.Economy)
 local Towers = require(script.Parent.Towers)
@@ -46,6 +48,9 @@ local function decorate(tower: Towers.Tower)
 	body:SetAttribute("TowerId", tower.id)
 	body:SetAttribute("Tower", tower.key)
 	body:SetAttribute("Spent", spent[tower] or 0)
+	for pathIndex, tier in tower.pathTiers do
+		body:SetAttribute(`Path{pathIndex}`, tier)
+	end
 
 	local prompt = body:FindFirstChildOfClass("ProximityPrompt")
 	if not prompt then
@@ -109,6 +114,49 @@ local function build(player: Player, towerKey: unknown, position: unknown): (boo
 	return true, `Built {def.display}`
 end
 
+local UPGRADE_REFUSALS = {
+	maxed = "That path is maxed",
+	["third path"] = "Only two paths can be opened",
+	crossover = "Only one path can go past tier 2",
+}
+
+local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (boolean, string)
+	if typeof(towerId) ~= "number" or typeof(pathIndex) ~= "number" then
+		return false, "Unknown upgrade"
+	end
+	local tower = Towers.byId(towerId)
+	if not tower then
+		return false, "That tower is gone"
+	end
+	local path = tower.def.paths[pathIndex]
+	if not path then
+		return false, "Unknown upgrade"
+	end
+	if not isWithin(player, tower.base, ShopRules.PromptDistance) then
+		return false, "Too far from the tower"
+	end
+
+	local why = Upgrades.check(tower.pathTiers, pathIndex, #path.tiers)
+	if why ~= "ok" then
+		return false, UPGRADE_REFUSALS[why] or "Can't upgrade that"
+	end
+	local step = Upgrades.nextStep(tower.def, tower.pathTiers, pathIndex)
+	if not step then
+		return false, "That path is maxed"
+	end
+	if not Economy.trySpend(step.cost) then
+		return false, "Not enough cash"
+	end
+
+	if not Towers.upgrade(tower, pathIndex) then
+		Economy.earn(step.cost) -- give it back; upgrade() refused
+		return false, "Can't upgrade that"
+	end
+	spent[tower] = (spent[tower] or 0) + step.cost
+	decorate(tower)
+	return true, `{path.id} tier {tower.pathTiers[pathIndex]}`
+end
+
 local function sell(player: Player, towerId: unknown): (boolean, string)
 	if typeof(towerId) ~= "number" then
 		return false, "Unknown tower"
@@ -142,6 +190,8 @@ local function handle(player: Player, action: unknown, a: unknown, b: unknown): 
 
 	if action == "build" then
 		return build(player, a, b)
+	elseif action == "upgrade" then
+		return upgrade(player, a, b)
 	elseif action == "sell" then
 		return sell(player, a)
 	end
@@ -153,7 +203,7 @@ end
 function Shop.init(remotes: Folder)
 	local request = Instance.new("RemoteFunction")
 	request.Name = "ShopRequest"
-	-- ("build", towerKey, position) or ("sell", towerId)
+	-- ("build", towerKey, position), ("upgrade", towerId, pathIndex) or ("sell", towerId)
 	request.OnServerInvoke = function(player: Player, action: unknown, a: unknown, b: unknown)
 		local ok, success, message = pcall(handle, player, action, a, b)
 		if not ok then

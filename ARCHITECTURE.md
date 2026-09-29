@@ -29,7 +29,9 @@ src/
 │   ├── Track.luau           Level layout: waypoints, build area, sizes. Hand-authored.
 │   ├── Path.luau            Distance-along-path math
 │   ├── Placement.luau       Where a tower may stand (off track, no overlap) — client ghost + server
-│   ├── TowerLook.luau       Tower models, shared by real towers and the placement ghost
+│   ├── TowerLook.luau       Tower models, shared by real towers and the placement ghost;
+│   │                        upgrade visuals (ring size, tier label, crown/glow swaps)
+│   ├── Upgrades.luau        The crossover rule, shared so the client greys out what the server refuses
 │   └── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
 ├── server/   → ServerScriptService.Server
 │   ├── Main.server.luau     Entry point and wiring. Only file that knows every module.
@@ -111,8 +113,9 @@ caller pays first. Keeps money logic in exactly one place.
 - **Walk time.** The round-length formula's 14s is really *clear time after the last spawn*:
   measured in Studio at 13.8–14.3s for rounds 2–10 with no leaks. A leaking enemy walks the
   full ~610 studs at 14 studs/s ≈ 44s. Re-measure once players buy their own towers.
-- **Range paths don't increase range.** The spreadsheet has no range-multiplier column, so
-  the Scout's "Range" path only buffs damage and rate. Add a column when towers get tuned.
+- **Range paths.** Resolved in phase 3: `Range x` column on Tower Upgrades (Scout Range and
+  Chiller Field: 1.15 → 2.0x). The Scout Range path still also has its old damage/rate boosts,
+  so it is now the strongest Scout path — trim in the spreadsheet after playtesting.
 - **Fire rate ceiling.** Towers fire at most once per frame, so anything above ~60 shots/s is
   capped. Irrelevant until late upgrades.
 - **Fortnite theming.** Husks, Loot Llamas and Storm Barges are Fortnite-flavoured names and
@@ -139,8 +142,8 @@ second test client.
 |---|---|---|
 | **1** — track, enemies, towers, lives | `Track`, `Path`, `MapBuilder`, `Enemies`, `Towers`, `Waves`, `Lives`, `Hud` | **Written and verified headlessly.** Includes splitting and the cap, which the UEFN plan had deferred to phase 3. |
 | **2** — cash, placement, shop | `Economy` (replaces `Lives`), `Shop` (RemoteFunction + validation), free placement anywhere off the track with a ghost preview (pads dropped 2026-09-28 at the user's request), sell via tower prompts, build phase + Start button | **Done, confirmed in Studio.** Sells Scout, Sniper, Grenadier; Chiller and Quartermaster wait for phase 5. |
-| **3** — upgrade paths | Shop calls `Towers.upgrade()`; model swaps at tiers 3 and 5 | Next. `canUpgrade()` done and tested |
-| **4** — weapons and abilities | `Weapons` (Tools, server-validated hits), `Abilities` | |
+| **3** — upgrade paths | Shop calls `Towers.upgrade()`; model swaps at tiers 3 and 5; range multipliers | **Written, statically checked**, not yet playtested |
+| **4** — the hero: weapons and abilities | `Weapons` (Tools, server-validated hits), `Abilities`. The player character is the hero, with its own upgrade track separate from tower paths (user, 2026-09-28) | Next |
 | **5** — roster and rounds | Remaining towers' behaviours (Chiller slow, Quartermaster income) | Numbers already in `Config` |
 | **6** — co-op, mastery, publish | `Progression` (DataStoreService), mastery effects, lobby | |
 

@@ -17,6 +17,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Placement = require(Shared:WaitForChild("Placement"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
+local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local Enemies = require(script.Parent.Enemies)
 
@@ -47,48 +48,44 @@ local nextId = 0
 ------------------------------------------------------------------ stats
 
 local function computeStats(def, pathTiers: { number }): Stats
-	local damageMult, rateMult, targetsMult = 1, 1, 1
+	local damageMult, rateMult, targetsMult, rangeMult = 1, 1, 1, 1
 	for pathIndex, tier in pathTiers do
 		if tier > 0 then
 			local step = def.paths[pathIndex].tiers[tier]
 			damageMult *= step.damageMult
 			rateMult *= step.rateMult
 			targetsMult *= step.targetsMult
+			rangeMult *= step.rangeMult or 1
 		end
 	end
 	return {
 		damage = def.baseDamage * damageMult,
 		rate = def.baseRate * rateMult,
 		targets = math.max(1, math.floor(def.baseTargets * targetsMult + 0.5)),
-		range = def.range,
+		range = def.range * rangeMult,
 	}
 end
 
--- The crossover rule (ARCHITECTURE.md §2). Towers always use the strict version.
+-- The crossover rule lives in Shared/Upgrades so the client can grey out buttons.
 function Towers.canUpgrade(tower: Tower, pathIndex: number): boolean
-	local tiers = tower.pathTiers
-	local current = tiers[pathIndex]
-	if current == nil or current >= 5 then
-		return false
-	end
+	local path = tower.def.paths[pathIndex]
+	return path ~= nil and Upgrades.check(tower.pathTiers, pathIndex, #path.tiers) == "ok"
+end
 
-	local maxOther, nonZeroOthers = 0, 0
-	for i, tier in tiers do
-		if i ~= pathIndex then
-			maxOther = math.max(maxOther, tier)
-			if tier > 0 then
-				nonZeroOthers += 1
+-- How many model swaps the tower has reached (0, 1 or 2), from the tiers
+-- flagged swapsModel in Config.
+local function swapStage(tower: Tower): number
+	local stage = 0
+	for pathIndex, tier in tower.pathTiers do
+		local reached = 0
+		for t = 1, tier do
+			if tower.def.paths[pathIndex].tiers[t].swapsModel then
+				reached += 1
 			end
 		end
+		stage = math.max(stage, reached)
 	end
-
-	if current == 0 and nonZeroOthers >= 2 then
-		return false -- a third path may never open
-	end
-	if current >= 2 and maxOther >= 3 then
-		return false -- only one path may go past tier 2
-	end
-	return true
+	return stage
 end
 
 ------------------------------------------------------------------ visuals
@@ -156,6 +153,7 @@ function Towers.upgrade(tower: Tower, pathIndex: number): boolean
 	end
 	tower.pathTiers[pathIndex] += 1
 	tower.stats = computeStats(tower.def, tower.pathTiers)
+	TowerLook.refresh(tower.model, tower.stats.range, tower.pathTiers, swapStage(tower))
 	return true
 end
 

@@ -7,7 +7,8 @@
 	to place; Q or Cancel to stop.
 
 	Manage: walking up to a tower shows its prompt; triggering it opens a panel
-	with Sell.
+	with its three upgrade paths and Sell. Paths the crossover rule
+	(Shared/Upgrades) or the team's cash won't allow are greyed out.
 
 	Everything here is a request. The server re-checks the spot, the distance
 	and the cash with the same rules and has the final say. Prices shown come
@@ -25,6 +26,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local Placement = require(Shared:WaitForChild("Placement"))
 local ShopRules = require(Shared:WaitForChild("ShopRules"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
+local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local request = remotes:WaitForChild("ShopRequest") :: RemoteFunction
@@ -175,6 +177,27 @@ end
 local function say(text: string, color: Color3?)
 	message.Text = text
 	message.TextColor3 = color or TEXT_DIM
+end
+
+local LOCK_REASONS = {
+	["third path"] = "locked · only two paths per tower",
+	crossover = "locked · only one path past tier 2",
+}
+
+-- "+30% damage · +15% rate" for going from `current` to `current + 1` on a path.
+local function describeStep(path, current: number): string
+	local now = if current > 0 then path.tiers[current] else nil
+	local nextStep = path.tiers[current + 1]
+	local parts = {}
+	for _, stat in { { "damageMult", "damage" }, { "rateMult", "rate" }, { "targetsMult", "targets" }, { "rangeMult", "range" } } do
+		local before = if now then (now[stat[1]] or 1) else 1
+		local after = nextStep[stat[1]] or 1
+		local change = after / before - 1
+		if math.abs(change) >= 0.005 then
+			table.insert(parts, `{if change > 0 then "+" else ""}{math.floor(change * 100 + 0.5)}% {stat[2]}`)
+		end
+	end
+	return if #parts > 0 then table.concat(parts, " · ") else path.focus
 end
 
 local function addRow(order: number, text: string, color: Color3, enabled: boolean, onClick: (() -> ())?)
@@ -405,22 +428,46 @@ render = function()
 	elseif mode == "manage" and managed then
 		local key = managed:GetAttribute("Tower") :: string
 		local def = Config.Towers[key]
-		local refund = math.floor((managed:GetAttribute("Spent") or 0) * Config.Tuning.SellRefund)
-		title.Text = if def then def.display else "Tower"
 		local towerId = managed:GetAttribute("TowerId")
-		addRow(1, `<b>Sell</b>  for {refund}`, SELL_COLOR, true, function()
+		local tiers = {}
+		for pathIndex = 1, 3 do
+			tiers[pathIndex] = managed:GetAttribute(`Path{pathIndex}`) or 0
+		end
+		title.Text = `{if def then def.display else "Tower"}  ·  {tiers[1]} · {tiers[2]} · {tiers[3]}`
+
+		if def then
+			for pathIndex, path in def.paths do
+				local current = tiers[pathIndex]
+				local name = escape(path.id)
+				local why = Upgrades.check(tiers, pathIndex, #path.tiers)
+				if why == "maxed" then
+					addRow(pathIndex, `<b>{name}</b>  ·  maxed`, LOCKED_COLOR, false)
+				elseif why ~= "ok" then
+					addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
+				else
+					local step = path.tiers[current + 1]
+					local affordable = cash >= step.cost
+					local text = `<b>{name}</b>  ·  tier {current + 1}  ·  {step.cost}\n<font size="13">{escape(describeStep(path, current))}</font>`
+					addRow(pathIndex, text, if affordable then BUY_COLOR else LOCKED_COLOR, affordable, function()
+						send("upgrade", towerId, pathIndex)
+					end)
+				end
+			end
+		end
+
+		local refund = math.floor((managed:GetAttribute("Spent") or 0) * Config.Tuning.SellRefund)
+		addRow(10, `<b>Sell</b>  for {refund}`, SELL_COLOR, true, function()
 			if send("sell", towerId) then
 				setMode("closed")
 			end
 		end)
-		addRow(2, "Upgrades are coming soon", LOCKED_COLOR, false)
 	end
 end
 
 local function openManage(body: BasePart, prompt: ProximityPrompt)
 	setMode("manage")
 	managed, managedPrompt = body, prompt
-	for _, name in { "Spent", "Tower" } do
+	for _, name in { "Spent", "Tower", "Path1", "Path2", "Path3" } do
 		table.insert(managedConnections, body:GetAttributeChangedSignal(name):Connect(render))
 	end
 	table.insert(managedConnections, body.AncestryChanged:Connect(function()
