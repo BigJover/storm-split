@@ -143,12 +143,12 @@ starts with Pistol + Scout/Sniper/Grenadier; Rifle/Shotgun 75, Chiller 100, Quar
 (10-20, pot split 72/23/5 in battle royale) come with the battle modes. Level 10/15 ability variants deferred (user choice).
 Studio keys: K cash, J cores + unlocks (disables saving for that session).
 
-Home screen (user request, written 2026-09-29, not yet playtested): `Main` is now a match
+Home screen (user request, confirmed in Studio 2026-09-29): `Main` is now a match
 loop — Lobby (home screen, no characters, host picks mode/track/difficulty, Play) → Building
 → Playing → result screen with Cores earned → board reset → Lobby. Unlocks, mastery and hero
 picks survive the reset. Team Battle / Battle Royale show as coming soon.
 
-Next: playtest the home screen and a full match loop.
+Next (user's pick): balance pass, original theme, or phase 7 battle modes.
 
 ## Open issues
 
