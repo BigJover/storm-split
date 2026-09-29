@@ -145,6 +145,36 @@ local function refresh()
 	end
 end
 
+-- Studio-only test button. The remote only exists when the server runs in
+-- Studio, so this never appears in a published game.
+local studioCash = remotes:FindFirstChild("StudioCash")
+if studioCash and studioCash:IsA("RemoteEvent") then
+	local button = Instance.new("TextButton")
+	button.Name = "StudioCash"
+	button.AnchorPoint = Vector2.new(0, 0)
+	button.Position = UDim2.new(0, 12, 0, 60)
+	button.Size = UDim2.fromOffset(130, 34)
+	button.BackgroundColor3 = Color3.fromRGB(60, 140, 80)
+	button.TextColor3 = Color3.new(1, 1, 1)
+	button.Font = Enum.Font.GothamBold
+	button.TextSize = 15
+	button.Text = "+1000 cash (K)"
+	-- Not Modal: that would free the mouse for the whole game. Click it while
+	-- the mouse is free (build phase, a menu open) or press K any time.
+	button.Parent = gui
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 8)
+	c.Parent = button
+	button.Activated:Connect(function()
+		studioCash:FireServer()
+	end)
+	game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
+		if not processed and input.KeyCode == Enum.KeyCode.K then
+			studioCash:FireServer()
+		end
+	end)
+end
+
 for _, name in { "State", "Round", "Lives", "Alive", "Cash", "Difficulty" } do
 	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refresh)
 end

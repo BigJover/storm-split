@@ -31,6 +31,9 @@ local Airdrops = require(script.Parent.Airdrops)
 
 -- Testing only: set above 1 to jump straight to a later round.
 local START_ROUND = 1
+-- Testing only: what the Studio-only "+cash" button adds. Never active in a
+-- published game (checked with RunService:IsStudio() on the server).
+local STUDIO_CASH_GRANT = 1000
 
 ------------------------------------------------------------------ setup
 
@@ -49,6 +52,14 @@ startGame.Parent = remotes
 local chooseDifficulty = Instance.new("RemoteEvent")
 chooseDifficulty.Name = "ChooseDifficulty"
 chooseDifficulty.Parent = remotes
+if RunService:IsStudio() then
+	local studioCash = Instance.new("RemoteEvent")
+	studioCash.Name = "StudioCash"
+	studioCash.OnServerEvent:Connect(function()
+		Economy.earn(STUDIO_CASH_GRANT)
+	end)
+	studioCash.Parent = remotes
+end
 remotes.Parent = ReplicatedStorage
 
 local EASY = Config.DifficultyOrder[1]
