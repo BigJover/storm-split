@@ -125,6 +125,7 @@ def read_towers(ws):
             "incomePerRound": num(v(ws, r, 10)),
             "splashRadius": num(v(ws, r, 12)),
             "slowPercent": num(v(ws, r, 13)),
+            "unlockRound": num(v(ws, r, 14)),
             "paths": [],
         }
         order.append(key)
@@ -241,7 +242,14 @@ def read_mastery(ws):
         lvl = v(ws, r, 1)
         if lvl is None:
             break
-        out.append({"coreCost": num(v(ws, r, 2)), "unlock": v(ws, r, 5) or ""})
+        out.append({
+            "coreCost": num(v(ws, r, 2)),
+            "unlock": v(ws, r, 5) or "",
+            "upgradeDiscountPercent": num(v(ws, r, 6)),
+            "abilityCooldownMult": num(v(ws, r, 7), 1),
+            "freeFirstUpgrade": yes(v(ws, r, 8)),
+            "crossoverCap": int(num(v(ws, r, 9), 2)),
+        })
     return out
 
 
@@ -374,11 +382,19 @@ def validate(data):
         "StartingCashPerExtraPlayer", "WeaponAimAssist", "OverdriveFireRateX", "AirburstDelay",
         "AirburstReach", "SpinUpTime", "RicochetReach", "StillSpeed", "HeroUpgradeBaseCost",
         "HeroUpgradeCostGrowth", "ChestLifetime", "ChestSpread", "RoundsPerLevel",
-        "HeroDamagePerLevel", "TowerDamagePerLevel",
+        "HeroDamagePerLevel", "TowerDamagePerLevel", "CorePayoutBase", "CorePayoutPerRound",
     ]
     for key in needed:
         if key not in data["Tuning"]:
             problems.append(f"Tuning is missing '{key}' (the game reads it by name)")
+
+    for i, lvl in enumerate(data["Mastery"], start=1):
+        if not isinstance(lvl["coreCost"], (int, float)) or lvl["coreCost"] <= 0:
+            problems.append(f"Mastery level {i}: needs a Core cost")
+        if not 2 <= lvl["crossoverCap"] <= 5:
+            problems.append(f"Mastery level {i}: Crossover cap must be 2-5")
+    if not any(t["unlockRound"] == 0 for t in data["Towers"].values()):
+        problems.append("At least one tower must be unlocked from the start (Unlock round 0)")
 
     if "EASY" not in data["Difficulties"]:
         problems.append("Difficulty sheet needs an 'Easy' row (the baseline)")

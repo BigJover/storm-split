@@ -3,6 +3,10 @@
 	Roblox's built-in player list through leaderstats.
 
 	Co-op uses it as a scoreboard; battle royale (VISION.md) will rank by it.
+
+	Also shows each player's mastery with their current hero next to their
+	name — the design doc's visible badge. Read from the Hero and Mastery_*
+	player attributes that Hero and Progression publish.
 ]]
 
 local Players = game:GetService("Players")
@@ -17,8 +21,22 @@ local function setUp(player: Player)
 	local value = Instance.new("IntValue")
 	value.Name = "Pops"
 	value.Parent = stats
+	local badge = Instance.new("IntValue")
+	badge.Name = "Mastery"
+	badge.Parent = stats
 	stats.Parent = player
 	pops[player] = value
+
+	local function refreshBadge()
+		local hero = player:GetAttribute("Hero")
+		badge.Value = if typeof(hero) == "string" and hero ~= "" then player:GetAttribute(`Mastery_{hero}`) or 0 else 0
+	end
+	player.AttributeChanged:Connect(function(name)
+		if name == "Hero" or string.sub(name, 1, 8) == "Mastery_" then
+			refreshBadge()
+		end
+	end)
+	refreshBadge()
 end
 
 function Scoreboard.init()

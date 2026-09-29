@@ -26,6 +26,7 @@ local Placement = require(Shared:WaitForChild("Placement"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local Economy = require(script.Parent.Economy)
+local Progression = require(script.Parent.Progression)
 local Towers = require(script.Parent.Towers)
 
 local Shop = {}
@@ -89,6 +90,9 @@ local function build(player: Player, towerKey: unknown, position: unknown): (boo
 	local def = Config.Towers[towerKey]
 	if not def or ShopRules.Unreleased[towerKey] then
 		return false, "That tower isn't for sale"
+	end
+	if not Progression.towerUnlocked(towerKey) then
+		return false, `{def.display} unlocks when someone here has reached round {def.unlockRound}`
 	end
 	if typeof(position) ~= "Vector3" then
 		return false, "Pick a spot"

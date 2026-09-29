@@ -21,6 +21,11 @@
 	The hero's ability (Mark, Overdrive, Airburst) is available from the start
 	on its cooldown.
 
+	MASTERY (Server/Progression): the player's mastery with their hero makes
+	hero upgrades cheaper, shortens the ability cooldown, can make the first
+	upgrade of the match free, raises the crossover cap at level 20, and turns
+	the gun gold at max mastery. Read at pick time and on every purchase.
+
 	HERO LEVELS: each level multiplies all of the hero's damage — rounds,
 	splash, fire, Airburst — by 1 + HeroDamagePerLevel, compounding, so the
 	hero keeps pace with enemy HP. For now every hero levels up together every
@@ -42,6 +47,7 @@ local Track = require(Shared:WaitForChild("Track"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local Economy = require(script.Parent.Economy)
+local Progression = require(script.Parent.Progression)
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
 local Hazards = require(script.Parent.Hazards)
@@ -61,6 +67,7 @@ type State = {
 	bloomAt: number,
 	gunSide: number, -- alternates 1 / -1 for dual guns (visual)
 	level: number,
+	freeUpgrade: boolean, -- mastery 10: the first upgrade of the match costs nothing
 	abilityReadyAt: number,
 	overdriveUntil: number,
 	overdrivePercent: number,
@@ -74,6 +81,7 @@ local HERO_COLORS = {
 	SHOTGUN = Color3.fromRGB(255, 140, 50),
 }
 local DUAL_GUN_OFFSET = 0.9 -- studs sideways for the second gun's tracer
+local MASTERY_GOLD = Color3.fromRGB(250, 200, 60)
 
 local SHOT_GAP_SLACK = 0.8 -- accept pulls up to 20% early, for network jitter
 local RAY_ORIGIN_SLACK = 20 -- studs beyond max camera zoom a ray may start from
@@ -102,6 +110,7 @@ local function stateOf(player: Player): State
 			bloomAt = 0,
 			gunSide = 1,
 			level = teamLevel,
+			freeUpgrade = false,
 			abilityReadyAt = 0,
 			overdriveUntil = 0,
 			overdrivePercent = 0,
@@ -115,6 +124,14 @@ end
 -- Damage multiplier from this player's hero level.
 local function levelScale(s: State): number
 	return (1 + Config.Tuning.HeroDamagePerLevel) ^ math.max(0, s.level - 1)
+end
+
+-- The mastery rewards this player has with their current hero, or nil.
+local function mastery(player: Player, s: State): any?
+	if not s.hero then
+		return nil
+	end
+	return Progression.masteryRewards(Progression.masteryLevel(player, s.hero))
 end
 
 local function credit(player: Player, killed: boolean)
@@ -162,6 +179,7 @@ local function publish(player: Player)
 	local clockToServer = workspace:GetServerTimeNow() - os.clock()
 	player:SetAttribute("Hero", s.hero or "")
 	player:SetAttribute("HeroLevel", s.level)
+	player:SetAttribute("FreeUpgrade", s.freeUpgrade)
 	for i = 1, 3 do
 		player:SetAttribute(`HeroPath{i}`, s.tiers[i])
 	end
@@ -216,11 +234,14 @@ local function syncTool(player: Player)
 		tool.Parent = backpack
 	end
 	local hero = Config.Heroes[s.hero]
+	local maxed = Progression.masteryLevel(player, s.hero) >= #Config.Mastery
 	tool.Name = hero.display
 	tool.ToolTip = `{hero.display} · {hero.ability} (F)`
 	local handle = tool:FindFirstChild("Handle")
 	if handle and handle:IsA("BasePart") then
-		handle.Color = HERO_COLORS[s.hero] or Color3.new(1, 1, 1)
+		-- Mastery skin: a gold gun at max mastery.
+		handle.Color = if maxed then MASTERY_GOLD else (HERO_COLORS[s.hero] or Color3.new(1, 1, 1))
+		handle.Material = if maxed then Enum.Material.Neon else Enum.Material.SmoothPlastic
 	end
 end
 
@@ -255,6 +276,8 @@ local function pick(player: Player, key: unknown): (boolean, string)
 	s.hero = key
 	s.tiers = { 0, 0, 0 }
 	s.spent = 0
+	local rewards = Progression.masteryRewards(Progression.masteryLevel(player, key))
+	s.freeUpgrade = rewards ~= nil and rewards.freeFirstUpgrade == true
 	s.bloom = 0
 	s.abilityReadyAt = 0
 	refresh(player, true)
@@ -279,16 +302,21 @@ local function upgrade(player: Player, pathIndex: unknown): (boolean, string)
 	if not path then
 		return false, "Unknown upgrade"
 	end
-	local why = Upgrades.check(s.tiers, pathIndex, #path.tiers)
+	local rewards = mastery(player, s)
+	local why = Upgrades.check(s.tiers, pathIndex, #path.tiers, if rewards then rewards.crossoverCap else nil)
 	if why ~= "ok" then
 		return false, REFUSALS[why] or "Can't upgrade that"
 	end
 	local step = path.tiers[s.tiers[pathIndex] + 1]
-	if not Economy.trySpend(step.cost) then
+	-- Mastery: a discount on every upgrade, and possibly the first one free.
+	local discount = if rewards then rewards.upgradeDiscountPercent else 0
+	local cost = if s.freeUpgrade then 0 else math.floor(step.cost * (1 - discount / 100) + 0.5)
+	if not Economy.trySpend(cost) then
 		return false, "Not enough cash"
 	end
+	s.freeUpgrade = false
 	s.tiers[pathIndex] += 1
-	s.spent += step.cost
+	s.spent += cost
 	refresh(player, true) -- a fresh magazine with every upgrade
 	return true, `{step.name}!`
 end
@@ -576,12 +604,28 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 		return false, "No ability"
 	end
 
-	s.abilityReadyAt = now + stats.abilityCooldown
+	local rewards = mastery(player, s)
+	s.abilityReadyAt = now + stats.abilityCooldown * (if rewards then rewards.abilityCooldownMult else 1)
 	publish(player)
 	return true, `{hero.ability}!`
 end
 
 ------------------------------------------------------------------ public
+
+-- Mastery was just bought: apply a new free first upgrade (if nothing has
+-- been bought yet this match) and the gold gun right away.
+function Hero.masteryChanged(player: Player)
+	local s = states[player]
+	if not s or not s.hero then
+		return
+	end
+	local rewards = mastery(player, s)
+	if s.spent == 0 and s.tiers[1] + s.tiers[2] + s.tiers[3] == 0 then
+		s.freeUpgrade = rewards ~= nil and rewards.freeFirstUpgrade == true
+	end
+	syncTool(player)
+	publish(player)
+end
 
 -- Level every hero (and anyone who joins later) to `level`; each player's
 -- level shows on their HeroLevel attribute.

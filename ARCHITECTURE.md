@@ -48,6 +48,7 @@ src/
 │   │                        fire modes, pellets/pierce/ricochet, abilities — all validated here
 │   ├── Hazards.luau         Burning patches on the track (towers and hero rounds)
 │   ├── Airdrops.luau        Quartermaster chests players run over to collect
+│   ├── Progression.luau     Saved per player: Storm Cores, hero mastery, highest round (DataStore)
 │   ├── Effects.luau         Tracers, blasts, burn discs (visual only)
 │   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
 └── client/   → StarterPlayer.StarterPlayerScripts.Client
@@ -93,7 +94,7 @@ This dissolves most of the problems the UEFN plan was built around:
 | A player's hero, upgrades, ammo, recoil, cooldown, Overdrive | `Hero` | Clients read `Hero`, `HeroPath1-3`, `Ammo`, `Magazine`, `ReloadUntil`, `AbilityReadyAt` player attributes; Towers ask `Hero.towerRateBoost` |
 | Burning patches | `Hazards` | Towers and Hero call `Hazards.burn()` |
 | Current round | `Waves` | Read the `Round` attribute |
-| Saved progression *(phase 6)* | `Progression` | Snapshot at match start only |
+| Saved progression: Cores, mastery, highest round | `Progression` | Hero reads mastery; Shop asks `towerUnlocked`; mastery only bought outside a match |
 
 **Server authoritative, always.** On Roblox the client is untrusted — exploiters can fire any
 RemoteEvent with any arguments. The client *requests* ("upgrade the tower on pad 4, path 2");
@@ -163,7 +164,7 @@ second test client.
 | **4** — the hero | Free hero pick (Pistol, Assault Rifle, Shotgun); three named upgrade paths each about handling, not damage (`HEROES.md`); magazines, recoil, fire modes, pellets/slugs, pierce, ricochet, special rounds; first-person gunplay; abilities Mark / Overdrive / Airburst | **Done, confirmed in Studio** (redesign 2026-09-29) |
 | **5** — roster and rounds | Chiller (chill: slow, brittle, armour strip; freeze pulses) and Quartermaster (round income, interest, airdrop chests, Logistics discounts/refunds) per `UPGRADES.md` | **Written 2026-09-29, statically checked**, not yet playtested |
 | **5b** — levels | Heroes +25% and towers +10% damage per level, a level every 5 rounds cleared (`HEROES.md`). Next step, planned: hero XP from pops drives each player's level | **Done, confirmed in Studio** |
-| **6** — co-op, mastery, publish | `Progression` (DataStoreService), mastery effects, lobby, 10-player servers | |
+| **6** — progression | `Progression`: DataStore save (Cores, mastery per hero, highest round; failed loads never overwrite), Storm Cores every match, mastery screen (M) with cheaper hero upgrades / cooldowns / free first upgrade / crossover cap 3 / gold gun, shared tower unlocks by highest round, mastery badge on the leaderboard. 10-player servers = a Game Settings value. Deferred: level 10/15 ability variants | **Written 2026-09-29, statically checked**, not yet playtested; saving needs the place published |
 | **7** — battle modes | Team battle (sides, tower HP, per-team cash) and battle royale (most pops) — `VISION.md` | |
 
 ---

@@ -133,8 +133,14 @@ Levels (confirmed in Studio 2026-09-29): heroes +25% and towers +10% damage per
 level, one level per 5 rounds cleared, banner + "Lv" on the HUD. Planned: hero XP from pops
 drives levels instead (HEROES.md) — levels are already per player.
 
-Next: phase 6 (saved progression: Storm Cores, weapon mastery, 10-player servers) or a
-balance / theme pass — user's call.
+Phase 6 written 2026-09-29, not yet playtested: `Progression` saves Storm Cores, mastery
+per hero and highest round (DataStore; session-only + "offline" status when unpublished, and
+a failed load never overwrites a save). Cores every match (win or lose); Mastery screen (M,
+between matches); tower unlocks by highest round, shared by the whole server (user choice);
+mastery badge on the leaderboard. Level 10/15 ability variants deferred (user choice).
+Studio keys: K cash, J cores + unlocks (disables saving for that session).
+
+Next: playtest phase 6; publish the place to test real saving (SETUP.md).
 
 ## Open issues
 

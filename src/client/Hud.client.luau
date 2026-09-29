@@ -211,9 +211,15 @@ if studioCash and studioCash:IsA("RemoteEvent") then
 	button.Activated:Connect(function()
 		studioCash:FireServer()
 	end)
+	local studioProgress = remotes:FindFirstChild("StudioProgress")
 	game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
-		if not processed and input.KeyCode == Enum.KeyCode.K then
+		if processed then
+			return
+		end
+		if input.KeyCode == Enum.KeyCode.K then
 			studioCash:FireServer()
+		elseif input.KeyCode == Enum.KeyCode.J and studioProgress and studioProgress:IsA("RemoteEvent") then
+			studioProgress:FireServer() -- +100 Storm Cores, all towers unlocked (never saved)
 		end
 	end)
 end

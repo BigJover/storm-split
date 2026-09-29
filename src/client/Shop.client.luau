@@ -16,7 +16,11 @@
 
 	Upgrades (U, once you have a hero): only your hero's three paths with the
 	next tier, price and what it changes (HEROES.md, Server/Hero). Same
-	crossover rule as towers.
+	crossover rule as towers; prices include your mastery discount.
+
+	Mastery (M, between matches): Storm Cores and each hero's mastery level,
+	with what the next level gives (Server/Progression). Towers nobody here has
+	unlocked show their unlock round in the Build list.
 
 	Everything here is a request. The server re-checks the spot, the distance
 	and the cash with the same rules and has the final say. Prices shown come
@@ -39,6 +43,7 @@ local Upgrades = require(Shared:WaitForChild("Upgrades"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local request = remotes:WaitForChild("ShopRequest") :: RemoteFunction
 local heroRequest = remotes:WaitForChild("HeroRequest") :: RemoteFunction
+local progressRequest = remotes:WaitForChild("ProgressRequest") :: RemoteFunction
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -112,6 +117,43 @@ upgradesButton.Text = "Upgrades  (U)"
 upgradesButton.Visible = false
 upgradesButton.Parent = gui
 corner(upgradesButton, 8)
+
+local masteryButton = Instance.new("TextButton")
+masteryButton.Name = "Mastery"
+masteryButton.AnchorPoint = Vector2.new(0.5, 0)
+masteryButton.Position = UDim2.new(0.5, 0, 0, 206)
+masteryButton.Size = UDim2.fromOffset(220, 40)
+masteryButton.BackgroundColor3 = Color3.fromRGB(120, 90, 200)
+masteryButton.Font = Enum.Font.GothamBold
+masteryButton.TextSize = 18
+masteryButton.TextColor3 = TEXT
+masteryButton.Text = "Mastery  (M)"
+masteryButton.Modal = true -- only shown between matches, when the mouse is free anyway
+masteryButton.Visible = false
+masteryButton.Parent = gui
+corner(masteryButton, 8)
+
+-- This player's mastery rewards with their hero (nil below level 1).
+local function myMastery()
+	local key = player:GetAttribute("Hero") or ""
+	local level = player:GetAttribute(`Mastery_{key}`) or 0
+	return Config.Mastery[level]
+end
+
+-- The next mastery level after `level` that says what it unlocks.
+local function nextMilestone(level: number): (number?, string?)
+	for l = level + 1, #Config.Mastery do
+		local text = Config.Mastery[l].unlock
+		if text and text ~= "" then
+			return l, text
+		end
+	end
+	return nil, nil
+end
+
+local function towerUnlocked(key: string): boolean
+	return (Config.Towers[key].unlockRound or 0) <= (ReplicatedStorage:GetAttribute("UnlockRound") or 0)
+end
 
 -- One line per ability for the hero cards. Display text only.
 local ABILITY_BLURB = {
@@ -222,7 +264,7 @@ message.Parent = panel
 
 ------------------------------------------------------------------ state
 
-type Mode = "closed" | "list" | "placing" | "manage" | "heroPick" | "heroUpgrade"
+type Mode = "closed" | "list" | "placing" | "manage" | "heroPick" | "heroUpgrade" | "mastery"
 
 local mode: Mode = "closed"
 local placingKey: string? = nil
@@ -729,6 +771,8 @@ render = function()
 	heroButton.Text = if mode == "heroPick" then "Close  (H)" else "Choose hero  (H)"
 	upgradesButton.Visible = myHero() ~= nil
 	upgradesButton.Text = if mode == "heroUpgrade" then "Close  (U)" else "Upgrades  (U)"
+	masteryButton.Visible = ReplicatedStorage:GetAttribute("State") ~= "Playing"
+	masteryButton.Text = if mode == "mastery" then "Close  (M)" else "Mastery  (M)"
 	local cash = math.floor(ReplicatedStorage:GetAttribute("Cash") or 0)
 
 	if mode == "list" then
@@ -738,6 +782,8 @@ render = function()
 			local name = escape(def.display)
 			if ShopRules.Unreleased[key] then
 				addRow(order, `<b>{name}</b>  ·  coming later`, LOCKED_COLOR, false)
+			elseif not towerUnlocked(key) then
+				addRow(order, `<b>{name}</b>  ·  unlocks at round {def.unlockRound}\n<font size="13">Reach it once and it's yours for good</font>`, LOCKED_COLOR, false)
 			else
 				local affordable = cash >= def.baseCost
 				local text = `<b>{name}</b>  ·  {def.baseCost}\n<font size="13">{escape(def.role)}</font>`
@@ -773,6 +819,10 @@ render = function()
 			title.Text = "Choose a hero first (H)"
 		else
 			title.Text = `{hero.display} upgrades  ·  Cash {cash}`
+			-- Mirrors Server/Hero: mastery discount, free first upgrade, crossover cap.
+			local rewards = myMastery()
+			local discount = if rewards then rewards.upgradeDiscountPercent else 0
+			local free = player:GetAttribute("FreeUpgrade") == true
 			local tiers = {}
 			for i = 1, 3 do
 				tiers[i] = player:GetAttribute(`HeroPath{i}`) or 0
@@ -780,21 +830,52 @@ render = function()
 			for pathIndex, path in hero.paths do
 				local current = tiers[pathIndex]
 				local name = escape(path.id)
-				local why = Upgrades.check(tiers, pathIndex, #path.tiers)
+				local why = Upgrades.check(tiers, pathIndex, #path.tiers, if rewards then rewards.crossoverCap else nil)
 				if why == "maxed" then
 					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(path.tiers[#path.tiers].name)}`, LOCKED_COLOR, false)
 				elseif why ~= "ok" then
 					addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
 				else
 					local step = path.tiers[current + 1]
-					local affordable = cash >= step.cost
-					local text = `<b>{escape(step.name)}</b>  ·  {step.cost}\n<font size="13">{name} {current + 1}  ·  {escape(describeHeroStep(path, current))}</font>`
+					local cost = if free then 0 else math.floor(step.cost * (1 - discount / 100) + 0.5)
+					local affordable = cash >= cost
+					local price = if free then "FREE" elseif discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
+					local text = `<b>{escape(step.name)}</b>  ·  {price}\n<font size="13">{name} {current + 1}  ·  {escape(describeHeroStep(path, current))}</font>`
 					addRow(pathIndex, text, if affordable then HERO_COLOR else LOCKED_COLOR, affordable, function()
 						send("upgrade", pathIndex, nil, heroRequest)
 					end)
 				end
 			end
 		end
+	elseif mode == "mastery" then
+		local cores = player:GetAttribute("Cores") or 0
+		local status = player:GetAttribute("SaveStatus")
+		title.Text = `Mastery  ·  {cores} Storm Cores`
+		local between = ReplicatedStorage:GetAttribute("State") ~= "Playing"
+		for order, key in Config.HeroOrder do
+			local hero = Config.Heroes[key]
+			local level = player:GetAttribute(`Mastery_{key}`) or 0
+			local name = escape(hero.display)
+			local nextLevel = Config.Mastery[level + 1]
+			if not nextLevel then
+				addRow(order, `<b>{name}</b>  ·  mastery {level}  ·  maxed`, LOCKED_COLOR, false)
+			else
+				local milestone, reward = nextMilestone(level)
+				local toward = if milestone == level + 1
+					then escape(reward or "")
+					elseif milestone then `toward level {milestone}: {escape(reward or "")}`
+					else ""
+				local affordable = between and cores >= nextLevel.coreCost
+				local text = `<b>{name}</b>  ·  mastery {level} → {level + 1}  ·  {nextLevel.coreCost} cores\n<font size="13">{toward}</font>`
+				addRow(order, text, if affordable then Color3.fromRGB(120, 90, 200) else LOCKED_COLOR, affordable, function()
+					send("mastery", key, nil, progressRequest)
+				end)
+			end
+		end
+		local note = if status == "offline"
+			then "Progress isn't saving: publish the place to Roblox to keep it (SETUP.md)."
+			else "Earn Storm Cores every match, win or lose. Mastery never adds damage."
+		addRow(20, `<font size="13">{note}</font>`, PANEL_COLOR, false)
 	elseif mode == "manage" and managed then
 		local key = managed:GetAttribute("Tower") :: string
 		local def = Config.Towers[key]
@@ -889,6 +970,15 @@ end
 buildButton.Activated:Connect(toggleBuild)
 heroButton.Activated:Connect(toggleHeroPick)
 upgradesButton.Activated:Connect(toggleHeroUpgrade)
+
+local function toggleMastery()
+	if mode == "mastery" then
+		setMode("closed")
+	elseif ReplicatedStorage:GetAttribute("State") ~= "Playing" then
+		setMode("mastery")
+	end
+end
+masteryButton.Activated:Connect(toggleMastery)
 closeButton.Activated:Connect(function()
 	setMode("closed")
 end)
@@ -901,6 +991,8 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		toggleBuild()
 	elseif input.KeyCode == Enum.KeyCode.H then
 		toggleHeroPick()
+	elseif input.KeyCode == Enum.KeyCode.M then
+		toggleMastery()
 	elseif input.KeyCode == Enum.KeyCode.U then
 		toggleHeroUpgrade()
 	elseif mode == "placing" then
@@ -944,16 +1036,28 @@ ReplicatedStorage:GetAttributeChangedSignal("Cash"):Connect(function()
 end)
 
 ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(function()
-	if mode == "heroPick" and not canPickHero() then
-		setMode("closed") -- heroes lock when the game starts
+	if (mode == "heroPick" and not canPickHero()) or (mode == "mastery" and ReplicatedStorage:GetAttribute("State") == "Playing") then
+		setMode("closed") -- heroes and mastery lock when the game starts
 	else
 		render() -- button visibility
 	end
 end)
 
 player.AttributeChanged:Connect(function(name)
-	if name == "Hero" or string.sub(name, 1, 8) == "HeroPath" then
-		render() -- button visibility, and the open hero screen
+	if
+		name == "Hero"
+		or name == "Cores"
+		or name == "FreeUpgrade"
+		or string.sub(name, 1, 8) == "HeroPath"
+		or string.sub(name, 1, 8) == "Mastery_"
+	then
+		render() -- button visibility, and whichever screen is open
+	end
+end)
+
+ReplicatedStorage:GetAttributeChangedSignal("UnlockRound"):Connect(function()
+	if mode == "list" then
+		render()
 	end
 end)
 

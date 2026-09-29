@@ -28,6 +28,7 @@ local Effects = require(script.Parent.Effects)
 local Hero = require(script.Parent.Hero)
 local Hazards = require(script.Parent.Hazards)
 local Airdrops = require(script.Parent.Airdrops)
+local Progression = require(script.Parent.Progression)
 
 -- Testing only: set above 1 to jump straight to a later round.
 local START_ROUND = 1
@@ -72,7 +73,9 @@ end
 Economy.init(Config.Tuning.StartingCash, Config.Tuning.StartingLives, function()
 	over = true
 	ReplicatedStorage:SetAttribute("State", "GameOver")
-	print(`[StormSplit] GAME OVER on round {ReplicatedStorage:GetAttribute("Round")}`)
+	local round = ReplicatedStorage:GetAttribute("Round") or 0
+	print(`[StormSplit] GAME OVER on round {round}`)
+	Progression.endMatch(round) -- Storm Cores, win or lose
 end)
 
 Enemies.init(map.path, map.enemyFolder, {
@@ -96,6 +99,7 @@ Towers.init(map.towerFolder, {
 		return Hero.towerRateBoost(tower.position) -- Overdrive
 	end,
 })
+Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged })
 Shop.init(remotes)
 Hero.init(remotes, { onPop = Scoreboard.addPop })
 
@@ -236,4 +240,5 @@ local won = Waves.run({
 if won then
 	ReplicatedStorage:SetAttribute("State", "Victory")
 	print("[StormSplit] VICTORY — all rounds cleared")
+	Progression.endMatch(#Config.Rounds)
 end

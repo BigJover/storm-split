@@ -3,7 +3,8 @@
 	server will refuse — but only the server's answer counts.
 
 	The crossover rule (strict version): a tower may open at most two of its
-	three paths, and only one of them may go past tier 2.
+	three paths, and only one of them may go past tier 2. `secondaryCap` raises
+	that 2 (hero mastery level 20 makes it 3).
 ]]
 
 local Upgrades = {}
@@ -11,7 +12,8 @@ local Upgrades = {}
 export type Why = "ok" | "maxed" | "third path" | "crossover"
 
 -- Can path `pathIndex` go up one tier, given the tower's current tiers?
-function Upgrades.check(tiers: { number }, pathIndex: number, maxTier: number): Why
+function Upgrades.check(tiers: { number }, pathIndex: number, maxTier: number, secondaryCap: number?): Why
+	local cap = secondaryCap or 2
 	local current = tiers[pathIndex]
 	if current == nil or current >= maxTier then
 		return "maxed"
@@ -30,8 +32,8 @@ function Upgrades.check(tiers: { number }, pathIndex: number, maxTier: number): 
 	if current == 0 and nonZeroOthers >= 2 then
 		return "third path" -- a third path may never open
 	end
-	if current >= 2 and maxOther >= 3 then
-		return "crossover" -- only one path may go past tier 2
+	if current >= cap and maxOther > cap then
+		return "crossover" -- only one path may go past the cap (with cap 2: the classic rule)
 	end
 	return "ok"
 end

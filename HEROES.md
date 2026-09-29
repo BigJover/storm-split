@@ -15,6 +15,13 @@ on the spreadsheet plus any new fire mechanic.
 - Every hero has its **ability from the start** (F), on a cooldown. One path per hero
   makes it stronger or faster.
 
+## Mastery (saved between matches)
+
+Storm Cores, earned every match, buy up to 20 mastery levels per hero: -5% to -20% hero
+upgrade costs (levels 1-4), ability cooldown -15% (5) and -30% (15), a free first upgrade
+each match (10), and at 20 a gold gun and a crossover cap of 3 for this hero. Never damage.
+Planned later: a second ability variant (10) and a secondary ability effect (15).
+
 ## Hero levels
 
 Enemy HP grows ~5% a round (x7 by round 40) while hero upgrades don't add much damage, so
