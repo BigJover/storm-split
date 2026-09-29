@@ -10,6 +10,10 @@
 	with its three upgrade paths and Sell. Paths the crossover rule
 	(Shared/Upgrades) or the team's cash won't allow are greyed out.
 
+	Hero: the Hero button (or H) lists the three weapon types with their next
+	tier and price (Server/Hero). Same crossover rule as towers: two weapon
+	types at most, only one past tier 2.
+
 	Everything here is a request. The server re-checks the spot, the distance
 	and the cash with the same rules and has the final say. Prices shown come
 	from Config for display only.
@@ -30,6 +34,7 @@ local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local request = remotes:WaitForChild("ShopRequest") :: RemoteFunction
+local heroRequest = remotes:WaitForChild("HeroRequest") :: RemoteFunction
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -72,6 +77,20 @@ buildButton.TextColor3 = TEXT
 buildButton.Text = "Build  (B)"
 buildButton.Parent = gui
 corner(buildButton, 8)
+
+local HERO_COLOR = Color3.fromRGB(200, 90, 110)
+local heroButton = Instance.new("TextButton")
+heroButton.Name = "Hero"
+heroButton.AnchorPoint = Vector2.new(1, 1)
+heroButton.Position = UDim2.new(1, -24, 1, -80)
+heroButton.Size = UDim2.fromOffset(140, 48)
+heroButton.BackgroundColor3 = HERO_COLOR
+heroButton.Font = Enum.Font.GothamBold
+heroButton.TextSize = 20
+heroButton.TextColor3 = TEXT
+heroButton.Text = "Hero  (H)"
+heroButton.Parent = gui
+corner(heroButton, 8)
 
 local panel = Instance.new("Frame")
 panel.Name = "Panel"
@@ -158,7 +177,7 @@ message.Parent = panel
 
 ------------------------------------------------------------------ state
 
-type Mode = "closed" | "list" | "placing" | "manage"
+type Mode = "closed" | "list" | "placing" | "manage" | "hero"
 
 local mode: Mode = "closed"
 local placingKey: string? = nil
@@ -434,14 +453,14 @@ local function setMode(newMode: Mode)
 	render()
 end
 
-local function send(action: string, a: any, b: any): boolean
+local function send(action: string, a: any, b: any, remote: RemoteFunction?): boolean
 	if busy then
 		return false
 	end
 	busy = true
 	say("…")
 	local ok, success, text = pcall(function()
-		return request:InvokeServer(action, a, b)
+		return (remote or request):InvokeServer(action, a, b)
 	end)
 	busy = false
 	if not ok then
@@ -453,6 +472,11 @@ local function send(action: string, a: any, b: any): boolean
 end
 
 local function startPlacing(key: string)
+	-- Put the weapon away so the placing click doesn't also shoot.
+	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid:UnequipTools()
+	end
 	setMode("placing")
 	placingKey = key
 	makeGhost(key)
@@ -481,7 +505,8 @@ render = function()
 	end
 
 	panel.Visible = mode ~= "closed"
-	buildButton.Text = if mode == "closed" then "Build  (B)" else "Close  (B)"
+	buildButton.Text = if mode == "list" or mode == "placing" then "Close  (B)" else "Build  (B)"
+	heroButton.Text = if mode == "hero" then "Close  (H)" else "Hero  (H)"
 	local cash = math.floor(ReplicatedStorage:GetAttribute("Cash") or 0)
 
 	if mode == "list" then
@@ -505,6 +530,38 @@ render = function()
 		addRow(1, "<b>Cancel</b>  (Q)", LOCKED_COLOR, true, function()
 			setMode("list")
 		end)
+	elseif mode == "hero" then
+		title.Text = `Hero weapons  ·  Cash {cash}`
+		local tiers = {}
+		for index, key in Config.WeaponOrder do
+			tiers[index] = player:GetAttribute(`Weapon_{key}`) or 0
+		end
+		for index, key in Config.WeaponOrder do
+			local weapon = Config.Weapons[key]
+			local current = tiers[index]
+			local why = Upgrades.check(tiers, index, #weapon.tiers)
+			local name = escape(weapon.display)
+			if why == "maxed" then
+				addRow(index, `<b>{name}</b>  ·  maxed  ·  {escape(weapon.tiers[current].name)}`, LOCKED_COLOR, false)
+			elseif why ~= "ok" then
+				local reason = if why == "third path" then "only two weapon types" else "only one weapon past tier 2"
+				addRow(index, `<b>{name}</b>  ·  tier {current}\n<font size="13">locked · {reason}</font>`, LOCKED_COLOR, false)
+			else
+				local step = weapon.tiers[current + 1]
+				local affordable = cash >= step.cost
+				local details = `{step.damage} dmg · {step.rate}/s · range {step.range}`
+				if current + 1 == 2 then
+					details ..= ` · unlocks {weapon.ability} (F)`
+				elseif current + 1 > 2 then
+					details ..= ` · stronger {weapon.ability}`
+				end
+				local text = `<b>{escape(step.name)}</b>  ·  {step.cost}\n<font size="13">{name} {current + 1}  ·  {escape(details)}</font>`
+				addRow(index, text, if affordable then HERO_COLOR else LOCKED_COLOR, affordable, function()
+					send("buy", key, nil, heroRequest)
+				end)
+			end
+		end
+		addRow(10, `<font size="13">Equip with the hotbar (1, 2). Click to shoot, F for the ability.</font>`, PANEL_COLOR, false)
 	elseif mode == "manage" and managed then
 		local key = managed:GetAttribute("Tower") :: string
 		local def = Config.Towers[key]
@@ -572,10 +629,15 @@ end
 ------------------------------------------------------------------ input
 
 local function toggleBuild()
-	setMode(if mode == "closed" or mode == "manage" then "list" else "closed")
+	setMode(if mode == "list" or mode == "placing" then "closed" else "list")
+end
+
+local function toggleHero()
+	setMode(if mode == "hero" then "closed" else "hero")
 end
 
 buildButton.Activated:Connect(toggleBuild)
+heroButton.Activated:Connect(toggleHero)
 closeButton.Activated:Connect(function()
 	setMode("closed")
 end)
@@ -586,6 +648,8 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	end
 	if input.KeyCode == Enum.KeyCode.B then
 		toggleBuild()
+	elseif input.KeyCode == Enum.KeyCode.H then
+		toggleHero()
 	elseif mode == "placing" then
 		if input.KeyCode == Enum.KeyCode.Q then
 			setMode("list")
@@ -621,7 +685,13 @@ ProximityPromptService.PromptHidden:Connect(function(prompt)
 end)
 
 ReplicatedStorage:GetAttributeChangedSignal("Cash"):Connect(function()
-	if mode == "list" or mode == "manage" then
+	if mode == "list" or mode == "manage" or mode == "hero" then
+		render()
+	end
+end)
+
+player.AttributeChanged:Connect(function(name)
+	if mode == "hero" and string.sub(name, 1, 7) == "Weapon_" then
 		render()
 	end
 end)

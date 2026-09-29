@@ -164,6 +164,13 @@ def read_weapons(ws):
             "rate": num(v(ws, r, 8)),
             "targets": num(v(ws, r, 9)),
             "cooldown": num(v(ws, r, 11)),
+            "piercesArmor": yes(v(ws, r, 13)),
+            "hitsAir": yes(v(ws, r, 14)),
+            "range": num(v(ws, r, 15)),
+            "splashRadius": num(v(ws, r, 16)),
+            "abilityPower": num(v(ws, r, 17)),
+            "abilitySeconds": num(v(ws, r, 18)),
+            "abilityRadius": num(v(ws, r, 19)),
         })
         r += 1
     return weapons, order
@@ -277,6 +284,13 @@ def validate(data):
                 for field in ("shots", "lineHits"):
                     if step[field] < 1 or step[field] != int(step[field]):
                         problems.append(f"{key} {p['id']} tier {i}: {field} must be a whole number >= 1")
+
+    for key, w in data["Weapons"].items():
+        for i, t in enumerate(w["tiers"], start=1):
+            if not isinstance(t["range"], (int, float)) or t["range"] <= 0:
+                problems.append(f"Weapon {w['display']} tier {i}: Range must be > 0")
+            if i >= 2 and (not isinstance(t["abilityPower"], (int, float)) or t["abilityPower"] <= 0):
+                problems.append(f"Weapon {w['display']} tier {i}: needs Ability power (abilities unlock at tier 2)")
 
     if "EASY" not in data["Difficulties"]:
         problems.append("Difficulty sheet needs an 'Easy' row (the baseline)")

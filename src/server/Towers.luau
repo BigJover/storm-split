@@ -29,7 +29,6 @@
 	                     (strongest aura wins; auras don't stack)
 ]]
 
-local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -38,6 +37,7 @@ local Placement = require(Shared:WaitForChild("Placement"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
+local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
 
 local Towers = {}
@@ -94,7 +94,6 @@ type Burn = {
 }
 
 -- Visuals only.
-local TRACER_LIFETIME = 0.06
 local BURN_COLOR = Color3.fromRGB(255, 110, 40)
 local BOMBLET_COLOR = Color3.fromRGB(255, 190, 90)
 
@@ -103,6 +102,7 @@ local burns: { Burn } = {}
 local towerFolder: Instance
 local nextId = 0
 local onPop: ((Player) -> ())? = nil
+local extraRatePercent: ((Tower) -> number)? = nil -- boosts from outside towers (hero Overdrive)
 
 local function credit(owner: Player?, killed: boolean)
 	if killed and owner and owner.Parent and onPop then
@@ -221,40 +221,17 @@ local function swapStage(tower: Tower): number
 	return stage
 end
 
------------------------------------------------------------------- visuals
-
-local function effect(size: Vector3, cframe: CFrame, color: Color3, lifetime: number, shape: Enum.PartType?)
-	local part = Instance.new("Part")
-	part.Anchored = true
-	part.CanCollide = false
-	part.CanQuery = false
-	part.CanTouch = false
-	part.CastShadow = false
-	part.Material = Enum.Material.Neon
-	part.Color = color
-	if shape then
-		part.Shape = shape
-	end
-	part.Size = size
-	part.CFrame = cframe
-	part.Parent = towerFolder
-	Debris:AddItem(part, lifetime)
-	return part
-end
-
-local function tracer(from: Vector3, to: Vector3, color: Color3)
-	local length = (to - from).Magnitude
-	if length < 0.1 then
-		return
-	end
-	effect(Vector3.new(0.15, 0.15, length), CFrame.lookAt((from + to) / 2, to), color, TRACER_LIFETIME)
-end
-
 ------------------------------------------------------------------ public
 
-function Towers.init(folder: Instance, hooks: { onPop: ((Player) -> ())? }?)
+export type Hooks = {
+	onPop: ((Player) -> ())?,
+	extraRatePercent: ((Tower) -> number)?,
+}
+
+function Towers.init(folder: Instance, hooks: Hooks?)
 	towerFolder = folder
 	onPop = hooks and hooks.onPop
+	extraRatePercent = hooks and hooks.extraRatePercent
 end
 
 -- Callers check Placement first (Shop does); this only builds.
@@ -407,7 +384,7 @@ local function bomblets(tower: Tower, distance: number, damage: number, generati
 				hit(tower, enemy, blastDamage)
 			end
 		end
-		effect(Vector3.one * 2, CFrame.new(Enemies.pointAt(centre) + Vector3.new(0, 1, 0)), BOMBLET_COLOR, 0.15, Enum.PartType.Ball)
+		Effects.part(Vector3.one * 2, CFrame.new(Enemies.pointAt(centre) + Vector3.new(0, 1, 0)), BOMBLET_COLOR, 0.15, Enum.PartType.Ball)
 		bomblets(tower, centre, blastDamage, generation + 1, live)
 	end
 end
@@ -426,14 +403,7 @@ local function addBurn(tower: Tower, primary: Enemies.Enemy)
 		piercesArmor = piercing(tower),
 		owner = tower.owner,
 	})
-	local ground = Enemies.pointAt(primary.distance)
-	effect(
-		Vector3.new(0.3, reach * 2, reach * 2),
-		CFrame.new(ground + Vector3.new(0, 0.45, 0)) * CFrame.Angles(0, 0, math.rad(90)),
-		BURN_COLOR,
-		stats.burnSeconds,
-		Enum.PartType.Cylinder
-	).Transparency = 0.5
+	Effects.disc(Enemies.pointAt(primary.distance) + Vector3.new(0, 0.45, 0), reach, BURN_COLOR, stats.burnSeconds, 0.5)
 end
 
 local function fire(tower: Tower, live): boolean
@@ -461,7 +431,7 @@ local function fire(tower: Tower, live): boolean
 		end
 		bomblets(tower, targetDistance, damage, 1, live)
 
-		tracer(tower.muzzle, targetPosition, TowerLook.COLORS[tower.key] or Color3.new(1, 1, 1))
+		Effects.tracer(tower.muzzle, targetPosition, TowerLook.COLORS[tower.key] or Color3.new(1, 1, 1))
 	end
 	return fired
 end
@@ -502,7 +472,8 @@ function Towers.step(dt: number)
 		end
 
 		if fire(tower, live) then
-			tower.cooldown += 1 / (stats.rate * (1 + tower.buff.ratePercent / 100))
+			local boost = tower.buff.ratePercent + (if extraRatePercent then extraRatePercent(tower) else 0)
+			tower.cooldown += 1 / (stats.rate * (1 + boost / 100))
 		else
 			tower.cooldown = 0 -- stay ready
 		end

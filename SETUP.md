@@ -55,7 +55,9 @@ Press **Play**. You should see:
 - A status bar at the top with your cash (450) and lives, and a green **Start round 1** button
 - **Build (B)** bottom-right: pick a tower, move the see-through ghost (green = fits, red =
   on the track, overlapping or too far), click to place, **Q** to cancel
-- Walk up to a built tower and press **E** to sell it
+- Walk up to a built tower and press **E** to upgrade or sell it
+- **Hero (H)**: buy weapon tiers; equip with the hotbar (1, 2), hold click to shoot, **F** for
+  the ability (from tier 2)
 - Press **Start** and enemies spawn; kills and cleared rounds add cash
 - One line per cleared round in **Output** (**Window → Output**):
   `Round 3 cleared | lives 40 | cash 212 | peak enemies 14 | script cost avg … ms`

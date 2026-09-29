@@ -85,8 +85,17 @@ difficulty levels on a new `Difficulty` sheet (Easy = the current baseline, Norm
 Chaos — HP, density, speed, promotion to tougher tiers, cash, lives), per-player scaling
 (`Tuning`, CO-OP), tower owners, a Pops leaderboard, and owner-only selling.
 
-Next: playtest 3c (including Studio's multi-client test), then phase 4 — the player
-character as the hero with its own upgrade track, weapons and abilities.
+Phase 3c playtested 2026-09-28 ("difficulty works"). Phase 4 written the same day, not
+yet playtested: the player is the hero (design doc §02). Three weapon types (Precision,
+Sustained, Ordnance), five named tiers each, bought with team cash under the tower crossover
+rule; weapons are hotbar Tools; shots are validated and aimed server-side; abilities from
+tier 2 — Mark, Overdrive, Airburst. Weapon reach/armour/air/splash and ability strength
+are new Weapons-sheet columns.
+
+Balance watch (design doc): the player must never out-damage their own towers — test round
+25 with no towers bought.
+
+Next: playtest phase 4, then phase 5 (Chiller and Quartermaster mechanics).
 
 ## Open issues
 

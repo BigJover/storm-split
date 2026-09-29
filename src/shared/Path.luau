@@ -61,4 +61,23 @@ function Path.sample(self: Path, distance: number): (Vector3, Vector3)
 	return points[n], (points[n] - points[n - 1]).Unit
 end
 
+-- Distance along the path of the point nearest to `point`, measured flat (XZ).
+function Path.closest(self: Path, point: Vector3): number
+	local points, cumulative = self.points, self.cumulative
+	local p = Vector2.new(point.X, point.Z)
+	local bestDistance, bestGap = 0, math.huge
+	for i = 2, #points do
+		local a = Vector2.new(points[i - 1].X, points[i - 1].Z)
+		local b = Vector2.new(points[i].X, points[i].Z)
+		local ab = b - a
+		local t = math.clamp((p - a):Dot(ab) / ab:Dot(ab), 0, 1)
+		local gap = (a + ab * t - p).Magnitude
+		if gap < bestGap then
+			bestGap = gap
+			bestDistance = cumulative[i - 1] + t * (cumulative[i] - cumulative[i - 1])
+		end
+	end
+	return bestDistance
+end
+
 return Path

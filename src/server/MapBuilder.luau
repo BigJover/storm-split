@@ -44,6 +44,7 @@ export type Map = {
 	path: Path.Path,
 	enemyFolder: Folder,
 	towerFolder: Folder,
+	effectFolder: Folder,
 }
 
 function MapBuilder.build(): Map
@@ -98,6 +99,7 @@ function MapBuilder.build(): Map
 
 	local enemyFolder = folder("Enemies", root)
 	local towerFolder = folder("Towers", root)
+	local effectFolder = folder("Effects", root)
 
 	root.Parent = workspace
 
@@ -106,6 +108,7 @@ function MapBuilder.build(): Map
 		path = path,
 		enemyFolder = enemyFolder,
 		towerFolder = towerFolder,
+		effectFolder = effectFolder,
 	}
 end
 

@@ -43,7 +43,7 @@ export type Enemy = {
 	markedUntil: number,
 }
 
-type Pending = { key: string, distance: number, hpMult: number }
+type Pending = { key: string, distance: number, hpMult: number, markPercent: number?, markedUntil: number? }
 
 -- Visuals only. Balance never lives here.
 local LOOK = {
@@ -157,8 +157,8 @@ local function spawnNow(item: Pending)
 		part = part,
 		alive = true,
 		stunnedUntil = 0,
-		markPercent = 0,
-		markedUntil = 0,
+		markPercent = item.markPercent or 0, -- a split child inherits its parent's mark
+		markedUntil = item.markedUntil or 0,
 	}
 
 	live[enemy.id] = enemy
@@ -230,6 +230,8 @@ function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?): b
 				key = def.splitsInto,
 				distance = math.max(0, distance - (i - 1) * SPLIT_SPACING),
 				hpMult = enemy.hpMult,
+				markPercent = enemy.markPercent,
+				markedUntil = enemy.markedUntil,
 			})
 		end
 	end
@@ -298,6 +300,11 @@ function Enemies.step(dt: number)
 			enemy.part.CFrame = cframeAt(enemy.distance, enemy.height)
 		end
 	end
+end
+
+-- Distance along the track of the point nearest to a world position.
+function Enemies.trackDistanceNear(point: Vector3): number
+	return path:closest(point)
 end
 
 -- World position of a point `distance` studs along the track (for visuals).

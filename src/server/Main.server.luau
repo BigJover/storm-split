@@ -24,6 +24,8 @@ local Waves = require(script.Parent.Waves)
 local Economy = require(script.Parent.Economy)
 local Shop = require(script.Parent.Shop)
 local Scoreboard = require(script.Parent.Scoreboard)
+local Effects = require(script.Parent.Effects)
+local Hero = require(script.Parent.Hero)
 
 -- Testing only: set above 1 to jump straight to a later round.
 local START_ROUND = 1
@@ -71,9 +73,16 @@ Enemies.init(map.path, map.enemyFolder, {
 	end,
 })
 
+Effects.init(map.effectFolder)
 Scoreboard.init()
-Towers.init(map.towerFolder, { onPop = Scoreboard.addPop })
+Towers.init(map.towerFolder, {
+	onPop = Scoreboard.addPop,
+	extraRatePercent = function(tower)
+		return Hero.towerRateBoost(tower.position) -- Overdrive
+	end,
+})
 Shop.init(remotes)
+Hero.init(remotes, { onPop = Scoreboard.addPop })
 
 -- Each player beyond the first adds to the shared pot once, whenever they join
 -- (a rejoin doesn't pay twice).
