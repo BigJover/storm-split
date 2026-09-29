@@ -51,6 +51,8 @@ ReplicatedStorage, ServerScriptService and StarterPlayerScripts.
 
 Press **Play**. You should see:
 
+- The **home screen** over a slowly circling view of the map: pick Co-op, the track and a
+  difficulty, then **PLAY** (the first player in the server is the host and chooses)
 - A purple serpentine track on a green build area, with a green spawn and red exit
 - A status bar at the top with your cash (450) and lives, and a green **Start round 1** button
 - **Build (B)** bottom-right: pick a tower, move the see-through ghost (green = fits, red =

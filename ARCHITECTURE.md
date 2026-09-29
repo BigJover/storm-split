@@ -33,9 +33,11 @@ src/
 │   │                        upgrade visuals (ring size, tier label, crown/glow swaps)
 │   ├── Upgrades.luau        The crossover rule, shared so the client greys out what the server refuses
 │   ├── HeroStats.luau       A hero's gun right now (base + upgrades), shared by server and client HUD
-│   └── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
+│   ├── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
+│   └── Modes.luau           Game modes and tracks the home screen offers (availability, display)
 ├── server/   → ServerScriptService.Server
-│   ├── Main.server.luau     Entry point and wiring. Only file that knows every module.
+│   ├── Main.server.luau     Entry point, wiring, and the match loop: Lobby → Building → Playing
+│   │                        → GameOver/Victory → reset → Lobby. Spawns characters.
 │   ├── MapBuilder.luau      Builds the map at runtime from Track
 │   ├── Enemies.luau         Spawning, movement, damage, splitting, live cap; armour, stun,
 │   │                        knockback, marks
@@ -52,7 +54,8 @@ src/
 │   ├── Effects.luau         Tracers, blasts, burn discs (visual only)
 │   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
 └── client/   → StarterPlayer.StarterPlayerScripts.Client
-    ├── Hud.client.luau      Round / cash / lives / enemies label, Start button
+    ├── Home.client.luau     Home screen (Lobby): mode, track, difficulty, Play (host only)
+    ├── Hud.client.luau      Status bar, Start button, level-up banner, result screen
     ├── Shop.client.luau     Build, hero select and hero upgrade screens; placement ghost; tower panel
     └── Hero.client.luau     Trigger (semi/auto/burst), reload, ammo, scope, camera, crosshair (requests only)
 ```
@@ -90,7 +93,7 @@ This dissolves most of the problems the UEFN plan was built around:
 | What a tower cost (for refunds) | `Shop` | — |
 | Who built a tower | `Towers` (`tower.owner`) | Shop reads it: only the builder sells |
 | Pops per player | `Scoreboard` | Towers report kills through the `onPop` hook |
-| Difficulty | `Main` (`Difficulty` attribute, locked at Start) | Waves reads it through `options.scale()` |
+| Match state (`State`), mode, track, difficulty, host | `Main` | Clients read the attributes; the host changes mode/track/difficulty through the `Lobby` remote, in the Lobby only |
 | A player's hero, upgrades, ammo, recoil, cooldown, Overdrive | `Hero` | Clients read `Hero`, `HeroPath1-3`, `Ammo`, `Magazine`, `ReloadUntil`, `AbilityReadyAt` player attributes; Towers ask `Hero.towerRateBoost` |
 | Burning patches | `Hazards` | Towers and Hero call `Hazards.burn()` |
 | Current round | `Waves` | Read the `Round` attribute |
@@ -165,6 +168,7 @@ second test client.
 | **5** — roster and rounds | Chiller (chill: slow, brittle, armour strip; freeze pulses) and Quartermaster (round income, interest, airdrop chests, Logistics discounts/refunds) per `UPGRADES.md` | **Written 2026-09-29, statically checked**, not yet playtested |
 | **5b** — levels | Heroes +25% and towers +10% damage per level, a level every 5 rounds cleared (`HEROES.md`). Next step, planned: hero XP from pops drives each player's level | **Done, confirmed in Studio** |
 | **6** — progression | `Progression`: DataStore save (Cores, owned heroes/towers, mastery per hero, highest round; failed loads never overwrite). Casual payouts (clear reward per difficulty; multiplayer loss 5; solo loss 0). Core unlocks: Pistol + Scout/Sniper/Grenadier free; Rifle/Shotgun 75, Chiller 100, Quartermaster 150; place only what you own, upgrade anyone's. Mastery screen (M). Deferred: level 10/15 ability variants; competitive buy-ins/pots (phase 7) | **Written 2026-09-29, statically checked**, not yet playtested; saving needs the place published |
+| **6b** — home screen | Match loop in `Main` (Lobby → match → results → reset → Lobby), no characters until Play, host picks mode (Co-op; Team Battle / Battle Royale shown as coming soon), track and difficulty; result screen with Cores earned. A separate lobby place with matchmaking comes with phase 7 | **Written 2026-09-29, statically checked**, not yet playtested |
 | **7** — battle modes | Team battle (sides, tower HP, per-team cash) and battle royale (most pops) — `VISION.md` | |
 
 ---
