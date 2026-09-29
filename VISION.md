@@ -24,6 +24,27 @@ Teams attack each other's towers; the focus is surviving longer than the other t
 **Battle royale.** Every player for themselves. Winner is whoever gets the most **pops**
 (kills credited to their towers).
 
+## Storm Cores economy (user, 2026-09-29)
+
+Cores are the permanent currency: they buy tower and hero unlocks and hero mastery.
+
+**Casual modes (no buy-in, only pay out):**
+- Solo: pays only for **clearing a track** — Easy 50, Normal 100, Hard 150, Chaos 200. Each
+  track is its own level with its own rewards.
+- Multiplayer: losers get a flat **5**; winners get more (co-op: the clear reward above).
+- Casual battle royale: 1st gets a lot, 2nd a decent amount, 3rd slightly more than
+  participation (numbers TBD).
+
+**Competitive modes (stakes):** every player pays a **10–20 Core buy-in** into a pot.
+- Team modes: the pot is split among the winning team.
+- Battle royale: 1st gets **72%**, 2nd **23%**, 3rd **5%** of the pot, each rounded down.
+- Competitive always pays more than the casual version.
+
+**Unlocks (Cores):** everyone starts with the Pistol hero and the Scout, Sniper and
+Grenadier towers. Other heroes and towers — Chiller, Quartermaster and everything added
+later — are bought with Cores. You can only place towers you own, but you can pay to
+upgrade a teammate's tower of a type you don't own.
+
 ## What the code needs for those modes
 
 Some of this is cheap now and expensive later, so it's built early:

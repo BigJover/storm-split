@@ -75,7 +75,7 @@ Economy.init(Config.Tuning.StartingCash, Config.Tuning.StartingLives, function()
 	ReplicatedStorage:SetAttribute("State", "GameOver")
 	local round = ReplicatedStorage:GetAttribute("Round") or 0
 	print(`[StormSplit] GAME OVER on round {round}`)
-	Progression.endMatch(round) -- Storm Cores, win or lose
+	Progression.endMatch({ cleared = false, roundReached = round, difficulty = ReplicatedStorage:GetAttribute("Difficulty") })
 end)
 
 Enemies.init(map.path, map.enemyFolder, {
@@ -240,5 +240,5 @@ local won = Waves.run({
 if won then
 	ReplicatedStorage:SetAttribute("State", "Victory")
 	print("[StormSplit] VICTORY — all rounds cleared")
-	Progression.endMatch(#Config.Rounds)
+	Progression.endMatch({ cleared = true, roundReached = #Config.Rounds, difficulty = ReplicatedStorage:GetAttribute("Difficulty") })
 end

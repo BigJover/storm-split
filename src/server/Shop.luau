@@ -91,8 +91,9 @@ local function build(player: Player, towerKey: unknown, position: unknown): (boo
 	if not def or ShopRules.Unreleased[towerKey] then
 		return false, "That tower isn't for sale"
 	end
-	if not Progression.towerUnlocked(towerKey) then
-		return false, `{def.display} unlocks when someone here has reached round {def.unlockRound}`
+	-- You can only place towers you own; upgrading anyone's tower is fine.
+	if not Progression.ownsTower(player, towerKey) then
+		return false, `Unlock {def.display} with Storm Cores first (M)`
 	end
 	if typeof(position) ~= "Vector3" then
 		return false, "Pick a spot"

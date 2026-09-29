@@ -49,7 +49,7 @@ built). Change a name there, not in code.
 - Cluster Shell: each shell splits into 3 blasts. Chain Reaction: the bomblets split again.
 - Shockwave: knocks enemies back along the track. Armor Crack: damages armour, ×2 vs armoured. Stun Grenade: brief stun. Tectonic Slam: everything hit is stunned 1s.
 
-## Chiller — support / crowd control ✅ phase 5
+## Chiller — support / crowd control ✅ phase 5 · unlock 100 Storm Cores
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
@@ -61,7 +61,7 @@ built). Change a name there, not in code.
 - Flash Freeze: periodic hard stop. Ice Shards: freezes also deal damage. Stasis: long freeze that holds bosses.
 - Brittle: chilled enemies take +25% damage. Shatter: +35% and strips armour. Cold Front: towers in range +10% attack speed. Winter's Edge: +75%, towers in range +20% damage.
 
-## Quartermaster — economy, no attack ✅ phase 5
+## Quartermaster — economy, no attack ✅ phase 5 · unlock 150 Storm Cores
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|

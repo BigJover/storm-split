@@ -6,7 +6,8 @@ on the spreadsheet plus any new fire mechanic.
 
 ## Rules
 
-- **Picking a hero is free.** Pick in the build phase; switch freely (full refund of any
+- **Everyone starts with the Pistol.** Other heroes are unlocked with Storm Cores (Assault
+  Rifle 75, Shotgun 75; `Heroes` sheet). **Picking a hero you own is free.** Pick in the build phase; switch freely (full refund of any
   upgrades) until Start, then it's locked. A player who joins mid-match picks once.
 - **Only upgrades cost cash** (the team's shared pot). Each hero has three paths of five
   tiers, with the same crossover rule as towers: two paths at most, only one past tier 2.
@@ -17,7 +18,7 @@ on the spreadsheet plus any new fire mechanic.
 
 ## Mastery (saved between matches)
 
-Storm Cores, earned every match, buy up to 20 mastery levels per hero: -5% to -20% hero
+Storm Cores (`VISION.md` for how they're earned) buy up to 20 mastery levels per owned hero: -5% to -20% hero
 upgrade costs (levels 1-4), ability cooldown -15% (5) and -30% (15), a free first upgrade
 each match (10), and at 20 a gold gun and a crossover cap of 3 for this hero. Never damage.
 Planned later: a second ability variant (10) and a secondary ability effect (15).

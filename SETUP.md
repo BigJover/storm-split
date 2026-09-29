@@ -73,7 +73,7 @@ Each extra player adds enemies and starting cash (`VISION.md`).
 
 ## Saving progress and 10-player servers
 
-Storm Cores, mastery and tower unlocks save with Roblox's DataStore, which only exists for a
+Storm Cores, unlocks and mastery save with Roblox's DataStore, which only exists for a
 place **published to Roblox**. Until then the game runs on session-only progress and the
 Mastery screen (M) says so.
 
@@ -84,7 +84,7 @@ Mastery screen (M) says so.
 3. **Game Settings → Places** (or on create.roblox.com) → set **Max Players** to **10**.
 
 Studio test keys (never in a published game): **K** = +1000 cash, **J** = +100 Storm Cores
-and every tower unlocked. J switches that session to "not saving" so test progress never
+and every hero and tower owned. J switches that session to "not saving" so test progress never
 reaches your real save.
 
 ## 4. Connect Claude to Studio (MCP)

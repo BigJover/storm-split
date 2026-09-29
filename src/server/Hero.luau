@@ -262,6 +262,9 @@ local function pick(player: Player, key: unknown): (boolean, string)
 	if typeof(key) ~= "string" or not Config.Heroes[key] then
 		return false, "Unknown hero"
 	end
+	if not Progression.ownsHero(player, key) then
+		return false, `Unlock {Config.Heroes[key].display} with Storm Cores first (M)`
+	end
 	local s = stateOf(player)
 	local building = ReplicatedStorage:GetAttribute("State") ~= "Playing"
 	if s.hero and not building then

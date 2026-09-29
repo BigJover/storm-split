@@ -24,8 +24,8 @@ return table.freeze({
 		GlobalSpeedScalar = 1,
 		HeroUpgradeBaseCost = 200,
 		HeroUpgradeCostGrowth = 2,
-		CorePayoutBase = 5,
-		CorePayoutPerRound = 1.5,
+		MultiplayerLossPayout = 5,
+		TypicalCoresPerMatch = 50,
 		MasteryCostBase = 25,
 		MasteryCostGrowth = 1.18,
 		AssumedSpendOnTowers = 0.75,
@@ -64,7 +64,7 @@ return table.freeze({
 			incomePerRound = 0,
 			splashRadius = 0,
 			slowPercent = 0,
-			unlockRound = 0,
+			unlockCost = 0,
 			paths = {
 				{
 					id = "Lookout",
@@ -728,7 +728,7 @@ return table.freeze({
 			incomePerRound = 0,
 			splashRadius = 0,
 			slowPercent = 0,
-			unlockRound = 0,
+			unlockCost = 0,
 			paths = {
 				{
 					id = "Deadeye",
@@ -1392,7 +1392,7 @@ return table.freeze({
 			incomePerRound = 0,
 			splashRadius = 6,
 			slowPercent = 0,
-			unlockRound = 10,
+			unlockCost = 0,
 			paths = {
 				{
 					id = "Blast",
@@ -2056,7 +2056,7 @@ return table.freeze({
 			incomePerRound = 0,
 			splashRadius = 6,
 			slowPercent = 40,
-			unlockRound = 20,
+			unlockCost = 100,
 			paths = {
 				{
 					id = "Field",
@@ -2720,7 +2720,7 @@ return table.freeze({
 			incomePerRound = 150,
 			splashRadius = 0,
 			slowPercent = 0,
-			unlockRound = 30,
+			unlockCost = 150,
 			paths = {
 				{
 					id = "Yield",
@@ -3918,6 +3918,7 @@ return table.freeze({
 			abilitySeconds = 8,
 			abilityRadius = 0,
 			abilityCooldown = 45,
+			unlockCost = 0,
 		},
 		RIFLE = {
 			paths = {
@@ -4456,6 +4457,7 @@ return table.freeze({
 			abilitySeconds = 10,
 			abilityRadius = 25,
 			abilityCooldown = 45,
+			unlockCost = 75,
 		},
 		SHOTGUN = {
 			paths = {
@@ -4994,6 +4996,7 @@ return table.freeze({
 			abilitySeconds = 2,
 			abilityRadius = 10,
 			abilityCooldown = 45,
+			unlockCost = 75,
 		},
 	},
 	HeroOrder = {
@@ -5753,6 +5756,7 @@ return table.freeze({
 			promoteChance = 0,
 			cashMult = 1,
 			startingLives = 40,
+			clearReward = 50,
 		},
 		NORMAL = {
 			display = "Normal",
@@ -5762,6 +5766,7 @@ return table.freeze({
 			promoteChance = 0.1,
 			cashMult = 0.9,
 			startingLives = 30,
+			clearReward = 100,
 		},
 		HARD = {
 			display = "Hard",
@@ -5771,6 +5776,7 @@ return table.freeze({
 			promoteChance = 0.2,
 			cashMult = 0.8,
 			startingLives = 20,
+			clearReward = 150,
 		},
 		CHAOS = {
 			display = "Chaos",
@@ -5780,6 +5786,7 @@ return table.freeze({
 			promoteChance = 0.35,
 			cashMult = 0.75,
 			startingLives = 10,
+			clearReward = 200,
 		},
 	},
 	DifficultyOrder = {

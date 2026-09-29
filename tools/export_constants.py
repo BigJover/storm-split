@@ -125,7 +125,7 @@ def read_towers(ws):
             "incomePerRound": num(v(ws, r, 10)),
             "splashRadius": num(v(ws, r, 12)),
             "slowPercent": num(v(ws, r, 13)),
-            "unlockRound": num(v(ws, r, 14)),
+            "unlockCost": num(v(ws, r, 14)),
             "paths": [],
         }
         order.append(key)
@@ -172,6 +172,7 @@ HERO_BASE_COLUMNS = [
     ("piercesArmor", 16, "bool"), ("hitsAir", 17, "bool"), ("splashRadius", 18, "num"),
     ("abilityPower", 19, "num"), ("abilitySeconds", 20, "num"), ("abilityRadius", 21, "num"),
     ("abilityCooldown", 22, "num"),
+    ("unlockCost", 24, "num"),
 ]
 
 # Hero Upgrades effect columns, cumulative per tier: (key, column, kind, default when blank).
@@ -382,7 +383,7 @@ def validate(data):
         "StartingCashPerExtraPlayer", "WeaponAimAssist", "OverdriveFireRateX", "AirburstDelay",
         "AirburstReach", "SpinUpTime", "RicochetReach", "StillSpeed", "HeroUpgradeBaseCost",
         "HeroUpgradeCostGrowth", "ChestLifetime", "ChestSpread", "RoundsPerLevel",
-        "HeroDamagePerLevel", "TowerDamagePerLevel", "CorePayoutBase", "CorePayoutPerRound",
+        "HeroDamagePerLevel", "TowerDamagePerLevel", "MultiplayerLossPayout",
     ]
     for key in needed:
         if key not in data["Tuning"]:
@@ -393,8 +394,10 @@ def validate(data):
             problems.append(f"Mastery level {i}: needs a Core cost")
         if not 2 <= lvl["crossoverCap"] <= 5:
             problems.append(f"Mastery level {i}: Crossover cap must be 2-5")
-    if not any(t["unlockRound"] == 0 for t in data["Towers"].values()):
-        problems.append("At least one tower must be unlocked from the start (Unlock round 0)")
+    if not any(t["unlockCost"] == 0 for t in data["Towers"].values()):
+        problems.append("At least one tower must be free (Unlock cost 0)")
+    if not any(h["unlockCost"] == 0 for h in data["Heroes"].values()):
+        problems.append("At least one hero must be free (Unlock cost 0)")
 
     if "EASY" not in data["Difficulties"]:
         problems.append("Difficulty sheet needs an 'Easy' row (the baseline)")
@@ -515,6 +518,7 @@ def read_difficulty(ws):
             "promoteChance": num(v(ws, r, 5), 0),
             "cashMult": num(v(ws, r, 6), 1),
             "startingLives": num(v(ws, r, 7)),
+            "clearReward": num(v(ws, r, 9)),
         }
         order.append(key)
         r += 1

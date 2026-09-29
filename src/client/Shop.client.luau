@@ -18,9 +18,10 @@
 	next tier, price and what it changes (HEROES.md, Server/Hero). Same
 	crossover rule as towers; prices include your mastery discount.
 
-	Mastery (M, between matches): Storm Cores and each hero's mastery level,
-	with what the next level gives (Server/Progression). Towers nobody here has
-	unlocked show their unlock round in the Build list.
+	Unlocks & Mastery (M, between matches): Storm Cores, buying the heroes and
+	towers you don't own yet, and each owned hero's mastery level with what the
+	next level gives (Server/Progression). Unowned towers and heroes show their
+	price in the Build list and hero select.
 
 	Everything here is a request. The server re-checks the spot, the distance
 	and the cash with the same rules and has the final say. Prices shown come
@@ -127,7 +128,7 @@ masteryButton.BackgroundColor3 = Color3.fromRGB(120, 90, 200)
 masteryButton.Font = Enum.Font.GothamBold
 masteryButton.TextSize = 18
 masteryButton.TextColor3 = TEXT
-masteryButton.Text = "Mastery  (M)"
+masteryButton.Text = "Unlocks & Mastery  (M)"
 masteryButton.Modal = true -- only shown between matches, when the mouse is free anyway
 masteryButton.Visible = false
 masteryButton.Parent = gui
@@ -151,8 +152,12 @@ local function nextMilestone(level: number): (number?, string?)
 	return nil, nil
 end
 
-local function towerUnlocked(key: string): boolean
-	return (Config.Towers[key].unlockRound or 0) <= (ReplicatedStorage:GetAttribute("UnlockRound") or 0)
+local function ownsTower(key: string): boolean
+	return player:GetAttribute(`OwnsTower_{key}`) == true
+end
+
+local function ownsHero(key: string): boolean
+	return player:GetAttribute(`OwnsHero_{key}`) == true
 end
 
 -- One line per ability for the hero cards. Display text only.
@@ -772,7 +777,7 @@ render = function()
 	upgradesButton.Visible = myHero() ~= nil
 	upgradesButton.Text = if mode == "heroUpgrade" then "Close  (U)" else "Upgrades  (U)"
 	masteryButton.Visible = ReplicatedStorage:GetAttribute("State") ~= "Playing"
-	masteryButton.Text = if mode == "mastery" then "Close  (M)" else "Mastery  (M)"
+	masteryButton.Text = if mode == "mastery" then "Close  (M)" else "Unlocks & Mastery  (M)"
 	local cash = math.floor(ReplicatedStorage:GetAttribute("Cash") or 0)
 
 	if mode == "list" then
@@ -782,8 +787,8 @@ render = function()
 			local name = escape(def.display)
 			if ShopRules.Unreleased[key] then
 				addRow(order, `<b>{name}</b>  ·  coming later`, LOCKED_COLOR, false)
-			elseif not towerUnlocked(key) then
-				addRow(order, `<b>{name}</b>  ·  unlocks at round {def.unlockRound}\n<font size="13">Reach it once and it's yours for good</font>`, LOCKED_COLOR, false)
+			elseif not ownsTower(key) then
+				addRow(order, `<b>{name}</b>  ·  unlock for {def.unlockCost} cores (M)\n<font size="13">{escape(def.role)}. You can still upgrade a teammate's.</font>`, LOCKED_COLOR, false)
 			else
 				local affordable = cash >= def.baseCost
 				local text = `<b>{name}</b>  ·  {def.baseCost}\n<font size="13">{escape(def.role)}</font>`
@@ -804,9 +809,11 @@ render = function()
 		for order, key in Config.HeroOrder do
 			local hero = Config.Heroes[key]
 			local chosen = key == current
+			local owned = ownsHero(key)
 			local blurb = ABILITY_BLURB[hero.ability] or ""
-			local text = `<b>{escape(hero.display)}</b>  ·  {escape(hero.role)}{if chosen then "  ·  your hero" else ""}\n<font size="13">{escape(hero.ability)}: {escape(blurb)}  ·  {FIRE_MODE_NAME[hero.fireMode] or hero.fireMode} · {hero.magazine} rounds</font>`
-			addRow(order, text, if chosen then HERO_COLOR else BUY_COLOR, not chosen, function()
+			local status = if chosen then "  ·  your hero" elseif not owned then `  ·  unlock for {hero.unlockCost} cores (M)` else ""
+			local text = `<b>{escape(hero.display)}</b>  ·  {escape(hero.role)}{status}\n<font size="13">{escape(hero.ability)}: {escape(blurb)}  ·  {FIRE_MODE_NAME[hero.fireMode] or hero.fireMode} · {hero.magazine} rounds</font>`
+			addRow(order, text, if chosen then HERO_COLOR elseif owned then BUY_COLOR else LOCKED_COLOR, owned and not chosen, function()
 				if send("pick", key, nil, heroRequest) then
 					setMode("closed")
 				end
@@ -850,9 +857,39 @@ render = function()
 	elseif mode == "mastery" then
 		local cores = player:GetAttribute("Cores") or 0
 		local status = player:GetAttribute("SaveStatus")
-		title.Text = `Mastery  ·  {cores} Storm Cores`
+		title.Text = `{cores} Storm Cores`
 		local between = ReplicatedStorage:GetAttribute("State") ~= "Playing"
-		for order, key in Config.HeroOrder do
+		local UNLOCK_COLOR = Color3.fromRGB(70, 150, 120)
+		local order = 0
+
+		-- Unlocks: everything you don't own yet.
+		for _, key in Config.HeroOrder do
+			if not ownsHero(key) then
+				local hero = Config.Heroes[key]
+				order += 1
+				local affordable = between and cores >= hero.unlockCost
+				addRow(order, `<b>Unlock {escape(hero.display)}</b>  ·  {hero.unlockCost} cores\n<font size="13">Hero · {escape(hero.role)} · {escape(hero.ability)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
+					send("unlock", "hero", key, progressRequest)
+				end)
+			end
+		end
+		for _, key in Config.TowerOrder do
+			if not ownsTower(key) then
+				local def = Config.Towers[key]
+				order += 1
+				local affordable = between and cores >= def.unlockCost
+				addRow(order, `<b>Unlock {escape(def.display)}</b>  ·  {def.unlockCost} cores\n<font size="13">Tower · {escape(def.role)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
+					send("unlock", "tower", key, progressRequest)
+				end)
+			end
+		end
+
+		-- Mastery: heroes you own.
+		for _, key in Config.HeroOrder do
+			if not ownsHero(key) then
+				continue
+			end
+			order += 1
 			local hero = Config.Heroes[key]
 			local level = player:GetAttribute(`Mastery_{key}`) or 0
 			local name = escape(hero.display)
@@ -874,8 +911,8 @@ render = function()
 		end
 		local note = if status == "offline"
 			then "Progress isn't saving: publish the place to Roblox to keep it (SETUP.md)."
-			else "Earn Storm Cores every match, win or lose. Mastery never adds damage."
-		addRow(20, `<font size="13">{note}</font>`, PANEL_COLOR, false)
+			else "Clear a track to earn Cores (more on harder difficulties). Mastery never adds damage."
+		addRow(50, `<font size="13">{note}</font>`, PANEL_COLOR, false)
 	elseif mode == "manage" and managed then
 		local key = managed:GetAttribute("Tower") :: string
 		local def = Config.Towers[key]
@@ -1050,14 +1087,9 @@ player.AttributeChanged:Connect(function(name)
 		or name == "FreeUpgrade"
 		or string.sub(name, 1, 8) == "HeroPath"
 		or string.sub(name, 1, 8) == "Mastery_"
+		or string.sub(name, 1, 4) == "Owns"
 	then
 		render() -- button visibility, and whichever screen is open
-	end
-end)
-
-ReplicatedStorage:GetAttributeChangedSignal("UnlockRound"):Connect(function()
-	if mode == "list" then
-		render()
 	end
 end)
 
