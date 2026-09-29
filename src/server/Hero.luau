@@ -17,9 +17,12 @@
 	  Airburst (Ordnance)  after AirburstDelay, the stretch of track nearest your
 	                       aim takes `power` damage and everything there is stunned
 
-	SERVER AUTHORITATIVE: a client only says "I fired, aiming here" or "use my
-	ability here". The server checks the equipped weapon, the fire rate, the
-	range and the cooldown, and picks what gets hit itself.
+	SERVER AUTHORITATIVE: a client only says "I fired along this camera ray" or
+	"use my ability along this ray". The server checks the equipped weapon, the
+	fire rate, the range and the cooldown, and picks what gets hit itself: the
+	in-range enemy closest to the ray, within aim assist. A ray (not a ground
+	point) is what makes flying enemies hittable from first person. Each hit is
+	echoed back to the shooter for the crosshair's hit marker.
 ]]
 
 local Players = game:GetService("Players")
@@ -27,6 +30,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local Track = require(Shared:WaitForChild("Track"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local Economy = require(script.Parent.Economy)
@@ -51,6 +55,9 @@ local WEAPON_COLORS = {
 	ORDNANCE = Color3.fromRGB(255, 140, 50),
 }
 local SHOT_GAP_SLACK = 0.8 -- accept shots up to 20% early, for network jitter
+local RAY_ORIGIN_SLACK = 20 -- studs beyond max camera zoom a ray may start from
+
+local fireEvent: RemoteEvent
 
 local states: { [Player]: State } = {}
 local onPop: ((Player) -> ())? = nil
@@ -108,6 +115,20 @@ end
 
 local function isFinite(v: Vector3): boolean
 	return v.X == v.X and v.Y == v.Y and v.Z == v.Z and v.Magnitude < 1e6
+end
+
+-- A sane aim ray from this player's camera, or nil.
+local function validRay(player: Player, body: BasePart, origin: unknown, direction: unknown): (Vector3?, Vector3?)
+	if typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3" then
+		return nil, nil
+	end
+	if not isFinite(origin) or not isFinite(direction) or direction.Magnitude < 0.01 then
+		return nil, nil
+	end
+	if (origin - body.Position).Magnitude > player.CameraMaxZoomDistance + RAY_ORIGIN_SLACK then
+		return nil, nil
+	end
+	return origin, direction.Unit
 end
 
 ------------------------------------------------------------------ tools
@@ -217,15 +238,19 @@ local function canHit(enemy: Enemies.Enemy, row): boolean
 	return Enemies.canHurt(enemy, row.piercesArmor)
 end
 
--- The hittable enemy in range that is nearest (flat) to the aim point, within aim assist.
-local function nearestTo(aim: Vector3, from: Vector3, row, live): Enemies.Enemy?
+-- The hittable enemy in weapon range (from the player) that sits closest to
+-- the aim ray, within aim assist. Enemies behind the camera don't count.
+local function alongRay(origin: Vector3, direction: Vector3, from: Vector3, row, live): Enemies.Enemy?
 	local best, bestGap = nil, Config.Tuning.WeaponAimAssist
 	for _, enemy in live do
-		if canHit(enemy, row) and (enemy.part.Position - from).Magnitude <= row.range then
-			local offset = enemy.part.Position - aim
-			local gap = Vector2.new(offset.X, offset.Z).Magnitude
-			if gap <= bestGap then
-				best, bestGap = enemy, gap
+		local position = enemy.part.Position
+		if canHit(enemy, row) and (position - from).Magnitude <= row.range then
+			local along = (position - origin):Dot(direction)
+			if along > 0 then
+				local gap = (origin + direction * along - position).Magnitude
+				if gap <= bestGap then
+					best, bestGap = enemy, gap
+				end
 			end
 		end
 	end
@@ -264,10 +289,7 @@ local function extraTargets(primary: Enemies.Enemy, row, live): { Enemies.Enemy 
 	return extra
 end
 
-local function fire(player: Player, aim: unknown)
-	if typeof(aim) ~= "Vector3" or not isFinite(aim) then
-		return
-	end
+local function fire(player: Player, rayOrigin: unknown, rayDirection: unknown)
 	local state = ReplicatedStorage:GetAttribute("State")
 	if state == "GameOver" or state == "Victory" then
 		return
@@ -275,6 +297,10 @@ local function fire(player: Player, aim: unknown)
 	local key, tier, tool = equipped(player)
 	local body = root(player)
 	if not key or tier <= 0 or not body then
+		return
+	end
+	local origin, direction = validRay(player, body, rayOrigin, rayDirection)
+	if not origin or not direction then
 		return
 	end
 
@@ -290,35 +316,36 @@ local function fire(player: Player, aim: unknown)
 	local handle = tool and tool:FindFirstChild("Handle")
 	local muzzle = if handle and handle:IsA("BasePart") then handle.Position else body.Position
 	local live = Enemies.getLive()
-	local primary = nearestTo(aim, body.Position, row, live)
+	local primary = alongRay(origin, direction, body.Position, row, live)
 	local color = WEAPON_COLORS[key] or Color3.new(1, 1, 1)
 
 	if not primary then
-		-- A miss: draw it, capped at the weapon's range.
-		local direction = aim - muzzle
-		local reach = math.min(direction.Magnitude, row.range)
-		if reach > 0.1 then
-			Effects.tracer(muzzle, muzzle + direction.Unit * reach, color)
-		end
+		-- A miss: draw it out to the weapon's range along the aim.
+		Effects.tracer(muzzle, origin + direction * ((muzzle - origin).Magnitude + row.range), color)
 		return
 	end
 
 	Effects.tracer(muzzle, primary.part.Position, color)
+	local anyKill = false
 	for _, enemy in { primary, table.unpack(extraTargets(primary, row, live)) } do
-		credit(player, Enemies.damage(enemy, row.damage, row.piercesArmor))
+		local killed = Enemies.damage(enemy, row.damage, row.piercesArmor)
+		credit(player, killed)
+		anyKill = anyKill or killed
 	end
+	fireEvent:FireClient(player, anyKill) -- hit marker
 end
 
 ------------------------------------------------------------------ abilities
 
-local function ability(player: Player, aim: unknown): (boolean, string)
-	if typeof(aim) ~= "Vector3" or not isFinite(aim) then
-		return false, "Aim somewhere"
-	end
+local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown): (boolean, string)
 	local key, tier = equipped(player)
 	local body = root(player)
 	if not key or not body then
 		return false, "Equip a weapon first"
+	end
+	local origin, direction = validRay(player, body, rayOrigin, rayDirection)
+	if not origin or not direction then
+		return false, "Aim somewhere"
 	end
 	if tier < 2 then
 		return false, `{Config.Weapons[key].ability} unlocks at tier 2`
@@ -334,7 +361,7 @@ local function ability(player: Player, aim: unknown): (boolean, string)
 	local color = WEAPON_COLORS[key] or Color3.new(1, 1, 1)
 
 	if key == "PRECISION" then
-		local target = nearestTo(aim, body.Position, row, Enemies.getLive())
+		local target = alongRay(origin, direction, body.Position, row, Enemies.getLive())
 		if not target then
 			return false, "No enemy there to mark"
 		end
@@ -347,6 +374,11 @@ local function ability(player: Player, aim: unknown): (boolean, string)
 		player:SetAttribute("OverdriveUntil", workspace:GetServerTimeNow() + row.abilitySeconds)
 		Effects.disc(body.Position - Vector3.new(0, 2.8, 0), row.abilityRadius, color, 0.5, 0.7)
 	elseif key == "ORDNANCE" then
+		-- Where the aim ray meets the ground.
+		if direction.Y >= -0.01 then
+			return false, "Aim at the ground"
+		end
+		local aim = origin + direction * ((Track.GroundTop - origin.Y) / direction.Y)
 		if (aim - body.Position).Magnitude > row.range then
 			return false, "Too far away"
 		end
@@ -394,8 +426,8 @@ function Hero.init(remotes: Folder, hooks: { onPop: ((Player) -> ())? }?)
 
 	local request = Instance.new("RemoteFunction")
 	request.Name = "HeroRequest"
-	-- ("buy", weaponKey) or ("ability", aimPoint)
-	request.OnServerInvoke = function(player: Player, action: unknown, a: unknown)
+	-- ("buy", weaponKey) or ("ability", rayOrigin, rayDirection)
+	request.OnServerInvoke = function(player: Player, action: unknown, a: unknown, b: unknown)
 		local ok, success, message = pcall(function()
 			local state = ReplicatedStorage:GetAttribute("State")
 			if state == "GameOver" or state == "Victory" then
@@ -404,7 +436,7 @@ function Hero.init(remotes: Folder, hooks: { onPop: ((Player) -> ())? }?)
 			if action == "buy" then
 				return buy(player, a)
 			elseif action == "ability" then
-				return ability(player, a)
+				return ability(player, a, b)
 			end
 			return false, "Unknown request"
 		end)
@@ -416,10 +448,11 @@ function Hero.init(remotes: Folder, hooks: { onPop: ((Player) -> ())? }?)
 	end
 	request.Parent = remotes
 
-	local fireEvent = Instance.new("RemoteEvent")
+	-- Client -> server: (rayOrigin, rayDirection). Server -> shooter: (killed) per hit.
+	fireEvent = Instance.new("RemoteEvent")
 	fireEvent.Name = "HeroFire"
-	fireEvent.OnServerEvent:Connect(function(player, aim)
-		local ok, err = pcall(fire, player, aim)
+	fireEvent.OnServerEvent:Connect(function(player, origin, direction)
+		local ok, err = pcall(fire, player, origin, direction)
 		if not ok then
 			warn(`[Hero] fire from {player.Name} failed: {err}`)
 		end

@@ -449,6 +449,8 @@ local function setMode(newMode: Mode)
 		managed, managedPrompt = nil, nil
 	end
 	mode = newMode
+	-- Hero.client switches to third person (free mouse) while a panel is open.
+	player:SetAttribute("PanelOpen", newMode ~= "closed")
 	say("")
 	render()
 end

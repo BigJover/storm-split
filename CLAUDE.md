@@ -92,6 +92,11 @@ rule; weapons are hotbar Tools; shots are validated and aimed server-side; abili
 tier 2 — Mark, Overdrive, Airburst. Weapon reach/armour/air/splash and ability strength
 are new Weapons-sheet columns.
 
+Gunplay pass (user request): holding a weapon = first person with a crosshair (spread per
+shot, hit/kill marker); panels or unarmed = third person with a free mouse; V toggles.
+Shots send the camera ray and the server hits the in-range enemy nearest that ray, so
+flying enemies are hittable.
+
 Balance watch (design doc): the player must never out-damage their own towers — test round
 25 with no towers bought.
 
