@@ -23,6 +23,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local ShopRules = require(Shared:WaitForChild("ShopRules"))
 local Placement = require(Shared:WaitForChild("Placement"))
+local Theme = require(Shared:WaitForChild("Theme"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local Economy = require(script.Parent.Economy)
@@ -93,7 +94,7 @@ local function build(player: Player, towerKey: unknown, position: unknown): (boo
 	end
 	-- You can only place towers you own; upgrading anyone's tower is fine.
 	if not Progression.ownsTower(player, towerKey) then
-		return false, `Unlock {def.display} with Storm Cores first (M)`
+		return false, `Unlock {def.display} with {Theme.Currency} first (M)`
 	end
 	if typeof(position) ~= "Vector3" then
 		return false, "Pick a spot"

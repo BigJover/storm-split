@@ -1,4 +1,4 @@
-# Storm Split — Roblox Architecture
+# Dino Hunters — Roblox Architecture
 
 Companion to `Storm-Split-Design-Doc.pdf` (what the game is) and `Storm-Split-Balance.xlsx`
 (what the numbers are). This file is **how the code is shaped**.
@@ -108,11 +108,11 @@ state a price, a damage number or a result.
 
 ## 5. Decisions already made in the code
 
-**5.1 The live cap and spawn queue.** One Barge death cascades into 244 enemies. Nothing ever
-spawns directly — everything goes through a queue that only drains while live enemies are under
-`MaxConcurrentEnemies`. Split children get a priority queue so they are never stuck behind
-fresh spawns. *Verified headlessly: 245 kills from one Barge, live count held exactly at the
-cap, queue drained to zero.*
+**5.1 The live cap and spawn queue.** Nothing ever spawns directly — everything goes through a
+queue that only drains while live enemies are under `MaxConcurrentEnemies`. (Before the
+dinosaur reskin, enemies split into children and one Barge cascaded into 244; dinos now
+**shrink in place** instead — same species, smaller size, HP shared across sizes — so a
+round's live count is just its spawns.)
 
 **5.2 Leaks cost effective HP, not one life.** The design doc said one life per leak. That makes
 leaking a boss *cheaper* than killing it, since its children never spawn. `Enemies.leakCost()`
@@ -137,8 +137,8 @@ caller pays first. Keeps money logic in exactly one place.
   so it is now the strongest Scout path — trim in the spreadsheet after playtesting.
 - **Fire rate ceiling.** Towers fire at most once per frame, so anything above ~60 shots/s is
   capped. Irrelevant until late upgrades.
-- **Fortnite theming.** Husks, Loot Llamas and Storm Barges are Fortnite-flavoured names and
-  should be replaced with an original theme. Internal keys (`HUSK`, `ZEP`…) can stay.
+- **Theme.** Resolved 2026-09-29: Dino Hunters (`VISION.md`). Internal keys (`HUSK`,
+  `SCOUT`, `PISTOL`…) stay; display names live in the spreadsheet and `Shared/Theme`.
 
 ---
 

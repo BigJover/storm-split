@@ -43,9 +43,9 @@ return table.freeze({
 	FlyingHeight = 9, -- centre height of flying enemies
 
 	Colors = {
-		Lane = Color3.fromRGB(92, 84, 110),
-		Spawn = Color3.fromRGB(90, 200, 120),
-		Exit = Color3.fromRGB(220, 70, 90),
-		BuildGround = Color3.fromRGB(86, 124, 78),
+		Lane = Color3.fromRGB(128, 98, 66), -- dirt trail
+		Spawn = Color3.fromRGB(110, 170, 70), -- the jungle the dinos come out of
+		Exit = Color3.fromRGB(220, 90, 60), -- the camp they're heading for
+		BuildGround = Color3.fromRGB(70, 112, 58), -- jungle grass
 	},
 })

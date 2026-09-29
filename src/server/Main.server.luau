@@ -11,7 +11,7 @@
 	            Every round scales with the difficulty and the number of players
 	            (VISION.md). Dead players respawn after RespawnTime.
 	  GameOver / Victory
-	            Storm Cores are paid out (Server/Progression); the result shows
+	            Amber is paid out (Server/Progression); the result shows
 	            for ResultsTime, then the board resets and everyone goes home.
 
 	Every round prints peak live enemies and how many milliseconds our own code
@@ -161,7 +161,7 @@ local function spawn(player: Player)
 				player:LoadCharacterAsync()
 			end)
 			if not ok then
-				warn(`[StormSplit] Couldn't spawn {player.Name}: {err}`)
+				warn(`[DinoHunters] Couldn't spawn {player.Name}: {err}`)
 			end
 		end)
 	end
@@ -290,7 +290,7 @@ local function playMatch()
 	Hero.setLevel(level)
 	Towers.setLevel(level)
 	Enemies.setSpeedMult(chosen.speedMult)
-	print(`[StormSplit] {Modes.Modes[ReplicatedStorage:GetAttribute("Mode")].display} on {chosen.display} with {#Players:GetPlayers()} player(s)`)
+	print(`[DinoHunters] {Modes.Modes[ReplicatedStorage:GetAttribute("Mode")].display} on {chosen.display} with {#Players:GetPlayers()} player(s)`)
 
 	-- Difficulty x player count, re-read every round so drop-in players count.
 	local function roundScale(): Waves.Scale
@@ -323,12 +323,12 @@ local function playMatch()
 				Hero.setLevel(level)
 				Towers.setLevel(level)
 				ReplicatedStorage:SetAttribute("Level", level) -- the HUD announces it
-				print(`[StormSplit] Level {level}: heroes and towers hit harder`)
+				print(`[DinoHunters] Level {level}: heroes and towers hit harder`)
 			end
 
 			local average = if frames > 0 then costSum / frames else 0
 			print(string.format(
-				"[StormSplit] Round %d cleared | %s, %d player(s) | lives %d | cash %d | peak enemies %d | script cost avg %.2f ms, worst %.2f ms",
+				"[DinoHunters] Round %d cleared | %s, %d player(s) | lives %d | cash %d | peak enemies %d | script cost avg %.2f ms, worst %.2f ms",
 				index,
 				chosen.display,
 				#Players:GetPlayers(),
@@ -344,7 +344,7 @@ local function playMatch()
 	-- Result: pay out, show it, then home.
 	local round = ReplicatedStorage:GetAttribute("Round") or 0
 	setState(if won then "Victory" else "GameOver")
-	print(if won then "[StormSplit] VICTORY — all rounds cleared" else `[StormSplit] GAME OVER on round {round}`)
+	print(if won then "[DinoHunters] VICTORY — all rounds cleared" else `[DinoHunters] GAME OVER on round {round}`)
 	Progression.endMatch({
 		cleared = won,
 		roundReached = if won then #Config.Rounds else round,

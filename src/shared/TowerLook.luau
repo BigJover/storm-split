@@ -13,11 +13,11 @@
 local TowerLook = {}
 
 TowerLook.COLORS = table.freeze({
-	SCOUT = Color3.fromRGB(96, 170, 255),
-	SNIPER = Color3.fromRGB(240, 240, 240),
-	GRENADIER = Color3.fromRGB(255, 140, 60),
-	CHILLER = Color3.fromRGB(120, 230, 255),
-	QUARTERMASTER = Color3.fromRGB(250, 205, 80),
+	SCOUT = Color3.fromRGB(100, 140, 70), -- Hunting Blind: camo green
+	SNIPER = Color3.fromRGB(200, 180, 130), -- Longshot Perch: khaki
+	GRENADIER = Color3.fromRGB(120, 115, 70), -- Mortar Pit: olive
+	CHILLER = Color3.fromRGB(70, 190, 180), -- Tranq Station: tranquilizer teal
+	QUARTERMASTER = Color3.fromRGB(230, 150, 50), -- Supply Camp: supply-crate orange
 })
 
 TowerLook.BODY_HEIGHT = 5

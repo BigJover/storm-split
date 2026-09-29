@@ -1,4 +1,4 @@
-# Storm Split — Hero Design
+# Dino Hunters — Hero Design
 
 The player character is the hero (design doc §02, `VISION.md`). User-approved 2026-09-29;
 **more heroes will be added later** — the data and code are shaped so a new hero is new rows
@@ -6,8 +6,8 @@ on the spreadsheet plus any new fire mechanic.
 
 ## Rules
 
-- **Everyone starts with the Pistol.** Other heroes are unlocked with Storm Cores (Assault
-  Rifle 75, Shotgun 75; `Heroes` sheet). **Picking a hero you own is free.** Pick in the build phase; switch freely (full refund of any
+- **Everyone starts as the Tracker.** Other heroes are unlocked with Amber (Big Game Hunter
+  75, Brush Beater 75; `Heroes` sheet). **Picking a hero you own is free.** Pick in the build phase; switch freely (full refund of any
   upgrades) until Start, then it's locked. A player who joins mid-match picks once.
 - **Only upgrades cost cash** (the team's shared pot). Each hero has three paths of five
   tiers, with the same crossover rule as towers: two paths at most, only one past tier 2.
@@ -55,19 +55,19 @@ LEVELS.
 
 Tiers in *italics* change how the gun fires.
 
-### Pistol — Precision · ability **Mark** (target takes +% damage from everything)
+### Tracker (revolver) — Precision · ability **Tracking Dart** (target takes +% damage from everything)
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
-| **Gunslinger** | handling | Quick Draw | Hair Trigger | *Dual Pistols* | Fan the Hammer | *Akimbo Storm* |
+| **Gunslinger** | handling | Quick Draw | Hair Trigger | *Dual Pistols* | Fan the Hammer | *Akimbo Frenzy* |
 | **Marksman** | accuracy | Match Barrel | Steady Hands | *Scope* | Hollow Tips | *Deadshot* |
 | **Trick Shot** | utility | Speed Loader | Extended Mag | *Ricochet* | Quick Mark | *Chain Shot* |
 
-Dual Pistols: a second gun, alternating fire. Akimbo Storm: both full-auto. Scope: zoom and
+Dual Pistols: a second gun, alternating fire. Akimbo Frenzy: both full-auto. Scope: zoom and
 reach. Hollow Tips: pierces armour. Deadshot: triple damage to marked enemies. Ricochet:
 bounces to a second enemy. Quick Mark: shorter Mark cooldown. Chain Shot: bounces 4 times.
 
-### Assault Rifle — Sustained · ability **Overdrive** (your fire rate up, nearby towers faster)
+### Big Game Hunter (hunting rifle) — Sustained · ability **Rally Cry** (your fire rate up, nearby towers faster)
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
@@ -80,7 +80,7 @@ much less recoil while standing still. Spin-Up: fire rate climbs while you hold.
 Rounds: hits briefly mark. Incendiary: burning ground. AP Rounds: pierce armour. Explosive
 Tips: small splash.
 
-### Shotgun — Ordnance · ability **Airburst** (delayed strike on the track: damage + stun)
+### Brush Beater (shotgun) — Ordnance · ability **Flare Strike** (delayed strike on the track: damage + stun)
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|

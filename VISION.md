@@ -24,17 +24,49 @@ Teams attack each other's towers; the focus is surviving longer than the other t
 **Battle royale.** Every player for themselves. Winner is whoever gets the most **pops**
 (kills credited to their towers).
 
-## Theme (tentative, user, 2026-09-29)
+## Theme: Dino Hunters (user, 2026-09-29)
 
-The current names are Fortnite-flavoured placeholders and need replacing. Brainrot was
-considered and rejected (the meta is played out on Roblox). **Front-runner: "Germ War"** —
-enemies are germs, viruses and cells that divide when hit (the split mechanic as mitosis);
-towers are immune cells and medicine; heroes are tiny scientists. The user is researching
-current and upcoming Roblox metas and may replace it. Nothing is renamed until the theme
-is final. Other options considered: weather (storm cells split), slime lab, asteroid
-defence, candy.
+The game is **Dino Hunters**. Enemies are dinosaurs; the player is a dinosaur hunter; towers,
+weapons and abilities are hunting gear. The permanent currency is **Amber** (was Storm
+Cores). Chosen from the user's research on Roblox metas (brainrot rejected as played out;
+germs, weather, slime, asteroids, candy considered).
 
-## Storm Cores economy (user, 2026-09-29)
+**Each tier is its own species**, and a dino doesn't turn into a different enemy when hit:
+it **shrinks one size** (same species, lower stats) until it's gone at its smallest size.
+
+| Tier | Species | Notes |
+|---|---|---|
+| 1 | Compy | tiny, one size |
+| 2 | Raptor | |
+| 3 | Pachycephalosaurus | |
+| 4 | Ankylosaurus | armoured |
+| 5 | Gallimimus | fast |
+| air | Pteranodon | flying |
+| boss | Triceratops | ground boss |
+| boss | T-Rex | ground boss (the finale) |
+
+Towers: Hunting Blind (Scout), Longshot Perch (Sniper), Mortar Pit (Grenadier), Tranq
+Station (Chiller; slow = tranquilizer darts), Supply Camp (Quartermaster). Heroes: Tracker
+(pistol), Big Game Hunter (rifle), Brush Beater (shotgun). Abilities: Tracking Dart (was
+Mark), Rally Cry (Overdrive), Flare Strike (Airburst).
+
+**Build order (user):** step 1 reskin — names, colours, dino shapes, the shrink rule, balance
+kept. Step 2 combat — below.
+
+### Step 2: the dinos fight back (planned)
+
+- Dinos **bite** towers and players within reach as they walk the track. **Mid and high
+  tiers also have ranged / projectile attacks**; the higher the tier, the deadlier. Smaller
+  sizes hit softer.
+- **Players have 100 health** and heal a flat **25** for every round cleared. Death =
+  respawn after Respawn time.
+- **Towers have health.** At 0 a tower is **knocked out until repaired**: it stops working
+  but keeps its upgrades. Players repair towers from the tower's upgrade menu, for cash.
+- More ways to heal and protect: a new **healer hero class** (Field Medic, with a healing
+  ability), a new **healing tower** (Field Hospital), and a new **support tower** (Armory)
+  that gives towers and players in its radius damage resistance.
+
+## Amber economy (user, 2026-09-29; was "Storm Cores")
 
 Cores are the permanent currency: they buy tower and hero unlocks and hero mastery.
 

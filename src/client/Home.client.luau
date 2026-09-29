@@ -1,7 +1,7 @@
 --[[
 	Home screen, shown while the server is in the Lobby state (Main).
 
-	Game mode, track and difficulty cards, your Storm Cores and hero, buttons
+	Game mode, track and difficulty cards, your Amber and hero, buttons
 	for hero select and Unlocks & Mastery (they open Shop.client's panels), and
 	Play. The host — the longest-connected player — makes the choices and
 	presses Play; everyone else sees them live and waits. Choices are only
@@ -18,6 +18,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Modes = require(Shared:WaitForChild("Modes"))
+local Theme = require(Shared:WaitForChild("Theme"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local lobby = remotes:WaitForChild("Lobby") :: RemoteEvent
@@ -130,7 +131,7 @@ local function card(parent: Instance, order: number, width: number, height: numb
 	return button
 end
 
-text(1, "STORM SPLIT", 56, Enum.Font.GothamBlack, TEXT)
+text(1, string.upper(Theme.Title), 56, Enum.Font.GothamBlack, Color3.fromRGB(245, 175, 60)) -- amber
 local profileLine = text(2, "", 18, Enum.Font.GothamBold, TEXT_DIM)
 
 text(3, "GAME MODE", 16, Enum.Font.GothamBold, TEXT_DIM)
@@ -166,7 +167,7 @@ local difficultyCards: { [string]: TextButton } = {}
 for order, key in Config.DifficultyOrder do
 	local level = Config.Difficulties[key]
 	local button = card(difficultyRow, order, 170, 64)
-	button.Text = `{level.display}\n<font size="14" color="#aaa3bb">clear: {level.clearReward} cores</font>`
+	button.Text = `{level.display}\n<font size="14" color="#aaa3bb">clear: {level.clearReward} {string.lower(Theme.Currency)}</font>`
 	button.Activated:Connect(function()
 		lobby:FireServer("difficulty", key)
 	end)
@@ -240,7 +241,7 @@ local function refresh()
 
 	local heroKey = player:GetAttribute("Hero") or ""
 	local hero = Config.Heroes[heroKey]
-	profileLine.Text = `{player:GetAttribute("Cores") or 0} Storm Cores  ·  Hero: {if hero then hero.display else "none yet (H)"}`
+	profileLine.Text = `{player:GetAttribute("Cores") or 0} {Theme.Currency}  ·  Hero: {if hero then hero.display else "none yet (H)"}`
 end
 
 for _, name in { "State", "Host", "Mode", "Track", "Difficulty" } do

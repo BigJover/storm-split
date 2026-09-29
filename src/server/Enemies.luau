@@ -1,5 +1,6 @@
 --[[
-	Enemies: spawning, movement, damage, the split chain, and the live cap.
+	Enemies: the dinosaurs — spawning, movement, damage, shrinking, and the
+	live cap.
 
 	OWNERSHIP: this module is the only thing that creates, moves, damages or
 	removes enemies. Towers and weapons read the live list and call
@@ -15,11 +16,16 @@
 	(Shatter). Chill is refreshed every frame an enemy stands in a Chiller's
 	range; Permafrost makes it linger after it leaves. Chilled enemies look icy.
 
-	THE CAP (ARCHITECTURE.md §5): one Barge death cascades into 244 enemies.
-	Nothing ever spawns directly — everything goes through a queue, and the
-	queue only drains while live enemies are under MaxConcurrentEnemies.
-	Split children have their own priority queue so they are never stuck
-	behind fresh spawns waiting at the start of the track.
+	SHRINKING (VISION.md): each tier is its own species, and a dino never turns
+	into a different enemy. It spawns at its largest size; each size holds an
+	equal share of the species' HP. Emptying a size pays out like a kill
+	(onKilled: cash, pops) and the dino shrinks one size — same species,
+	smaller model — keeping its mark, chill and fire. Emptying the smallest
+	size kills it. Excess damage doesn't carry into the next size.
+
+	THE CAP (ARCHITECTURE.md §5): nothing spawns directly — everything goes
+	through a queue that only drains while live enemies are under
+	MaxConcurrentEnemies.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -28,6 +34,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Track = require(Shared:WaitForChild("Track"))
 local Path = require(Shared:WaitForChild("Path"))
+local DinoLook = require(Shared:WaitForChild("DinoLook"))
 
 local Enemies = {}
 
@@ -41,7 +48,10 @@ export type Enemy = {
 	distance: number,
 	speed: number,
 	height: number,
-	part: BasePart,
+	size: number, -- current size: sizes (largest) counting down to 1 (smallest)
+	sizes: number,
+	model: Model,
+	part: BasePart, -- the model's Root: where the dino is, for targeting
 	alive: boolean,
 	stunnedUntil: number,
 	markPercent: number,
@@ -58,30 +68,7 @@ export type Enemy = {
 -- carries it, Hazards acts on it.
 export type Fire = { tick: number, untilTime: number, piercesArmor: boolean, owner: any }
 
-type Pending = {
-	key: string,
-	distance: number,
-	hpMult: number,
-	markPercent: number?,
-	markedUntil: number?,
-	fire: Fire?,
-}
-
--- Visuals only. Balance never lives here.
-local LOOK = {
-	HUSK = { size = Vector3.new(2, 2, 2), color = Color3.fromRGB(126, 196, 110) },
-	BRUTE = { size = Vector3.new(2.6, 2.6, 2.6), color = Color3.fromRGB(88, 160, 214) },
-	SHIELD = { size = Vector3.new(3, 3, 3), color = Color3.fromRGB(235, 200, 80) },
-	ARMOR = { size = Vector3.new(3.4, 3.4, 3.4), color = Color3.fromRGB(150, 150, 165) },
-	STORM = { size = Vector3.new(3.6, 3.6, 3.6), color = Color3.fromRGB(150, 90, 230) },
-	LLAMA = { size = Vector3.new(3.2, 3.2, 4), color = Color3.fromRGB(230, 120, 200) },
-	ZEP = { size = Vector3.new(6, 5, 12), color = Color3.fromRGB(70, 60, 110) },
-	BARGE = { size = Vector3.new(9, 7, 18), color = Color3.fromRGB(35, 25, 60) },
-}
-local DEFAULT_LOOK = { size = Vector3.new(2, 2, 2), color = Color3.new(1, 1, 1) }
-
--- How far behind its parent each split child appears, in studs.
-local SPLIT_SPACING = 1.5
+type Pending = { key: string, distance: number, hpMult: number }
 
 ------------------------------------------------------------------ queue
 
@@ -118,7 +105,6 @@ local liveCount = 0
 local peakLive = 0
 local nextId = 0
 
-local splitQueue = newQueue()
 local spawnQueue = newQueue()
 
 local path: Path.Path
@@ -140,6 +126,27 @@ local function cframeAt(distance: number, height: number): CFrame
 	return CFrame.lookAt(position, position + direction)
 end
 
+-- (Re)build an enemy's model for its current size. Visuals only; keeps the
+-- chill and fire looks.
+local function dress(enemy: Enemy)
+	local old = enemy.model
+	local scale = DinoLook.scale(enemy.size, enemy.sizes)
+	local ground = Track.GroundTop
+	local model, rootHeight = DinoLook.build(enemy.key, scale, CFrame.new())
+	enemy.height = if enemy.def.flying then Track.FlyingHeight else rootHeight + ground
+	enemy.model = model
+	enemy.part = model.PrimaryPart :: BasePart
+	enemy.part.CFrame = cframeAt(enemy.distance, enemy.height)
+	model.Parent = enemyFolder
+	if old then
+		old:Destroy()
+	end
+	enemy.icy = false -- step() re-applies Ice if still chilled
+	if enemy.fire then
+		Enemies.showBurning(enemy, true)
+	end
+end
+
 local function spawnNow(item: Pending)
 	local def = Config.Enemies[item.key]
 	if not def then
@@ -148,50 +155,36 @@ local function spawnNow(item: Pending)
 	end
 
 	nextId += 1
-	local look = LOOK[item.key] or DEFAULT_LOOK
-	local height = if def.flying then Track.FlyingHeight else Track.EnemyHeight
-
-	local part = Instance.new("Part")
-	part.Name = item.key
-	part.Size = look.size
-	part.Color = look.color
-	part.Material = Enum.Material.SmoothPlastic
-	part.Anchored = true
-	part.CanCollide = false
-	part.CanTouch = false
-	part.CanQuery = false
-	part.CastShadow = false
-	part.CFrame = cframeAt(item.distance, height)
-	part.Parent = enemyFolder
-
-	-- def.hp is the spreadsheet's Scaled HP, which already includes GlobalHPScalar.
-	local hp = def.hp * item.hpMult
+	local sizes = math.max(1, def.sizes or 1)
+	-- def.hp is the species' total (the spreadsheet's Scaled HP, GlobalHPScalar
+	-- included), shared evenly across its sizes.
+	local hpPerSize = def.hp * item.hpMult / sizes
 	local enemy: Enemy = {
 		id = nextId,
 		key = item.key,
 		def = def,
-		hp = hp,
-		maxHp = hp,
+		hp = hpPerSize,
+		maxHp = hpPerSize,
 		hpMult = item.hpMult,
 		distance = item.distance,
 		speed = baseSpeed * speedMult * def.speedMult,
-		height = height,
-		part = part,
+		height = 0,
+		size = sizes,
+		sizes = sizes,
+		model = nil :: any,
+		part = nil :: any,
 		alive = true,
 		stunnedUntil = 0,
-		markPercent = item.markPercent or 0, -- a split child inherits its parent's mark
-		markedUntil = item.markedUntil or 0,
+		markPercent = 0,
+		markedUntil = 0,
 		chilledUntil = 0,
 		slowPercent = 0,
 		brittlePercent = 0,
 		armorStripped = false,
 		icy = false,
-		fire = item.fire, -- a split child keeps burning with its parent's fire
+		fire = nil,
 	}
-
-	if enemy.fire then
-		Enemies.showBurning(enemy, true)
-	end
+	dress(enemy)
 
 	live[enemy.id] = enemy
 	liveCount += 1
@@ -207,7 +200,7 @@ local function remove(enemy: Enemy)
 	enemy.alive = false
 	live[enemy.id] = nil
 	liveCount -= 1
-	enemy.part:Destroy()
+	enemy.model:Destroy()
 end
 
 ------------------------------------------------------------------ public
@@ -237,9 +230,9 @@ function Enemies.canHurt(enemy: Enemy, piercesArmor: boolean): boolean
 	return piercesArmor or not enemy.def.armored or (enemy.armorStripped and chilled(enemy))
 end
 
--- Apply damage. Returns true if this hit killed it. A hit that can't pierce
--- an Armored enemy does nothing. An active mark adds its percentage.
--- Excess damage does NOT carry into split children (BTD6 does; add it later if wanted).
+-- Apply damage. Returns true if this hit emptied a size (a pop: it shrank or
+-- died). A hit that can't pierce an Armored enemy does nothing. An active mark
+-- or brittle chill adds its percentage.
 function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?): boolean
 	if not enemy.alive or not Enemies.canHurt(enemy, piercesArmor == true) then
 		return false
@@ -255,27 +248,16 @@ function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?): b
 		return false
 	end
 
-	local def = enemy.def
-	local distance = enemy.distance
-	remove(enemy)
-
 	if callbacks.onKilled then
-		callbacks.onKilled(enemy)
+		callbacks.onKilled(enemy) -- this size is done: cash and a pop
 	end
-
-	if def.splitsInto ~= "" and def.splitCount > 0 then
-		for i = 1, def.splitCount do
-			push(splitQueue, {
-				key = def.splitsInto,
-				distance = math.max(0, distance - (i - 1) * SPLIT_SPACING),
-				hpMult = enemy.hpMult,
-				markPercent = enemy.markPercent,
-				markedUntil = enemy.markedUntil,
-				fire = enemy.fire,
-			})
-		end
+	if enemy.size > 1 then
+		enemy.size -= 1
+		enemy.hp = enemy.maxHp
+		dress(enemy) -- one size smaller, same species
+	else
+		remove(enemy)
 	end
-
 	return true
 end
 
@@ -336,7 +318,7 @@ function Enemies.mark(enemy: Enemy, percent: number, seconds: number)
 end
 
 -- Set an enemy on fire, or refresh its fire (biggest tick and latest end
--- win, so several pellets still mean one tick). Split children inherit it.
+-- win, so several pellets still mean one tick). It keeps burning as it shrinks.
 function Enemies.ignite(enemy: Enemy, fire: Fire)
 	if not enemy.alive then
 		return
@@ -376,19 +358,16 @@ function Enemies.showBurning(enemy: Enemy, on: boolean)
 	end
 end
 
--- Lives lost when this enemy leaks.
--- DESIGN NOTE: the design doc says "one life per leak". That makes leaking a
--- boss cheaper than killing it, because its children never spawn. Charging
--- effective HP (what BTD6 does with RBE) keeps bosses scary. Tune StartingLives
--- in the spreadsheet if this feels too punishing.
+-- Lives lost when this enemy leaks: its effective HP for the sizes it still
+-- has (BTD6's RBE idea), so leaking a big dino hurts more than a shrunk one.
 function Enemies.leakCost(enemy: Enemy): number
-	return math.max(1, math.ceil(enemy.def.effectiveHp))
+	return math.max(1, math.ceil(enemy.def.effectiveHp * enemy.size / enemy.sizes))
 end
 
 -- Called every Heartbeat by Main.
 function Enemies.step(dt: number)
 	while liveCount < cap do
-		local item = pop(splitQueue) or pop(spawnQueue)
+		local item = pop(spawnQueue)
 		if not item then
 			break
 		end
@@ -404,7 +383,7 @@ function Enemies.step(dt: number)
 		end
 		if isChilled ~= enemy.icy then
 			enemy.icy = isChilled -- visuals only
-			enemy.part.Material = if isChilled then Enum.Material.Ice else Enum.Material.SmoothPlastic
+			DinoLook.setMaterial(enemy.model, if isChilled then Enum.Material.Ice else Enum.Material.SmoothPlastic)
 		end
 		if enemy.distance >= path.length then
 			remove(enemy)
@@ -439,7 +418,7 @@ end
 
 -- Everything still to deal with this round: on the field plus queued.
 function Enemies.remaining(): number
-	return liveCount + size(splitQueue) + size(spawnQueue)
+	return liveCount + size(spawnQueue)
 end
 
 function Enemies.peak(): number
@@ -454,7 +433,6 @@ function Enemies.clearAll()
 	for _, enemy in live do
 		remove(enemy)
 	end
-	splitQueue = newQueue()
 	spawnQueue = newQueue()
 end
 

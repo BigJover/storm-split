@@ -1,4 +1,4 @@
-# Storm Split — Tower Upgrade Design
+# Dino Hunters — Tower Upgrade Design
 
 The agreed vision for every tower's three paths (user-approved 2026-09-28). Every path is a
 **specialisation** — attack speed, anti-armour, support, crowd control, economy — not a
@@ -13,19 +13,19 @@ built). Change a name there, not in code.
 
 ---
 
-## Scout — cheap single-target
+## Hunting Blind (Scout) — cheap single-target
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
 | **Lookout** | range → support | Keen Eyes | Long Barrel | *Flare Gun* | Watch Post | *Signal Tower* |
-| **Trigger Happy** | attack speed | Quick Hands | Extended Mag | *Double Tap* | Bullet Hose | *Stormgunner* |
-| **Hardliner** | anti-armour | Heavy Slugs | *Armor Breaker* | Hollow Points | *Railshot* | *Tank Buster* |
+| **Trigger Happy** | attack speed | Quick Hands | Extended Mag | *Double Tap* | Bullet Hose | *Lead Rain* |
+| **Hardliner** | anti-armour | Heavy Slugs | *Armor Breaker* | Hollow Points | *Railshot* | *Hide Buster* |
 
 - Flare Gun: towers in its range +10% attack speed. Signal Tower: towers in range +20% damage and can hit armour.
-- Double Tap: two shots per trigger pull. Stormgunner: fastest fire in the game.
-- Armor Breaker: can damage Armored Husks. Hollow Points: ×2 vs armoured. Railshot: bullet passes through 3 enemies. Tank Buster: ×4 vs armoured and bosses.
+- Double Tap: two shots per trigger pull. Lead Rain: fastest fire in the game.
+- Armor Breaker: can damage Armored Husks. Hollow Points: ×2 vs armoured. Railshot: bullet passes through 3 enemies. Hide Buster: ×4 vs armoured and bosses.
 
-## Sniper — global range, slow
+## Longshot Perch (Sniper) — global range, slow
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
@@ -37,7 +37,7 @@ built). Change a name there, not in code.
 - Marked Target: its target takes +25% from every tower. Eye in the Sky: mark +60%, towers in range +15% attack speed.
 - Anti-Materiel: ×3 vs bosses. Concussion Round: stun on hit. Skybreaker: ×10 vs bosses, stuns bosses.
 
-## Grenadier — area damage, ground only
+## Mortar Pit (Grenadier) — area damage, ground only
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
@@ -49,27 +49,27 @@ built). Change a name there, not in code.
 - Cluster Shell: each shell splits into 3 blasts. Chain Reaction: the bomblets split again.
 - Shockwave: knocks enemies back along the track. Armor Crack: damages armour, ×2 vs armoured. Stun Grenade: brief stun. Tectonic Slam: everything hit is stunned 1s.
 
-## Chiller — support / crowd control ✅ phase 5 · unlock 100 Storm Cores
+## Tranq Station (Chiller) — tranquilizer darts: slow and knockout ✅ phase 5 · unlock 100 Storm Cores
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
-| **Field** | slow radius | Cold Snap | Frostbite | *Permafrost* | Glacier Zone | *Absolute Zero* |
-| **Freeze** | hard stops | *Flash Freeze* | Deep Freeze | *Ice Shards* | Cryo Pulse | *Stasis* |
-| **Brittle** | damage amp | *Brittle* | *Shatter* | *Cold Front* | Frozen Core | *Winter's Edge* |
+| **Sedate** | slow radius | Mild Dose | Heavy Dose | *Lingering Dose* | Sedative Cloud | *Hibernation* |
+| **Knockout** | hard stops | *Knockout Dart* | Heavy Sedative | *Barbed Darts* | Quick Cycle | *Big Game Tranq* |
+| **Weak Spot** | damage amp | *Exposed Hide* | *Crack Armor* | *Hunter's Call* | Vital Points | *Apex Predator* |
 
 - Permafrost: slow lingers after leaving the zone. Absolute Zero: slows bosses too.
 - Flash Freeze: periodic hard stop. Ice Shards: freezes also deal damage. Stasis: long freeze that holds bosses.
 - Brittle: chilled enemies take +25% damage. Shatter: +35% and strips armour. Cold Front: towers in range +10% attack speed. Winter's Edge: +75%, towers in range +20% damage.
 
-## Quartermaster — economy, no attack ✅ phase 5 · unlock 150 Storm Cores
+## Supply Camp (Quartermaster) — economy, no attack ✅ phase 5 · unlock 150 Storm Cores
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
-| **Yield** | income | Supply Crate | Bigger Budget | Trade Route | War Chest | *Storm Bank* |
-| **Airdrop** | loot chests | *Air Drop* | Double Drop | *Care Package* | Supply Chain | *Treasure Barge* |
+| **Yield** | income | Supply Crate | Bigger Budget | Trade Route | War Chest | *Amber Vault* |
+| **Airdrop** | loot chests | *Air Drop* | Double Drop | *Care Package* | Supply Chain | *Treasure Haul* |
 | **Logistics** | discounts | *Bulk Order* | Field Engineer | *Recycler* | *Forward Base* | *Command Center* |
 
-- Storm Bank: interest on banked cash. Air Drop: chests land that players run over to collect.
+- Amber Vault: interest on banked cash. Air Drop: chests land that players run over to collect.
 - Bulk Order: towers in range −5% upgrade cost. Recycler: towers in range sell for 90%. Forward Base: towers in range +10% attack speed. Command Center: −20% costs, full refunds.
 
 ---
@@ -82,7 +82,7 @@ built). Change a name there, not in code.
 | Range multiplier | Lookout, Field | ✅ phase 3 |
 | **Armored** and **Boss** enemy flags; armour blocks damage without pierce | enemies | ✅ phase 3b |
 | Armour pierce, bonus vs armoured, bonus vs bosses | Hardliner, Deadeye, Siege, Concussive, Signal Tower | ✅ phase 3b |
-| Multi-shot per trigger | Double Tap, Stormgunner | ✅ phase 3b |
+| Multi-shot per trigger | Double Tap, Lead Rain | ✅ phase 3b |
 | Line pierce (hits N in a line) | Railshot, Deadeye | ✅ phase 3b |
 | Mark (target takes +X% from all towers) | Marked Target, Eye in the Sky | ✅ phase 3b |
 | Stun, knockback | Concussion Round, Skybreaker, Shockwave, Stun Grenade, Tectonic Slam | ✅ phase 3b |

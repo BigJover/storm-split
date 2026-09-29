@@ -1,19 +1,19 @@
 --[[
 	Progression: what a player keeps between matches (design doc §05, phase 6).
 
-	Saved per player (DataStoreService): Storm Cores, what they own, a mastery
+	Saved per player (DataStoreService): Amber (stored as `cores`), what they own, a mastery
 	level per hero, and the highest round they've ever reached.
 
-	  Storm Cores   the permanent currency (VISION.md). Casual payouts:
+	  Amber         the permanent currency (VISION.md). Casual payouts:
 	                clearing the track pays the difficulty's Clear reward to
 	                everyone; a multiplayer match that ends without a clear pays
 	                MultiplayerLossPayout each; a solo loss pays nothing.
 	                (Competitive buy-ins and pots come with the battle modes.)
-	  Unlocks       heroes and towers with an Unlock cost are bought with Cores.
+	  Unlocks       heroes and towers with an Unlock cost are bought with Amber.
 	                Free ones (cost 0) are owned by everyone. You can only pick
 	                heroes and place towers you own; upgrading a teammate's
 	                tower doesn't need ownership (Shop).
-	  Mastery       bought with Cores, per owned hero, up to 20 levels (Mastery
+	  Mastery       bought with Amber, per owned hero, up to 20 levels (Mastery
 	                sheet): cheaper hero upgrades, shorter cooldowns, a free
 	                first upgrade, a higher crossover cap — never damage
 
@@ -34,6 +34,7 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local Theme = require(Shared:WaitForChild("Theme"))
 
 local Progression = {}
 
@@ -220,7 +221,7 @@ local function buyMastery(player: Player, heroKey: unknown): (boolean, string)
 		return false, "Mastery is maxed"
 	end
 	if profile.cores < nextLevel.coreCost then
-		return false, "Not enough Storm Cores"
+		return false, `Not enough {Theme.Currency}`
 	end
 	profile.cores -= nextLevel.coreCost
 	profile.mastery[heroKey] = level + 1
@@ -261,7 +262,7 @@ local function buyUnlock(player: Player, kind: unknown, itemKey: unknown): (bool
 		return false, "You already own that"
 	end
 	if profile.cores < cost then
-		return false, "Not enough Storm Cores"
+		return false, `Not enough {Theme.Currency}`
 	end
 	profile.cores -= cost
 	profile.owned[`{kind}:{itemKey}`] = true
@@ -299,7 +300,7 @@ function Progression.endMatch(result: MatchResult)
 		publish(player)
 		task.spawn(save, player)
 	end
-	print(`[StormSplit] Match over (round {result.roundReached}, {if result.cleared then "cleared" else "lost"}): +{payout} Storm Cores each`)
+	print(`[DinoHunters] Match over (round {result.roundReached}, {if result.cleared then "cleared" else "lost"}): +{payout} {Theme.Currency} each`)
 end
 
 ------------------------------------------------------------------ public
@@ -326,7 +327,7 @@ function Progression.init(remotes: Folder, hooks: { onMasteryChanged: ((Player) 
 	end
 	request.Parent = remotes
 
-	-- Studio-only test shortcut (J): +100 Cores for this session, so buying
+	-- Studio-only test shortcut (J): +100 Amber for this session, so buying
 	-- unlocks and mastery can be tried. Never saved, never present in a
 	-- published game.
 	if RunService:IsStudio() then

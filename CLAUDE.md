@@ -1,6 +1,9 @@
-# Storm Split
+# Dino Hunters
 
-Co-op (2–4 player) tower defense for **Roblox**, built solo by Jovan as a first game. BTD6-style towers
+(Repo and folder still say `storm-split` / `~/Fortnite`, the working name before the
+dinosaur theme.)
+
+Co-op (2–10 player) dinosaur-hunting tower defense for **Roblox**, built solo by Jovan as a first game. BTD6-style towers
 with three upgrade paths, splitting enemies, and one original twist: the player's weapon *is*
 the hero — each weapon type grants an ability and levels on an in-round track and a permanent
 mastery track.
@@ -148,7 +151,16 @@ loop — Lobby (home screen, no characters, host picks mode/track/difficulty, Pl
 → Playing → result screen with Cores earned → board reset → Lobby. Unlocks, mastery and hero
 picks survive the reset. Team Battle / Battle Royale show as coming soon.
 
-Next (user's pick): balance pass, original theme, or phase 7 battle modes.
+Theme (2026-09-29): **Dino Hunters** — step 1 (reskin) written, not yet playtested: every
+tier is its own dinosaur species that **shrinks** one size per emptied HP share instead of
+splitting (total HP per species = the old split-chain HP, so balance is unchanged; bosses now
+walk). Blocky dino models (`Shared/DinoLook`), hunting names for towers/heroes/abilities,
+Amber currency, dirt-trail map. Title and currency live in `Shared/Theme`; internal keys
+unchanged. Step 2 (planned, `VISION.md`): dinos bite and shoot towers/players, 100 player
+HP (+25 per round), tower HP with knock-out + repair, Field Medic hero, Field Hospital and
+Armory towers.
+
+Next: playtest the reskin, then step 2.
 
 ## Open issues
 
@@ -157,5 +169,4 @@ Next (user's pick): balance pass, original theme, or phase 7 battle modes.
   matters for leaks. Relabel the note at Rounds!A48 next time the sheet is edited.
 - Leak cost is effective HP (BTD6-style), so 40 starting lives is likely too few.
 - Scout Range path has range *and* its old damage/rate boosts — likely too strong; trim.
-- Enemy names are Fortnite-flavoured placeholders; needs an original theme.
 - Folder is still named `~/Fortnite`.

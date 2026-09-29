@@ -112,7 +112,8 @@ def read_towers(ws):
         name = v(ws, r, 1)
         if not name or str(name).startswith("Cost per DPS"):
             break
-        key = str(name).upper()
+        # Internal key (Key column) stays fixed while the display name can change.
+        key = str(v(ws, r, 15) or name).strip().upper()
         towers[key] = {
             "display": str(name),
             "role": v(ws, r, 2) or "",
@@ -134,13 +135,16 @@ def read_towers(ws):
 
 
 def attach_paths(ws, towers):
+    by_display = {t["display"]: k for k, t in towers.items()}
     index = {}
     r = 5
     while True:
         tower = v(ws, r, 1)
         if not tower:
             break
-        key = str(tower).upper()
+        key = by_display.get(str(tower).strip())
+        if key is None:
+            sys.exit(f"Tower Upgrades row {r}: unknown tower '{tower}' (not on the Towers sheet)")
         pid = str(v(ws, r, 2))
         if (key, pid) not in index:
             path = {"id": pid, "focus": v(ws, r, 3) or "", "tiers": []}
@@ -173,6 +177,8 @@ HERO_BASE_COLUMNS = [
     ("abilityPower", 19, "num"), ("abilitySeconds", 20, "num"), ("abilityRadius", 21, "num"),
     ("abilityCooldown", 22, "num"),
     ("unlockCost", 24, "num"),
+    ("weapon", 25, "text"),
+    ("abilityKind", 26, "text"),
 ]
 
 # Hero Upgrades effect columns, cumulative per tier: (key, column, kind, default when blank).
@@ -273,6 +279,7 @@ def read_enemies(ws):
             "flying": str(v(ws, r, 10)).strip().lower() == "yes",
             "armored": yes(v(ws, r, 12)),
             "boss": yes(v(ws, r, 13)),
+            "sizes": max(1, int(num(v(ws, r, 14), 1))),
         }
         r += 1
     return enemies
@@ -327,7 +334,11 @@ def validate(data):
 
     worst = max((descendants(k), k) for k in enemies)
     cap = data["Tuning"].get("MaxConcurrentEnemies", 0)
-    notes = [f"worst-case split cascade: {worst[0]} enemies from one {worst[1]} (live cap {cap}; the spawn queue absorbs the overflow)"]
+    notes = [
+        f"worst-case split cascade: {worst[0]} enemies from one {worst[1]} (live cap {cap})"
+        if worst[0] > 0
+        else f"no splitting: dinos shrink in place (live cap {cap})"
+    ]
 
     for i, rd in enumerate(data["Rounds"], start=1):
         for k in rd["counts"]:
@@ -394,6 +405,9 @@ def validate(data):
             problems.append(f"Mastery level {i}: needs a Core cost")
         if not 2 <= lvl["crossoverCap"] <= 5:
             problems.append(f"Mastery level {i}: Crossover cap must be 2-5")
+    for key, h in data["Heroes"].items():
+        if h["abilityKind"].upper() not in ("MARK", "OVERDRIVE", "AIRBURST"):
+            problems.append(f"Hero {h['display']}: Ability kind must be MARK, OVERDRIVE or AIRBURST")
     if not any(t["unlockCost"] == 0 for t in data["Towers"].values()):
         problems.append("At least one tower must be free (Unlock cost 0)")
     if not any(h["unlockCost"] == 0 for h in data["Heroes"].values()):

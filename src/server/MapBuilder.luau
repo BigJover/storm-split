@@ -78,13 +78,14 @@ function MapBuilder.build(): Map
 	for i = 2, #points do
 		local a, b = points[i - 1] + GROUND_LIFT, points[i] + GROUND_LIFT
 		local length = (b - a).Magnitude
-		makePart(
+		local lane = makePart(
 			`Lane{i - 1}`,
 			Vector3.new(Track.LaneWidth, 0.4, length + Track.LaneWidth),
 			CFrame.lookAt((a + b) / 2, b),
 			Track.Colors.Lane,
 			lanes
 		)
+		lane.Material = Enum.Material.Ground -- a dirt trail
 	end
 
 	-- Spawn and exit markers.

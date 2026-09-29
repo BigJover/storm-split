@@ -44,6 +44,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local HeroStats = require(Shared:WaitForChild("HeroStats"))
 local Track = require(Shared:WaitForChild("Track"))
+local Theme = require(Shared:WaitForChild("Theme"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local Economy = require(script.Parent.Economy)
@@ -235,7 +236,7 @@ local function syncTool(player: Player)
 	end
 	local hero = Config.Heroes[s.hero]
 	local maxed = Progression.masteryLevel(player, s.hero) >= #Config.Mastery
-	tool.Name = hero.display
+	tool.Name = hero.weapon ~= "" and hero.weapon or hero.display
 	tool.ToolTip = `{hero.display} · {hero.ability} (F)`
 	local handle = tool:FindFirstChild("Handle")
 	if handle and handle:IsA("BasePart") then
@@ -263,7 +264,7 @@ local function pick(player: Player, key: unknown): (boolean, string)
 		return false, "Unknown hero"
 	end
 	if not Progression.ownsHero(player, key) then
-		return false, `Unlock {Config.Heroes[key].display} with Storm Cores first (M)`
+		return false, `Unlock {Config.Heroes[key].display} with {Theme.Currency} first (M)`
 	end
 	local s = stateOf(player)
 	local building = ReplicatedStorage:GetAttribute("State") ~= "Playing"
@@ -564,7 +565,7 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 	end
 	local color = HERO_COLORS[s.hero] or Color3.new(1, 1, 1)
 
-	if hero.ability == "Mark" then
+	if hero.abilityKind == "MARK" then
 		-- Marks ignore armour and air limits: it's a paint, not a bullet.
 		local markStats = table.clone(stats)
 		markStats.hitsAir = true
@@ -575,13 +576,13 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 		end
 		Enemies.mark(target, stats.abilityPower, stats.abilitySeconds)
 		Effects.part(Vector3.one * 3, CFrame.new(target.part.Position + Vector3.new(0, 3, 0)), color, 0.6, Enum.PartType.Ball)
-	elseif hero.ability == "Overdrive" then
+	elseif hero.abilityKind == "OVERDRIVE" then
 		s.overdriveUntil = now + stats.abilitySeconds
 		s.overdrivePercent = stats.abilityPower
 		s.overdriveRadius = stats.abilityRadius
 		player:SetAttribute("OverdriveUntil", workspace:GetServerTimeNow() + stats.abilitySeconds)
 		Effects.disc(body.Position - Vector3.new(0, 2.8, 0), stats.abilityRadius, color, 0.5, 0.7)
-	elseif hero.ability == "Airburst" then
+	elseif hero.abilityKind == "AIRBURST" then
 		if direction.Y >= -0.01 then
 			return false, "Aim at the ground"
 		end

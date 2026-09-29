@@ -18,7 +18,7 @@
 	next tier, price and what it changes (HEROES.md, Server/Hero). Same
 	crossover rule as towers; prices include your mastery discount.
 
-	Unlocks & Mastery (M, between matches): Storm Cores, buying the heroes and
+	Unlocks & Mastery (M, between matches): Amber, buying the heroes and
 	towers you don't own yet, and each owned hero's mastery level with what the
 	next level gives (Server/Progression). Unowned towers and heroes show their
 	price in the Build list and hero select.
@@ -36,6 +36,8 @@ local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local Theme = require(Shared:WaitForChild("Theme"))
+local CUR = string.lower(Theme.Currency) -- "amber" in running text
 local Placement = require(Shared:WaitForChild("Placement"))
 local ShopRules = require(Shared:WaitForChild("ShopRules"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
@@ -162,9 +164,9 @@ end
 
 -- One line per ability for the hero cards. Display text only.
 local ABILITY_BLURB = {
-	Mark = "paint a target so everything hits it harder",
-	Overdrive = "you and nearby towers fire faster",
-	Airburst = "call a strike down on the track",
+	MARK = "dart a dino so everything hits it harder",
+	OVERDRIVE = "you and nearby towers fire faster",
+	AIRBURST = "call a flare strike down on the track",
 }
 local FIRE_MODE_NAME = { semi = "semi-auto", auto = "full-auto", burst = "burst" }
 
@@ -792,7 +794,7 @@ render = function()
 			if ShopRules.Unreleased[key] then
 				addRow(order, `<b>{name}</b>  ·  coming later`, LOCKED_COLOR, false)
 			elseif not ownsTower(key) then
-				addRow(order, `<b>{name}</b>  ·  unlock for {def.unlockCost} cores (M)\n<font size="13">{escape(def.role)}. You can still upgrade a teammate's.</font>`, LOCKED_COLOR, false)
+				addRow(order, `<b>{name}</b>  ·  unlock for {def.unlockCost} {CUR} (M)\n<font size="13">{escape(def.role)}. You can still upgrade a teammate's.</font>`, LOCKED_COLOR, false)
 			else
 				local affordable = cash >= def.baseCost
 				local text = `<b>{name}</b>  ·  {def.baseCost}\n<font size="13">{escape(def.role)}</font>`
@@ -814,8 +816,8 @@ render = function()
 			local hero = Config.Heroes[key]
 			local chosen = key == current
 			local owned = ownsHero(key)
-			local blurb = ABILITY_BLURB[hero.ability] or ""
-			local status = if chosen then "  ·  your hero" elseif not owned then `  ·  unlock for {hero.unlockCost} cores (M)` else ""
+			local blurb = ABILITY_BLURB[hero.abilityKind] or ""
+			local status = if chosen then "  ·  your hero" elseif not owned then `  ·  unlock for {hero.unlockCost} {CUR} (M)` else ""
 			local text = `<b>{escape(hero.display)}</b>  ·  {escape(hero.role)}{status}\n<font size="13">{escape(hero.ability)}: {escape(blurb)}  ·  {FIRE_MODE_NAME[hero.fireMode] or hero.fireMode} · {hero.magazine} rounds</font>`
 			addRow(order, text, if chosen then HERO_COLOR elseif owned then BUY_COLOR else LOCKED_COLOR, owned and not chosen, function()
 				if send("pick", key, nil, heroRequest) then
@@ -861,7 +863,7 @@ render = function()
 	elseif mode == "mastery" then
 		local cores = player:GetAttribute("Cores") or 0
 		local status = player:GetAttribute("SaveStatus")
-		title.Text = `{cores} Storm Cores`
+		title.Text = `{cores} {Theme.Currency}`
 		local between = ReplicatedStorage:GetAttribute("State") ~= "Playing"
 		local UNLOCK_COLOR = Color3.fromRGB(70, 150, 120)
 		local order = 0
@@ -879,7 +881,7 @@ render = function()
 			local name = escape(hero.display)
 			if not ownsHero(key) then
 				local affordable = between and cores >= hero.unlockCost
-				addRow(order, `<b>{name}</b>  ·  unlock  ·  {hero.unlockCost} cores\n<font size="13">{escape(hero.role)} · {escape(hero.ability)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
+				addRow(order, `<b>{name}</b>  ·  unlock  ·  {hero.unlockCost} {CUR}\n<font size="13">{escape(hero.role)} · {escape(hero.ability)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
 					send("unlock", "hero", key, progressRequest)
 				end)
 				continue
@@ -895,7 +897,7 @@ render = function()
 					elseif milestone then `toward level {milestone}: {escape(reward or "")}`
 					else ""
 				local affordable = between and cores >= nextLevel.coreCost
-				local text = `<b>{name}</b>  ·  mastery {level} → {level + 1}  ·  {nextLevel.coreCost} cores\n<font size="13">{toward}</font>`
+				local text = `<b>{name}</b>  ·  mastery {level} → {level + 1}  ·  {nextLevel.coreCost} {CUR}\n<font size="13">{toward}</font>`
 				addRow(order, text, if affordable then Color3.fromRGB(120, 90, 200) else LOCKED_COLOR, affordable, function()
 					send("mastery", key, nil, progressRequest)
 				end)
@@ -915,7 +917,7 @@ render = function()
 				addRow(order, `<b>{name}</b>  ·  owned\n<font size="13">{escape(def.role)}</font>`, LOCKED_COLOR, false)
 			else
 				local affordable = between and cores >= def.unlockCost
-				addRow(order, `<b>{name}</b>  ·  unlock  ·  {def.unlockCost} cores\n<font size="13">{escape(def.role)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
+				addRow(order, `<b>{name}</b>  ·  unlock  ·  {def.unlockCost} {CUR}\n<font size="13">{escape(def.role)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
 					send("unlock", "tower", key, progressRequest)
 				end)
 			end
@@ -923,7 +925,7 @@ render = function()
 
 		local note = if status == "offline"
 			then "Progress isn't saving: publish the place to Roblox to keep it (SETUP.md)."
-			else "Clear a track to earn Cores (more on harder difficulties). Mastery never adds damage."
+			else `Clear a track to earn {Theme.Currency} (more on harder difficulties). Mastery never adds damage.`
 		addRow(50, `<font size="13">{note}</font>`, PANEL_COLOR, false)
 	elseif mode == "manage" and managed then
 		local key = managed:GetAttribute("Tower") :: string

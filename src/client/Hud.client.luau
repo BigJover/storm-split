@@ -1,7 +1,7 @@
 --[[
 	Minimal HUD: round, difficulty, level, cash, lives, enemies alive; the
 	Start button in the build phase; the result screen after a match (with the
-	Storm Cores earned and a countdown home). Hidden on the home screen
+	Amber earned and a countdown home). Hidden on the home screen
 	(Home.client). Reads ReplicatedStorage attributes set by the server;
 	pressing Start is only a request.
 ]]
@@ -14,6 +14,7 @@ local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local startGame = remotes:WaitForChild("StartGame") :: RemoteEvent
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+local Theme = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Theme"))
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "StormSplitHud"
@@ -112,7 +113,7 @@ local function refresh()
 	if state == "GameOver" or state == "Victory" then
 		local won = state == "Victory"
 		local payout = player:GetAttribute("LastPayout")
-		local cores = if payout == nil then "" elseif payout > 0 then `+{payout} Storm Cores` else "No Storm Cores (solo pays on a clear)"
+		local cores = if payout == nil then "" elseif payout > 0 then `+{payout} {Theme.Currency}` else `No {Theme.Currency} (solo pays on a clear)`
 		results.Text = `<font color="{if won then "#8cf0aa" else "#ff788c"}">{if won then "VICTORY" else "GAME OVER"}</font>\n<font size="18">{if won then `{difficultyName} cleared` else `Reached round {round} on {difficultyName}`}\n{cores}</font>`
 		label.Text = if won then "VICTORY" else `GAME OVER  ·  round {round}`
 		label.TextColor3 = if won then Color3.fromRGB(140, 240, 170) else Color3.fromRGB(255, 120, 140)
@@ -199,7 +200,7 @@ if studioCash and studioCash:IsA("RemoteEvent") then
 		if input.KeyCode == Enum.KeyCode.K then
 			studioCash:FireServer()
 		elseif input.KeyCode == Enum.KeyCode.J and studioProgress and studioProgress:IsA("RemoteEvent") then
-			studioProgress:FireServer() -- +100 Storm Cores (never saved)
+			studioProgress:FireServer() -- +100 Amber (never saved)
 		end
 	end)
 end
