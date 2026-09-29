@@ -24,6 +24,16 @@ Teams attack each other's towers; the focus is surviving longer than the other t
 **Battle royale.** Every player for themselves. Winner is whoever gets the most **pops**
 (kills credited to their towers).
 
+## Theme (tentative, user, 2026-09-29)
+
+The current names are Fortnite-flavoured placeholders and need replacing. Brainrot was
+considered and rejected (the meta is played out on Roblox). **Front-runner: "Germ War"** —
+enemies are germs, viruses and cells that divide when hit (the split mechanic as mitosis);
+towers are immune cells and medicine; heroes are tiny scientists. The user is researching
+current and upcoming Roblox metas and may replace it. Nothing is renamed until the theme
+is final. Other options considered: weather (storm cells split), slime lab, asteroid
+defence, candy.
+
 ## Storm Cores economy (user, 2026-09-29)
 
 Cores are the permanent currency: they buy tower and hero unlocks and hero mastery.
