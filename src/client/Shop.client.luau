@@ -315,6 +315,65 @@ local function describeAbilities(now, nextStep, parts: { string })
 	if changed("auraPiercesArmor", false) then
 		table.insert(parts, "towers in range pierce armour")
 	end
+
+	-- Chiller
+	local slow = changed("slowPercent", 0)
+	if slow then
+		table.insert(parts, `slows {slow}%`)
+	end
+	local linger = changed("slowLinger", 0)
+	if linger then
+		table.insert(parts, `slow lingers {fmt(linger)}s`)
+	end
+	if changed("slowsBosses", false) then
+		table.insert(parts, "slows bosses")
+	end
+	local freeze = changed("freezeSeconds", 0)
+	if freeze then
+		table.insert(parts, `freezes {fmt(freeze)}s every {fmt(nextStep.freezeEvery or 0)}s`)
+	elseif changed("freezeEvery", 0) then
+		table.insert(parts, `freezes every {fmt(nextStep.freezeEvery)}s`)
+	end
+	local shards = changed("freezeDamage", 0)
+	if shards then
+		table.insert(parts, `freezes deal {fmt(shards)} damage`)
+	end
+	if changed("freezeHoldsBosses", false) then
+		table.insert(parts, "freezes bosses")
+	end
+	local brittle = changed("brittlePercent", 0)
+	if brittle then
+		table.insert(parts, `chilled take +{brittle}% damage`)
+	end
+	if changed("stripsArmor", false) then
+		table.insert(parts, "chill strips armour")
+	end
+
+	-- Quartermaster
+	local income = changed("incomeMult", 1)
+	if income then
+		table.insert(parts, `income x{fmt(income)}`)
+	end
+	local interest = changed("interestPercent", 0)
+	if interest then
+		table.insert(parts, `{interest}% interest on banked cash (max {nextStep.interestCap or 0})`)
+	end
+	local chests = changed("chests", 0)
+	if chests then
+		table.insert(parts, `{chests} airdrop chest{if chests == 1 then "" else "s"} a round`)
+	end
+	local chestCash = changed("chestCash", 0)
+	if chestCash then
+		table.insert(parts, `chests hold {chestCash}`)
+	end
+	local discount = changed("discountPercent", 0)
+	if discount then
+		table.insert(parts, `towers in range -{discount}% upgrades`)
+	end
+	local refund = changed("sellRefund", 0)
+	if refund then
+		table.insert(parts, `towers in range sell for {math.floor(refund * 100 + 0.5)}%`)
+	end
 end
 
 -- "+30% damage · +15% rate · 2 shots per trigger" for going from `current`
@@ -737,8 +796,12 @@ render = function()
 					addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
 				else
 					local step = path.tiers[current + 1]
-					local affordable = cash >= step.cost
-					local text = `<b>{escape(step.name or path.id)}</b>  ·  {step.cost}\n<font size="13">{name} {current + 1}  ·  {escape(describeStep(path, current))}</font>`
+					-- Mirrors Server/Shop: a Quartermaster's Logistics discount.
+					local discount = managed:GetAttribute("Discount") or 0
+					local cost = math.floor(step.cost * (1 - discount / 100) + 0.5)
+					local affordable = cash >= cost
+					local price = if discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
+					local text = `<b>{escape(step.name or path.id)}</b>  ·  {price}\n<font size="13">{name} {current + 1}  ·  {escape(describeStep(path, current))}</font>`
 					addRow(pathIndex, text, if affordable then BUY_COLOR else LOCKED_COLOR, affordable, function()
 						send("upgrade", towerId, pathIndex)
 					end)
@@ -746,7 +809,8 @@ render = function()
 			end
 		end
 
-		local refund = math.floor((managed:GetAttribute("Spent") or 0) * Config.Tuning.SellRefund)
+		local refundRate = managed:GetAttribute("RefundRate") or Config.Tuning.SellRefund
+		local refund = math.floor((managed:GetAttribute("Spent") or 0) * refundRate)
 		local ownerId = managed:GetAttribute("OwnerId") or 0
 		local ownerName = managed:GetAttribute("OwnerName") or ""
 		-- Mirrors the server rule: only the builder sells, unless they've left.
@@ -769,7 +833,7 @@ end
 local function openManage(body: BasePart, prompt: ProximityPrompt)
 	setMode("manage")
 	managed, managedPrompt = body, prompt
-	for _, name in { "Spent", "Tower", "Path1", "Path2", "Path3" } do
+	for _, name in { "Spent", "Tower", "Path1", "Path2", "Path3", "Discount", "RefundRate" } do
 		table.insert(managedConnections, body:GetAttributeChangedSignal(name):Connect(render))
 	end
 	table.insert(managedConnections, body.AncestryChanged:Connect(function()

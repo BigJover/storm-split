@@ -49,7 +49,7 @@ built). Change a name there, not in code.
 - Cluster Shell: each shell splits into 3 blasts. Chain Reaction: the bomblets split again.
 - Shockwave: knocks enemies back along the track. Armor Crack: damages armour, ×2 vs armoured. Stun Grenade: brief stun. Tectonic Slam: everything hit is stunned 1s.
 
-## Chiller — support / crowd control ⏳ phase 5
+## Chiller — support / crowd control ✅ phase 5
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
@@ -61,7 +61,7 @@ built). Change a name there, not in code.
 - Flash Freeze: periodic hard stop. Ice Shards: freezes also deal damage. Stasis: long freeze that holds bosses.
 - Brittle: chilled enemies take +25% damage. Shatter: +35% and strips armour. Cold Front: towers in range +10% attack speed. Winter's Edge: +75%, towers in range +20% damage.
 
-## Quartermaster — economy, no attack ⏳ phase 5
+## Quartermaster — economy, no attack ✅ phase 5
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
@@ -89,8 +89,8 @@ built). Change a name there, not in code.
 | Burn patch on the track | Napalm, Scorched Earth | ✅ phase 3b |
 | Cluster bomblets | Cluster Shell, Chain Reaction | ✅ phase 3b |
 | Support auras (buff nearby towers) | Flare Gun, Signal Tower, Eye in the Sky | ✅ phase 3b |
-| Slow, freeze, damage-taken amp | Chiller | ⏳ phase 5 |
-| Round income, chests, discounts, refunds | Quartermaster | ⏳ phase 5 |
+| Slow, freeze, damage-taken amp, armour strip | Chiller | ✅ phase 5 |
+| Round income, interest, airdrop chests, upgrade discounts, better refunds | Quartermaster | ✅ phase 5 |
 
 When a mechanic lands, its numbers get a column on `Tower Upgrades` and the stat-only
 multipliers get rebalanced around it — expect a tuning pass per mechanic.

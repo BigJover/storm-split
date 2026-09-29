@@ -47,6 +47,7 @@ src/
 │   ├── Hero.luau            The player as hero: free pick, upgrade paths, magazine/reload, recoil,
 │   │                        fire modes, pellets/pierce/ricochet, abilities — all validated here
 │   ├── Hazards.luau         Burning patches on the track (towers and hero rounds)
+│   ├── Airdrops.luau        Quartermaster chests players run over to collect
 │   ├── Effects.luau         Tracers, blasts, burn discs (visual only)
 │   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
 └── client/   → StarterPlayer.StarterPlayerScripts.Client
@@ -160,7 +161,7 @@ second test client.
 | **3b** — tower abilities | Armored/Boss enemy flags, then the Scout, Sniper and Grenadier mechanics in `UPGRADES.md` (multi-shot, pierce, mark, stun, knockback, burn, cluster, auras) | **Written, statically checked**, not yet playtested |
 | **3c** — difficulty and scale | Difficulty levels (Easy = baseline, Normal, Hard, Chaos) and per-player scaling from the spreadsheet; tower owners; pops leaderboard; owner-only selling. See `VISION.md` | **Written, statically checked**, not yet playtested |
 | **4** — the hero | Free hero pick (Pistol, Assault Rifle, Shotgun); three named upgrade paths each about handling, not damage (`HEROES.md`); magazines, recoil, fire modes, pellets/slugs, pierce, ricochet, special rounds; first-person gunplay; abilities Mark / Overdrive / Airburst | **Done, confirmed in Studio** (redesign 2026-09-29) |
-| **5** — roster and rounds | Chiller and Quartermaster mechanics per `UPGRADES.md` (slow, freeze, damage amp, income, chests, discounts) | Numbers already in `Config` |
+| **5** — roster and rounds | Chiller (chill: slow, brittle, armour strip; freeze pulses) and Quartermaster (round income, interest, airdrop chests, Logistics discounts/refunds) per `UPGRADES.md` | **Written 2026-09-29, statically checked**, not yet playtested |
 | **6** — co-op, mastery, publish | `Progression` (DataStoreService), mastery effects, lobby, 10-player servers | |
 | **7** — battle modes | Team battle (sides, tower HP, per-team cash) and battle royale (most pops) — `VISION.md` | |
 

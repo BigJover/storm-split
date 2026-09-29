@@ -114,7 +114,14 @@ Hero redesign playtested and confirmed 2026-09-29. Then split hero select (H, by
 heroes only, closes on pick) from hero upgrades (U, bottom right) at the user's request:
 choosing a hero must not show upgrades.
 
-Next: phase 5 (Chiller and Quartermaster mechanics, per `UPGRADES.md`).
+Phase 5 written 2026-09-29, not yet playtested: Chiller and Quartermaster are for sale.
+Chiller chills enemies in range (slow, brittle damage amp, armour strip with Shatter,
+lingering with Permafrost) and Freeze pulses hard stops; Quartermaster pays round income
+(Yield, Storm Bank interest), drops chests players collect (Airdrop), and discounts upgrades
+/ raises refunds for towers in range (Logistics). Also fixed: burning patches dealt no damage
+since the hero redesign (Hazards.step was never called).
+
+Next: playtest phase 5.
 
 ## Open issues
 

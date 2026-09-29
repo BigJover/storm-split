@@ -75,6 +75,24 @@ ABILITY_COLUMNS = [
     ("auraRatePercent", 28, "num", 0),
     ("auraDamagePercent", 29, "num", 0),
     ("auraPiercesArmor", 30, "bool", False),
+    # Chiller
+    ("slowPercent", 31, "num", 0),
+    ("slowLinger", 32, "num", 0),
+    ("slowsBosses", 33, "bool", False),
+    ("freezeEvery", 34, "num", 0),
+    ("freezeSeconds", 35, "num", 0),
+    ("freezeDamage", 36, "num", 0),
+    ("freezeHoldsBosses", 37, "bool", False),
+    ("brittlePercent", 38, "num", 0),
+    ("stripsArmor", 39, "bool", False),
+    # Quartermaster
+    ("incomeMult", 40, "num", 1),
+    ("interestPercent", 41, "num", 0),
+    ("interestCap", 42, "num", 0),
+    ("chests", 43, "num", 0),
+    ("chestCash", 44, "num", 0),
+    ("discountPercent", 45, "num", 0),
+    ("sellRefund", 46, "num", 0),
 ]
 
 
@@ -106,6 +124,7 @@ def read_towers(ws):
             "hitsAir": str(v(ws, r, 9)).strip().lower() == "yes",
             "incomePerRound": num(v(ws, r, 10)),
             "splashRadius": num(v(ws, r, 12)),
+            "slowPercent": num(v(ws, r, 13)),
             "paths": [],
         }
         order.append(key)
@@ -352,7 +371,7 @@ def validate(data):
         "BombletDamage", "BombletSpread", "ExtraEnemiesPerPlayer", "ExtraHPPerPlayer",
         "StartingCashPerExtraPlayer", "WeaponAimAssist", "OverdriveFireRateX", "AirburstDelay",
         "AirburstReach", "SpinUpTime", "RicochetReach", "StillSpeed", "HeroUpgradeBaseCost",
-        "HeroUpgradeCostGrowth",
+        "HeroUpgradeCostGrowth", "ChestLifetime", "ChestSpread",
     ]
     for key in needed:
         if key not in data["Tuning"]:

@@ -10,6 +10,11 @@
 	doesn't pierce armour. Bosses shrug off stun and knockback unless a hit
 	says otherwise.
 
+	CHILL (Chiller): a chilled enemy moves slower, may take extra damage from
+	every source (brittle), and may lose its armour while the chill lasts
+	(Shatter). Chill is refreshed every frame an enemy stands in a Chiller's
+	range; Permafrost makes it linger after it leaves. Chilled enemies look icy.
+
 	THE CAP (ARCHITECTURE.md §5): one Barge death cascades into 244 enemies.
 	Nothing ever spawns directly — everything goes through a queue, and the
 	queue only drains while live enemies are under MaxConcurrentEnemies.
@@ -41,6 +46,11 @@ export type Enemy = {
 	stunnedUntil: number,
 	markPercent: number,
 	markedUntil: number,
+	chilledUntil: number,
+	slowPercent: number,
+	brittlePercent: number,
+	armorStripped: boolean,
+	icy: boolean, -- what the part currently shows
 }
 
 type Pending = { key: string, distance: number, hpMult: number, markPercent: number?, markedUntil: number? }
@@ -159,6 +169,11 @@ local function spawnNow(item: Pending)
 		stunnedUntil = 0,
 		markPercent = item.markPercent or 0, -- a split child inherits its parent's mark
 		markedUntil = item.markedUntil or 0,
+		chilledUntil = 0,
+		slowPercent = 0,
+		brittlePercent = 0,
+		armorStripped = false,
+		icy = false,
 	}
 
 	live[enemy.id] = enemy
@@ -196,9 +211,13 @@ function Enemies.enqueue(key: string, hpMult: number)
 	push(spawnQueue, { key = key, distance = 0, hpMult = hpMult })
 end
 
+local function chilled(enemy: Enemy): boolean
+	return os.clock() < enemy.chilledUntil
+end
+
 -- Whether a hit with these properties can hurt this enemy at all.
 function Enemies.canHurt(enemy: Enemy, piercesArmor: boolean): boolean
-	return piercesArmor or not enemy.def.armored
+	return piercesArmor or not enemy.def.armored or (enemy.armorStripped and chilled(enemy))
 end
 
 -- Apply damage. Returns true if this hit killed it. A hit that can't pierce
@@ -210,6 +229,9 @@ function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?): b
 	end
 	if enemy.markPercent > 0 and os.clock() < enemy.markedUntil then
 		amount *= 1 + enemy.markPercent / 100
+	end
+	if enemy.brittlePercent > 0 and chilled(enemy) then
+		amount *= 1 + enemy.brittlePercent / 100
 	end
 	enemy.hp -= amount
 	if enemy.hp > 0 then
@@ -241,6 +263,30 @@ end
 
 function Enemies.isMarked(enemy: Enemy): boolean
 	return enemy.markPercent > 0 and os.clock() < enemy.markedUntil
+end
+
+export type Chill = {
+	slowPercent: number,
+	seconds: number,
+	affectsBosses: boolean,
+	brittlePercent: number,
+	stripsArmor: boolean,
+}
+
+-- Chill an enemy for `seconds`. The strongest slow and brittle in effect win
+-- while the chill lasts; a fresh chill with weaker numbers only extends it.
+function Enemies.chill(enemy: Enemy, c: Chill)
+	if not enemy.alive or c.seconds <= 0 or (enemy.def.boss and not c.affectsBosses) then
+		return
+	end
+	local now = os.clock()
+	if now >= enemy.chilledUntil then
+		enemy.slowPercent, enemy.brittlePercent, enemy.armorStripped = 0, 0, false
+	end
+	enemy.chilledUntil = math.max(enemy.chilledUntil, now + c.seconds)
+	enemy.slowPercent = math.max(enemy.slowPercent, c.slowPercent)
+	enemy.brittlePercent = math.max(enemy.brittlePercent, c.brittlePercent)
+	enemy.armorStripped = enemy.armorStripped or c.stripsArmor
 end
 
 function Enemies.stun(enemy: Enemy, seconds: number, affectsBosses: boolean?)
@@ -292,8 +338,14 @@ function Enemies.step(dt: number)
 
 	local now = os.clock()
 	for _, enemy in live do
+		local isChilled = now < enemy.chilledUntil
 		if now >= enemy.stunnedUntil then
-			enemy.distance += enemy.speed * dt
+			local slow = if isChilled then math.clamp(enemy.slowPercent, 0, 95) / 100 else 0
+			enemy.distance += enemy.speed * (1 - slow) * dt
+		end
+		if isChilled ~= enemy.icy then
+			enemy.icy = isChilled -- visuals only
+			enemy.part.Material = if isChilled then Enum.Material.Ice else Enum.Material.SmoothPlastic
 		end
 		if enemy.distance >= path.length then
 			remove(enemy)

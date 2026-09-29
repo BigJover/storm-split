@@ -26,6 +26,8 @@ local Shop = require(script.Parent.Shop)
 local Scoreboard = require(script.Parent.Scoreboard)
 local Effects = require(script.Parent.Effects)
 local Hero = require(script.Parent.Hero)
+local Hazards = require(script.Parent.Hazards)
+local Airdrops = require(script.Parent.Airdrops)
 
 -- Testing only: set above 1 to jump straight to a later round.
 local START_ROUND = 1
@@ -75,6 +77,8 @@ Enemies.init(map.path, map.enemyFolder, {
 
 Effects.init(map.effectFolder)
 Scoreboard.init()
+Hazards.init({ onPop = Scoreboard.addPop })
+Airdrops.init(map.effectFolder)
 Towers.init(map.towerFolder, {
 	onPop = Scoreboard.addPop,
 	extraRatePercent = function(tower)
@@ -112,6 +116,7 @@ RunService.Heartbeat:Connect(function(dt)
 	local started = os.clock()
 	Enemies.step(dt)
 	Towers.step(dt)
+	Hazards.step(dt)
 	local cost = os.clock() - started
 
 	frames += 1
@@ -178,9 +183,11 @@ local won = Waves.run({
 	onRoundStart = function()
 		frames, costSum, costWorst = 0, 0, 0
 		Enemies.resetPeak()
+		Airdrops.drop()
 	end,
 	onRoundEnd = function(index)
 		Economy.earn((Config.Tuning.RoundBonusBase + Config.Tuning.RoundBonusPerRound * index) * chosen.cashMult)
+		Economy.earn(Towers.roundIncome(Economy.cash()) * chosen.cashMult) -- Quartermasters
 
 		local average = if frames > 0 then costSum / frames else 0
 		print(string.format(

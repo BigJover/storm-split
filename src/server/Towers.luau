@@ -27,6 +27,12 @@
 	  bomblets           each shell throws this many smaller blasts
 	  aura*              buffs OTHER towers inside this tower's range
 	                     (strongest aura wins; auras don't stack)
+
+	CHILLER: every frame it chills enemies in range (slow, brittle, armour
+	strip — Enemies.chill); Freeze towers also pulse a hard stop every
+	`freezeEvery` seconds. QUARTERMASTER: never shoots; pays round income
+	(Towers.roundIncome), drops chests (Towers.airdrops), and its Logistics
+	aura discounts upgrades and raises sell refunds for towers in range.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -65,10 +71,32 @@ export type Stats = {
 	auraRatePercent: number,
 	auraDamagePercent: number,
 	auraPiercesArmor: boolean,
+	slowPercent: number,
+	slowLinger: number,
+	slowsBosses: boolean,
+	freezeEvery: number,
+	freezeSeconds: number,
+	freezeDamage: number,
+	freezeHoldsBosses: boolean,
+	brittlePercent: number,
+	stripsArmor: boolean,
+	incomeMult: number,
+	interestPercent: number,
+	interestCap: number,
+	chests: number,
+	chestCash: number,
+	discountPercent: number,
+	sellRefund: number,
 }
 
 -- What nearby auras give this tower right now.
-type Buff = { ratePercent: number, damagePercent: number, piercesArmor: boolean }
+type Buff = {
+	ratePercent: number,
+	damagePercent: number,
+	piercesArmor: boolean,
+	discountPercent: number, -- off its upgrades (Logistics)
+	sellRefund: number, -- 0 = the normal SellRefund
+}
 
 export type Tower = {
 	id: number,
@@ -82,6 +110,7 @@ export type Tower = {
 	stats: Stats,
 	buff: Buff,
 	cooldown: number,
+	freezeTimer: number,
 	model: Model,
 }
 
@@ -102,7 +131,7 @@ end
 
 ------------------------------------------------------------------ stats
 
-local MULTIPLIERS = { "damageMult", "rateMult", "targetsMult", "rangeMult", "armoredMult", "bossMult", "splashMult" }
+local MULTIPLIERS = { "damageMult", "rateMult", "targetsMult", "rangeMult", "armoredMult", "bossMult", "splashMult", "incomeMult" }
 local HIGHEST = {
 	"shots",
 	"lineHits",
@@ -115,8 +144,19 @@ local HIGHEST = {
 	"bombletGenerations",
 	"auraRatePercent",
 	"auraDamagePercent",
+	"slowPercent",
+	"slowLinger",
+	"freezeSeconds",
+	"freezeDamage",
+	"brittlePercent",
+	"interestPercent",
+	"interestCap",
+	"chests",
+	"chestCash",
+	"discountPercent",
+	"sellRefund",
 }
-local FLAGS = { "piercesArmor", "stunsBosses", "auraPiercesArmor" }
+local FLAGS = { "piercesArmor", "stunsBosses", "auraPiercesArmor", "slowsBosses", "freezeHoldsBosses", "stripsArmor" }
 
 local function computeStats(def, pathTiers: { number }): Stats
 	local mult: { [string]: number } = {}
@@ -125,6 +165,7 @@ local function computeStats(def, pathTiers: { number }): Stats
 	end
 	local high: { [string]: number } = { shots = 1, lineHits = 1 }
 	local flag: { [string]: boolean } = {}
+	local freezeEvery = 0 -- shortest pulse interval any path gives
 
 	for pathIndex, tier in pathTiers do
 		if tier > 0 then
@@ -137,6 +178,10 @@ local function computeStats(def, pathTiers: { number }): Stats
 			end
 			for _, field in FLAGS do
 				flag[field] = flag[field] or step[field] == true
+			end
+			local every = step.freezeEvery or 0
+			if every > 0 and (freezeEvery == 0 or every < freezeEvery) then
+				freezeEvery = every
 			end
 		end
 	end
@@ -163,29 +208,57 @@ local function computeStats(def, pathTiers: { number }): Stats
 		auraRatePercent = high.auraRatePercent or 0,
 		auraDamagePercent = high.auraDamagePercent or 0,
 		auraPiercesArmor = flag.auraPiercesArmor == true,
+		slowPercent = math.max(def.slowPercent or 0, high.slowPercent or 0),
+		slowLinger = high.slowLinger or 0,
+		slowsBosses = flag.slowsBosses == true,
+		freezeEvery = freezeEvery,
+		freezeSeconds = high.freezeSeconds or 0,
+		freezeDamage = high.freezeDamage or 0,
+		freezeHoldsBosses = flag.freezeHoldsBosses == true,
+		brittlePercent = high.brittlePercent or 0,
+		stripsArmor = flag.stripsArmor == true,
+		incomeMult = mult.incomeMult,
+		interestPercent = high.interestPercent or 0,
+		interestCap = high.interestCap or 0,
+		chests = math.floor(high.chests or 0),
+		chestCash = high.chestCash or 0,
+		discountPercent = high.discountPercent or 0,
+		sellRefund = high.sellRefund or 0,
 	}
 end
 
-local NO_BUFF: Buff = table.freeze({ ratePercent = 0, damagePercent = 0, piercesArmor = false })
+local NO_BUFF: Buff = table.freeze({ ratePercent = 0, damagePercent = 0, piercesArmor = false, discountPercent = 0, sellRefund = 0 })
 
--- Recomputed whenever a tower is placed, upgraded or removed.
+local function hasAura(s: Stats): boolean
+	return s.auraRatePercent > 0 or s.auraDamagePercent > 0 or s.auraPiercesArmor or s.discountPercent > 0 or s.sellRefund > 0
+end
+
+-- Recomputed whenever a tower is placed, upgraded or removed. The shop panel
+-- reads Discount / RefundRate from the tower's body.
 local function refreshAuras()
 	for _, tower in towers do
-		local rate, damage, pierce = 0, 0, false
+		local rate, damage, pierce, discount, refund = 0, 0, false, 0, 0
 		for _, source in towers do
 			local s = source.stats
-			if source ~= tower and (s.auraRatePercent > 0 or s.auraDamagePercent > 0 or s.auraPiercesArmor) then
+			if source ~= tower and hasAura(s) then
 				local offset = tower.base - source.base
 				if Vector2.new(offset.X, offset.Z).Magnitude <= s.range then
 					rate = math.max(rate, s.auraRatePercent)
 					damage = math.max(damage, s.auraDamagePercent)
 					pierce = pierce or s.auraPiercesArmor
+					discount = math.max(discount, s.discountPercent)
+					refund = math.max(refund, s.sellRefund)
 				end
 			end
 		end
-		tower.buff = if rate > 0 or damage > 0 or pierce
-			then { ratePercent = rate, damagePercent = damage, piercesArmor = pierce }
+		tower.buff = if rate > 0 or damage > 0 or pierce or discount > 0 or refund > 0
+			then { ratePercent = rate, damagePercent = damage, piercesArmor = pierce, discountPercent = discount, sellRefund = refund }
 			else NO_BUFF
+		local body = tower.model.PrimaryPart
+		if body then
+			body:SetAttribute("Discount", discount)
+			body:SetAttribute("RefundRate", math.max(Config.Tuning.SellRefund, refund))
+		end
 	end
 end
 
@@ -250,6 +323,7 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 		stats = computeStats(def, pathTiers),
 		buff = NO_BUFF,
 		cooldown = 0,
+		freezeTimer = 0,
 		model = model,
 	}
 	table.insert(towers, tower)
@@ -417,11 +491,60 @@ local function fire(tower: Tower, live): boolean
 	return fired
 end
 
+-- Visuals only.
+local FREEZE_COLOR = Color3.fromRGB(150, 220, 255)
+-- How long a chill lasts after the last frame an enemy spent in range (plus
+-- any Permafrost linger). Keeps the chill continuous between frames.
+local CHILL_REFRESH = 0.25
+
+-- Chillers: chill everything in range every frame; Freeze pulses hard stops.
+local function stepChill(tower: Tower, dt: number, live)
+	local stats = tower.stats
+	if stats.slowPercent <= 0 and stats.freezeEvery <= 0 then
+		return
+	end
+	local range = stats.range
+	local chill: Enemies.Chill = {
+		slowPercent = stats.slowPercent,
+		seconds = CHILL_REFRESH + stats.slowLinger,
+		affectsBosses = stats.slowsBosses,
+		brittlePercent = stats.brittlePercent,
+		stripsArmor = stats.stripsArmor,
+	}
+	local pulse = false
+	if stats.freezeEvery > 0 then
+		tower.freezeTimer += dt
+		if tower.freezeTimer >= stats.freezeEvery then
+			tower.freezeTimer -= stats.freezeEvery
+			pulse = true
+		end
+	end
+	for _, enemy in live do
+		if (enemy.part.Position - tower.position).Magnitude <= range then
+			if stats.slowPercent > 0 then
+				Enemies.chill(enemy, chill)
+			end
+			if pulse then
+				Enemies.stun(enemy, stats.freezeSeconds, stats.freezeHoldsBosses)
+				if stats.freezeDamage > 0 then
+					credit(tower.owner, Enemies.damage(enemy, stats.freezeDamage, piercing(tower)))
+				end
+			end
+		end
+	end
+	if pulse then
+		Effects.disc(tower.base + Vector3.new(0, 0.3, 0), range, FREEZE_COLOR, 0.3, 0.6)
+	end
+end
+
 -- Called every Heartbeat by Main.
 -- NOTE: fires at most once per frame (times `shots`), so fire rates above
 -- ~60/s are capped.
 function Towers.step(dt: number)
 	local live = Enemies.getLive()
+	for _, tower in towers do
+		stepChill(tower, dt, live)
+	end
 
 	for _, tower in towers do
 		local stats = tower.stats
@@ -469,6 +592,36 @@ function Towers.remove(tower: Tower)
 	table.remove(towers, index)
 	tower.model:Destroy()
 	refreshAuras()
+end
+
+-- Quartermaster income for the round that just ended. Interest is on the
+-- team's banked cash; the best Storm Bank applies, they don't stack.
+function Towers.roundIncome(bankedCash: number): number
+	local income, interest = 0, 0
+	for _, tower in towers do
+		local perRound = tower.def.incomePerRound or 0
+		if perRound > 0 then
+			local stats = tower.stats
+			income += perRound * stats.incomeMult
+			if stats.interestPercent > 0 then
+				interest = math.max(interest, math.min(stats.interestCap, bankedCash * stats.interestPercent / 100))
+			end
+		end
+	end
+	return income + interest
+end
+
+export type Airdrop = { base: Vector3, count: number, cash: number, owner: Player? }
+
+-- Chests each Quartermaster drops this round.
+function Towers.airdrops(): { Airdrop }
+	local drops = {}
+	for _, tower in towers do
+		if tower.stats.chests > 0 and tower.stats.chestCash > 0 then
+			table.insert(drops, { base = tower.base, count = tower.stats.chests, cash = tower.stats.chestCash, owner = tower.owner })
+		end
+	end
+	return drops
 end
 
 function Towers.all(): { Tower }

@@ -4,12 +4,9 @@
 ]]
 
 return table.freeze({
-	-- In Config but not sold yet: their special behaviour isn't built
-	-- (ARCHITECTURE.md §8, phase 5 — Chiller's slow, Quartermaster's income).
-	Unreleased = table.freeze({
-		CHILLER = true,
-		QUARTERMASTER = true,
-	}),
+	-- In Config but not sold yet, because their behaviour isn't built.
+	-- Empty since phase 5 (Chiller and Quartermaster).
+	Unreleased = table.freeze({} :: { [string]: boolean }),
 
 	-- How far (studs) from your character you can place a tower. Keeps
 	-- placement walk-up: you go to where you want to build.

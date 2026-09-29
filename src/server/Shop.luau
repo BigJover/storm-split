@@ -146,15 +146,17 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 	if not step then
 		return false, "That path is maxed"
 	end
-	if not Economy.trySpend(step.cost) then
+	-- A Quartermaster's Logistics aura discounts upgrades on towers in its range.
+	local cost = math.floor(step.cost * (1 - tower.buff.discountPercent / 100) + 0.5)
+	if not Economy.trySpend(cost) then
 		return false, "Not enough cash"
 	end
 
 	if not Towers.upgrade(tower, pathIndex) then
-		Economy.earn(step.cost) -- give it back; upgrade() refused
+		Economy.earn(cost) -- give it back; upgrade() refused
 		return false, "Can't upgrade that"
 	end
-	spent[tower] = (spent[tower] or 0) + step.cost
+	spent[tower] = (spent[tower] or 0) + cost
 	decorate(tower)
 	return true, `{step.name or path.id}!`
 end
@@ -176,7 +178,8 @@ local function sell(player: Player, towerId: unknown): (boolean, string)
 		return false, `Only {tower.owner.DisplayName} can sell this`
 	end
 
-	local refund = math.floor((spent[tower] or 0) * Config.Tuning.SellRefund)
+	-- Recycler / Command Center raise the refund for towers in their range.
+	local refund = math.floor((spent[tower] or 0) * math.max(Config.Tuning.SellRefund, tower.buff.sellRefund))
 	spent[tower] = nil
 	Towers.remove(tower)
 	Economy.earn(refund)
