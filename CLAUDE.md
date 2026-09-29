@@ -14,6 +14,8 @@ design in the PDF still holds; its UEFN-specific sections don't. Old UEFN materi
 - `Storm-Split-Design-Doc.pdf` — the game design
 - `Storm-Split-Balance.xlsx` — every number. Source of truth.
 - `ARCHITECTURE.md` — code structure, ownership rules, phase plan. **Read before changing code.**
+- `UPGRADES.md` — the approved vision for every tower's paths, tier names and abilities.
+  Build tower mechanics to match it.
 - `SETUP.md` — Mac setup: Studio, Rokit, Rojo, MCP
 - `src/` — Luau, synced into Studio by Rojo (`default.project.json`)
 - `tools/export_constants.py` — spreadsheet → `src/shared/Config.luau`
@@ -62,8 +64,14 @@ tower panel (crossover rule shared via `Shared/Upgrades`), cost added to the sel
 label, crown at tier 3 and glow at tier 5, and a `Range x` spreadsheet column so range paths
 grow range.
 
-Next: playtest phase 3, then phase 4 — the player character as the hero, with its own upgrade
-track, weapons and abilities (separate from tower paths).
+Phase 3 playtested and confirmed 2026-09-28. Then the user asked for specialised, named
+paths (attack speed, anti-armour, support…) instead of generic +% tracks: the approved design
+is `UPGRADES.md`, tier names are in the spreadsheet (Tower Upgrades, column M) and shown in
+the tower panel.
+
+Next: phase 3b — armour and the Scout/Sniper/Grenadier abilities from `UPGRADES.md` — then
+phase 4, the player character as the hero with its own upgrade track, weapons and abilities
+(separate from tower paths). Build each mechanic where it fits, keeping to the vision.
 
 ## Open issues
 

@@ -46,10 +46,11 @@ return table.freeze({
 			incomePerRound = 0,
 			paths = {
 				{
-					id = "Range",
+					id = "Lookout",
 					focus = "range",
 					tiers = {
 						{
+							name = "Keen Eyes",
 							cost = 460,
 							damageMult = 1.3,
 							rateMult = 1.15,
@@ -58,6 +59,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Long Barrel",
 							cost = 1058,
 							damageMult = 1.69,
 							rateMult = 1.32,
@@ -66,6 +68,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Flare Gun",
 							cost = 2433,
 							damageMult = 2.2,
 							rateMult = 1.52,
@@ -74,6 +77,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Watch Post",
 							cost = 5597,
 							damageMult = 2.86,
 							rateMult = 1.75,
@@ -82,6 +86,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Signal Tower",
 							cost = 12873,
 							damageMult = 3.71,
 							rateMult = 2.01,
@@ -92,10 +97,11 @@ return table.freeze({
 					},
 				},
 				{
-					id = "Rate",
+					id = "Trigger Happy",
 					focus = "rate",
 					tiers = {
 						{
+							name = "Quick Hands",
 							cost = 460,
 							damageMult = 1.35,
 							rateMult = 1.42,
@@ -104,6 +110,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Extended Mag",
 							cost = 1058,
 							damageMult = 1.82,
 							rateMult = 2.02,
@@ -112,6 +119,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Double Tap",
 							cost = 2433,
 							damageMult = 2.46,
 							rateMult = 2.86,
@@ -120,6 +128,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Bullet Hose",
 							cost = 5597,
 							damageMult = 3.32,
 							rateMult = 4.07,
@@ -128,6 +137,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Stormgunner",
 							cost = 12873,
 							damageMult = 4.48,
 							rateMult = 5.77,
@@ -138,10 +148,11 @@ return table.freeze({
 					},
 				},
 				{
-					id = "Damage",
+					id = "Hardliner",
 					focus = "damage",
 					tiers = {
 						{
+							name = "Heavy Slugs",
 							cost = 460,
 							damageMult = 1.9,
 							rateMult = 1,
@@ -150,6 +161,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Armor Breaker",
 							cost = 1058,
 							damageMult = 3.61,
 							rateMult = 1,
@@ -158,6 +170,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Hollow Points",
 							cost = 2433,
 							damageMult = 6.86,
 							rateMult = 1,
@@ -166,6 +179,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Railshot",
 							cost = 5597,
 							damageMult = 13.03,
 							rateMult = 1,
@@ -174,6 +188,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Tank Buster",
 							cost = 12873,
 							damageMult = 24.76,
 							rateMult = 1,
@@ -197,10 +212,11 @@ return table.freeze({
 			incomePerRound = 0,
 			paths = {
 				{
-					id = "Pierce",
+					id = "Deadeye",
 					focus = "targets",
 					tiers = {
 						{
+							name = "Full Metal Jacket",
 							cost = 805,
 							damageMult = 1.45,
 							rateMult = 1,
@@ -209,6 +225,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Through-and-Through",
 							cost = 1852,
 							damageMult = 2.1,
 							rateMult = 1,
@@ -217,6 +234,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Ricochet",
 							cost = 4258,
 							damageMult = 3.05,
 							rateMult = 1,
@@ -225,6 +243,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Tungsten Core",
 							cost = 9794,
 							damageMult = 4.42,
 							rateMult = 1,
@@ -233,6 +252,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Linebreaker",
 							cost = 22527,
 							damageMult = 6.41,
 							rateMult = 1,
@@ -247,6 +267,7 @@ return table.freeze({
 					focus = "rate",
 					tiers = {
 						{
+							name = "Steady Breath",
 							cost = 805,
 							damageMult = 1.35,
 							rateMult = 1.42,
@@ -255,6 +276,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Bolt Racking",
 							cost = 1852,
 							damageMult = 1.82,
 							rateMult = 2.02,
@@ -263,6 +285,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Marked Target",
 							cost = 4258,
 							damageMult = 2.46,
 							rateMult = 2.86,
@@ -271,6 +294,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Tactical Spotter",
 							cost = 9794,
 							damageMult = 3.32,
 							rateMult = 4.07,
@@ -279,6 +303,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Eye in the Sky",
 							cost = 22527,
 							damageMult = 4.48,
 							rateMult = 5.77,
@@ -293,6 +318,7 @@ return table.freeze({
 					focus = "damage",
 					tiers = {
 						{
+							name = "Large Calibre",
 							cost = 805,
 							damageMult = 1.9,
 							rateMult = 1,
@@ -301,6 +327,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Anti-Materiel",
 							cost = 1852,
 							damageMult = 3.61,
 							rateMult = 1,
@@ -309,6 +336,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Concussion Round",
 							cost = 4258,
 							damageMult = 6.86,
 							rateMult = 1,
@@ -317,6 +345,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Siege Gun",
 							cost = 9794,
 							damageMult = 13.03,
 							rateMult = 1,
@@ -325,6 +354,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Skybreaker",
 							cost = 22527,
 							damageMult = 24.76,
 							rateMult = 1,
@@ -352,6 +382,7 @@ return table.freeze({
 					focus = "targets",
 					tiers = {
 						{
+							name = "Bigger Bang",
 							cost = 1265,
 							damageMult = 1.45,
 							rateMult = 1,
@@ -360,6 +391,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Shrapnel",
 							cost = 2910,
 							damageMult = 2.1,
 							rateMult = 1,
@@ -368,6 +400,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Napalm",
 							cost = 6692,
 							damageMult = 3.05,
 							rateMult = 1,
@@ -376,6 +409,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Firestorm",
 							cost = 15391,
 							damageMult = 4.42,
 							rateMult = 1,
@@ -384,6 +418,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Scorched Earth",
 							cost = 35400,
 							damageMult = 6.41,
 							rateMult = 1,
@@ -398,6 +433,7 @@ return table.freeze({
 					focus = "targets",
 					tiers = {
 						{
+							name = "Cluster Shell",
 							cost = 1265,
 							damageMult = 1.45,
 							rateMult = 1,
@@ -406,6 +442,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Rapid Loader",
 							cost = 2910,
 							damageMult = 2.1,
 							rateMult = 1,
@@ -414,6 +451,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Chain Reaction",
 							cost = 6692,
 							damageMult = 3.05,
 							rateMult = 1,
@@ -422,6 +460,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Carpet Shelling",
 							cost = 15391,
 							damageMult = 4.42,
 							rateMult = 1,
@@ -430,6 +469,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Storm of Steel",
 							cost = 35400,
 							damageMult = 6.41,
 							rateMult = 1,
@@ -444,6 +484,7 @@ return table.freeze({
 					focus = "damage",
 					tiers = {
 						{
+							name = "Shockwave",
 							cost = 1265,
 							damageMult = 1.9,
 							rateMult = 1,
@@ -452,6 +493,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Armor Crack",
 							cost = 2910,
 							damageMult = 3.61,
 							rateMult = 1,
@@ -460,6 +502,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Stun Grenade",
 							cost = 6692,
 							damageMult = 6.86,
 							rateMult = 1,
@@ -468,6 +511,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Earthshaker",
 							cost = 15391,
 							damageMult = 13.03,
 							rateMult = 1,
@@ -476,6 +520,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Tectonic Slam",
 							cost = 35400,
 							damageMult = 24.76,
 							rateMult = 1,
@@ -503,6 +548,7 @@ return table.freeze({
 					focus = "range",
 					tiers = {
 						{
+							name = "Cold Snap",
 							cost = 920,
 							damageMult = 1.3,
 							rateMult = 1.15,
@@ -511,6 +557,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Frostbite",
 							cost = 2116,
 							damageMult = 1.69,
 							rateMult = 1.32,
@@ -519,6 +566,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Permafrost",
 							cost = 4867,
 							damageMult = 2.2,
 							rateMult = 1.52,
@@ -527,6 +575,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Glacier Zone",
 							cost = 11194,
 							damageMult = 2.86,
 							rateMult = 1.75,
@@ -535,6 +584,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Absolute Zero",
 							cost = 25745,
 							damageMult = 3.71,
 							rateMult = 2.01,
@@ -549,6 +599,7 @@ return table.freeze({
 					focus = "rate",
 					tiers = {
 						{
+							name = "Flash Freeze",
 							cost = 920,
 							damageMult = 1.35,
 							rateMult = 1.42,
@@ -557,6 +608,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Deep Freeze",
 							cost = 2116,
 							damageMult = 1.82,
 							rateMult = 2.02,
@@ -565,6 +617,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Ice Shards",
 							cost = 4867,
 							damageMult = 2.46,
 							rateMult = 2.86,
@@ -573,6 +626,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Cryo Pulse",
 							cost = 11194,
 							damageMult = 3.32,
 							rateMult = 4.07,
@@ -581,6 +635,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Stasis",
 							cost = 25745,
 							damageMult = 4.48,
 							rateMult = 5.77,
@@ -595,6 +650,7 @@ return table.freeze({
 					focus = "damage",
 					tiers = {
 						{
+							name = "Brittle",
 							cost = 920,
 							damageMult = 1.9,
 							rateMult = 1,
@@ -603,6 +659,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Shatter",
 							cost = 2116,
 							damageMult = 3.61,
 							rateMult = 1,
@@ -611,6 +668,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Cold Front",
 							cost = 4867,
 							damageMult = 6.86,
 							rateMult = 1,
@@ -619,6 +677,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Frozen Core",
 							cost = 11194,
 							damageMult = 13.03,
 							rateMult = 1,
@@ -627,6 +686,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Winter's Edge",
 							cost = 25745,
 							damageMult = 24.76,
 							rateMult = 1,
@@ -654,6 +714,7 @@ return table.freeze({
 					focus = "economy",
 					tiers = {
 						{
+							name = "Supply Crate",
 							cost = 2300,
 							damageMult = 1,
 							rateMult = 1,
@@ -662,6 +723,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Bigger Budget",
 							cost = 5290,
 							damageMult = 1,
 							rateMult = 1,
@@ -670,6 +732,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Trade Route",
 							cost = 12167,
 							damageMult = 1,
 							rateMult = 1,
@@ -678,6 +741,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "War Chest",
 							cost = 27984,
 							damageMult = 1,
 							rateMult = 1,
@@ -686,6 +750,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Storm Bank",
 							cost = 64363,
 							damageMult = 1,
 							rateMult = 1,
@@ -700,6 +765,7 @@ return table.freeze({
 					focus = "economy",
 					tiers = {
 						{
+							name = "Air Drop",
 							cost = 2300,
 							damageMult = 1,
 							rateMult = 1,
@@ -708,6 +774,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Double Drop",
 							cost = 5290,
 							damageMult = 1,
 							rateMult = 1,
@@ -716,6 +783,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Care Package",
 							cost = 12167,
 							damageMult = 1,
 							rateMult = 1,
@@ -724,6 +792,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Supply Chain",
 							cost = 27984,
 							damageMult = 1,
 							rateMult = 1,
@@ -732,6 +801,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Treasure Barge",
 							cost = 64363,
 							damageMult = 1,
 							rateMult = 1,
@@ -746,6 +816,7 @@ return table.freeze({
 					focus = "economy",
 					tiers = {
 						{
+							name = "Bulk Order",
 							cost = 2300,
 							damageMult = 1,
 							rateMult = 1,
@@ -754,6 +825,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Field Engineer",
 							cost = 5290,
 							damageMult = 1,
 							rateMult = 1,
@@ -762,6 +834,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Recycler",
 							cost = 12167,
 							damageMult = 1,
 							rateMult = 1,
@@ -770,6 +843,7 @@ return table.freeze({
 							swapsModel = true,
 						},
 						{
+							name = "Forward Base",
 							cost = 27984,
 							damageMult = 1,
 							rateMult = 1,
@@ -778,6 +852,7 @@ return table.freeze({
 							swapsModel = false,
 						},
 						{
+							name = "Command Center",
 							cost = 64363,
 							damageMult = 1,
 							rateMult = 1,

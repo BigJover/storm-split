@@ -441,13 +441,13 @@ render = function()
 				local name = escape(path.id)
 				local why = Upgrades.check(tiers, pathIndex, #path.tiers)
 				if why == "maxed" then
-					addRow(pathIndex, `<b>{name}</b>  ·  maxed`, LOCKED_COLOR, false)
+					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(path.tiers[#path.tiers].name or "")}`, LOCKED_COLOR, false)
 				elseif why ~= "ok" then
 					addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
 				else
 					local step = path.tiers[current + 1]
 					local affordable = cash >= step.cost
-					local text = `<b>{name}</b>  ·  tier {current + 1}  ·  {step.cost}\n<font size="13">{escape(describeStep(path, current))}</font>`
+					local text = `<b>{escape(step.name or path.id)}</b>  ·  {step.cost}\n<font size="13">{name} {current + 1}  ·  {escape(describeStep(path, current))}</font>`
 					addRow(pathIndex, text, if affordable then BUY_COLOR else LOCKED_COLOR, affordable, function()
 						send("upgrade", towerId, pathIndex)
 					end)

@@ -101,6 +101,7 @@ def attach_paths(ws, towers):
             towers[key]["paths"].append(path)
         tier = int(v(ws, r, 4))
         index[(key, pid)]["tiers"].append({
+            "name": str(v(ws, r, 13) or ""),
             "cost": num(v(ws, r, 5)),
             "damageMult": num(v(ws, r, 7), 1),
             "rateMult": num(v(ws, r, 8), 1),
@@ -233,6 +234,8 @@ def validate(data):
                         f"{key} {p['id']} tier {i} has no upgrade cost. If the spreadsheet was saved by a "
                         "script, open it in Numbers and Export To Excel so formulas are recalculated."
                     )
+                if not step["name"].strip():
+                    problems.append(f"{key} {p['id']} tier {i} has no Name (Tower Upgrades, column M)")
                 if not isinstance(step["rangeMult"], (int, float)) or step["rangeMult"] <= 0:
                     problems.append(f"{key} {p['id']} tier {i}: Range x must be a positive number")
 

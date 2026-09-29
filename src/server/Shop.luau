@@ -154,7 +154,7 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 	end
 	spent[tower] = (spent[tower] or 0) + step.cost
 	decorate(tower)
-	return true, `{path.id} tier {tower.pathTiers[pathIndex]}`
+	return true, `{step.name or path.id}!`
 end
 
 local function sell(player: Player, towerId: unknown): (boolean, string)
