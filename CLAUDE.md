@@ -110,7 +110,9 @@ magazines + reload, server-side recoil, semi/auto/burst, dual guns, pellets vs s
 per shot is conserved across pellets), pierce, ricochet, burn/splash/knockback/mark rounds,
 scope, Spin-Up, Belt Fed. Spreadsheet: `Heroes` and `Hero Upgrades` replace `Weapons`.
 
-Next: playtest the hero redesign, then phase 5 (Chiller and Quartermaster mechanics).
+Hero redesign playtested and confirmed 2026-09-29.
+
+Next: phase 5 (Chiller and Quartermaster mechanics, per `UPGRADES.md`).
 
 ## Open issues
 
