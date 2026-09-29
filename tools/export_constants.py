@@ -143,37 +143,75 @@ def attach_paths(ws, towers):
         r += 1
 
 
-def read_weapons(ws):
-    weapons, order = {}, []
+HERO_BASE_COLUMNS = [
+    # (key, column, kind)
+    ("display", 2, "text"), ("role", 3, "text"), ("ability", 4, "text"),
+    ("damage", 5, "num"), ("rate", 6, "num"), ("fireMode", 7, "text"), ("magazine", 8, "num"),
+    ("reload", 9, "num"), ("pellets", 10, "num"), ("spread", 11, "num"), ("recoilPerShot", 12, "num"),
+    ("recoilMax", 13, "num"), ("recoilRecovery", 14, "num"), ("range", 15, "num"),
+    ("piercesArmor", 16, "bool"), ("hitsAir", 17, "bool"), ("splashRadius", 18, "num"),
+    ("abilityPower", 19, "num"), ("abilitySeconds", 20, "num"), ("abilityRadius", 21, "num"),
+    ("abilityCooldown", 22, "num"),
+]
+
+# Hero Upgrades effect columns, cumulative per tier: (key, column, kind, default when blank).
+# "mult" multiplies the hero's base; "set" overrides it when present.
+HERO_UPGRADE_COLUMNS = [
+    ("rateMult", 7, "mult", 1), ("magazineMult", 8, "mult", 1), ("reloadMult", 9, "mult", 1),
+    ("spreadMult", 10, "mult", 1), ("recoilMult", 11, "mult", 1), ("rangeMult", 12, "mult", 1),
+    ("damageMult", 13, "mult", 1), ("fireMode", 14, "text", ""), ("burstCount", 15, "num", 0),
+    ("guns", 16, "num", 0), ("pellets", 17, "num", 0), ("shotsPerTrigger", 18, "num", 0),
+    ("pierce", 19, "num", 0), ("bounces", 20, "num", 0), ("piercesArmor", 21, "bool", False),
+    ("hitsAir", 22, "bool", False), ("burnDps", 23, "num", 0), ("burnSeconds", 24, "num", 0),
+    ("splashRadius", 25, "num", 0), ("knockback", 26, "num", 0), ("markPercent", 27, "num", 0),
+    ("markedDamageMult", 28, "mult", 1), ("abilityCooldownMult", 29, "mult", 1),
+    ("beltFed", 30, "bool", False), ("stillRecoilMult", 31, "mult", 1), ("spinUp", 32, "mult", 1),
+    ("scope", 33, "bool", False),
+]
+
+FIRE_MODES = ("semi", "auto", "burst")
+
+
+def read_heroes(ws):
+    heroes, order = {}, []
     r = 5
-    while True:
-        wtype = v(ws, r, 1)
-        if not wtype or str(wtype).startswith("CROSSOVER"):
-            break
-        key = str(wtype).upper()
-        if key not in weapons:
-            weapons[key] = {"display": str(wtype), "ability": "", "tiers": []}
-            order.append(key)
-        ability = v(ws, r, 2)
-        if ability and "locked" not in str(ability):
-            weapons[key]["ability"] = str(ability)
-        weapons[key]["tiers"].append({
-            "name": v(ws, r, 4) or "",
-            "cost": num(v(ws, r, 5)),
-            "damage": num(v(ws, r, 7)),
-            "rate": num(v(ws, r, 8)),
-            "targets": num(v(ws, r, 9)),
-            "cooldown": num(v(ws, r, 11)),
-            "piercesArmor": yes(v(ws, r, 13)),
-            "hitsAir": yes(v(ws, r, 14)),
-            "range": num(v(ws, r, 15)),
-            "splashRadius": num(v(ws, r, 16)),
-            "abilityPower": num(v(ws, r, 17)),
-            "abilitySeconds": num(v(ws, r, 18)),
-            "abilityRadius": num(v(ws, r, 19)),
-        })
+    while v(ws, r, 1):
+        key = str(v(ws, r, 1)).strip().upper()
+        hero = {"paths": []}
+        for field, col, kind in HERO_BASE_COLUMNS:
+            raw = v(ws, r, col)
+            hero[field] = yes(raw) if kind == "bool" else (str(raw or "").strip() if kind == "text" else num(raw))
+        hero["fireMode"] = hero["fireMode"].lower()
+        heroes[key] = hero
+        order.append(key)
         r += 1
-    return weapons, order
+    return heroes, order
+
+
+def attach_hero_paths(ws, heroes):
+    by_display = {h["display"]: h for h in heroes.values()}
+    index = {}
+    r = 5
+    while v(ws, r, 1):
+        hero = by_display.get(str(v(ws, r, 1)).strip())
+        if hero is None:
+            sys.exit(f"Hero Upgrades row {r}: unknown hero '{v(ws, r, 1)}' (not on the Heroes sheet)")
+        pid = str(v(ws, r, 2))
+        if (hero["display"], pid) not in index:
+            path = {"id": pid, "focus": v(ws, r, 3) or "", "tiers": []}
+            index[(hero["display"], pid)] = path
+            hero["paths"].append(path)
+        step = {"name": str(v(ws, r, 5) or ""), "cost": num(v(ws, r, 6))}
+        for field, col, kind, default in HERO_UPGRADE_COLUMNS:
+            raw = v(ws, r, col)
+            if kind == "bool":
+                step[field] = yes(raw)
+            elif kind == "text":
+                step[field] = str(raw or "").strip().lower()
+            else:
+                step[field] = num(raw, default)
+        index[(hero["display"], pid)]["tiers"].append(step)
+        r += 1
 
 
 def read_mastery(ws):
@@ -285,12 +323,40 @@ def validate(data):
                     if step[field] < 1 or step[field] != int(step[field]):
                         problems.append(f"{key} {p['id']} tier {i}: {field} must be a whole number >= 1")
 
-    for key, w in data["Weapons"].items():
-        for i, t in enumerate(w["tiers"], start=1):
-            if not isinstance(t["range"], (int, float)) or t["range"] <= 0:
-                problems.append(f"Weapon {w['display']} tier {i}: Range must be > 0")
-            if i >= 2 and (not isinstance(t["abilityPower"], (int, float)) or t["abilityPower"] <= 0):
-                problems.append(f"Weapon {w['display']} tier {i}: needs Ability power (abilities unlock at tier 2)")
+    for key, h in data["Heroes"].items():
+        name = h["display"]
+        if h["fireMode"] not in FIRE_MODES:
+            problems.append(f"Hero {name}: Fire mode must be one of {', '.join(FIRE_MODES)}")
+        for field in ("damage", "rate", "magazine", "reload", "pellets", "range", "abilityCooldown"):
+            if not isinstance(h[field], (int, float)) or h[field] <= 0:
+                problems.append(f"Hero {name}: {field} must be > 0")
+        if len(h["paths"]) != 3:
+            problems.append(f"Hero {name}: needs exactly 3 upgrade paths on Hero Upgrades (has {len(h['paths'])})")
+        for p in h["paths"]:
+            for i, step in enumerate(p["tiers"], start=1):
+                where = f"Hero {name} {p['id']} tier {i}"
+                if not step["name"].strip():
+                    problems.append(f"{where}: needs a Name")
+                if not isinstance(step["cost"], (int, float)) or step["cost"] <= 0:
+                    problems.append(f"{where}: has no cost")
+                if step["fireMode"] and step["fireMode"] not in FIRE_MODES:
+                    problems.append(f"{where}: Fire mode must be one of {', '.join(FIRE_MODES)}")
+                if step["fireMode"] == "burst" and step["burstCount"] < 2:
+                    problems.append(f"{where}: burst fire needs a Burst count of 2+")
+
+    # Tuning levers the game code reads by name. A renamed or overwritten row would
+    # otherwise only show up as nil in Studio.
+    needed = [
+        "StartingCash", "StartingLives", "CashPerEffectiveHP", "RoundBonusBase", "RoundBonusPerRound",
+        "SellRefund", "MaxConcurrentEnemies", "GlobalSpeedScalar", "LinePierceReach", "MarkDuration",
+        "BombletDamage", "BombletSpread", "ExtraEnemiesPerPlayer", "ExtraHPPerPlayer",
+        "StartingCashPerExtraPlayer", "WeaponAimAssist", "OverdriveFireRateX", "AirburstDelay",
+        "AirburstReach", "SpinUpTime", "RicochetReach", "StillSpeed", "HeroUpgradeBaseCost",
+        "HeroUpgradeCostGrowth",
+    ]
+    for key in needed:
+        if key not in data["Tuning"]:
+            problems.append(f"Tuning is missing '{key}' (the game reads it by name)")
 
     if "EASY" not in data["Difficulties"]:
         problems.append("Difficulty sheet needs an 'Easy' row (the baseline)")
@@ -310,13 +376,22 @@ def validate(data):
                 continue
             top = p["tiers"][-1]
             best_tower = max(best_tower, base * top["damageMult"] * top["rateMult"] * top["targetsMult"])
-    best_weapon = max(
-        (w["tiers"][-1]["damage"] * w["tiers"][-1]["rate"] * w["tiers"][-1]["targets"])
-        for w in data["Weapons"].values()
-    )
-    notes.append(f"max weapon DPS {best_weapon:.0f} vs max tower DPS {best_tower:.0f}")
+    def hero_peak_dps(h):
+        best = 0.0
+        for p in h["paths"]:
+            if not p["tiers"]:
+                continue
+            t = p["tiers"][-1]
+            guns = max(1, t["guns"] or 1)
+            pellets = h["pellets"]  # damage per shot is conserved across pellet counts
+            shots = max(1, t["shotsPerTrigger"] or 1)
+            dps = h["damage"] * t["damageMult"] * h["rate"] * t["rateMult"] * t["spinUp"] * guns * pellets * shots
+            best = max(best, dps * max(1, t["pierce"] or 1))
+        return best
+    best_weapon = max(hero_peak_dps(h) for h in data["Heroes"].values())
+    notes.append(f"max hero DPS {best_weapon:.0f} vs max tower DPS {best_tower:.0f}")
     if best_tower and best_weapon > best_tower:
-        problems.append("A maxed weapon out-damages the best maxed tower. The game becomes a horde shooter.")
+        problems.append("A maxed hero out-damages the best maxed tower. The game becomes a horde shooter.")
 
     return problems, notes
 
@@ -449,15 +524,16 @@ def main():
 
     towers, tower_order = read_towers(wb["Towers"])
     attach_paths(wb["Tower Upgrades"], towers)
-    weapons, weapon_order = read_weapons(wb["Weapons"])
+    heroes, hero_order = read_heroes(wb["Heroes"])
+    attach_hero_paths(wb["Hero Upgrades"], heroes)
     difficulties, difficulty_order = read_difficulty(wb["Difficulty"])
 
     data = {
         "Tuning": read_tuning(wb["Tuning"]),
         "Towers": towers,
         "TowerOrder": tower_order,
-        "Weapons": weapons,
-        "WeaponOrder": weapon_order,
+        "Heroes": heroes,
+        "HeroOrder": hero_order,
         "Mastery": read_mastery(wb["Mastery"]),
         "Enemies": read_enemies(wb["Enemies"]),
         "EnemyOrder": [k for k in TIER_KEYS],
@@ -474,7 +550,7 @@ def main():
 
     print(f"Read   {xlsx}")
     print(f"Wrote  {os.path.relpath(OUT_FILE, ROOT)}")
-    print(f"  {len(towers)} towers, {len(weapons)} weapon types, {len(data['Enemies'])} enemy tiers, {len(data['Rounds'])} rounds")
+    print(f"  {len(towers)} towers, {len(heroes)} heroes, {len(data['Enemies'])} enemy tiers, {len(data['Rounds'])} rounds")
     for n in notes:
         print(f"  {n}")
     if problems:

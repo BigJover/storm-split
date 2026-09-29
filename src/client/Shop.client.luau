@@ -10,9 +10,10 @@
 	with its three upgrade paths and Sell. Paths the crossover rule
 	(Shared/Upgrades) or the team's cash won't allow are greyed out.
 
-	Hero: the Hero button (or H) lists the three weapon types with their next
-	tier and price (Server/Hero). Same crossover rule as towers: two weapon
-	types at most, only one past tier 2.
+	Hero: the Hero button (or H). In the build phase, pick a hero for free
+	(switching refunds upgrades); after that, the hero's three upgrade paths
+	with their next tier, price and what it changes (HEROES.md, Server/Hero).
+	Same crossover rule as towers.
 
 	Everything here is a request. The server re-checks the spot, the distance
 	and the cash with the same rules and has the final say. Prices shown come
@@ -294,6 +295,103 @@ local function describeStep(path, current: number): string
 	return if #parts > 0 then table.concat(parts, " · ") else path.focus
 end
 
+-- What a hero upgrade tier changes, in words (HEROES.md). Only fields that
+-- differ from the previous tier are mentioned.
+local function describeHeroStep(path, current: number): string
+	local now = if current > 0 then path.tiers[current] else nil
+	local nextStep = path.tiers[current + 1]
+	local parts = {}
+	local function before(field: string, default: any): any
+		return if now and now[field] ~= nil then now[field] else default
+	end
+	local function percent(field: string, label: string)
+		local change = (nextStep[field] or 1) / before(field, 1) - 1
+		if math.abs(change) >= 0.005 then
+			local shown = math.floor(math.abs(change) * 100 + 0.5)
+			table.insert(parts, `{if change < 0 then "-" else "+"}{shown}% {label}`)
+		end
+	end
+	local function newly(field: string, default: any): any?
+		local after = nextStep[field]
+		if after == nil or after == default or after == before(field, default) then
+			return nil
+		end
+		return after
+	end
+
+	local mode = newly("fireMode", "")
+	if mode == "auto" then
+		table.insert(parts, "full-auto")
+	elseif mode == "burst" then
+		table.insert(parts, `{nextStep.burstCount}-round burst`)
+	end
+	if newly("guns", 0) then
+		table.insert(parts, "dual guns")
+	end
+	local pellets = newly("pellets", 0)
+	if pellets then
+		table.insert(parts, if pellets == 1 then "fires a slug" else `{pellets} pellets`)
+	end
+	local blasts = newly("shotsPerTrigger", 0)
+	if blasts then
+		table.insert(parts, `{blasts} blasts per trigger`)
+	end
+	local pierce = newly("pierce", 0)
+	if pierce then
+		table.insert(parts, `through {pierce} enemies`)
+	end
+	local bounces = newly("bounces", 0)
+	if bounces then
+		table.insert(parts, if bounces == 1 then "ricochets" else `ricochets {bounces} times`)
+	end
+	if newly("piercesArmor", false) then
+		table.insert(parts, "pierces armour")
+	end
+	if newly("hitsAir", false) then
+		table.insert(parts, "hits air")
+	end
+	if newly("scope", false) then
+		table.insert(parts, "scope (right-click)")
+	end
+	if newly("beltFed", false) then
+		table.insert(parts, "no reloading in Overdrive")
+	end
+	local burn = newly("burnDps", 0)
+	if burn then
+		table.insert(parts, `burning ground {burn}/s`)
+	end
+	local splash = newly("splashRadius", 0)
+	if splash then
+		table.insert(parts, `explodes ({splash} studs)`)
+	end
+	local knock = newly("knockback", 0)
+	if knock then
+		table.insert(parts, "knocks back")
+	end
+	local mark = newly("markPercent", 0)
+	if mark then
+		table.insert(parts, `hits mark +{mark}%`)
+	end
+	local marked = newly("markedDamageMult", 1)
+	if marked then
+		table.insert(parts, `x{marked} vs marked`)
+	end
+	local spin = newly("spinUp", 1)
+	if spin then
+		table.insert(parts, `spins up to x{spin} fire rate`)
+	end
+	percent("rateMult", "fire rate")
+	percent("magazineMult", "magazine")
+	percent("reloadMult", "reload time")
+	percent("spreadMult", "spread")
+	percent("recoilMult", "recoil")
+	percent("stillRecoilMult", "recoil standing still")
+	percent("rangeMult", "range")
+	percent("damageMult", "damage")
+	percent("abilityCooldownMult", "ability cooldown")
+	return if #parts > 0 then table.concat(parts, " · ") else path.focus
+end
+
 local function addRow(order: number, text: string, color: Color3, enabled: boolean, onClick: (() -> ())?)
 	local button = Instance.new("TextButton")
 	button.Size = UDim2.new(1, 0, 0, 48)
@@ -533,37 +631,52 @@ render = function()
 			setMode("list")
 		end)
 	elseif mode == "hero" then
-		title.Text = `Hero weapons  ·  Cash {cash}`
-		local tiers = {}
-		for index, key in Config.WeaponOrder do
-			tiers[index] = player:GetAttribute(`Weapon_{key}`) or 0
-		end
-		for index, key in Config.WeaponOrder do
-			local weapon = Config.Weapons[key]
-			local current = tiers[index]
-			local why = Upgrades.check(tiers, index, #weapon.tiers)
-			local name = escape(weapon.display)
-			if why == "maxed" then
-				addRow(index, `<b>{name}</b>  ·  maxed  ·  {escape(weapon.tiers[current].name)}`, LOCKED_COLOR, false)
-			elseif why ~= "ok" then
-				local reason = if why == "third path" then "only two weapon types" else "only one weapon past tier 2"
-				addRow(index, `<b>{name}</b>  ·  tier {current}\n<font size="13">locked · {reason}</font>`, LOCKED_COLOR, false)
-			else
-				local step = weapon.tiers[current + 1]
-				local affordable = cash >= step.cost
-				local details = `{step.damage} dmg · {step.rate}/s · range {step.range}`
-				if current + 1 == 2 then
-					details ..= ` · unlocks {weapon.ability} (F)`
-				elseif current + 1 > 2 then
-					details ..= ` · stronger {weapon.ability}`
-				end
-				local text = `<b>{escape(step.name)}</b>  ·  {step.cost}\n<font size="13">{name} {current + 1}  ·  {escape(details)}</font>`
-				addRow(index, text, if affordable then HERO_COLOR else LOCKED_COLOR, affordable, function()
-					send("buy", key, nil, heroRequest)
+		local heroKey = player:GetAttribute("Hero") or ""
+		local hero = Config.Heroes[heroKey]
+		local building = ReplicatedStorage:GetAttribute("State") ~= "Playing"
+		local order = 0
+
+		if not hero or building then
+			title.Text = if hero then `Hero: {hero.display}  ·  switch free until Start` else "Pick your hero  ·  free"
+			for _, key in Config.HeroOrder do
+				local option = Config.Heroes[key]
+				order += 1
+				local chosen = key == heroKey
+				local text = `<b>{escape(option.display)}</b>  ·  {escape(option.role)}{if chosen then "  ·  picked" else ""}\n<font size="13">Ability: {escape(option.ability)}  ·  {escape(option.fireMode)}, {option.magazine} rounds</font>`
+				addRow(order, text, if chosen then HERO_COLOR else BUY_COLOR, not chosen, function()
+					send("pick", key, nil, heroRequest)
 				end)
 			end
 		end
-		addRow(10, `<font size="13">Equip with the hotbar (1, 2). Click to shoot, F for the ability.</font>`, PANEL_COLOR, false)
+
+		if hero then
+			if not building then
+				title.Text = `{hero.display}  ·  Cash {cash}`
+			end
+			local tiers = {}
+			for i = 1, 3 do
+				tiers[i] = player:GetAttribute(`HeroPath{i}`) or 0
+			end
+			for pathIndex, path in hero.paths do
+				order += 1
+				local current = tiers[pathIndex]
+				local name = escape(path.id)
+				local why = Upgrades.check(tiers, pathIndex, #path.tiers)
+				if why == "maxed" then
+					addRow(order, `<b>{name}</b>  ·  maxed  ·  {escape(path.tiers[#path.tiers].name)}`, LOCKED_COLOR, false)
+				elseif why ~= "ok" then
+					addRow(order, `<b>{name}</b>  ·  tier {current}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
+				else
+					local step = path.tiers[current + 1]
+					local affordable = cash >= step.cost
+					local text = `<b>{escape(step.name)}</b>  ·  {step.cost}\n<font size="13">{name} {current + 1}  ·  {escape(describeHeroStep(path, current))}</font>`
+					addRow(order, text, if affordable then HERO_COLOR else LOCKED_COLOR, affordable, function()
+						send("upgrade", pathIndex, nil, heroRequest)
+					end)
+				end
+			end
+			addRow(20, `<font size="13">Equip with 1. Click to shoot, R to reload, F for {escape(hero.ability)}.</font>`, PANEL_COLOR, false)
+		end
 	elseif mode == "manage" and managed then
 		local key = managed:GetAttribute("Tower") :: string
 		local def = Config.Towers[key]
@@ -692,8 +805,14 @@ ReplicatedStorage:GetAttributeChangedSignal("Cash"):Connect(function()
 	end
 end)
 
+ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(function()
+	if mode == "hero" then
+		render() -- picking closes when the game starts
+	end
+end)
+
 player.AttributeChanged:Connect(function(name)
-	if mode == "hero" and string.sub(name, 1, 7) == "Weapon_" then
+	if mode == "hero" and (name == "Hero" or string.sub(name, 1, 8) == "HeroPath") then
 		render()
 	end
 end)

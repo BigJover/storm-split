@@ -32,6 +32,7 @@ src/
 │   ├── TowerLook.luau       Tower models, shared by real towers and the placement ghost;
 │   │                        upgrade visuals (ring size, tier label, crown/glow swaps)
 │   ├── Upgrades.luau        The crossover rule, shared so the client greys out what the server refuses
+│   ├── HeroStats.luau       A hero's gun right now (base + upgrades), shared by server and client HUD
 │   └── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
 ├── server/   → ServerScriptService.Server
 │   ├── Main.server.luau     Entry point and wiring. Only file that knows every module.
@@ -43,13 +44,15 @@ src/
 │   ├── Waves.luau           Runs the 40-round table
 │   ├── Economy.luau         The team's shared cash and lives
 │   ├── Scoreboard.luau      Per-player pops on the Roblox leaderboard (leaderstats)
-│   ├── Hero.luau            The player as hero: weapon tiers, Tools, validated shots, abilities
+│   ├── Hero.luau            The player as hero: free pick, upgrade paths, magazine/reload, recoil,
+│   │                        fire modes, pellets/pierce/ricochet, abilities — all validated here
+│   ├── Hazards.luau         Burning patches on the track (towers and hero rounds)
 │   ├── Effects.luau         Tracers, blasts, burn discs (visual only)
 │   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
 └── client/   → StarterPlayer.StarterPlayerScripts.Client
     ├── Hud.client.luau      Round / cash / lives / enemies label, Start button
     ├── Shop.client.luau     Build/Hero buttons, placement ghost, tower and weapon panels
-    └── Hero.client.luau     Hold-to-fire, ability button (requests only)
+    └── Hero.client.luau     Trigger (semi/auto/burst), reload, ammo, scope, camera, crosshair (requests only)
 ```
 
 Dependencies point one way: `shared` imports nothing from `server` or `client`. `Main` imports
@@ -86,7 +89,8 @@ This dissolves most of the problems the UEFN plan was built around:
 | Who built a tower | `Towers` (`tower.owner`) | Shop reads it: only the builder sells |
 | Pops per player | `Scoreboard` | Towers report kills through the `onPop` hook |
 | Difficulty | `Main` (`Difficulty` attribute, locked at Start) | Waves reads it through `options.scale()` |
-| A player's weapon tiers, cooldowns, Overdrive | `Hero` | Clients read `Weapon_*` / `AbilityReadyAt_*` player attributes; Towers ask `Hero.towerRateBoost` |
+| A player's hero, upgrades, ammo, recoil, cooldown, Overdrive | `Hero` | Clients read `Hero`, `HeroPath1-3`, `Ammo`, `Magazine`, `ReloadUntil`, `AbilityReadyAt` player attributes; Towers ask `Hero.towerRateBoost` |
+| Burning patches | `Hazards` | Towers and Hero call `Hazards.burn()` |
 | Current round | `Waves` | Read the `Round` attribute |
 | Saved progression *(phase 6)* | `Progression` | Snapshot at match start only |
 
@@ -155,7 +159,7 @@ second test client.
 | **3** — upgrade paths | Shop calls `Towers.upgrade()`; model swaps at tiers 3 and 5; range multipliers; tier names | **Done, confirmed in Studio** |
 | **3b** — tower abilities | Armored/Boss enemy flags, then the Scout, Sniper and Grenadier mechanics in `UPGRADES.md` (multi-shot, pierce, mark, stun, knockback, burn, cluster, auras) | **Written, statically checked**, not yet playtested |
 | **3c** — difficulty and scale | Difficulty levels (Easy = baseline, Normal, Hard, Chaos) and per-player scaling from the spreadsheet; tower owners; pops leaderboard; owner-only selling. See `VISION.md` | **Written, statically checked**, not yet playtested |
-| **4** — the hero: weapons and abilities | `Hero`: three weapon types bought in tiers with team cash (crossover rule shared with towers), Tools in the hotbar, server-validated shots with aim assist, abilities Mark / Overdrive / Airburst from tier 2 | **Written, statically checked**, not yet playtested |
+| **4** — the hero | Free hero pick (Pistol, Assault Rifle, Shotgun); three named upgrade paths each about handling, not damage (`HEROES.md`); magazines, recoil, fire modes, pellets/slugs, pierce, ricochet, special rounds; first-person gunplay; abilities Mark / Overdrive / Airburst | First version confirmed in Studio; **redesign written 2026-09-29**, statically checked, not yet playtested |
 | **5** — roster and rounds | Chiller and Quartermaster mechanics per `UPGRADES.md` (slow, freeze, damage amp, income, chests, discounts) | Numbers already in `Config` |
 | **6** — co-op, mastery, publish | `Progression` (DataStoreService), mastery effects, lobby, 10-player servers | |
 | **7** — battle modes | Team battle (sides, tower HP, per-team cash) and battle royale (most pops) — `VISION.md` | |

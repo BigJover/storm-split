@@ -239,6 +239,10 @@ function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?): b
 	return true
 end
 
+function Enemies.isMarked(enemy: Enemy): boolean
+	return enemy.markPercent > 0 and os.clock() < enemy.markedUntil
+end
+
 function Enemies.stun(enemy: Enemy, seconds: number, affectsBosses: boolean?)
 	if not enemy.alive or seconds <= 0 or (enemy.def.boss and not affectsBosses) then
 		return

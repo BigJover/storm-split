@@ -16,6 +16,8 @@ design in the PDF still holds; its UEFN-specific sections don't. Old UEFN materi
 - `ARCHITECTURE.md` — code structure, ownership rules, phase plan. **Read before changing code.**
 - `UPGRADES.md` — the approved vision for every tower's paths, tier names and abilities.
   Build tower mechanics to match it.
+- `HEROES.md` — the approved hero design: free pick, three upgrade paths per hero about how
+  the gun handles and fires. More heroes will be added later.
 - `VISION.md` — scale and modes: ~10-player chaotic co-op, difficulty levels, and future
   team-battle and battle-royale modes. Don't write code that blocks them.
 - `SETUP.md` — Mac setup: Studio, Rokit, Rojo, MCP
@@ -100,7 +102,15 @@ flying enemies are hittable.
 Balance watch (design doc): the player must never out-damage their own towers — test round
 25 with no towers bought.
 
-Next: playtest phase 4, then phase 5 (Chiller and Quartermaster mechanics).
+Phase 4 v1 and first-person gunplay confirmed in Studio 2026-09-29 ("working perfectly").
+The user then redesigned the hero (`HEROES.md`), written the same day, not yet playtested:
+picking a hero is free (switch until Start, upgrades refunded); Pistol / Assault Rifle /
+Shotgun each have three named upgrade paths about handling and fire modes, not damage;
+magazines + reload, server-side recoil, semi/auto/burst, dual guns, pellets vs slug (damage
+per shot is conserved across pellets), pierce, ricochet, burn/splash/knockback/mark rounds,
+scope, Spin-Up, Belt Fed. Spreadsheet: `Heroes` and `Hero Upgrades` replace `Weapons`.
+
+Next: playtest the hero redesign, then phase 5 (Chiller and Quartermaster mechanics).
 
 ## Open issues
 

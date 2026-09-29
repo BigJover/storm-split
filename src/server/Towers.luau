@@ -39,6 +39,7 @@ local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
+local Hazards = require(script.Parent.Hazards)
 
 local Towers = {}
 
@@ -84,21 +85,10 @@ export type Tower = {
 	model: Model,
 }
 
-type Burn = {
-	distance: number,
-	reach: number,
-	dps: number,
-	untilTime: number,
-	piercesArmor: boolean,
-	owner: Player?,
-}
-
 -- Visuals only.
-local BURN_COLOR = Color3.fromRGB(255, 110, 40)
 local BOMBLET_COLOR = Color3.fromRGB(255, 190, 90)
 
 local towers: { Tower } = {}
-local burns: { Burn } = {}
 local towerFolder: Instance
 local nextId = 0
 local onPop: ((Player) -> ())? = nil
@@ -391,19 +381,10 @@ end
 
 local function addBurn(tower: Tower, primary: Enemies.Enemy)
 	local stats = tower.stats
-	if stats.burnDps <= 0 or stats.burnSeconds <= 0 or primary.def.flying then
+	if primary.def.flying then
 		return
 	end
-	local reach = math.max(stats.splashRadius, 1)
-	table.insert(burns, {
-		distance = primary.distance,
-		reach = reach,
-		dps = stats.burnDps,
-		untilTime = os.clock() + stats.burnSeconds,
-		piercesArmor = piercing(tower),
-		owner = tower.owner,
-	})
-	Effects.disc(Enemies.pointAt(primary.distance) + Vector3.new(0, 0.45, 0), reach, BURN_COLOR, stats.burnSeconds, 0.5)
+	Hazards.burn(primary.distance, stats.splashRadius, stats.burnDps, stats.burnSeconds, piercing(tower), tower.owner)
 end
 
 local function fire(tower: Tower, live): boolean
@@ -436,29 +417,11 @@ local function fire(tower: Tower, live): boolean
 	return fired
 end
 
--- Burning patches damage ground enemies standing in them.
-local function stepBurns(dt: number, live)
-	local now = os.clock()
-	for i = #burns, 1, -1 do
-		local burn = burns[i]
-		if now >= burn.untilTime then
-			table.remove(burns, i)
-			continue
-		end
-		for _, enemy in live do
-			if not enemy.def.flying and math.abs(enemy.distance - burn.distance) <= burn.reach then
-				credit(burn.owner, Enemies.damage(enemy, burn.dps * dt, burn.piercesArmor))
-			end
-		end
-	end
-end
-
 -- Called every Heartbeat by Main.
 -- NOTE: fires at most once per frame (times `shots`), so fire rates above
 -- ~60/s are capped.
 function Towers.step(dt: number)
 	local live = Enemies.getLive()
-	stepBurns(dt, live)
 
 	for _, tower in towers do
 		local stats = tower.stats

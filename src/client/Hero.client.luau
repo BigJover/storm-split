@@ -1,15 +1,19 @@
 --[[
-	Hero weapons on the client: hold click (or touch) with a weapon equipped to
-	keep firing along your aim; F or the ability button uses the equipped
-	weapon's ability.
+	The hero's gun on the client (HEROES.md).
 
-	CAMERA: holding a weapon puts you in first person with a crosshair, for
-	gunplay. Unarmed, or with any panel open (Build, Hero, a tower), you're in
-	third person with a free mouse so you can see the map and click the HUD.
-	V (or the View button) turns first person off and on.
+	TRIGGER: semi fires once per click, auto keeps firing while held, burst
+	fires `burstCount` rounds per click. Dual guns and Spin-Up fire faster, as
+	the server allows (Shared/HeroStats gives both sides the same numbers).
+	R reloads; an empty magazine reloads by itself (the server starts it).
+	Right-click zooms if the gun has a scope. F uses the hero's ability.
 
-	Shots send the camera's aim ray. They're only requests: the server
-	(Server/Hero) checks the weapon, fire rate, range and cooldown and decides
+	CAMERA: holding the gun puts you in first person with a crosshair. Unarmed,
+	or with any panel open (Build, Hero, a tower), you're in third person with
+	a free mouse. V (or the Aim button) turns first person off and on.
+
+	The crosshair opens up with the same recoil the server applies, so what you
+	see is the cone your shots land in. Every shot is only a request carrying
+	the camera ray: the server checks rate, ammo, recoil and range and decides
 	what gets hit, then echoes hits back for the hit marker.
 ]]
 
@@ -18,7 +22,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
+local HeroStats = require(Shared:WaitForChild("HeroStats"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local heroRequest = remotes:WaitForChild("HeroRequest") :: RemoteFunction
@@ -26,22 +32,68 @@ local heroFire = remotes:WaitForChild("HeroFire") :: RemoteEvent
 
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
+local camera = workspace.CurrentCamera
 
 -- Visuals only.
 local TEXT = Color3.fromRGB(240, 236, 250)
 local READY = Color3.fromRGB(200, 90, 110)
 local WAITING = Color3.fromRGB(70, 66, 82)
 local KILL = Color3.fromRGB(255, 80, 90)
-local CROSSHAIR_GAP = 5 -- px, at rest
-local CROSSHAIR_KICK = 7 -- px added per shot
-local CROSSHAIR_SETTLE = 14 -- how fast the spread recovers (per second, exponential)
+local CROSSHAIR_MIN_GAP = 4 -- px
 local THIRD_PERSON_ZOOM = 12 -- studs; where the camera lands when leaving first person
+local SCOPE_FOV = 30
+local SPIN_KEEP = 0.35 -- must match Server/Hero: pulls closer than this keep spinning
 
------------------------------------------------------------------- ability button
+------------------------------------------------------------------ the gun right now
+
+local function heroKey(): string?
+	local key = player:GetAttribute("Hero")
+	return if typeof(key) == "string" and Config.Heroes[key] then key else nil
+end
+
+local function currentStats(): HeroStats.Stats?
+	local key = heroKey()
+	if not key then
+		return nil
+	end
+	local tiers = {}
+	for i = 1, 3 do
+		tiers[i] = player:GetAttribute(`HeroPath{i}`) or 0
+	end
+	return HeroStats.compute(key, tiers)
+end
+
+local function equippedGun(): Tool?
+	local character = player.Character
+	local tool = character and character:FindFirstChildOfClass("Tool")
+	return if tool and tool:GetAttribute("HeroWeapon") then tool else nil
+end
+
+local function reloading(): boolean
+	return (player:GetAttribute("ReloadUntil") or 0) > workspace:GetServerTimeNow()
+end
+
+local function overdriveOn(): boolean
+	return (player:GetAttribute("OverdriveUntil") or 0) > workspace:GetServerTimeNow()
+end
+
+-- The camera ray through the crosshair (first person) or the mouse (third).
+local function aimRay(): (Vector3, Vector3)
+	local ray = mouse.UnitRay
+	return ray.Origin, ray.Direction
+end
+
+------------------------------------------------------------------ HUD
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "StormSplitHero"
 gui.ResetOnSpawn = false
+
+local function corner(parent: Instance, radius: number)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, radius)
+	c.Parent = parent
+end
 
 local abilityButton = Instance.new("TextButton")
 abilityButton.Name = "Ability"
@@ -53,18 +105,27 @@ abilityButton.TextSize = 18
 abilityButton.TextColor3 = TEXT
 abilityButton.Visible = false
 abilityButton.Parent = gui
+corner(abilityButton, 8)
 
-do
-	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, 8)
-	c.Parent = abilityButton
-end
+local ammoLabel = Instance.new("TextLabel")
+ammoLabel.Name = "Ammo"
+ammoLabel.AnchorPoint = Vector2.new(1, 1)
+ammoLabel.Position = UDim2.new(1, -176, 1, -24)
+ammoLabel.Size = UDim2.fromOffset(160, 48)
+ammoLabel.BackgroundTransparency = 1
+ammoLabel.Font = Enum.Font.GothamBold
+ammoLabel.TextSize = 26
+ammoLabel.TextColor3 = TEXT
+ammoLabel.TextStrokeTransparency = 0.5
+ammoLabel.TextXAlignment = Enum.TextXAlignment.Right
+ammoLabel.Visible = false
+ammoLabel.Parent = gui
 
 local toast = Instance.new("TextLabel")
 toast.Name = "Toast"
 toast.AnchorPoint = Vector2.new(1, 1)
 toast.Position = UDim2.new(1, -24, 1, -192)
-toast.Size = UDim2.fromOffset(260, 24)
+toast.Size = UDim2.fromOffset(280, 24)
 toast.BackgroundTransparency = 1
 toast.Font = Enum.Font.GothamBold
 toast.TextSize = 16
@@ -86,31 +147,7 @@ local function showToast(text: string)
 	end)
 end
 
------------------------------------------------------------------- equipped weapon
-
-local function equippedTool(): Tool?
-	local character = player.Character
-	local tool = character and character:FindFirstChildOfClass("Tool")
-	if tool and typeof(tool:GetAttribute("WeaponType")) == "string" then
-		return tool
-	end
-	return nil
-end
-
-local function weaponRow(tool: Tool)
-	local key = tool:GetAttribute("WeaponType") :: string
-	local tier = player:GetAttribute(`Weapon_{key}`) or 0
-	local weapon = Config.Weapons[key]
-	return weapon, if weapon and tier > 0 then weapon.tiers[tier] else nil, tier
-end
-
--- The camera ray through the crosshair (first person) or the mouse (third).
-local function aimRay(): (Vector3, Vector3)
-	local ray = mouse.UnitRay
-	return ray.Origin, ray.Direction
-end
-
------------------------------------------------------------------- crosshair and camera
+------------------------------------------------------------------ crosshair
 
 local crosshair = Instance.new("Frame")
 crosshair.Name = "Crosshair"
@@ -142,13 +179,7 @@ hitMarker.Text = "×"
 hitMarker.Visible = false
 hitMarker.Parent = crosshair
 
-local spread = 0
 local markerToken = 0
-
-local function kickCrosshair()
-	spread += CROSSHAIR_KICK
-end
-
 heroFire.OnClientEvent:Connect(function(killed: boolean)
 	markerToken += 1
 	local token = markerToken
@@ -161,6 +192,23 @@ heroFire.OnClientEvent:Connect(function(killed: boolean)
 	end)
 end)
 
+-- Local copy of the server's recoil (bloom) so the crosshair shows the real cone.
+local bloom, bloomAt = 0, 0
+
+local function currentBloom(stats: HeroStats.Stats): number
+	return math.max(0, bloom - stats.recoilRecovery * (os.clock() - bloomAt))
+end
+
+local function addRecoil(stats: HeroStats.Stats)
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	local speed = if root and root:IsA("BasePart") then root.AssemblyLinearVelocity.Magnitude else 0
+	local recoil = stats.recoilPerShot * stats.shotsPerTrigger * (if speed < Config.Tuning.StillSpeed then stats.stillRecoilMult else 1)
+	bloom = math.min(stats.recoilMax, currentBloom(stats) + recoil)
+	bloomAt = os.clock()
+end
+
+------------------------------------------------------------------ camera
+
 local viewButton = Instance.new("TextButton")
 viewButton.Name = "View"
 viewButton.AnchorPoint = Vector2.new(1, 0)
@@ -171,18 +219,21 @@ viewButton.Font = Enum.Font.GothamBold
 viewButton.TextSize = 15
 viewButton.TextColor3 = TEXT
 viewButton.Parent = gui
-do
-	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, 8)
-	c.Parent = viewButton
-end
+corner(viewButton, 8)
 
-local preferFirstPerson = true -- flipped by V; first person also needs a weapon in hand
+local preferFirstPerson = true -- flipped by V; first person also needs the gun in hand
 local inFirstPerson: boolean? = nil
 local defaultMinZoom = player.CameraMinZoomDistance
+local defaultFov = camera.FieldOfView
+local scoped = false
+
+local function setScope(on: boolean)
+	scoped = on
+	camera.FieldOfView = if on then SCOPE_FOV else defaultFov
+end
 
 local function applyCamera()
-	local wantFirst = preferFirstPerson and equippedTool() ~= nil and player:GetAttribute("PanelOpen") ~= true
+	local wantFirst = preferFirstPerson and equippedGun() ~= nil and player:GetAttribute("PanelOpen") ~= true
 	viewButton.Text = if preferFirstPerson then "Aim: 1st (V)" else "Aim: 3rd (V)"
 	if wantFirst == inFirstPerson then
 		return
@@ -193,6 +244,7 @@ local function applyCamera()
 	if wantFirst then
 		player.CameraMode = Enum.CameraMode.LockFirstPerson
 	else
+		setScope(false)
 		player.CameraMode = Enum.CameraMode.Classic
 		-- Leaving first person leaves the camera zoomed all the way in; push it
 		-- back out, then let the player zoom freely again.
@@ -214,42 +266,71 @@ viewButton.Activated:Connect(toggleView)
 player:GetAttributeChangedSignal("PanelOpen"):Connect(applyCamera)
 applyCamera()
 
-RunService.RenderStepped:Connect(function(dt)
-	spread *= math.exp(-CROSSHAIR_SETTLE * dt)
-	local gap = CROSSHAIR_GAP + spread
-	bars[1].Position = UDim2.fromOffset(0, -gap - 4)
-	bars[2].Position = UDim2.fromOffset(0, gap + 4)
-	bars[3].Position = UDim2.fromOffset(-gap - 4, 0)
-	bars[4].Position = UDim2.fromOffset(gap + 4, 0)
-end)
-
------------------------------------------------------------------- firing
+------------------------------------------------------------------ trigger
 
 local holding = false
 local firing = false
+local lastPull = 0
+local spinTime = 0
 local hooked: { [Tool]: boolean } = {}
+
+-- Seconds between trigger pulls right now (mirrors Server/Hero's rate check).
+local function pullGap(stats: HeroStats.Stats): number
+	local spin = 1 + (stats.spinUp - 1) * math.min(1, spinTime / Config.Tuning.SpinUpTime)
+	local rate = stats.rate * stats.guns * spin * (if overdriveOn() then Config.Tuning.OverdriveFireRateX else 1)
+	return 1 / rate
+end
+
+-- One trigger pull if the gun is ready. Returns "fired", "wait" (not ready
+-- yet) or "empty" (reloading or out of rounds).
+local function pull(stats: HeroStats.Stats): string
+	if reloading() or (player:GetAttribute("Ammo") or 0) <= 0 then
+		return "empty"
+	end
+	local now = os.clock()
+	if now - lastPull < pullGap(stats) then
+		return "wait"
+	end
+	spinTime = if now - lastPull <= SPIN_KEEP then spinTime + (now - lastPull) else 0
+	lastPull = now
+	heroFire:FireServer(aimRay())
+	addRecoil(stats)
+	return "fired"
+end
 
 local function fireLoop(tool: Tool)
 	if firing then
 		return
 	end
 	firing = true
-	while holding and tool.Parent == player.Character do
-		local _, row = weaponRow(tool)
-		if not row then
-			break
+	local stats = currentStats()
+	if stats and stats.fireMode == "burst" then
+		local fired = 0
+		while fired < stats.burstCount and tool.Parent == player.Character do
+			local result = pull(stats)
+			if result == "empty" then
+				break
+			elseif result == "fired" then
+				fired += 1
+			end
+			task.wait()
 		end
-		heroFire:FireServer(aimRay())
-		kickCrosshair()
-		local overdrive = (player:GetAttribute("OverdriveUntil") or 0) > workspace:GetServerTimeNow()
-		local rate = row.rate * (if overdrive then Config.Tuning.OverdriveFireRateX else 1)
-		task.wait(1 / rate)
+	elseif stats and stats.fireMode == "auto" then
+		while holding and tool.Parent == player.Character do
+			stats = currentStats()
+			if not stats or pull(stats) == "empty" then
+				break
+			end
+			task.wait()
+		end
+	elseif stats then
+		pull(stats)
 	end
 	firing = false
 end
 
 local function hook(tool: Instance)
-	if not tool:IsA("Tool") or hooked[tool] or typeof(tool:GetAttribute("WeaponType")) ~= "string" then
+	if not tool:IsA("Tool") or hooked[tool] or not tool:GetAttribute("HeroWeapon") then
 		return
 	end
 	hooked[tool] = true
@@ -289,20 +370,25 @@ if player.Character then
 	onCharacter(player.Character)
 end
 
------------------------------------------------------------------- ability
+------------------------------------------------------------------ reload, ability, scope
 
-local function useAbility()
-	if not equippedTool() then
-		return
-	end
+local function request(action: string, a: any?, b: any?)
 	local ok, _, text = pcall(function()
-		local origin, direction = aimRay()
-		return heroRequest:InvokeServer("ability", origin, direction)
+		return heroRequest:InvokeServer(action, a, b)
 	end)
 	showToast(if ok then tostring(text) else "Couldn't reach the server")
 end
 
+local function useAbility()
+	if not equippedGun() then
+		return
+	end
+	local origin, direction = aimRay()
+	request("ability", origin, direction)
+end
+
 abilityButton.Activated:Connect(useAbility)
+
 UserInputService.InputBegan:Connect(function(input, processed)
 	if processed then
 		return
@@ -311,30 +397,59 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		useAbility()
 	elseif input.KeyCode == Enum.KeyCode.V then
 		toggleView()
+	elseif input.KeyCode == Enum.KeyCode.R and equippedGun() then
+		request("reload")
+	elseif input.UserInputType == Enum.UserInputType.MouseButton2 and inFirstPerson then
+		local stats = currentStats()
+		if stats and stats.scope then
+			setScope(true)
+		end
 	end
 end)
 
--- Keep the button showing the equipped weapon's ability and its cooldown.
-RunService.Heartbeat:Connect(function()
-	local tool = equippedTool()
-	if not tool then
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton2 and scoped then
+		setScope(false)
+	end
+end)
+
+------------------------------------------------------------------ every frame
+
+local hintShown = false
+
+RunService.RenderStepped:Connect(function()
+	local stats = currentStats()
+	local gun = equippedGun()
+
+	if not stats then
 		abilityButton.Visible = false
+		ammoLabel.Visible = false
+		if not hintShown and ReplicatedStorage:GetAttribute("State") ~= nil then
+			hintShown = true
+			showToast("Press H to pick your hero (free)")
+		end
 		return
 	end
-	local key = tool:GetAttribute("WeaponType") :: string
-	local weapon, _, tier = weaponRow(tool)
-	if not weapon or tier < 2 then
-		abilityButton.Visible = false
-		return
-	end
-	abilityButton.Visible = true
-	local remaining = (player:GetAttribute(`AbilityReadyAt_{key}`) or 0) - workspace:GetServerTimeNow()
-	if remaining > 0 then
-		abilityButton.Text = `{weapon.ability}  {math.ceil(remaining)}s`
-		abilityButton.BackgroundColor3 = WAITING
-	else
-		abilityButton.Text = `{weapon.ability}  (F)`
-		abilityButton.BackgroundColor3 = READY
+
+	-- Crosshair gap from the real cone: spread + recoil, degrees -> pixels.
+	local degrees = stats.spread + currentBloom(stats)
+	local gap = CROSSHAIR_MIN_GAP + degrees * camera.ViewportSize.Y / camera.FieldOfView
+	bars[1].Position = UDim2.fromOffset(0, -gap - 4)
+	bars[2].Position = UDim2.fromOffset(0, gap + 4)
+	bars[3].Position = UDim2.fromOffset(-gap - 4, 0)
+	bars[4].Position = UDim2.fromOffset(gap + 4, 0)
+
+	ammoLabel.Visible = gun ~= nil
+	ammoLabel.Text = if reloading()
+		then "Reloading…"
+		else `{player:GetAttribute("Ammo") or 0} / {player:GetAttribute("Magazine") or 0}`
+
+	local hero = Config.Heroes[heroKey() or ""]
+	abilityButton.Visible = gun ~= nil and hero ~= nil
+	if hero then
+		local remaining = (player:GetAttribute("AbilityReadyAt") or 0) - workspace:GetServerTimeNow()
+		abilityButton.Text = if remaining > 0 then `{hero.ability}  {math.ceil(remaining)}s` else `{hero.ability}  (F)`
+		abilityButton.BackgroundColor3 = if remaining > 0 then WAITING else READY
 	end
 end)
 

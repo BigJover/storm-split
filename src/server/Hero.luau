@@ -1,28 +1,29 @@
 --[[
-	Hero: the player character is the hero (design doc §02, VISION.md).
+	Hero: the player character is the hero (HEROES.md, design doc §02).
 
-	Each player buys tiers of three weapon types — Precision, Sustained,
-	Ordnance — with the team's shared cash. The same crossover rule as towers
-	applies (Shared/Upgrades): at most two weapon types, and only one past
-	tier 2. Every owned weapon is a Tool in the player's hotbar, named after
-	its tier ("Marksman rifle").
+	Picking a hero (Pistol, Assault Rifle, Shotgun) is free: switch freely in the
+	build phase, with any upgrades refunded; after Start it's locked. A player
+	who joins mid-match picks once. Upgrades cost the team's cash: three paths
+	of five tiers per hero, under the same crossover rule as towers
+	(Shared/Upgrades). What the gun does right now comes from Shared/HeroStats,
+	which the client uses too.
 
-	Tier 2 of each type unlocks its ability; a second weapon type is capped at
-	tier 2, so its ability stays at its weakest form ("commit for power, split
-	for flexibility"):
-	  Mark (Precision)     the enemy nearest your aim takes +power% damage from
-	                       everything for (s) seconds; the mark passes to its splits
-	  Overdrive (Sustained) for (s) seconds your fire rate is x OverdriveFireRateX
-	                       and towers within the radius fire +power% faster
-	  Airburst (Ordnance)  after AirburstDelay, the stretch of track nearest your
-	                       aim takes `power` damage and everything there is stunned
+	Gun mechanics, all enforced here:
+	  magazine    each trigger pull uses rounds; empty starts a reload
+	  recoil      each shot widens this player's spread (bloom); it settles over
+	              time. The server scatters every pellet inside that cone, so a
+	              client can't shoot straighter than its gun
+	  fire rate   pulls closer together than the gun allows are ignored
+	              (Spin-Up raises the rate while the trigger is held)
+	  pellets     each pellet travels its own ray, passes through `pierce`
+	              enemies, can ricochet, splash, burn, knock back and mark
 
-	SERVER AUTHORITATIVE: a client only says "I fired along this camera ray" or
-	"use my ability along this ray". The server checks the equipped weapon, the
-	fire rate, the range and the cooldown, and picks what gets hit itself: the
-	in-range enemy closest to the ray, within aim assist. A ray (not a ground
-	point) is what makes flying enemies hittable from first person. Each hit is
-	echoed back to the shooter for the crosshair's hit marker.
+	The hero's ability (Mark, Overdrive, Airburst) is available from the start
+	on its cooldown.
+
+	SERVER AUTHORITATIVE: a client only says "I pulled the trigger along this
+	camera ray", "reload", or "use my ability along this ray". Hits are echoed
+	back to the shooter for the hit marker.
 ]]
 
 local Players = game:GetService("Players")
@@ -30,51 +31,69 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local HeroStats = require(Shared:WaitForChild("HeroStats"))
 local Track = require(Shared:WaitForChild("Track"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local Economy = require(script.Parent.Economy)
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
+local Hazards = require(script.Parent.Hazards)
 
 local Hero = {}
 
 type State = {
-	tiers: { number }, -- by index in Config.WeaponOrder
+	hero: string?,
+	tiers: { number },
+	spent: number, -- cash put into upgrades (refunded if the hero is switched in the build phase)
+	stats: HeroStats.Stats?,
+	ammo: number,
+	reloadUntil: number, -- os.clock(); 0 when not reloading
 	lastShot: number,
-	abilityReadyAt: { [string]: number }, -- os.clock() time, per weapon type
+	spinTime: number,
+	bloom: number, -- extra spread in degrees from recoil
+	bloomAt: number,
+	gunSide: number, -- alternates 1 / -1 for dual guns (visual)
+	abilityReadyAt: number,
 	overdriveUntil: number,
 	overdrivePercent: number,
 	overdriveRadius: number,
 }
 
 -- Visuals only.
-local WEAPON_COLORS = {
-	PRECISION = Color3.fromRGB(255, 90, 110),
-	SUSTAINED = Color3.fromRGB(255, 220, 90),
-	ORDNANCE = Color3.fromRGB(255, 140, 50),
+local HERO_COLORS = {
+	PISTOL = Color3.fromRGB(255, 90, 110),
+	RIFLE = Color3.fromRGB(255, 220, 90),
+	SHOTGUN = Color3.fromRGB(255, 140, 50),
 }
-local SHOT_GAP_SLACK = 0.8 -- accept shots up to 20% early, for network jitter
-local RAY_ORIGIN_SLACK = 20 -- studs beyond max camera zoom a ray may start from
+local DUAL_GUN_OFFSET = 0.9 -- studs sideways for the second gun's tracer
 
-local fireEvent: RemoteEvent
+local SHOT_GAP_SLACK = 0.8 -- accept pulls up to 20% early, for network jitter
+local RAY_ORIGIN_SLACK = 20 -- studs beyond max camera zoom a ray may start from
+local SPIN_KEEP = 0.35 -- seconds between pulls that still count as holding the trigger
 
 local states: { [Player]: State } = {}
 local onPop: ((Player) -> ())? = nil
+local fireEvent: RemoteEvent
 
 ------------------------------------------------------------------ state
 
 local function stateOf(player: Player): State
 	local state = states[player]
 	if not state then
-		local tiers = {}
-		for i = 1, #Config.WeaponOrder do
-			tiers[i] = 0
-		end
 		state = {
-			tiers = tiers,
+			hero = nil,
+			tiers = { 0, 0, 0 },
+			spent = 0,
+			stats = nil,
+			ammo = 0,
+			reloadUntil = 0,
 			lastShot = 0,
-			abilityReadyAt = {},
+			spinTime = 0,
+			bloom = 0,
+			bloomAt = 0,
+			gunSide = 1,
+			abilityReadyAt = 0,
 			overdriveUntil = 0,
 			overdrivePercent = 0,
 			overdriveRadius = 0,
@@ -100,19 +119,6 @@ local function root(player: Player): BasePart?
 	return nil
 end
 
--- The weapon in the player's hands and its tier, if it's one of ours.
-local function equipped(player: Player): (string?, number, Tool?)
-	local character = player.Character
-	local tool = character and character:FindFirstChildOfClass("Tool")
-	local key = tool and tool:GetAttribute("WeaponType")
-	if typeof(key) ~= "string" then
-		return nil, 0, nil
-	end
-	local index = table.find(Config.WeaponOrder, key)
-	local tier = if index then stateOf(player).tiers[index] else 0
-	return key, tier, tool
-end
-
 local function isFinite(v: Vector3): boolean
 	return v.X == v.X and v.Y == v.Y and v.Z == v.Z and v.Magnitude < 1e6
 end
@@ -131,13 +137,32 @@ local function validRay(player: Player, body: BasePart, origin: unknown, directi
 	return origin, direction.Unit
 end
 
------------------------------------------------------------------- tools
+local function gameOver(): boolean
+	local state = ReplicatedStorage:GetAttribute("State")
+	return state == "GameOver" or state == "Victory"
+end
 
-local function findTool(player: Player, key: string): Tool?
+-- Everything the client HUD needs, as player attributes. Times are server time.
+local function publish(player: Player)
+	local s = stateOf(player)
+	local clockToServer = workspace:GetServerTimeNow() - os.clock()
+	player:SetAttribute("Hero", s.hero or "")
+	for i = 1, 3 do
+		player:SetAttribute(`HeroPath{i}`, s.tiers[i])
+	end
+	player:SetAttribute("Ammo", s.ammo)
+	player:SetAttribute("Magazine", if s.stats then s.stats.magazine else 0)
+	player:SetAttribute("ReloadUntil", if s.reloadUntil > 0 then s.reloadUntil + clockToServer else 0)
+	player:SetAttribute("AbilityReadyAt", s.abilityReadyAt + clockToServer)
+end
+
+------------------------------------------------------------------ the tool
+
+local function findTool(player: Player): Tool?
 	for _, container in { player:FindFirstChildOfClass("Backpack"), player.Character } do
 		if container then
 			for _, child in container:GetChildren() do
-				if child:IsA("Tool") and child:GetAttribute("WeaponType") == key then
+				if child:IsA("Tool") and child:GetAttribute("HeroWeapon") then
 					return child
 				end
 			end
@@ -146,157 +171,248 @@ local function findTool(player: Player, key: string): Tool?
 	return nil
 end
 
-local function makeTool(key: string): Tool
-	local tool = Instance.new("Tool")
-	tool.RequiresHandle = true
-	tool.CanBeDropped = false
-	tool:SetAttribute("WeaponType", key)
-	local handle = Instance.new("Part")
-	handle.Name = "Handle"
-	handle.Size = Vector3.new(0.4, 0.5, 2)
-	handle.Color = WEAPON_COLORS[key] or Color3.new(1, 1, 1)
-	handle.Material = Enum.Material.SmoothPlastic
-	handle.CanCollide = false
-	handle.Massless = true
-	handle.Parent = tool
-	return tool
-end
-
--- Makes the hotbar match what the player owns. Safe to call any time.
-local function syncTools(player: Player)
-	local backpack = player:FindFirstChildOfClass("Backpack")
-	if not backpack then
+-- One Tool in the hotbar: the hero's gun. Safe to call any time.
+local function syncTool(player: Player)
+	local s = stateOf(player)
+	local tool = findTool(player)
+	if not s.hero then
+		if tool then
+			tool:Destroy()
+		end
 		return
 	end
-	local state = stateOf(player)
-	for index, key in Config.WeaponOrder do
-		local tier = state.tiers[index]
-		local tool = findTool(player, key)
-		if tier == 0 then
-			if tool then
-				tool:Destroy()
-			end
-		else
-			if not tool then
-				tool = makeTool(key)
-				tool.Parent = backpack
-			end
-			assert(tool)
-			local step = Config.Weapons[key].tiers[tier]
-			tool.Name = step.name
-			tool.ToolTip = `{Config.Weapons[key].display} {tier}`
-			tool:SetAttribute("Tier", tier)
+	local backpack = player:FindFirstChildOfClass("Backpack")
+	if not tool then
+		if not backpack then
+			return
 		end
+		tool = Instance.new("Tool")
+		assert(tool)
+		tool.RequiresHandle = true
+		tool.CanBeDropped = false
+		tool:SetAttribute("HeroWeapon", true)
+		local handle = Instance.new("Part")
+		handle.Name = "Handle"
+		handle.Size = Vector3.new(0.4, 0.5, 2)
+		handle.Material = Enum.Material.SmoothPlastic
+		handle.CanCollide = false
+		handle.Massless = true
+		handle.Parent = tool
+		tool.Parent = backpack
+	end
+	local hero = Config.Heroes[s.hero]
+	tool.Name = hero.display
+	tool.ToolTip = `{hero.display} · {hero.ability} (F)`
+	local handle = tool:FindFirstChild("Handle")
+	if handle and handle:IsA("BasePart") then
+		handle.Color = HERO_COLORS[s.hero] or Color3.new(1, 1, 1)
 	end
 end
 
-local function publish(player: Player)
-	local state = stateOf(player)
-	for index, key in Config.WeaponOrder do
-		player:SetAttribute(`Weapon_{key}`, state.tiers[index])
+local function refresh(player: Player, refill: boolean)
+	local s = stateOf(player)
+	s.stats = if s.hero then HeroStats.compute(s.hero, s.tiers) else nil
+	if s.stats and refill then
+		s.ammo = s.stats.magazine
+		s.reloadUntil = 0
 	end
+	syncTool(player)
+	publish(player)
 end
 
------------------------------------------------------------------- buying
+------------------------------------------------------------------ picking and upgrading
+
+local function pick(player: Player, key: unknown): (boolean, string)
+	if typeof(key) ~= "string" or not Config.Heroes[key] then
+		return false, "Unknown hero"
+	end
+	local s = stateOf(player)
+	local building = ReplicatedStorage:GetAttribute("State") ~= "Playing"
+	if s.hero and not building then
+		return false, "Heroes lock when the game starts"
+	end
+	if s.hero == key then
+		return true, `{Config.Heroes[key].display} it is`
+	end
+	if s.spent > 0 then
+		Economy.earn(s.spent) -- switching in the build phase refunds every upgrade
+	end
+	s.hero = key
+	s.tiers = { 0, 0, 0 }
+	s.spent = 0
+	s.bloom = 0
+	s.abilityReadyAt = 0
+	refresh(player, true)
+	return true, `{Config.Heroes[key].display} it is`
+end
 
 local REFUSALS = {
-	maxed = "That weapon is maxed",
-	["third path"] = "You can only carry two weapon types",
-	crossover = "Only one weapon type can go past tier 2",
+	maxed = "That path is maxed",
+	["third path"] = "Only two paths can be opened",
+	crossover = "Only one path can go past tier 2",
 }
 
-local function buy(player: Player, key: unknown): (boolean, string)
-	if typeof(key) ~= "string" then
-		return false, "Unknown weapon"
+local function upgrade(player: Player, pathIndex: unknown): (boolean, string)
+	local s = stateOf(player)
+	if not s.hero then
+		return false, "Pick a hero first"
 	end
-	local index = table.find(Config.WeaponOrder, key)
-	local def = Config.Weapons[key]
-	if not index or not def then
-		return false, "Unknown weapon"
+	if typeof(pathIndex) ~= "number" then
+		return false, "Unknown upgrade"
 	end
-	local state = stateOf(player)
-	local why = Upgrades.check(state.tiers, index, #def.tiers)
+	local path = Config.Heroes[s.hero].paths[pathIndex]
+	if not path then
+		return false, "Unknown upgrade"
+	end
+	local why = Upgrades.check(s.tiers, pathIndex, #path.tiers)
 	if why ~= "ok" then
-		return false, REFUSALS[why] or "Can't buy that"
+		return false, REFUSALS[why] or "Can't upgrade that"
 	end
-	local step = def.tiers[state.tiers[index] + 1]
+	local step = path.tiers[s.tiers[pathIndex] + 1]
 	if not Economy.trySpend(step.cost) then
 		return false, "Not enough cash"
 	end
-	state.tiers[index] += 1
-	syncTools(player)
-	publish(player)
+	s.tiers[pathIndex] += 1
+	s.spent += step.cost
+	refresh(player, true) -- a fresh magazine with every upgrade
 	return true, `{step.name}!`
 end
 
------------------------------------------------------------------- firing
+------------------------------------------------------------------ reloading
 
-local function canHit(enemy: Enemies.Enemy, row): boolean
-	if enemy.def.flying and not row.hitsAir then
-		return false
+local function finishReloadIfDue(player: Player, s: State)
+	if s.reloadUntil > 0 and os.clock() >= s.reloadUntil and s.stats then
+		s.reloadUntil = 0
+		s.ammo = s.stats.magazine
+		publish(player)
 	end
-	return Enemies.canHurt(enemy, row.piercesArmor)
 end
 
--- The hittable enemy in weapon range (from the player) that sits closest to
--- the aim ray, within aim assist. Enemies behind the camera don't count.
-local function alongRay(origin: Vector3, direction: Vector3, from: Vector3, row, live): Enemies.Enemy?
-	local best, bestGap = nil, Config.Tuning.WeaponAimAssist
+local function startReload(player: Player, s: State)
+	local stats = s.stats
+	if not stats or s.reloadUntil > 0 or s.ammo >= stats.magazine then
+		return
+	end
+	s.reloadUntil = os.clock() + stats.reload
+	publish(player)
+	task.delay(stats.reload, function()
+		if states[player] == s then
+			finishReloadIfDue(player, s)
+		end
+	end)
+end
+
+------------------------------------------------------------------ shooting
+
+local function canHit(enemy: Enemies.Enemy, stats: HeroStats.Stats): boolean
+	if enemy.def.flying and not stats.hitsAir then
+		return false
+	end
+	return Enemies.canHurt(enemy, stats.piercesArmor)
+end
+
+-- A random direction inside a cone of `degrees` around `direction`.
+local random = Random.new()
+local function scatter(direction: Vector3, degrees: number): Vector3
+	if degrees <= 0 then
+		return direction
+	end
+	local frame = CFrame.lookAt(Vector3.zero, direction)
+	local angle = math.rad(degrees) * math.sqrt(random:NextNumber())
+	local around = random:NextNumber() * 2 * math.pi
+	return (frame * CFrame.Angles(0, 0, around) * CFrame.Angles(angle, 0, 0)).LookVector
+end
+
+-- Enemies a pellet passes through, nearest first: in weapon range of the
+-- player, in front of the camera, and within aim assist of the ray.
+local function alongRay(origin: Vector3, direction: Vector3, from: Vector3, stats: HeroStats.Stats, live, count: number): { Enemies.Enemy }
+	local hits = {}
+	local assist = Config.Tuning.WeaponAimAssist
 	for _, enemy in live do
 		local position = enemy.part.Position
-		if canHit(enemy, row) and (position - from).Magnitude <= row.range then
+		if canHit(enemy, stats) and (position - from).Magnitude <= stats.range then
 			local along = (position - origin):Dot(direction)
-			if along > 0 then
-				local gap = (origin + direction * along - position).Magnitude
+			if along > 0 and (origin + direction * along - position).Magnitude <= assist then
+				table.insert(hits, { enemy = enemy, along = along })
+			end
+		end
+	end
+	table.sort(hits, function(a, b)
+		return a.along < b.along
+	end)
+	local result = {}
+	for i = 1, math.min(count, #hits) do
+		table.insert(result, hits[i].enemy)
+	end
+	return result
+end
+
+type Outcome = { hit: boolean, killed: boolean }
+
+-- One enemy taking a round: damage, then what the round does on impact.
+local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Enemy, live, outcome: Outcome)
+	if not enemy.alive then
+		return
+	end
+	outcome.hit = true
+	local damage = stats.damage * (if Enemies.isMarked(enemy) then stats.markedDamageMult else 1)
+	local distance, position, flying = enemy.distance, enemy.part.Position, enemy.def.flying
+
+	if stats.markPercent > 0 then
+		Enemies.mark(enemy, stats.markPercent, Config.Tuning.MarkDuration)
+	end
+	Enemies.knockback(enemy, stats.knockback)
+	local killed = Enemies.damage(enemy, damage, stats.piercesArmor)
+	credit(player, killed)
+	outcome.killed = outcome.killed or killed
+
+	if stats.splashRadius > 0 then
+		for _, other in live do
+			if other ~= enemy and canHit(other, stats) and (other.part.Position - position).Magnitude <= stats.splashRadius then
+				local splashKill = Enemies.damage(other, damage, stats.piercesArmor)
+				credit(player, splashKill)
+				outcome.killed = outcome.killed or splashKill
+			end
+		end
+	end
+	if not flying then
+		Hazards.burn(distance, stats.splashRadius, stats.burnDps, stats.burnSeconds, stats.piercesArmor, player)
+	end
+end
+
+-- Ricochet: hop from `from` to the nearest enemy not hit yet, `bounces` times.
+local function ricochet(player: Player, stats: HeroStats.Stats, from: Enemies.Enemy, live, hit: { [any]: boolean }, color: Color3, outcome: Outcome)
+	local lastPosition = from.part.Position
+	for _ = 1, stats.bounces do
+		local best, bestGap = nil, Config.Tuning.RicochetReach
+		for _, enemy in live do
+			if not hit[enemy] and canHit(enemy, stats) then
+				local gap = (enemy.part.Position - lastPosition).Magnitude
 				if gap <= bestGap then
 					best, bestGap = enemy, gap
 				end
 			end
 		end
-	end
-	return best
-end
-
--- Extra targets: a splash around the primary if the weapon has one, otherwise
--- a line through the enemies right behind it (Railgun "pierces a lane").
-local function extraTargets(primary: Enemies.Enemy, row, live): { Enemies.Enemy }
-	local extra = {}
-	local wanted = math.floor(row.targets) - 1
-	if wanted <= 0 then
-		return extra
-	end
-	local candidates = {}
-	for _, enemy in live do
-		if enemy ~= primary and canHit(enemy, row) then
-			if row.splashRadius > 0 then
-				if (enemy.part.Position - primary.part.Position).Magnitude <= row.splashRadius then
-					table.insert(candidates, enemy)
-				end
-			else
-				local gap = primary.distance - enemy.distance
-				if gap >= 0 and gap <= Config.Tuning.LinePierceReach then
-					table.insert(candidates, enemy)
-				end
-			end
+		if not best then
+			return
 		end
+		hit[best] = true
+		Effects.tracer(lastPosition, best.part.Position, color)
+		lastPosition = best.part.Position
+		impact(player, stats, best, live, outcome)
 	end
-	table.sort(candidates, function(a, b)
-		return math.abs(a.distance - primary.distance) < math.abs(b.distance - primary.distance)
-	end)
-	for i = 1, math.min(wanted, #candidates) do
-		table.insert(extra, candidates[i])
-	end
-	return extra
 end
 
-local function fire(player: Player, rayOrigin: unknown, rayDirection: unknown)
-	local state = ReplicatedStorage:GetAttribute("State")
-	if state == "GameOver" or state == "Victory" then
+local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown)
+	if gameOver() then
 		return
 	end
-	local key, tier, tool = equipped(player)
+	local s = stateOf(player)
+	local stats = s.stats
 	local body = root(player)
-	if not key or tier <= 0 or not body then
+	local character = player.Character
+	local tool = character and character:FindFirstChildOfClass("Tool")
+	if not stats or not body or not tool or not tool:GetAttribute("HeroWeapon") then
 		return
 	end
 	local origin, direction = validRay(player, body, rayOrigin, rayDirection)
@@ -304,94 +420,134 @@ local function fire(player: Player, rayOrigin: unknown, rayDirection: unknown)
 		return
 	end
 
-	local s = stateOf(player)
-	local row = Config.Weapons[key].tiers[tier]
-	local now = os.clock()
-	local rate = row.rate * (if now < s.overdriveUntil then Config.Tuning.OverdriveFireRateX else 1)
-	if now - s.lastShot < SHOT_GAP_SLACK / rate then
-		return -- faster than the weapon can fire
+	finishReloadIfDue(player, s)
+	if s.reloadUntil > 0 then
+		return
 	end
-	s.lastShot = now
-
-	local handle = tool and tool:FindFirstChild("Handle")
-	local muzzle = if handle and handle:IsA("BasePart") then handle.Position else body.Position
-	local live = Enemies.getLive()
-	local primary = alongRay(origin, direction, body.Position, row, live)
-	local color = WEAPON_COLORS[key] or Color3.new(1, 1, 1)
-
-	if not primary then
-		-- A miss: draw it out to the weapon's range along the aim.
-		Effects.tracer(muzzle, origin + direction * ((muzzle - origin).Magnitude + row.range), color)
+	if s.ammo <= 0 then
+		startReload(player, s)
 		return
 	end
 
-	Effects.tracer(muzzle, primary.part.Position, color)
-	local anyKill = false
-	for _, enemy in { primary, table.unpack(extraTargets(primary, row, live)) } do
-		local killed = Enemies.damage(enemy, row.damage, row.piercesArmor)
-		credit(player, killed)
-		anyKill = anyKill or killed
+	-- Fire rate: dual guns alternate; Overdrive and Spin-Up speed it up.
+	local now = os.clock()
+	local sinceLast = now - s.lastShot
+	s.spinTime = if sinceLast <= SPIN_KEEP then s.spinTime + sinceLast else 0
+	local spin = 1 + (stats.spinUp - 1) * math.min(1, s.spinTime / Config.Tuning.SpinUpTime)
+	local overdrive = now < s.overdriveUntil
+	local rate = stats.rate * stats.guns * spin * (if overdrive then Config.Tuning.OverdriveFireRateX else 1)
+	if sinceLast < SHOT_GAP_SLACK / rate then
+		return
 	end
-	fireEvent:FireClient(player, anyKill) -- hit marker
+	s.lastShot = now
+
+	-- Recoil settles over time, then this pull adds to it.
+	s.bloom = math.max(0, s.bloom - stats.recoilRecovery * (now - s.bloomAt))
+	s.bloomAt = now
+	local cone = stats.spread + s.bloom
+
+	local handle = tool:FindFirstChild("Handle")
+	local muzzle = if handle and handle:IsA("BasePart") then handle.Position else body.Position
+	if stats.guns > 1 then
+		s.gunSide = -s.gunSide
+		muzzle += body.CFrame.RightVector * DUAL_GUN_OFFSET * s.gunSide
+	end
+	local color = HERO_COLORS[s.hero or ""] or Color3.new(1, 1, 1)
+	local live = Enemies.getLive()
+	local outcome: Outcome = { hit = false, killed = false }
+
+	for _ = 1, stats.shotsPerTrigger do
+		for _ = 1, stats.pellets do
+			local pelletDirection = scatter(direction, cone)
+			local struck = alongRay(origin, pelletDirection, body.Position, stats, live, stats.pierce)
+			if #struck == 0 then
+				Effects.tracer(muzzle, origin + pelletDirection * ((muzzle - origin).Magnitude + stats.range), color)
+			else
+				Effects.tracer(muzzle, struck[#struck].part.Position, color)
+				local hit: { [any]: boolean } = {}
+				for _, enemy in struck do
+					hit[enemy] = true
+					impact(player, stats, enemy, live, outcome)
+				end
+				if stats.bounces > 0 then
+					ricochet(player, stats, struck[#struck], live, hit, color, outcome)
+				end
+			end
+		end
+	end
+
+	local speed = body.AssemblyLinearVelocity.Magnitude
+	local recoil = stats.recoilPerShot * stats.shotsPerTrigger * (if speed < Config.Tuning.StillSpeed then stats.stillRecoilMult else 1)
+	s.bloom = math.min(stats.recoilMax, s.bloom + recoil)
+
+	if not (stats.beltFed and overdrive) then
+		s.ammo = math.max(0, s.ammo - stats.shotsPerTrigger)
+	end
+	publish(player)
+	if s.ammo <= 0 then
+		startReload(player, s)
+	end
+	if outcome.hit then
+		fireEvent:FireClient(player, outcome.killed)
+	end
 end
 
------------------------------------------------------------------- abilities
+------------------------------------------------------------------ ability
 
 local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown): (boolean, string)
-	local key, tier = equipped(player)
+	local s = stateOf(player)
+	local stats = s.stats
 	local body = root(player)
-	if not key or not body then
-		return false, "Equip a weapon first"
+	if not s.hero or not stats or not body then
+		return false, "Pick a hero first"
 	end
 	local origin, direction = validRay(player, body, rayOrigin, rayDirection)
 	if not origin or not direction then
 		return false, "Aim somewhere"
 	end
-	if tier < 2 then
-		return false, `{Config.Weapons[key].ability} unlocks at tier 2`
-	end
-
-	local s = stateOf(player)
+	local hero = Config.Heroes[s.hero]
 	local now = os.clock()
-	local readyAt = s.abilityReadyAt[key] or 0
-	if now < readyAt then
-		return false, `{Config.Weapons[key].ability} ready in {math.ceil(readyAt - now)}s`
+	if now < s.abilityReadyAt then
+		return false, `{hero.ability} ready in {math.ceil(s.abilityReadyAt - now)}s`
 	end
-	local row = Config.Weapons[key].tiers[tier]
-	local color = WEAPON_COLORS[key] or Color3.new(1, 1, 1)
+	local color = HERO_COLORS[s.hero] or Color3.new(1, 1, 1)
 
-	if key == "PRECISION" then
-		local target = alongRay(origin, direction, body.Position, row, Enemies.getLive())
+	if hero.ability == "Mark" then
+		-- Marks ignore armour and air limits: it's a paint, not a bullet.
+		local markStats = table.clone(stats)
+		markStats.hitsAir = true
+		markStats.piercesArmor = true
+		local target = alongRay(origin, direction, body.Position, markStats, Enemies.getLive(), 1)[1]
 		if not target then
 			return false, "No enemy there to mark"
 		end
-		Enemies.mark(target, row.abilityPower, row.abilitySeconds)
+		Enemies.mark(target, stats.abilityPower, stats.abilitySeconds)
 		Effects.part(Vector3.one * 3, CFrame.new(target.part.Position + Vector3.new(0, 3, 0)), color, 0.6, Enum.PartType.Ball)
-	elseif key == "SUSTAINED" then
-		s.overdriveUntil = now + row.abilitySeconds
-		s.overdrivePercent = row.abilityPower
-		s.overdriveRadius = row.abilityRadius
-		player:SetAttribute("OverdriveUntil", workspace:GetServerTimeNow() + row.abilitySeconds)
-		Effects.disc(body.Position - Vector3.new(0, 2.8, 0), row.abilityRadius, color, 0.5, 0.7)
-	elseif key == "ORDNANCE" then
-		-- Where the aim ray meets the ground.
+	elseif hero.ability == "Overdrive" then
+		s.overdriveUntil = now + stats.abilitySeconds
+		s.overdrivePercent = stats.abilityPower
+		s.overdriveRadius = stats.abilityRadius
+		player:SetAttribute("OverdriveUntil", workspace:GetServerTimeNow() + stats.abilitySeconds)
+		Effects.disc(body.Position - Vector3.new(0, 2.8, 0), stats.abilityRadius, color, 0.5, 0.7)
+	elseif hero.ability == "Airburst" then
 		if direction.Y >= -0.01 then
 			return false, "Aim at the ground"
 		end
 		local aim = origin + direction * ((Track.GroundTop - origin.Y) / direction.Y)
-		if (aim - body.Position).Magnitude > row.range then
+		if (aim - body.Position).Magnitude > Config.Tuning.AirburstReach then
 			return false, "Too far away"
 		end
 		local centre = Enemies.trackDistanceNear(aim)
 		local ground = Enemies.pointAt(centre) + Vector3.new(0, 0.5, 0)
 		local delay = Config.Tuning.AirburstDelay
-		Effects.disc(ground, row.abilityRadius, color, delay, 0.75) -- the warning
+		local power, stun, radius = stats.abilityPower, stats.abilitySeconds, stats.abilityRadius
+		Effects.disc(ground, radius, color, delay, 0.75) -- the warning
 		task.delay(delay, function()
-			Effects.part(Vector3.one * row.abilityRadius * 2, CFrame.new(ground), color, 0.25, Enum.PartType.Ball).Transparency = 0.4
+			Effects.part(Vector3.one * radius * 2, CFrame.new(ground), color, 0.25, Enum.PartType.Ball).Transparency = 0.4
 			for _, enemy in Enemies.getLive() do
-				if math.abs(enemy.distance - centre) <= row.abilityRadius then
-					Enemies.stun(enemy, row.abilitySeconds)
-					credit(player, Enemies.damage(enemy, row.abilityPower, true))
+				if math.abs(enemy.distance - centre) <= radius then
+					Enemies.stun(enemy, stun)
+					credit(player, Enemies.damage(enemy, power, true))
 				end
 			end
 		end)
@@ -399,9 +555,9 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 		return false, "No ability"
 	end
 
-	s.abilityReadyAt[key] = now + row.cooldown
-	player:SetAttribute(`AbilityReadyAt_{key}`, workspace:GetServerTimeNow() + row.cooldown)
-	return true, `{Config.Weapons[key].ability}!`
+	s.abilityReadyAt = now + stats.abilityCooldown
+	publish(player)
+	return true, `{hero.ability}!`
 end
 
 ------------------------------------------------------------------ public
@@ -426,15 +582,19 @@ function Hero.init(remotes: Folder, hooks: { onPop: ((Player) -> ())? }?)
 
 	local request = Instance.new("RemoteFunction")
 	request.Name = "HeroRequest"
-	-- ("buy", weaponKey) or ("ability", rayOrigin, rayDirection)
+	-- ("pick", heroKey), ("upgrade", pathIndex), ("reload"), ("ability", rayOrigin, rayDirection)
 	request.OnServerInvoke = function(player: Player, action: unknown, a: unknown, b: unknown)
 		local ok, success, message = pcall(function()
-			local state = ReplicatedStorage:GetAttribute("State")
-			if state == "GameOver" or state == "Victory" then
+			if gameOver() then
 				return false, "The game is over"
 			end
-			if action == "buy" then
-				return buy(player, a)
+			if action == "pick" then
+				return pick(player, a)
+			elseif action == "upgrade" then
+				return upgrade(player, a)
+			elseif action == "reload" then
+				startReload(player, stateOf(player))
+				return true, "Reloading"
 			elseif action == "ability" then
 				return ability(player, a, b)
 			end
@@ -448,11 +608,12 @@ function Hero.init(remotes: Folder, hooks: { onPop: ((Player) -> ())? }?)
 	end
 	request.Parent = remotes
 
-	-- Client -> server: (rayOrigin, rayDirection). Server -> shooter: (killed) per hit.
+	-- Client -> server: (rayOrigin, rayDirection) per trigger pull.
+	-- Server -> shooter: (killed) when a pull hit something.
 	fireEvent = Instance.new("RemoteEvent")
 	fireEvent.Name = "HeroFire"
 	fireEvent.OnServerEvent:Connect(function(player, origin, direction)
-		local ok, err = pcall(fire, player, origin, direction)
+		local ok, err = pcall(trigger, player, origin, direction)
 		if not ok then
 			warn(`[Hero] fire from {player.Name} failed: {err}`)
 		end
@@ -462,13 +623,10 @@ function Hero.init(remotes: Folder, hooks: { onPop: ((Player) -> ())? }?)
 	local function setUp(player: Player)
 		stateOf(player)
 		publish(player)
-		-- The Backpack is rebuilt on every respawn; put the weapons back.
+		-- The Backpack is rebuilt on every respawn; put the gun back.
 		player.CharacterAdded:Connect(function()
-			task.defer(syncTools, player)
+			task.defer(syncTool, player)
 		end)
-		if player.Character then
-			task.defer(syncTools, player)
-		end
 	end
 	Players.PlayerAdded:Connect(setUp)
 	for _, player in Players:GetPlayers() do
