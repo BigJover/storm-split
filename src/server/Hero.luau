@@ -21,6 +21,12 @@
 	The hero's ability (Mark, Overdrive, Airburst) is available from the start
 	on its cooldown.
 
+	HERO LEVELS: each level multiplies all of the hero's damage — rounds,
+	splash, fire, Airburst — by 1 + HeroDamagePerLevel, compounding, so the
+	hero keeps pace with enemy HP. For now every hero levels up together every
+	RoundsPerLevel rounds cleared (Hero.setLevel from Main); levels are kept per
+	player so hero XP from their own pops can drive them later (HEROES.md).
+
 	SERVER AUTHORITATIVE: a client only says "I pulled the trigger along this
 	camera ray", "reload", or "use my ability along this ray". Hits are echoed
 	back to the shooter for the hit marker.
@@ -54,6 +60,7 @@ type State = {
 	bloom: number, -- extra spread in degrees from recoil
 	bloomAt: number,
 	gunSide: number, -- alternates 1 / -1 for dual guns (visual)
+	level: number,
 	abilityReadyAt: number,
 	overdriveUntil: number,
 	overdrivePercent: number,
@@ -73,6 +80,7 @@ local RAY_ORIGIN_SLACK = 20 -- studs beyond max camera zoom a ray may start from
 local SPIN_KEEP = 0.35 -- seconds between pulls that still count as holding the trigger
 
 local states: { [Player]: State } = {}
+local teamLevel = 1 -- what new players start at
 local onPop: ((Player) -> ())? = nil
 local fireEvent: RemoteEvent
 
@@ -93,6 +101,7 @@ local function stateOf(player: Player): State
 			bloom = 0,
 			bloomAt = 0,
 			gunSide = 1,
+			level = teamLevel,
 			abilityReadyAt = 0,
 			overdriveUntil = 0,
 			overdrivePercent = 0,
@@ -101,6 +110,11 @@ local function stateOf(player: Player): State
 		states[player] = state
 	end
 	return state
+end
+
+-- Damage multiplier from this player's hero level.
+local function levelScale(s: State): number
+	return (1 + Config.Tuning.HeroDamagePerLevel) ^ math.max(0, s.level - 1)
 end
 
 local function credit(player: Player, killed: boolean)
@@ -147,6 +161,7 @@ local function publish(player: Player)
 	local s = stateOf(player)
 	local clockToServer = workspace:GetServerTimeNow() - os.clock()
 	player:SetAttribute("Hero", s.hero or "")
+	player:SetAttribute("HeroLevel", s.level)
 	for i = 1, 3 do
 		player:SetAttribute(`HeroPath{i}`, s.tiers[i])
 	end
@@ -355,7 +370,8 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 		return
 	end
 	outcome.hit = true
-	local damage = stats.damage * (if Enemies.isMarked(enemy) then stats.markedDamageMult else 1)
+	local scale = levelScale(stateOf(player))
+	local damage = stats.damage * scale * (if Enemies.isMarked(enemy) then stats.markedDamageMult else 1)
 	local distance, position, flying = enemy.distance, enemy.part.Position, enemy.def.flying
 
 	if stats.markPercent > 0 then
@@ -364,7 +380,7 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 	-- Ignite before the damage, so if this round pops the enemy, its split
 	-- children inherit the fire.
 	if stats.igniteShare > 0 then
-		Hazards.ignite(enemy, stats.shotDamage * stats.igniteShare, stats.igniteSeconds, stats.piercesArmor, player)
+		Hazards.ignite(enemy, stats.shotDamage * scale * stats.igniteShare, stats.igniteSeconds, stats.piercesArmor, player)
 	end
 	Enemies.knockback(enemy, stats.knockback)
 	local killed = Enemies.damage(enemy, damage, stats.piercesArmor)
@@ -381,7 +397,7 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 		end
 	end
 	if not flying then
-		Hazards.burn(distance, stats.splashRadius, stats.burnDps, stats.burnSeconds, stats.piercesArmor, player)
+		Hazards.burn(distance, stats.splashRadius, stats.burnDps * scale, stats.burnSeconds, stats.piercesArmor, player)
 	end
 end
 
@@ -545,7 +561,7 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 		local centre = Enemies.trackDistanceNear(aim)
 		local ground = Enemies.pointAt(centre) + Vector3.new(0, 0.5, 0)
 		local delay = Config.Tuning.AirburstDelay
-		local power, stun, radius = stats.abilityPower, stats.abilitySeconds, stats.abilityRadius
+		local power, stun, radius = stats.abilityPower * levelScale(s), stats.abilitySeconds, stats.abilityRadius
 		Effects.disc(ground, radius, color, delay, 0.75) -- the warning
 		task.delay(delay, function()
 			Effects.part(Vector3.one * radius * 2, CFrame.new(ground), color, 0.25, Enum.PartType.Ball).Transparency = 0.4
@@ -566,6 +582,16 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 end
 
 ------------------------------------------------------------------ public
+
+-- Level every hero (and anyone who joins later) to `level`; each player's
+-- level shows on their HeroLevel attribute.
+function Hero.setLevel(level: number)
+	teamLevel = level
+	for player, s in states do
+		s.level = level
+		publish(player)
+	end
+end
 
 -- Overdrive: the strongest active boost from a player standing near this point.
 function Hero.towerRateBoost(position: Vector3): number

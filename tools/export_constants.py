@@ -373,7 +373,8 @@ def validate(data):
         "BombletDamage", "BombletSpread", "ExtraEnemiesPerPlayer", "ExtraHPPerPlayer",
         "StartingCashPerExtraPlayer", "WeaponAimAssist", "OverdriveFireRateX", "AirburstDelay",
         "AirburstReach", "SpinUpTime", "RicochetReach", "StillSpeed", "HeroUpgradeBaseCost",
-        "HeroUpgradeCostGrowth", "ChestLifetime", "ChestSpread",
+        "HeroUpgradeCostGrowth", "ChestLifetime", "ChestSpread", "RoundsPerLevel",
+        "HeroDamagePerLevel", "TowerDamagePerLevel",
     ]
     for key in needed:
         if key not in data["Tuning"]:
@@ -409,9 +410,15 @@ def validate(data):
             dps = h["damage"] * t["damageMult"] * h["rate"] * t["rateMult"] * t["spinUp"] * guns * pellets * shots
             best = max(best, dps * max(1, t["pierce"] or 1))
         return best
-    best_weapon = max(hero_peak_dps(h) for h in data["Heroes"].values())
-    notes.append(f"max hero DPS {best_weapon:.0f} vs max tower DPS {best_tower:.0f}")
-    if best_tower and best_weapon > best_tower:
+    # Compare at the last round's level: both sides scale with hero levels.
+    tuning = data["Tuning"]
+    last_level = 1 + (len(data["Rounds"]) // max(1, int(tuning.get("RoundsPerLevel", 5))))
+    hero_scale = (1 + tuning.get("HeroDamagePerLevel", 0)) ** (last_level - 1)
+    tower_scale = (1 + tuning.get("TowerDamagePerLevel", 0)) ** (last_level - 1)
+    best_weapon = max(hero_peak_dps(h) for h in data["Heroes"].values()) * hero_scale
+    best_tower_leveled = best_tower * tower_scale
+    notes.append(f"at level {last_level}: max hero DPS {best_weapon:.0f} vs max tower DPS {best_tower_leveled:.0f}")
+    if best_tower_leveled and best_weapon > best_tower_leveled:
         problems.append("A maxed hero out-damages the best maxed tower. The game becomes a horde shooter.")
 
     return problems, notes

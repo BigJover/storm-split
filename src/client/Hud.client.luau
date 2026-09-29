@@ -141,9 +141,52 @@ local function refresh()
 	elseif state == "Building" then
 		label.Text = `Build (B), pick a difficulty, then Start  ·  Cash {cash}  ·  Lives {lives}`
 	else
-		label.Text = `Round {round}  ·  {difficultyName}  ·  Cash {cash}  ·  Lives {lives}  ·  Enemies {alive}`
+		label.Text = `Round {round}  ·  {difficultyName}  ·  Lv {math.floor(attr("Level", 1))}  ·  Cash {cash}  ·  Lives {lives}  ·  Enemies {alive}`
 	end
 end
+
+-- Level-up banner (every RoundsPerLevel rounds cleared).
+local banner = Instance.new("TextLabel")
+banner.Name = "LevelUp"
+banner.AnchorPoint = Vector2.new(0.5, 0.5)
+banner.Position = UDim2.fromScale(0.5, 0.3)
+banner.Size = UDim2.fromOffset(0, 56)
+banner.AutomaticSize = Enum.AutomaticSize.X
+banner.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
+banner.BackgroundTransparency = 0.15
+banner.TextColor3 = Color3.fromRGB(250, 205, 80)
+banner.Font = Enum.Font.GothamBlack
+banner.TextSize = 26
+banner.Visible = false
+banner.Parent = gui
+do
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 10)
+	c.Parent = banner
+	local pad = Instance.new("UIPadding")
+	pad.PaddingLeft = UDim.new(0, 24)
+	pad.PaddingRight = UDim.new(0, 24)
+	pad.Parent = banner
+end
+
+local shownLevel = ReplicatedStorage:GetAttribute("Level") or 1
+ReplicatedStorage:GetAttributeChangedSignal("Level"):Connect(function()
+	local level = ReplicatedStorage:GetAttribute("Level") or 1
+	if level <= shownLevel then
+		shownLevel = level
+		return
+	end
+	shownLevel = level
+	local hero = math.floor(Config.Tuning.HeroDamagePerLevel * 100 + 0.5)
+	local tower = math.floor(Config.Tuning.TowerDamagePerLevel * 100 + 0.5)
+	banner.Text = `LEVEL {level}  ·  Heroes +{hero}% damage  ·  Towers +{tower}%`
+	banner.Visible = true
+	task.delay(4, function()
+		if shownLevel == level then
+			banner.Visible = false
+		end
+	end)
+end)
 
 -- Studio-only test button. The remote only exists when the server runs in
 -- Studio, so this never appears in a published game.
@@ -175,7 +218,7 @@ if studioCash and studioCash:IsA("RemoteEvent") then
 	end)
 end
 
-for _, name in { "State", "Round", "Lives", "Alive", "Cash", "Difficulty" } do
+for _, name in { "State", "Round", "Lives", "Alive", "Cash", "Difficulty", "Level" } do
 	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refresh)
 end
 refresh()

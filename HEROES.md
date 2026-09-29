@@ -15,6 +15,19 @@ on the spreadsheet plus any new fire mechanic.
 - Every hero has its **ability from the start** (F), on a cooldown. One path per hero
   makes it stronger or faster.
 
+## Hero levels
+
+Enemy HP grows ~5% a round (x7 by round 40) while hero upgrades don't add much damage, so
+heroes **level up**: each level multiplies all hero damage — rounds, splash, fire, Airburst —
+by +25%, compounding. Towers ride the same levels at +10% a level (they already scale with
+upgrades), so both stay useful. A banner announces each level. Numbers: `Tuning` → HERO
+LEVELS.
+
+- **Now:** everyone levels up together every 5 rounds cleared.
+- **Planned (user-approved 2026-09-29):** hero **XP from your own pops** drives your level
+  instead, BTD6-style, with perks at some levels. Levels are already stored per player
+  (`HeroLevel`), so only the trigger changes.
+
 ## Gun mechanics
 
 | Mechanic | What it means |

@@ -28,6 +28,10 @@
 	  aura*              buffs OTHER towers inside this tower's range
 	                     (strongest aura wins; auras don't stack)
 
+	LEVELS: every tower's damage (shots, bomblets, freeze, burns) is multiplied
+	by the team's level (Towers.setLevel, raised by Main every RoundsPerLevel
+	rounds cleared), so towers keep pace with enemy HP alongside upgrades.
+
 	CHILLER: every frame it chills enemies in range (slow, brittle, armour
 	strip — Enemies.chill); Freeze towers also pulse a hard stop every
 	`freezeEvery` seconds. QUARTERMASTER: never shoots; pays round income
@@ -121,6 +125,7 @@ local towers: { Tower } = {}
 local towerFolder: Instance
 local nextId = 0
 local onPop: ((Player) -> ())? = nil
+local levelScale = 1 -- damage multiplier from the team's level
 local extraRatePercent: ((Tower) -> number)? = nil -- boosts from outside towers (hero Overdrive)
 
 local function credit(owner: Player?, killed: boolean)
@@ -458,12 +463,12 @@ local function addBurn(tower: Tower, primary: Enemies.Enemy)
 	if primary.def.flying then
 		return
 	end
-	Hazards.burn(primary.distance, stats.splashRadius, stats.burnDps, stats.burnSeconds, piercing(tower), tower.owner)
+	Hazards.burn(primary.distance, stats.splashRadius, stats.burnDps * levelScale, stats.burnSeconds, piercing(tower), tower.owner)
 end
 
 local function fire(tower: Tower, live): boolean
 	local stats = tower.stats
-	local damage = stats.damage * (1 + tower.buff.damagePercent / 100)
+	local damage = stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
 	local fired = false
 
 	for _ = 1, stats.shots do
@@ -527,7 +532,7 @@ local function stepChill(tower: Tower, dt: number, live)
 			if pulse then
 				Enemies.stun(enemy, stats.freezeSeconds, stats.freezeHoldsBosses)
 				if stats.freezeDamage > 0 then
-					credit(tower.owner, Enemies.damage(enemy, stats.freezeDamage, piercing(tower)))
+					credit(tower.owner, Enemies.damage(enemy, stats.freezeDamage * levelScale, piercing(tower)))
 				end
 			end
 		end
@@ -592,6 +597,11 @@ function Towers.remove(tower: Tower)
 	table.remove(towers, index)
 	tower.model:Destroy()
 	refreshAuras()
+end
+
+-- Level 1 is the start; each level multiplies tower damage by 1 + TowerDamagePerLevel.
+function Towers.setLevel(level: number)
+	levelScale = (1 + Config.Tuning.TowerDamagePerLevel) ^ math.max(0, level - 1)
 end
 
 -- Quartermaster income for the round that just ended. Interest is on the

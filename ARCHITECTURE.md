@@ -162,6 +162,7 @@ second test client.
 | **3c** — difficulty and scale | Difficulty levels (Easy = baseline, Normal, Hard, Chaos) and per-player scaling from the spreadsheet; tower owners; pops leaderboard; owner-only selling. See `VISION.md` | **Written, statically checked**, not yet playtested |
 | **4** — the hero | Free hero pick (Pistol, Assault Rifle, Shotgun); three named upgrade paths each about handling, not damage (`HEROES.md`); magazines, recoil, fire modes, pellets/slugs, pierce, ricochet, special rounds; first-person gunplay; abilities Mark / Overdrive / Airburst | **Done, confirmed in Studio** (redesign 2026-09-29) |
 | **5** — roster and rounds | Chiller (chill: slow, brittle, armour strip; freeze pulses) and Quartermaster (round income, interest, airdrop chests, Logistics discounts/refunds) per `UPGRADES.md` | **Written 2026-09-29, statically checked**, not yet playtested |
+| **5b** — levels | Heroes +25% and towers +10% damage per level, a level every 5 rounds cleared (`HEROES.md`). Next step, planned: hero XP from pops drives each player's level | **Written 2026-09-29, statically checked**, not yet playtested |
 | **6** — co-op, mastery, publish | `Progression` (DataStoreService), mastery effects, lobby, 10-player servers | |
 | **7** — battle modes | Team battle (sides, tower HP, per-team cash) and battle royale (most pops) — `VISION.md` | |
 

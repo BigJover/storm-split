@@ -47,6 +47,9 @@ return table.freeze({
 		AirburstDelay = 1,
 		ChestLifetime = 20,
 		ChestSpread = 25,
+		RoundsPerLevel = 5,
+		HeroDamagePerLevel = 0.25,
+		TowerDamagePerLevel = 0.1,
 	},
 	Towers = {
 		SCOUT = {

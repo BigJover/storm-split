@@ -125,7 +125,15 @@ Camera rule (user, 2026-09-29, for PvP fairness): first person for everyone, alw
 person only while placing a tower, then snap back (gun re-equipped). Menus free the mouse via
 Modal buttons instead of switching view. The V toggle was removed.
 
-Next: playtest phase 5 and the camera rule.
+Phase 5 playtested 2026-09-29 (Chiller slow buffed; Dragon's Breath ignite reworked twice:
+now a fire that passes to split children and ticks 35% of the shot). Studio-only K = +1000
+cash for testing.
+
+Levels (written 2026-09-29, not yet playtested): heroes +25% and towers +10% damage per
+level, one level per 5 rounds cleared, banner + "Lv" on the HUD. Planned: hero XP from pops
+drives levels instead (HEROES.md) — levels are already per player.
+
+Next: playtest levels.
 
 ## Open issues
 

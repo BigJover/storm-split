@@ -170,6 +170,15 @@ while not startPressed do
 end
 ReplicatedStorage:SetAttribute("State", "Playing")
 
+-- Levels: heroes and towers get stronger every RoundsPerLevel rounds cleared.
+local function levelAfter(roundsCleared: number): number
+	return 1 + math.floor(roundsCleared / Config.Tuning.RoundsPerLevel)
+end
+local level = levelAfter(START_ROUND - 1)
+ReplicatedStorage:SetAttribute("Level", level)
+Hero.setLevel(level)
+Towers.setLevel(level)
+
 local chosen = difficulty()
 Economy.setLives(chosen.startingLives)
 Enemies.setSpeedMult(chosen.speedMult)
@@ -199,6 +208,15 @@ local won = Waves.run({
 	onRoundEnd = function(index)
 		Economy.earn((Config.Tuning.RoundBonusBase + Config.Tuning.RoundBonusPerRound * index) * chosen.cashMult)
 		Economy.earn(Towers.roundIncome(Economy.cash()) * chosen.cashMult) -- Quartermasters
+
+		local newLevel = levelAfter(index)
+		if newLevel > level then
+			level = newLevel
+			Hero.setLevel(level)
+			Towers.setLevel(level)
+			ReplicatedStorage:SetAttribute("Level", level) -- the HUD announces it
+			print(`[StormSplit] Level {level}: heroes and towers hit harder`)
+		end
 
 		local average = if frames > 0 then costSum / frames else 0
 		print(string.format(
