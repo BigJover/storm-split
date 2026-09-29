@@ -361,6 +361,11 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 	if stats.markPercent > 0 then
 		Enemies.mark(enemy, stats.markPercent, Config.Tuning.MarkDuration)
 	end
+	-- Ignite before the damage, so if this round pops the enemy, its split
+	-- children inherit the fire.
+	if stats.igniteShare > 0 then
+		Hazards.ignite(enemy, stats.shotDamage * stats.igniteShare, stats.igniteSeconds, stats.piercesArmor, player)
+	end
 	Enemies.knockback(enemy, stats.knockback)
 	local killed = Enemies.damage(enemy, damage, stats.piercesArmor)
 	credit(player, killed)
@@ -377,9 +382,6 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 	end
 	if not flying then
 		Hazards.burn(distance, stats.splashRadius, stats.burnDps, stats.burnSeconds, stats.piercesArmor, player)
-	end
-	if stats.igniteShare > 0 and enemy.alive then
-		Hazards.ignite(enemy, stats.shotDamage * stats.igniteShare, stats.igniteSeconds, stats.piercesArmor, player)
 	end
 end
 

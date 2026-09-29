@@ -51,9 +51,21 @@ export type Enemy = {
 	brittlePercent: number,
 	armorStripped: boolean,
 	icy: boolean, -- what the part currently shows
+	fire: Fire?, -- burning: one damage tick when it runs out (Server/Hazards)
 }
 
-type Pending = { key: string, distance: number, hpMult: number, markPercent: number?, markedUntil: number? }
+-- A burn on an enemy. `owner` is whoever lit it (for pops); Enemies only
+-- carries it, Hazards acts on it.
+export type Fire = { tick: number, untilTime: number, piercesArmor: boolean, owner: any }
+
+type Pending = {
+	key: string,
+	distance: number,
+	hpMult: number,
+	markPercent: number?,
+	markedUntil: number?,
+	fire: Fire?,
+}
 
 -- Visuals only. Balance never lives here.
 local LOOK = {
@@ -174,7 +186,12 @@ local function spawnNow(item: Pending)
 		brittlePercent = 0,
 		armorStripped = false,
 		icy = false,
+		fire = item.fire, -- a split child keeps burning with its parent's fire
 	}
+
+	if enemy.fire then
+		Enemies.showBurning(enemy, true)
+	end
 
 	live[enemy.id] = enemy
 	liveCount += 1
@@ -254,6 +271,7 @@ function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?): b
 				hpMult = enemy.hpMult,
 				markPercent = enemy.markPercent,
 				markedUntil = enemy.markedUntil,
+				fire = enemy.fire,
 			})
 		end
 	end
@@ -317,11 +335,36 @@ function Enemies.mark(enemy: Enemy, percent: number, seconds: number)
 	enemy.markedUntil = now + seconds
 end
 
--- Visual only: flames on a burning enemy (Hazards decides who burns).
-function Enemies.showBurning(enemy: Enemy, on: boolean)
+-- Set an enemy on fire, or refresh its fire (biggest tick and latest end
+-- win, so several pellets still mean one tick). Split children inherit it.
+function Enemies.ignite(enemy: Enemy, fire: Fire)
 	if not enemy.alive then
 		return
 	end
+	local current = enemy.fire
+	if current then
+		enemy.fire = {
+			tick = math.max(current.tick, fire.tick),
+			untilTime = math.max(current.untilTime, fire.untilTime),
+			piercesArmor = current.piercesArmor or fire.piercesArmor,
+			owner = fire.owner,
+		}
+	else
+		enemy.fire = fire
+		Enemies.showBurning(enemy, true)
+	end
+end
+
+-- The fire has run its course; returns it so Hazards can deal the tick.
+function Enemies.extinguish(enemy: Enemy): Fire?
+	local fire = enemy.fire
+	enemy.fire = nil
+	Enemies.showBurning(enemy, false)
+	return fire
+end
+
+-- Visual only: flames on a burning enemy.
+function Enemies.showBurning(enemy: Enemy, on: boolean)
 	local fire = enemy.part:FindFirstChildOfClass("Fire")
 	if on and not fire then
 		local flames = Instance.new("Fire")

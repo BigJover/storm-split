@@ -5,11 +5,10 @@
 	Breath): a patch covers a stretch of track around a distance and damages
 	ground enemies standing in it every frame until it expires.
 
-	Ignited enemies (Dragon's Breath): the enemy itself burns for a moment, then
-	takes one tick of fire damage — a share of the shot that lit it. Early on
-	that's enough to take it down a level; later, against tougher layers, it's
-	a small extra. Its split children don't inherit the fire; the patch on the
-	ground is what catches them.
+	Ignited enemies (Dragon's Breath): the enemy burns for a moment, then takes
+	one tick of fire damage — a share of the shot that lit it. The fire lives on
+	the enemy (Enemies.ignite) and passes to its split children, so a Brute
+	shot down to Husks sees them burn out together when the tick lands.
 
 	Kills are credited to whoever lit the fire.
 ]]
@@ -31,16 +30,7 @@ type Burn = {
 -- Visuals only.
 local BURN_COLOR = Color3.fromRGB(255, 110, 40)
 
-type Ignited = {
-	enemy: Enemies.Enemy,
-	tick: number, -- damage dealt once, when the burn ends
-	untilTime: number,
-	piercesArmor: boolean,
-	owner: Player?,
-}
-
 local burns: { Burn } = {}
-local ignited: { Ignited } = {}
 local onPop: ((Player) -> ())? = nil
 
 function Hazards.init(hooks: { onPop: ((Player) -> ())? }?)
@@ -70,35 +60,21 @@ local function credit(owner: Player?, killed: boolean)
 	end
 end
 
--- Set one enemy on fire: after `seconds` it takes `tick` damage once.
--- Re-igniting a burning enemy refreshes the fire (biggest tick wins) rather
--- than stacking it, so nine pellets on one enemy still mean one tick.
+-- Set one enemy on fire: after `seconds` it (or its split children) takes
+-- `tick` damage once.
 function Hazards.ignite(enemy: Enemies.Enemy, tick: number, seconds: number, piercesArmor: boolean, owner: Player?)
-	if not enemy.alive or seconds <= 0 or not Enemies.canHurt(enemy, piercesArmor) then
+	if seconds <= 0 or tick <= 0 then
 		return
 	end
-	local untilTime = os.clock() + seconds
-	for _, entry in ignited do
-		if entry.enemy == enemy then
-			entry.tick = math.max(entry.tick, tick)
-			entry.untilTime = math.max(entry.untilTime, untilTime)
-			return
-		end
-	end
-	table.insert(ignited, { enemy = enemy, tick = tick, untilTime = untilTime, piercesArmor = piercesArmor, owner = owner })
-	Enemies.showBurning(enemy, true)
+	Enemies.ignite(enemy, { tick = tick, untilTime = os.clock() + seconds, piercesArmor = piercesArmor, owner = owner })
 end
 
-local function stepIgnited(now: number)
-	for i = #ignited, 1, -1 do
-		local entry = ignited[i]
-		local enemy = entry.enemy
-		if not enemy.alive then
-			table.remove(ignited, i)
-		elseif now >= entry.untilTime then
-			table.remove(ignited, i)
-			Enemies.showBurning(enemy, false)
-			credit(entry.owner, Enemies.damage(enemy, entry.tick, entry.piercesArmor))
+local function stepFires(now: number, live)
+	for _, enemy in live do
+		local fire = enemy.fire
+		if fire and now >= fire.untilTime then
+			Enemies.extinguish(enemy)
+			credit(fire.owner, Enemies.damage(enemy, fire.tick, fire.piercesArmor))
 		end
 	end
 end
@@ -106,8 +82,8 @@ end
 -- Called every Heartbeat by Main.
 function Hazards.step(dt: number)
 	local now = os.clock()
-	stepIgnited(now)
 	local live = Enemies.getLive()
+	stepFires(now, live)
 	for i = #burns, 1, -1 do
 		local burn = burns[i]
 		if now >= burn.untilTime then

@@ -69,8 +69,8 @@ Tips: small splash.
 
 Slug Rounds: one accurate shot through 2 enemies. Rifled Barrel: slugs reach air. Sabot:
 pierces armour. Railslug: through 6. Dragon's Breath: pellets set enemies on fire — after a moment they take one burn tick worth
-a quarter of the shot, enough to drop an early enemy a level — and leave burning ground for
-the enemies behind. Street Sweeper:
+35% of the shot. The fire passes to split children, so a Brute shot down to Husks sees the
+Husks burn out on the tick in early rounds. Also leaves burning ground behind. Street Sweeper:
 full-auto drum. Double Barrel: two blasts per trigger. Kickback: knocks enemies back. Frag
 Shells: explode on impact.
 

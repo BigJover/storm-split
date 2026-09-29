@@ -4723,7 +4723,7 @@ return table.freeze({
 							spinUp = 1,
 							scope = false,
 							igniteSeconds = 1.5,
-							igniteShare = 0.25,
+							igniteShare = 0.35,
 						},
 						{
 							name = "Auto-Loader",
@@ -4756,7 +4756,7 @@ return table.freeze({
 							spinUp = 1,
 							scope = false,
 							igniteSeconds = 1.5,
-							igniteShare = 0.25,
+							igniteShare = 0.35,
 						},
 						{
 							name = "Street Sweeper",
@@ -4789,7 +4789,7 @@ return table.freeze({
 							spinUp = 1,
 							scope = false,
 							igniteSeconds = 1.5,
-							igniteShare = 0.25,
+							igniteShare = 0.35,
 						},
 					},
 				},
