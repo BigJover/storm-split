@@ -94,6 +94,7 @@ heroButton.Font = Enum.Font.GothamBold
 heroButton.TextSize = 20
 heroButton.TextColor3 = TEXT
 heroButton.Text = "Choose hero  (H)"
+heroButton.Modal = true -- build phase: free mouse in first person to click it
 heroButton.Visible = false
 heroButton.Parent = gui
 corner(heroButton, 8)
@@ -186,6 +187,9 @@ closeButton.Font = Enum.Font.GothamBold
 closeButton.TextSize = 16
 closeButton.TextColor3 = TEXT
 closeButton.Text = "X"
+-- Modal: while the panel is showing, the mouse is free in first person so its
+-- buttons can be clicked.
+closeButton.Modal = true
 closeButton.Parent = header
 corner(closeButton, 6)
 
@@ -225,6 +229,7 @@ local placingKey: string? = nil
 local ghost: Model? = nil
 local ghostSpot: Vector3? = nil
 local ghostFits = false
+local holstered: Tool? = nil -- the gun put away while placing
 local managed: BasePart? = nil -- body of the tower being managed
 local managedPrompt: ProximityPrompt? = nil
 local managedConnections: { RBXScriptConnection } = {}
@@ -637,6 +642,13 @@ local function setMode(newMode: Mode)
 	if newMode ~= "placing" then
 		destroyGhost()
 		placingKey = nil
+		-- Back from placing: gun back in hand.
+		local tool = holstered
+		holstered = nil
+		local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		if tool and humanoid and tool.Parent == player:FindFirstChildOfClass("Backpack") then
+			humanoid:EquipTool(tool)
+		end
 	end
 	if newMode ~= "manage" then
 		for _, connection in managedConnections do
@@ -646,8 +658,9 @@ local function setMode(newMode: Mode)
 		managed, managedPrompt = nil, nil
 	end
 	mode = newMode
-	-- Hero.client switches to third person (free mouse) while a panel is open.
+	-- Hero.client: first person always, third person only while placing.
 	player:SetAttribute("PanelOpen", newMode ~= "closed")
+	player:SetAttribute("Placing", newMode == "placing")
 	say("")
 	render()
 end
@@ -671,9 +684,12 @@ local function send(action: string, a: any, b: any, remote: RemoteFunction?): bo
 end
 
 local function startPlacing(key: string)
-	-- Put the weapon away so the placing click doesn't also shoot.
-	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	-- Put the gun away so the placing click doesn't also shoot; setMode hands
+	-- it back when placing ends.
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
+		holstered = character:FindFirstChildOfClass("Tool")
 		humanoid:UnequipTools()
 	end
 	setMode("placing")

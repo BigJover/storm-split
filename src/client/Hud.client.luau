@@ -52,6 +52,9 @@ startButton.Font = Enum.Font.GothamBold
 startButton.TextSize = 20
 startButton.Text = "Start round 1"
 startButton.Visible = false
+-- Modal: during the build phase the mouse is free in first person, so Start and
+-- the difficulty buttons can be clicked. Gone once the game starts.
+startButton.Modal = true
 startButton.Parent = gui
 
 local startCorner = Instance.new("UICorner")

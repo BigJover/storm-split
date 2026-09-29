@@ -121,7 +121,11 @@ lingering with Permafrost) and Freeze pulses hard stops; Quartermaster pays roun
 / raises refunds for towers in range (Logistics). Also fixed: burning patches dealt no damage
 since the hero redesign (Hazards.step was never called).
 
-Next: playtest phase 5.
+Camera rule (user, 2026-09-29, for PvP fairness): first person for everyone, always; third
+person only while placing a tower, then snap back (gun re-equipped). Menus free the mouse via
+Modal buttons instead of switching view. The V toggle was removed.
+
+Next: playtest phase 5 and the camera rule.
 
 ## Open issues
 

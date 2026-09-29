@@ -57,10 +57,10 @@ Press **Play**. You should see:
   on the track, overlapping or too far), click to place, **Q** to cancel
 - Walk up to a built tower and press **E** to upgrade or sell it
 - **Choose hero (H)** (under Start): pick a hero for free, switch until Start. **Upgrades (U)**
-  (bottom right): your hero's upgrade paths. Equip with **1**
-  and you drop into **first person**: click to shoot, **R** reload, **F** ability, right-click
-  zooms if you have a scope. Any panel, or unequipping, returns to third person. **V** turns
-  first person off/on.
+  (bottom right): your hero's upgrade paths. Equip with **1**: click to shoot, **R** reload,
+  **F** ability, right-click zooms if you have a scope.
+- **Camera:** always first person, so PvP is even. Placing a tower pulls back to third person
+  until you place or cancel. Open menus free the mouse without leaving first person.
 - Press **Start** and enemies spawn; kills and cleared rounds add cash
 - One line per cleared round in **Output** (**Window → Output**):
   `Round 3 cleared | lives 40 | cash 212 | peak enemies 14 | script cost avg … ms`

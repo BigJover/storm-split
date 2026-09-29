@@ -7,9 +7,11 @@
 	R reloads; an empty magazine reloads by itself (the server starts it).
 	Right-click zooms if the gun has a scope. F uses the hero's ability.
 
-	CAMERA: holding the gun puts you in first person with a crosshair. Unarmed,
-	or with any panel open (Build, Hero, a tower), you're in third person with
-	a free mouse. V (or the Aim button) turns first person off and on.
+	CAMERA: everyone is in first person all the time, so nobody gets a
+	third-person view advantage in PvP (VISION.md). The one exception is placing
+	a tower: the camera pulls back to third person so the ghost lands where you
+	mean, then snaps back when you place or cancel. Open panels free the mouse
+	(Shop.client makes them Modal) without leaving first person.
 
 	The crosshair opens up with the same recoil the server applies, so what you
 	see is the cone your shots land in. Every shot is only a request carrying
@@ -209,19 +211,6 @@ end
 
 ------------------------------------------------------------------ camera
 
-local viewButton = Instance.new("TextButton")
-viewButton.Name = "View"
-viewButton.AnchorPoint = Vector2.new(1, 0)
-viewButton.Position = UDim2.new(1, -24, 0, 12)
-viewButton.Size = UDim2.fromOffset(110, 36)
-viewButton.BackgroundColor3 = WAITING
-viewButton.Font = Enum.Font.GothamBold
-viewButton.TextSize = 15
-viewButton.TextColor3 = TEXT
-viewButton.Parent = gui
-corner(viewButton, 8)
-
-local preferFirstPerson = true -- flipped by V; first person also needs the gun in hand
 local inFirstPerson: boolean? = nil
 local defaultMinZoom = player.CameraMinZoomDistance
 local defaultFov = camera.FieldOfView
@@ -233,14 +222,15 @@ local function setScope(on: boolean)
 end
 
 local function applyCamera()
-	local wantFirst = preferFirstPerson and equippedGun() ~= nil and player:GetAttribute("PanelOpen") ~= true
-	viewButton.Text = if preferFirstPerson then "Aim: 1st (V)" else "Aim: 3rd (V)"
+	local wantFirst = player:GetAttribute("Placing") ~= true
+	local panelOpen = player:GetAttribute("PanelOpen") == true
+	-- Crosshair only when the gun is up and the mouse is locked to it.
+	crosshair.Visible = wantFirst and not panelOpen and equippedGun() ~= nil
+	UserInputService.MouseIconEnabled = not wantFirst or panelOpen
 	if wantFirst == inFirstPerson then
 		return
 	end
 	inFirstPerson = wantFirst
-	crosshair.Visible = wantFirst
-	UserInputService.MouseIconEnabled = not wantFirst
 	if wantFirst then
 		player.CameraMode = Enum.CameraMode.LockFirstPerson
 	else
@@ -257,13 +247,11 @@ local function applyCamera()
 	end
 end
 
-local function toggleView()
-	preferFirstPerson = not preferFirstPerson
-	applyCamera()
-end
-
-viewButton.Activated:Connect(toggleView)
+player:GetAttributeChangedSignal("Placing"):Connect(applyCamera)
 player:GetAttributeChangedSignal("PanelOpen"):Connect(applyCamera)
+player.CharacterAdded:Connect(function()
+	task.defer(applyCamera)
+end)
 applyCamera()
 
 ------------------------------------------------------------------ trigger
@@ -395,8 +383,6 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	end
 	if input.KeyCode == Enum.KeyCode.F then
 		useAbility()
-	elseif input.KeyCode == Enum.KeyCode.V then
-		toggleView()
 	elseif input.KeyCode == Enum.KeyCode.R and equippedGun() then
 		request("reload")
 	elseif input.UserInputType == Enum.UserInputType.MouseButton2 and inFirstPerson then
