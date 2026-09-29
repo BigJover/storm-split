@@ -36,6 +36,9 @@ return table.freeze({
 		MarkDuration = 3,
 		BombletDamage = 0.5,
 		BombletSpread = 5,
+		ExtraEnemiesPerPlayer = 0.35,
+		ExtraHPPerPlayer = 0.08,
+		StartingCashPerExtraPlayer = 200,
 	},
 	Towers = {
 		SCOUT = {
@@ -504,7 +507,7 @@ return table.freeze({
 						},
 						{
 							name = "Through-and-Through",
-							cost = 1852,
+							cost = 1851,
 							damageMult = 2.1,
 							rateMult = 1,
 							targetsMult = 1.74,
@@ -640,7 +643,7 @@ return table.freeze({
 						},
 						{
 							name = "Bolt Racking",
-							cost = 1852,
+							cost = 1851,
 							damageMult = 1.82,
 							rateMult = 2.02,
 							targetsMult = 1,
@@ -776,7 +779,7 @@ return table.freeze({
 						},
 						{
 							name = "Anti-Materiel",
-							cost = 1852,
+							cost = 1851,
 							damageMult = 3.61,
 							rateMult = 1,
 							targetsMult = 1,
@@ -926,7 +929,7 @@ return table.freeze({
 						},
 						{
 							name = "Shrapnel",
-							cost = 2910,
+							cost = 2909,
 							damageMult = 2.1,
 							rateMult = 1,
 							targetsMult = 1.74,
@@ -1062,7 +1065,7 @@ return table.freeze({
 						},
 						{
 							name = "Rapid Loader",
-							cost = 2910,
+							cost = 2909,
 							damageMult = 2.1,
 							rateMult = 1,
 							targetsMult = 1.74,
@@ -1198,7 +1201,7 @@ return table.freeze({
 						},
 						{
 							name = "Armor Crack",
-							cost = 2910,
+							cost = 2909,
 							damageMult = 3.61,
 							rateMult = 1,
 							targetsMult = 1,
@@ -2963,5 +2966,49 @@ return table.freeze({
 			spawnGap = 0.64,
 			effectiveHp = 51673,
 		},
+	},
+	Difficulties = {
+		EASY = {
+			display = "Easy",
+			hpMult = 1,
+			countMult = 1,
+			speedMult = 1,
+			promoteChance = 0,
+			cashMult = 1,
+			startingLives = 40,
+		},
+		NORMAL = {
+			display = "Normal",
+			hpMult = 1.25,
+			countMult = 1.3,
+			speedMult = 1.05,
+			promoteChance = 0.1,
+			cashMult = 0.9,
+			startingLives = 30,
+		},
+		HARD = {
+			display = "Hard",
+			hpMult = 1.6,
+			countMult = 1.7,
+			speedMult = 1.1,
+			promoteChance = 0.2,
+			cashMult = 0.8,
+			startingLives = 20,
+		},
+		CHAOS = {
+			display = "Chaos",
+			hpMult = 2.2,
+			countMult = 2.5,
+			speedMult = 1.2,
+			promoteChance = 0.35,
+			cashMult = 0.75,
+			startingLives = 10,
+		},
+	},
+	DifficultyOrder = {
+		"EASY",
+		"NORMAL",
+		"HARD",
+		"CHAOS",
 	},
 })

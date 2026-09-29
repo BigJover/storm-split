@@ -278,6 +278,16 @@ def validate(data):
                     if step[field] < 1 or step[field] != int(step[field]):
                         problems.append(f"{key} {p['id']} tier {i}: {field} must be a whole number >= 1")
 
+    if "EASY" not in data["Difficulties"]:
+        problems.append("Difficulty sheet needs an 'Easy' row (the baseline)")
+    for key, d in data["Difficulties"].items():
+        for field in ("hpMult", "countMult", "speedMult", "cashMult", "startingLives"):
+            if not isinstance(d[field], (int, float)) or d[field] <= 0:
+                problems.append(f"Difficulty {d['display']}: {field} must be > 0")
+        if not isinstance(d["promoteChance"], (int, float)) or not 0 <= d["promoteChance"] <= 1:
+            problems.append(f"Difficulty {d['display']}: Promote chance must be between 0 and 1")
+    notes.append("difficulties: " + ", ".join(d["display"] for d in data["Difficulties"].values()))
+
     best_tower = 0.0
     for t in data["Towers"].values():
         base = t["baseDamage"] * t["baseRate"] * t["baseTargets"]
@@ -358,11 +368,33 @@ def emit(data, source_name):
 
 # ---------------------------------------------------------------- main
 
+def read_difficulty(ws):
+    levels, order = {}, []
+    r = 5
+    while v(ws, r, 1):
+        name = str(v(ws, r, 1)).strip()
+        key = name.upper()
+        levels[key] = {
+            "display": name,
+            "hpMult": num(v(ws, r, 2), 1),
+            "countMult": num(v(ws, r, 3), 1),
+            "speedMult": num(v(ws, r, 4), 1),
+            "promoteChance": num(v(ws, r, 5), 0),
+            "cashMult": num(v(ws, r, 6), 1),
+            "startingLives": num(v(ws, r, 7)),
+        }
+        order.append(key)
+        r += 1
+    return levels, order
+
+
 def recalculated(xlsx):
     """The workbook with every formula replaced by its value, computed by pycel.
 
-    Verified 2026-09-28 to match Numbers on all 1100 formulas, including how
-    exact .5 results round. Only used when the file has no stored results.
+    pycel follows Excel's arithmetic. Checked 2026-09-28 on a copy with stored
+    results removed: all 1100 formulas match the original Excel values; Numbers
+    differs on 54 cells (Sniper costs where 350 x 2.3^n sits on an exact .5,
+    which Numbers rounds up). The file's stored results are never used.
     """
     try:
         from pycel import ExcelCompiler
@@ -387,7 +419,7 @@ def recalculated(xlsx):
                         sys.exit(f"Formula error {value} in {ws.title}!{cell.coordinate}: {formula}")
                     cell.value = value
                     count += 1
-    print(f"Recalculated {count} formulas (no stored results in the file)")
+    print(f"Recalculated {count} formulas")
     return wb
 
 
@@ -396,14 +428,15 @@ def main():
     if not os.path.exists(xlsx):
         sys.exit(f"Spreadsheet not found: {xlsx}")
 
-    wb = load_workbook(xlsx, data_only=True)
-    if wb["Rounds"].cell(row=5, column=13).value is None:
-        # Saved by a script (openpyxl drops calculated results): work them out here.
-        wb = recalculated(xlsx)
+    # Always recalculate: results stored in the file depend on which app saved it
+    # (Numbers and Excel round a few exact-.5 costs differently), so one
+    # calculator gives the same Config every time.
+    wb = recalculated(xlsx)
 
     towers, tower_order = read_towers(wb["Towers"])
     attach_paths(wb["Tower Upgrades"], towers)
     weapons, weapon_order = read_weapons(wb["Weapons"])
+    difficulties, difficulty_order = read_difficulty(wb["Difficulty"])
 
     data = {
         "Tuning": read_tuning(wb["Tuning"]),
@@ -415,6 +448,8 @@ def main():
         "Enemies": read_enemies(wb["Enemies"]),
         "EnemyOrder": [k for k in TIER_KEYS],
         "Rounds": read_rounds(wb["Rounds"]),
+        "Difficulties": difficulties,
+        "DifficultyOrder": difficulty_order,
     }
 
     problems, notes = validate(data)

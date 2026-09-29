@@ -1,7 +1,8 @@
 --[[
-	Minimal HUD: round, cash, lives, enemies alive, and the Start button for the
-	build phase. Reads ReplicatedStorage attributes set by the server. Start is
-	only a request; the server decides whether the game begins.
+	Minimal HUD: round, difficulty, cash, lives, enemies alive; in the build
+	phase, the difficulty picker and the Start button. Reads ReplicatedStorage
+	attributes set by the server. Picking and starting are only requests; the
+	server decides.
 ]]
 
 local Players = game:GetService("Players")
@@ -10,6 +11,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local startGame = remotes:WaitForChild("StartGame") :: RemoteEvent
+local chooseDifficulty = remotes:WaitForChild("ChooseDifficulty") :: RemoteEvent
+
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "StormSplitHud"
@@ -19,7 +23,8 @@ local label = Instance.new("TextLabel")
 label.Name = "Status"
 label.AnchorPoint = Vector2.new(0.5, 0)
 label.Position = UDim2.new(0.5, 0, 0, 12)
-label.Size = UDim2.fromOffset(520, 40)
+label.Size = UDim2.fromOffset(0, 40)
+label.AutomaticSize = Enum.AutomaticSize.X -- fits whatever the status says
 label.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
 label.BackgroundTransparency = 0.25
 label.TextColor3 = Color3.fromRGB(240, 236, 250)
@@ -30,6 +35,11 @@ label.Parent = gui
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 8)
 corner.Parent = label
+
+local labelPadding = Instance.new("UIPadding")
+labelPadding.PaddingLeft = UDim.new(0, 16)
+labelPadding.PaddingRight = UDim.new(0, 16)
+labelPadding.Parent = label
 
 local startButton = Instance.new("TextButton")
 startButton.Name = "Start"
@@ -52,6 +62,45 @@ startButton.Activated:Connect(function()
 	startGame:FireServer()
 end)
 
+-- Difficulty picker, shown during the build phase under the Start button.
+local picker = Instance.new("Frame")
+picker.Name = "Difficulty"
+picker.AnchorPoint = Vector2.new(0.5, 0)
+picker.Position = UDim2.new(0.5, 0, 0, 112)
+picker.Size = UDim2.fromOffset(0, 36)
+picker.AutomaticSize = Enum.AutomaticSize.X
+picker.BackgroundTransparency = 1
+picker.Visible = false
+picker.Parent = gui
+
+do
+	local layout = Instance.new("UIListLayout")
+	layout.FillDirection = Enum.FillDirection.Horizontal
+	layout.Padding = UDim.new(0, 6)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Parent = picker
+end
+
+local difficultyButtons: { [string]: TextButton } = {}
+for order, key in Config.DifficultyOrder do
+	local button = Instance.new("TextButton")
+	button.Name = key
+	button.LayoutOrder = order
+	button.Size = UDim2.fromOffset(96, 36)
+	button.Font = Enum.Font.GothamBold
+	button.TextSize = 16
+	button.TextColor3 = Color3.fromRGB(240, 236, 250)
+	button.Text = Config.Difficulties[key].display
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 8)
+	c.Parent = button
+	button.Activated:Connect(function()
+		chooseDifficulty:FireServer(key)
+	end)
+	button.Parent = picker
+	difficultyButtons[key] = button
+end
+
 local function attr(name: string, default: any): any
 	local value = ReplicatedStorage:GetAttribute(name)
 	if value == nil then
@@ -68,6 +117,15 @@ local function refresh()
 	local cash = math.floor(attr("Cash", 0))
 
 	startButton.Visible = state == "Building"
+	picker.Visible = state == "Building"
+
+	local difficultyKey = attr("Difficulty", Config.DifficultyOrder[1])
+	local difficultyName = Config.Difficulties[difficultyKey] and Config.Difficulties[difficultyKey].display or ""
+	for key, button in difficultyButtons do
+		local selected = key == difficultyKey
+		button.BackgroundColor3 = if selected then Color3.fromRGB(200, 90, 110) else Color3.fromRGB(60, 56, 72)
+		button.BackgroundTransparency = if selected then 0 else 0.2
+	end
 
 	if state == "GameOver" then
 		label.Text = `GAME OVER  ·  reached round {round}`
@@ -78,13 +136,13 @@ local function refresh()
 	elseif state == "Waiting" then
 		label.Text = "Starting…"
 	elseif state == "Building" then
-		label.Text = `Walk to a gold pad to build  ·  Cash {cash}  ·  Lives {lives}`
+		label.Text = `Build (B), pick a difficulty, then Start  ·  Cash {cash}  ·  Lives {lives}`
 	else
-		label.Text = `Round {round}  ·  Cash {cash}  ·  Lives {lives}  ·  Enemies {alive}`
+		label.Text = `Round {round}  ·  {difficultyName}  ·  Cash {cash}  ·  Lives {lives}  ·  Enemies {alive}`
 	end
 end
 
-for _, name in { "State", "Round", "Lives", "Alive", "Cash" } do
+for _, name in { "State", "Round", "Lives", "Alive", "Cash", "Difficulty" } do
 	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refresh)
 end
 refresh()

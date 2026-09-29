@@ -60,6 +60,12 @@ end
 
 ------------------------------------------------------------------ lives
 
+-- Difficulty sets lives when the match starts.
+function Economy.setLives(amount: number)
+	lives = amount
+	ReplicatedStorage:SetAttribute("Lives", lives)
+end
+
 function Economy.lose(amount: number)
 	if lives <= 0 then
 		return

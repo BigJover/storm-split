@@ -108,6 +108,7 @@ local callbacks: {
 
 local cap = Config.Tuning.MaxConcurrentEnemies
 local baseSpeed = Track.BaseEnemySpeed * Config.Tuning.GlobalSpeedScalar
+local speedMult = 1 -- difficulty
 
 ------------------------------------------------------------------ internals
 
@@ -151,7 +152,7 @@ local function spawnNow(item: Pending)
 		maxHp = hp,
 		hpMult = item.hpMult,
 		distance = item.distance,
-		speed = baseSpeed * def.speedMult,
+		speed = baseSpeed * speedMult * def.speedMult,
 		height = height,
 		part = part,
 		alive = true,
@@ -183,6 +184,11 @@ function Enemies.init(mapPath: Path.Path, folder: Instance, hooks: { onLeak: ((E
 	path = mapPath
 	enemyFolder = folder
 	callbacks = hooks
+end
+
+-- Difficulty's enemy speed. Applies to enemies spawned from now on.
+function Enemies.setSpeedMult(mult: number)
+	speedMult = mult
 end
 
 -- Queue a fresh enemy at the start of the track.

@@ -62,6 +62,10 @@ Press **Play**. You should see:
 
 Leave `rojo serve` running. Edits to any `.luau` file sync into Studio instantly.
 
+**Testing with several players:** Studio → **Test** tab → **Clients and Servers** → set the
+number of players → **Start**. Studio opens one server window and one window per player.
+Each extra player adds enemies and starting cash (`VISION.md`).
+
 ## 4. Connect Claude to Studio (MCP)
 
 1. Update Studio to the latest version.
@@ -93,9 +97,10 @@ Then create an empty repo on GitHub and push to it. On another machine, clone it
    `~/Fortnite/Storm-Split-Balance.xlsx` (untick "Include a summary worksheet"). Cmd+S only
    saves a `.numbers` copy, which the exporter can't read.
 
-   If the file was changed by a script instead (no stored formula results), the exporter
-   recalculates every formula itself with pycel — no Numbers step needed. pycel matches
-   Numbers exactly, including rounding exact .5 results up.
+   The exporter always recalculates every formula itself (pycel, Excel's arithmetic), so
+   it doesn't matter which app last saved the file, and a file edited by a script needs no
+   Numbers step. Numbers would round a few exact-.5 Sniper costs up by 1; the export uses
+   Excel's result.
 2. `python3 tools/export_constants.py`
 3. `Config.luau` regenerates and Rojo syncs it. Stop and restart the playtest to pick it up.
 

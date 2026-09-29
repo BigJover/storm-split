@@ -9,6 +9,9 @@
 	Towers never touch cash (ARCHITECTURE.md §5.4). The shop pays first, then
 	calls place() / upgrade() / remove().
 
+	Every tower has an owner — the player who built it (VISION.md). Kills by
+	its shots, bomblets and burns are reported through the onPop hook.
+
 	ABILITIES (UPGRADES.md) come from the spreadsheet's ability columns, which
 	are cumulative per tier. Across a tower's paths, multipliers multiply,
 	amounts take the highest, and yes/no flags combine with OR.
@@ -70,6 +73,7 @@ export type Tower = {
 	id: number,
 	key: string,
 	def: any,
+	owner: Player?, -- who built it; nil if they've left
 	base: Vector3, -- on the build floor; what Placement checks against
 	position: Vector3,
 	muzzle: Vector3,
@@ -80,7 +84,14 @@ export type Tower = {
 	model: Model,
 }
 
-type Burn = { distance: number, reach: number, dps: number, untilTime: number, piercesArmor: boolean }
+type Burn = {
+	distance: number,
+	reach: number,
+	dps: number,
+	untilTime: number,
+	piercesArmor: boolean,
+	owner: Player?,
+}
 
 -- Visuals only.
 local TRACER_LIFETIME = 0.06
@@ -91,6 +102,13 @@ local towers: { Tower } = {}
 local burns: { Burn } = {}
 local towerFolder: Instance
 local nextId = 0
+local onPop: ((Player) -> ())? = nil
+
+local function credit(owner: Player?, killed: boolean)
+	if killed and owner and owner.Parent and onPop then
+		onPop(owner)
+	end
+end
 
 ------------------------------------------------------------------ stats
 
@@ -234,12 +252,13 @@ end
 
 ------------------------------------------------------------------ public
 
-function Towers.init(folder: Instance)
+function Towers.init(folder: Instance, hooks: { onPop: ((Player) -> ())? }?)
 	towerFolder = folder
+	onPop = hooks and hooks.onPop
 end
 
 -- Callers check Placement first (Shop does); this only builds.
-function Towers.place(key: string, position: Vector3): Tower?
+function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 	local def = Config.Towers[key]
 	if not def then
 		warn(`[Towers] Unknown tower '{key}'`)
@@ -256,6 +275,7 @@ function Towers.place(key: string, position: Vector3): Tower?
 		id = nextId,
 		key = key,
 		def = def,
+		owner = owner,
 		base = base,
 		position = base + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0),
 		muzzle = base + Vector3.new(0, TowerLook.BODY_HEIGHT - 0.5, 0),
@@ -366,7 +386,7 @@ local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number)
 	end
 	Enemies.stun(enemy, stats.stunSeconds, stats.stunsBosses)
 	Enemies.knockback(enemy, stats.knockback)
-	Enemies.damage(enemy, damage, pierce)
+	credit(tower.owner, Enemies.damage(enemy, damage, pierce))
 end
 
 -- Bomblets land along the track around `distance`, alternating behind and
@@ -404,6 +424,7 @@ local function addBurn(tower: Tower, primary: Enemies.Enemy)
 		dps = stats.burnDps,
 		untilTime = os.clock() + stats.burnSeconds,
 		piercesArmor = piercing(tower),
+		owner = tower.owner,
 	})
 	local ground = Enemies.pointAt(primary.distance)
 	effect(
@@ -456,7 +477,7 @@ local function stepBurns(dt: number, live)
 		end
 		for _, enemy in live do
 			if not enemy.def.flying and math.abs(enemy.distance - burn.distance) <= burn.reach then
-				Enemies.damage(enemy, burn.dps * dt, burn.piercesArmor)
+				credit(burn.owner, Enemies.damage(enemy, burn.dps * dt, burn.piercesArmor))
 			end
 		end
 	end

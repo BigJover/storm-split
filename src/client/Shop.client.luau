@@ -536,11 +536,22 @@ render = function()
 		end
 
 		local refund = math.floor((managed:GetAttribute("Spent") or 0) * Config.Tuning.SellRefund)
-		addRow(10, `<b>Sell</b>  for {refund}`, SELL_COLOR, true, function()
-			if send("sell", towerId) then
-				setMode("closed")
-			end
-		end)
+		local ownerId = managed:GetAttribute("OwnerId") or 0
+		local ownerName = managed:GetAttribute("OwnerName") or ""
+		-- Mirrors the server rule: only the builder sells, unless they've left.
+		local canSell = ownerId == 0 or ownerId == player.UserId or Players:GetPlayerByUserId(ownerId) == nil
+		if canSell then
+			addRow(10, `<b>Sell</b>  for {refund}`, SELL_COLOR, true, function()
+				if send("sell", towerId) then
+					setMode("closed")
+				end
+			end)
+		else
+			addRow(10, `<b>Sell</b>  ·  only {escape(ownerName)} can sell this`, LOCKED_COLOR, false)
+		end
+		if ownerName ~= "" then
+			addRow(11, `<font size="13">Built by {escape(ownerName)}</font>`, PANEL_COLOR, false)
+		end
 	end
 end
 

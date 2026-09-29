@@ -42,6 +42,7 @@ src/
 │   │                        burn, auras), targeting, firing
 │   ├── Waves.luau           Runs the 40-round table
 │   ├── Economy.luau         The team's shared cash and lives
+│   ├── Scoreboard.luau      Per-player pops on the Roblox leaderboard (leaderstats)
 │   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
 └── client/   → StarterPlayer.StarterPlayerScripts.Client
     ├── Hud.client.luau      Round / cash / lives / enemies label, Start button
@@ -79,6 +80,9 @@ This dissolves most of the problems the UEFN plan was built around:
 | A tower's tiers and stats | `Towers` | Call `upgrade()` after paying |
 | Cash and lives | `Economy` | Call `trySpend()` / `earn()` / `lose()` |
 | What a tower cost (for refunds) | `Shop` | — |
+| Who built a tower | `Towers` (`tower.owner`) | Shop reads it: only the builder sells |
+| Pops per player | `Scoreboard` | Towers report kills through the `onPop` hook |
+| Difficulty | `Main` (`Difficulty` attribute, locked at Start) | Waves reads it through `options.scale()` |
 | Current round | `Waves` | Read the `Round` attribute |
 | Saved progression *(phase 6)* | `Progression` | Snapshot at match start only |
 
@@ -146,9 +150,11 @@ second test client.
 | **2** — cash, placement, shop | `Economy` (replaces `Lives`), `Shop` (RemoteFunction + validation), free placement anywhere off the track with a ghost preview (pads dropped 2026-09-28 at the user's request), sell via tower prompts, build phase + Start button | **Done, confirmed in Studio.** Sells Scout, Sniper, Grenadier; Chiller and Quartermaster wait for phase 5. |
 | **3** — upgrade paths | Shop calls `Towers.upgrade()`; model swaps at tiers 3 and 5; range multipliers; tier names | **Done, confirmed in Studio** |
 | **3b** — tower abilities | Armored/Boss enemy flags, then the Scout, Sniper and Grenadier mechanics in `UPGRADES.md` (multi-shot, pierce, mark, stun, knockback, burn, cluster, auras) | **Written, statically checked**, not yet playtested |
+| **3c** — difficulty and scale | Difficulty levels (Easy = baseline, Normal, Hard, Chaos) and per-player scaling from the spreadsheet; tower owners; pops leaderboard; owner-only selling. See `VISION.md` | **Written, statically checked**, not yet playtested |
 | **4** — the hero: weapons and abilities | `Weapons` (Tools, server-validated hits), `Abilities`. The player character is the hero, with its own upgrade track separate from tower paths (user, 2026-09-28) | |
 | **5** — roster and rounds | Chiller and Quartermaster mechanics per `UPGRADES.md` (slow, freeze, damage amp, income, chests, discounts) | Numbers already in `Config` |
-| **6** — co-op, mastery, publish | `Progression` (DataStoreService), mastery effects, lobby | |
+| **6** — co-op, mastery, publish | `Progression` (DataStoreService), mastery effects, lobby, 10-player servers | |
+| **7** — battle modes | Team battle (sides, tower HP, per-team cash) and battle royale (most pops) — `VISION.md` | |
 
 ---
 

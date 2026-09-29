@@ -48,6 +48,8 @@ local function decorate(tower: Towers.Tower)
 	body:SetAttribute("TowerId", tower.id)
 	body:SetAttribute("Tower", tower.key)
 	body:SetAttribute("Spent", spent[tower] or 0)
+	body:SetAttribute("OwnerId", if tower.owner then tower.owner.UserId else 0)
+	body:SetAttribute("OwnerName", if tower.owner then tower.owner.DisplayName else "")
 	for pathIndex, tier in tower.pathTiers do
 		body:SetAttribute(`Path{pathIndex}`, tier)
 	end
@@ -104,7 +106,7 @@ local function build(player: Player, towerKey: unknown, position: unknown): (boo
 		return false, "Not enough cash"
 	end
 
-	local tower = Towers.place(towerKey, spot)
+	local tower = Towers.place(towerKey, spot, player)
 	if not tower then
 		Economy.earn(def.baseCost) -- give it back; place() refused
 		return false, "Couldn't build there"
@@ -167,6 +169,11 @@ local function sell(player: Player, towerId: unknown): (boolean, string)
 	end
 	if not isWithin(player, tower.base, ShopRules.PromptDistance) then
 		return false, "Too far from the tower"
+	end
+	-- Anyone can upgrade (it helps the team); only the builder can sell, unless
+	-- they've left. Stops one player cashing out a teammate's tower.
+	if tower.owner and tower.owner ~= player and tower.owner.Parent then
+		return false, `Only {tower.owner.DisplayName} can sell this`
 	end
 
 	local refund = math.floor((spent[tower] or 0) * Config.Tuning.SellRefund)

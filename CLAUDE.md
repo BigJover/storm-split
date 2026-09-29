@@ -16,6 +16,8 @@ design in the PDF still holds; its UEFN-specific sections don't. Old UEFN materi
 - `ARCHITECTURE.md` — code structure, ownership rules, phase plan. **Read before changing code.**
 - `UPGRADES.md` — the approved vision for every tower's paths, tier names and abilities.
   Build tower mechanics to match it.
+- `VISION.md` — scale and modes: ~10-player chaotic co-op, difficulty levels, and future
+  team-battle and battle-royale modes. Don't write code that blocks them.
 - `SETUP.md` — Mac setup: Studio, Rokit, Rojo, MCP
 - `src/` — Luau, synced into Studio by Rojo (`default.project.json`)
 - `tools/export_constants.py` — spreadsheet → `src/shared/Config.luau`
@@ -43,7 +45,8 @@ tools/check.sh                          # static type-check of src/ (luau-lsp vi
 On this Mac `/usr/bin/git` and `/usr/bin/python3` may fail on the Xcode licence; use
 `/Library/Developer/CommandLineTools/usr/bin/` instead. No Excel licence: the user edits the
 spreadsheet in Numbers and **Export To → Excel** (see SETUP.md). Claude can edit it with
-openpyxl directly — the exporter recalculates formulas itself (pycel), so no Numbers step.
+openpyxl directly — the exporter always recalculates formulas itself (pycel, Excel rules),
+so no Numbers step.
 Verify every spreadsheet change by diffing `Config.luau`.
 
 ## Status
@@ -76,9 +79,14 @@ upgrade), boss flag, and the Scout/Sniper/Grenadier abilities — multi-shot, li
 bonus vs armoured/bosses, mark, stun, knockback, burn patches, cluster bomblets, support
 auras. Numbers are seeds in the spreadsheet; expect a tuning pass.
 
-Next: playtest 3b, then phase 4 — the player character as the hero with its own upgrade
-track, weapons and abilities (separate from tower paths). Build each mechanic where it
-fits, keeping to the vision in `UPGRADES.md`.
+Phase 3b playtested 2026-09-28: cash flow good, "a little easy". The user set the scale
+vision (`VISION.md`), and phase 3c was written the same day, not yet playtested:
+difficulty levels on a new `Difficulty` sheet (Easy = the current baseline, Normal, Hard,
+Chaos — HP, density, speed, promotion to tougher tiers, cash, lives), per-player scaling
+(`Tuning`, CO-OP), tower owners, a Pops leaderboard, and owner-only selling.
+
+Next: playtest 3c (including Studio's multi-client test), then phase 4 — the player
+character as the hero with its own upgrade track, weapons and abilities.
 
 ## Open issues
 
