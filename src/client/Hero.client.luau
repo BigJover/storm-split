@@ -426,7 +426,7 @@ RunService.RenderStepped:Connect(function()
 		ammoLabel.Visible = false
 		if not hintShown and ReplicatedStorage:GetAttribute("State") ~= nil then
 			hintShown = true
-			showToast("Press H to pick your hero (free)")
+			showToast("Press H to choose your hero (free)")
 		end
 		return
 	end

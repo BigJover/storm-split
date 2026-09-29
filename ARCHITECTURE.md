@@ -51,7 +51,7 @@ src/
 │   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
 └── client/   → StarterPlayer.StarterPlayerScripts.Client
     ├── Hud.client.luau      Round / cash / lives / enemies label, Start button
-    ├── Shop.client.luau     Build/Hero buttons, placement ghost, tower and weapon panels
+    ├── Shop.client.luau     Build, hero select and hero upgrade screens; placement ghost; tower panel
     └── Hero.client.luau     Trigger (semi/auto/burst), reload, ammo, scope, camera, crosshair (requests only)
 ```
 

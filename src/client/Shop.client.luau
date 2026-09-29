@@ -10,10 +10,13 @@
 	with its three upgrade paths and Sell. Paths the crossover rule
 	(Shared/Upgrades) or the team's cash won't allow are greyed out.
 
-	Hero: the Hero button (or H). In the build phase, pick a hero for free
-	(switching refunds upgrades); after that, the hero's three upgrade paths
-	with their next tier, price and what it changes (HEROES.md, Server/Hero).
-	Same crossover rule as towers.
+	Hero select (Choose hero button by Start, or H): the heroes only — pick one
+	for free and the screen closes. Open until the game starts (switching
+	refunds upgrades), and any time for a player who hasn't picked yet.
+
+	Upgrades (U, once you have a hero): only your hero's three paths with the
+	next tier, price and what it changes (HEROES.md, Server/Hero). Same
+	crossover rule as towers.
 
 	Everything here is a request. The server re-checks the spot, the distance
 	and the cash with the same rules and has the final say. Prices shown come
@@ -80,18 +83,55 @@ buildButton.Parent = gui
 corner(buildButton, 8)
 
 local HERO_COLOR = Color3.fromRGB(200, 90, 110)
+-- Hero select sits with the build-phase HUD, under Start and the difficulty picker.
 local heroButton = Instance.new("TextButton")
-heroButton.Name = "Hero"
-heroButton.AnchorPoint = Vector2.new(1, 1)
-heroButton.Position = UDim2.new(1, -24, 1, -80)
-heroButton.Size = UDim2.fromOffset(140, 48)
+heroButton.Name = "ChooseHero"
+heroButton.AnchorPoint = Vector2.new(0.5, 0)
+heroButton.Position = UDim2.new(0.5, 0, 0, 156)
+heroButton.Size = UDim2.fromOffset(220, 44)
 heroButton.BackgroundColor3 = HERO_COLOR
 heroButton.Font = Enum.Font.GothamBold
 heroButton.TextSize = 20
 heroButton.TextColor3 = TEXT
-heroButton.Text = "Hero  (H)"
+heroButton.Text = "Choose hero  (H)"
+heroButton.Visible = false
 heroButton.Parent = gui
 corner(heroButton, 8)
+
+local upgradesButton = Instance.new("TextButton")
+upgradesButton.Name = "Upgrades"
+upgradesButton.AnchorPoint = Vector2.new(1, 1)
+upgradesButton.Position = UDim2.new(1, -24, 1, -80)
+upgradesButton.Size = UDim2.fromOffset(140, 48)
+upgradesButton.BackgroundColor3 = HERO_COLOR
+upgradesButton.Font = Enum.Font.GothamBold
+upgradesButton.TextSize = 20
+upgradesButton.TextColor3 = TEXT
+upgradesButton.Text = "Upgrades  (U)"
+upgradesButton.Visible = false
+upgradesButton.Parent = gui
+corner(upgradesButton, 8)
+
+-- One line per ability for the hero cards. Display text only.
+local ABILITY_BLURB = {
+	Mark = "paint a target so everything hits it harder",
+	Overdrive = "you and nearby towers fire faster",
+	Airburst = "call a strike down on the track",
+}
+local FIRE_MODE_NAME = { semi = "semi-auto", auto = "full-auto", burst = "burst" }
+
+local function myHero()
+	return Config.Heroes[player:GetAttribute("Hero") or ""]
+end
+
+-- Picking is open until the game starts, and always for someone without a hero.
+local function canPickHero(): boolean
+	local state = ReplicatedStorage:GetAttribute("State")
+	if state == "GameOver" or state == "Victory" then
+		return false
+	end
+	return state ~= "Playing" or myHero() == nil
+end
 
 local panel = Instance.new("Frame")
 panel.Name = "Panel"
@@ -178,7 +218,7 @@ message.Parent = panel
 
 ------------------------------------------------------------------ state
 
-type Mode = "closed" | "list" | "placing" | "manage" | "hero"
+type Mode = "closed" | "list" | "placing" | "manage" | "heroPick" | "heroUpgrade"
 
 local mode: Mode = "closed"
 local placingKey: string? = nil
@@ -606,7 +646,10 @@ render = function()
 
 	panel.Visible = mode ~= "closed"
 	buildButton.Text = if mode == "list" or mode == "placing" then "Close  (B)" else "Build  (B)"
-	heroButton.Text = if mode == "hero" then "Close  (H)" else "Hero  (H)"
+	heroButton.Visible = canPickHero()
+	heroButton.Text = if mode == "heroPick" then "Close  (H)" else "Choose hero  (H)"
+	upgradesButton.Visible = myHero() ~= nil
+	upgradesButton.Text = if mode == "heroUpgrade" then "Close  (U)" else "Upgrades  (U)"
 	local cash = math.floor(ReplicatedStorage:GetAttribute("Cash") or 0)
 
 	if mode == "list" then
@@ -630,52 +673,48 @@ render = function()
 		addRow(1, "<b>Cancel</b>  (Q)", LOCKED_COLOR, true, function()
 			setMode("list")
 		end)
-	elseif mode == "hero" then
-		local heroKey = player:GetAttribute("Hero") or ""
-		local hero = Config.Heroes[heroKey]
-		local building = ReplicatedStorage:GetAttribute("State") ~= "Playing"
-		local order = 0
-
-		if not hero or building then
-			title.Text = if hero then `Hero: {hero.display}  ·  switch free until Start` else "Pick your hero  ·  free"
-			for _, key in Config.HeroOrder do
-				local option = Config.Heroes[key]
-				order += 1
-				local chosen = key == heroKey
-				local text = `<b>{escape(option.display)}</b>  ·  {escape(option.role)}{if chosen then "  ·  picked" else ""}\n<font size="13">Ability: {escape(option.ability)}  ·  {escape(option.fireMode)}, {option.magazine} rounds</font>`
-				addRow(order, text, if chosen then HERO_COLOR else BUY_COLOR, not chosen, function()
-					send("pick", key, nil, heroRequest)
-				end)
-			end
+	elseif mode == "heroPick" then
+		local current = player:GetAttribute("Hero") or ""
+		title.Text = "Choose your hero"
+		for order, key in Config.HeroOrder do
+			local hero = Config.Heroes[key]
+			local chosen = key == current
+			local blurb = ABILITY_BLURB[hero.ability] or ""
+			local text = `<b>{escape(hero.display)}</b>  ·  {escape(hero.role)}{if chosen then "  ·  your hero" else ""}\n<font size="13">{escape(hero.ability)}: {escape(blurb)}  ·  {FIRE_MODE_NAME[hero.fireMode] or hero.fireMode} · {hero.magazine} rounds</font>`
+			addRow(order, text, if chosen then HERO_COLOR else BUY_COLOR, not chosen, function()
+				if send("pick", key, nil, heroRequest) then
+					setMode("closed")
+				end
+			end)
 		end
-
-		if hero then
-			if not building then
-				title.Text = `{hero.display}  ·  Cash {cash}`
-			end
+		addRow(20, `<font size="13">Free. Switch any time before Start.</font>`, PANEL_COLOR, false)
+	elseif mode == "heroUpgrade" then
+		local hero = myHero()
+		if not hero then
+			title.Text = "Choose a hero first (H)"
+		else
+			title.Text = `{hero.display} upgrades  ·  Cash {cash}`
 			local tiers = {}
 			for i = 1, 3 do
 				tiers[i] = player:GetAttribute(`HeroPath{i}`) or 0
 			end
 			for pathIndex, path in hero.paths do
-				order += 1
 				local current = tiers[pathIndex]
 				local name = escape(path.id)
 				local why = Upgrades.check(tiers, pathIndex, #path.tiers)
 				if why == "maxed" then
-					addRow(order, `<b>{name}</b>  ·  maxed  ·  {escape(path.tiers[#path.tiers].name)}`, LOCKED_COLOR, false)
+					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(path.tiers[#path.tiers].name)}`, LOCKED_COLOR, false)
 				elseif why ~= "ok" then
-					addRow(order, `<b>{name}</b>  ·  tier {current}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
+					addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
 				else
 					local step = path.tiers[current + 1]
 					local affordable = cash >= step.cost
 					local text = `<b>{escape(step.name)}</b>  ·  {step.cost}\n<font size="13">{name} {current + 1}  ·  {escape(describeHeroStep(path, current))}</font>`
-					addRow(order, text, if affordable then HERO_COLOR else LOCKED_COLOR, affordable, function()
+					addRow(pathIndex, text, if affordable then HERO_COLOR else LOCKED_COLOR, affordable, function()
 						send("upgrade", pathIndex, nil, heroRequest)
 					end)
 				end
 			end
-			addRow(20, `<font size="13">Equip with 1. Click to shoot, R to reload, F for {escape(hero.ability)}.</font>`, PANEL_COLOR, false)
 		end
 	elseif mode == "manage" and managed then
 		local key = managed:GetAttribute("Tower") :: string
@@ -747,12 +786,25 @@ local function toggleBuild()
 	setMode(if mode == "list" or mode == "placing" then "closed" else "list")
 end
 
-local function toggleHero()
-	setMode(if mode == "hero" then "closed" else "hero")
+local function toggleHeroPick()
+	if mode == "heroPick" then
+		setMode("closed")
+	elseif canPickHero() then
+		setMode("heroPick")
+	end
+end
+
+local function toggleHeroUpgrade()
+	if mode == "heroUpgrade" then
+		setMode("closed")
+	elseif myHero() then
+		setMode("heroUpgrade")
+	end
 end
 
 buildButton.Activated:Connect(toggleBuild)
-heroButton.Activated:Connect(toggleHero)
+heroButton.Activated:Connect(toggleHeroPick)
+upgradesButton.Activated:Connect(toggleHeroUpgrade)
 closeButton.Activated:Connect(function()
 	setMode("closed")
 end)
@@ -764,7 +816,9 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	if input.KeyCode == Enum.KeyCode.B then
 		toggleBuild()
 	elseif input.KeyCode == Enum.KeyCode.H then
-		toggleHero()
+		toggleHeroPick()
+	elseif input.KeyCode == Enum.KeyCode.U then
+		toggleHeroUpgrade()
 	elseif mode == "placing" then
 		if input.KeyCode == Enum.KeyCode.Q then
 			setMode("list")
@@ -800,20 +854,22 @@ ProximityPromptService.PromptHidden:Connect(function(prompt)
 end)
 
 ReplicatedStorage:GetAttributeChangedSignal("Cash"):Connect(function()
-	if mode == "list" or mode == "manage" or mode == "hero" then
+	if mode == "list" or mode == "manage" or mode == "heroUpgrade" then
 		render()
 	end
 end)
 
 ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(function()
-	if mode == "hero" then
-		render() -- picking closes when the game starts
+	if mode == "heroPick" and not canPickHero() then
+		setMode("closed") -- heroes lock when the game starts
+	else
+		render() -- button visibility
 	end
 end)
 
 player.AttributeChanged:Connect(function(name)
-	if mode == "hero" and (name == "Hero" or string.sub(name, 1, 8) == "HeroPath") then
-		render()
+	if name == "Hero" or string.sub(name, 1, 8) == "HeroPath" then
+		render() -- button visibility, and the open hero screen
 	end
 end)
 

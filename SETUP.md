@@ -56,7 +56,8 @@ Press **Play**. You should see:
 - **Build (B)** bottom-right: pick a tower, move the see-through ghost (green = fits, red =
   on the track, overlapping or too far), click to place, **Q** to cancel
 - Walk up to a built tower and press **E** to upgrade or sell it
-- **Hero (H)**: pick a hero for free (switch until Start), then buy upgrades. Equip with **1**
+- **Choose hero (H)** (under Start): pick a hero for free, switch until Start. **Upgrades (U)**
+  (bottom right): your hero's upgrade paths. Equip with **1**
   and you drop into **first person**: click to shoot, **R** reload, **F** ability, right-click
   zooms if you have a scope. Any panel, or unequipping, returns to third person. **V** turns
   first person off/on.
