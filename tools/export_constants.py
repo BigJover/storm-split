@@ -187,6 +187,7 @@ HERO_UPGRADE_COLUMNS = [
     ("beltFed", 30, "bool", False), ("stillRecoilMult", 31, "mult", 1), ("spinUp", 32, "mult", 1),
     ("scope", 33, "bool", False),
     ("igniteSeconds", 34, "num", 0),
+    ("igniteShare", 35, "num", 0),
 ]
 
 FIRE_MODES = ("semi", "auto", "burst")

@@ -378,8 +378,8 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 	if not flying then
 		Hazards.burn(distance, stats.splashRadius, stats.burnDps, stats.burnSeconds, stats.piercesArmor, player)
 	end
-	if stats.igniteSeconds > 0 and enemy.alive then
-		Hazards.ignite(enemy, stats.burnDps, stats.igniteSeconds, stats.piercesArmor, player)
+	if stats.igniteShare > 0 and enemy.alive then
+		Hazards.ignite(enemy, stats.shotDamage * stats.igniteShare, stats.igniteSeconds, stats.piercesArmor, player)
 	end
 end
 

@@ -20,6 +20,7 @@ local HeroStats = {}
 
 export type Stats = {
 	damage: number, -- per pellet
+	shotDamage: number, -- the whole shot (every pellet)
 	rate: number, -- trigger pulls per second (per gun)
 	fireMode: string, -- "semi" | "auto" | "burst"
 	burstCount: number,
@@ -48,6 +49,7 @@ export type Stats = {
 	spinUp: number,
 	scope: boolean,
 	igniteSeconds: number,
+	igniteShare: number,
 	abilityPower: number,
 	abilitySeconds: number,
 	abilityRadius: number,
@@ -78,6 +80,7 @@ local HIGHEST = {
 	"knockback",
 	"markPercent",
 	"igniteSeconds",
+	"igniteShare",
 }
 local FLAGS = { "piercesArmor", "hitsAir", "beltFed", "scope" }
 
@@ -132,6 +135,7 @@ function HeroStats.compute(heroKey: string, tiers: { number }): Stats?
 	pellets = math.max(1, math.floor(pellets))
 	return {
 		damage = hero.damage * hero.pellets / pellets * mult.damageMult,
+		shotDamage = hero.damage * hero.pellets * mult.damageMult,
 		rate = hero.rate * mult.rateMult,
 		fireMode = fireMode,
 		burstCount = math.max(1, math.floor(burstCount)),
@@ -160,6 +164,7 @@ function HeroStats.compute(heroKey: string, tiers: { number }): Stats?
 		spinUp = mult.spinUp,
 		scope = flag.scope == true,
 		igniteSeconds = high.igniteSeconds or 0,
+		igniteShare = high.igniteShare or 0,
 		abilityPower = hero.abilityPower,
 		abilitySeconds = hero.abilitySeconds,
 		abilityRadius = hero.abilityRadius,

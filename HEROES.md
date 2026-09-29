@@ -68,8 +68,9 @@ Tips: small splash.
 | **Breacher** | burst | Speed Shells | Extended Tube | *Double Barrel* | Kickback | *Frag Shells* |
 
 Slug Rounds: one accurate shot through 2 enemies. Rifled Barrel: slugs reach air. Sabot:
-pierces armour. Railslug: through 6. Dragon's Breath: pellets set enemies on fire — they burn down one layer (bosses just take
-the burn) — and leave burning ground for the enemies behind. Street Sweeper:
+pierces armour. Railslug: through 6. Dragon's Breath: pellets set enemies on fire — after a moment they take one burn tick worth
+a quarter of the shot, enough to drop an early enemy a level — and leave burning ground for
+the enemies behind. Street Sweeper:
 full-auto drum. Double Barrel: two blasts per trigger. Kickback: knocks enemies back. Frag
 Shells: explode on impact.
 
