@@ -34,6 +34,7 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local Payouts = require(Shared:WaitForChild("Payouts"))
 local Theme = require(Shared:WaitForChild("Theme"))
 
 local Progression = {}
@@ -278,21 +279,15 @@ export type MatchResult = {
 	cleared: boolean, -- every round of the track beaten
 	roundReached: number,
 	difficulty: string, -- key in Config.Difficulties
+	players: number, -- took part in the match and still here (Main counts them)
 }
 
--- Casual payouts (VISION.md): a clear pays the difficulty's reward to everyone
--- here; a multiplayer loss pays everyone MultiplayerLossPayout; a solo loss
--- pays nothing. Also records the round reached.
+-- Casual payouts (Shared/Payouts, VISION.md): a clear pays the difficulty's
+-- reward to everyone here; a multiplayer loss pays everyone
+-- MultiplayerLossPayout; a solo loss pays nothing. Also records the round
+-- reached.
 function Progression.endMatch(result: MatchResult)
-	local present = 0
-	for _ in profiles do
-		present += 1
-	end
-	local difficulty = Config.Difficulties[result.difficulty]
-	local payout = if result.cleared
-		then (if difficulty then difficulty.clearReward else 0)
-		elseif present >= 2 then Config.Tuning.MultiplayerLossPayout
-		else 0
+	local payout = Payouts.casualPayout(result.cleared, result.players, result.difficulty)
 	for player, profile in profiles do
 		profile.cores += payout
 		profile.highestRound = math.max(profile.highestRound, result.roundReached)

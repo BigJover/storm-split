@@ -35,6 +35,7 @@ src/
 │   ├── HeroStats.luau       A hero's gun right now (base + upgrades), shared by server and client HUD
 │   ├── TowerStats.luau      A tower's stats right now (base + upgrades); pure, used by Towers
 │   ├── Pricing.luau         Upgrade discounts and sell refunds; pure, used by Shop
+│   ├── Payouts.luau         Casual Amber payout at match end; pure, used by Progression
 │   ├── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
 │   └── Modes.luau           Game modes and tracks the home screen offers (availability, display)
 ├── server/   → ServerScriptService.Server

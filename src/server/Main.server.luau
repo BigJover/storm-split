@@ -345,10 +345,19 @@ local function playMatch()
 	local round = ReplicatedStorage:GetAttribute("Round") or 0
 	setState(if won then "Victory" else "GameOver")
 	print(if won then "[DinoHunters] VICTORY — all rounds cleared" else `[DinoHunters] GAME OVER on round {round}`)
+	-- Everyone who took part and is still here counts toward "multiplayer",
+	-- whether or not their save loaded (DECISIONS #19).
+	local players = 0
+	for userId in joinedThisMatch do
+		if Players:GetPlayerByUserId(userId) then
+			players += 1
+		end
+	end
 	Progression.endMatch({
 		cleared = won,
 		roundReached = if won then #Config.Rounds else round,
 		difficulty = ReplicatedStorage:GetAttribute("Difficulty"),
+		players = players,
 	})
 	ReplicatedStorage:SetAttribute("HomeAt", workspace:GetServerTimeNow() + Config.Tuning.ResultsTime)
 	task.wait(Config.Tuning.ResultsTime)
