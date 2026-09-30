@@ -994,13 +994,17 @@ render = function()
 		end
 
 		local refundRate = managed:GetAttribute("RefundRate") or Config.Tuning.SellRefund
-		local refund = Pricing.sellRefund((managed:GetAttribute("Spent") or 0) :: number, refundRate)
+		-- Mirrors Server/Shop: a damaged tower refunds less its repair price.
+		local spentHere = (managed:GetAttribute("Spent") or 0) :: number
+		local repairPrice = Combat.repairCost(spentHere, hp, maxHp, (managed:GetAttribute("Discount") or 0) :: number)
+		local refund = Pricing.sellRefund(spentHere, refundRate, repairPrice)
 		local ownerId = managed:GetAttribute("OwnerId") or 0
 		local ownerName = managed:GetAttribute("OwnerName") or ""
 		-- Mirrors the server rule: only the builder sells, unless they've left.
 		local canSell = ownerId == 0 or ownerId == player.UserId or Players:GetPlayerByUserId(ownerId) == nil
 		if canSell then
-			addRow(10, `<b>Sell</b>  for {refund}`, SELL_COLOR, true, function()
+			local damaged = if repairPrice > 0 then `  <font size="13">(-{repairPrice} for damage)</font>` else ""
+			addRow(10, `<b>Sell</b>  for {refund}{damaged}`, SELL_COLOR, true, function()
 				if send("sell", towerId) then
 					setMode("closed")
 				end

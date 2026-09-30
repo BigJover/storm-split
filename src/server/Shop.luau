@@ -13,8 +13,10 @@
 	SellRefund of all of it. Repairs (anyone's tower, like upgrades) cost
 	Repair cost x that amount x the share of HP missing (Shared/Combat, less a
 	Logistics discount); they pay first, then Towers.repair(), and are NOT
-	added to it, so a repair never raises the sell refund. A trampled tower
-	can't be upgraded until it's repaired.
+	added to it, so a repair never raises the sell refund. Selling a damaged
+	tower refunds less its repair price (DECISIONS #35), so selling and
+	rebuying never beats repairing. A trampled tower can't be upgraded until
+	it's repaired.
 
 	Each built tower gets a ProximityPrompt for managing it. The server never
 	trusts that the prompt was used and re-checks distance on every request.
@@ -218,7 +220,9 @@ local function sell(player: Player, towerId: unknown): (boolean, string)
 	end
 
 	-- Recycler / Command Center raise the refund for towers in their range.
-	local refund = Pricing.sellRefund(spent[tower] or 0, tower.buff.sellRefund)
+	-- A damaged tower refunds less its repair price (DECISIONS #35).
+	local repairPrice = Combat.repairCost(spent[tower] or 0, tower.hp, tower.maxHp, tower.buff.discountPercent)
+	local refund = Pricing.sellRefund(spent[tower] or 0, tower.buff.sellRefund, repairPrice)
 	spent[tower] = nil
 	Towers.remove(tower)
 	Economy.earn(refund)

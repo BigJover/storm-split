@@ -54,11 +54,23 @@ test("repair (Combat.repairCost) with the Logistics discounts, and against sell-
 	eq(Combat.repairCost(2000, 0, 100, BULK_ORDER.discountPercent), 570, "trampled, Bulk Order: 600 less 5%")
 	eq(Combat.repairCost(2000, 0, 100, COMMAND_CENTER.discountPercent), 480, "trampled, Command Center: 600 less 20%")
 	eq(Combat.repairCost(2000, 75, 100, 0), 150, "a quarter missing")
-	-- DECISIONS #10 says a full repair (30% of spent) beats selling and buying again.
-	-- At the normal 70% refund the two cost the same; with Recycler / Command Center
-	-- refunds, rebuilding is cheaper. Recorded here so a tuning change shows up.
-	local spent = 2000
-	local rebuildNet = spent - Pricing.sellRefund(spent, 0)
-	eq(Combat.repairCost(spent, 0, 100), rebuildNet, "normal refund: repair == rebuild")
-	ok(spent - Pricing.sellRefund(spent, RECYCLER.sellRefund) < Combat.repairCost(spent, 0, 100), "Recycler: rebuild cheaper")
+end)
+
+test("DECISIONS #35: selling a damaged tower refunds less its repair price, never below 0", function()
+	local Combat = require(src.shared.Combat)
+	for _, rate in { 0, RECYCLER.sellRefund, COMMAND_CENTER.sellRefund } do -- 0.7 (normal), 0.9, 1.0
+		for _, spent in { 200, 659, 2000, 64363 } do
+			local where = `rate {math.max(rate, Config.Tuning.SellRefund)}, spent {spent}`
+			eq(Pricing.sellRefund(spent, rate, 0), Pricing.sellRefund(spent, rate), `{where}: full HP unchanged`)
+			for _, hp in { 0, 50 } do -- trampled, half-damaged
+				local repair = Combat.repairCost(spent, hp, 100)
+				local refund = Pricing.sellRefund(spent, rate, repair)
+				ok(refund >= 0, `{where}, hp {hp}: never below 0`)
+				ok(spent - refund >= repair, `{where}, hp {hp}: sell-and-rebuy costs at least the repair`)
+			end
+		end
+	end
+	eq(Pricing.sellRefund(1000, 0, 300), 400, "trampled at 0.7: 700 - 300")
+	eq(Pricing.sellRefund(1000, COMMAND_CENTER.sellRefund, 300), 700, "trampled at 1.0: 1000 - 300")
+	eq(Pricing.sellRefund(100, 0, 500), 0, "never below 0")
 end)
