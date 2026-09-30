@@ -626,8 +626,9 @@ local function makeGhost(key: string)
 			part.CanQuery = false
 			part.CanTouch = false
 			part.CastShadow = false
-			if part.Name == "Body" then
-				part.Transparency = GHOST_TRANSPARENCY
+			-- The body is the invisible hitbox when the tower has a silhouette.
+			if part.Name ~= "Range" and part.Transparency < 1 then
+				part.Transparency = math.max(part.Transparency, GHOST_TRANSPARENCY)
 			end
 		end
 	end

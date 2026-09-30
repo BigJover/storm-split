@@ -2,12 +2,16 @@
 	What a tower looks like. Visuals only — shared so the server's real towers
 	and the client's placement ghost are built the same way.
 
-	The body is 3x3 studs; Track.TowerRadius must stay at least its
-	half-diagonal (2.12) or towers could visually overlap.
+	The body is an invisible 3x3x5 box: the part that anchors the model, carries
+	the prompt, label and attributes, and blocks players. What you see is a
+	block silhouette per tower in real materials (a hide, a tree stand, a
+	sandbagged mortar, a dart barrel, stacked crates), always inside the body's
+	box. Track.TowerRadius must stay at least the body's half-diagonal (2.12) or
+	towers could visually overlap.
 
 	Upgrades call refresh(): the range ring follows the tower's real range, a
 	label shows its path tiers, and the look changes at the model-swap tiers
-	(3 and 5): a crown at the first, a glowing body at the second.
+	(3 and 5): a crown on top at the first, a glowing silhouette at the second.
 ]]
 
 local TowerLook = {}
@@ -24,20 +28,147 @@ TowerLook.BODY_HEIGHT = 5
 local BODY_SIZE = Vector3.new(3, TowerLook.BODY_HEIGHT, 3)
 local RING_MAX_RANGE = 200 -- Sniper's "global" 999 range would draw a 2000-stud disc
 
+------------------------------------------------------------------ silhouettes
+
+-- Visuals only.
+local WOOD = Color3.fromRGB(110, 80, 50)
+local DARK_WOOD = Color3.fromRGB(70, 50, 32)
+local SAND = Color3.fromRGB(190, 170, 120)
+local STEEL = Color3.fromRGB(70, 72, 75)
+local LEAF = Color3.fromRGB(70, 110, 50)
+local DART_TIP = Color3.fromRGB(60, 210, 190)
+local CYLINDER = Enum.PartType.Cylinder
+
+-- One silhouette block: `at` is its centre, measured from the tower's base
+-- (the ground under the body's centre). Anchored and ghost-like to physics:
+-- the body does the colliding.
+type Block = { name: string, size: Vector3, at: CFrame, color: Color3, material: Enum.Material, shape: Enum.PartType? }
+
+local function block(name: string, size: Vector3, at: CFrame, color: Color3, material: Enum.Material, shape: Enum.PartType?): Block
+	return { name = name, size = size, at = at, color = color, material = material, shape = shape }
+end
+
+local function at(x: number, y: number, z: number): CFrame
+	return CFrame.new(x, y, z)
+end
+
+-- Each list stays inside the 3x3x5 body box (x and z within +-1.5, y 0..5),
+-- so the look never reaches past Track.TowerRadius. `color` is the tower's
+-- colour; the rest are material colours.
+local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
+	-- Hunting Blind: a low camo hide with a viewing slit and a leafy roof.
+	SCOUT = function(color)
+		return {
+			block("Hide", Vector3.new(3, 2.6, 3), at(0, 1.3, 0), color, Enum.Material.Fabric),
+			block("Slit", Vector3.new(2.2, 0.35, 0.1), at(0, 1.9, -1.45), Color3.fromRGB(25, 25, 20), Enum.Material.Fabric),
+			block("Roof", Vector3.new(3, 0.4, 3), at(0, 2.8, 0), LEAF, Enum.Material.Grass),
+			block("Leaves", Vector3.new(1.6, 0.5, 1.4), at(-0.5, 3.2, 0.4), LEAF, Enum.Material.Grass),
+		}
+	end,
+	-- Longshot Perch: a tree stand on four stilts, a rifle over the rail.
+	SNIPER = function(color)
+		local parts = {
+			block("Platform", Vector3.new(3, 0.3, 3), at(0, 3.6, 0), color, Enum.Material.Wood),
+			block("Rail", Vector3.new(3, 0.6, 0.2), at(0, 4.05, -1.4), DARK_WOOD, Enum.Material.Wood),
+			block("Roof", Vector3.new(3, 0.25, 3), at(0, 4.85, 0), DARK_WOOD, Enum.Material.Wood),
+			block("Barrel", Vector3.new(0.2, 0.2, 1.3), at(0.4, 4.45, -0.8), STEEL, Enum.Material.Metal),
+		}
+		for i, corner in { Vector2.new(-1, -1), Vector2.new(1, -1), Vector2.new(-1, 1), Vector2.new(1, 1) } do
+			table.insert(parts, block(`Stilt{i}`, Vector3.new(0.3, 3.45, 0.3), at(corner.X * 1.25, 1.725, corner.Y * 1.25), WOOD, Enum.Material.Wood))
+			if corner.Y > 0 then
+				table.insert(parts, block(`Post{i}`, Vector3.new(0.2, 1.1, 0.2), at(corner.X * 1.25, 4.3, corner.Y * 1.25), WOOD, Enum.Material.Wood))
+			end
+		end
+		return parts
+	end,
+	-- Mortar Pit: a ring of sandbags around a tube angled at 45 degrees.
+	GRENADIER = function(color)
+		return {
+			block("BagsFront", Vector3.new(3, 1, 0.7), at(0, 0.5, -1.15), SAND, Enum.Material.Fabric),
+			block("BagsBack", Vector3.new(3, 1, 0.7), at(0, 0.5, 1.15), SAND, Enum.Material.Fabric),
+			block("BagsLeft", Vector3.new(0.7, 1, 1.6), at(-1.15, 0.5, 0), SAND, Enum.Material.Fabric),
+			block("BagsRight", Vector3.new(0.7, 1, 1.6), at(1.15, 0.5, 0), SAND, Enum.Material.Fabric),
+			block("Plate", Vector3.new(1.4, 0.3, 1.4), at(0, 0.3, 0), STEEL, Enum.Material.Metal),
+			block("Tube", Vector3.new(0.8, 0.8, 2.6), at(0, 1.4, 0) * CFrame.Angles(math.rad(45), 0, 0), color, Enum.Material.Metal),
+		}
+	end,
+	-- Tranq Station: a teal barrel with a rack of three darts, tips glowing.
+	CHILLER = function(color)
+		local parts = {
+			block("Barrel", Vector3.new(2.6, 2.2, 2.2), at(0, 1.3, 0.2) * CFrame.Angles(0, 0, math.rad(90)), color, Enum.Material.Metal, CYLINDER),
+			block("Rack", Vector3.new(2.4, 0.2, 0.25), at(0, 2.7, -0.3), DARK_WOOD, Enum.Material.Wood),
+		}
+		for i, x in { -0.8, 0, 0.8 } do
+			table.insert(parts, block(`Dart{i}`, Vector3.new(0.15, 1.3, 0.15), at(x, 3.0, -0.3), WOOD, Enum.Material.Wood))
+			table.insert(parts, block(`Tip{i}`, Vector3.new(0.22, 0.35, 0.22), at(x, 3.8, -0.3), DART_TIP, Enum.Material.Neon))
+		end
+		return parts
+	end,
+	-- Supply Camp: stacked crates under an orange tarp, a flag on a pole.
+	QUARTERMASTER = function(color)
+		return {
+			block("CrateA", Vector3.new(1.4, 1.4, 1.4), at(-0.7, 0.7, 0.6), WOOD, Enum.Material.Wood),
+			block("CrateB", Vector3.new(1.4, 1.4, 1.4), at(0.7, 0.7, -0.5), WOOD, Enum.Material.Wood),
+			block("CrateC", Vector3.new(1.2, 1.2, 1.2), at(-0.4, 2.0, 0.3), DARK_WOOD, Enum.Material.Wood),
+			block("Tarp", Vector3.new(2.6, 0.2, 2.6), at(-0.1, 2.7, 0.05), color, Enum.Material.Fabric),
+			block("Pole", Vector3.new(0.15, 4.4, 0.15), at(1.3, 2.2, 1.3), STEEL, Enum.Material.Metal),
+			block("Flag", Vector3.new(0.08, 0.6, 1), at(1.3, 4.1, 0.75), color, Enum.Material.Fabric),
+		}
+	end,
+}
+
+-- How high the silhouette reaches above the base (the crown sits there).
+local function silhouetteTop(blocks: { Block }): number
+	local top = 0
+	for _, b in blocks do
+		local rotated = b.at - b.at.Position
+		local half = b.size / 2
+		-- the highest corner of the (possibly rotated) block
+		local reach = math.abs(rotated.XVector.Y) * half.X + math.abs(rotated.YVector.Y) * half.Y + math.abs(rotated.ZVector.Y) * half.Z
+		top = math.max(top, b.at.Position.Y + reach)
+	end
+	return top
+end
+
 -- Builds the model with its base centred on `base`. PrimaryPart is "Body".
 function TowerLook.build(key: string, range: number, base: Vector3): Model
 	local model = Instance.new("Model")
 	model.Name = key
+	local color = TowerLook.COLORS[key] or Color3.new(1, 1, 1)
 
 	local body = Instance.new("Part")
 	body.Name = "Body"
 	body.Size = BODY_SIZE
 	body.CFrame = CFrame.new(base + Vector3.new(0, BODY_SIZE.Y / 2, 0))
-	body.Color = TowerLook.COLORS[key] or Color3.new(1, 1, 1)
+	body.Color = color
 	body.Material = Enum.Material.SmoothPlastic
 	body.Anchored = true
 	body.Parent = model
 	model.PrimaryPart = body
+
+	local silhouette = SILHOUETTES[key]
+	if silhouette then
+		body.Transparency = 1 -- the silhouette is the look; the body stays the hitbox
+		local blocks = silhouette(color)
+		for _, b in blocks do
+			local part = Instance.new("Part")
+			part.Name = b.name
+			if b.shape then
+				part.Shape = b.shape
+			end
+			part.Size = b.size
+			part.CFrame = CFrame.new(base) * b.at
+			part.Color = b.color
+			part.Material = b.material
+			part.Anchored = true
+			part.CanCollide = false
+			part.CanQuery = false
+			part.CanTouch = false
+			part:SetAttribute("LookMaterial", b.material.Name) -- restored if the glow goes
+			part.Parent = model
+		end
+		model:SetAttribute("LookTop", silhouetteTop(blocks))
+	end
 
 	TowerLook.refresh(model, range, { 0, 0, 0 }, 0)
 	return model
@@ -67,7 +198,7 @@ local function setRing(model: Model, range: number)
 		ring = new
 	end
 	assert(ring)
-	local base = body.Position - Vector3.new(0, body.Size.Y / 2, 0)
+	local base = body.CFrame.Position - Vector3.new(0, body.Size.Y / 2, 0)
 	ring.Size = Vector3.new(0.1, range * 2, range * 2)
 	ring.CFrame = CFrame.new(base + Vector3.new(0, 0.05, 0)) * CFrame.Angles(0, 0, math.rad(90))
 	ring.Color = body.Color
@@ -124,7 +255,9 @@ local function setStage(model: Model, stage: number)
 		local part = Instance.new("Part")
 		part.Name = "Crown"
 		part.Size = Vector3.new(3, 0.8, 3) -- no wider than the body (Track.TowerRadius)
-		part.CFrame = body.CFrame * CFrame.new(0, body.Size.Y / 2 + 0.4, 0)
+		-- on top of the silhouette (or of the body, for a tower without one)
+		local top = model:GetAttribute("LookTop") or body.Size.Y
+		part.CFrame = body.CFrame * CFrame.new(0, top - body.Size.Y / 2 + 0.4, 0)
 		part.Color = Color3.fromRGB(250, 205, 80)
 		part.Material = Enum.Material.Metal
 		part.Anchored = true
@@ -135,7 +268,18 @@ local function setStage(model: Model, stage: number)
 	elseif stage < 1 and crown then
 		crown:Destroy()
 	end
-	body.Material = if stage >= 2 then Enum.Material.Neon else Enum.Material.SmoothPlastic
+	local glow = stage >= 2
+	local lookParts = 0
+	for _, part in model:GetChildren() do
+		local material = part:GetAttribute("LookMaterial")
+		if part:IsA("BasePart") and typeof(material) == "string" then
+			lookParts += 1
+			part.Material = if glow then Enum.Material.Neon else (Enum.Material :: any)[material]
+		end
+	end
+	if lookParts == 0 then
+		body.Material = if glow then Enum.Material.Neon else Enum.Material.SmoothPlastic
+	end
 end
 
 function TowerLook.refresh(model: Model, range: number, tiers: { number }, stage: number)

@@ -65,6 +65,29 @@ local function quadruped(body: Vector3, legLength: number, head: Vector3, extras
 	return parts
 end
 
+-- Moves a built part list's Head (Gallimimus: onto its neck).
+local function withHeadAt(parts: { PartSpec }, offset: Vector3): { PartSpec }
+	for _, part in parts do
+		if part.name == "Head" then
+			part.offset = offset
+		end
+	end
+	return parts
+end
+
+-- T-Rex: small white teeth along the part of the jaw that juts past the head
+-- (the jaw's front is at z -7.8, the head's at about -7.1).
+local TOOTH = Color3.fromRGB(245, 240, 225)
+local function withTeeth(parts: { PartSpec }): { PartSpec }
+	for i, x in { -1, -0.33, 0.33, 1 } do
+		table.insert(parts, { name = `ToothF{i}`, size = Vector3.new(0.3, 0.45, 0.3), offset = Vector3.new(x, 1.05, -7.6), color = TOOTH })
+	end
+	for i, x in { -1.25, 1.25 } do
+		table.insert(parts, { name = `ToothS{i}`, size = Vector3.new(0.3, 0.45, 0.3), offset = Vector3.new(x, 1.05, -7.3), color = TOOTH })
+	end
+	return parts
+end
+
 local SPECIES: { [string]: Species } = {
 	HUSK = { -- Compy
 		color = Color3.fromRGB(126, 196, 110),
@@ -78,6 +101,9 @@ local SPECIES: { [string]: Species } = {
 		legLength = 1.2,
 		parts = biped(Vector3.new(1.1, 1, 2.2), 1.2, Vector3.new(0.7, 0.7, 1.2), {
 			{ name = "Claw", size = Vector3.new(0.2, 0.5, 0.2), offset = Vector3.new(0, -0.6, -1), color = Color3.fromRGB(240, 235, 220) },
+			-- a darker back stripe and a small crest: the tougher small biped (vs the Compy)
+			{ name = "Stripe", size = Vector3.new(0.4, 0.12, 2), offset = Vector3.new(0, 0.53, 0), color = Color3.fromRGB(120, 70, 35) },
+			{ name = "Crest", size = Vector3.new(0.15, 0.3, 0.6), offset = Vector3.new(0, 0.95, -1.4), color = Color3.fromRGB(120, 70, 35) },
 		}),
 	},
 	SHIELD = { -- Pachycephalosaurus: domed skull
@@ -99,13 +125,16 @@ local SPECIES: { [string]: Species } = {
 			{ name = "Club", size = Vector3.new(1.1, 0.9, 0.9), offset = Vector3.new(0, 0, 3.4), color = Color3.fromRGB(85, 85, 80), shape = Enum.PartType.Ball },
 		}),
 	},
-	STORM = { -- Gallimimus: long legs and neck, built to run
+	STORM = { -- Gallimimus: long legs and neck, built to run; the head sits on the neck
 		color = Color3.fromRGB(225, 195, 90),
 		body = Vector3.new(1.2, 1.1, 2),
 		legLength = 2.2,
-		parts = biped(Vector3.new(1.2, 1.1, 2), 2.2, Vector3.new(0.5, 0.5, 0.9), {
-			{ name = "Neck", size = Vector3.new(0.4, 1.4, 0.4), offset = Vector3.new(0, 1.1, -1), color = nil },
-		}),
+		parts = withHeadAt(
+			biped(Vector3.new(1.2, 1.1, 2), 2.2, Vector3.new(0.5, 0.5, 0.9), {
+				{ name = "Neck", size = Vector3.new(0.4, 1.4, 0.4), offset = Vector3.new(0, 1.1, -1), color = nil },
+			}),
+			Vector3.new(0, 1.9, -1.2)
+		),
 	},
 	LLAMA = { -- Pteranodon: wings and a crest
 		color = Color3.fromRGB(150, 125, 165),
@@ -115,7 +144,8 @@ local SPECIES: { [string]: Species } = {
 			{ name = "WingL", size = Vector3.new(3.4, 0.15, 1.3), offset = Vector3.new(-2, 0.1, 0) },
 			{ name = "WingR", size = Vector3.new(3.4, 0.15, 1.3), offset = Vector3.new(2, 0.1, 0) },
 			{ name = "Head", size = Vector3.new(0.5, 0.5, 1.4), offset = Vector3.new(0, 0.3, -1.4) },
-			{ name = "Crest", size = Vector3.new(0.2, 0.4, 1.1), offset = Vector3.new(0, 0.55, -0.6), color = Color3.fromRGB(220, 110, 90) },
+			-- the crest sweeps back off the head
+			{ name = "Crest", size = Vector3.new(0.2, 0.35, 1.2), offset = Vector3.new(0, 0.6, -0.3), color = Color3.fromRGB(220, 110, 90) },
 		},
 	},
 	ZEP = { -- Triceratops: frill and three horns
@@ -133,11 +163,11 @@ local SPECIES: { [string]: Species } = {
 		color = Color3.fromRGB(75, 100, 60),
 		body = Vector3.new(4.5, 4.5, 7),
 		legLength = 4,
-		parts = biped(Vector3.new(4.5, 4.5, 7), 4, Vector3.new(3.2, 3, 4.2), {
+		parts = biped(Vector3.new(4.5, 4.5, 7), 4, Vector3.new(3.2, 3, 4.2), withTeeth({
 			{ name = "Jaw", size = Vector3.new(2.8, 0.8, 3.4), offset = Vector3.new(0, 0.5, -6.1), color = Color3.fromRGB(55, 75, 45) },
 			{ name = "ArmL", size = Vector3.new(0.4, 1.1, 0.4), offset = Vector3.new(-1.4, -0.4, -3), color = nil },
 			{ name = "ArmR", size = Vector3.new(0.4, 1.1, 0.4), offset = Vector3.new(1.4, -0.4, -3), color = nil },
-		}),
+		})),
 	},
 }
 local DEFAULT: Species = SPECIES.HUSK
