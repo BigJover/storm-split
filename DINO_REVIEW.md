@@ -149,3 +149,26 @@ Crown):
 Still open from round 1 (not taken, which is fine): the attack renames, the Medic/Armory name
 collisions (M7, due with T14/T16), the projectile ground ring (M8, due with T12), Storm of Steel /
 Skybreaker (M5/M6) and "Pops".
+
+---
+
+## Round 3 — review of f4e883e (player HP), 9ee8b73 (trampled towers), 558763b (repair)
+
+**Reads well**
+- M1 and R1 are done. **"TRAMPLED"** is on the tower, the panel header reads "Trampled — repair it · {tower}",
+  and the locked upgrade rows say "Repair it first". Only internal keys still say KO, so there is no
+  clash with the Tranq Station's "knocks out".
+- The trampled look (15° tilt, dark Slate, debris at the base, ring hidden, red label) reads as
+  "smashed", not "switched off". Restoring on repair also brings back the stage-2 glow.
+- The player HP bar ("HP 72 / 100", bottom left, red flash on a hit) and the "Repair — {price}" row
+  (with the Supply Camp discount shown) are plain words and clear. "Repair" is the right word; it
+  doesn't collide with the Medic's *Patch Up*.
+
+**Nice-to-have only (no must-fix this round)**
+
+| # | Issue | Fix |
+|---|---|---|
+| T3-1 | The grey `TrampledSmoke` reads as a fire, but dinos stomped this tower; nothing burned it. | `TowerLook` (setKnockedOut): make the Smoke a dust cloud: `Color3.fromRGB(150, 125, 90)`, Opacity 0.2, RiseVelocity 1.5. |
+| T3-2 | Every trampled tower tips the same way (a world-X tilt), so a row of them looks staged. | `TowerLook`: tilt about the X or Z axis chosen from the model's position (e.g. `(base.X + base.Z) % 4`), and keep the 15°. |
+| T3-3 | Low health is **orange** on the player bar (`Hud` HP_LOW 230,170,60) but **red** on the tower bar (`TowerLook` HP_LOW 235,90,70). | Use one "low" colour in both. Orange is best: red already means "hit" (the flash) and "trampled". |
+| T3-4 | The tower prompt's ActionText is the generic **"Manage"**. | `Shop.luau:71`: **"Upgrade"** (or "Upgrade / Repair" when damaged). It's plain words and what players come to do. |
