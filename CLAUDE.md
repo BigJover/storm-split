@@ -150,7 +150,7 @@ day to the user's Cores economy (`VISION.md`): solo pays only for a clear (Easy 
 starts with Pistol + Scout/Sniper/Grenadier; Rifle/Shotgun 75, Chiller 100, Quartermaster
 150 Cores; you can only place towers you own but can upgrade anyone's. Competitive buy-ins
 (10-20, pot split 72/23/5 in battle royale) come with the battle modes. Level 10/15 ability variants deferred (user choice).
-Studio keys: K cash, J cores + unlocks (disables saving for that session).
+Studio keys: K cash, J cores + unlocks (disables saving for that session), L knocks half the HP off the tower nearest you (Step 2 testing).
 
 Home screen (user request, confirmed in Studio 2026-09-29): `Main` is now a match
 loop — Lobby (home screen, no characters, host picks mode/track/difficulty, Play) → Building

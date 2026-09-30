@@ -74,6 +74,7 @@ return table.freeze({
 			splashRadius = 0,
 			slowPercent = 0,
 			unlockCost = 0,
+			maxHp = 100,
 			paths = {
 				{
 					id = "Lookout",
@@ -738,6 +739,7 @@ return table.freeze({
 			splashRadius = 0,
 			slowPercent = 0,
 			unlockCost = 0,
+			maxHp = 80,
 			paths = {
 				{
 					id = "Deadeye",
@@ -1402,6 +1404,7 @@ return table.freeze({
 			splashRadius = 6,
 			slowPercent = 0,
 			unlockCost = 0,
+			maxHp = 150,
 			paths = {
 				{
 					id = "Blast",
@@ -2066,6 +2069,7 @@ return table.freeze({
 			splashRadius = 6,
 			slowPercent = 40,
 			unlockCost = 100,
+			maxHp = 120,
 			paths = {
 				{
 					id = "Sedate",
@@ -2730,6 +2734,7 @@ return table.freeze({
 			splashRadius = 0,
 			slowPercent = 0,
 			unlockCost = 150,
+			maxHp = 200,
 			paths = {
 				{
 					id = "Yield",

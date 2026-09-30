@@ -37,12 +37,20 @@
 	`freezeEvery` seconds. QUARTERMASTER: never shoots; pays round income
 	(Towers.roundIncome), drops chests (Towers.airdrops), and its Logistics
 	aura discounts upgrades and raises sell refunds for towers in range.
+
+	HEALTH (VISION.md Step 2, DECISIONS #8/#9): every tower has HP — its Max HP
+	column, +Tower HP per tier x base for each tier bought (Shared/Combat).
+	Towers owns it: damage() (resistance applied), heal(), repair(). At 0 HP a
+	tower is trampled (`knockedOut`): it stops firing, chilling, giving auras,
+	paying income and dropping chests, dinos stop targeting it (targets()),
+	and it can't be upgraded until repaired. It keeps its tiers.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local Combat = require(Shared:WaitForChild("Combat"))
 local Placement = require(Shared:WaitForChild("Placement"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
 local TowerStats = require(Shared:WaitForChild("TowerStats"))
@@ -78,6 +86,9 @@ export type Tower = {
 	buff: Buff,
 	cooldown: number,
 	freezeTimer: number,
+	hp: number,
+	maxHp: number,
+	knockedOut: boolean, -- trampled at 0 HP until repaired
 	model: Model,
 }
 
@@ -89,7 +100,8 @@ local towerFolder: Instance
 local nextId = 0
 local onPop: ((Player) -> ())? = nil
 local levelScale = 1 -- damage multiplier from the team's level
-local extraRatePercent: ((Tower) -> number)? = nil -- boosts from outside towers (hero Overdrive)
+local extraRatePercent: ((Tower) -> number)? = nil -- boosts from outside towers (hero Rally Cry)
+local resistOf: ((Tower) -> { number })? = nil -- damage resistance sources (Armory, later)
 
 local function credit(owner: Player?, killed: boolean)
 	if killed and owner and owner.Parent and onPop then
@@ -112,7 +124,7 @@ local function refreshAuras()
 		local rate, damage, pierce, discount, refund = 0, 0, false, 0, 0
 		for _, source in towers do
 			local s = source.stats
-			if source ~= tower and hasAura(s) then
+			if source ~= tower and not source.knockedOut and hasAura(s) then
 				local offset = tower.base - source.base
 				if Vector2.new(offset.X, offset.Z).Magnitude <= s.range then
 					rate = math.max(rate, s.auraRatePercent)
@@ -135,9 +147,79 @@ local function refreshAuras()
 end
 
 -- The crossover rule lives in Shared/Upgrades so the client can grey out buttons.
+-- A trampled tower can't be upgraded until it's repaired.
 function Towers.canUpgrade(tower: Tower, pathIndex: number): boolean
 	local path = tower.def.paths[pathIndex]
-	return path ~= nil and Upgrades.check(tower.pathTiers, pathIndex, #path.tiers) == "ok"
+	return path ~= nil and not tower.knockedOut and Upgrades.check(tower.pathTiers, pathIndex, #path.tiers) == "ok"
+end
+
+------------------------------------------------------------------ health
+
+-- The body carries HP / MaxHP / KO for the tower panel; the model shows a bar.
+local function showHealth(tower: Tower)
+	local body = tower.model.PrimaryPart
+	if body then
+		body:SetAttribute("HP", math.ceil(tower.hp))
+		body:SetAttribute("MaxHP", math.floor(tower.maxHp + 0.5))
+		body:SetAttribute("KO", tower.knockedOut)
+	end
+	TowerLook.setHealth(tower.model, if tower.maxHp > 0 then tower.hp / tower.maxHp else 1)
+end
+
+local function setKnockedOut(tower: Tower, on: boolean)
+	if tower.knockedOut == on then
+		return
+	end
+	tower.knockedOut = on
+	tower.cooldown = 0
+	tower.freezeTimer = 0
+	TowerLook.setKnockedOut(tower.model, on)
+	refreshAuras() -- its auras go (and come back on repair)
+end
+
+-- Hurts a standing tower, less its resistance. At 0 HP it's trampled.
+-- `source` is who or what did it (kept for PvP later). Returns the damage dealt.
+function Towers.damage(tower: Tower, amount: number, source: any?): number
+	if tower.knockedOut or amount <= 0 or not table.find(towers, tower) then
+		return 0
+	end
+	local resist = Combat.combineResist(if resistOf then resistOf(tower) else {})
+	local dealt = math.min(tower.hp, Combat.afterResist(amount, resist))
+	tower.hp -= dealt
+	if tower.hp <= 0 then
+		tower.hp = 0
+		setKnockedOut(tower, true)
+	end
+	showHealth(tower)
+	return dealt
+end
+
+-- Heals a standing tower, never past max. Trampled towers need a repair.
+function Towers.heal(tower: Tower, amount: number)
+	if tower.knockedOut or amount <= 0 or tower.hp >= tower.maxHp then
+		return
+	end
+	tower.hp = math.min(tower.maxHp, tower.hp + amount)
+	showHealth(tower)
+end
+
+-- Back to full HP, and standing again if it was trampled. Doesn't charge
+-- cash: the caller (Shop) pays first.
+function Towers.repair(tower: Tower)
+	tower.hp = tower.maxHp
+	setKnockedOut(tower, false)
+	showHealth(tower)
+end
+
+-- Standing towers, for dinos to pick targets from.
+function Towers.targets(): { Tower }
+	local standing = {}
+	for _, tower in towers do
+		if not tower.knockedOut then
+			table.insert(standing, tower)
+		end
+	end
+	return standing
 end
 
 -- How many model swaps the tower has reached (0, 1 or 2), from the tiers
@@ -161,12 +243,14 @@ end
 export type Hooks = {
 	onPop: ((Player) -> ())?,
 	extraRatePercent: ((Tower) -> number)?,
+	resistOf: ((Tower) -> { number })?,
 }
 
 function Towers.init(folder: Instance, hooks: Hooks?)
 	towerFolder = folder
 	onPop = hooks and hooks.onPop
 	extraRatePercent = hooks and hooks.extraRatePercent
+	resistOf = hooks and hooks.resistOf
 end
 
 -- Callers check Placement first (Shop does); this only builds.
@@ -183,6 +267,7 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 
 	nextId += 1
 	local pathTiers = { 0, 0, 0 }
+	local maxHp = Combat.towerMaxHp(def, pathTiers)
 	local tower: Tower = {
 		id = nextId,
 		key = key,
@@ -196,9 +281,13 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 		buff = NO_BUFF,
 		cooldown = 0,
 		freezeTimer = 0,
+		hp = maxHp,
+		maxHp = maxHp,
+		knockedOut = false,
 		model = model,
 	}
 	table.insert(towers, tower)
+	showHealth(tower)
 	refreshAuras()
 	return tower
 end
@@ -211,7 +300,12 @@ function Towers.upgrade(tower: Tower, pathIndex: number): boolean
 	end
 	tower.pathTiers[pathIndex] += 1
 	tower.stats = TowerStats.compute(tower.def, tower.pathTiers)
+	-- The HP an upgrade adds to the max is added to current HP too.
+	local maxHp = Combat.towerMaxHp(tower.def, tower.pathTiers)
+	tower.hp = math.min(maxHp, tower.hp + (maxHp - tower.maxHp))
+	tower.maxHp = maxHp
 	TowerLook.refresh(tower.model, tower.stats.range, tower.pathTiers, swapStage(tower))
+	showHealth(tower)
 	refreshAuras()
 	return true
 end
@@ -372,7 +466,7 @@ local CHILL_REFRESH = 0.25
 -- Chillers: chill everything in range every frame; Freeze pulses hard stops.
 local function stepChill(tower: Tower, dt: number, live)
 	local stats = tower.stats
-	if stats.slowPercent <= 0 and stats.freezeEvery <= 0 then
+	if tower.knockedOut or (stats.slowPercent <= 0 and stats.freezeEvery <= 0) then
 		return
 	end
 	local range = stats.range
@@ -420,8 +514,8 @@ function Towers.step(dt: number)
 
 	for _, tower in towers do
 		local stats = tower.stats
-		if stats.rate <= 0 or stats.damage <= 0 then
-			continue -- Quartermaster and anything else that doesn't shoot
+		if stats.rate <= 0 or stats.damage <= 0 or tower.knockedOut then
+			continue -- Quartermaster and anything else that doesn't shoot; trampled towers
 		end
 
 		tower.cooldown -= dt
@@ -477,7 +571,7 @@ function Towers.roundIncome(bankedCash: number): number
 	local income, interest = 0, 0
 	for _, tower in towers do
 		local perRound = tower.def.incomePerRound or 0
-		if perRound > 0 then
+		if perRound > 0 and not tower.knockedOut then
 			local stats = tower.stats
 			income += perRound * stats.incomeMult
 			if stats.interestPercent > 0 then
@@ -494,7 +588,7 @@ export type Airdrop = { base: Vector3, count: number, cash: number, owner: Playe
 function Towers.airdrops(): { Airdrop }
 	local drops = {}
 	for _, tower in towers do
-		if tower.stats.chests > 0 and tower.stats.chestCash > 0 then
+		if tower.stats.chests > 0 and tower.stats.chestCash > 0 and not tower.knockedOut then
 			table.insert(drops, { base = tower.base, count = tower.stats.chests, cash = tower.stats.chestCash, owner = tower.owner })
 		end
 	end

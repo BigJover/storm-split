@@ -57,3 +57,14 @@ test("repair cost: 0.3 x spent x HP missing, discount, rounded", function()
 	eq(Combat.repairCost(659, 25, 80), 136, "0.3 x 659 x 0.6875 = 135.9")
 	eq(Combat.repairCost(1000, 0, 0), 0, "no max HP")
 end)
+
+test("Config tower Max HP (DECISIONS #8) and what upgrades add", function()
+	local want = { SCOUT = 100, SNIPER = 80, GRENADIER = 150, CHILLER = 120, QUARTERMASTER = 200 }
+	for key, hp in want do
+		local def = Config.Towers[key]
+		eq(def.maxHp, hp, `{key} ({def.display}) Max HP`)
+		near(Combat.towerMaxHp(def, { 0, 0, 0 }), hp, `{key} at 0 tiers`)
+		near(Combat.towerMaxHp(def, { 2, 1, 0 }), hp * 1.45, `{key} at 3 tiers`)
+		near(Combat.towerMaxHp(def, { 5, 2, 0 }), hp * 2.05, `{key} at 7 tiers`)
+	end
+end)

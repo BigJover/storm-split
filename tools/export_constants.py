@@ -127,6 +127,7 @@ def read_towers(ws):
             "splashRadius": num(v(ws, r, 12)),
             "slowPercent": num(v(ws, r, 13)),
             "unlockCost": num(v(ws, r, 14)),
+            "maxHp": num(v(ws, r, 16)),
             "paths": [],
         }
         order.append(key)
@@ -346,6 +347,8 @@ def validate(data):
                 problems.append(f"Round {i} references unknown tier '{k}'")
 
     for key, t in data["Towers"].items():
+        if not isinstance(t["maxHp"], (int, float)) or t["maxHp"] <= 0:
+            problems.append(f"{key} needs a Max HP above 0 (Towers column P)")
         for p in t["paths"]:
             for i, step in enumerate(p["tiers"], start=1):
                 if not isinstance(step["cost"], (int, float)) or step["cost"] <= 0:

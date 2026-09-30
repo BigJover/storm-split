@@ -45,6 +45,9 @@ local START_ROUND = 1
 -- Testing only: what the Studio-only "+cash" button adds. Never active in a
 -- published game (checked with RunService:IsStudio() on the server).
 local STUDIO_CASH_GRANT = 1000
+-- Testing only: the share of max HP the Studio-only L key knocks off the
+-- tower nearest you (DECISIONS #11).
+local STUDIO_TOWER_HIT = 0.5
 
 ------------------------------------------------------------------ setup
 
@@ -78,6 +81,27 @@ if RunService:IsStudio() then
 		Economy.earn(STUDIO_CASH_GRANT)
 	end)
 	studioCash.Parent = remotes
+
+	local studioTrample = Instance.new("RemoteEvent")
+	studioTrample.Name = "StudioTowerHit"
+	studioTrample.OnServerEvent:Connect(function(player)
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if not root or not root:IsA("BasePart") then
+			return
+		end
+		local nearest, best = nil, math.huge
+		for _, tower in Towers.all() do
+			local gap = (tower.base - root.Position).Magnitude
+			if gap < best then
+				nearest, best = tower, gap
+			end
+		end
+		if nearest then
+			Towers.damage(nearest, nearest.maxHp * STUDIO_TOWER_HIT, "studio")
+		end
+	end)
+	studioTrample.Parent = remotes
 end
 remotes.Parent = ReplicatedStorage
 

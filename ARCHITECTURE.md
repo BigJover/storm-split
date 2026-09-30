@@ -96,6 +96,7 @@ This dissolves most of the problems the UEFN plan was built around:
 |---|---|---|
 | Enemies (create / move / damage / remove) | `Enemies` | Read `getLive()`, call `damage()` |
 | A tower's tiers and stats | `Towers` | Call `upgrade()` after paying |
+| A tower's HP and trampled state | `Towers` | Call `damage()` / `heal()` / `repair()` (after paying); dinos pick from `targets()`; clients read the body's `HP` / `MaxHP` / `KO` attributes |
 | Cash and lives | `Economy` | Call `trySpend()` / `earn()` / `lose()` |
 | Player HP (the Humanoid's Health / MaxHealth) | `Health` | Call `damage()` / `heal()` / `healAll()`; clients read the Humanoid |
 | What a tower cost (for refunds) | `Shop` | — |

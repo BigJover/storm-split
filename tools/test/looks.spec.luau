@@ -140,3 +140,52 @@ test("DinoLook fixes: Gallimimus head on its neck, Raptor stripe and crest, T-Re
 	ok(crest.CFrame.Position.Z > pHead.CFrame.Position.Z, "Pteranodon crest points back")
 	ok(crest.CFrame.Position.Z + crest.Size.Z / 2 > pHead.CFrame.Position.Z + pHead.Size.Z / 2, "crest sticks out behind the head")
 end)
+
+test("trampled look: tilt, Slate, smoke, debris, no ring, TRAMPLED label; all undone on repair", function()
+	for _, key in Config.TowerOrder do
+		local model = TowerLook.build(key, 15, BASE)
+		TowerLook.refresh(model, 15, { 5, 2, 0 }, 2)
+		local body = model.PrimaryPart
+		local before = {}
+		for _, part in model:GetChildren() do
+			if part:GetAttribute("LookMaterial") then
+				before[part] = { cframe = part.CFrame, color = part.Color }
+			end
+		end
+		TowerLook.setKnockedOut(model, true)
+		local label = body:FindFirstChild("Trampled")
+		ok(label ~= nil, `{key} label`)
+		eq(label:FindFirstChildOfClass("TextLabel").Text, "TRAMPLED", `{key} label text`)
+		ok(body:FindFirstChild("TrampledSmoke") ~= nil, `{key} smoke`)
+		ok(model:FindFirstChild("Debris1") ~= nil and model:FindFirstChild("Debris3") ~= nil, `{key} debris`)
+		eq(model:FindFirstChild("Range").Transparency, 1, `{key} ring hidden`)
+		for part in before do
+			eq(part.Material, Enum.Material.Slate, `{key} {part.Name} Slate`)
+			local tipped = part.CFrame.UpVector:Dot(Vector3.yAxis)
+			ok(tipped < 0.99, `{key} {part.Name} tipped over`)
+		end
+		eq(body.CFrame.Position, BASE + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0), `{key} body doesn't move`)
+		TowerLook.setKnockedOut(model, false)
+		ok(body:FindFirstChild("Trampled") == nil and body:FindFirstChild("TrampledSmoke") == nil, `{key} label and smoke gone`)
+		ok(model:FindFirstChild("Debris1") == nil, `{key} debris gone`)
+		near(model:FindFirstChild("Range").Transparency, 0.85, `{key} ring back`, 1e-3)
+		for part, was in before do
+			ok((part.CFrame.Position - was.cframe.Position).Magnitude < 1e-3, `{key} {part.Name} upright again`)
+			eq(part.Color, was.color, `{key} {part.Name} colour back`)
+			eq(part.Material, Enum.Material.Neon, `{key} {part.Name} stage-2 glow back`)
+		end
+	end
+end)
+
+test("health bar: hidden at full, shown when damaged", function()
+	local model = TowerLook.build("SCOUT", 20, BASE)
+	local body = model.PrimaryPart
+	TowerLook.setHealth(model, 1)
+	ok(body:FindFirstChild("HealthBar") == nil, "hidden at full")
+	TowerLook.setHealth(model, 0.4)
+	local bar = body:FindFirstChild("HealthBar")
+	ok(bar ~= nil, "shown when damaged")
+	near(bar.Back.Fill.Size.X.Scale, 0.4, "fill", 1e-3)
+	TowerLook.setHealth(model, 1)
+	ok(body:FindFirstChild("HealthBar") == nil, "hidden again at full")
+end)

@@ -194,6 +194,7 @@ if studioCash and studioCash:IsA("RemoteEvent") then
 		studioCash:FireServer()
 	end)
 	local studioProgress = remotes:FindFirstChild("StudioProgress")
+	local studioTowerHit = remotes:FindFirstChild("StudioTowerHit")
 	game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
 		if processed then
 			return
@@ -202,6 +203,8 @@ if studioCash and studioCash:IsA("RemoteEvent") then
 			studioCash:FireServer()
 		elseif input.KeyCode == Enum.KeyCode.J and studioProgress and studioProgress:IsA("RemoteEvent") then
 			studioProgress:FireServer() -- +100 Amber (never saved)
+		elseif input.KeyCode == Enum.KeyCode.L and studioTowerHit and studioTowerHit:IsA("RemoteEvent") then
+			studioTowerHit:FireServer() -- the nearest tower loses half its max HP
 		end
 	end)
 end

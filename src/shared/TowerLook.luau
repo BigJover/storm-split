@@ -12,6 +12,11 @@
 	Upgrades call refresh(): the range ring follows the tower's real range, a
 	label shows its path tiers, and the look changes at the model-swap tiers
 	(3 and 5): a crown on top at the first, a glowing silhouette at the second.
+
+	Health (Step 2): setHealth() shows a small bar over a damaged tower;
+	setKnockedOut() shows a trampled one — tipped over about 15 degrees, dark
+	Slate, smoking, a few Slate debris blocks at its base, no range ring, and a
+	TRAMPLED label (DECISIONS #9/#21). All of it undoes on repair.
 ]]
 
 local TowerLook = {}
@@ -27,6 +32,7 @@ TowerLook.COLORS = table.freeze({
 TowerLook.BODY_HEIGHT = 5
 local BODY_SIZE = Vector3.new(3, TowerLook.BODY_HEIGHT, 3)
 local RING_MAX_RANGE = 200 -- Sniper's "global" 999 range would draw a 2000-stud disc
+local RING_TRANSPARENCY = 0.85
 
 ------------------------------------------------------------------ silhouettes
 
@@ -187,7 +193,7 @@ local function setRing(model: Model, range: number)
 		local new = Instance.new("Part")
 		new.Name = "Range"
 		new.Shape = Enum.PartType.Cylinder
-		new.Transparency = 0.85
+		new.Transparency = RING_TRANSPARENCY
 		new.Material = Enum.Material.Neon
 		new.Anchored = true
 		new.CanCollide = false
@@ -250,6 +256,7 @@ local function setStage(model: Model, stage: number)
 	if not body then
 		return
 	end
+	model:SetAttribute("Stage", stage)
 	local crown = model:FindFirstChild("Crown")
 	if stage >= 1 and not crown then
 		local part = Instance.new("Part")
@@ -279,6 +286,160 @@ local function setStage(model: Model, stage: number)
 	end
 	if lookParts == 0 then
 		body.Material = if glow then Enum.Material.Neon else Enum.Material.SmoothPlastic
+	end
+end
+
+------------------------------------------------------------------ health
+
+-- Visuals only.
+local TRAMPLED_TILT = math.rad(15)
+local TRAMPLED_COLOR = Color3.fromRGB(60, 60, 64)
+local TRAMPLED_TEXT = Color3.fromRGB(255, 120, 110)
+local HP_GOOD = Color3.fromRGB(110, 210, 110)
+local HP_LOW = Color3.fromRGB(235, 90, 70)
+
+-- A small bar over the tower; hidden at full health.
+function TowerLook.setHealth(model: Model, frac: number)
+	local body = model.PrimaryPart
+	if not body then
+		return
+	end
+	local bar = body:FindFirstChild("HealthBar") :: BillboardGui?
+	if frac >= 1 then
+		if bar then
+			bar:Destroy()
+		end
+		return
+	end
+	if not bar then
+		local gui = Instance.new("BillboardGui")
+		gui.Name = "HealthBar"
+		gui.Size = UDim2.fromOffset(64, 8)
+		gui.StudsOffset = Vector3.new(0, body.Size.Y / 2 + 3.4, 0)
+		gui.MaxDistance = 80
+		local back = Instance.new("Frame")
+		back.Name = "Back"
+		back.Size = UDim2.fromScale(1, 1)
+		back.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
+		back.BorderSizePixel = 0
+		back.Parent = gui
+		local fill = Instance.new("Frame")
+		fill.Name = "Fill"
+		fill.BorderSizePixel = 0
+		fill.Parent = back
+		gui.Parent = body
+		bar = gui
+	end
+	assert(bar)
+	local fill = (bar:FindFirstChild("Back") :: Frame):FindFirstChild("Fill") :: Frame
+	local shown = math.clamp(frac, 0, 1)
+	fill.Size = UDim2.fromScale(shown, 1)
+	fill.BackgroundColor3 = if shown < 0.35 then HP_LOW else HP_GOOD
+end
+
+-- Everything that makes up the visible tower (the silhouette and the crown).
+local function visibleParts(model: Model): { BasePart }
+	local parts = {}
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") and (part:GetAttribute("LookMaterial") ~= nil or part.Name == "Crown") then
+			table.insert(parts, part)
+		end
+	end
+	return parts
+end
+
+function TowerLook.setKnockedOut(model: Model, on: boolean)
+	local body = model.PrimaryPart
+	if not body or (model:GetAttribute("Trampled") == true) == on then
+		return
+	end
+	model:SetAttribute("Trampled", on)
+	local ring = model:FindFirstChild("Range")
+	local base = body.CFrame * CFrame.new(0, -body.Size.Y / 2, 0)
+
+	if on then
+		-- Tip over about the base, go dark.
+		local tilt = base * CFrame.Angles(TRAMPLED_TILT, 0, 0) * base:Inverse()
+		for _, part in visibleParts(model) do
+			part:SetAttribute("UprightCFrame", part.CFrame)
+			part:SetAttribute("UprightColor", part.Color)
+			part:SetAttribute("UprightMaterial", part.Material.Name)
+			part.CFrame = tilt * part.CFrame
+			part.Color = TRAMPLED_COLOR
+			part.Material = Enum.Material.Slate
+		end
+		if ring and ring:IsA("BasePart") then
+			ring.Transparency = 1
+		end
+		local smoke = Instance.new("Smoke")
+		smoke.Name = "TrampledSmoke"
+		smoke.Color = Color3.fromRGB(80, 80, 80)
+		smoke.Opacity = 0.3
+		smoke.RiseVelocity = 3
+		smoke.Size = 2
+		smoke.Parent = body
+		for i, spot in { Vector3.new(-1, 0.25, 1), Vector3.new(0.9, 0.2, 0.8), Vector3.new(0.6, 0.3, -1.1) } do
+			local debris = Instance.new("Part")
+			debris.Name = `Debris{i}`
+			debris.Size = Vector3.new(0.7, 0.4 + 0.1 * i, 0.5)
+			debris.CFrame = base * CFrame.new(spot) * CFrame.Angles(0, math.rad(35 * i), math.rad(10 * i))
+			debris.Color = TRAMPLED_COLOR
+			debris.Material = Enum.Material.Slate
+			debris.Anchored = true
+			debris.CanCollide = false
+			debris.CanQuery = false
+			debris.CanTouch = false
+			debris.Parent = model
+		end
+		local label = Instance.new("BillboardGui")
+		label.Name = "Trampled"
+		label.Size = UDim2.fromOffset(110, 26)
+		label.StudsOffset = Vector3.new(0, body.Size.Y / 2 + 4.6, 0)
+		label.MaxDistance = 120
+		local text = Instance.new("TextLabel")
+		text.Size = UDim2.fromScale(1, 1)
+		text.BackgroundTransparency = 1
+		text.Text = "TRAMPLED"
+		text.TextColor3 = TRAMPLED_TEXT
+		text.TextStrokeTransparency = 0.3
+		text.Font = Enum.Font.GothamBlack
+		text.TextScaled = true
+		text.Parent = label
+		label.Parent = body
+	else
+		local glow = (model:GetAttribute("Stage") or 0) >= 2
+		for _, part in visibleParts(model) do
+			local upright = part:GetAttribute("UprightCFrame")
+			if typeof(upright) == "CFrame" then
+				part.CFrame = upright
+			end
+			local color = part:GetAttribute("UprightColor")
+			if typeof(color) == "Color3" then
+				part.Color = color
+			end
+			local material = part:GetAttribute("UprightMaterial")
+			if typeof(material) == "string" then
+				part.Material = (Enum.Material :: any)[material]
+			end
+			if glow and part:GetAttribute("LookMaterial") ~= nil then
+				part.Material = Enum.Material.Neon
+			end
+		end
+		if ring and ring:IsA("BasePart") then
+			ring.Transparency = RING_TRANSPARENCY
+		end
+		for _, name in { "Debris1", "Debris2", "Debris3" } do
+			local debris = model:FindFirstChild(name)
+			if debris then
+				debris:Destroy()
+			end
+		end
+		for _, name in { "TrampledSmoke", "Trampled" } do
+			local thing = body:FindFirstChild(name)
+			if thing then
+				thing:Destroy()
+			end
+		end
 	end
 end
 
