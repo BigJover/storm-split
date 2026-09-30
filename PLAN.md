@@ -151,7 +151,13 @@ the spreadsheet, never for code.
   `DinoLook.setSedated(model, on)`: a teal dart in the flank. Add a "zzz" billboard while a dino
   is stunned by a Tranq Station freeze pulse. **Do not rename any tier, path, hero, tower or
   "Pops".** Those wait for Jovan (#27).
-- **Accept:** `tools/audit.py` prints no findings; check and tests green; grep shows no
+- **Dead columns (DECISIONS #28):** in `tools/audit.py`, Tuning fields that sheet formulas
+  read become an "ok sheet-only" note, not a finding. Add a commented allowlist with two
+  entries: `Tuning.StartingLives` (superseded by Difficulty) and `Enemies.cashValue`
+  (display; the code derives the same value). Relabel the StartingLives note in the sheet
+  (assert the old text first) and drop it from the exporter's `needed` list. Delete no
+  cell and wire no column in.
+- **Accept:** `tools/audit.py --strict` prints no findings; check and tests green; grep shows no
   player-facing "Overdrive", "Airburst", "freez", "chill" or "enemies" strings (internal
   names excepted).
 
