@@ -38,6 +38,7 @@ local Hero = require(script.Parent.Hero)
 local Hazards = require(script.Parent.Hazards)
 local Airdrops = require(script.Parent.Airdrops)
 local Progression = require(script.Parent.Progression)
+local Health = require(script.Parent.Health)
 
 -- Testing only: set above 1 to jump straight to a later round.
 local START_ROUND = 1
@@ -111,6 +112,7 @@ Towers.init(map.towerFolder, {
 	end,
 })
 Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged })
+Health.init()
 Shop.init(remotes)
 Hero.init(remotes, { onPop = Scoreboard.addPop })
 
@@ -167,9 +169,11 @@ local function spawn(player: Player)
 	end
 end
 
--- During a match, the dead come back after RespawnTime.
+-- During a match, the dead come back after RespawnTime, at full health with
+-- a short force field (Server/Health).
 local function watchCharacter(player: Player)
 	player.CharacterAdded:Connect(function(character)
+		Health.setUp(character)
 		local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 		humanoid.Died:Connect(function()
 			task.delay(Config.Tuning.RespawnTime, function()
@@ -316,6 +320,7 @@ local function playMatch()
 		onRoundEnd = function(index)
 			Economy.earn((Config.Tuning.RoundBonusBase + Config.Tuning.RoundBonusPerRound * index) * chosen.cashMult)
 			Economy.earn(Towers.roundIncome(Economy.cash()) * chosen.cashMult) -- Quartermasters
+			Health.healAll(Config.Tuning.HealPerRound)
 
 			local newLevel = levelAfter(index)
 			if newLevel > level then

@@ -1,7 +1,8 @@
 --[[
-	Minimal HUD: round, difficulty, level, cash, lives, enemies alive; the
-	Start button in the build phase; the result screen after a match (with the
-	Amber earned and a countdown home). Hidden on the home screen
+	Minimal HUD: round, difficulty, level, cash, lives, dinos alive; the
+	Start button in the build phase; your health bar (bottom left, flashes red
+	when you're hurt); the result screen after a match (with the Amber earned
+	and a countdown home). Hidden on the home screen
 	(Home.client). Reads ReplicatedStorage attributes set by the server;
 	pressing Start is only a request.
 ]]
@@ -208,6 +209,90 @@ end
 player:GetAttributeChangedSignal("LastPayout"):Connect(function()
 	refresh()
 end)
+
+-- Health bar, bottom left. Reads the Humanoid; only Server/Health changes it.
+local HP_FILL = Color3.fromRGB(110, 200, 110)
+local HP_LOW = Color3.fromRGB(230, 170, 60)
+local HP_FLASH = Color3.fromRGB(255, 70, 70)
+local hpFrame = Instance.new("Frame")
+hpFrame.Name = "Health"
+hpFrame.AnchorPoint = Vector2.new(0, 1)
+hpFrame.Position = UDim2.new(0, 24, 1, -24)
+hpFrame.Size = UDim2.fromOffset(240, 28)
+hpFrame.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
+hpFrame.BackgroundTransparency = 0.25
+hpFrame.Visible = false
+hpFrame.Parent = gui
+do
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 8)
+	c.Parent = hpFrame
+end
+local hpFill = Instance.new("Frame")
+hpFill.Name = "Fill"
+hpFill.Size = UDim2.fromScale(1, 1)
+hpFill.BackgroundColor3 = HP_FILL
+hpFill.BorderSizePixel = 0
+hpFill.Parent = hpFrame
+do
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 8)
+	c.Parent = hpFill
+end
+local hpText = Instance.new("TextLabel")
+hpText.Size = UDim2.fromScale(1, 1)
+hpText.BackgroundTransparency = 1
+hpText.TextColor3 = Color3.new(1, 1, 1)
+hpText.TextStrokeTransparency = 0.5
+hpText.Font = Enum.Font.GothamBold
+hpText.TextSize = 16
+hpText.ZIndex = 2
+hpText.Parent = hpFrame
+
+local lastHealth = 0
+local flashId = 0
+local function showHealth(humanoid: Humanoid)
+	local max = math.max(1, humanoid.MaxHealth)
+	local health = math.max(0, humanoid.Health)
+	local frac = math.clamp(health / max, 0, 1)
+	hpFill.Size = UDim2.fromScale(frac, 1)
+	hpText.Text = `HP {math.ceil(health)} / {math.floor(max)}`
+	if health < lastHealth then
+		flashId += 1
+		local mine = flashId
+		hpFill.BackgroundColor3 = HP_FLASH
+		hpFrame.BackgroundColor3 = Color3.fromRGB(90, 20, 28)
+		task.delay(0.25, function()
+			if flashId == mine then
+				hpFill.BackgroundColor3 = if frac < 0.35 then HP_LOW else HP_FILL
+				hpFrame.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
+			end
+		end)
+	else
+		hpFill.BackgroundColor3 = if frac < 0.35 then HP_LOW else HP_FILL
+	end
+	lastHealth = health
+end
+
+local function watchHumanoid(character: Model)
+	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
+	lastHealth = humanoid.Health
+	showHealth(humanoid)
+	hpFrame.Visible = true
+	humanoid.HealthChanged:Connect(function()
+		showHealth(humanoid)
+	end)
+	humanoid:GetPropertyChangedSignal("MaxHealth"):Connect(function()
+		showHealth(humanoid)
+	end)
+end
+player.CharacterAdded:Connect(watchHumanoid)
+player.CharacterRemoving:Connect(function()
+	hpFrame.Visible = false
+end)
+if player.Character then
+	task.spawn(watchHumanoid, player.Character)
+end
 
 -- Countdown home on the result screen.
 task.spawn(function()

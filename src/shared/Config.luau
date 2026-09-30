@@ -52,6 +52,13 @@ return table.freeze({
 		TowerDamagePerLevel = 0.1,
 		RespawnTime = 3,
 		ResultsTime = 8,
+		PlayerMaxHealth = 100,
+		HealPerRound = 25,
+		SpawnProtection = 3,
+		MaxResist = 60,
+		MaxProjectiles = 80,
+		TowerHPPerTier = 0.15,
+		RepairCost = 0.3,
 	},
 	Towers = {
 		SCOUT = {

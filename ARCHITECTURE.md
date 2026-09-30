@@ -36,6 +36,7 @@ src/
 │   ├── TowerStats.luau      A tower's stats right now (base + upgrades); pure, used by Towers
 │   ├── Pricing.luau         Upgrade discounts and sell refunds; pure, used by Shop
 │   ├── Payouts.luau         Casual Amber payout at match end; pure, used by Progression
+│   ├── Combat.luau          Dino attack scaling, resistance cap, tower max HP, repair cost; pure
 │   ├── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
 │   └── Modes.luau           Game modes and tracks the home screen offers (availability, display)
 ├── server/   → ServerScriptService.Server
@@ -53,9 +54,12 @@ src/
 │   │                        fire modes, pellets/pierce/ricochet, abilities — all validated here
 │   ├── Hazards.luau         Burning patches on the track (towers and hero rounds)
 │   ├── Airdrops.luau        Quartermaster chests players run over to collect
+│   ├── Health.luau          The only mutator of player HP: setUp (max HP, spawn force field), damage (resist), heal
 │   ├── Progression.luau     Saved per player: Storm Cores, hero mastery, highest round (DataStore)
 │   ├── Effects.luau         Tracers, blasts, burn discs (visual only)
 │   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
+├── starter/StarterCharacterScripts → StarterPlayer.StarterCharacterScripts
+│   └── Health.server.luau   Empty on purpose: replaces Roblox's health regeneration
 └── client/   → StarterPlayer.StarterPlayerScripts.Client
     ├── Home.client.luau     Home screen (Lobby): mode, track, difficulty, Play (host only)
     ├── Hud.client.luau      Status bar, Start button, level-up banner, result screen
@@ -93,6 +97,7 @@ This dissolves most of the problems the UEFN plan was built around:
 | Enemies (create / move / damage / remove) | `Enemies` | Read `getLive()`, call `damage()` |
 | A tower's tiers and stats | `Towers` | Call `upgrade()` after paying |
 | Cash and lives | `Economy` | Call `trySpend()` / `earn()` / `lose()` |
+| Player HP (the Humanoid's Health / MaxHealth) | `Health` | Call `damage()` / `heal()` / `healAll()`; clients read the Humanoid |
 | What a tower cost (for refunds) | `Shop` | — |
 | Who built a tower | `Towers` (`tower.owner`) | Shop reads it: only the builder sells |
 | Pops per player | `Scoreboard` | Towers report kills through the `onPop` hook |
