@@ -228,6 +228,17 @@ the spreadsheet, never for code.
 - **Accept:** Config diff is the one new Tuning line; the heroes spec still passes; a new
   assertion that Incendiary's patch reach is ≥ 3; check clean. No playtest claim.
 
+### T10c. Readability touch-ups (visual only) — 🦖
+- **Goal:** DECISIONS #33 (Dino review round 2: R3, R6–R9).
+- **Files:** `TowerLook`: the Hunting Blind gets viewing slits on all four sides; the Longshot
+  Perch gets a rail on all four sides and a shorter barrel angled up 30°; the Tranq Station
+  darts get a flat fletching block at the bottom. `DinoLook`: `setSedated` puts the dart in the
+  back (top of the body, tilted toward the tail); `setAsleep` sets billboard MaxDistance 80;
+  the Pteranodon crest sits at offset (0, 0.7, -0.9), size (0.2, 0.3, 1.0), tilted up about 20°.
+  **Don't touch the crown or the stage-2 glow** (R5 rejected; R4 waits for Jovan).
+- **Accept:** the looks spec is extended (footprint, anchoring, dart present from the top,
+  MaxDistance) and green; check clean. No playtest claim.
+
 ### T11. Dino bites — 🦖
 - **Spreadsheet:** `Enemies` columns O–R: Melee name, Melee damage, Melee every (s), Melee
   reach (studs) with DECISIONS #3 values (melee names from #2: Nip, Slash, Head-Butt, Tail
