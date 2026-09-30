@@ -59,6 +59,7 @@ return table.freeze({
 		MaxProjectiles = 80,
 		TowerHPPerTier = 0.15,
 		RepairCost = 0.3,
+		BurnPatchMinReach = 3,
 	},
 	Towers = {
 		SCOUT = {

@@ -13,6 +13,10 @@
 	Kills are credited to whoever lit the fire.
 ]]
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
 
@@ -42,7 +46,7 @@ function Hazards.burn(distance: number, reach: number, dps: number, seconds: num
 	if dps <= 0 or seconds <= 0 then
 		return
 	end
-	reach = math.max(reach, 1)
+	reach = math.max(reach, Config.Tuning.BurnPatchMinReach) -- readable even with no splash
 	table.insert(burns, {
 		distance = distance,
 		reach = reach,

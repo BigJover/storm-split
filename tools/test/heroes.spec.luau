@@ -164,3 +164,10 @@ test("fire mode: a path that sets it wins over the base; others leave it", funct
 	eq((HeroStats.compute("PISTOL", { 5, 0, 2 }) :: any).fireMode, "auto", "Akimbo Frenzy")
 	eq((HeroStats.compute("PISTOL", { 2, 0, 5 }) :: any).fireMode, "semi", "base semi")
 end)
+
+test("Incendiary's burning ground is readable: patch reach >= 3 (DECISIONS #32)", function()
+	local incendiary = at("RIFLE", 3, 2, "Incendiary")
+	eq(Config.Tuning.BurnPatchMinReach, 3, "Tuning Burn patch min reach")
+	-- Hazards.burn: reach = max(splash radius, BurnPatchMinReach)
+	ok(math.max(incendiary.splashRadius, Config.Tuning.BurnPatchMinReach) >= 3, "Incendiary patch reach")
+end)

@@ -399,7 +399,7 @@ def validate(data):
         "HeroUpgradeCostGrowth", "ChestLifetime", "ChestSpread", "RoundsPerLevel",
         "HeroDamagePerLevel", "TowerDamagePerLevel", "MultiplayerLossPayout", "RespawnTime", "ResultsTime",
         "PlayerMaxHealth", "HealPerRound", "SpawnProtection", "MaxResist", "MaxProjectiles",
-        "TowerHPPerTier", "RepairCost",
+        "TowerHPPerTier", "RepairCost", "BurnPatchMinReach",
     ]
     for key in needed:
         if key not in data["Tuning"]:
