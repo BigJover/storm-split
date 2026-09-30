@@ -18,15 +18,15 @@ on the spreadsheet plus any new fire mechanic.
 
 ## Mastery (saved between matches)
 
-Storm Cores (`VISION.md` for how they're earned) buy up to 20 mastery levels per owned hero: -5% to -20% hero
+Amber (`VISION.md` for how it's earned) buys up to 20 mastery levels per owned hero: -5% to -20% hero
 upgrade costs (levels 1-4), ability cooldown -15% (5) and -30% (15), a free first upgrade
 each match (10), and at 20 a gold gun and a crossover cap of 3 for this hero. Never damage.
 Planned later: a second ability variant (10) and a secondary ability effect (15).
 
 ## Hero levels
 
-Enemy HP grows ~5% a round (x7 by round 40) while hero upgrades don't add much damage, so
-heroes **level up**: each level multiplies all hero damage — rounds, splash, fire, Airburst —
+Dino HP grows ~5% a round (x7 by round 40) while hero upgrades don't add much damage, so
+heroes **level up**: each level multiplies all hero damage — rounds, splash, fire, Flare Strike —
 by +25%, compounding. Towers ride the same levels at +10% a level (they already scale with
 upgrades), so both stay useful. A banner announces each level. Numbers: `Tuning` → HERO
 LEVELS.
@@ -45,8 +45,8 @@ LEVELS.
 | Fire modes | Semi (one per click), auto (hold), burst (N per click) |
 | Dual guns | Two guns alternate: double fire rate and magazine |
 | Pellets / slug | Shotguns fire a cone of pellets; a slug is one accurate shot |
-| Pierce | A shot keeps going through N enemies |
-| Ricochet | A hit bounces to nearby enemies |
+| Pierce | A shot keeps going through N dinos |
+| Ricochet | A hit bounces to nearby dinos |
 | Special rounds | Burn, armour-piercing, splash, knockback, marking, bonus vs marked |
 | Scope | Right-click zoom in first person |
 | Spin-up | Fire rate climbs the longer you hold the trigger |
@@ -64,8 +64,8 @@ Tiers in *italics* change how the gun fires.
 | **Trick Shot** | utility | Speed Loader | Extended Mag | *Ricochet* | Quick Mark | *Chain Shot* |
 
 Dual Pistols: a second gun, alternating fire. Akimbo Frenzy: both full-auto. Scope: zoom and
-reach. Hollow Tips: pierces armour. Deadshot: triple damage to marked enemies. Ricochet:
-bounces to a second enemy. Quick Mark: shorter Mark cooldown. Chain Shot: bounces 4 times.
+reach. Hollow Tips: pierces armour. Deadshot: triple damage to marked dinos. Ricochet:
+bounces to a second dino. Quick Mark: shorter Tracking Dart cooldown. Chain Shot: bounces 4 times.
 
 ### Big Game Hunter (hunting rifle) — Sustained · ability **Rally Cry** (your fire rate up, nearby towers faster)
 
@@ -75,7 +75,7 @@ bounces to a second enemy. Quick Mark: shorter Mark cooldown. Chain Shot: bounce
 | **Heavy** | sustain | Drum Mag | Fast Hands | *Belt Fed* | Bipod | *Spin-Up* |
 | **Special Ammo** | rounds | Tracer Rounds | *Incendiary* | *AP Rounds* | Hot Load | *Explosive Tips* |
 
-Burst Fire: 3-round bursts, tight grouping. Belt Fed: no reloading during Overdrive. Bipod:
+Burst Fire: 3-round bursts, tight grouping. Belt Fed: no reloading during Rally Cry. Bipod:
 much less recoil while standing still. Spin-Up: fire rate climbs while you hold. Tracer
 Rounds: hits briefly mark. Incendiary: burning ground. AP Rounds: pierce armour. Explosive
 Tips: small splash.
@@ -88,11 +88,12 @@ Tips: small splash.
 | **Buckshot** | crowds | Tight Choke | Extra Pellets | *Dragon's Breath* | Auto-Loader | *Street Sweeper* |
 | **Breacher** | burst | Speed Shells | Extended Tube | *Double Barrel* | Kickback | *Frag Shells* |
 
-Slug Rounds: one accurate shot through 2 enemies. Rifled Barrel: slugs reach air. Sabot:
-pierces armour. Railslug: through 6. Dragon's Breath: pellets set enemies on fire — after a moment they take one burn tick worth
-35% of the shot. The fire passes to split children, so a Brute shot down to Husks sees the
-Husks burn out on the tick in early rounds. Also leaves burning ground behind. Street Sweeper:
-full-auto drum. Double Barrel: two blasts per trigger. Kickback: knocks enemies back. Frag
+Slug Rounds: one accurate shot through 2 dinos. Rifled Barrel: slugs reach air. Sabot:
+pierces armour. Railslug: through 6. Dragon's Breath: pellets set dinos on fire — after a moment they take one burn tick worth
+35% of the shot. The fire stays lit as a dino shrinks, so a dino shot down a size still
+takes the tick, which often finishes off small ones in early rounds. Also leaves burning
+ground behind. Street Sweeper:
+full-auto drum. Double Barrel: two blasts per trigger. Kickback: knocks dinos back. Frag
 Shells: explode on impact.
 
 ## Where the numbers live
