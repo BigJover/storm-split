@@ -115,3 +115,37 @@ Crown):
   of the head, pointing backward.
 - **V3 Trampled tower:** besides the tilt and smoke, add 2–3 small Slate debris blocks at the base,
   so it reads as "smashed" and not just "off".
+
+---
+
+## Round 2 — review of f877eb0 (T7 wording + sedation looks) and 068da66 (T7b silhouettes)
+
+**Landed well**
+- All the cold, storm and Overdrive wording is gone from the player-facing text. The Tranq panel
+  now reads as darts and sleep. "Dinos {n}" and "No dino there to dart" are good.
+- **"Camp lives"** instead of my "Fence" works: it's clear, and it no longer reads as the player's
+  own lives. Accepted.
+- Ice is replaced by a teal Neon dart plus "zzz", and zzz shows only for Tranq knockouts (not for
+  Concussion or Flare Strike stuns). That's exactly the right split.
+- The tower silhouettes read as hunting gear: a camo hide, a tree stand, a sandbagged mortar, crates
+  under a tarp. Real materials, and everything stays in the footprint.
+- The DinoLook fixes are all correct: the Gallimimus head now sits on its neck; the Raptor stripe
+  and crest sit on its body and head; the T-Rex teeth sit on top of the jutting jaw.
+
+**Still open or new**
+
+| # | Priority | Issue | Fix |
+|---|---|---|---|
+| R1 | **must-fix (when T9 lands)** | The Tranq panel now says "knocks out" and a sleeping dino is "knocked out", which makes M1 more urgent. The tower state can't also be "Knocked out" / "KO". | `TowerLook.setKnockedOut` label → `TRAMPLED`. `Shop.client` header → "Trampled — repair it". DECISIONS #9 wording. |
+| R2 | must-fix (when T14/T15 land) | The Field Hospital and Armory still have no silhouette. | `TowerLook.SILHOUETTES`: HOSPITAL = a white canvas tent (two wedges) with a **green "+"** (not a red cross). ARMORY = a dark wood back wall, a gun rack of thin bars, a grey Metal plate. Add both to `COLORS`. |
+| R3 | nice | Towers never rotate, so the Hunting Blind's slit, the Perch rail and barrel, and the Mortar tube all face world −Z, often away from the track. | `TowerLook` SCOUT: add slits on all four sides. SNIPER: a rail on all four sides and a shorter barrel pointing up at 30° (reads from any side). |
+| R4 | nice | The stage-2 glow turns the *whole* silhouette Neon (glowing sandbags, glowing grass), which hides the shape you just added. | `TowerLook.setStage`: at stage 2, keep the materials and add a single amber Neon accent part instead (for example a band under the roof or top block). |
+| R5 | nice | The stage-1 gold **Crown** is a generic 3×0.8×3 slab; on the Perch it sits on the roof like a lid. | `TowerLook.setStage`: a **trophy** instead: two bone-white horn blocks (0.3×0.3×1.2, angled ±30°) on a small dark-wood plaque on top. |
+| R6 | nice | The sedation dart sits on the right flank only, so it's invisible from the left and hard to see from a tower-height, first-person view. | `DinoLook.setSedated`: put the dart in the **back** (offset `(0, body.Y/2, 0)`, tilted 30° toward the tail) so it shows from every side and from above. |
+| R7 | nice | The "zzz" billboard has no distance cap; a knockout pulse on a crowded wave draws a lot of labels across the map. | `DinoLook.setAsleep`: `billboard.MaxDistance = 80` (same as the tier label). |
+| R8 | nice | The Pteranodon crest moved back to z −0.9…+0.3, so it now sits mostly over the body and reads as a back fin. | `DinoLook` LLAMA Crest: offset `(0, 0.7, -0.9)`, size `(0.2, 0.3, 1.0)`, tilted up about 20°, so it starts at the back of the head. |
+| R9 | nice | The Tranq Station darts stand upright with glowing tips on top, which can read as candles. | `TowerLook` CHILLER: add a small flat fletching block (0.35×0.25×0.05) at the bottom of each dart. |
+
+Still open from round 1 (not taken, which is fine): the attack renames, the Medic/Armory name
+collisions (M7, due with T14/T16), the projectile ground ring (M8, due with T12), Storm of Steel /
+Skybreaker (M5/M6) and "Pops".
