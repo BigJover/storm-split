@@ -281,6 +281,11 @@ def read_enemies(ws):
             "armored": yes(v(ws, r, 12)),
             "boss": yes(v(ws, r, 13)),
             "sizes": max(1, int(num(v(ws, r, 14), 1))),
+            # Step 2: the bite (values at the largest size, on Easy)
+            "meleeName": str(v(ws, r, 15) or ""),
+            "meleeDamage": num(v(ws, r, 16)),
+            "meleeEvery": num(v(ws, r, 17)),
+            "meleeReach": num(v(ws, r, 18)),
         }
         r += 1
     return enemies
@@ -345,6 +350,15 @@ def validate(data):
         for k in rd["counts"]:
             if k not in enemies:
                 problems.append(f"Round {i} references unknown tier '{k}'")
+
+    for key, e in enemies.items():
+        if e["meleeDamage"] > 0 and (e["meleeEvery"] <= 0 or e["meleeReach"] <= 0):
+            problems.append(f"{key} bites (Melee damage > 0) but needs Melee every and Melee reach above 0")
+        if e["meleeDamage"] > 0 and not e["meleeName"]:
+            problems.append(f"{key} bites but its Melee name is empty")
+    for key, d in data["Difficulties"].items():
+        if d["dinoDamageMult"] <= 0:
+            problems.append(f"Difficulty {key} needs a Dino damage x above 0")
 
     for key, t in data["Towers"].items():
         if not isinstance(t["maxHp"], (int, float)) or t["maxHp"] <= 0:
@@ -538,6 +552,7 @@ def read_difficulty(ws):
             "cashMult": num(v(ws, r, 6), 1),
             "startingLives": num(v(ws, r, 7)),
             "clearReward": num(v(ws, r, 9)),
+            "dinoDamageMult": num(v(ws, r, 10), 1),
         }
         order.append(key)
         r += 1

@@ -55,6 +55,7 @@ export type Enemy = {
 	part: BasePart, -- the model's Root: where the dino is, for targeting
 	alive: boolean,
 	stunnedUntil: number,
+	disarmedUntil: number, -- can't bite or shoot until then (Field Medic Jaw Lock, later)
 	markPercent: number,
 	markedUntil: number,
 	chilledUntil: number,
@@ -178,6 +179,7 @@ local function spawnNow(item: Pending)
 		part = nil :: any,
 		alive = true,
 		stunnedUntil = 0,
+		disarmedUntil = 0,
 		markPercent = 0,
 		markedUntil = 0,
 		chilledUntil = 0,
@@ -301,6 +303,32 @@ function Enemies.stun(enemy: Enemy, seconds: number, affectsBosses: boolean?)
 	enemy.stunnedUntil = math.max(enemy.stunnedUntil, os.clock() + seconds)
 end
 
+function Enemies.isStunned(enemy: Enemy): boolean
+	return os.clock() < enemy.stunnedUntil
+end
+
+-- A disarmed dino keeps walking but can't bite or shoot (Server/DinoAttacks
+-- checks). Bosses shrug it off unless `affectsBosses`.
+function Enemies.disarm(enemy: Enemy, seconds: number, affectsBosses: boolean?)
+	if not enemy.alive or seconds <= 0 or (enemy.def.boss and not affectsBosses) then
+		return
+	end
+	enemy.disarmedUntil = math.max(enemy.disarmedUntil, os.clock() + seconds)
+end
+
+function Enemies.isDisarmed(enemy: Enemy): boolean
+	return os.clock() < enemy.disarmedUntil
+end
+
+-- How much a sedation slow holds this dino back right now (0..0.95): its
+-- walking speed and, in DinoAttacks, its attack cooldowns (DECISIONS #6).
+function Enemies.slowFraction(enemy: Enemy): number
+	if os.clock() >= enemy.chilledUntil then
+		return 0
+	end
+	return math.clamp(enemy.slowPercent, 0, 95) / 100
+end
+
 -- A Tranq Station knockout pulse: a stun that also shows "zzz" while it holds.
 function Enemies.knockOut(enemy: Enemy, seconds: number, affectsBosses: boolean?)
 	local before = enemy.stunnedUntil
@@ -392,7 +420,7 @@ function Enemies.step(dt: number)
 	for _, enemy in live do
 		local isChilled = now < enemy.chilledUntil
 		if now >= enemy.stunnedUntil then
-			local slow = if isChilled then math.clamp(enemy.slowPercent, 0, 95) / 100 else 0
+			local slow = Enemies.slowFraction(enemy)
 			enemy.distance += enemy.speed * (1 - slow) * dt
 		end
 		-- Visuals only.

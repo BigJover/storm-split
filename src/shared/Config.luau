@@ -5200,6 +5200,10 @@ return table.freeze({
 			armored = false,
 			boss = false,
 			sizes = 1,
+			meleeName = "Nip",
+			meleeDamage = 2,
+			meleeEvery = 1,
+			meleeReach = 8,
 		},
 		BRUTE = {
 			display = "Raptor",
@@ -5213,6 +5217,10 @@ return table.freeze({
 			armored = false,
 			boss = false,
 			sizes = 2,
+			meleeName = "Slash",
+			meleeDamage = 4,
+			meleeEvery = 1.2,
+			meleeReach = 9,
 		},
 		SHIELD = {
 			display = "Pachycephalosaurus",
@@ -5226,6 +5234,10 @@ return table.freeze({
 			armored = false,
 			boss = false,
 			sizes = 3,
+			meleeName = "Head-Butt",
+			meleeDamage = 6,
+			meleeEvery = 1.5,
+			meleeReach = 9,
 		},
 		ARMOR = {
 			display = "Ankylosaurus",
@@ -5239,6 +5251,10 @@ return table.freeze({
 			armored = true,
 			boss = false,
 			sizes = 3,
+			meleeName = "Tail Club",
+			meleeDamage = 10,
+			meleeEvery = 2,
+			meleeReach = 10,
 		},
 		STORM = {
 			display = "Gallimimus",
@@ -5252,6 +5268,10 @@ return table.freeze({
 			armored = false,
 			boss = false,
 			sizes = 3,
+			meleeName = "Kick",
+			meleeDamage = 6,
+			meleeEvery = 1,
+			meleeReach = 9,
 		},
 		LLAMA = {
 			display = "Pteranodon",
@@ -5265,6 +5285,10 @@ return table.freeze({
 			armored = false,
 			boss = false,
 			sizes = 3,
+			meleeName = "",
+			meleeDamage = 0,
+			meleeEvery = 0,
+			meleeReach = 0,
 		},
 		ZEP = {
 			display = "Triceratops",
@@ -5278,6 +5302,10 @@ return table.freeze({
 			armored = false,
 			boss = true,
 			sizes = 4,
+			meleeName = "Gore",
+			meleeDamage = 25,
+			meleeEvery = 2,
+			meleeReach = 12,
 		},
 		BARGE = {
 			display = "T-Rex",
@@ -5291,6 +5319,10 @@ return table.freeze({
 			armored = false,
 			boss = true,
 			sizes = 5,
+			meleeName = "Chomp",
+			meleeDamage = 50,
+			meleeEvery = 2.5,
+			meleeReach = 14,
 		},
 	},
 	EnemyOrder = {
@@ -5786,6 +5818,7 @@ return table.freeze({
 			cashMult = 1,
 			startingLives = 40,
 			clearReward = 50,
+			dinoDamageMult = 1,
 		},
 		NORMAL = {
 			display = "Normal",
@@ -5796,6 +5829,7 @@ return table.freeze({
 			cashMult = 0.9,
 			startingLives = 30,
 			clearReward = 100,
+			dinoDamageMult = 1.25,
 		},
 		HARD = {
 			display = "Hard",
@@ -5806,6 +5840,7 @@ return table.freeze({
 			cashMult = 0.8,
 			startingLives = 20,
 			clearReward = 150,
+			dinoDamageMult = 1.6,
 		},
 		CHAOS = {
 			display = "Chaos",
@@ -5816,6 +5851,7 @@ return table.freeze({
 			cashMult = 0.75,
 			startingLives = 10,
 			clearReward = 200,
+			dinoDamageMult = 2.2,
 		},
 	},
 	DifficultyOrder = {

@@ -68,3 +68,50 @@ test("Config tower Max HP (DECISIONS #8) and what upgrades add", function()
 		near(Combat.towerMaxHp(def, { 5, 2, 0 }), hp * 2.05, `{key} at 7 tiers`)
 	end
 end)
+
+test("bites in Config (DECISIONS #2/#3) and Dino damage x (#4)", function()
+	local bites = {
+		HUSK = { "Nip", 2, 1, 8 },
+		BRUTE = { "Slash", 4, 1.2, 9 },
+		SHIELD = { "Head-Butt", 6, 1.5, 9 },
+		ARMOR = { "Tail Club", 10, 2, 10 },
+		STORM = { "Kick", 6, 1, 9 },
+		ZEP = { "Gore", 25, 2, 12 },
+		BARGE = { "Chomp", 50, 2.5, 14 },
+	}
+	for key, want in bites do
+		local e = Config.Enemies[key]
+		eq(e.meleeName, want[1], `{key} ({e.display}) melee name`)
+		eq(e.meleeDamage, want[2], `{key} melee damage`)
+		eq(e.meleeEvery, want[3], `{key} melee every`)
+		eq(e.meleeReach, want[4], `{key} melee reach`)
+	end
+	eq(Config.Enemies.LLAMA.meleeDamage, 0, "Pteranodon can't bite (it flies)")
+	local mult = { EASY = 1, NORMAL = 1.25, HARD = 1.6, CHAOS = 2.2 }
+	for key, m in mult do
+		eq(Config.Difficulties[key].dinoDamageMult, m, `{key} Dino damage x`)
+	end
+	local rex = Config.Enemies.BARGE
+	near(Combat.attackDamage(rex.meleeDamage, rex.sizes, rex.sizes, 2.2), 110, "full T-Rex Chomp on Chaos")
+	near(Combat.attackDamage(rex.meleeDamage, 1, rex.sizes, 1), 10, "smallest T-Rex on Easy")
+end)
+
+local function target(x: number, z: number, standing: boolean, name: string, y: number?): Combat.Target
+	return { position = Vector3.new(x, y or 0, z), standing = standing, ref = name }
+end
+
+test("pickTarget: the nearest standing target in reach, sideways only", function()
+	local dino = Vector3.new(0, 3, 0)
+	eq(Combat.pickTarget(dino, {}, 10), nil, "nothing to bite")
+	local a, b = target(8, 0, true, "tower 8"), target(5, 0, true, "player 5")
+	eq((Combat.pickTarget(dino, { a, b }, 10) :: any).ref, "player 5", "nearest wins, towers and players alike")
+	eq(Combat.pickTarget(dino, { a, b }, 4), nil, "out of reach")
+	eq((Combat.pickTarget(dino, { a }, 8) :: any).ref, "tower 8", "exactly at reach counts")
+	local trampled, dead = target(1, 0, false, "trampled tower"), target(2, 0, false, "dead player")
+	eq((Combat.pickTarget(dino, { trampled, dead, a }, 10) :: any).ref, "tower 8", "trampled towers and the dead are ignored")
+	eq(Combat.pickTarget(dino, { trampled, dead }, 10), nil, "only down targets: none")
+	local high = target(3, 4, true, "on a ledge", 40)
+	eq((Combat.pickTarget(dino, { a, high }, 10) :: any).ref, "on a ledge", "height doesn't count: 5 sideways")
+	local tie1, tie2 = target(0, 6, true, "first"), target(6, 0, true, "second")
+	eq((Combat.pickTarget(dino, { tie1, tie2 }, 10) :: any).ref, "first", "ties go to the earlier candidate")
+end)

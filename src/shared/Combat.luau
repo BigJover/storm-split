@@ -11,6 +11,8 @@
 	                on any path, then any aura's +% max HP
 	  repairCost    Repair cost x cash put into the tower x share of HP missing,
 	                less a Logistics discount, rounded to the nearest whole
+	  pickTarget    the nearest standing target within reach, measured sideways
+	                (ignoring height); towers and players alike (DECISIONS #6)
 ]]
 
 local Config = require(script.Parent.Config)
@@ -54,6 +56,28 @@ function Combat.repairCost(spent: number, hp: number, maxHp: number, discountPer
 	local missing = 1 - math.max(0, hp) / maxHp
 	local cost = Config.Tuning.RepairCost * spent * missing * (1 - (discountPercent or 0) / 100)
 	return math.floor(cost + 0.5)
+end
+
+export type Target = {
+	position: Vector3,
+	standing: boolean, -- false: a trampled tower or a dead / out-of-match player
+	ref: any, -- the tower or player
+}
+
+-- The nearest standing target within `reach` (horizontal studs) of `point`,
+-- or nil. Ties go to the earlier candidate.
+function Combat.pickTarget(point: Vector3, candidates: { Target }, reach: number): Target?
+	local best, bestGap = nil, math.huge
+	for _, candidate in candidates do
+		if candidate.standing then
+			local offset = candidate.position - point
+			local gap = Vector2.new(offset.X, offset.Z).Magnitude
+			if gap <= reach and gap < bestGap then
+				best, bestGap = candidate, gap
+			end
+		end
+	end
+	return best
 end
 
 return Combat

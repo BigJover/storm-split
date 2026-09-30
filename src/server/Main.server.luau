@@ -39,6 +39,7 @@ local Hazards = require(script.Parent.Hazards)
 local Airdrops = require(script.Parent.Airdrops)
 local Progression = require(script.Parent.Progression)
 local Health = require(script.Parent.Health)
+local DinoAttacks = require(script.Parent.DinoAttacks)
 
 -- Testing only: set above 1 to jump straight to a later round.
 local START_ROUND = 1
@@ -137,6 +138,11 @@ Towers.init(map.towerFolder, {
 })
 Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged })
 Health.init()
+DinoAttacks.init({
+	damageMult = function()
+		return difficulty().dinoDamageMult
+	end,
+})
 Shop.init(remotes)
 Hero.init(remotes, { onPop = Scoreboard.addPop })
 
@@ -242,6 +248,7 @@ RunService.Heartbeat:Connect(function(dt)
 	local started = os.clock()
 	Enemies.step(dt)
 	Towers.step(dt)
+	DinoAttacks.step(dt) -- bites (Playing only)
 	Hazards.step(dt)
 	local cost = os.clock() - started
 
@@ -270,6 +277,7 @@ local function resetBoard()
 	Towers.clearAll()
 	Shop.reset()
 	Hazards.clear()
+	DinoAttacks.clear()
 	Effects.clear()
 	Hero.resetMatch()
 	Scoreboard.resetPops()
