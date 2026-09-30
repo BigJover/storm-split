@@ -255,6 +255,16 @@ the spreadsheet, never for code.
 - **Accept:** check clean; spec for target choice (nearest, ignores KO/dead) using a pure
   `Combat.pickTarget(point, candidates, reach)`.
 
+### T11b. Damaged towers sell for less (tiny)
+- **Goal:** DECISIONS #35: repairing is never worse than selling and rebuying.
+- **Files:** `Pricing.sellRefund(spent, auraRefund, repairPrice)` returns
+  `max(0, floor(spent × rate) − repairPrice)`, where `repairPrice` is `Combat.repairCost` for the
+  tower's current HP (0 at full). `Shop.sell` and the `Shop.client` sell row pass it. The panel's
+  sell text shows the reduced refund.
+- **Accept:** a pricing spec shows, for refund rates 0.7, 0.9 and 1.0, that (spent − refund)
+  ≥ the repair price for a trampled tower and for a half-damaged one, and that a full-HP refund is
+  unchanged; check clean; no spreadsheet change.
+
 ### T12. Dino ranged attacks (projectiles) — 🦖
 - **Spreadsheet:** `Enemies` columns S–X: Ranged name, Ranged damage, Ranged every (s),
   Ranged reach, Projectile speed, Impact radius (DECISIONS #3). Ranged names per #25: Skull
