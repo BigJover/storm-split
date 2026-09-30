@@ -14,7 +14,7 @@
 
 	ABILITIES (UPGRADES.md) come from the spreadsheet's ability columns, which
 	are cumulative per tier. Across a tower's paths, multipliers multiply,
-	amounts take the highest, and yes/no flags combine with OR.
+	amounts take the highest, and yes/no flags combine with OR (Shared/TowerStats).
 
 	  shots              trigger pulls per fire (Double Tap)
 	  lineHits           a shot keeps going through enemies behind its target
@@ -45,6 +45,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Placement = require(Shared:WaitForChild("Placement"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
+local TowerStats = require(Shared:WaitForChild("TowerStats"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local Effects = require(script.Parent.Effects)
@@ -53,45 +54,7 @@ local Hazards = require(script.Parent.Hazards)
 
 local Towers = {}
 
-export type Stats = {
-	damage: number,
-	rate: number,
-	targets: number,
-	range: number,
-	splashRadius: number,
-	shots: number,
-	lineHits: number,
-	piercesArmor: boolean,
-	armoredMult: number,
-	bossMult: number,
-	markPercent: number,
-	stunSeconds: number,
-	stunsBosses: boolean,
-	knockback: number,
-	burnDps: number,
-	burnSeconds: number,
-	bomblets: number,
-	bombletGenerations: number,
-	auraRatePercent: number,
-	auraDamagePercent: number,
-	auraPiercesArmor: boolean,
-	slowPercent: number,
-	slowLinger: number,
-	slowsBosses: boolean,
-	freezeEvery: number,
-	freezeSeconds: number,
-	freezeDamage: number,
-	freezeHoldsBosses: boolean,
-	brittlePercent: number,
-	stripsArmor: boolean,
-	incomeMult: number,
-	interestPercent: number,
-	interestCap: number,
-	chests: number,
-	chestCash: number,
-	discountPercent: number,
-	sellRefund: number,
-}
+export type Stats = TowerStats.Stats
 
 -- What nearby auras give this tower right now.
 type Buff = {
@@ -135,102 +98,6 @@ local function credit(owner: Player?, killed: boolean)
 end
 
 ------------------------------------------------------------------ stats
-
-local MULTIPLIERS = { "damageMult", "rateMult", "targetsMult", "rangeMult", "armoredMult", "bossMult", "splashMult", "incomeMult" }
-local HIGHEST = {
-	"shots",
-	"lineHits",
-	"markPercent",
-	"stunSeconds",
-	"knockback",
-	"burnDps",
-	"burnSeconds",
-	"bomblets",
-	"bombletGenerations",
-	"auraRatePercent",
-	"auraDamagePercent",
-	"slowPercent",
-	"slowLinger",
-	"freezeSeconds",
-	"freezeDamage",
-	"brittlePercent",
-	"interestPercent",
-	"interestCap",
-	"chests",
-	"chestCash",
-	"discountPercent",
-	"sellRefund",
-}
-local FLAGS = { "piercesArmor", "stunsBosses", "auraPiercesArmor", "slowsBosses", "freezeHoldsBosses", "stripsArmor" }
-
-local function computeStats(def, pathTiers: { number }): Stats
-	local mult: { [string]: number } = {}
-	for _, field in MULTIPLIERS do
-		mult[field] = 1
-	end
-	local high: { [string]: number } = { shots = 1, lineHits = 1 }
-	local flag: { [string]: boolean } = {}
-	local freezeEvery = 0 -- shortest pulse interval any path gives
-
-	for pathIndex, tier in pathTiers do
-		if tier > 0 then
-			local step = def.paths[pathIndex].tiers[tier]
-			for _, field in MULTIPLIERS do
-				mult[field] *= step[field] or 1
-			end
-			for _, field in HIGHEST do
-				high[field] = math.max(high[field] or 0, step[field] or 0)
-			end
-			for _, field in FLAGS do
-				flag[field] = flag[field] or step[field] == true
-			end
-			local every = step.freezeEvery or 0
-			if every > 0 and (freezeEvery == 0 or every < freezeEvery) then
-				freezeEvery = every
-			end
-		end
-	end
-
-	return {
-		damage = def.baseDamage * mult.damageMult,
-		rate = def.baseRate * mult.rateMult,
-		targets = math.max(1, math.floor(def.baseTargets * mult.targetsMult + 0.5)),
-		range = def.range * mult.rangeMult,
-		splashRadius = (def.splashRadius or 0) * mult.splashMult,
-		shots = math.max(1, math.floor(high.shots)),
-		lineHits = math.max(1, math.floor(high.lineHits)),
-		piercesArmor = flag.piercesArmor == true,
-		armoredMult = mult.armoredMult,
-		bossMult = mult.bossMult,
-		markPercent = high.markPercent or 0,
-		stunSeconds = high.stunSeconds or 0,
-		stunsBosses = flag.stunsBosses == true,
-		knockback = high.knockback or 0,
-		burnDps = high.burnDps or 0,
-		burnSeconds = high.burnSeconds or 0,
-		bomblets = math.floor(high.bomblets or 0),
-		bombletGenerations = math.floor(high.bombletGenerations or 0),
-		auraRatePercent = high.auraRatePercent or 0,
-		auraDamagePercent = high.auraDamagePercent or 0,
-		auraPiercesArmor = flag.auraPiercesArmor == true,
-		slowPercent = math.max(def.slowPercent or 0, high.slowPercent or 0),
-		slowLinger = high.slowLinger or 0,
-		slowsBosses = flag.slowsBosses == true,
-		freezeEvery = freezeEvery,
-		freezeSeconds = high.freezeSeconds or 0,
-		freezeDamage = high.freezeDamage or 0,
-		freezeHoldsBosses = flag.freezeHoldsBosses == true,
-		brittlePercent = high.brittlePercent or 0,
-		stripsArmor = flag.stripsArmor == true,
-		incomeMult = mult.incomeMult,
-		interestPercent = high.interestPercent or 0,
-		interestCap = high.interestCap or 0,
-		chests = math.floor(high.chests or 0),
-		chestCash = high.chestCash or 0,
-		discountPercent = high.discountPercent or 0,
-		sellRefund = high.sellRefund or 0,
-	}
-end
 
 local NO_BUFF: Buff = table.freeze({ ratePercent = 0, damagePercent = 0, piercesArmor = false, discountPercent = 0, sellRefund = 0 })
 
@@ -325,7 +192,7 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 		position = base + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0),
 		muzzle = base + Vector3.new(0, TowerLook.BODY_HEIGHT - 0.5, 0),
 		pathTiers = pathTiers,
-		stats = computeStats(def, pathTiers),
+		stats = TowerStats.compute(def, pathTiers),
 		buff = NO_BUFF,
 		cooldown = 0,
 		freezeTimer = 0,
@@ -343,7 +210,7 @@ function Towers.upgrade(tower: Tower, pathIndex: number): boolean
 		return false
 	end
 	tower.pathTiers[pathIndex] += 1
-	tower.stats = computeStats(tower.def, tower.pathTiers)
+	tower.stats = TowerStats.compute(tower.def, tower.pathTiers)
 	TowerLook.refresh(tower.model, tower.stats.range, tower.pathTiers, swapStage(tower))
 	refreshAuras()
 	return true

@@ -23,6 +23,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local ShopRules = require(Shared:WaitForChild("ShopRules"))
 local Placement = require(Shared:WaitForChild("Placement"))
+local Pricing = require(Shared:WaitForChild("Pricing"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
@@ -153,7 +154,7 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 		return false, "That path is maxed"
 	end
 	-- A Quartermaster's Logistics aura discounts upgrades on towers in its range.
-	local cost = math.floor(step.cost * (1 - tower.buff.discountPercent / 100) + 0.5)
+	local cost = Pricing.upgradeCost(step, tower.buff.discountPercent)
 	if not Economy.trySpend(cost) then
 		return false, "Not enough cash"
 	end
@@ -185,7 +186,7 @@ local function sell(player: Player, towerId: unknown): (boolean, string)
 	end
 
 	-- Recycler / Command Center raise the refund for towers in their range.
-	local refund = math.floor((spent[tower] or 0) * math.max(Config.Tuning.SellRefund, tower.buff.sellRefund))
+	local refund = Pricing.sellRefund(spent[tower] or 0, tower.buff.sellRefund)
 	spent[tower] = nil
 	Towers.remove(tower)
 	Economy.earn(refund)

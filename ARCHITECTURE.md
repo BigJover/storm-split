@@ -33,6 +33,8 @@ src/
 │   │                        upgrade visuals (ring size, tier label, crown/glow swaps)
 │   ├── Upgrades.luau        The crossover rule, shared so the client greys out what the server refuses
 │   ├── HeroStats.luau       A hero's gun right now (base + upgrades), shared by server and client HUD
+│   ├── TowerStats.luau      A tower's stats right now (base + upgrades); pure, used by Towers
+│   ├── Pricing.luau         Upgrade discounts and sell refunds; pure, used by Shop
 │   ├── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
 │   └── Modes.luau           Game modes and tracks the home screen offers (availability, display)
 ├── server/   → ServerScriptService.Server
