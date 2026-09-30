@@ -49,7 +49,8 @@ design in the PDF still holds; its UEFN-specific sections don't. Old UEFN materi
 rojo serve                              # live-sync src/ into Studio
 python3 tools/export_constants.py       # after any spreadsheet change
 tools/check.sh                          # static type-check of src/ (luau-lsp via Rokit)
-tools/test.sh                           # headless specs in tools/test/ (Lune via Rokit)
+tools/test.sh                           # headless specs in tools/test/ (Lune via Rokit) + audit
+python3 tools/audit.py                  # spreadsheet vs UPGRADES/HEROES/DIRECTION/VISION + dead columns
 ```
 
 On this Mac `/usr/bin/git` and `/usr/bin/python3` may fail on the Xcode licence; use

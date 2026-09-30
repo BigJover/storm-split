@@ -1,7 +1,17 @@
 #!/bin/sh
-# Headless tests: every tools/test/*.spec.luau under Lune (see tools/test/run.luau).
-# Pass words to run only the specs whose file name contains them: tools/test.sh upgrades
-set -e
+# Headless tests: every tools/test/*.spec.luau under Lune (see tools/test/run.luau),
+# then the Config <-> design-doc audit (tools/audit.py, a report; findings don't fail).
+# Pass words to run only the specs whose file name contains them (skips the audit):
+#   tools/test.sh upgrades
 cd "$(dirname "$0")/.."
 export PATH="$HOME/.rokit/bin:$PATH"
-lune run tools/test/run.luau "$@"
+PYTHON=/Library/Developer/CommandLineTools/usr/bin/python3 # the Xcode licence blocks /usr/bin/python3
+[ -x "$PYTHON" ] || PYTHON=python3
+
+status=0
+lune run tools/test/run.luau "$@" || status=1
+if [ $# -eq 0 ]; then
+	echo
+	"$PYTHON" tools/audit.py || status=1
+fi
+exit $status

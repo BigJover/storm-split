@@ -574,11 +574,8 @@ def recalculated(xlsx):
     return wb
 
 
-def main():
-    xlsx = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_XLSX
-    if not os.path.exists(xlsx):
-        sys.exit(f"Spreadsheet not found: {xlsx}")
-
+def read_data(xlsx):
+    """Everything Config.luau is written from, as Python data (tools/audit.py uses it)."""
     # Always recalculate: results stored in the file depend on which app saved it
     # (Numbers and Excel round a few exact-.5 costs differently), so one
     # calculator gives the same Config every time.
@@ -603,7 +600,16 @@ def main():
         "Difficulties": difficulties,
         "DifficultyOrder": difficulty_order,
     }
+    return data
 
+
+def main():
+    xlsx = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_XLSX
+    if not os.path.exists(xlsx):
+        sys.exit(f"Spreadsheet not found: {xlsx}")
+
+    data = read_data(xlsx)
+    towers, heroes = data["Towers"], data["Heroes"]
     problems, notes = validate(data)
 
     os.makedirs(os.path.dirname(OUT_FILE), exist_ok=True)
