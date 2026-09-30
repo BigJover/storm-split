@@ -132,7 +132,9 @@ the spreadsheet, never for code.
   already has Ricochet bounces 1, Incendiary burn DPS 1 and slug pellets 1 (DECISIONS #18 is
   retracted). Fix only what the spec or the code trace actually shows failing. Docs: `HEROES.md` still says
   "Storm Cores", and Dragon's Breath still talks about "split children / Brute / Husks", so
-  reword both for Amber and shrinking.
+  reword both for Amber and shrinking. Also (DECISIONS #24): Belt Fed "during Overdrive" →
+  "during Rally Cry", "Airburst" → "Flare Strike", and "Mark cooldown" → "Tracking Dart
+  cooldown". These are wording changes only; no tier names change.
 - **Accept:** spec green; Config diff accounted for; the exporter's hero-vs-tower check passes.
 
 ### T7. Polish sweep of leftovers found by T4–T6
@@ -140,7 +142,31 @@ the spreadsheet, never for code.
   behaviour. It also covers stale "Storm Split"/"Cores" wording in player-facing strings
   (`Main` header, prints, panel text) — player-visible text only; internal keys stay. Relabel
   the note at `Rounds!A48` (CLAUDE.md open issue). 🦖 for wording.
-- **Accept:** `tools/audit.py` prints no findings; check and tests green.
+- **Theme fixes from the Dino review (DECISIONS #22–#24):** HUD "Lives {n}" → "Camp lives
+  {n}". "Enemies {n}" → "Dinos {n}". Player-facing "enemy/enemies" → "dino/dinos"
+  (`Hero.luau` "No dino there to dart"; `Shop.client` "sets dinos on fire", "through N
+  dinos"). Tranq Station panel text uses sedation words ("knocks out Xs every Ys", "darts deal
+  X damage", "knocks out bosses", "sedated dinos take +X%", "sedated dinos lose their armour").
+  `Shop.client` "Overdrive" → "Rally Cry". Replace the Ice look (`Enemies` step) with
+  `DinoLook.setSedated(model, on)`: a teal dart in the flank. Add a "zzz" billboard while a dino
+  is stunned by a Tranq Station freeze pulse. **Do not rename any tier, path, hero, tower or
+  "Pops".** Those wait for Jovan (#27).
+- **Accept:** `tools/audit.py` prints no findings; check and tests green; grep shows no
+  player-facing "Overdrive", "Airburst", "freez", "chill" or "enemies" strings (internal
+  names excepted).
+
+### T7b. Tower and dino silhouettes (visual only) — 🦖
+- **Goal:** towers read by shape, not just colour (DECISIONS #26).
+- **Files:** `TowerLook.build`: one block silhouette per key, in real materials, inside the
+  3×3 footprint (anchored, CanCollide/CanQuery off), per `DINO_REVIEW.md` "TowerLook". The
+  keys are Hunting Blind, Longshot Perch, Mortar Pit, Tranq Station and Supply Camp; the
+  HOSPITAL and ARMORY looks come with T14/T15, and the Field Hospital gets a green "+", never a
+  red cross. **The crown at stage 1 and the glow at stage 2 stay**; a trophy accent may be
+  added next to them. Placement ghost still works (it uses the same `build`). `DinoLook`:
+  Gallimimus head on top of its neck, a Raptor back stripe and crest, T-Rex teeth, the
+  Pteranodon crest pointing backward.
+- **Accept:** check clean; no change to `Placement`/`Track.TowerRadius`; the prompt and range
+  ring still attach to the body part that `Shop.decorate` uses.
 
 ---
 
@@ -170,7 +196,9 @@ the spreadsheet, never for code.
   (resist applied; `source` kept for future PvP); `Towers.heal`; KO at 0 → `knockedOut`.
   KO skips fire, chill, auras (`refreshAuras` on KO and revive), income and chests;
   `Towers.targets()` returns standing towers only. Upgrades raise hp by the max HP gained.
-  `TowerLook.setKnockedOut(model, on)` (tilt, Slate, smoke, ring hidden, "KO") and
+  `TowerLook.setKnockedOut(model, on)` (tilt, Slate, smoke, 2–3 Slate debris blocks, ring
+  hidden, label **TRAMPLED**; DECISIONS #21. Player-facing text says "Trampled", never
+  "knocked out" or "KO") and
   `TowerLook.setHealth(model, frac)` (billboard bar, hidden at full). `Shop.decorate`
   publishes `HP`/`MaxHP`/`KO` attributes. Studio-only **L** key (DECISIONS #11).
 - **Accept:** check clean; spec on `TowerStats`/`Combat` for max HP; code trace that a KO'd
@@ -181,13 +209,14 @@ the spreadsheet, never for code.
   `Combat.repairCost` using `spent[tower]` and the Logistics discount; pays first, then
   `Towers.repair`); refuses upgrading a KO'd tower with "Repair it first". Repair cost is
   **not** added to `spent` (a repair doesn't raise the sell refund). `Shop.client`: HP line
-  and a "Repair — $X" row when damaged; red "Knocked out" header when KO'd; the upgrade rows
+  and a "Repair — $X" row when damaged; red "Trampled — repair it" header when KO'd; the upgrade rows
   greyed with the reason.
 - **Accept:** check clean; Pricing/Combat spec for repair; code trace of every refusal.
 
 ### T11. Dino bites — 🦖
 - **Spreadsheet:** `Enemies` columns O–R: Melee name, Melee damage, Melee every (s), Melee
-  reach (studs) with DECISIONS #3 values. `Difficulty` column J **Dino damage x** (1 /
+  reach (studs) with DECISIONS #3 values (melee names from #2: Nip, Slash, Head-Butt, Tail
+  Club, Kick, Gore, Chomp). `Difficulty` column J **Dino damage x** (1 /
   1.25 / 1.6 / 2.2). Exporter: read, validate (damage > 0 ⇒ every and reach > 0).
 - **Files:** new `src/server/DinoAttacks.luau` (reads `Enemies.getLive()`, keeps its own
   per-enemy timers keyed by id; never mutates enemies). Each frame in `Playing`: for each
@@ -202,12 +231,17 @@ the spreadsheet, never for code.
 
 ### T12. Dino ranged attacks (projectiles) — 🦖
 - **Spreadsheet:** `Enemies` columns S–X: Ranged name, Ranged damage, Ranged every (s),
-  Ranged reach, Projectile speed, Impact radius (DECISIONS #3). Validate damage > 0 ⇒
+  Ranged reach, Projectile speed, Impact radius (DECISIONS #3). Ranged names per #25: Skull
+  Toss, Spike Flick, Gravel Spray, Stone Drop, Horn Toss, Bone Spit. Validate damage > 0 ⇒
   others > 0.
 - **Files:** `DinoAttacks`: projectiles as data `{from, to, speed, damage, radius, t}`,
   stepped each frame. They land at the launch-time target point and damage every player and
-  standing tower within radius (DECISIONS #5), capped at Max projectiles. Visual: a coloured
-  ball per species, with the colour in `DinoLook` (visual only), moved by the server or tweened.
+  standing tower within radius (DECISIONS #5), capped at Max projectiles. Visual (DECISIONS #26):
+  a **ground warning ring** at the landing point for the whole flight, sized to the impact
+  radius (orange Neon, 0.6 transparency). The projectile shape comes from `DinoLook` per attack
+  (visual only): Skull Toss / Stone Drop / Horn Toss are a Slate ball in Rock material; Spike
+  Flick is a bone-white wedge; Gravel Spray is 3 brown pebbles; Bone Spit is a bone-white
+  capsule. Moved by the server or tweened.
   Cleared on board reset.
 - **Accept:** check clean; spec for `Combat.landingHits` (inside/outside radius, KO'd
   towers skipped); a note estimating how many projectiles fly in round 40 against the cap.
@@ -231,7 +265,8 @@ the spreadsheet, never for code.
   Re-assert that before writing. New Towers columns Q **Heal /s**, R **Resist %**. Armory row 11: 600,
   range 15, hits air No, HP 250, resist 15, unlock 150, key ARMORY. `Tower Upgrades`: 15 rows
   appended with cost formulas copied from the Supply Camp pattern (pointing at
-  `'Towers'!$C$11`) and names per DECISIONS #16. New columns: Resist %, Thorns damage, Stuns
+  `'Towers'!$C$11`) and names per DECISIONS #16 as renamed by #25 (Hand Loads, Piercing Rounds, Master
+  Gunsmith, Recoil Pads). Silhouette: dark Wood back wall, gun rack, Metal plate. New columns: Resist %, Thorns damage, Stuns
   biters (s), Hunter recoil x, Hunter reload x, Hunter spread x, Hunter fire rate %; Gunsmith
   uses the existing aura columns. Add ARMORY to `ShopRules.Unreleased` until this task lands,
   then remove it.
@@ -245,7 +280,8 @@ the spreadsheet, never for code.
 
 ### T15. Field Hospital — 🦖
 - **Spreadsheet:** Towers row 10: 450, range 15, HP 150, heal 3, unlock 100, key HOSPITAL.
-  15 Tower Upgrades rows (DECISIONS #15). New columns: Heal x, Revives, Revive speed x, Med
+  15 Tower Upgrades rows (DECISIONS #15, renamed by #25: path **Rescue**, Camp
+  Rations). Silhouette: white canvas tent with a green "+". New columns: Heal x, Revives, Revive speed x, Med
   kits, Med kit heal, Rescue beacon, Aura HP %, Last stand.
 - **Files:** `Towers` (heal standing towers and players in range each frame via
   `Towers.heal`/`Health.heal`; revive; the Aura HP % feeds `Combat.towerMaxHp`; Last Stand
@@ -255,7 +291,8 @@ the spreadsheet, never for code.
 
 ### T16. Field Medic hero — 🦖
 - **Spreadsheet:** `Heroes` row 8 MEDIC (DECISIONS #13); ability kind HEAL. 15 `Hero
-  Upgrades` rows (DECISIONS #14). New columns: Heal x, Heal radius x, Heal repairs towers,
+  Upgrades` rows (DECISIONS #14, renamed by #25: path **Muzzle**, Double Dose, Belt
+  Pouch, Triage Tent). The Jaw Lock look is a snout strap (`DinoLook`). New columns: Heal x, Heal radius x, Heal repairs towers,
   Guard %, Guard (s), Slow on hit %, Slow on hit (s), Jaw lock (s), Jaw lock spread
   (studs). Exporter: accept HEAL; the hero-vs-tower check still passes.
 - **Files:** `HeroStats` (new fields), `Hero` (HEAL ability: `Health.heal` in radius;
@@ -269,7 +306,8 @@ the spreadsheet, never for code.
 - `CLAUDE.md` status (Step 2 and polish: statically checked and headless-tested, not
   playtested), `ARCHITECTURE.md` (layout, §4 ownership: Health, DinoAttacks, tower HP in
   Towers; the phase table row "Step 2"), `VISION.md` ("Towers with HP" ✅; Step 2 no longer
-  "planned"), `UPGRADES.md`/`HEROES.md` status keys. 🦖 final wording pass.
+  "planned"), `UPGRADES.md`/`HEROES.md` status keys. 🦖 final wording pass. The recap
+  includes the DECISIONS #27 "ask Jovan" rename list, so he can approve it in one go.
 - The Director writes the recap for Jovan: what changed, what to try in Studio first (L
   key, a round-11 Pachy wave near lane-hugging towers, repair, Medic heal, Armory resist),
   and which numbers are seeds.
