@@ -283,16 +283,24 @@ the spreadsheet, never for code.
   towers skipped); a note estimating how many projectiles fly in round 40 against the cap.
 
 ### T12b. Round-3 touch-ups (visual/wording only) — 🦖
-- **Goal:** DECISIONS #36 and #38.
+- **Goal:** DECISIONS #38 and #39.
 - **Files:** `TowerLook.setKnockedOut`: the smoke becomes dust (RGB 150,125,90, Opacity 0.2,
   RiseVelocity 1.5), and the tilt axis is picked from the base position (still 15°). `Hud` and
   `TowerLook` share one orange low-HP colour (e.g. export `LOW_HP_COLOR` from TowerLook, or a
   tiny shared visual constant). `Shop.decorate`: prompt ActionText "Upgrade", or
   "Upgrade / Repair" while hp < maxHp (it updates when HP changes; Towers already publishes
-  HP). `tools/audit.py` allowlist: `Enemies.meleeName` and `Enemies.rangedName` (display text
-  kept for later).
+  HP). **Private hit notice (DECISIONS #39, replaces the #36 allowlist):** `Health.damage`
+  takes an optional `{species, attack}` source and sends it to that player only (a
+  RemoteEvent to that client, or a player attribute). `Hud` shows one line beside the HP
+  bar, e.g. "Raptor · Slash −4", faded after 1.5s. A new hit replaces the line, and a repeat of
+  the same attack adds up. `DinoAttacks` passes the display name and meleeName/rangedName. No
+  text for tower hits or for other players. Bite visual: a small snapping-teeth pair of blocks
+  in the species colour instead of the red ball (Effects/DinoLook, visual only). A bitten
+  tower's silhouette flashes red for about 0.15s (TowerLook, restoring materials and colours;
+  skip if trampled).
 - **Accept:** looks spec updated (dust colour, tilt differs for two positions, one low colour);
-  audit --strict clean apart from anything T12 still owes; check clean.
+  audit --strict clean with meleeName/rangedName now read by code; a spec (pure helper) for
+  notice text and merging; check clean.
 
 ### T13. Threat estimate — does a sensible defence survive Easy?
 - **Files:** new `tools/threat.py` (run by `tools/test.sh`, report only): from Track geometry and
