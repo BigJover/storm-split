@@ -17,6 +17,9 @@ design in the PDF still holds; its UEFN-specific sections don't. Old UEFN materi
 - `Storm-Split-Design-Doc.pdf` — the game design
 - `Storm-Split-Balance.xlsx` — every number. Source of truth.
 - `ARCHITECTURE.md` — code structure, ownership rules, phase plan. **Read before changing code.**
+- `DIRECTION.md` — how Jovan decides: his taste and past calls. Read before any design call.
+- `GAUNTLET.md` — the multi-agent build loop (Director, Builder, Dino agent) and its rules.
+- `DECISIONS.md` — design calls made while Jovan was away, for his review.
 - `UPGRADES.md` — the approved vision for every tower's paths, tier names and abilities.
   Build tower mechanics to match it.
 - `HEROES.md` — the approved hero design: free pick, three upgrade paths per hero about how

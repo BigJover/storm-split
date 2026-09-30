@@ -16,3 +16,6 @@ __pycache__/
 
 # Numbers working copies (the .xlsx is the source of truth)
 *.numbers
+
+# Personal notes and research (never commit)
+ideas/
