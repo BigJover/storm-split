@@ -189,3 +189,43 @@ test("health bar: hidden at full, shown when damaged", function()
 	TowerLook.setHealth(model, 1)
 	ok(body:FindFirstChild("HealthBar") == nil, "hidden again at full")
 end)
+
+test("T10c: slits and rails on all four sides, barrel angled up, dart fletching", function()
+	local blind = TowerLook.build("SCOUT", 20, BASE)
+	for _, name in { "SlitFront", "SlitBack", "SlitLeft", "SlitRight" } do
+		ok(blind:FindFirstChild(name) ~= nil, `Hunting Blind {name}`)
+	end
+	local perch = TowerLook.build("SNIPER", 999, BASE)
+	for _, name in { "RailFront", "RailBack", "RailLeft", "RailRight" } do
+		ok(perch:FindFirstChild(name) ~= nil, `Longshot Perch {name}`)
+	end
+	local barrel = perch:FindFirstChild("Barrel")
+	near(math.deg(math.asin(math.abs(barrel.CFrame.LookVector.Y))), 30, "barrel angle", 0.5)
+	-- the end that points forward (toward -Z of the tower) is the raised one
+	local frontEnd = if barrel.CFrame.LookVector.Z < 0 then barrel.CFrame.LookVector else -barrel.CFrame.LookVector
+	ok(frontEnd.Y > 0, "barrel's front end points up")
+	ok(barrel.Size.Z < 1.3, "barrel shorter than before")
+	local tranq = TowerLook.build("CHILLER", 12, BASE)
+	for i = 1, 3 do
+		local dart, fletching = tranq:FindFirstChild(`Dart{i}`), tranq:FindFirstChild(`Fletching{i}`)
+		ok(fletching ~= nil, `dart {i} fletching`)
+		ok(fletching.CFrame.Position.Y < dart.CFrame.Position.Y, `dart {i} fletching at the bottom`)
+	end
+end)
+
+test("T10c: sedation dart sticks up out of the back; zzz MaxDistance 80", function()
+	for _, key in Config.EnemyOrder do
+		local model = DinoLook.build(key, 1, CFrame.new(0, 5, 0))
+		local root = model.PrimaryPart
+		DinoLook.setSedated(model, true)
+		local dart = model:FindFirstChild("SedationDart")
+		local top = root.CFrame.Position.Y + root.Size.Y / 2
+		-- its highest end pokes out above the body: visible from the top
+		local reach = math.abs(dart.CFrame.LookVector.Y) * dart.Size.Z / 2
+		ok(dart.CFrame.Position.Y + reach > top + 0.1, `{key} dart visible from above`)
+		near(dart.CFrame.Position.X, root.CFrame.Position.X, `{key} dart on the spine`, 1e-3)
+		ok(dart.CFrame.Position.Z > root.CFrame.Position.Z, `{key} dart toward the tail`)
+		DinoLook.setAsleep(model, true)
+		eq(root:FindFirstChild("Asleep").MaxDistance, 80, `{key} zzz MaxDistance`)
+	end
+end)

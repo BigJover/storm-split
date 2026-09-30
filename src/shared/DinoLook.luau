@@ -20,6 +20,7 @@ type PartSpec = {
 	offset: Vector3, -- from the root's centre
 	color: Color3?, -- defaults to the species colour
 	shape: Enum.PartType?,
+	tilt: CFrame?, -- a rotation applied at the offset
 }
 type Species = {
 	color: Color3,
@@ -144,8 +145,14 @@ local SPECIES: { [string]: Species } = {
 			{ name = "WingL", size = Vector3.new(3.4, 0.15, 1.3), offset = Vector3.new(-2, 0.1, 0) },
 			{ name = "WingR", size = Vector3.new(3.4, 0.15, 1.3), offset = Vector3.new(2, 0.1, 0) },
 			{ name = "Head", size = Vector3.new(0.5, 0.5, 1.4), offset = Vector3.new(0, 0.3, -1.4) },
-			-- the crest sweeps back off the head
-			{ name = "Crest", size = Vector3.new(0.2, 0.35, 1.2), offset = Vector3.new(0, 0.6, -0.3), color = Color3.fromRGB(220, 110, 90) },
+			-- the crest starts at the back of the head and sweeps up and back
+			{
+				name = "Crest",
+				size = Vector3.new(0.2, 0.3, 1),
+				offset = Vector3.new(0, 0.7, -0.9),
+				color = Color3.fromRGB(220, 110, 90),
+				tilt = CFrame.Angles(math.rad(-20), 0, 0),
+			},
 		},
 	},
 	ZEP = { -- Triceratops: frill and three horns
@@ -216,7 +223,7 @@ function DinoLook.build(key: string, scale: number, cframe: CFrame): (Model, num
 		part.Anchored = false
 		part.Massless = true
 		cosmetic(part)
-		part.CFrame = cframe * CFrame.new(spec.offset * scale)
+		part.CFrame = cframe * CFrame.new(spec.offset * scale) * (spec.tilt or CFrame.identity)
 		local weld = Instance.new("WeldConstraint")
 		weld.Part0 = root
 		weld.Part1 = part
@@ -238,7 +245,7 @@ local function measure(model: Model): (Species, number)
 	return species, if root then root.Size.X / species.body.X else 1
 end
 
--- Sedated by a Tranq Station: a small teal dart sticks out of the flank.
+-- Sedated by a Tranq Station: a small teal dart sticks out of the back.
 function DinoLook.setSedated(model: Model, on: boolean)
 	local root = model.PrimaryPart
 	local dart = model:FindFirstChild("SedationDart")
@@ -261,11 +268,9 @@ function DinoLook.setSedated(model: Model, on: boolean)
 	dart.Massless = true
 	cosmetic(dart)
 	dart.Material = Enum.Material.Neon
-	-- Half in the right flank, pointing out and a little up.
-	dart.CFrame = root.CFrame
-		* CFrame.new(body.X / 2, body.Y * 0.15, 0)
-		* CFrame.Angles(0, math.rad(90), 0)
-		* CFrame.Angles(math.rad(25), 0, 0)
+	-- Half in the top of the back, leaning toward the tail, so it shows from above
+	-- and from both sides.
+	dart.CFrame = root.CFrame * CFrame.new(0, body.Y / 2, body.Z * 0.15) * CFrame.Angles(math.rad(-60), 0, 0)
 	local weld = Instance.new("WeldConstraint")
 	weld.Part0 = root
 	weld.Part1 = dart
@@ -292,6 +297,7 @@ function DinoLook.setAsleep(model: Model, on: boolean)
 	billboard.Size = UDim2.fromOffset(60, 28)
 	billboard.StudsOffset = Vector3.new(0, species.body.Y * scale + 1.5, 0)
 	billboard.LightInfluence = 0
+	billboard.MaxDistance = 80
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
 	label.BackgroundTransparency = 1

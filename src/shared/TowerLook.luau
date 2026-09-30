@@ -62,22 +62,30 @@ end
 -- so the look never reaches past Track.TowerRadius. `color` is the tower's
 -- colour; the rest are material colours.
 local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
-	-- Hunting Blind: a low camo hide with a viewing slit and a leafy roof.
+	-- Hunting Blind: a low camo hide with viewing slits all round and a leafy roof.
 	SCOUT = function(color)
+		local slit = Color3.fromRGB(25, 25, 20)
 		return {
 			block("Hide", Vector3.new(3, 2.6, 3), at(0, 1.3, 0), color, Enum.Material.Fabric),
-			block("Slit", Vector3.new(2.2, 0.35, 0.1), at(0, 1.9, -1.45), Color3.fromRGB(25, 25, 20), Enum.Material.Fabric),
+			block("SlitFront", Vector3.new(2.2, 0.35, 0.1), at(0, 1.9, -1.45), slit, Enum.Material.Fabric),
+			block("SlitBack", Vector3.new(2.2, 0.35, 0.1), at(0, 1.9, 1.45), slit, Enum.Material.Fabric),
+			block("SlitLeft", Vector3.new(0.1, 0.35, 2.2), at(-1.45, 1.9, 0), slit, Enum.Material.Fabric),
+			block("SlitRight", Vector3.new(0.1, 0.35, 2.2), at(1.45, 1.9, 0), slit, Enum.Material.Fabric),
 			block("Roof", Vector3.new(3, 0.4, 3), at(0, 2.8, 0), LEAF, Enum.Material.Grass),
 			block("Leaves", Vector3.new(1.6, 0.5, 1.4), at(-0.5, 3.2, 0.4), LEAF, Enum.Material.Grass),
 		}
 	end,
-	-- Longshot Perch: a tree stand on four stilts, a rifle over the rail.
+	-- Longshot Perch: a tree stand on four stilts, railed all round, a rifle
+	-- over the front rail angled up.
 	SNIPER = function(color)
 		local parts = {
 			block("Platform", Vector3.new(3, 0.3, 3), at(0, 3.6, 0), color, Enum.Material.Wood),
-			block("Rail", Vector3.new(3, 0.6, 0.2), at(0, 4.05, -1.4), DARK_WOOD, Enum.Material.Wood),
+			block("RailFront", Vector3.new(3, 0.6, 0.2), at(0, 4.05, -1.4), DARK_WOOD, Enum.Material.Wood),
+			block("RailBack", Vector3.new(3, 0.6, 0.2), at(0, 4.05, 1.4), DARK_WOOD, Enum.Material.Wood),
+			block("RailLeft", Vector3.new(0.2, 0.6, 2.6), at(-1.4, 4.05, 0), DARK_WOOD, Enum.Material.Wood),
+			block("RailRight", Vector3.new(0.2, 0.6, 2.6), at(1.4, 4.05, 0), DARK_WOOD, Enum.Material.Wood),
 			block("Roof", Vector3.new(3, 0.25, 3), at(0, 4.85, 0), DARK_WOOD, Enum.Material.Wood),
-			block("Barrel", Vector3.new(0.2, 0.2, 1.3), at(0.4, 4.45, -0.8), STEEL, Enum.Material.Metal),
+			block("Barrel", Vector3.new(0.2, 0.2, 1), at(0.4, 4.5, -0.9) * CFrame.Angles(math.rad(30), 0, 0), STEEL, Enum.Material.Metal),
 		}
 		for i, corner in { Vector2.new(-1, -1), Vector2.new(1, -1), Vector2.new(-1, 1), Vector2.new(1, 1) } do
 			table.insert(parts, block(`Stilt{i}`, Vector3.new(0.3, 3.45, 0.3), at(corner.X * 1.25, 1.725, corner.Y * 1.25), WOOD, Enum.Material.Wood))
@@ -107,6 +115,7 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 		for i, x in { -0.8, 0, 0.8 } do
 			table.insert(parts, block(`Dart{i}`, Vector3.new(0.15, 1.3, 0.15), at(x, 3.0, -0.3), WOOD, Enum.Material.Wood))
 			table.insert(parts, block(`Tip{i}`, Vector3.new(0.22, 0.35, 0.22), at(x, 3.8, -0.3), DART_TIP, Enum.Material.Neon))
+			table.insert(parts, block(`Fletching{i}`, Vector3.new(0.45, 0.3, 0.05), at(x, 2.5, -0.3), Color3.fromRGB(230, 225, 210), Enum.Material.Fabric))
 		end
 		return parts
 	end,
