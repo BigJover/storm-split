@@ -172,3 +172,51 @@ Skybreaker (M5/M6) and "Pops".
 | T3-2 | Every trampled tower tips the same way (a world-X tilt), so a row of them looks staged. | `TowerLook`: tilt about the X or Z axis chosen from the model's position (e.g. `(base.X + base.Z) % 4`), and keep the 15°. |
 | T3-3 | Low health is **orange** on the player bar (`Hud` HP_LOW 230,170,60) but **red** on the tower bar (`TowerLook` HP_LOW 235,90,70). | Use one "low" colour in both. Orange is best: red already means "hit" (the flash) and "trampled". |
 | T3-4 | The tower prompt's ActionText is the generic **"Manage"**. | `Shop.luau:71`: **"Upgrade"** (or "Upgrade / Repair" when damaged). It's plain words and what players come to do. |
+
+---
+
+## Round 4 — review of 17b0915 (T10c look tweaks) and 3d2cb33 (T11 bites)
+
+**Reads well**
+- All of R3–R9 landed as asked:
+  - The Blind has slits on all four sides; the Perch has rails all round and a barrel angled up 30°.
+  - The Tranq darts have fletching at the bottom, so they no longer look like candles.
+  - The sedation dart is in the back, leaning toward the tail. zzz has MaxDistance 80.
+  - The Pteranodon crest now starts at the back of the head and sweeps up.
+- The bite rules feel right. The attack names match DECISIONS #2 on the sheet (Nip, Slash,
+  Head-Butt, Tail Club, Kick, Gore, Chomp). The Pteranodon has no bite. A knocked-out (asleep)
+  dino can't bite, which gives the Tranq Station a clear defensive job.
+
+**Off / to fix**
+
+| # | Priority | Issue | Fix |
+|---|---|---|---|
+| R4-1 | **must-fix** | The attack names are a dead column (the audit flags `meleeName`). The hunter never learns *what* bit them, so the per-species flavour is invisible. | `Hud.client`: when the local hunter is bitten, show a small popup by the HP bar: **"Raptor · Slash −4"** (1.2s, fades). The server sends species display + `meleeName` + damage with the damage (e.g. a `Hurt` RemoteEvent from `Health.damage`, or an attribute pair). Use the same line later for ranged hits ("Pteranodon · Stone Drop −8"). |
+| R4-2 | nice | The bite flash is a plain red ball of the same size for every dino, so a Compy nip and a T-Rex chomp look the same. It reads as "hit", not "bite". | `DinoAttacks.bite` (visual only): two bone-white tooth bars (upper and lower, 1.6×0.25×0.3) that snap together over the target in 0.15s, scaled by `enemy.size/enemy.sizes` × a boss factor 2. Keep a faint red flash behind them. |
+| R4-3 | nice | Tower bites show nothing on the tower itself, only the floating flash. | `TowerLook.setHealth` is already called on damage; add a 0.1s red tint of the silhouette parts (restore the colour via the existing `LookMaterial`/`UprightColor` pattern). |
+
+---
+
+## T12 guidance: ranged attacks at a glance
+
+**Shared rules, all six attacks**
+- **Warning ring (M8):** one flat Neon cylinder at the landing point, diameter = 2 × impact radius,
+  0.1 studs tall. Use the **same orange for every attack** (255, 150, 40), so players learn
+  "orange ring = move". Transparency goes from 0.75 at launch to 0.35 just before impact.
+  Optionally, an inner disc grows from 0 to full size as a timer. Remove it on landing.
+- **On landing:** a 0.3s puff in the projectile's colour (a Ball that grows to the impact radius
+  and fades), plus 2–3 small debris chips for rock-type shots.
+- The projectile is **species-coloured only where the attack is part of the dino** (spike, bone).
+  Thrown debris is **earth-coloured** (Slate / Rock / Sand), so players read "what is coming" from
+  the shape and "who threw it" from where it came from.
+- Size follows the impact radius (about 0.35 × radius, capped at 3 studs) and scales with the
+  dino's size, like the damage.
+
+| Attack (dino) | Look |
+|---|---|
+| **Rock Fling** (Pachycephalosaurus) | One fist-sized Slate ball (Rock material, grey-brown 120,105,90) on a **high lob** (a clear arc, not a straight line). It spins as it flies. On landing: a grey dust puff and 2 chips. |
+| **Spike Flick** (Ankylosaurus) | A thin bone-white wedge (0.3×0.3×1.4, colour 230,225,210, the Anky's own spike colour), **pointing along its flight**, on a flat, fast path. On landing: it sticks upright in the ground for the remaining 0.5s, then fades. No dust. |
+| **Gravel Spray** (Gallimimus) | **3 small pebbles** (0.4 studs, Sand/brown 170,140,100) in a tight, slightly spread cluster on a low, fast path (it's kicked). The ring still shows one landing zone. On landing: a low, wide sand puff. |
+| **Stone Drop** (Pteranodon) | A Slate stone that **falls straight down** from the flier's height to the ring. There's almost no sideways travel, so the ring is the whole warning. Make the ring show from launch and keep the stone bigger (≈1.2). On landing: a dust puff. |
+| **Boulder Kick** (Triceratops) | A **big** boulder (≈2.5 studs, Rock material, dark 95,85,75) that **rolls along the ground** (a low bounce, spinning) toward the ring instead of flying. That makes it read as heavy, boss-grade and dodgeable. On landing: a big dust puff, 3 chips and a small camera-shake-free shockwave ring. |
+| **Roar Blast** (T-Rex) | **Not a ball.** It's a flattened, translucent **sound-wave disc** (Neon, pale T-Rex green 170,210,140, 0.6 transparency) that **grows as it flies**, from 2 to the full impact diameter. Two or three thin rings trail behind it. On landing: a ring that expands outward and fades. If it's renamed **Bone Spit** (round 1), use a bone-white capsule instead. |
