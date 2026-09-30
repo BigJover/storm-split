@@ -159,8 +159,9 @@ end
 local function showHealth(tower: Tower)
 	local body = tower.model.PrimaryPart
 	if body then
-		body:SetAttribute("HP", math.ceil(tower.hp))
-		body:SetAttribute("MaxHP", math.floor(tower.maxHp + 0.5))
+		-- Exact values, so the panel's repair price matches the server's.
+		body:SetAttribute("HP", tower.hp)
+		body:SetAttribute("MaxHP", tower.maxHp)
 		body:SetAttribute("KO", tower.knockedOut)
 	end
 	TowerLook.setHealth(tower.model, if tower.maxHp > 0 then tower.hp / tower.maxHp else 1)

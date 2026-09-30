@@ -1,7 +1,7 @@
 --[[
 	Shop: the only way clients reach cash and towers (ARCHITECTURE.md §4).
 
-	Clients REQUEST ("build a SCOUT here", "upgrade tower 7 path 2", "sell tower 7"). The server checks
+	Clients REQUEST ("build a SCOUT here", "upgrade tower 7 path 2", "repair tower 7", "sell tower 7"). The server checks
 	everything itself — the spot (Shared/Placement, the same rule the client's
 	ghost uses), the player's distance to it, the tower, the cash — and prices
 	come only from Config. A client sends a tower key and a position, or a tower
@@ -10,7 +10,11 @@
 	Money flow: Economy.trySpend() first, then Towers.place(). Towers never touch
 	cash (§5.4); upgrades likewise pay first, then call Towers.upgrade(). The
 	shop remembers what each tower cost, upgrades included, so selling refunds
-	SellRefund of all of it.
+	SellRefund of all of it. Repairs (anyone's tower, like upgrades) cost
+	Repair cost x that amount x the share of HP missing (Shared/Combat, less a
+	Logistics discount); they pay first, then Towers.repair(), and are NOT
+	added to it, so a repair never raises the sell refund. A trampled tower
+	can't be upgraded until it's repaired.
 
 	Each built tower gets a ProximityPrompt for managing it. The server never
 	trusts that the prompt was used and re-checks distance on every request.
@@ -20,6 +24,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Combat = require(Shared:WaitForChild("Combat"))
 local Config = require(Shared:WaitForChild("Config"))
 local ShopRules = require(Shared:WaitForChild("ShopRules"))
 local Placement = require(Shared:WaitForChild("Placement"))
@@ -144,6 +149,9 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 	if not isWithin(player, tower.base, ShopRules.PromptDistance) then
 		return false, "Too far from the tower"
 	end
+	if tower.knockedOut then
+		return false, "Repair it first"
+	end
 
 	local why = Upgrades.check(tower.pathTiers, pathIndex, #path.tiers)
 	if why ~= "ok" then
@@ -166,6 +174,30 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 	spent[tower] = (spent[tower] or 0) + cost
 	decorate(tower)
 	return true, `{step.name or path.id}!`
+end
+
+-- Anyone can repair any tower, in the build phase or mid-round (DECISIONS #10).
+local function repair(player: Player, towerId: unknown): (boolean, string)
+	if typeof(towerId) ~= "number" then
+		return false, "Unknown tower"
+	end
+	local tower = Towers.byId(towerId)
+	if not tower then
+		return false, "That tower is gone"
+	end
+	if not isWithin(player, tower.base, ShopRules.PromptDistance) then
+		return false, "Too far from the tower"
+	end
+	if tower.hp >= tower.maxHp and not tower.knockedOut then
+		return false, "It doesn't need repairs"
+	end
+	-- A Supply Camp's Logistics discount applies, as it does to upgrades.
+	local cost = Combat.repairCost(spent[tower] or 0, tower.hp, tower.maxHp, tower.buff.discountPercent)
+	if cost > 0 and not Economy.trySpend(cost) then
+		return false, "Not enough cash"
+	end
+	Towers.repair(tower) -- not added to spent: a repair doesn't raise the refund
+	return true, if cost > 0 then `Repaired for {cost}` else "Repaired"
 end
 
 local function sell(player: Player, towerId: unknown): (boolean, string)
@@ -209,6 +241,8 @@ local function handle(player: Player, action: unknown, a: unknown, b: unknown): 
 		return build(player, a, b)
 	elseif action == "upgrade" then
 		return upgrade(player, a, b)
+	elseif action == "repair" then
+		return repair(player, a)
 	elseif action == "sell" then
 		return sell(player, a)
 	end
@@ -225,7 +259,7 @@ end
 function Shop.init(remotes: Folder)
 	local request = Instance.new("RemoteFunction")
 	request.Name = "ShopRequest"
-	-- ("build", towerKey, position), ("upgrade", towerId, pathIndex) or ("sell", towerId)
+	-- ("build", towerKey, position), ("upgrade", towerId, pathIndex), ("repair", towerId) or ("sell", towerId)
 	request.OnServerInvoke = function(player: Player, action: unknown, a: unknown, b: unknown)
 		local ok, success, message = pcall(handle, player, action, a, b)
 		if not ok then

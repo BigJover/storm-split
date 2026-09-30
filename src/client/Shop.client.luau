@@ -35,7 +35,9 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Combat = require(Shared:WaitForChild("Combat"))
 local Config = require(Shared:WaitForChild("Config"))
+local Pricing = require(Shared:WaitForChild("Pricing"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local CUR = string.lower(Theme.Currency) -- "amber" in running text
 local Placement = require(Shared:WaitForChild("Placement"))
@@ -56,6 +58,8 @@ local PANEL_COLOR = Color3.fromRGB(24, 20, 34)
 local BUY_COLOR = Color3.fromRGB(60, 110, 190)
 local SELL_COLOR = Color3.fromRGB(190, 80, 90)
 local LOCKED_COLOR = Color3.fromRGB(70, 66, 82)
+local REPAIR_COLOR = Color3.fromRGB(200, 140, 60)
+local TRAMPLED_COLOR = Color3.fromRGB(255, 110, 100)
 local BUILD_COLOR = Color3.fromRGB(70, 180, 110)
 local TEXT = Color3.fromRGB(240, 236, 250)
 local TEXT_DIM = Color3.fromRGB(150, 145, 165)
@@ -774,6 +778,7 @@ render = function()
 	end
 
 	panel.Visible = mode ~= "closed"
+	title.TextColor3 = TEXT -- the tower panel turns it red for a trampled tower
 	buildButton.Text = if mode == "list" or mode == "placing" then "Close  (B)" else "Build  (B)"
 	local state = ReplicatedStorage:GetAttribute("State")
 	local inMatch = state == "Building" or state == "Playing"
@@ -936,22 +941,48 @@ render = function()
 		for pathIndex = 1, 3 do
 			tiers[pathIndex] = managed:GetAttribute(`Path{pathIndex}`) or 0
 		end
-		title.Text = `{if def then def.display else "Tower"}  ·  {tiers[1]} · {tiers[2]} · {tiers[3]}`
+		local hp = (managed:GetAttribute("HP") or 0) :: number
+		local maxHp = (managed:GetAttribute("MaxHP") or 0) :: number
+		local trampled = managed:GetAttribute("KO") == true
+		if trampled then
+			title.Text = `Trampled — repair it  ·  {if def then def.display else "Tower"}`
+			title.TextColor3 = TRAMPLED_COLOR
+		else
+			title.Text = `{if def then def.display else "Tower"}  ·  {tiers[1]} · {tiers[2]} · {tiers[3]}`
+		end
+
+		-- Health, and a repair row when it's damaged. Mirrors Server/Shop:
+		-- Shared/Combat's price with the Logistics discount.
+		if maxHp > 0 then
+			addRow(-1, `<font size="13">HP {math.ceil(hp)} / {math.floor(maxHp + 0.5)}</font>`, PANEL_COLOR, false)
+		end
+		if trampled or (maxHp > 0 and hp < maxHp) then
+			local discount = managed:GetAttribute("Discount") or 0
+			local cost = Combat.repairCost((managed:GetAttribute("Spent") or 0) :: number, hp, maxHp, discount)
+			local affordable = cash >= cost
+			local price = if discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
+			addRow(0, `<b>Repair</b>  —  {price}`, if affordable then REPAIR_COLOR else LOCKED_COLOR, affordable, function()
+				send("repair", towerId)
+			end)
+		end
 
 		if def then
 			for pathIndex, path in def.paths do
 				local current = tiers[pathIndex]
 				local name = escape(path.id)
 				local why = Upgrades.check(tiers, pathIndex, #path.tiers)
-				if why == "maxed" then
+				if trampled and why ~= "maxed" then
+					-- Mirrors Server/Shop: no upgrades until it's repaired.
+					addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">Repair it first</font>`, LOCKED_COLOR, false)
+				elseif why == "maxed" then
 					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(path.tiers[#path.tiers].name or "")}`, LOCKED_COLOR, false)
 				elseif why ~= "ok" then
 					addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
 				else
 					local step = path.tiers[current + 1]
-					-- Mirrors Server/Shop: a Quartermaster's Logistics discount.
+					-- Mirrors Server/Shop: a Supply Camp's Logistics discount (Shared/Pricing).
 					local discount = managed:GetAttribute("Discount") or 0
-					local cost = math.floor(step.cost * (1 - discount / 100) + 0.5)
+					local cost = Pricing.upgradeCost(step, discount)
 					local affordable = cash >= cost
 					local price = if discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
 					local text = `<b>{escape(step.name or path.id)}</b>  ·  {price}\n<font size="13">{name} {current + 1}  ·  {escape(describeStep(path, current))}</font>`
@@ -963,7 +994,7 @@ render = function()
 		end
 
 		local refundRate = managed:GetAttribute("RefundRate") or Config.Tuning.SellRefund
-		local refund = math.floor((managed:GetAttribute("Spent") or 0) * refundRate)
+		local refund = Pricing.sellRefund((managed:GetAttribute("Spent") or 0) :: number, refundRate)
 		local ownerId = managed:GetAttribute("OwnerId") or 0
 		local ownerName = managed:GetAttribute("OwnerName") or ""
 		-- Mirrors the server rule: only the builder sells, unless they've left.
@@ -986,7 +1017,7 @@ end
 local function openManage(body: BasePart, prompt: ProximityPrompt)
 	setMode("manage")
 	managed, managedPrompt = body, prompt
-	for _, name in { "Spent", "Tower", "Path1", "Path2", "Path3", "Discount", "RefundRate" } do
+	for _, name in { "Spent", "Tower", "Path1", "Path2", "Path3", "Discount", "RefundRate", "HP", "MaxHP", "KO" } do
 		table.insert(managedConnections, body:GetAttributeChangedSignal(name):Connect(render))
 	end
 	table.insert(managedConnections, body.AncestryChanged:Connect(function()

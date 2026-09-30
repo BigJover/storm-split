@@ -48,3 +48,17 @@ end)
 test("sell refund: an aura below the normal rate never lowers it", function()
 	eq(Pricing.sellRefund(1000, 0.5), 700)
 end)
+
+test("repair (Combat.repairCost) with the Logistics discounts, and against sell-and-rebuild", function()
+	local Combat = require(src.shared.Combat)
+	eq(Combat.repairCost(2000, 0, 100, BULK_ORDER.discountPercent), 570, "trampled, Bulk Order: 600 less 5%")
+	eq(Combat.repairCost(2000, 0, 100, COMMAND_CENTER.discountPercent), 480, "trampled, Command Center: 600 less 20%")
+	eq(Combat.repairCost(2000, 75, 100, 0), 150, "a quarter missing")
+	-- DECISIONS #10 says a full repair (30% of spent) beats selling and buying again.
+	-- At the normal 70% refund the two cost the same; with Recycler / Command Center
+	-- refunds, rebuilding is cheaper. Recorded here so a tuning change shows up.
+	local spent = 2000
+	local rebuildNet = spent - Pricing.sellRefund(spent, 0)
+	eq(Combat.repairCost(spent, 0, 100), rebuildNet, "normal refund: repair == rebuild")
+	ok(spent - Pricing.sellRefund(spent, RECYCLER.sellRefund) < Combat.repairCost(spent, 0, 100), "Recycler: rebuild cheaper")
+end)
