@@ -282,6 +282,18 @@ the spreadsheet, never for code.
 - **Accept:** check clean; spec for `Combat.landingHits` (inside/outside radius, KO'd
   towers skipped); a note estimating how many projectiles fly in round 40 against the cap.
 
+### T12b. Round-3 touch-ups (visual/wording only) — 🦖
+- **Goal:** DECISIONS #36 and #38.
+- **Files:** `TowerLook.setKnockedOut`: the smoke becomes dust (RGB 150,125,90, Opacity 0.2,
+  RiseVelocity 1.5), and the tilt axis is picked from the base position (still 15°). `Hud` and
+  `TowerLook` share one orange low-HP colour (e.g. export `LOW_HP_COLOR` from TowerLook, or a
+  tiny shared visual constant). `Shop.decorate`: prompt ActionText "Upgrade", or
+  "Upgrade / Repair" while hp < maxHp (it updates when HP changes; Towers already publishes
+  HP). `tools/audit.py` allowlist: `Enemies.meleeName` and `Enemies.rangedName` (display text
+  kept for later).
+- **Accept:** looks spec updated (dust colour, tilt differs for two positions, one low colour);
+  audit --strict clean apart from anything T12 still owes; check clean.
+
 ### T13. Threat estimate — does a sensible defence survive Easy?
 - **Files:** new `tools/threat.py` (run by `tools/test.sh`, report only): from Track geometry and
   the Rounds/Enemies sheets, it estimates the bite and projectile damage per round to a tower 1
