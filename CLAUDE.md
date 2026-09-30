@@ -29,6 +29,7 @@ design in the PDF still holds; its UEFN-specific sections don't. Old UEFN materi
 - `SETUP.md` — Mac setup: Studio, Rokit, Rojo, MCP
 - `src/` — Luau, synced into Studio by Rojo (`default.project.json`)
 - `tools/export_constants.py` — spreadsheet → `src/shared/Config.luau`
+- `tools/test/` — headless specs (`*.spec.luau`) and their Lune runner (`run.luau`)
 
 ## Rules
 
@@ -48,6 +49,7 @@ design in the PDF still holds; its UEFN-specific sections don't. Old UEFN materi
 rojo serve                              # live-sync src/ into Studio
 python3 tools/export_constants.py       # after any spreadsheet change
 tools/check.sh                          # static type-check of src/ (luau-lsp via Rokit)
+tools/test.sh                           # headless specs in tools/test/ (Lune via Rokit)
 ```
 
 On this Mac `/usr/bin/git` and `/usr/bin/python3` may fail on the Xcode licence; use
