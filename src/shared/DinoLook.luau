@@ -197,13 +197,81 @@ function DinoLook.build(key: string, scale: number, cframe: CFrame): (Model, num
 	return model, (species.legLength + species.body.Y / 2) * scale
 end
 
--- Visual only: every part of the dino in one material (e.g. Ice when chilled).
-function DinoLook.setMaterial(model: Model, material: Enum.Material)
-	for _, part in model:GetDescendants() do
-		if part:IsA("BasePart") then
-			part.Material = material
+-- Visuals only.
+local DART_COLOR = Color3.fromRGB(60, 210, 190)
+local DART_SIZE = Vector3.new(0.15, 0.15, 0.7)
+
+-- The species and scale a built model was made at (its Root is body x scale).
+local function measure(model: Model): (Species, number)
+	local species = SPECIES[model.Name] or DEFAULT
+	local root = model.PrimaryPart
+	return species, if root then root.Size.X / species.body.X else 1
+end
+
+-- Sedated by a Tranq Station: a small teal dart sticks out of the flank.
+function DinoLook.setSedated(model: Model, on: boolean)
+	local root = model.PrimaryPart
+	local dart = model:FindFirstChild("SedationDart")
+	if not on or not root then
+		if dart then
+			dart:Destroy()
 		end
+		return
 	end
+	if dart then
+		return
+	end
+	local species, scale = measure(model)
+	local body = species.body * scale
+	dart = Instance.new("Part")
+	dart.Name = "SedationDart"
+	dart.Size = DART_SIZE * math.max(scale, 0.6)
+	dart.Color = DART_COLOR
+	dart.Anchored = false
+	dart.Massless = true
+	cosmetic(dart)
+	dart.Material = Enum.Material.Neon
+	-- Half in the right flank, pointing out and a little up.
+	dart.CFrame = root.CFrame
+		* CFrame.new(body.X / 2, body.Y * 0.15, 0)
+		* CFrame.Angles(0, math.rad(90), 0)
+		* CFrame.Angles(math.rad(25), 0, 0)
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = root
+	weld.Part1 = dart
+	weld.Parent = dart
+	dart.Parent = model
+end
+
+-- Knocked out by a Tranq Station pulse: "zzz" floats above the dino.
+function DinoLook.setAsleep(model: Model, on: boolean)
+	local root = model.PrimaryPart
+	local sign = root and root:FindFirstChild("Asleep")
+	if not on or not root then
+		if sign then
+			sign:Destroy()
+		end
+		return
+	end
+	if sign then
+		return
+	end
+	local species, scale = measure(model)
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "Asleep"
+	billboard.Size = UDim2.fromOffset(60, 28)
+	billboard.StudsOffset = Vector3.new(0, species.body.Y * scale + 1.5, 0)
+	billboard.LightInfluence = 0
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.Text = "zzz"
+	label.TextScaled = true
+	label.Font = Enum.Font.GothamBold
+	label.TextColor3 = Color3.fromRGB(235, 245, 255)
+	label.TextStrokeTransparency = 0.4
+	label.Parent = billboard
+	billboard.Parent = root
 end
 
 return DinoLook

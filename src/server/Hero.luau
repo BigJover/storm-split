@@ -409,8 +409,8 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 	if stats.markPercent > 0 then
 		Enemies.mark(enemy, stats.markPercent, Config.Tuning.MarkDuration)
 	end
-	-- Ignite before the damage, so if this round pops the enemy, its split
-	-- children inherit the fire.
+	-- Ignite before the damage, so if this round shrinks the dino, the smaller
+	-- size keeps the fire.
 	if stats.igniteShare > 0 then
 		Hazards.ignite(enemy, stats.shotDamage * scale * stats.igniteShare, stats.igniteSeconds, stats.piercesArmor, player)
 	end
@@ -572,7 +572,7 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 		markStats.piercesArmor = true
 		local target = alongRay(origin, direction, body.Position, markStats, Enemies.getLive(), 1)[1]
 		if not target then
-			return false, "No enemy there to mark"
+			return false, "No dino there to dart"
 		end
 		Enemies.mark(target, stats.abilityPower, stats.abilitySeconds)
 		Effects.part(Vector3.one * 3, CFrame.new(target.part.Position + Vector3.new(0, 3, 0)), color, 0.6, Enum.PartType.Ball)

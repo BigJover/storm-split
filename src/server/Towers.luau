@@ -397,7 +397,7 @@ local function stepChill(tower: Tower, dt: number, live)
 				Enemies.chill(enemy, chill)
 			end
 			if pulse then
-				Enemies.stun(enemy, stats.freezeSeconds, stats.freezeHoldsBosses)
+				Enemies.knockOut(enemy, stats.freezeSeconds, stats.freezeHoldsBosses)
 				if stats.freezeDamage > 0 then
 					credit(tower.owner, Enemies.damage(enemy, stats.freezeDamage * levelScale, piercing(tower)))
 				end
@@ -472,7 +472,7 @@ function Towers.setLevel(level: number)
 end
 
 -- Quartermaster income for the round that just ended. Interest is on the
--- team's banked cash; the best Storm Bank applies, they don't stack.
+-- team's banked cash; the best Amber Vault applies, they don't stack.
 function Towers.roundIncome(bankedCash: number): number
 	local income, interest = 0, 0
 	for _, tower in towers do

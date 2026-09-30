@@ -1,5 +1,5 @@
 --[[
-	Storm Split — server entry point.
+	Dino Hunters — server entry point.
 
 	The server runs matches in a loop:
 

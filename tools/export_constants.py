@@ -388,7 +388,7 @@ def validate(data):
     # Tuning levers the game code reads by name. A renamed or overwritten row would
     # otherwise only show up as nil in Studio.
     needed = [
-        "StartingCash", "StartingLives", "CashPerEffectiveHP", "RoundBonusBase", "RoundBonusPerRound",
+        "StartingCash", "CashPerEffectiveHP", "RoundBonusBase", "RoundBonusPerRound",
         "SellRefund", "MaxConcurrentEnemies", "GlobalSpeedScalar", "LinePierceReach", "MarkDuration",
         "BombletDamage", "BombletSpread", "ExtraEnemiesPerPlayer", "ExtraHPPerPlayer",
         "StartingCashPerExtraPlayer", "WeaponAimAssist", "OverdriveFireRateX", "AirburstDelay",

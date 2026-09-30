@@ -120,9 +120,9 @@ local function refresh()
 	elseif state == "Lobby" then
 		label.Text = ""
 	elseif state == "Building" then
-		label.Text = `Build (B), choose a hero (H), then Start  ·  {difficultyName}  ·  Cash {cash}  ·  Lives {lives}`
+		label.Text = `Build (B), choose a hero (H), then Start  ·  {difficultyName}  ·  Cash {cash}  ·  Camp lives {lives}`
 	else
-		label.Text = `Round {round}  ·  {difficultyName}  ·  Lv {math.floor(attr("Level", 1))}  ·  Cash {cash}  ·  Lives {lives}  ·  Enemies {alive}`
+		label.Text = `Round {round}  ·  {difficultyName}  ·  Lv {math.floor(attr("Level", 1))}  ·  Cash {cash}  ·  Camp lives {lives}  ·  Dinos {alive}`
 	end
 end
 

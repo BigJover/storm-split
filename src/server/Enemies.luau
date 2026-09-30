@@ -14,7 +14,8 @@
 	CHILL (Chiller): a chilled enemy moves slower, may take extra damage from
 	every source (brittle), and may lose its armour while the chill lasts
 	(Shatter). Chill is refreshed every frame an enemy stands in a Chiller's
-	range; Permafrost makes it linger after it leaves. Chilled enemies look icy.
+	range; Lingering Dose makes it linger after it leaves. A chilled (sedated)
+	dino shows a tranq dart; one knocked out by a Tranq Station pulse shows "zzz".
 
 	SHRINKING (VISION.md): each tier is its own species, and a dino never turns
 	into a different enemy. It spawns at its largest size; each size holds an
@@ -60,7 +61,9 @@ export type Enemy = {
 	slowPercent: number,
 	brittlePercent: number,
 	armorStripped: boolean,
-	icy: boolean, -- what the part currently shows
+	sleepUntil: number, -- knocked out by a Tranq Station pulse (a stun; visuals only)
+	sedatedShown: boolean, -- what the model currently shows
+	asleepShown: boolean,
 	fire: Fire?, -- burning: one damage tick when it runs out (Server/Hazards)
 }
 
@@ -141,7 +144,7 @@ local function dress(enemy: Enemy)
 	if old then
 		old:Destroy()
 	end
-	enemy.icy = false -- step() re-applies Ice if still chilled
+	enemy.sedatedShown, enemy.asleepShown = false, false -- step() re-applies them on the new model
 	if enemy.fire then
 		Enemies.showBurning(enemy, true)
 	end
@@ -181,7 +184,9 @@ local function spawnNow(item: Pending)
 		slowPercent = 0,
 		brittlePercent = 0,
 		armorStripped = false,
-		icy = false,
+		sleepUntil = 0,
+		sedatedShown = false,
+		asleepShown = false,
 		fire = nil,
 	}
 	dress(enemy)
@@ -296,6 +301,15 @@ function Enemies.stun(enemy: Enemy, seconds: number, affectsBosses: boolean?)
 	enemy.stunnedUntil = math.max(enemy.stunnedUntil, os.clock() + seconds)
 end
 
+-- A Tranq Station knockout pulse: a stun that also shows "zzz" while it holds.
+function Enemies.knockOut(enemy: Enemy, seconds: number, affectsBosses: boolean?)
+	local before = enemy.stunnedUntil
+	Enemies.stun(enemy, seconds, affectsBosses)
+	if enemy.stunnedUntil > before then
+		enemy.sleepUntil = enemy.stunnedUntil
+	end
+end
+
 -- Pushes an enemy back along the track. Bosses are too heavy to move.
 function Enemies.knockback(enemy: Enemy, studs: number)
 	if not enemy.alive or studs <= 0 or enemy.def.boss then
@@ -381,9 +395,15 @@ function Enemies.step(dt: number)
 			local slow = if isChilled then math.clamp(enemy.slowPercent, 0, 95) / 100 else 0
 			enemy.distance += enemy.speed * (1 - slow) * dt
 		end
-		if isChilled ~= enemy.icy then
-			enemy.icy = isChilled -- visuals only
-			DinoLook.setMaterial(enemy.model, if isChilled then Enum.Material.Ice else Enum.Material.SmoothPlastic)
+		-- Visuals only.
+		if isChilled ~= enemy.sedatedShown then
+			enemy.sedatedShown = isChilled
+			DinoLook.setSedated(enemy.model, isChilled)
+		end
+		local asleep = now < enemy.sleepUntil and now < enemy.stunnedUntil
+		if asleep ~= enemy.asleepShown then
+			enemy.asleepShown = asleep
+			DinoLook.setAsleep(enemy.model, asleep)
 		end
 		if enemy.distance >= path.length then
 			remove(enemy)

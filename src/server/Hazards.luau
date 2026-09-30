@@ -7,8 +7,8 @@
 
 	Ignited enemies (Dragon's Breath): the enemy burns for a moment, then takes
 	one tick of fire damage — a share of the shot that lit it. The fire lives on
-	the enemy (Enemies.ignite) and passes to its split children, so a Brute
-	shot down to Husks sees them burn out together when the tick lands.
+	the dino (Enemies.ignite) and stays lit as it shrinks, so a dino shot down
+	a size still takes the tick when it lands.
 
 	Kills are credited to whoever lit the fire.
 ]]
@@ -60,7 +60,7 @@ local function credit(owner: Player?, killed: boolean)
 	end
 end
 
--- Set one enemy on fire: after `seconds` it (or its split children) takes
+-- Set one enemy on fire: after `seconds` it (at whatever size it's shrunk to) takes
 -- `tick` damage once.
 function Hazards.ignite(enemy: Enemies.Enemy, tick: number, seconds: number, piercesArmor: boolean, owner: Player?)
 	if seconds <= 0 or tick <= 0 then

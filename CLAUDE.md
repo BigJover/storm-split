@@ -170,9 +170,6 @@ Next: playtest the reskin, then step 2.
 
 ## Open issues
 
-- "14s walk time" in the spreadsheet's round length: measured 2026-09-28, rounds end ~14s
-  after the last spawn when nothing leaks, so it holds as *clear time*; the full ~44s walk only
-  matters for leaks. Relabel the note at Rounds!A48 next time the sheet is edited.
 - Leak cost is effective HP (BTD6-style), so 40 starting lives is likely too few.
 - Scout Range path has range *and* its old damage/rate boosts — likely too strong; trim.
 - Folder is still named `~/Fortnite`.

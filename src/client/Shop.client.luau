@@ -370,7 +370,7 @@ local function describeAbilities(now, nextStep, parts: { string })
 		table.insert(parts, "towers in range pierce armour")
 	end
 
-	-- Chiller
+	-- Tranq Station (CHILLER)
 	local slow = changed("slowPercent", 0)
 	if slow then
 		table.insert(parts, `slows {slow}%`)
@@ -384,23 +384,23 @@ local function describeAbilities(now, nextStep, parts: { string })
 	end
 	local freeze = changed("freezeSeconds", 0)
 	if freeze then
-		table.insert(parts, `freezes {fmt(freeze)}s every {fmt(nextStep.freezeEvery or 0)}s`)
+		table.insert(parts, `knocks out {fmt(freeze)}s every {fmt(nextStep.freezeEvery or 0)}s`)
 	elseif changed("freezeEvery", 0) then
-		table.insert(parts, `freezes every {fmt(nextStep.freezeEvery)}s`)
+		table.insert(parts, `knocks out every {fmt(nextStep.freezeEvery)}s`)
 	end
 	local shards = changed("freezeDamage", 0)
 	if shards then
-		table.insert(parts, `freezes deal {fmt(shards)} damage`)
+		table.insert(parts, `darts deal {fmt(shards)} damage`)
 	end
 	if changed("freezeHoldsBosses", false) then
-		table.insert(parts, "freezes bosses")
+		table.insert(parts, "knocks out bosses")
 	end
 	local brittle = changed("brittlePercent", 0)
 	if brittle then
-		table.insert(parts, `chilled take +{brittle}% damage`)
+		table.insert(parts, `sedated dinos take +{brittle}% damage`)
 	end
 	if changed("stripsArmor", false) then
-		table.insert(parts, "chill strips armour")
+		table.insert(parts, "sedated dinos lose their armour")
 	end
 
 	-- Quartermaster
@@ -491,7 +491,7 @@ local function describeHeroStep(path, current: number): string
 	end
 	local pierce = newly("pierce", 0)
 	if pierce then
-		table.insert(parts, `through {pierce} enemies`)
+		table.insert(parts, `through {pierce} dinos`)
 	end
 	local bounces = newly("bounces", 0)
 	if bounces then
@@ -507,7 +507,7 @@ local function describeHeroStep(path, current: number): string
 		table.insert(parts, "scope (right-click)")
 	end
 	if newly("beltFed", false) then
-		table.insert(parts, "no reloading in Overdrive")
+		table.insert(parts, "no reloading during Rally Cry")
 	end
 	local burn = newly("burnDps", 0)
 	if burn then
@@ -515,7 +515,7 @@ local function describeHeroStep(path, current: number): string
 	end
 	local ignite = newly("igniteShare", 0)
 	if ignite then
-		table.insert(parts, `sets enemies on fire (a {math.floor(ignite * 100 + 0.5)}%-of-shot burn tick)`)
+		table.insert(parts, `sets dinos on fire (a {math.floor(ignite * 100 + 0.5)}%-of-shot burn tick)`)
 	end
 	local splash = newly("splashRadius", 0)
 	if splash then

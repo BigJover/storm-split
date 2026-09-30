@@ -13,7 +13,9 @@ Config.luau, and prints a findings list:
               #13/#15/#16 once those rows exist
   3. dead     every Config field that is non-zero (true, non-empty) somewhere is
               referenced by name in some src/**/*.luau other than Config.luau, so no
-              mechanic is silently unbuilt
+              mechanic is silently unbuilt. Exempt, and listed as notes: Tuning levers
+              that only sheet formulas read ("sheet-only", DECISIONS #28), and the
+              DEAD_ALLOWED entries below
   4. species  every species in VISION.md's table exists with that display name
 
 Usage:
@@ -42,6 +44,14 @@ LADDER_EXTENSIONS = {
     ("hero", "MEDIC"): ("Field Medic", 75, "DECISIONS #13"),
     ("tower", "HOSPITAL"): ("Field Hospital", 100, "DECISIONS #15"),
     ("tower", "ARMORY"): ("Armory", 150, "DECISIONS #16"),
+}
+
+
+# Config fields no code reads, on purpose (DECISIONS #28). One reason each; nothing
+# else belongs here. (block, field): reason
+DEAD_ALLOWED = {
+    ("Tuning", "StartingLives"): "superseded by Difficulty -> Starting lives",
+    ("Enemies", "cashValue"): "display column; the code pays maxHp x CashPerEffectiveHP, the same value unrounded",
 }
 
 
@@ -250,7 +260,7 @@ def tuning_formula_uses():
     return uses
 
 
-def check_dead(findings, data):
+def check_dead(findings, data, notes):
     tuning_uses = tuning_formula_uses()
     config = os.path.join(ROOT, "src", "shared", "Config.luau")
     code = ""
@@ -260,12 +270,20 @@ def check_dead(findings, data):
                 code += f.read() + "\n"
     for (block, field), where in sorted(config_fields(data).items()):
         if where and not re.search(r"\b" + re.escape(field) + r"\b", code):
-            shown = ", ".join(where[:3]) + (f" (+{len(where) - 3} more)" if len(where) > 3 else "")
-            finding = f"{block}.{field} is set ({shown}) but no src file reads it"
-            if block == "Tuning":
-                uses = tuning_uses.get(field, 0)
-                finding += f"; sheet formulas read it {uses}x" if uses else "; no sheet formula reads it either"
-            findings.append(finding)
+            uses = tuning_uses.get(field, 0) if block == "Tuning" else 0
+            if (block, field) in DEAD_ALLOWED:
+                notes.append(f"allowed: {block}.{field} ({DEAD_ALLOWED[(block, field)]})")
+            elif uses:
+                notes.append(f"sheet-only: {block}.{field} (sheet formulas read it {uses}x)")
+            else:
+                shown = ", ".join(where[:3]) + (f" (+{len(where) - 3} more)" if len(where) > 3 else "")
+                finding = f"{block}.{field} is set ({shown}) but no src file reads it"
+                if block == "Tuning":
+                    finding += "; no sheet formula reads it either"
+                findings.append(finding)
+    for (block, field) in DEAD_ALLOWED:
+        if (block, field) not in config_fields(data):
+            findings.append(f"DEAD_ALLOWED lists {block}.{field}, which Config no longer has")
 
 
 # ---------------------------------------------------------------- 4. species
@@ -316,19 +334,21 @@ def main():
 
     compared = []
     checks = [
-        ("names", lambda f: (check_names(f, "Towers", data["Towers"], "UPGRADES.md", "##", compared),
+        ("names", lambda f, n: (check_names(f, "Towers", data["Towers"], "UPGRADES.md", "##", compared),
                              check_names(f, "Heroes", data["Heroes"], "HEROES.md", "###", compared))),
-        ("unlocks", lambda f: check_unlocks(f, data)),
-        ("dead columns", lambda f: check_dead(f, data)),
-        ("species", lambda f: check_species(f, data)),
+        ("unlocks", lambda f, n: check_unlocks(f, data)),
+        ("dead columns", lambda f, n: check_dead(f, data, n)),
+        ("species", lambda f, n: check_species(f, data)),
     ]
     total = 0
     for name, run in checks:
-        findings = []
-        run(findings)
+        findings, notes = [], []
+        run(findings, notes)
         total += len(findings)
         counted = f" ({len(compared)} tier names compared)" if name == "names" else ""
         print(f"{'ok  ' if not findings else 'FIND'} audit {name}: {len(findings)} finding(s){counted}")
+        for note in notes:
+            print(f"       ok {note}")
         for finding in findings:
             print(f"       - {finding}")
     print(f"audit: {total} finding(s)")
