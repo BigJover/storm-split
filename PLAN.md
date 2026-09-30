@@ -219,6 +219,15 @@ the spreadsheet, never for code.
   greyed with the reason.
 - **Accept:** check clean; Pricing/Combat spec for repair; code trace of every refusal.
 
+### T10b. Readable hero burn patch (small)
+- **Goal:** Incendiary's burning ground is visible (DECISIONS #32).
+- **Spreadsheet:** a new Tuning row below the last one: **Burn patch min reach** = 3
+  (studs). Add it to the exporter's `needed` list.
+- **Files:** `Hazards.burn`: `reach = math.max(reach, Config.Tuning.BurnPatchMinReach)`
+  instead of the literal 1. No other change.
+- **Accept:** Config diff is the one new Tuning line; the heroes spec still passes; a new
+  assertion that Incendiary's patch reach is ≥ 3; check clean. No playtest claim.
+
 ### T11. Dino bites — 🦖
 - **Spreadsheet:** `Enemies` columns O–R: Melee name, Melee damage, Melee every (s), Melee
   reach (studs) with DECISIONS #3 values (melee names from #2: Nip, Slash, Head-Butt, Tail
