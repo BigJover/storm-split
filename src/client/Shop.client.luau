@@ -462,6 +462,33 @@ local function describeAbilities(now, nextStep, parts: { string })
 	if hunterRate then
 		table.insert(parts, `hunters in range fire {hunterRate}% faster`)
 	end
+
+	-- Field Hospital
+	local heal = changed("healMult", 1)
+	if heal then
+		table.insert(parts, `heals x{fmt(heal)} as fast`)
+	end
+	local reviveSpeed = changed("reviveSpeed", 0)
+	if reviveSpeed then
+		local pace = if reviveSpeed >= 1 then "at full speed" else `at {math.floor(reviveSpeed * 100 + 0.5)}% speed`
+		table.insert(parts, `raises trampled towers in range {pace}`)
+	end
+	local kits = changed("medKits", 0)
+	local kitHeal = changed("medKitHeal", 0)
+	if kits or kitHeal then
+		table.insert(parts, `{nextStep.medKits} med kits land nearby each round, {fmt(nextStep.medKitHeal)} HP each`)
+	end
+	local rescue = changed("rescueRespawnMult", 0)
+	if rescue then
+		table.insert(parts, `downed hunters come back here in {math.floor(rescue * 100 + 0.5)}% of the time`)
+	end
+	local hpAura = changed("auraHpPercent", 0)
+	if hpAura then
+		table.insert(parts, `towers in range get +{hpAura}% max HP`)
+	end
+	if changed("lastStand", false) then
+		table.insert(parts, "once a round, a tower in range that would be trampled stays at 1 HP")
+	end
 end
 
 -- "+30% damage · +15% rate · 2 shots per trigger" for going from `current`

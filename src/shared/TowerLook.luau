@@ -29,6 +29,7 @@ TowerLook.COLORS = table.freeze({
 	CHILLER = Color3.fromRGB(70, 190, 180), -- Tranq Station: tranquilizer teal
 	QUARTERMASTER = Color3.fromRGB(230, 150, 50), -- Supply Camp: supply-crate orange
 	ARMORY = Color3.fromRGB(115, 125, 140), -- Armory: plate-steel grey
+	HOSPITAL = Color3.fromRGB(235, 232, 220), -- Field Hospital: canvas white
 })
 
 TowerLook.BODY_HEIGHT = 5
@@ -118,6 +119,27 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 			table.insert(parts, block(`Dart{i}`, Vector3.new(0.15, 1.3, 0.15), at(x, 3.0, -0.3), WOOD, Enum.Material.Wood))
 			table.insert(parts, block(`Tip{i}`, Vector3.new(0.22, 0.35, 0.22), at(x, 3.8, -0.3), DART_TIP, Enum.Material.Neon))
 			table.insert(parts, block(`Fletching{i}`, Vector3.new(0.45, 0.3, 0.05), at(x, 2.5, -0.3), Color3.fromRGB(230, 225, 210), Enum.Material.Fabric))
+		end
+		return parts
+	end,
+	-- Field Hospital: a white canvas A-frame tent with a green "+" on each side
+	-- (green, never a red cross: DINO_REVIEW R2).
+	HOSPITAL = function(color)
+		local green = Color3.fromRGB(60, 190, 90)
+		local lean = math.atan(1.35 / 2.5) -- each canvas side, from upright
+		local length = math.sqrt(1.35 ^ 2 + 2.5 ^ 2)
+		local parts = {
+			block("Groundsheet", Vector3.new(2.9, 0.1, 2.9), at(0, 0.05, 0), Color3.fromRGB(120, 110, 90), Enum.Material.Fabric),
+			block("Ridge", Vector3.new(0.2, 0.2, 2.9), at(0, 2.55, 0), WOOD, Enum.Material.Wood),
+		}
+		for _, side in { -1, 1 } do
+			local name = if side < 0 then "Left" else "Right"
+			local canvas = at(side * 0.675, 1.3, 0) * CFrame.Angles(0, 0, -side * lean)
+			table.insert(parts, block(`Canvas{name}`, Vector3.new(0.15, length, 2.8), canvas, color, Enum.Material.Fabric))
+			-- the "+" lies on the outside of the canvas
+			local face = canvas * CFrame.new(side * 0.1, 0.25, 0)
+			table.insert(parts, block(`Cross{name}V`, Vector3.new(0.05, 0.9, 0.28), face, green, Enum.Material.Neon))
+			table.insert(parts, block(`Cross{name}H`, Vector3.new(0.05, 0.28, 0.9), face, green, Enum.Material.Neon))
 		end
 		return parts
 	end,

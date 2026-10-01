@@ -8,7 +8,7 @@ local Config = require(src.shared.Config)
 local TowerStats = require(src.shared.TowerStats)
 local Upgrades = require(src.shared.Upgrades)
 
-local ROUNDED_DOWN = { bomblets = true, bombletGenerations = true, chests = true }
+local ROUNDED_DOWN = { bomblets = true, bombletGenerations = true, chests = true, medKits = true }
 local AT_LEAST_ONE = { shots = true, lineHits = true }
 
 local function where(key: string, tiers: { number }): string
@@ -59,6 +59,7 @@ local function expected(def, tiers: { number })
 		hunterRecoilMult = product("hunterRecoilMult"),
 		hunterReloadMult = product("hunterReloadMult"),
 		hunterSpreadMult = product("hunterSpreadMult"),
+		healPerSecond = def.healPerSecond * product("healMult"),
 	}
 	for _, field in TowerStats.HIGHEST do
 		local value = highest(field)

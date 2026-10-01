@@ -57,6 +57,15 @@ export type Stats = {
 	hunterReloadMult: number,
 	hunterSpreadMult: number,
 	hunterRatePercent: number,
+	-- Field Hospital (Step 2)
+	healPerSecond: number, -- to standing towers and hunters in range
+	revives: boolean, -- also raises trampled towers in range
+	reviveSpeed: number, -- x heal rate while reviving
+	medKits: number, -- heal kits dropped each round
+	medKitHeal: number,
+	rescueRespawnMult: number, -- 0 = no Rescue Beacon; else x respawn time, at the hospital
+	auraHpPercent: number, -- towers in range get +% max HP
+	lastStand: boolean, -- once a round, a tower in range that would be trampled stays at 1 HP
 }
 
 local MULTIPLIERS = {
@@ -71,6 +80,7 @@ local MULTIPLIERS = {
 	"hunterRecoilMult",
 	"hunterReloadMult",
 	"hunterSpreadMult",
+	"healMult",
 }
 local HIGHEST = {
 	"shots",
@@ -99,8 +109,13 @@ local HIGHEST = {
 	"thornsDamage",
 	"stunBitersSeconds",
 	"hunterRatePercent",
+	"reviveSpeed",
+	"medKits",
+	"medKitHeal",
+	"rescueRespawnMult",
+	"auraHpPercent",
 }
-local FLAGS = { "piercesArmor", "stunsBosses", "auraPiercesArmor", "slowsBosses", "freezeHoldsBosses", "stripsArmor" }
+local FLAGS = { "piercesArmor", "stunsBosses", "auraPiercesArmor", "slowsBosses", "freezeHoldsBosses", "stripsArmor", "revives", "lastStand" }
 
 function TowerStats.compute(def, pathTiers: { number }): Stats
 	local mult: { [string]: number } = {}
@@ -175,6 +190,14 @@ function TowerStats.compute(def, pathTiers: { number }): Stats
 		hunterReloadMult = mult.hunterReloadMult,
 		hunterSpreadMult = mult.hunterSpreadMult,
 		hunterRatePercent = high.hunterRatePercent or 0,
+		healPerSecond = (def.healPerSecond or 0) * mult.healMult,
+		revives = flag.revives == true,
+		reviveSpeed = high.reviveSpeed or 0,
+		medKits = math.floor(high.medKits or 0),
+		medKitHeal = high.medKitHeal or 0,
+		rescueRespawnMult = high.rescueRespawnMult or 0,
+		auraHpPercent = high.auraHpPercent or 0,
+		lastStand = flag.lastStand == true,
 	}
 end
 

@@ -209,14 +209,32 @@ local function spawn(player: Player)
 end
 
 -- During a match, the dead come back after RespawnTime, at full health with
--- a short force field (Server/Health).
+-- a short force field (Server/Health). A standing Rescue Beacon (Field
+-- Hospital) brings them back sooner, next to it.
+local RESCUE_OFFSET = Vector3.new(0, 3, 4) -- visual placement beside the hospital
+local rescueAt: { [Player]: Vector3 } = {}
+
 local function watchCharacter(player: Player)
 	player.CharacterAdded:Connect(function(character)
 		Health.setUp(character)
+		local beacon = rescueAt[player]
+		rescueAt[player] = nil
+		if beacon then
+			task.defer(function()
+				if character.Parent then
+					character:PivotTo(CFrame.new(beacon + RESCUE_OFFSET))
+				end
+			end)
+		end
 		local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 		humanoid.Died:Connect(function()
-			task.delay(Config.Tuning.RespawnTime, function()
+			local base, share = Towers.rescueBeacon()
+			task.delay(Config.Tuning.RespawnTime * (if base then share else 1), function()
 				if player.Character == character then
+					local stillThere = Towers.rescueBeacon() -- still standing?
+					if stillThere then
+						rescueAt[player] = stillThere
+					end
 					spawn(player)
 				end
 			end)
@@ -357,6 +375,7 @@ local function playMatch()
 			frames, costSum, costWorst = 0, 0, 0
 			Enemies.resetPeak()
 			DinoAttacks.resetPeak()
+			Towers.newRound() -- Last Stand is ready again
 			Airdrops.drop()
 		end,
 		onRoundEnd = function(index)

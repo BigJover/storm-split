@@ -44,8 +44,17 @@
 	tower is trampled (`knockedOut`): it stops firing, chilling, giving auras,
 	paying income and dropping chests, dinos stop targeting it (targets()),
 	and it can't be upgraded until repaired. It keeps its tiers.
+
+	FIELD HOSPITAL (DECISIONS #15): each frame it heals standing towers and
+	hunters in range (the strongest hospital covering each, no stacking);
+	Stitch-Up / Miracle Ward also raise trampled towers in range, which
+	stand back up at full HP. Tonic's Aura HP % raises the max HP of towers in
+	range (Shared/Combat.towerMaxHp), and Last Stand keeps one tower in range
+	per round at 1 HP instead of trampled. Med kits ride Airdrops; the Rescue
+	Beacon is Main's (respawn here, sooner).
 ]]
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -59,6 +68,7 @@ local Upgrades = require(Shared:WaitForChild("Upgrades"))
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
 local Hazards = require(script.Parent.Hazards)
+local Health = require(script.Parent.Health)
 
 local Towers = {}
 
@@ -72,6 +82,7 @@ type Buff = {
 	discountPercent: number, -- off its upgrades (Logistics)
 	sellRefund: number, -- 0 = the normal SellRefund
 	resistPercent: number, -- damage resistance (an Armory in range, itself included)
+	hpPercent: number, -- +% max HP (a Field Hospital's Tonic in range)
 }
 
 export type Tower = {
@@ -90,6 +101,7 @@ export type Tower = {
 	hp: number,
 	maxHp: number,
 	knockedOut: boolean, -- trampled at 0 HP until repaired
+	lastStandUsed: boolean, -- a Field Hospital's Last Stand has saved a tower this round
 	model: Model,
 }
 
@@ -112,7 +124,9 @@ end
 
 ------------------------------------------------------------------ stats
 
-local NO_BUFF: Buff = table.freeze({ ratePercent = 0, damagePercent = 0, piercesArmor = false, discountPercent = 0, sellRefund = 0, resistPercent = 0 })
+local NO_BUFF: Buff =
+	table.freeze({ ratePercent = 0, damagePercent = 0, piercesArmor = false, discountPercent = 0, sellRefund = 0, resistPercent = 0, hpPercent = 0 })
+local showHealth: (Tower) -> () -- below, with the rest of health
 
 local function hasAura(s: Stats): boolean
 	return s.auraRatePercent > 0
@@ -121,6 +135,7 @@ local function hasAura(s: Stats): boolean
 		or s.discountPercent > 0
 		or s.sellRefund > 0
 		or s.resistPercent > 0
+		or s.auraHpPercent > 0
 end
 
 local function covers(source: Tower, point: Vector3): boolean
@@ -132,7 +147,7 @@ end
 -- reads Discount / RefundRate from the tower's body.
 local function refreshAuras()
 	for _, tower in towers do
-		local rate, damage, pierce, discount, refund, resist = 0, 0, false, 0, 0, 0
+		local rate, damage, pierce, discount, refund, resist, hpBonus = 0, 0, false, 0, 0, 0, 0
 		for _, source in towers do
 			local s = source.stats
 			if not source.knockedOut and hasAura(s) and covers(source, tower.base) then
@@ -144,12 +159,31 @@ local function refreshAuras()
 					pierce = pierce or s.auraPiercesArmor
 					discount = math.max(discount, s.discountPercent)
 					refund = math.max(refund, s.sellRefund)
+					hpBonus = math.max(hpBonus, s.auraHpPercent)
 				end
 			end
 		end
-		tower.buff = if rate > 0 or damage > 0 or pierce or discount > 0 or refund > 0 or resist > 0
-			then { ratePercent = rate, damagePercent = damage, piercesArmor = pierce, discountPercent = discount, sellRefund = refund, resistPercent = resist }
+		tower.buff = if rate > 0 or damage > 0 or pierce or discount > 0 or refund > 0 or resist > 0 or hpBonus > 0
+			then {
+				ratePercent = rate,
+				damagePercent = damage,
+				piercesArmor = pierce,
+				discountPercent = discount,
+				sellRefund = refund,
+				resistPercent = resist,
+				hpPercent = hpBonus,
+			}
 			else NO_BUFF
+		-- Tonic: gaining the aura adds the HP it gives; losing it only caps HP.
+		local maxHp = Combat.towerMaxHp(tower.def, tower.pathTiers, hpBonus)
+		if maxHp ~= tower.maxHp then
+			if maxHp > tower.maxHp and not tower.knockedOut then
+				tower.hp += maxHp - tower.maxHp
+			end
+			tower.maxHp = maxHp
+			tower.hp = math.min(tower.hp, maxHp)
+			showHealth(tower)
+		end
 		local body = tower.model.PrimaryPart
 		if body then
 			body:SetAttribute("Discount", discount)
@@ -168,7 +202,7 @@ end
 ------------------------------------------------------------------ health
 
 -- The body carries HP / MaxHP / KO for the tower panel; the model shows a bar.
-local function showHealth(tower: Tower)
+function showHealth(tower: Tower)
 	local body = tower.model.PrimaryPart
 	if body then
 		-- Exact values, so the panel's repair price matches the server's.
@@ -190,6 +224,18 @@ local function setKnockedOut(tower: Tower, on: boolean)
 	refreshAuras() -- its auras go (and come back on repair)
 end
 
+-- Last Stand: the first standing hospital covering this tower that hasn't
+-- saved one yet this round spends its save. True if the tower is saved.
+local function lastStand(tower: Tower): boolean
+	for _, source in towers do
+		if source.stats.lastStand and not source.lastStandUsed and not source.knockedOut and covers(source, tower.base) then
+			source.lastStandUsed = true
+			return true
+		end
+	end
+	return false
+end
+
 -- Hurts a standing tower, less its resistance. At 0 HP it's trampled.
 -- `source` is who or what did it (kept for PvP later). Returns the damage dealt.
 function Towers.damage(tower: Tower, amount: number, source: any?): number
@@ -201,7 +247,9 @@ function Towers.damage(tower: Tower, amount: number, source: any?): number
 	local resist = Combat.combineResist(sources)
 	local dealt = math.min(tower.hp, Combat.afterResist(amount, resist))
 	tower.hp -= dealt
-	if tower.hp <= 0 then
+	if tower.hp <= 0 and lastStand(tower) then
+		tower.hp = 1 -- a Field Hospital's Last Stand: not this time
+	elseif tower.hp <= 0 then
 		tower.hp = 0
 		setKnockedOut(tower, true)
 	elseif dealt > 0 then
@@ -355,6 +403,7 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 		hp = maxHp,
 		maxHp = maxHp,
 		knockedOut = false,
+		lastStandUsed = false,
 		model = model,
 	}
 	table.insert(towers, tower)
@@ -372,7 +421,7 @@ function Towers.upgrade(tower: Tower, pathIndex: number): boolean
 	tower.pathTiers[pathIndex] += 1
 	tower.stats = TowerStats.compute(tower.def, tower.pathTiers)
 	-- The HP an upgrade adds to the max is added to current HP too.
-	local maxHp = Combat.towerMaxHp(tower.def, tower.pathTiers)
+	local maxHp = Combat.towerMaxHp(tower.def, tower.pathTiers, tower.buff.hpPercent)
 	tower.hp = math.min(maxHp, tower.hp + (maxHp - tower.maxHp))
 	tower.maxHp = maxHp
 	TowerLook.refresh(tower.model, tower.stats.range, tower.pathTiers, swapStage(tower))
@@ -577,7 +626,96 @@ end
 -- Called every Heartbeat by Main.
 -- NOTE: fires at most once per frame (times `shots`), so fire rates above
 -- ~60/s are capped.
+------------------------------------------------------------------ Field Hospital
+
+-- The strongest standing hospital's heal (and revive) rate covering a point.
+local function healRates(point: Vector3): (number, number)
+	local heal, revive = 0, 0
+	for _, source in towers do
+		local s = source.stats
+		if s.healPerSecond > 0 and not source.knockedOut and covers(source, point) then
+			heal = math.max(heal, s.healPerSecond)
+			if s.revives then
+				revive = math.max(revive, s.healPerSecond * s.reviveSpeed)
+			end
+		end
+	end
+	return heal, revive
+end
+
+local function stepHealing(dt: number)
+	local any = false
+	for _, source in towers do
+		if source.stats.healPerSecond > 0 and not source.knockedOut then
+			any = true
+			break
+		end
+	end
+	if not any then
+		return
+	end
+	for _, tower in towers do
+		local heal, revive = healRates(tower.base)
+		if not tower.knockedOut and heal > 0 and tower.hp < tower.maxHp then
+			Towers.heal(tower, heal * dt)
+		elseif tower.knockedOut and revive > 0 then
+			-- Revive: HP climbs while it stays trampled; it stands at full.
+			tower.hp = math.min(tower.maxHp, tower.hp + revive * dt)
+			if tower.hp >= tower.maxHp then
+				Towers.repair(tower)
+			else
+				showHealth(tower)
+			end
+		end
+	end
+	for _, player in Players:GetPlayers() do
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if root and root:IsA("BasePart") then
+			local heal = healRates(root.Position)
+			if heal > 0 then
+				Health.heal(player, heal * dt)
+			end
+		end
+	end
+end
+
+export type MedKitDrop = { base: Vector3, count: number, heal: number }
+
+-- Med kits each standing hospital drops this round.
+function Towers.medKits(): { MedKitDrop }
+	local drops = {}
+	for _, tower in towers do
+		local s = tower.stats
+		if s.medKits > 0 and s.medKitHeal > 0 and not tower.knockedOut then
+			table.insert(drops, { base = tower.base, count = s.medKits, heal = s.medKitHeal })
+		end
+	end
+	return drops
+end
+
+-- A standing Rescue Beacon: where downed hunters come back, and the share of
+-- the respawn time they wait. nil if there's none.
+function Towers.rescueBeacon(): (Vector3?, number)
+	local best, mult = nil, 1
+	for _, tower in towers do
+		local m = tower.stats.rescueRespawnMult
+		if m > 0 and not tower.knockedOut and (best == nil or m < mult) then
+			best, mult = tower.base, m
+		end
+	end
+	return best, mult
+end
+
+-- A new round: every Last Stand is ready again.
+function Towers.newRound()
+	for _, tower in towers do
+		tower.lastStandUsed = false
+	end
+end
+
 function Towers.step(dt: number)
+	stepHealing(dt)
 	local live = Enemies.getLive()
 	for _, tower in towers do
 		stepChill(tower, dt, live)

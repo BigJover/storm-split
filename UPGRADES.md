@@ -72,6 +72,21 @@ built). Change a name there, not in code.
 - Amber Vault: interest on banked cash. Air Drop: chests land that players run over to collect.
 - Bulk Order: towers in range −5% upgrade cost. Recycler: towers in range sell for 90%. Forward Base: towers in range +10% attack speed. Command Center: −20% costs, full refunds.
 
+## Field Hospital (HOSPITAL) — heals towers and hunters, no attack ✅ Step 2 · unlock 100 Amber
+
+Never shoots. Heals standing towers and hunters in its range (itself included) 3 HP/s.
+Hospitals don't stack: the strongest one covering a tower or hunter heals it.
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Ward** | heal speed | Clean Linens | Extra Cots | *Stitch-Up* | Night Shift | *Miracle Ward* |
+| **Rescue** | hunters | Stretcher Team | Signal Whistle | *Med Kits* | Supply Runs | *Rescue Beacon* |
+| **Tonic** | tougher towers | Camp Rations | Iron Tonic | *Adrenaline* | Bone Broth | *Last Stand* |
+
+- Clean Linens heal ×1.5 · Extra Cots ×2. Stitch-Up: ×2.5, and trampled towers in range climb back at half the heal rate; they stand up again at full HP. Night Shift: ×3. Miracle Ward: ×4.5, revives at full speed.
+- Stretcher Team: range ×1.2. Signal Whistle: ×1.4. Med Kits: 2 white kits with a green "+" land nearby each round (like the Supply Camp's chests); the hunter who runs over one heals 30. Supply Runs: 3 kits, 40. Rescue Beacon: range ×1.8, kits heal 50, and downed hunters come back beside the hospital in half the respawn time.
+- Camp Rations: towers in range +10% max HP · Iron Tonic +20%. Adrenaline: towers in range also +10% attack speed. Bone Broth: +35% HP. Last Stand: +50% HP, and once per round a tower in range that would be trampled stays at 1 HP.
+
 ## Armory (ARMORY) — damage resistance, no attack ✅ Step 2 · unlock 150 Amber
 
 Never shoots. Towers and hunters in its range (itself included) take 15% less damage.
@@ -107,6 +122,7 @@ Resistance doesn't stack: the strongest source wins, capped at 60% (Tuning).
 | Slow, knockout pulses, damage-taken amp, armour strip | Tranq Station | ✅ phase 5 |
 | Round income, interest, airdrop chests, upgrade discounts, better refunds | Supply Camp | ✅ phase 5 |
 | Damage resistance aura, thorns, biter stun, hunter handling buffs | Armory | ✅ Step 2 |
+| Healing aura, tower revive, med kits, rescue respawn, max-HP aura, Last Stand | Field Hospital | ✅ Step 2 |
 
 When a mechanic lands, its numbers get a column on `Tower Upgrades` and the stat-only
 multipliers get rebalanced around it — expect a tuning pass per mechanic.

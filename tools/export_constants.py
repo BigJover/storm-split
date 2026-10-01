@@ -101,6 +101,15 @@ ABILITY_COLUMNS = [
     ("hunterReloadMult", 51, "num", 1),
     ("hunterSpreadMult", 52, "num", 1),
     ("hunterRatePercent", 53, "num", 0),
+    # Field Hospital (Step 2)
+    ("healMult", 54, "num", 1),
+    ("revives", 55, "bool", False),
+    ("reviveSpeed", 56, "num", 0),
+    ("medKits", 57, "num", 0),
+    ("medKitHeal", 58, "num", 0),
+    ("rescueRespawnMult", 59, "num", 0),
+    ("auraHpPercent", 60, "num", 0),
+    ("lastStand", 61, "bool", False),
 ]
 
 

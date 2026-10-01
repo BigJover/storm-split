@@ -265,3 +265,74 @@ test("Armory crossover: Bulwark + Hand Loads keeps both", function()
 	eq(s.stunBitersSeconds, 0.5, "stun")
 	eq(s.auraDamagePercent, 10, "aura damage")
 end)
+
+-- Field Hospital (DECISIONS #15, names per #25) -----------------------------------
+
+test("Field Hospital: 450, range 15, no attack, 150 HP, heals 3/s, unlock 100", function()
+	local def = Config.Towers.HOSPITAL
+	eq(def.display, "Field Hospital")
+	eq(def.baseCost, 450, "cost")
+	eq(def.range, 15, "range")
+	eq(def.hitsAir, false, "hits air")
+	eq(def.maxHp, 150, "Max HP")
+	eq(def.unlockCost, 100, "unlock")
+	local s = base("HOSPITAL")
+	ok(s.rate <= 0 or s.damage <= 0, "never shoots")
+	eq(s.healPerSecond, 3, "heal")
+	eq(s.revives, false, "no revive yet")
+	eq(s.medKits, 0, "no kits yet")
+	eq(s.rescueRespawnMult, 0, "no beacon yet")
+	eq(s.auraHpPercent, 0, "no Tonic yet")
+	eq(s.lastStand, false, "no Last Stand yet")
+end)
+
+test("Field Hospital Ward: heal x1.5/2/2.5/3/4.5, Stitch-Up revives at half speed, Miracle Ward at full", function()
+	local names = { "Clean Linens", "Extra Cots", "Stitch-Up", "Night Shift", "Miracle Ward" }
+	local heal = { 1.5, 2, 2.5, 3, 4.5 }
+	local revives = { false, false, true, true, true }
+	local speed = { 0, 0, 0.5, 0.5, 1 }
+	for t, name in names do
+		local s = at("HOSPITAL", 1, t, name)
+		near(s.healPerSecond, 3 * heal[t], `{name} heal`)
+		eq(s.revives, revives[t], `{name} revives`)
+		eq(s.reviveSpeed, speed[t], `{name} revive speed`)
+	end
+end)
+
+test("Field Hospital Rescue: range x1.2/1.4, Med Kits 2x30, Supply Runs 3x40, Rescue Beacon x1.8, 50, half respawn", function()
+	local def = Config.Towers.HOSPITAL
+	near(at("HOSPITAL", 2, 1, "Stretcher Team").range, def.range * 1.2, "Stretcher Team range")
+	near(at("HOSPITAL", 2, 2, "Signal Whistle").range, def.range * 1.4, "Signal Whistle range")
+	local kits = at("HOSPITAL", 2, 3, "Med Kits")
+	eq(kits.medKits, 2, "Med Kits count")
+	eq(kits.medKitHeal, 30, "Med Kits heal")
+	eq(kits.rescueRespawnMult, 0, "no beacon yet")
+	local runs = at("HOSPITAL", 2, 4, "Supply Runs")
+	eq(runs.medKits, 3, "Supply Runs count")
+	eq(runs.medKitHeal, 40, "Supply Runs heal")
+	local beacon = at("HOSPITAL", 2, 5, "Rescue Beacon")
+	near(beacon.range, def.range * 1.8, "Rescue Beacon range")
+	eq(beacon.medKits, 3, "keeps 3 kits")
+	eq(beacon.medKitHeal, 50, "Rescue Beacon kits heal")
+	eq(beacon.rescueRespawnMult, 0.5, "half the respawn time")
+	near(beacon.healPerSecond, 3, "Rescue doesn't speed healing")
+end)
+
+test("Field Hospital Tonic: +10/20% HP, Adrenaline +10% rate, Bone Broth +35%, Last Stand +50% once a round", function()
+	local names = { "Camp Rations", "Iron Tonic", "Adrenaline", "Bone Broth", "Last Stand" }
+	local hp = { 10, 20, 20, 35, 50 }
+	local rate = { 0, 0, 10, 10, 10 }
+	for t, name in names do
+		local s = at("HOSPITAL", 3, t, name)
+		eq(s.auraHpPercent, hp[t], `{name} aura HP`)
+		eq(s.auraRatePercent, rate[t], `{name} aura rate`)
+		eq(s.lastStand, t == 5, `{name} Last Stand`)
+	end
+end)
+
+test("Field Hospital crossover: Miracle Ward + Iron Tonic keeps both", function()
+	local s = TowerStats.compute(Config.Towers.HOSPITAL, { 5, 0, 2 })
+	near(s.healPerSecond, 13.5, "heal")
+	eq(s.reviveSpeed, 1, "revive speed")
+	eq(s.auraHpPercent, 20, "aura HP")
+end)

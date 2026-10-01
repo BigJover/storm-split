@@ -77,7 +77,7 @@ test("crown on top at stage 1, glow at stage 2, tier label on the body", functio
 		ok(body:FindFirstChild("Tiers") ~= nil, `{key} tier label on the body`)
 		for _, part in model:GetChildren() do
 			if part:GetAttribute("LookMaterial") then
-				ok(part.Material ~= Enum.Material.Neon or part.Name:sub(1, 3) == "Tip", `{key} {part.Name} not glowing yet`)
+				eq(part.Material.Name, part:GetAttribute("LookMaterial"), `{key} {part.Name} not glowing yet`)
 			end
 		end
 		TowerLook.refresh(model, 20, { 5, 2, 0 }, 2)
