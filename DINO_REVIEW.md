@@ -274,3 +274,23 @@ Skybreaker (M5/M6) and "Pops".
 | R6-2 | The Armory is grey-on-grey, so its trampled state (dark Slate 60,60,64) changes less than on other towers. | `TowerLook.setKnockedOut`: no colour change is needed; the tilt, debris and label already carry it. Optionally darken the trampled tint to (45,45,48) for every tower so the contrast holds on grey. |
 | R6-3 | DECISIONS #16 still lists the pre-rename Armory names; #25 overrides them, but a reader of #16 alone sees Hot Loads / AP Crates / Big Game Arsenal / Gun Oil. | Director: add "(renamed in #25)" to row #16. That's a doc note only. |
 | R6-4 | The Tranq Station's Sedate T5 is still **Hibernation**, a cold/winter word, and the old Chiller bullets in UPGRADES.md under the Tranq table (Permafrost, Flash Freeze, Shatter, Cold Front…) may still be there. | `Tower Upgrades` Name Tranq Station / Sedate / T5 → **Deep Sleep** (round-1 nice-to-have), and check that the T5 doc rewrite of those bullets landed. |
+
+---
+
+## Round 7 — review of a815665 (T15 Field Hospital)
+
+**Reads well**
+- The R2 ask landed: the tent is a cream canvas A-frame on a groundsheet with a wooden ridge pole and a **green Neon "+"** on both sides. There's no red cross anywhere. Next to the Armory's grey shed and the Supply Camp's orange crates, it reads at once as "camp medic tent".
+- The med kits match the tent (cream box, green "+", a green "+30 HP" label). One rule for players to learn: green "+" = healing.
+- The round-1 asks landed: **Outreach → Rescue**, **Vitamins → Camp Rations**. The Ward and Tonic tiers (Clean Linens, Extra Cots, Stitch-Up, Night Shift, Miracle Ward / Iron Tonic, Bone Broth, Last Stand) sound like a frontier field camp. "Big Game" and "Signal Tower" don't collide with "Signal Whistle".
+- The panel uses the game's own words ("raises **trampled** towers", "med kits land nearby"), and the UPGRADES.md section matches Config.
+
+**Off / to fix**
+
+| # | Priority | Issue | Fix |
+|---|---|---|---|
+| R7-1 | **must-fix** | **Last Stand is invisible.** When it saves a tower, `Towers.damage` sets hp = 1 and skips even `flashHit` (it's the first branch of the if/elseif). Hunters see a tower that "should" be trampled shrug off a bite with no cue, so it looks like a bug, not the T5 they paid for. | `src/server/Towers.luau` `Towers.damage`, Last Stand branch: call a visual-only `TowerLook.flashSaved(tower.model)`, which flashes the saved tower's parts green (60,190,90, the hospital's "+") for 0.3s, plus a brief "+" billboard / "Last Stand!" label. Optionally pulse the hospital's own "+" so players see *who* saved it. |
+| R7-2 | nice | **Rescue Beacon has no beacon.** A T5 hospital looks the same as a T0 one, and a respawning hunter appears beside a plain tent with no idea why. | `TowerLook` HOSPITAL (or a tier-5 Rescue add-on): a tall wooden pole beside the tent with a **green lantern** (Neon, 60,190,90) on top. That's the same green and still low-tech, and it marks the respawn spot from across the map. |
+| R7-3 | nice | **Adrenaline** is a modern clinical word in a camp-remedy path (Camp Rations, Iron Tonic, Bone Broth). | `Tower Upgrades` Field Hospital / Tonic / T3 → **Smelling Salts** (it wakes towers up = +attack speed). Update UPGRADES.md line 84/88. |
+| R7-4 | nice | **Supply Runs** echoes the **Supply Camp** tower, and its kits are already described as "like the Supply Camp's chests", so players may think it involves the camp. | Rescue / T4 → **Pack Mules** (more kits, heavier kits). Update UPGRADES.md. |
+| R7-5 | nice | Panel wording: "heals x1.5 as fast" is awkward. "downed hunters come back here in 50% of the time" uses "downed", a term the game doesn't use elsewhere. | `src/client/Shop.client.luau` ~469: `heals {fmt(heal)}× faster`. ~486: `fallen hunters respawn at this tent in {pct}% of the usual time`. |
