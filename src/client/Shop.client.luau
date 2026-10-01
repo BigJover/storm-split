@@ -42,6 +42,7 @@ local Theme = require(Shared:WaitForChild("Theme"))
 local CUR = string.lower(Theme.Currency) -- "amber" in running text
 local Placement = require(Shared:WaitForChild("Placement"))
 local ShopRules = require(Shared:WaitForChild("ShopRules"))
+local PanelRules = require(Shared:WaitForChild("PanelRules"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
@@ -1113,27 +1114,34 @@ end
 
 ------------------------------------------------------------------ input
 
-local function toggleBuild()
-	local state = ReplicatedStorage:GetAttribute("State")
-	if state ~= "Building" and state ~= "Playing" then
-		return -- nothing to build on from the home screen
+-- Open `wanted` if Shared/PanelRules allows it in the current state.
+local function openIfAllowed(wanted: Mode)
+	if PanelRules.allowed(wanted, ReplicatedStorage:GetAttribute("State"), myHero() ~= nil) then
+		setMode(wanted)
 	end
-	setMode(if mode == "list" or mode == "placing" then "closed" else "list")
+end
+
+local function toggleBuild()
+	if mode == "list" or mode == "placing" then
+		setMode("closed")
+	else
+		openIfAllowed("list") -- nothing to build on from the home screen
+	end
 end
 
 local function toggleHeroPick()
 	if mode == "heroPick" then
 		setMode("closed")
 	elseif canPickHero() then
-		setMode("heroPick")
+		openIfAllowed("heroPick")
 	end
 end
 
 local function toggleHeroUpgrade()
 	if mode == "heroUpgrade" then
 		setMode("closed")
-	elseif myHero() then
-		setMode("heroUpgrade")
+	else
+		openIfAllowed("heroUpgrade") -- in a match only
 	end
 end
 
@@ -1144,8 +1152,8 @@ upgradesButton.Activated:Connect(toggleHeroUpgrade)
 local function toggleMastery()
 	if mode == "mastery" then
 		setMode("closed")
-	elseif ReplicatedStorage:GetAttribute("State") ~= "Playing" then
-		setMode("mastery")
+	else
+		openIfAllowed("mastery") -- before the round starts
 	end
 end
 masteryButton.Activated:Connect(toggleMastery)
@@ -1205,14 +1213,13 @@ ReplicatedStorage:GetAttributeChangedSignal("Cash"):Connect(function()
 	end
 end)
 
+-- Shared/PanelRules decides what survives a state change: only match panels,
+-- only from Building into Playing. Pressing Play, the results screen and
+-- going home close everything.
 ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(function()
 	local state = ReplicatedStorage:GetAttribute("State")
-	if
-		(mode == "heroPick" and not canPickHero())
-		or (mode == "mastery" and state == "Playing")
-		or ((state == "GameOver" or state == "Victory") and mode ~= "closed")
-	then
-		setMode("closed") -- heroes and mastery lock when the game starts
+	if not PanelRules.keepOnStateChange(mode, state, myHero() ~= nil) then
+		setMode("closed")
 	else
 		render() -- button visibility
 	end
@@ -1239,9 +1246,9 @@ player:GetAttributeChangedSignal("OpenPanel"):Connect(function()
 	end
 	player:SetAttribute("OpenPanel", "")
 	if wanted == "heroPick" and canPickHero() then
-		setMode("heroPick")
+		openIfAllowed("heroPick")
 	elseif wanted == "mastery" then
-		setMode("mastery")
+		openIfAllowed("mastery")
 	end
 end)
 

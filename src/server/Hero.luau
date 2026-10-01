@@ -319,6 +319,13 @@ local REFUSALS = {
 }
 
 local function upgrade(player: Player, pathIndex: unknown): (boolean, string)
+	-- In a match only. Hero upgrades reset before the home screen, so anything
+	-- bought there (with the last match's leftover cash) would carry into the
+	-- next match.
+	local matchState = ReplicatedStorage:GetAttribute("State")
+	if matchState ~= "Building" and matchState ~= "Playing" then
+		return false, "Hero upgrades can be bought during a match"
+	end
 	local s = stateOf(player)
 	if not s.hero then
 		return false, "Pick a hero first"
