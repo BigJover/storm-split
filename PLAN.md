@@ -396,6 +396,19 @@ the spreadsheet, never for code.
   colours) and the lantern. A towers spec shows that a Last Stand save calls the flash. A spec (or a pure helper) shows
   that a full-HP hunter doesn't take a kit. Exporter clean; check clean.
 
+### T16c. Round-8 Medic touch-ups (small) — 🦖
+- **Goal:** DECISIONS #50. Start it after T16b is committed.
+- **Files:**
+  - `DinoLook.setMuzzled`: the strap is (165,115,65) with a 0.35-stud steel-grey Metal buckle
+    welded on top. Add a 0.3s lighter flash of the strap, used when Lullaby Rounds spreads the
+    lock (`Hero` calls it for the spread targets). No "zzz".
+  - `Shop.client` Field Medic slow line: "dinos you hit are slowed N% for Ns (not bosses)".
+  - `Hero Upgrades`, scoped to (Field Medic, Lever Action, T5): rename Hip Fire → Runaway
+    Lever. Assert the old name first. Update the HEROES.md table and its description line.
+- **Accept:** the looks spec covers the strap colour (clearly different from every dino's
+  head and jaw colour), the buckle and the flash restore. The Config diff is exactly the 1
+  name line. Exporter, audit and check clean.
+
 ### T17. Docs and recap
 - `CLAUDE.md` status (Step 2 and polish: statically checked and headless-tested, not
   playtested), `ARCHITECTURE.md` (layout, §4 ownership: Health, DinoAttacks, tower HP in
