@@ -294,3 +294,21 @@ Skybreaker (M5/M6) and "Pops".
 | R7-3 | nice | **Adrenaline** is a modern clinical word in a camp-remedy path (Camp Rations, Iron Tonic, Bone Broth). | `Tower Upgrades` Field Hospital / Tonic / T3 → **Smelling Salts** (it wakes towers up = +attack speed). Update UPGRADES.md line 84/88. |
 | R7-4 | nice | **Supply Runs** echoes the **Supply Camp** tower, and its kits are already described as "like the Supply Camp's chests", so players may think it involves the camp. | Rescue / T4 → **Pack Mules** (more kits, heavier kits). Update UPGRADES.md. |
 | R7-5 | nice | Panel wording: "heals x1.5 as fast" is awkward. "downed hunters come back here in 50% of the time" uses "downed", a term the game doesn't use elsewhere. | `src/client/Shop.client.luau` ~469: `heals {fmt(heal)}× faster`. ~486: `fallen hunters respawn at this tent in {pct}% of the usual time`. |
+
+---
+
+## Round 8 — review of dda81db (T16 Field Medic)
+
+**Reads well**
+- The M7 asks landed: **Double Dose** (no clash with the Tranq Station's Heavy Dose) and the **Muzzle** path. Every round-1 name is in (Lever-Action Carbine, Triage Kit, Belt Pouch, Triage Tent, Patch Up, Second Wind, Jaw Lock, Lullaby Rounds). There are no collisions with tower or hero names.
+- HEROES.md and the panel are plain and in hunter terms: "heal yourself and hunters near you", "the heal also patches up towers", "hit dinos can't bite or shoot for 2s (bosses 1s)". Showing the boss time inline is a good habit.
+- The strap is welded to the Jaw (or the Head), is Fabric, and is removed cleanly. "A muzzle on the snout" is the right single image for "can't bite".
+
+**Off / to fix**
+
+| # | Priority | Issue | Fix |
+|---|---|---|---|
+| R8-1 | **must-fix** | The strap (45,35,30) almost vanishes on the **T-Rex Jaw (55,75,45)**, the dino players most want to see muzzled, and on the darker heads. The lock reads only as "the dino stopped". | `src/shared/DinoLook.luau` `setMuzzled`: make `MUZZLE_COLOR` a **leather tan (165,115,65)** and add a small steel **buckle** part (0.35-stud cube, STEEL-grey Metal, welded on top of the strap). The tan contrasts with green, grey and blue hides, and the buckle shows up even on the orange Raptor. |
+| R8-2 | nice | The panel line "hits slow dinos 20% for 1s" can be read as "it hits *slow* dinos". It also doesn't say that bosses ignore the slow (HEROES.md does). | `src/client/Shop.client.luau` (Field Medic block): change it to `` `dinos you hit are slowed {p}% for {s}s (not bosses)` ``. |
+| R8-3 | nice | **Hip Fire** = full auto on a lever-action is the one modern-shooter term in the tree, and it's about stance, not the lever. | `Hero Upgrades` Field Medic / Lever Action / T5 → **Lever Storm** (or **Fanned Lever**), plus the HEROES.md table and line 115. |
+| R8-4 | nice | **Lullaby Rounds** suggests sleep (the Tranq "zzz"), but its effect is the muzzle strap spreading. Players may look for a "zzz". | Keep the name, but when the lock spreads, give the strap a brief (0.3s) lighter flash or a tiny "zzz" billboard on the spread targets (`DinoLook.setMuzzled`, visual only), so the name and the look agree. |
