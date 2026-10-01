@@ -86,3 +86,13 @@ numbers are seeds in the spreadsheet. The full reasoning is in `DECISIONS.md` (#
 
 **Also done:** T16d, the Jaw Lock strap is now (185,100,45) so it reads apart from every dino's
 head and jaw (#51). The looks spec now fails on the old colour.
+
+## Fixed after the recap (2026-10-01, from Jovan's playtest)
+
+- Unlocks & Mastery stayed open after pressing Play; now every panel closes on match-state
+  changes (`Shared/PanelRules`, with a spec). Hero upgrades can't be bought outside a match
+  (they were carrying into the next one).
+- Panels can't trap you any more: the row list scrolls inside a box capped at about half the
+  screen, so the X is always visible; the panel narrows on small screens; the home screen
+  scales to fit so Play is always reachable; non-host players get a free mouse on the home
+  screen too.

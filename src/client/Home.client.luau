@@ -61,12 +61,29 @@ column.AutomaticSize = Enum.AutomaticSize.Y
 column.BackgroundTransparency = 1
 column.Parent = backdrop
 
+-- The home screen shrinks to fit short or narrow windows, so every card and
+-- the Play button are always reachable (a host who can't see Play can't start).
+local columnScale = Instance.new("UIScale")
+columnScale.Parent = column
+local SCREEN_MARGIN = 24 -- px kept clear on each edge
+
 do
 	local layout = Instance.new("UIListLayout")
 	layout.Padding = UDim.new(0, 14)
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = column
+
+	local function fit()
+		local viewport = camera.ViewportSize
+		local content = layout.AbsoluteContentSize / math.max(columnScale.Scale, 0.01)
+		local tall = (viewport.Y - SCREEN_MARGIN * 2) / math.max(content.Y, 1)
+		local wide = (viewport.X - SCREEN_MARGIN * 2) / 740
+		columnScale.Scale = math.clamp(math.min(tall, wide), 0.4, 1)
+	end
+	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fit)
+	camera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
+	task.defer(fit)
 end
 
 local function corner(parent: Instance, radius: number)
@@ -179,6 +196,9 @@ local hostLine = text(9, "", 16, Enum.Font.GothamBold, TEXT_DIM)
 local actionRow = row(10, 56)
 local heroCard = card(actionRow, 1, 200, 56)
 heroCard.Text = "Choose hero  (H)"
+-- Modal on a button every player sees: frees the mouse on the home screen for
+-- non-hosts too (Play, the host's Modal button, is hidden for them).
+heroCard.Modal = true
 heroCard.Activated:Connect(function()
 	player:SetAttribute("OpenPanel", "heroPick")
 end)

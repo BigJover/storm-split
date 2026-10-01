@@ -26,6 +26,12 @@ point, then log it in `DECISIONS.md`.
   plain words.
 - **PvP fairness:** first person for everyone, always; third person only while placing a
   tower. The mouse cursor must be visible whenever it's free.
+- **No pop-up may ever trap a player** (Jovan, 2026-10-01, after one did). Every panel or
+  screen must: fit on any window size with its close control always visible (scroll, scale
+  or shrink, never overflow); free the mouse while it's open; close with the key that opened
+  it and with an on-screen X; and close on every match-state change except the ones
+  `Shared/PanelRules` allows. Anything a player must click (Play, Start) must stay reachable
+  for every player who needs it, not just the host.
 - **Everyone starts fair:** no free starting towers beyond the free roster; heroes picked
   for free once owned; you can only place towers you own but may upgrade a teammate's.
 - **Numbers belong in the spreadsheet**, never in code. Visual-only values may live in code.

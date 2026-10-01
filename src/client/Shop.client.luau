@@ -193,7 +193,9 @@ local panel = Instance.new("Frame")
 panel.Name = "Panel"
 panel.AnchorPoint = Vector2.new(0.5, 1)
 panel.Position = UDim2.new(0.5, 0, 1, -24)
-panel.Size = UDim2.fromOffset(400, 0)
+local PANEL_WIDTH = 400 -- px, on screens wide enough
+local PANEL_EDGE = 16 -- px kept clear on each side when the screen is narrower
+panel.Size = UDim2.fromOffset(PANEL_WIDTH, 0)
 panel.AutomaticSize = Enum.AutomaticSize.Y
 panel.BackgroundColor3 = PANEL_COLOR
 panel.BackgroundTransparency = 0.1
@@ -248,11 +250,21 @@ closeButton.Modal = true
 closeButton.Parent = header
 corner(closeButton, 6)
 
-local list = Instance.new("Frame")
+-- The rows scroll inside a box capped at LIST_MAX_SCREEN of the screen height,
+-- so however many rows a panel has (Unlocks & Mastery has a dozen), its header
+-- and the X button always stay on screen. A panel you can't close leaves the
+-- mouse unlocked and the game unplayable.
+local LIST_MAX_SCREEN = 0.55
+
+local list = Instance.new("ScrollingFrame")
 list.Name = "List"
 list.Size = UDim2.new(1, 0, 0, 0)
-list.AutomaticSize = Enum.AutomaticSize.Y
 list.BackgroundTransparency = 1
+list.BorderSizePixel = 0
+list.ScrollBarThickness = 6
+list.ScrollingDirection = Enum.ScrollingDirection.Y
+list.AutomaticCanvasSize = Enum.AutomaticSize.Y
+list.CanvasSize = UDim2.new()
 list.LayoutOrder = 2
 list.Parent = panel
 
@@ -261,6 +273,18 @@ do
 	layout.Padding = UDim.new(0, 6)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = list
+
+	local function fit()
+		local viewport = workspace.CurrentCamera.ViewportSize
+		local content = layout.AbsoluteContentSize.Y
+		local cap = math.floor(viewport.Y * LIST_MAX_SCREEN)
+		list.Size = UDim2.new(1, 0, 0, math.min(content, cap))
+		-- Narrow screens (a phone held upright): keep the X on screen too.
+		panel.Size = UDim2.fromOffset(math.min(PANEL_WIDTH, viewport.X - PANEL_EDGE * 2), 0)
+	end
+	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fit)
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
+	fit()
 end
 
 local message = Instance.new("TextLabel")
@@ -796,6 +820,7 @@ local function setMode(newMode: Mode)
 		managed, managedPrompt = nil, nil
 	end
 	mode = newMode
+	list.CanvasPosition = Vector2.zero -- a new panel starts scrolled to the top
 	-- Hero.client: first person always, third person only while placing.
 	player:SetAttribute("PanelOpen", newMode ~= "closed")
 	player:SetAttribute("Placing", newMode == "placing")
