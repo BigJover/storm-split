@@ -313,6 +313,15 @@ the spreadsheet, never for code.
   cells (not code) until it does, and log the final numbers as DECISIONS rows.
 - **Accept:** the report is in the commit message; the Config diff is accounted for.
 
+### T13b. Projectile readability (visual only) — 🦖
+- **Goal:** DECISIONS #41.
+- **Files:** `DinoLook`: warning ring colour (255,70,40), plus a bright thin edge ring; bigger
+  Gravel Spray pebbles (still ≤ 3 studs in total); a short head flash on the thrower at launch
+  (`DinoAttacks` calls a `DinoLook` helper, restoring the colour afterwards).
+- **Accept:** projectiles/looks specs updated (ring colour differs from every
+  `TowerLook.COLORS` entry by a clear margin, edge present, pebble size, head restored);
+  check clean.
+
 ### T14. Armory — 🦖
 - **Spreadsheet:** `Towers` rows for Field Hospital and Armory come in this task and T15.
   **Move `Cost per DPS` (A11:D11, `C11 = C5/G5`) from row 11 down to row 13 first**, and
