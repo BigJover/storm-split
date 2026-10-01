@@ -382,10 +382,19 @@ the spreadsheet, never for code.
   `TowerLook.setKnockedOut`, the trampled tint goes from (60,60,64) to (45,45,48) for every
   tower. In the `Airdrops` med kit touch, ignore a hunter at full HP, so the kit stays for
   someone who's hurt. Spreadsheet: set the `Tower Upgrades` title cell to "7 towers x 3 paths
-  x 5 tiers". Assert it still holds the "5 towers" text before writing it. Config shouldn't
-  change.
-- **Accept:** the looks spec covers the stocks and the tint. A spec (or a pure helper) shows
-  that a full-HP hunter doesn't take a kit. Exporter clean with no Config diff; check clean.
+  x 5 tiers". Assert it still holds the "5 towers" text before writing it.
+- **Round 7 (DECISIONS #48):** **must-fix R7-1:** `TowerLook.flashSaved(model)` flashes the
+  saved tower green (60,190,90) for 0.3s and shows a brief "Last Stand!" label. Call it from
+  the Last Stand branch of `Towers.damage`, and pulse the saving hospital's "+". R7-2: a pole
+  with a green Neon lantern on any hospital whose stats have rescueRespawnMult > 0. R7-3/R7-4:
+  in `Tower Upgrades`, scoped to (Field Hospital, Tonic, T3) and (Field Hospital, Rescue, T4),
+  rename Adrenaline → Smelling Salts and Supply Runs → Pack Mules. Assert the old names first,
+  and update UPGRADES.md. R7-5: in `Shop.client`, "heals N× faster" and "fallen hunters
+  respawn at this tent in N% of the usual time". With the renames, the Config diff should be
+  exactly those 2 name lines.
+- **Accept:** the looks spec covers the stocks, the tint, flashSaved (it restores the
+  colours) and the lantern. A towers spec shows that a Last Stand save calls the flash. A spec (or a pure helper) shows
+  that a full-HP hunter doesn't take a kit. Exporter clean; check clean.
 
 ### T17. Docs and recap
 - `CLAUDE.md` status (Step 2 and polish: statically checked and headless-tested, not
