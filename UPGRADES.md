@@ -70,6 +70,9 @@ built). Change a name there, not in code.
 | **Logistics** | discounts | *Bulk Order* | Field Engineer | *Recycler* | *Forward Base* | *Command Center* |
 
 - Amber Vault: interest on banked cash. Air Drop: chests land that players run over to collect.
+- Supply Camp upgrades cost less than other towers' (each tier ×1.6, not ×2.3: 1,600 / 2,560 / 4,096 / 6,554 / 10,486) so every tier repays itself in about 8–10 rounds, like the base camp (round 2, #56/#73).
+- Yield: round income ×2.1 / ×3.85 / ×6.6 / ×11.1 / ×17.9 of the base 150; Amber Vault adds 5% interest (up to 500 a round).
+- Airdrop: 1 / 2 / 2 / 3 / 4 chests a round worth 200 / 260 / 515 / 615 / 790 cash each.
 - Bulk Order: towers in range −5% upgrade cost. Recycler: towers in range sell for 90%. Forward Base: towers in range +10% attack speed. Command Center: −20% costs, full refunds.
 
 ## Field Hospital (HOSPITAL) — heals towers and hunters, no attack ✅ Step 2 · unlock 100 Amber
