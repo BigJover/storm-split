@@ -383,6 +383,7 @@ the spreadsheet, never for code.
   includes the DECISIONS #27 "ask Jovan" rename list, so he can approve it in one go.
 - The Director writes the recap for Jovan: what changed, what to try in Studio first (L
   key, a round-11 Pachy wave near lane-hugging towers, repair, Medic heal, Armory resist),
-  and which numbers are seeds.
+  and which numbers are seeds. Playtest watch items: boss throws from round 31 (#44), the
+  Horn Toss boulder look (#40), the R4 glow question (#33), and the #27 rename list.
 
 **Stop here. Phase 7 (team battle, battle royale, buy-ins, per-team cash) is out of scope.**
