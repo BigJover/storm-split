@@ -114,7 +114,7 @@ local nextId = 0
 local onPop: ((Player) -> ())? = nil
 local levelScale = 1 -- damage multiplier from the team's level
 local extraRatePercent: ((Tower) -> number)? = nil -- boosts from outside towers (hero Rally Cry)
-local resistOf: ((Tower) -> { number })? = nil -- extra damage resistance sources (Field Medic, later)
+local resistOf: ((Tower) -> { number })? = nil -- extra damage resistance sources (Field Medic Second Wind)
 
 local function credit(owner: Player?, killed: boolean)
 	if killed and owner and owner.Parent and onPop then

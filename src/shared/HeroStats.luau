@@ -58,6 +58,17 @@ export type Stats = {
 	abilitySeconds: number,
 	abilityRadius: number,
 	abilityCooldown: number,
+	-- Field Medic (HEAL): the Triage Kit heal and what rides on it, and the
+	-- Muzzle rounds' on-hit slow and Jaw Lock.
+	heal: number, -- HP per Triage Kit (flat: hero levels don't scale it)
+	healRadius: number,
+	healRepairsTowers: boolean,
+	guardPercent: number, -- Second Wind: damage resistance on everything healed
+	guardSeconds: number,
+	slowPercent: number,
+	slowSeconds: number,
+	jawLockSeconds: number, -- a hit dino can't bite or shoot
+	jawLockSpread: number, -- the lock also reaches dinos this close to the hit one
 }
 
 local MULTIPLY = {
@@ -72,6 +83,8 @@ local MULTIPLY = {
 	"abilityCooldownMult",
 	"stillRecoilMult",
 	"spinUp",
+	"healMult",
+	"healRadiusMult",
 }
 local HIGHEST = {
 	"guns",
@@ -85,8 +98,14 @@ local HIGHEST = {
 	"markPercent",
 	"igniteSeconds",
 	"igniteShare",
+	"guardPercent",
+	"guardSeconds",
+	"slowPercent",
+	"slowSeconds",
+	"jawLockSeconds",
+	"jawLockSpread",
 }
-local FLAGS = { "piercesArmor", "hitsAir", "beltFed", "scope" }
+local FLAGS = { "piercesArmor", "hitsAir", "beltFed", "scope", "healRepairsTowers" }
 
 export type Gear = { recoilMult: number, reloadMult: number, spreadMult: number, ratePercent: number }
 
@@ -192,6 +211,15 @@ function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?): Sta
 		abilitySeconds = hero.abilitySeconds,
 		abilityRadius = hero.abilityRadius,
 		abilityCooldown = hero.abilityCooldown * mult.abilityCooldownMult,
+		heal = hero.abilityPower * mult.healMult,
+		healRadius = hero.abilityRadius * mult.healRadiusMult,
+		healRepairsTowers = flag.healRepairsTowers == true,
+		guardPercent = high.guardPercent or 0,
+		guardSeconds = high.guardSeconds or 0,
+		slowPercent = high.slowPercent or 0,
+		slowSeconds = high.slowSeconds or 0,
+		jawLockSeconds = high.jawLockSeconds or 0,
+		jawLockSpread = high.jawLockSpread or 0,
 	}
 end
 

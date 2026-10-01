@@ -171,6 +171,7 @@ local ABILITY_BLURB = {
 	MARK = "dart a dino so everything hits it harder",
 	OVERDRIVE = "you and nearby towers fire faster",
 	AIRBURST = "call a flare strike down on the track",
+	HEAL = "heal yourself and hunters near you",
 }
 local FIRE_MODE_NAME = { semi = "semi-auto", auto = "full-auto", burst = "burst" }
 
@@ -598,6 +599,25 @@ local function describeHeroStep(path, current: number): string
 	if spin then
 		table.insert(parts, `spins up to x{spin} fire rate`)
 	end
+	-- Field Medic.
+	if newly("healRepairsTowers", false) then
+		table.insert(parts, "the heal also patches up towers")
+	end
+	if newly("guardPercent", 0) or newly("guardSeconds", 0) then
+		table.insert(parts, `everything healed takes {nextStep.guardPercent}% less damage for {nextStep.guardSeconds}s`)
+	end
+	if newly("slowPercent", 0) or newly("slowSeconds", 0) then
+		table.insert(parts, `hits slow dinos {nextStep.slowPercent}% for {nextStep.slowSeconds}s`)
+	end
+	local lock = newly("jawLockSeconds", 0)
+	if lock then
+		local bossLock = math.floor(lock * Config.Tuning.BossJawLockX * 10 + 0.5) / 10
+		table.insert(parts, `hit dinos can't bite or shoot for {lock}s (bosses {bossLock}s)`)
+	end
+	local spreadLock = newly("jawLockSpread", 0)
+	if spreadLock then
+		table.insert(parts, `the lock spreads to dinos within {spreadLock} studs`)
+	end
 	percent("rateMult", "fire rate")
 	percent("magazineMult", "magazine")
 	percent("reloadMult", "reload time")
@@ -607,6 +627,8 @@ local function describeHeroStep(path, current: number): string
 	percent("rangeMult", "range")
 	percent("damageMult", "damage")
 	percent("abilityCooldownMult", "ability cooldown")
+	percent("healMult", "heal")
+	percent("healRadiusMult", "heal radius")
 	return if #parts > 0 then table.concat(parts, " · ") else path.focus
 end
 

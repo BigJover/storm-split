@@ -55,7 +55,7 @@ export type Enemy = {
 	part: BasePart, -- the model's Root: where the dino is, for targeting
 	alive: boolean,
 	stunnedUntil: number,
-	disarmedUntil: number, -- can't bite or shoot until then (Field Medic Jaw Lock, later)
+	disarmedUntil: number, -- can't bite or shoot until then (Field Medic Jaw Lock)
 	markPercent: number,
 	markedUntil: number,
 	chilledUntil: number,
@@ -65,6 +65,7 @@ export type Enemy = {
 	sleepUntil: number, -- knocked out by a Tranq Station pulse (a stun; visuals only)
 	sedatedShown: boolean, -- what the model currently shows
 	asleepShown: boolean,
+	muzzledShown: boolean,
 	fire: Fire?, -- burning: one damage tick when it runs out (Server/Hazards)
 }
 
@@ -145,7 +146,7 @@ local function dress(enemy: Enemy)
 	if old then
 		old:Destroy()
 	end
-	enemy.sedatedShown, enemy.asleepShown = false, false -- step() re-applies them on the new model
+	enemy.sedatedShown, enemy.asleepShown, enemy.muzzledShown = false, false, false -- step() re-applies them on the new model
 	if enemy.fire then
 		Enemies.showBurning(enemy, true)
 	end
@@ -189,6 +190,7 @@ local function spawnNow(item: Pending)
 		sleepUntil = 0,
 		sedatedShown = false,
 		asleepShown = false,
+		muzzledShown = false,
 		fire = nil,
 	}
 	dress(enemy)
@@ -432,6 +434,11 @@ function Enemies.step(dt: number)
 		if asleep ~= enemy.asleepShown then
 			enemy.asleepShown = asleep
 			DinoLook.setAsleep(enemy.model, asleep)
+		end
+		local muzzled = now < enemy.disarmedUntil
+		if muzzled ~= enemy.muzzledShown then
+			enemy.muzzledShown = muzzled
+			DinoLook.setMuzzled(enemy.model, muzzled)
 		end
 		if enemy.distance >= path.length then
 			remove(enemy)

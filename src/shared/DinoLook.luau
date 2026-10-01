@@ -283,6 +283,40 @@ function DinoLook.setSedated(model: Model, on: boolean)
 	dart.Parent = model
 end
 
+-- Jaw Lock (Field Medic): a dark strap across the snout, a muzzle. On the
+-- T-Rex's jutting Jaw if it has one, otherwise round the Head.
+local MUZZLE_COLOR = Color3.fromRGB(45, 35, 30)
+function DinoLook.setMuzzled(model: Model, on: boolean)
+	local strap = model:FindFirstChild("Muzzle")
+	local snout = model:FindFirstChild("Jaw") or model:FindFirstChild("Head")
+	if not on or not snout or not snout:IsA("BasePart") then
+		if strap then
+			strap:Destroy()
+		end
+		return
+	end
+	if strap then
+		return
+	end
+	local size = snout.Size
+	strap = Instance.new("Part")
+	strap.Name = "Muzzle"
+	-- A band a little wider and taller than the snout, a quarter of its length,
+	-- near its tip.
+	strap.Size = Vector3.new(size.X * 1.08, size.Y * 1.08, math.max(0.15, size.Z * 0.25))
+	strap.Color = MUZZLE_COLOR
+	strap.Anchored = false
+	strap.Massless = true
+	cosmetic(strap)
+	strap.Material = Enum.Material.Fabric
+	strap.CFrame = snout.CFrame * CFrame.new(0, 0, -size.Z * 0.25)
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = snout
+	weld.Part1 = strap
+	weld.Parent = strap
+	strap.Parent = model
+end
+
 -- Knocked out by a Tranq Station pulse: "zzz" floats above the dino.
 function DinoLook.setAsleep(model: Model, on: boolean)
 	local root = model.PrimaryPart

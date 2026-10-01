@@ -135,14 +135,18 @@ Towers.init(map.towerFolder, {
 	extraRatePercent = function(tower)
 		return Hero.towerRateBoost(tower.position) -- Overdrive
 	end,
+	resistOf = function(tower)
+		return { Hero.towerGuardOf(tower) } -- Field Medic Second Wind
+	end,
 })
 Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged })
 Health.init(remotes, {
-	-- An Armory covering where the hunter stands.
+	-- An Armory covering where the hunter stands, and a Field Medic's Second Wind.
 	resistOf = function(player)
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
-		return if root and root:IsA("BasePart") then { Towers.resistAt(root.Position) } else {}
+		local guard = Hero.guardOf(player)
+		return if root and root:IsA("BasePart") then { Towers.resistAt(root.Position), guard } else { guard }
 	end,
 })
 DinoAttacks.init({

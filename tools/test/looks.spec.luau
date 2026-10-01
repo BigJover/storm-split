@@ -272,3 +272,25 @@ test("T12b: dust cloud, tip direction varies by spot, one low-HP orange, hit fla
 	TowerLook.flashHit(down)
 	eq(down:FindFirstChild("Hide").Color, slate, "no flash on a trampled tower")
 end)
+
+test("Jaw Lock muzzle: one dark strap on the snout of every species, removed after", function()
+	for _, key in Config.EnemyOrder do
+		local model = DinoLook.build(key, 0.75, CFrame.new(0, 5, 0))
+		local snout = model:FindFirstChild("Jaw") or model:FindFirstChild("Head")
+		ok(snout ~= nil, `{key} has a Jaw or Head for the strap`)
+		DinoLook.setMuzzled(model, true)
+		DinoLook.setMuzzled(model, true)
+		local straps = 0
+		for _, part in model:GetChildren() do
+			if part.Name == "Muzzle" then
+				straps += 1
+			end
+		end
+		eq(straps, 1, `{key} one strap`)
+		local strap = model:FindFirstChild("Muzzle") :: BasePart
+		ok((strap.CFrame.Position - (snout :: BasePart).CFrame.Position).Magnitude < (snout :: BasePart).Size.Magnitude, `{key} strap sits on the snout`)
+		ok(strap.Color.R < 0.3 and strap.Color.G < 0.3 and strap.Color.B < 0.3, `{key} strap is dark`)
+		DinoLook.setMuzzled(model, false)
+		ok(model:FindFirstChild("Muzzle") == nil, `{key} strap removed`)
+	end
+end)

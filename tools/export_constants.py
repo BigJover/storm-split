@@ -218,7 +218,14 @@ HERO_UPGRADE_COLUMNS = [
     ("scope", 33, "bool", False),
     ("igniteSeconds", 34, "num", 0),
     ("igniteShare", 35, "num", 0),
+    # Field Medic (PLAN T16): the Triage Kit heal, Second Wind guard, Muzzle rounds.
+    ("healMult", 36, "mult", 1), ("healRadiusMult", 37, "mult", 1), ("healRepairsTowers", 38, "bool", False),
+    ("guardPercent", 39, "num", 0), ("guardSeconds", 40, "num", 0),
+    ("slowPercent", 41, "num", 0), ("slowSeconds", 42, "num", 0),
+    ("jawLockSeconds", 43, "num", 0), ("jawLockSpread", 44, "num", 0),
 ]
+
+ABILITY_KINDS = ("MARK", "OVERDRIVE", "AIRBURST", "HEAL")
 
 FIRE_MODES = ("semi", "auto", "burst")
 
@@ -431,6 +438,18 @@ def validate(data):
                     problems.append(f"{where}: Fire mode must be one of {', '.join(FIRE_MODES)}")
                 if step["fireMode"] == "burst" and step["burstCount"] < 2:
                     problems.append(f"{where}: burst fire needs a Burst count of 2+")
+                for field, _, kind, _ in HERO_UPGRADE_COLUMNS:
+                    if kind in ("num", "mult") and (not isinstance(step[field], (int, float)) or step[field] < 0):
+                        problems.append(f"{where}: {field} must be a number >= 0")
+                for field in ("guardPercent", "slowPercent"):
+                    if step[field] > 100:
+                        problems.append(f"{where}: {field} must be 0-100")
+                if (step["guardPercent"] > 0) != (step["guardSeconds"] > 0):
+                    problems.append(f"{where}: Guard % and Guard (s) go together")
+                if (step["slowPercent"] > 0) != (step["slowSeconds"] > 0):
+                    problems.append(f"{where}: Slow on hit % and Slow on hit (s) go together")
+                if step["jawLockSpread"] > 0 and step["jawLockSeconds"] <= 0:
+                    problems.append(f"{where}: Jaw lock spread needs Jaw lock (s)")
 
     # Tuning levers the game code reads by name. A renamed or overwritten row would
     # otherwise only show up as nil in Studio.
@@ -443,7 +462,7 @@ def validate(data):
         "HeroUpgradeCostGrowth", "ChestLifetime", "ChestSpread", "RoundsPerLevel",
         "HeroDamagePerLevel", "TowerDamagePerLevel", "MultiplayerLossPayout", "RespawnTime", "ResultsTime",
         "PlayerMaxHealth", "HealPerRound", "SpawnProtection", "MaxResist", "MaxProjectiles",
-        "TowerHPPerTier", "RepairCost", "BurnPatchMinReach",
+        "TowerHPPerTier", "RepairCost", "BurnPatchMinReach", "BossJawLockX",
     ]
     for key in needed:
         if key not in data["Tuning"]:
@@ -455,8 +474,8 @@ def validate(data):
         if not 2 <= lvl["crossoverCap"] <= 5:
             problems.append(f"Mastery level {i}: Crossover cap must be 2-5")
     for key, h in data["Heroes"].items():
-        if h["abilityKind"].upper() not in ("MARK", "OVERDRIVE", "AIRBURST"):
-            problems.append(f"Hero {h['display']}: Ability kind must be MARK, OVERDRIVE or AIRBURST")
+        if h["abilityKind"].upper() not in ABILITY_KINDS:
+            problems.append(f"Hero {h['display']}: Ability kind must be one of {', '.join(ABILITY_KINDS)}")
     if not any(t["unlockCost"] == 0 for t in data["Towers"].values()):
         problems.append("At least one tower must be free (Unlock cost 0)")
     if not any(h["unlockCost"] == 0 for h in data["Heroes"].values()):

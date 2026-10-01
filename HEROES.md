@@ -7,7 +7,7 @@ on the spreadsheet plus any new fire mechanic.
 ## Rules
 
 - **Everyone starts as the Tracker.** Other heroes are unlocked with Amber (Big Game Hunter
-  75, Brush Beater 75; `Heroes` sheet). **Picking a hero you own is free.** Pick in the build phase; switch freely (full refund of any
+  75, Brush Beater 75, Field Medic 75; `Heroes` sheet). **Picking a hero you own is free.** Pick in the build phase; switch freely (full refund of any
   upgrades) until Start, then it's locked. A player who joins mid-match picks once.
 - **Only upgrades cost cash** (the team's shared pot). Each hero has three paths of five
   tiers, with the same crossover rule as towers: two paths at most, only one past tier 2.
@@ -95,6 +95,27 @@ takes the tick, which often finishes off small ones in early rounds. Also leaves
 ground behind. Street Sweeper:
 full-auto drum. Double Barrel: two blasts per trigger. Kickback: knocks dinos back. Frag
 Shells: explode on impact.
+
+### Field Medic (lever-action carbine) — Support · ability **Triage Kit** (heals you and every hunter within 20 studs by 40 HP)
+
+DECISIONS #13, #14 (names per #25). The carbine deals less damage per second than the
+Tracker's revolver: the Medic is support. The heal is flat and doesn't grow with hero levels.
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Triage** | ability | Clean Bandages | Belt Pouch | *Patch Up* | Triage Tent | *Second Wind* |
+| **Lever Action** | handling | Oiled Lever | Loading Gate | *Rapid Cycle* | Smooth Action | *Hip Fire* |
+| **Muzzle** | protective rounds | Tranq Tips | Double Dose | *Jaw Lock* | Long Dose | *Lullaby Rounds* |
+
+Clean Bandages: heals 25% more. Belt Pouch: shorter Triage Kit cooldown. Patch Up: also
+heals standing towers in the radius by the same amount. Triage Tent: 1.5x radius. Second
+Wind: everything healed takes 30% less damage for 8s (resistance doesn't stack: the
+strongest source wins, DECISIONS #12). Oiled Lever: faster cycling. Loading Gate: bigger
+magazine, faster reload. Rapid Cycle: 2-round bursts. Smooth Action: half the recoil. Hip
+Fire: full auto. Tranq Tips: hits slow dinos 20% for 1s. Double Dose: 30% for 1.5s. Jaw
+Lock: a hit dino can't bite or shoot for 2s (a dark strap across its snout). Long Dose:
+locked 3s. Lullaby Rounds: the lock spreads to dinos within 6 studs. Bosses ignore the slow
+and are locked for half as long.
 
 ## Where the numbers live
 

@@ -9,8 +9,8 @@
 	safety; Humanoid:TakeDamage respects it.
 
 	damage() applies damage resistance first (Shared/Combat: the strongest
-	source wins, capped). The sources (Armory aura, Second Wind) come with
-	later steps and plug in through the `resistOf` hook. A hit from a dino
+	source wins, capped). The sources (Armory aura, Field Medic Second Wind)
+	plug in through the `resistOf` hook (Main). A hit from a dino
 	tells that hunter alone what it was (the "Hurt" remote, Shared/HitNotice;
 	DECISIONS #39).
 ]]

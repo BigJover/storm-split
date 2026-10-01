@@ -18,8 +18,18 @@
 	  pellets     each pellet travels its own ray, passes through `pierce`
 	              enemies, can ricochet, splash, burn, knock back and mark
 
-	The hero's ability (Mark, Overdrive, Airburst) is available from the start
-	on its cooldown.
+	The hero's ability (Mark, Overdrive, Airburst, Heal) is available from the
+	start on its cooldown.
+
+	FIELD MEDIC (PLAN T16, DECISIONS #13/#14/#25): the Triage Kit heals the
+	medic and every hunter in its radius through Server/Health (flat: hero
+	levels don't scale it). Patch Up also heals standing towers in the radius
+	(Towers.heal). Second Wind guards everything it healed: a damage
+	resistance source that Main feeds to Health and Towers (Hero.guardOf /
+	Hero.towerGuardOf; the strongest source wins, DECISIONS #12). Muzzle rounds
+	slow a hit dino (Enemies.chill; bosses ignore it) and Jaw Lock disarms it
+	(Enemies.disarm; bosses for Tuning Boss jaw lock x of the time), spreading
+	to dinos nearby with Lullaby Rounds.
 
 	MASTERY (Server/Progression): the player's mastery with their hero makes
 	hero upgrades cheaper, shortens the ability cooldown, can make the first
@@ -53,6 +63,8 @@ local Progression = require(script.Parent.Progression)
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
 local Hazards = require(script.Parent.Hazards)
+local Health = require(script.Parent.Health)
+local Towers = require(script.Parent.Towers)
 
 local Hero = {}
 
@@ -82,6 +94,7 @@ local HERO_COLORS = {
 	PISTOL = Color3.fromRGB(255, 90, 110),
 	RIFLE = Color3.fromRGB(255, 220, 90),
 	SHOTGUN = Color3.fromRGB(255, 140, 50),
+	MEDIC = Color3.fromRGB(110, 230, 140),
 }
 local DUAL_GUN_OFFSET = 0.9 -- studs sideways for the second gun's tracer
 local MASTERY_GOLD = Color3.fromRGB(250, 200, 60)
@@ -96,6 +109,12 @@ local onPop: ((Player) -> ())? = nil
 local gearAt: ((Vector3) -> HeroStats.Gear)? = nil -- Towers.hunterGearAt
 local GEAR_CHECK = 0.2 -- seconds between checks of where each hunter stands
 local fireEvent: RemoteEvent
+
+-- Second Wind: who is guarded, how much and until when (os.clock()). Keyed by
+-- the hunter or tower that was healed, not by the medic.
+type Guard = { percent: number, untilTime: number }
+local playerGuards: { [Player]: Guard } = {}
+local towerGuards: { [any]: Guard } = setmetatable({}, { __mode = "k" }) :: any
 
 ------------------------------------------------------------------ state
 
@@ -354,6 +373,26 @@ local function startReload(player: Player, s: State)
 	end)
 end
 
+------------------------------------------------------------------ guard
+
+local function guard(guards: { [any]: Guard }, target: any, percent: number, seconds: number)
+	if percent <= 0 or seconds <= 0 then
+		return
+	end
+	local now = os.clock()
+	local old = guards[target]
+	local active = old ~= nil and now < old.untilTime
+	guards[target] = {
+		percent = if active and old then math.max(old.percent, percent) else percent,
+		untilTime = if active and old then math.max(old.untilTime, now + seconds) else now + seconds,
+	}
+end
+
+local function guardFrom(guards: { [any]: Guard }, target: any): number
+	local g = guards[target]
+	return if g and os.clock() < g.untilTime then g.percent else 0
+end
+
 ------------------------------------------------------------------ shooting
 
 local function canHit(enemy: Enemies.Enemy, stats: HeroStats.Stats): boolean
@@ -420,6 +459,27 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 		Hazards.ignite(enemy, stats.shotDamage * scale * stats.igniteShare, stats.igniteSeconds, stats.piercesArmor, player)
 	end
 	Enemies.knockback(enemy, stats.knockback)
+	-- Muzzle rounds, before the damage so a shrunk dino keeps them.
+	if stats.slowPercent > 0 then
+		Enemies.chill(enemy, {
+			slowPercent = stats.slowPercent,
+			seconds = stats.slowSeconds,
+			affectsBosses = false,
+			brittlePercent = 0,
+			stripsArmor = false,
+		})
+	end
+	if stats.jawLockSeconds > 0 then
+		for _, other in live do
+			if other == enemy or (stats.jawLockSpread > 0 and (other.part.Position - position).Magnitude <= stats.jawLockSpread) then
+				if other.def.boss then
+					Enemies.disarm(other, stats.jawLockSeconds * Config.Tuning.BossJawLockX, true)
+				else
+					Enemies.disarm(other, stats.jawLockSeconds)
+				end
+			end
+		end
+	end
 	local killed = Enemies.damage(enemy, damage, stats.piercesArmor)
 	credit(player, killed)
 	outcome.killed = outcome.killed or killed
@@ -609,6 +669,25 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 				end
 			end
 		end)
+	elseif hero.abilityKind == "HEAL" then
+		-- Flat heal, no level scaling (DECISIONS #13).
+		local radius = stats.healRadius
+		for _, other in Players:GetPlayers() do
+			local otherBody = root(other)
+			if otherBody and (otherBody.Position - body.Position).Magnitude <= radius then
+				Health.heal(other, stats.heal)
+				guard(playerGuards, other, stats.guardPercent, stats.guardSeconds)
+			end
+		end
+		if stats.healRepairsTowers then
+			for _, tower in Towers.targets() do
+				if (tower.position - body.Position).Magnitude <= radius then
+					Towers.heal(tower, stats.heal)
+					guard(towerGuards, tower, stats.guardPercent, stats.guardSeconds)
+				end
+			end
+		end
+		Effects.disc(body.Position - Vector3.new(0, 2.8, 0), radius, color, 0.5, 0.7)
 	else
 		return false, "No ability"
 	end
@@ -638,6 +717,8 @@ function Hero.resetMatch()
 		player:SetAttribute("OverdriveUntil", 0)
 		refresh(player, true)
 	end
+	table.clear(playerGuards)
+	table.clear(towerGuards)
 end
 
 -- Mastery was just bought: apply a new free first upgrade (if nothing has
@@ -678,6 +759,16 @@ function Hero.towerRateBoost(position: Vector3): number
 		end
 	end
 	return best
+end
+
+-- Second Wind: this hunter's guard right now (a resistance percent for Health).
+function Hero.guardOf(player: Player): number
+	return guardFrom(playerGuards, player)
+end
+
+-- Second Wind: this tower's guard right now (a resistance percent for Towers).
+function Hero.towerGuardOf(tower: any): number
+	return guardFrom(towerGuards, tower)
 end
 
 function Hero.init(remotes: Folder, hooks: { onPop: ((Player) -> ())?, gearAt: ((Vector3) -> HeroStats.Gear)? }?)
@@ -765,6 +856,7 @@ function Hero.init(remotes: Folder, hooks: { onPop: ((Player) -> ())?, gearAt: (
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		states[player] = nil
+		playerGuards[player] = nil
 	end)
 end
 
