@@ -225,15 +225,15 @@ local function setKnockedOut(tower: Tower, on: boolean)
 end
 
 -- Last Stand: the first standing hospital covering this tower that hasn't
--- saved one yet this round spends its save. True if the tower is saved.
-local function lastStand(tower: Tower): boolean
+-- saved one yet this round spends its save. Returns that hospital, or nil.
+local function lastStand(tower: Tower): Tower?
 	for _, source in towers do
 		if source.stats.lastStand and not source.lastStandUsed and not source.knockedOut and covers(source, tower.base) then
 			source.lastStandUsed = true
-			return true
+			return source
 		end
 	end
-	return false
+	return nil
 end
 
 -- Hurts a standing tower, less its resistance. At 0 HP it's trampled.
@@ -247,14 +247,17 @@ function Towers.damage(tower: Tower, amount: number, source: any?): number
 	local resist = Combat.combineResist(sources)
 	local dealt = math.min(tower.hp, Combat.afterResist(amount, resist))
 	tower.hp -= dealt
-	if tower.hp <= 0 and lastStand(tower) then
+	local saver = if tower.hp <= 0 then lastStand(tower) else nil
+	local outcome = Combat.hitOutcome(tower.hp, dealt, saver ~= nil)
+	if outcome == "saved" then
 		tower.hp = 1 -- a Field Hospital's Last Stand: not this time
-	elseif tower.hp <= 0 then
+	elseif outcome == "trampled" then
 		tower.hp = 0
 		setKnockedOut(tower, true)
-	elseif dealt > 0 then
-		TowerLook.flashHit(tower.model) -- visual only
 	end
+	-- Visual only: a red hit flash, or Last Stand's green save flash and the
+	-- saving hospital's "+" pulse (DECISIONS #48).
+	TowerLook.showHit(tower.model, outcome, if saver then saver.model else nil)
 	showHealth(tower)
 	return dealt
 end
@@ -425,6 +428,7 @@ function Towers.upgrade(tower: Tower, pathIndex: number): boolean
 	tower.hp = math.min(maxHp, tower.hp + (maxHp - tower.maxHp))
 	tower.maxHp = maxHp
 	TowerLook.refresh(tower.model, tower.stats.range, tower.pathTiers, swapStage(tower))
+	TowerLook.setLantern(tower.model, tower.stats.rescueRespawnMult > 0) -- Rescue Beacon
 	showHealth(tower)
 	refreshAuras()
 	return true

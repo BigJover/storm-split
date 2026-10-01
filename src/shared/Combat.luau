@@ -40,6 +40,22 @@ function Combat.afterResist(amount: number, resistPercent: number): number
 	return amount * (1 - math.clamp(resistPercent, 0, 100) / 100)
 end
 
+-- What a hit did to a standing tower, from its HP after the damage: "saved"
+-- (a Field Hospital's Last Stand holds it at 1 HP), "trampled", "hit" or
+-- "none" (nothing got through).
+function Combat.hitOutcome(hpAfter: number, dealt: number, saved: boolean): string
+	if hpAfter <= 0 then
+		return if saved then "saved" else "trampled"
+	end
+	return if dealt > 0 then "hit" else "none"
+end
+
+-- A med kit is taken only by a living hunter who's missing HP, so a full-HP
+-- hunter leaves it for a hurt teammate (DECISIONS #45).
+function Combat.takesMedKit(health: number, maxHealth: number): boolean
+	return health > 0 and health < maxHealth
+end
+
 -- A tower's max HP with these tiers bought and this aura bonus (percent).
 function Combat.towerMaxHp(def, pathTiers: { number }, auraHpPercent: number?): number
 	local tiers = 0

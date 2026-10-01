@@ -5007,7 +5007,7 @@ return table.freeze({
 							lastStand = false,
 						},
 						{
-							name = "Supply Runs",
+							name = "Pack Mules",
 							cost = 12593,
 							damageMult = 1,
 							rateMult = 1,
@@ -5241,7 +5241,7 @@ return table.freeze({
 							lastStand = false,
 						},
 						{
-							name = "Adrenaline",
+							name = "Smelling Salts",
 							cost = 5475,
 							damageMult = 1,
 							rateMult = 1,

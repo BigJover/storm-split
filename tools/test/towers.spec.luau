@@ -299,7 +299,7 @@ test("Field Hospital Ward: heal x1.5/2/2.5/3/4.5, Stitch-Up revives at half spee
 	end
 end)
 
-test("Field Hospital Rescue: range x1.2/1.4, Med Kits 2x30, Supply Runs 3x40, Rescue Beacon x1.8, 50, half respawn", function()
+test("Field Hospital Rescue: range x1.2/1.4, Med Kits 2x30, Pack Mules 3x40, Rescue Beacon x1.8, 50, half respawn", function()
 	local def = Config.Towers.HOSPITAL
 	near(at("HOSPITAL", 2, 1, "Stretcher Team").range, def.range * 1.2, "Stretcher Team range")
 	near(at("HOSPITAL", 2, 2, "Signal Whistle").range, def.range * 1.4, "Signal Whistle range")
@@ -307,9 +307,9 @@ test("Field Hospital Rescue: range x1.2/1.4, Med Kits 2x30, Supply Runs 3x40, Re
 	eq(kits.medKits, 2, "Med Kits count")
 	eq(kits.medKitHeal, 30, "Med Kits heal")
 	eq(kits.rescueRespawnMult, 0, "no beacon yet")
-	local runs = at("HOSPITAL", 2, 4, "Supply Runs")
-	eq(runs.medKits, 3, "Supply Runs count")
-	eq(runs.medKitHeal, 40, "Supply Runs heal")
+	local runs = at("HOSPITAL", 2, 4, "Pack Mules")
+	eq(runs.medKits, 3, "Pack Mules count")
+	eq(runs.medKitHeal, 40, "Pack Mules heal")
 	local beacon = at("HOSPITAL", 2, 5, "Rescue Beacon")
 	near(beacon.range, def.range * 1.8, "Rescue Beacon range")
 	eq(beacon.medKits, 3, "keeps 3 kits")
@@ -318,8 +318,8 @@ test("Field Hospital Rescue: range x1.2/1.4, Med Kits 2x30, Supply Runs 3x40, Re
 	near(beacon.healPerSecond, 3, "Rescue doesn't speed healing")
 end)
 
-test("Field Hospital Tonic: +10/20% HP, Adrenaline +10% rate, Bone Broth +35%, Last Stand +50% once a round", function()
-	local names = { "Camp Rations", "Iron Tonic", "Adrenaline", "Bone Broth", "Last Stand" }
+test("Field Hospital Tonic: +10/20% HP, Smelling Salts +10% rate, Bone Broth +35%, Last Stand +50% once a round", function()
+	local names = { "Camp Rations", "Iron Tonic", "Smelling Salts", "Bone Broth", "Last Stand" }
 	local hp = { 10, 20, 20, 35, 50 }
 	local rate = { 0, 0, 10, 10, 10 }
 	for t, name in names do

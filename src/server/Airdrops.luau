@@ -15,6 +15,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Placement = require(Shared:WaitForChild("Placement"))
+local Combat = require(Shared:WaitForChild("Combat"))
 
 local Economy = require(script.Parent.Economy)
 local Health = require(script.Parent.Health)
@@ -132,7 +133,7 @@ local function spawnKit(position: Vector3, heal: number)
 		end
 		local player = Players:GetPlayerFromCharacter(part.Parent)
 		local humanoid = player and player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-		if not player or not humanoid or humanoid.Health <= 0 then
+		if not player or not humanoid or not Combat.takesMedKit(humanoid.Health, humanoid.MaxHealth) then
 			return
 		end
 		taken = true

@@ -153,8 +153,10 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 			block("Plate", Vector3.new(1.8, 2, 0.25), at(0, 1.3, -0.9) * CFrame.Angles(math.rad(-10), 0, 0), color, Enum.Material.Metal),
 			block("Boss", Vector3.new(0.5, 0.5, 0.15), at(0, 1.35, -1.08) * CFrame.Angles(math.rad(-10), 0, 0), STEEL, Enum.Material.Metal),
 		}
+		-- Rifles on the rack: a wooden stock at the base, a shorter steel barrel above.
 		for i, x in { -0.9, -0.3, 0.3, 0.9 } do
-			table.insert(parts, block(`Gun{i}`, Vector3.new(0.15, 2.1, 0.15), at(x, 2.05, 0.85), STEEL, Enum.Material.Metal))
+			table.insert(parts, block(`Stock{i}`, Vector3.new(0.25, 0.6, 0.25), at(x, 1.25, 0.85), WOOD, Enum.Material.Wood))
+			table.insert(parts, block(`Gun{i}`, Vector3.new(0.15, 1.5, 0.15), at(x, 2.3, 0.85), STEEL, Enum.Material.Metal))
 		end
 		return parts
 	end,
@@ -341,7 +343,7 @@ end
 
 -- Visuals only.
 local TRAMPLED_TILT = math.rad(15)
-local TRAMPLED_COLOR = Color3.fromRGB(60, 60, 64)
+local TRAMPLED_COLOR = Color3.fromRGB(45, 45, 48)
 local TRAMPLED_TEXT = Color3.fromRGB(255, 120, 110)
 local HP_GOOD = Color3.fromRGB(110, 210, 110)
 -- One orange for "low HP" on every bar, the hunter's (Hud) and the towers';
@@ -430,6 +432,124 @@ function TowerLook.flashHit(model: Model)
 	task.delay(HIT_FLASH, function()
 		TowerLook.endHitFlash(model)
 	end)
+end
+
+-- Visuals only.
+local SAVED_COLOR = Color3.fromRGB(60, 190, 90) -- the hospital's green "+"
+local SAVED_FLASH = 0.3 -- seconds
+local SAVED_LABEL_TIME = 1.2 -- seconds
+local CROSS_PULSE_COLOR = Color3.fromRGB(200, 255, 210)
+
+-- Last Stand saved this tower: its silhouette flashes green for a moment and
+-- a short "Last Stand!" label pops up. Shares the hit flash's colour restore.
+function TowerLook.flashSaved(model: Model)
+	local body = model.PrimaryPart
+	if not body or model:GetAttribute("Trampled") then
+		return
+	end
+	TowerLook.endHitFlash(model)
+	model:SetAttribute("HitFlash", true)
+	for _, part in visibleParts(model) do
+		part:SetAttribute("FlashColor", part.Color)
+		part.Color = SAVED_COLOR
+	end
+	task.delay(SAVED_FLASH, function()
+		TowerLook.endHitFlash(model)
+	end)
+	local old = body:FindFirstChild("LastStand")
+	if old then
+		old:Destroy()
+	end
+	local label = Instance.new("BillboardGui")
+	label.Name = "LastStand"
+	label.Size = UDim2.fromOffset(120, 26)
+	label.StudsOffset = Vector3.new(0, body.Size.Y / 2 + 4.6, 0)
+	label.MaxDistance = 120
+	local text = Instance.new("TextLabel")
+	text.Size = UDim2.fromScale(1, 1)
+	text.BackgroundTransparency = 1
+	text.Text = "Last Stand!"
+	text.TextColor3 = SAVED_COLOR
+	text.TextStrokeTransparency = 0.3
+	text.Font = Enum.Font.GothamBlack
+	text.TextScaled = true
+	text.Parent = label
+	label.Parent = body
+	task.delay(SAVED_LABEL_TIME, function()
+		if label.Parent then
+			label:Destroy()
+		end
+	end)
+end
+
+-- The hospital whose Last Stand just fired: its green "+" pulses bright.
+function TowerLook.pulseCross(model: Model)
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") and part.Name:sub(1, 5) == "Cross" and part:GetAttribute("PulseColor") == nil then
+			part:SetAttribute("PulseColor", part.Color)
+			part.Color = CROSS_PULSE_COLOR
+			task.delay(SAVED_FLASH, function()
+				local color = part:GetAttribute("PulseColor")
+				if typeof(color) == "Color3" then
+					part.Color = color
+				end
+				part:SetAttribute("PulseColor", nil)
+			end)
+		end
+	end
+end
+
+-- What a hit looks like (Combat.hitOutcome): red flash on a plain hit;
+-- green save flash, plus the saving hospital's pulse, on a Last Stand.
+function TowerLook.showHit(model: Model, outcome: string, saver: Model?)
+	if outcome == "saved" then
+		TowerLook.flashSaved(model)
+		if saver then
+			TowerLook.pulseCross(saver)
+		end
+	elseif outcome == "hit" then
+		TowerLook.flashHit(model)
+	end
+end
+
+-- A Field Hospital with a Rescue Beacon: a wooden pole with a green Neon
+-- lantern at the tent's front corner, inside the 3x3x5 box. Driven by the
+-- tower's stats (rescueRespawnMult > 0), not its tier.
+local LANTERN_X, LANTERN_Z = 1.25, -1.25
+function TowerLook.setLantern(model: Model, on: boolean)
+	local body = model.PrimaryPart
+	local pole, lantern = model:FindFirstChild("BeaconPole"), model:FindFirstChild("BeaconLantern")
+	if not on or not body then
+		if pole then
+			pole:Destroy()
+		end
+		if lantern then
+			lantern:Destroy()
+		end
+		return
+	end
+	if pole and lantern then
+		return
+	end
+	local base = body.CFrame * CFrame.new(0, -body.Size.Y / 2, 0)
+	local specs = {
+		{ "BeaconPole", Vector3.new(0.15, 3.4, 0.15), 1.7, WOOD, Enum.Material.Wood },
+		{ "BeaconLantern", Vector3.new(0.4, 0.45, 0.4), 3.6, SAVED_COLOR, Enum.Material.Neon },
+	}
+	for _, spec in specs do
+		local part = Instance.new("Part")
+		part.Name = spec[1]
+		part.Size = spec[2]
+		part.CFrame = base * CFrame.new(LANTERN_X, spec[3], LANTERN_Z)
+		part.Color = spec[4]
+		part.Material = spec[5]
+		part.Anchored = true
+		part.CanCollide = false
+		part.CanQuery = false
+		part.CanTouch = false
+		part:SetAttribute("LookMaterial", spec[5].Name)
+		part.Parent = model
+	end
 end
 
 -- Which way a trampled tower tips: picked from where it stands, so a row of

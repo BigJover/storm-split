@@ -467,7 +467,7 @@ local function describeAbilities(now, nextStep, parts: { string })
 	-- Field Hospital
 	local heal = changed("healMult", 1)
 	if heal then
-		table.insert(parts, `heals x{fmt(heal)} as fast`)
+		table.insert(parts, `heals {fmt(heal)}× faster`)
 	end
 	local reviveSpeed = changed("reviveSpeed", 0)
 	if reviveSpeed then
@@ -481,7 +481,7 @@ local function describeAbilities(now, nextStep, parts: { string })
 	end
 	local rescue = changed("rescueRespawnMult", 0)
 	if rescue then
-		table.insert(parts, `downed hunters come back here in {math.floor(rescue * 100 + 0.5)}% of the time`)
+		table.insert(parts, `fallen hunters respawn at this tent in {math.floor(rescue * 100 + 0.5)}% of the usual time`)
 	end
 	local hpAura = changed("auraHpPercent", 0)
 	if hpAura then

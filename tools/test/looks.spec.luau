@@ -294,3 +294,120 @@ test("Jaw Lock muzzle: one dark strap on the snout of every species, removed aft
 		ok(model:FindFirstChild("Muzzle") == nil, `{key} strap removed`)
 	end
 end)
+
+-- T16b (DECISIONS #46, #48) ---------------------------------------------------------
+
+local function rgb(c: Color3): string
+	return `{math.floor(c.R * 255 + 0.5)},{math.floor(c.G * 255 + 0.5)},{math.floor(c.B * 255 + 0.5)}`
+end
+
+test("Armory rack guns read as rifles: a Wood stock under a 1.5-long steel barrel (R6-1)", function()
+	local model = TowerLook.build("ARMORY", Config.Towers.ARMORY.range, BASE)
+	for i = 1, 4 do
+		local stock = model:FindFirstChild(`Stock{i}`) :: BasePart
+		local gun = model:FindFirstChild(`Gun{i}`) :: BasePart
+		ok(stock ~= nil and gun ~= nil, `stock and gun {i}`)
+		eq(stock.Material, Enum.Material.Wood, `stock {i} wood`)
+		near(stock.Size.Y, 0.6, `stock {i} length`, EPS)
+		near(stock.CFrame.Position.Y - BASE.Y, 1.25, `stock {i} at y 1.25`, EPS)
+		near(gun.Size.Y, 1.5, `gun {i} steel shortened to 1.5`, EPS)
+		eq(gun.Material, Enum.Material.Metal, `gun {i} steel`)
+		local stockTop = stock.CFrame.Position.Y + stock.Size.Y / 2
+		local gunBottom = gun.CFrame.Position.Y - gun.Size.Y / 2
+		near(gunBottom, stockTop, `gun {i} sits on its stock`, EPS)
+	end
+end)
+
+test("trampled tint is (45,45,48) on every tower (R6-2)", function()
+	for _, key in Config.TowerOrder do
+		local model = TowerLook.build(key, Config.Towers[key].range, BASE)
+		TowerLook.setKnockedOut(model, true)
+		for _, part in model:GetChildren() do
+			if part:IsA("BasePart") and part:GetAttribute("LookMaterial") then
+				eq(rgb(part.Color), "45,45,48", `{key} {part.Name} trampled tint`)
+			end
+		end
+	end
+end)
+
+test("Last Stand save: green (60,190,90) flash + label on the tower, hospital + pulses, colours restored (R7-1)", function()
+	local Combat = require(src.shared.Combat)
+	eq(Combat.hitOutcome(0, 12, true), "saved", "0 HP with a Last Stand = saved")
+	eq(Combat.hitOutcome(-3, 12, false), "trampled", "0 HP without = trampled")
+	eq(Combat.hitOutcome(5, 12, false), "hit", "still standing = hit")
+	eq(Combat.hitOutcome(5, 0, false), "none", "nothing through = none")
+	local tower = TowerLook.build("SCOUT", Config.Towers.SCOUT.range, BASE)
+	local hospital = TowerLook.build("HOSPITAL", Config.Towers.HOSPITAL.range, BASE + Vector3.new(8, 0, 0))
+	local before, crossBefore = {}, {}
+	for _, part in tower:GetChildren() do
+		if part:IsA("BasePart") and part:GetAttribute("LookMaterial") then
+			before[part] = rgb(part.Color)
+		end
+	end
+	for _, part in hospital:GetChildren() do
+		if part:IsA("BasePart") and part.Name:sub(1, 5) == "Cross" then
+			crossBefore[part] = rgb(part.Color)
+		end
+	end
+	ok(next(crossBefore) ~= nil, "hospital has its + parts")
+	TowerLook.showHit(tower, Combat.hitOutcome(0, 12, true), hospital)
+	for part in before do
+		eq(rgb(part.Color), "60,190,90", `{part.Name} flashes green`)
+	end
+	local label = tower.PrimaryPart:FindFirstChild("LastStand")
+	ok(label ~= nil, "Last Stand! label")
+	eq(label:FindFirstChildOfClass("TextLabel").Text, "Last Stand!", "label text")
+	for part, color in crossBefore do
+		ok(rgb(part.Color) ~= color, `{part.Name} pulses`)
+	end
+	task.wait(0.45)
+	for part, color in before do
+		eq(rgb(part.Color), color, `{part.Name} colour restored`)
+	end
+	for part, color in crossBefore do
+		eq(rgb(part.Color), color, `{part.Name} pulse restored`)
+	end
+	-- a plain hit still flashes red, not green
+	TowerLook.showHit(tower, "hit", nil)
+	local anyPart = next(before)
+	eq(rgb(anyPart.Color), "255,60,60", "a plain hit flashes red")
+	TowerLook.endHitFlash(tower)
+end)
+
+test("Rescue Beacon lantern: a Wood pole and green Neon lantern inside the box, on/off (R7-2)", function()
+	local model = TowerLook.build("HOSPITAL", Config.Towers.HOSPITAL.range, BASE)
+	ok(model:FindFirstChild("BeaconLantern") == nil, "no lantern without a beacon")
+	TowerLook.setLantern(model, true)
+	TowerLook.setLantern(model, true)
+	local count = 0
+	for _, part in model:GetChildren() do
+		if part.Name == "BeaconPole" or part.Name == "BeaconLantern" then
+			count += 1
+			for _, c in corners(part) do
+				local d = c - BASE
+				ok(math.abs(d.X) <= 1.5 + EPS and math.abs(d.Z) <= 1.5 + EPS, `{part.Name} inside the footprint`)
+				ok(d.Y >= -EPS and d.Y <= TowerLook.BODY_HEIGHT + EPS, `{part.Name} inside 0..5`)
+			end
+		end
+	end
+	eq(count, 2, "one pole and one lantern")
+	local lantern = model:FindFirstChild("BeaconLantern") :: BasePart
+	eq(lantern.Material, Enum.Material.Neon, "lantern Neon")
+	eq(rgb(lantern.Color), "60,190,90", "lantern green")
+	eq((model:FindFirstChild("BeaconPole") :: BasePart).Material, Enum.Material.Wood, "pole wood")
+	TowerLook.setLantern(model, false)
+	ok(model:FindFirstChild("BeaconPole") == nil and model:FindFirstChild("BeaconLantern") == nil, "removed")
+	-- the beacon is stats-driven: only Rescue T5 has rescueRespawnMult > 0
+	local TowerStats = require(src.shared.TowerStats)
+	for tier = 0, 5 do
+		local stats = TowerStats.compute(Config.Towers.HOSPITAL, { 0, tier, 0 }) :: any
+		eq(stats.rescueRespawnMult > 0, tier == 5, `Rescue T{tier} beacon`)
+	end
+end)
+
+test("a med kit is only taken by a hurt, living hunter (DECISIONS #45)", function()
+	local Combat = require(src.shared.Combat)
+	eq(Combat.takesMedKit(100, 100), false, "full HP leaves it")
+	eq(Combat.takesMedKit(99.5, 100), true, "missing HP takes it")
+	eq(Combat.takesMedKit(0, 100), false, "dead hunters don't")
+end)
