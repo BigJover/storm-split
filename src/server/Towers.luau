@@ -190,6 +190,8 @@ function Towers.damage(tower: Tower, amount: number, source: any?): number
 	if tower.hp <= 0 then
 		tower.hp = 0
 		setKnockedOut(tower, true)
+	elseif dealt > 0 then
+		TowerLook.flashHit(tower.model) -- visual only
 	end
 	showHealth(tower)
 	return dealt

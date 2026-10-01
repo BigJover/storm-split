@@ -141,7 +141,7 @@ test("DinoLook fixes: Gallimimus head on its neck, Raptor stripe and crest, T-Re
 	ok(crest.CFrame.Position.Z + crest.Size.Z / 2 > pHead.CFrame.Position.Z + pHead.Size.Z / 2, "crest sticks out behind the head")
 end)
 
-test("trampled look: tilt, Slate, smoke, debris, no ring, TRAMPLED label; all undone on repair", function()
+test("trampled look: tilt, Slate, dust, debris, no ring, TRAMPLED label; all undone on repair", function()
 	for _, key in Config.TowerOrder do
 		local model = TowerLook.build(key, 15, BASE)
 		TowerLook.refresh(model, 15, { 5, 2, 0 }, 2)
@@ -156,7 +156,7 @@ test("trampled look: tilt, Slate, smoke, debris, no ring, TRAMPLED label; all un
 		local label = body:FindFirstChild("Trampled")
 		ok(label ~= nil, `{key} label`)
 		eq(label:FindFirstChildOfClass("TextLabel").Text, "TRAMPLED", `{key} label text`)
-		ok(body:FindFirstChild("TrampledSmoke") ~= nil, `{key} smoke`)
+		ok(body:FindFirstChild("TrampledDust") ~= nil, `{key} dust`)
 		ok(model:FindFirstChild("Debris1") ~= nil and model:FindFirstChild("Debris3") ~= nil, `{key} debris`)
 		eq(model:FindFirstChild("Range").Transparency, 1, `{key} ring hidden`)
 		for part in before do
@@ -166,7 +166,7 @@ test("trampled look: tilt, Slate, smoke, debris, no ring, TRAMPLED label; all un
 		end
 		eq(body.CFrame.Position, BASE + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0), `{key} body doesn't move`)
 		TowerLook.setKnockedOut(model, false)
-		ok(body:FindFirstChild("Trampled") == nil and body:FindFirstChild("TrampledSmoke") == nil, `{key} label and smoke gone`)
+		ok(body:FindFirstChild("Trampled") == nil and body:FindFirstChild("TrampledDust") == nil, `{key} label and dust gone`)
 		ok(model:FindFirstChild("Debris1") == nil, `{key} debris gone`)
 		near(model:FindFirstChild("Range").Transparency, 0.85, `{key} ring back`, 1e-3)
 		for part, was in before do
@@ -228,4 +228,47 @@ test("T10c: sedation dart sticks up out of the back; zzz MaxDistance 80", functi
 		DinoLook.setAsleep(model, true)
 		eq(root:FindFirstChild("Asleep").MaxDistance, 80, `{key} zzz MaxDistance`)
 	end
+end)
+
+test("T12b: dust cloud, tip direction varies by spot, one low-HP orange, hit flash", function()
+	local model = TowerLook.build("SCOUT", 20, BASE)
+	TowerLook.setKnockedOut(model, true)
+	local dust = model.PrimaryPart:FindFirstChild("TrampledDust")
+	eq(dust.Color, Color3.fromRGB(150, 125, 90), "dust colour")
+	near(dust.Opacity, 0.2, "dust opacity", 1e-3)
+	near(dust.RiseVelocity, 1.5, "dust rises slowly", 1e-3)
+	-- two spots tip different ways
+	local axisA, axisB = TowerLook.tipAxis(Vector3.new(0, 0, 0)), TowerLook.tipAxis(Vector3.new(1, 0, 0))
+	ok((axisA - axisB).Magnitude > 0.1, "two positions tip along different axes")
+	near(axisA.Y, 0, "horizontal axis", 1e-9)
+	local function hideAt(spot)
+		local m = TowerLook.build("SCOUT", 20, spot)
+		TowerLook.setKnockedOut(m, true)
+		local hide = m:FindFirstChild("Hide")
+		return hide.CFrame.UpVector
+	end
+	local upA, upB = hideAt(Vector3.new(0, 0, 0)), hideAt(Vector3.new(1, 0, 0))
+	near(math.deg(math.acos(math.clamp(upA:Dot(Vector3.yAxis), -1, 1))), 15, "still 15 degrees", 0.1)
+	ok((upA - upB).Magnitude > 0.05, "and they lean different ways")
+	-- one low-HP orange on the tower bar (Hud uses the same constant)
+	eq(TowerLook.LOW_HP_COLOR, Color3.fromRGB(230, 170, 60), "low-HP orange")
+	local hurt = TowerLook.build("SCOUT", 20, BASE)
+	TowerLook.setHealth(hurt, 0.2)
+	eq(hurt.PrimaryPart.HealthBar.Back.Fill.BackgroundColor3, TowerLook.LOW_HP_COLOR, "tower bar uses it when low")
+	-- hit flash: red, then the real colours back; a trampled tower doesn't flash
+	local hide = hurt:FindFirstChild("Hide")
+	local before = hide.Color
+	TowerLook.flashHit(hurt)
+	eq(hide.Color, Color3.fromRGB(255, 60, 60), "flashes red")
+	TowerLook.endHitFlash(hurt)
+	eq(hide.Color, before, "colour restored")
+	TowerLook.flashHit(hurt)
+	TowerLook.setKnockedOut(hurt, true)
+	TowerLook.setKnockedOut(hurt, false)
+	eq(hide.Color, before, "trampled mid-flash still repairs to the real colour")
+	local down = TowerLook.build("SCOUT", 20, BASE)
+	TowerLook.setKnockedOut(down, true)
+	local slate = down:FindFirstChild("Hide").Color
+	TowerLook.flashHit(down)
+	eq(down:FindFirstChild("Hide").Color, slate, "no flash on a trampled tower")
 end)

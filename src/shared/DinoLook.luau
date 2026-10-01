@@ -179,6 +179,11 @@ local SPECIES: { [string]: Species } = {
 }
 local DEFAULT: Species = SPECIES.HUSK
 
+-- The species' body colour (for effects like the bite).
+function DinoLook.colorOf(key: string): Color3
+	return (SPECIES[key] or DEFAULT).color
+end
+
 -- Scale for size `size` of `sizes` (sizes counts down to 1 as it shrinks).
 function DinoLook.scale(size: number, sizes: number): number
 	if sizes <= 1 then

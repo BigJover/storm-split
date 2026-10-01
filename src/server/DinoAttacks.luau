@@ -45,8 +45,9 @@ local Towers = require(script.Parent.Towers)
 local DinoAttacks = {}
 
 -- Visuals only.
-local BITE_COLOR = Color3.fromRGB(255, 60, 60)
-local BITE_FLASH = 0.15 -- seconds
+local BITE_SNAP = 0.15 -- seconds for the teeth to close
+local TOOTH_BAR = Vector3.new(1.6, 0.25, 0.3)
+local BOSS_BITE = 2 -- bosses' teeth are this much bigger
 local PUFF_TIME = 0.3
 local CHIP_TIME = 0.6
 local SPIKE_STICK_TIME = 0.5
@@ -60,6 +61,8 @@ type Projectile = {
 	damage: number,
 	radius: number,
 	style: string,
+	species: string, -- for the hit notice
+	attack: string,
 	model: Model,
 	ring: BasePart,
 }
@@ -114,18 +117,36 @@ local function stillStanding(target: Combat.Target): boolean
 	return not ref.knockedOut
 end
 
-local function hurt(target: Combat.Target, damage: number, enemy: Enemies.Enemy?)
+local function hurt(target: Combat.Target, damage: number, enemy: Enemies.Enemy?, source: Health.Source)
 	if typeof(target.ref) == "Instance" and target.ref:IsA("Player") then
-		Health.damage(target.ref, damage)
+		Health.damage(target.ref, damage, source)
 	else
 		Towers.damage(target.ref, damage, enemy)
 	end
 	target.standing = stillStanding(target) -- trampled or killed: the rest look elsewhere
 end
 
+-- Two tooth bars in the species colour snap shut over the target; bigger for
+-- a bigger dino, bigger still for a boss.
+local function biteLook(enemy: Enemies.Enemy, at: Vector3)
+	local scale = math.max(0.5, enemy.size / math.max(1, enemy.sizes)) * (if enemy.def.boss then BOSS_BITE else 1)
+	local size = TOOTH_BAR * scale
+	local gap = 0.6 * scale
+	local color = DinoLook.colorOf(enemy.key)
+	-- facing the dino, level
+	local toward = (enemy.part.Position - at) * Vector3.new(1, 0, 1)
+	local centre = if toward.Magnitude > 0.01 then CFrame.lookAt(at, at + toward) else CFrame.new(at)
+	for _, side in { 1, -1 } do
+		local tooth = Effects.part(size, centre * CFrame.new(0, side * gap, 0), color, BITE_SNAP + 0.1)
+		tooth.Material = Enum.Material.SmoothPlastic
+		TweenService:Create(tooth, TweenInfo.new(BITE_SNAP), { CFrame = centre * CFrame.new(0, side * size.Y / 2, 0) }):Play()
+	end
+end
+
 local function bite(enemy: Enemies.Enemy, target: Combat.Target)
-	hurt(target, Combat.attackDamage(enemy.def.meleeDamage, enemy.size, enemy.sizes, damageMult()), enemy)
-	Effects.part(Vector3.new(1.6, 1.6, 1.6), CFrame.new(target.position + Vector3.new(0, 2, 0)), BITE_COLOR, BITE_FLASH, Enum.PartType.Ball)
+	local damage = Combat.attackDamage(enemy.def.meleeDamage, enemy.size, enemy.sizes, damageMult())
+	hurt(target, damage, enemy, { species = enemy.def.display, attack = enemy.def.meleeName })
+	biteLook(enemy, target.position + Vector3.new(0, 2, 0))
 end
 
 ------------------------------------------------------------------ projectiles
@@ -158,6 +179,8 @@ local function throw(enemy: Enemies.Enemy, target: Combat.Target)
 		damage = Combat.attackDamage(def.rangedDamage, enemy.size, enemy.sizes, damageMult()),
 		radius = def.impactRadius,
 		style = style,
+		species = def.display,
+		attack = def.rangedName,
 		model = model,
 		ring = ring,
 	}
@@ -196,7 +219,7 @@ end
 local function land(p: Projectile)
 	local targets = candidates()
 	for _, target in Combat.landingHits(p.to, p.radius, targets) do
-		hurt(target, p.damage, nil)
+		hurt(target, p.damage, nil, { species = p.species, attack = p.attack })
 	end
 	landingLook(p)
 	destroy(p)

@@ -16,6 +16,8 @@ local startGame = remotes:WaitForChild("StartGame") :: RemoteEvent
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Theme = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Theme"))
+local TowerLook = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("TowerLook"))
+local HitNotice = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HitNotice"))
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "StormSplitHud"
@@ -215,7 +217,7 @@ end)
 
 -- Health bar, bottom left. Reads the Humanoid; only Server/Health changes it.
 local HP_FILL = Color3.fromRGB(110, 200, 110)
-local HP_LOW = Color3.fromRGB(230, 170, 60)
+local HP_LOW = TowerLook.LOW_HP_COLOR -- one low-HP orange for hunters and towers
 local HP_FLASH = Color3.fromRGB(255, 70, 70)
 local hpFrame = Instance.new("Frame")
 hpFrame.Name = "Health"
@@ -289,6 +291,43 @@ local function watchHumanoid(character: Model)
 		showHealth(humanoid)
 	end)
 end
+-- Private hit notice beside the HP bar: "Raptor · Slash −4" (DECISIONS #39).
+-- Only this hunter's hits arrive here (Server/Health fires to them alone).
+local notice = Instance.new("TextLabel")
+notice.Name = "HitNotice"
+notice.AnchorPoint = Vector2.new(0, 1)
+notice.Position = UDim2.new(0, 24 + 240 + 10, 1, -24)
+notice.Size = UDim2.fromOffset(0, 28)
+notice.AutomaticSize = Enum.AutomaticSize.X
+notice.BackgroundTransparency = 1
+notice.TextColor3 = HP_FLASH
+notice.TextStrokeTransparency = 0.4
+notice.Font = Enum.Font.GothamBold
+notice.TextSize = 17
+notice.TextXAlignment = Enum.TextXAlignment.Left
+notice.Visible = false
+notice.Parent = gui
+
+local noticeState: HitNotice.State? = nil
+task.spawn(function()
+	local hurt = remotes:WaitForChild("Hurt") :: RemoteEvent
+	hurt.OnClientEvent:Connect(function(species: unknown, attack: unknown, amount: unknown)
+		if typeof(species) ~= "string" or typeof(attack) ~= "string" or typeof(amount) ~= "number" then
+			return
+		end
+		local now = os.clock()
+		local state = HitNotice.merge(noticeState, species, attack, amount, now)
+		noticeState = state
+		notice.Text = HitNotice.text(state)
+		notice.Visible = true
+		task.delay(HitNotice.FADE, function()
+			if noticeState == state then -- no newer hit since
+				notice.Visible = false
+			end
+		end)
+	end)
+end)
+
 player.CharacterAdded:Connect(watchHumanoid)
 player.CharacterRemoving:Connect(function()
 	hpFrame.Visible = false

@@ -137,7 +137,7 @@ Towers.init(map.towerFolder, {
 	end,
 })
 Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged })
-Health.init()
+Health.init(remotes)
 DinoAttacks.init({
 	damageMult = function()
 		return difficulty().dinoDamageMult

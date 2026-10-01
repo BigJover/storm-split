@@ -14,9 +14,10 @@
 	(3 and 5): a crown on top at the first, a glowing silhouette at the second.
 
 	Health (Step 2): setHealth() shows a small bar over a damaged tower;
-	setKnockedOut() shows a trampled one — tipped over about 15 degrees, dark
-	Slate, smoking, a few Slate debris blocks at its base, no range ring, and a
+	setKnockedOut() shows a trampled one — tipped over about 15 degrees (which
+	way depends on where it stands), dark Slate, a dust cloud, a few Slate debris blocks at its base, no range ring, and a
 	TRAMPLED label (DECISIONS #9/#21). All of it undoes on repair.
+	flashHit() tints a bitten tower red for a moment.
 ]]
 
 local TowerLook = {}
@@ -305,7 +306,12 @@ local TRAMPLED_TILT = math.rad(15)
 local TRAMPLED_COLOR = Color3.fromRGB(60, 60, 64)
 local TRAMPLED_TEXT = Color3.fromRGB(255, 120, 110)
 local HP_GOOD = Color3.fromRGB(110, 210, 110)
-local HP_LOW = Color3.fromRGB(235, 90, 70)
+-- One orange for "low HP" on every bar, the hunter's (Hud) and the towers';
+-- red stays for hits and Trampled.
+TowerLook.LOW_HP_COLOR = Color3.fromRGB(230, 170, 60)
+local HIT_COLOR = Color3.fromRGB(255, 60, 60)
+local HIT_FLASH = 0.15 -- seconds
+local DUST_COLOR = Color3.fromRGB(150, 125, 90)
 
 -- A small bar over the tower; hidden at full health.
 function TowerLook.setHealth(model: Model, frac: number)
@@ -343,7 +349,7 @@ function TowerLook.setHealth(model: Model, frac: number)
 	local fill = (bar:FindFirstChild("Back") :: Frame):FindFirstChild("Fill") :: Frame
 	local shown = math.clamp(frac, 0, 1)
 	fill.Size = UDim2.fromScale(shown, 1)
-	fill.BackgroundColor3 = if shown < 0.35 then HP_LOW else HP_GOOD
+	fill.BackgroundColor3 = if shown < 0.35 then TowerLook.LOW_HP_COLOR else HP_GOOD
 end
 
 -- Everything that makes up the visible tower (the silhouette and the crown).
@@ -357,18 +363,59 @@ local function visibleParts(model: Model): { BasePart }
 	return parts
 end
 
+-- Ends a hit flash early (or on time): every part gets its colour back.
+function TowerLook.endHitFlash(model: Model)
+	if not model:GetAttribute("HitFlash") then
+		return
+	end
+	model:SetAttribute("HitFlash", nil)
+	for _, part in visibleParts(model) do
+		local color = part:GetAttribute("FlashColor")
+		if typeof(color) == "Color3" then
+			part.Color = color
+		end
+		part:SetAttribute("FlashColor", nil)
+	end
+end
+
+-- A bitten (or hit) tower's silhouette flashes red for a moment. Not on a
+-- trampled tower.
+function TowerLook.flashHit(model: Model)
+	if model:GetAttribute("Trampled") or model:GetAttribute("HitFlash") then
+		return
+	end
+	model:SetAttribute("HitFlash", true)
+	for _, part in visibleParts(model) do
+		part:SetAttribute("FlashColor", part.Color)
+		part.Color = HIT_COLOR
+	end
+	task.delay(HIT_FLASH, function()
+		TowerLook.endHitFlash(model)
+	end)
+end
+
+-- Which way a trampled tower tips: picked from where it stands, so a row of
+-- trampled towers doesn't all fall the same way. A horizontal axis.
+function TowerLook.tipAxis(base: Vector3): Vector3
+	local step = (math.floor(base.X) * 7 + math.floor(base.Z) * 13) % 8
+	local angle = math.rad(step * 45)
+	return Vector3.new(math.cos(angle), 0, math.sin(angle))
+end
+
 function TowerLook.setKnockedOut(model: Model, on: boolean)
 	local body = model.PrimaryPart
 	if not body or (model:GetAttribute("Trampled") == true) == on then
 		return
 	end
+	TowerLook.endHitFlash(model) -- so the colours saved below are the real ones
 	model:SetAttribute("Trampled", on)
 	local ring = model:FindFirstChild("Range")
 	local base = body.CFrame * CFrame.new(0, -body.Size.Y / 2, 0)
 
 	if on then
 		-- Tip over about the base, go dark.
-		local tilt = base * CFrame.Angles(TRAMPLED_TILT, 0, 0) * base:Inverse()
+		local axis = TowerLook.tipAxis(base.Position)
+		local tilt = base * CFrame.fromAxisAngle(axis, TRAMPLED_TILT) * base:Inverse()
 		for _, part in visibleParts(model) do
 			part:SetAttribute("UprightCFrame", part.CFrame)
 			part:SetAttribute("UprightColor", part.Color)
@@ -380,13 +427,13 @@ function TowerLook.setKnockedOut(model: Model, on: boolean)
 		if ring and ring:IsA("BasePart") then
 			ring.Transparency = 1
 		end
-		local smoke = Instance.new("Smoke")
-		smoke.Name = "TrampledSmoke"
-		smoke.Color = Color3.fromRGB(80, 80, 80)
-		smoke.Opacity = 0.3
-		smoke.RiseVelocity = 3
-		smoke.Size = 2
-		smoke.Parent = body
+		local dust = Instance.new("Smoke") -- a dust cloud, not fire smoke
+		dust.Name = "TrampledDust"
+		dust.Color = DUST_COLOR
+		dust.Opacity = 0.2
+		dust.RiseVelocity = 1.5
+		dust.Size = 2
+		dust.Parent = body
 		for i, spot in { Vector3.new(-1, 0.25, 1), Vector3.new(0.9, 0.2, 0.8), Vector3.new(0.6, 0.3, -1.1) } do
 			local debris = Instance.new("Part")
 			debris.Name = `Debris{i}`
@@ -443,7 +490,7 @@ function TowerLook.setKnockedOut(model: Model, on: boolean)
 				debris:Destroy()
 			end
 		end
-		for _, name in { "TrampledSmoke", "Trampled" } do
+		for _, name in { "TrampledDust", "Trampled" } do
 			local thing = body:FindFirstChild(name)
 			if thing then
 				thing:Destroy()

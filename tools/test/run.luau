@@ -9,7 +9,8 @@
 	    X.client.luau or to the folder X, the way Rojo lays them out.
 	  - `require(shim)` loads that file once and caches it, like Roblox's require.
 	  - Vector3, Vector2, CFrame, Color3, UDim, UDim2, Enum and Instance come from
-	    @lune/roblox, so visual builders (TowerLook, DinoLook) can build real instances.
+	    @lune/roblox, so visual builders (TowerLook, DinoLook) can build real instances;
+	    `task` is @lune/task.
 	Only pure modules work this way (the shared ones); anything that calls game:GetService
 	needs Studio.
 
@@ -25,6 +26,7 @@ local fs = require("@lune/fs")
 local luau = require("@lune/luau")
 local process = require("@lune/process")
 local roblox = require("@lune/roblox")
+local task = require("@lune/task")
 
 local SPEC_DIR = "tools/test"
 local SRC = "src"
@@ -135,6 +137,7 @@ local function environment(path: string, extra: { [string]: any }?): { [string]:
 		UDim2 = roblox.UDim2,
 		Enum = roblox.Enum,
 		Instance = roblox.Instance,
+		task = task,
 	}
 	if extra then
 		for k, v in extra do

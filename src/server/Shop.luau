@@ -70,8 +70,16 @@ local function decorate(tower: Towers.Tower)
 		prompt.HoldDuration = 0
 		prompt.RequiresLineOfSight = false
 		prompt.MaxActivationDistance = ShopRules.PromptDistance
-		prompt.ActionText = "Manage"
 		prompt.Parent = body
+		-- "Upgrade", or "Upgrade / Repair" while it's damaged (Towers publishes HP).
+		local function label()
+			local hp, maxHp = body:GetAttribute("HP"), body:GetAttribute("MaxHP")
+			local damaged = typeof(hp) == "number" and typeof(maxHp) == "number" and hp < maxHp
+			prompt.ActionText = if damaged then "Upgrade / Repair" else "Upgrade"
+		end
+		body:GetAttributeChangedSignal("HP"):Connect(label)
+		body:GetAttributeChangedSignal("MaxHP"):Connect(label)
+		label()
 	end
 	prompt.ObjectText = tower.def.display
 end
