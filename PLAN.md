@@ -375,6 +375,18 @@ the spreadsheet, never for code.
   `HEROES.md` section.
 - **Accept:** exporter clean; audit clean; HeroStats spec per tier claim; check clean.
 
+### T16b. Round-6 touch-ups (small) — 🦖
+- **Goal:** DECISIONS #45–#47. Start it only after T16 is committed.
+- **Files:** In `TowerLook` ARMORY, each `Gun{i}` gets a wooden stock (a 0.25×0.6×0.25 Wood
+  block at its base, y ≈ 1.25), and its steel part is shortened to 1.5. In
+  `TowerLook.setKnockedOut`, the trampled tint goes from (60,60,64) to (45,45,48) for every
+  tower. In the `Airdrops` med kit touch, ignore a hunter at full HP, so the kit stays for
+  someone who's hurt. Spreadsheet: set the `Tower Upgrades` title cell to "7 towers x 3 paths
+  x 5 tiers". Assert it still holds the "5 towers" text before writing it. Config shouldn't
+  change.
+- **Accept:** the looks spec covers the stocks and the tint. A spec (or a pure helper) shows
+  that a full-HP hunter doesn't take a kit. Exporter clean with no Config diff; check clean.
+
 ### T17. Docs and recap
 - `CLAUDE.md` status (Step 2 and polish: statically checked and headless-tested, not
   playtested), `ARCHITECTURE.md` (layout, §4 ownership: Health, DinoAttacks, tower HP in
