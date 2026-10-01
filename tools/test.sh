@@ -1,7 +1,8 @@
 #!/bin/sh
 # Headless tests: every tools/test/*.spec.luau under Lune (see tools/test/run.luau),
-# then the Config <-> design-doc audit (tools/audit.py) and the threat estimate
-# (tools/threat.py); both are reports, their findings don't fail the run.
+# then the Config <-> design-doc audit (tools/audit.py, a report: findings don't fail
+# the run; use --strict for that) and the threat estimate (tools/threat.py, which fails
+# the run if a DECISIONS #42 target is missed).
 # Pass words to run only the specs whose file name contains them (skips the audit):
 #   tools/test.sh upgrades
 cd "$(dirname "$0")/.."

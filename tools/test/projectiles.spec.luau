@@ -7,12 +7,12 @@ local Config = require(src.shared.Config)
 local Combat = require(src.shared.Combat)
 local DinoLook = require(src.shared.DinoLook)
 
--- key -> name, damage, every, reach, speed, impact radius, style
+-- key -> name, damage, every, reach, speed, impact radius, style (mid tiers retuned by DECISIONS #42)
 local RANGED = {
-	SHIELD = { "Skull Toss", 5, 5, 22, 40, 3, "lob" },
-	ARMOR = { "Spike Flick", 6, 5, 20, 50, 3, "spike" },
-	STORM = { "Gravel Spray", 8, 4, 25, 70, 3, "gravel" },
-	LLAMA = { "Stone Drop", 8, 4, 18, 35, 4, "drop" },
+	SHIELD = { "Skull Toss", 3, 8, 22, 40, 3, "lob" },
+	ARMOR = { "Spike Flick", 4, 8, 20, 50, 3, "spike" },
+	STORM = { "Gravel Spray", 5, 6.5, 25, 70, 3, "gravel" },
+	LLAMA = { "Stone Drop", 5, 6.5, 18, 35, 4, "drop" },
 	ZEP = { "Horn Toss", 20, 5, 30, 45, 5, "roll" },
 	BARGE = { "Bone Spit", 35, 6, 35, 35, 8, "capsule" },
 }
