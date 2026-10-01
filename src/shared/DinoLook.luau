@@ -286,7 +286,7 @@ end
 -- Jaw Lock (Field Medic): a tan leather strap across the snout, a muzzle,
 -- with a small steel buckle on top (DECISIONS #50: it must show on the dark
 -- T-Rex jaw). On the T-Rex's jutting Jaw if it has one, otherwise round the Head.
-DinoLook.MUZZLE_COLOR = Color3.fromRGB(165, 115, 65)
+DinoLook.MUZZLE_COLOR = Color3.fromRGB(185, 100, 45)
 local MUZZLE_FLASH_COLOR = Color3.fromRGB(235, 200, 150)
 local MUZZLE_FLASH = 0.3 -- seconds
 local BUCKLE_COLOR = Color3.fromRGB(150, 155, 160)

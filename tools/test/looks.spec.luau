@@ -417,8 +417,8 @@ test("a med kit is only taken by a hurt, living hunter (DECISIONS #45)", functio
 	eq(Combat.takesMedKit(0, 100), false, "dead hunters don't")
 end)
 
-test("Jaw Lock strap (165,115,65) stands apart from every dino's head and jaw (R8-1)", function()
-	eq(rgb(DinoLook.MUZZLE_COLOR), "165,115,65", "strap colour")
+test("Jaw Lock strap (185,100,45) stands apart from every dino's head and jaw (R8-1)", function()
+	eq(rgb(DinoLook.MUZZLE_COLOR), "185,100,45", "strap colour")
 	local function distance(a: Color3, b: Color3): number
 		return math.sqrt((a.R - b.R) ^ 2 + (a.G - b.G) ^ 2 + (a.B - b.B) ^ 2) * 255
 	end
@@ -440,7 +440,7 @@ test("Jaw Lock strap (165,115,65) stands apart from every dino's head and jaw (R
 	end
 	-- The Pachycephalosaurus head (150,110,80) is the nearest, about 22 apart; the
 	-- steel buckle and the Leather material carry it there. Any closer fails.
-	ok(closest >= 20, `strap too close to {closestKey} ({closest})`)
+	ok(closest >= 40, `strap too close to {closestKey} ({closest})`)
 end)
 
 test("Lullaby Rounds strap flash: lighter for 0.3s, then back to tan (R8-4, no zzz)", function()
