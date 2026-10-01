@@ -61,11 +61,11 @@ Tiers in *italics* change how the gun fires.
 |---|---|---|---|---|---|---|
 | **Gunslinger** | handling | Quick Draw | Hair Trigger | *Dual Pistols* | Fan the Hammer | *Akimbo Frenzy* |
 | **Marksman** | accuracy | Match Barrel | Steady Hands | *Scope* | Hollow Tips | *Deadshot* |
-| **Trick Shot** | utility | Speed Loader | Extended Mag | *Ricochet* | Quick Mark | *Chain Shot* |
+| **Trick Shot** | utility | Speed Loader | Extended Mag | *Ricochet* | Quick Dart | *Chain Shot* |
 
 Dual Pistols: a second gun, alternating fire. Akimbo Frenzy: both full-auto. Scope: zoom and
 reach. Hollow Tips: pierces armour. Deadshot: triple damage to marked dinos. Ricochet:
-bounces to a second dino. Quick Mark: shorter Tracking Dart cooldown. Chain Shot: bounces 4 times.
+bounces to a second dino. Quick Dart: shorter Tracking Dart cooldown. Chain Shot: bounces 4 times.
 
 ### Big Game Hunter (hunting rifle) — Sustained · ability **Rally Cry** (your fire rate up, nearby towers faster)
 

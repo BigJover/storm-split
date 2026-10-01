@@ -1787,7 +1787,7 @@ return table.freeze({
 							lastStand = false,
 						},
 						{
-							name = "Skybreaker",
+							name = "Extinction Round",
 							cost = 22527,
 							damageMult = 24.76,
 							rateMult = 1,
@@ -2388,7 +2388,7 @@ return table.freeze({
 							lastStand = false,
 						},
 						{
-							name = "Storm of Steel",
+							name = "Meteor Shower",
 							cost = 35400,
 							damageMult = 6.41,
 							rateMult = 1,
@@ -3400,7 +3400,7 @@ return table.freeze({
 							lastStand = false,
 						},
 						{
-							name = "Crack Armor",
+							name = "Find the Gap",
 							cost = 2116,
 							damageMult = 3.61,
 							rateMult = 1,
@@ -6883,7 +6883,7 @@ return table.freeze({
 							jawLockSpread = 0,
 						},
 						{
-							name = "Quick Mark",
+							name = "Quick Dart",
 							cost = 1600,
 							rateMult = 1,
 							magazineMult = 1.6,

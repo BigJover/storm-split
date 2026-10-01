@@ -55,7 +55,8 @@ numbers are seeds in the spreadsheet. The full reasoning is in `DECISIONS.md` (#
   - Hibernation → Deep Sleep
   - Crack Armor → Find the Gap
 
-  My lean: yes to Skybreaker, Crack Armor, Quick Mark and Storm of Steel.
+  **Done (Jovan, 2026-10-01):** Skybreaker → Extinction Round, Crack Armor → Find the Gap,
+  Quick Mark → Quick Dart, Storm of Steel → Meteor Shower. The rest are still open.
 - **Tier-5 glow (#33):** keep the whole tower going Neon (it hides the new silhouettes), or a
   single amber accent?
 - **Linebreaker "×2 damage" (#17):** ×2 over tier 3 (as it is, 6.41) or over tier 4 (8.84)?

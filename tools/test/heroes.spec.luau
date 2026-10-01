@@ -64,10 +64,10 @@ test("Tracker Marksman: Scope flag and reach, Hollow Tips pierce, Deadshot marke
 	eq(at("PISTOL", 2, 5, "Deadshot").markedDamageMult, 3, "Deadshot vs marked")
 end)
 
-test("Tracker Trick Shot: Ricochet bounces, Quick Mark cooldown, Chain Shot 4", function()
+test("Tracker Trick Shot: Ricochet bounces, Quick Dart cooldown, Chain Shot 4", function()
 	ok(at("PISTOL", 3, 3, "Ricochet").bounces >= 1, "Ricochet bounces")
 	eq(at("PISTOL", 3, 2, "Extended Mag").bounces, 0, "no bounce before Ricochet")
-	ok(at("PISTOL", 3, 4, "Quick Mark").abilityCooldown < base("PISTOL").abilityCooldown, "Quick Mark cooldown")
+	ok(at("PISTOL", 3, 4, "Quick Dart").abilityCooldown < base("PISTOL").abilityCooldown, "Quick Dart cooldown")
 	eq(at("PISTOL", 3, 5, "Chain Shot").bounces, 4, "Chain Shot bounces")
 end)
 
