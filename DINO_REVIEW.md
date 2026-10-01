@@ -220,3 +220,28 @@ Skybreaker (M5/M6) and "Pops".
 | **Stone Drop** (Pteranodon) | A Slate stone that **falls straight down** from the flier's height to the ring. There's almost no sideways travel, so the ring is the whole warning. Make the ring show from launch and keep the stone bigger (≈1.2). On landing: a dust puff. |
 | **Boulder Kick** (Triceratops) | A **big** boulder (≈2.5 studs, Rock material, dark 95,85,75) that **rolls along the ground** (a low bounce, spinning) toward the ring instead of flying. That makes it read as heavy, boss-grade and dodgeable. On landing: a big dust puff, 3 chips and a small camera-shake-free shockwave ring. |
 | **Roar Blast** (T-Rex) | **Not a ball.** It's a flattened, translucent **sound-wave disc** (Neon, pale T-Rex green 170,210,140, 0.6 transparency) that **grows as it flies**, from 2 to the full impact diameter. Two or three thin rings trail behind it. On landing: a ring that expands outward and fades. If it's renamed **Bone Spit** (round 1), use a bone-white capsule instead. |
+
+---
+
+## Round 5 — review of 8a0e8b6 (T12 projectiles)
+
+**Reads well**
+- The round-1 renames were adopted on the sheet: **Skull Toss**, **Horn Toss** and **Bone Spit**. The
+  six ranged names now all describe something a dino could physically do.
+- The styles match the round-4 guidance:
+  - The lobbed stone spins and arcs high.
+  - The spike flies flat, points along its path and sticks in the ground.
+  - Stone Drop falls straight down and accelerates.
+  - Horn Toss rolls and bounces as a boulder.
+  - Bone Spit is a bone capsule.
+  - Debris is earth-coloured; only the dino's own spike or bone is bone-white.
+- One shared ring that firms up as the shot comes in is the right single rule for players to learn.
+
+**Off / to fix**
+
+| # | Priority | Issue | Fix |
+|---|---|---|---|
+| R5-1 | **must-fix** | The warning colour (255,150,40) is nearly the **Supply Camp's** colour (230,150,50). Every Supply Camp draws a permanent Neon range disc in that colour (`TowerLook.setRing`, range 20 = a 40-stud orange disc at 0.85). The ground near a camp looks like a standing danger zone, and real warnings get lost on top of it. | `DinoLook.RING_COLOR` → a hot **red-orange (255, 70, 40)**. Red already means "hurt" in this game (bite flash, HP flash), so it fits. Keep the Supply Camp crate-orange. |
+| R5-2 | nice | The ring is a filled disc, so overlapping Bone Spit discs (16 studs wide) merge into one blob, and the sense of "edge = safe line" is weak. | `DinoLook.buildWarningRing`: keep a faint fill (0.85) plus a bright 0.3-stud edge (a second, slightly larger cylinder only 0.12 tall, or 8 thin edge blocks). Fade only the fill. |
+| R5-3 | nice | Gravel Spray pebbles are 0.4 / 0.35 studs flying at 70 studs/s (about 0.35s of flight), which is practically invisible. | `DinoLook.buildProjectile` gravel: pebbles 0.6 studs (× scale), and a thin sand trail (one 0.2×0.2×1.5 streak behind the cluster). The ring still does the warning. |
+| R5-4 | nice | A throw has no wind-up, so hunters only see the ring, not *who* threw it. That undercuts "who threw it, from where it came" (round 4). | Visual only: when a ranged attack launches, flash the thrower's Head part bone-white for 0.15s (`DinoLook.flashHead(model)`) so the source is visible. |
