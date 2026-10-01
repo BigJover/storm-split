@@ -1,4 +1,219 @@
-# Plan — Step 2 + wide polish (Director, 2026-09-30)
+# Plan — Round 2: balance pass + daily log-in rewards and bounties (Director, 2026-10-01)
+
+Scope (Jovan, 2026-10-01, `GAUNTLET.md` "Round 2 scope"): (1) a balance pass across the whole
+game, justified by headless models because there's no playtest data yet; (2) daily log-in
+rewards plus daily and weekly challenges, for retention. **Stop before phase 7** and append a
+round-2 recap to `RECAP.md`. Design calls: `DECISIONS.md` #54–#71. Round 1's plan is kept
+below as history.
+
+The round-1 rules still hold (one task = one commit, push after verifying; `tools/check.sh`,
+`export_constants.py` and `tools/test.sh` green; diff `Config.luau` after every sheet change
+and account for each changed line; openpyxl only, assert a cell before writing it; append
+rows/columns, never insert; scope every lookup by (tower/hero, path, tier); "statically
+checked + headless tests, not playtested"). Plus, for this round:
+
+- **Models read the spreadsheet through the exporter** (`export_constants.read_data` /
+  `recalculated`), never `Config.luau`, and never write Config (import, don't run `main`).
+  Model output stays short: ≤ ~120 lines by default, `--full` for everything.
+- **A number changes only if a model shows why** (DECISIONS #54). Each balance commit message
+  quotes the model line before and after.
+- New Tuning levers go **below row 76** (row 77 blank, then a `REWARDS` header).
+- 🦖 = the Dino agent reviews names, looks and wording before the Director signs off.
+
+---
+
+## Part C — Balance models (report only, no number changes)
+
+### T18. Value model: towers, heroes, economy tiers
+- **Goal:** one table that shows dead and dominant tiers using what the game really does,
+  not the sheet's formula DPS (today all three paths of a tower show near-identical
+  `Resulting DPS`, because the multipliers were set to track 1.9^tier; pierce, armour,
+  splash, bosses, burn and auras are invisible to it).
+- **Files:** new `tools/value.py`; `tools/test.sh` runs it after `threat.py` (report only:
+  exit 0 unless it crashes).
+- **Do:** a reference wave mix per band (rounds 1–10, 11–20, 21–30, 31–40) from the Rounds
+  sheet: share of EHP that is armoured, flying, boss. For each tower × path × tier: cumulative
+  cash, **effective DPS** in each band (Damage x × Rate x × Shots × Line hits / Targets x
+  stand-in; 0 vs armour without Pierces armour/Strips armour, Armoured x, Boss x; 0 vs air if
+  it can't hit air; + Burn DPS × uptime; + bomblets; Mark/Brittle as +% on the tower's own
+  damage; aura towers credited with aura % × the DPS of **3 neighbour T2 Hunting Blinds**, a
+  stated assumption), cost per effective DPS, and marginal cash per marginal eDPS. Support and
+  control paths (Lookout, Sedate, Armory, Field Hospital, Supply Camp) are listed with their
+  own value line (aura %, slow %, resist %, heal, payback) and are **not** judged on DPS.
+  Flags: **dead tier** = marginal cash/eDPS > 2× the median of all damage paths at that tier
+  in the band it's typically bought (T1–2: 11–20, T3: 21–30, T4–5: 31–40); **dominant tower**
+  = cost/eDPS < 0.5× the median at every tier in every band. **Economy payback**: for every
+  Supply Camp tier, rounds to repay its upgrade cost from its extra income (Yield) or chest
+  cash (Airdrop, assuming every chest is collected); Logistics: cash spent needed to repay
+  the discount. **Heroes:** each hero's best path DPS at levels 1/5/9 vs Required DPS of that
+  round and vs every tower's T5 leveled DPS, and the cash its upgrades cost per DPS.
+- **Accept:** runs in < 15 s; flags print in a "Findings" block at the end; numbers spot-
+  checked by hand for one tower per kind (Blind, Perch, Mortar, Tranq) in the commit message;
+  no sheet or Config change.
+
+### T19. Pacing model: difficulty × players, repair, Amber
+- **Goal:** see whether Normal/Hard/Chaos and co-op are affordable, what repairs cost against
+  income, and how long Amber takes.
+- **Files:** `tools/value.py` (new sections, `--pacing`), or `tools/pacing.py` if cleaner.
+- **Do:** (a) the Balance Check's affordability ratio recomputed for every difficulty
+  (HP x, count x, speed x, promote chance, Cash x) at 1, 4 and 10 players (Tuning CO-OP), with
+  the minimum over rounds 11–35 and the TIGHT rounds listed; (b) the repair price of a
+  fully trampled tower at its typical tier for the round (T2 at 15, T3 at 25, T4 at 35)
+  against that round's income; (c) Amber: clears to unlock every hero and tower per
+  difficulty, mastery cost per level with a "gives a reward?" column, hours per clear from
+  the Rounds sheet's round lengths, and (once T25 exists) the same with the daily/weekly
+  maximum added.
+- **Accept:** as T18; the Balance Check sheet's Easy-solo values are reproduced exactly
+  (assert in the script).
+
+## Part D — Balance changes (each one model-justified; Director reviews the model output first)
+
+### T20. Supply Camp tiers pay for themselves
+- **Why:** today no Yield or Airdrop tier repays itself within a 40-round match (Supply Crate
+  ≈ 51 rounds, Bigger Budget ≈ 88, Amber Vault never), so the economy paths are dead
+  (DECISIONS #56).
+- **Sheet:** new Towers column **"Upgrade cost growth"** (blank = Tuning Tier cost growth);
+  Supply Camp = **1.6**. Change the Tower Upgrades cost formula to use it (array formula,
+  recalculated by the exporter). Seeds — Yield Income x: **2.0 / 3.6 / 6.3 / 10.5 / 17**
+  (Amber Vault's 5% interest, cap 500, unchanged). Airdrop Chest cash: **200 / 260 / 515 /
+  615 / 790** (chest counts 1/2/2/3/4 unchanged). Logistics unchanged.
+- **Accept:** `value.py` payback ≤ 10 rounds for every Yield and Airdrop tier, ≥ 5 rounds for
+  every tier (no instant payback); only Supply Camp cost/income/chest lines change in
+  Config; Balance Check unchanged (it doesn't model income towers); audit 0.
+
+### T21. Smooth the round-21 and round-31 cliffs (also eases #44)
+- **Why:** round 30 → 31 the round's EHP jumps ×2.8 (8 Triceratops at once, Gallimimus
+  doubles, Compy gone) and affordability drops 1.58 → 0.71; round 21 dips to 0.97 when
+  Gallimimus arrive (DECISIONS #57).
+- **Sheet:** Rounds counts (blue) only, rounds 18–39. Phase Gallimimus in from round 18 and
+  Triceratops from round 31 (seed: 3 at round 31, +1 a round, 8 from 36), and Gallimimus 16 → 31
+  across rounds 31–35. Builder iterates on counts only.
+- **Accept:** Balance Check: no TIGHT before round 36, affordability ≥ 1.0 for rounds 11–35;
+  after round 11, no round's Required DPS is > 1.5× the round before; total EHP of rounds
+  31–40 within ±10% of today's (the finale stays as hard overall; round 40 untouched);
+  `threat.py` green; the Config diff touches only the Rounds block.
+
+### T22. Difficulty cash scaling meets its bars
+- **Why / bars (DECISIONS #55):** minimum affordability over rounds 11–35, solo: Normal
+  ≥ 0.85, Hard ≥ 0.70; Chaos at 4 players ≥ 0.70 (Chaos solo is exempt: "meant for big
+  lobbies").
+- **Sheet:** Difficulty **Cash x** only, steps of 0.05, smallest change that meets the bar.
+  If T19 shows every bar already met: no change, log it.
+- **Accept:** T19 table before/after in the commit message; only `cashMult` lines change.
+
+### T23. Tier fixes from T18 (filled in by the Director after T18)
+- **Rule (DECISIONS #59):** only flagged dead/dominant damage tiers; change that tier's blue
+  multipliers (Damage x / Rate x / an ability column), never costs, at most ±25% per cell;
+  one tower per commit (T23a, T23b…); the exporter's hero-vs-tower guard stays green.
+  The Director lists the exact cells here before the Builder starts.
+
+### T24. Threat report for the boss rounds (#44, report only)
+- **Files:** `tools/threat.py`: print rounds 31–40 mid-gap defended damage per tower type,
+  also with the Armory's top resist (45%) applied. **No target, no failure** (#44 stays a
+  playtest item).
+- **Accept:** output shows rounds 31–40 before/after T21 in the commit message; test.sh green.
+
+## Part E — Daily Haul and Bounties (log-in rewards + challenges)
+
+Design: DECISIONS #63–#71. Names are proposals until 🦖 review: the screen is the **Hunt
+Board**; the log-in calendar is the **Daily Haul** (day 7 = **Big Haul**); challenges are
+**Bounties** (daily / weekly); a reroll is a **Swap**.
+
+### T25. Sheets, levers and exporter — 🦖 (names and bounty text)
+- **Sheet:** new sheet **Daily Haul**: Day 1–7, Amber **5, 5, 10, 10, 15, 15, 40**, Note.
+  New sheet **Bounties**: Id, Pool (daily/weekly), Slot (easy/medium/hard), Event
+  (pop / popTotal / clear / reachRound / ability / build / upgrade / repair / chest), Target
+  (species key, difficulty key or blank), Count, Amber, Text (with `{n}`). Tuning levers
+  (rows 78+, under a `REWARDS` header): Daily bounties 3, Weekly bounties 3, Daily swaps 1,
+  Weekly swaps 1, Haul resets after missed days 0 (0 = never), Daily reset hour UTC 0,
+  Weekly reset day 1 (Monday). Reward seeds: daily easy/medium/hard **10/15/20**; weekly
+  **40/60/80**. Pool seeds (Builder sizes counts so the T25 check below passes):
+  - daily: pop N Compies / Raptors / Pachys / Ankylosaurs / Gallimimus / Pteranodons; pop N
+    dinos; reach round 15 / 25; use your ability N times; build N towers; upgrade N times;
+    repair N towers; collect N supply chests; clear any track (hard slot).
+  - weekly: clear N tracks; clear Normal or harder; clear Hard or harder; pop N dinos; pop N
+    Triceratops; pop a T-Rex; reach round 31 N times; use your ability N times; repair N.
+  - at least slot-count + 2 entries per (pool, slot), so a swap always has a choice.
+- **Exporter:** `Config.DailyHaul`, `Config.Bounties`, levers in `Config.Tuning`. Validation
+  (fails the export): each Haul day < Easy clear reward; Haul week total ≤ 2× Easy clear;
+  the daily slots' Amber sum < Easy clear; each weekly < Chaos clear and their sum ≤ Chaos
+  clear; Event and Target valid; ids unique; enough entries per slot. **Model check**
+  (`value.py`): every daily is doable in one solo Easy match reaching round 25 (species
+  counts from the Rounds sheet), every weekly in ≤ 5 such matches or clears.
+- **Accept:** export clean; new Config blocks only (diff); `audit.py --strict` 0 (allowlist
+  the Text column as display text); T19's Amber table now shows the with-bounties pace.
+
+### T26. `Shared/Bounties` — pure rules + spec
+- **Files:** new `src/shared/Bounties.luau`, `tools/test/bounties.spec.luau`.
+- **Do:** UTC day index (`floor((t - resetHour*3600)/86400)`) and Monday-based week index;
+  `fresh(now, rng)`; `refresh(state, now, rng)` (new day: roll dailies, reset daily swaps;
+  new week: roll weeklies; completed-but-unclaimed bounties are paid out on reset, returned
+  as an amount); Haul: `canClaimHaul`, `claimHaul` (once per UTC day; advances day 1→7 then
+  loops; missed days pause it unless the lever says reset); `roll` (one per slot, no
+  duplicates, never the one just swapped out); `swap` (unfinished and unclaimed only, within
+  the swap allowance); `progress(state, event, target, amount, context)`; `claim`;
+  `sanitize(raw)` (nil, garbage, unknown ids, wrong types → a valid state; unknown ids
+  dropped and refilled).
+- **Accept:** specs cover: old profile without the field; garbage field; day boundary at
+  00:00 UTC; Sunday 23:59 → Monday 00:00 rolls weeklies; double claim refused; swap on a
+  done bounty refused; swap limit; unclaimed payout on reset; Haul loop after day 7; missed
+  day pauses. All existing specs still green.
+
+### T27. Progression: save, load, claim and swap
+- **Files:** `src/server/Progression.luau` (sole owner of the saved profile), the Progress
+  remote.
+- **Do:** profile field `rewards` (sanitised on load by `Bounties.sanitize`; old saves load
+  cleanly); refresh on load, on every claim/swap and at match end; actions `claimHaul`,
+  `claimBounty(id)`, `swapBounty(id)` validated server-side, Amber added by the server
+  only, save right after a claim; publish state for the client (attribute JSON or a
+  RemoteFunction `getRewards`). Claims and swaps only outside a match (Lobby), like unlocks.
+  Studio J sessions keep not saving.
+- **Accept:** check.sh, specs green; a spec or harness test of the claim path using a fake
+  store if the existing harness allows; old-save sanitize case in the spec.
+
+### T28. Bounty progress from match events
+- **Files:** `Scoreboard`/`Main` hook (onPop gains the species key: Towers, Hero, Hazards
+  call sites), `Shop` (build, upgrade, repair), `Hero` (ability used), `Airdrops` (chest
+  collected), `Progression.endMatch` (clear + difficulty, round reached), `Waves` (round
+  reached).
+- **Do:** one `Progression.bountyEvent(player, event, target, amount)`; counts only while
+  State is Building/Playing; **boss pops (Triceratops, T-Rex) count for every hunter in the
+  match**, other pops for the hunter credited with the pop; shrinks don't count, only
+  pops. A private in-match toast "Bounty done: …" (fades like the hit notice, no stacking).
+- **Accept:** `audit.py` (or a spec) proves every Event kind in the Bounties sheet has a
+  call site; specs green; no change to cash or Amber outside claims.
+
+### T29. Hunt Board screen on the home screen — 🦖 (wording, look)
+- **Files:** `src/client/Home.client.luau` (or a new `HuntBoard.client.luau`),
+  `src/shared/PanelRules.luau` + spec.
+- **Do:** a Hunt Board button on the home screen with a dot when something is claimable;
+  key **G** toggles it. Sections: Daily Haul (7 tiles, today highlighted, Claim), Daily
+  Bounties (3 rows: text, progress bar, Amber, Claim or Swap), Weekly Bounties (3 rows),
+  "New bounties in 5h 12m" (UTC). Buttons disable while a request is in flight.
+- **No-trap checklist (DIRECTION):** fits any window size with the X always visible (rows
+  scroll inside a box capped like the existing panels; the panel narrows on small
+  screens); frees the mouse while open; closes with G and with the X; PanelRules mode
+  `huntBoard` is allowed only in Lobby and closes on every state change (Play pressed,
+  match start); Play stays reachable for every player while it's open; every player can
+  open it, not just the host.
+- **Accept:** panelrules spec covers `huntBoard`; check.sh green; screenshots not possible:
+  "statically checked, not playtested".
+
+## Part F — Wrap-up
+
+### T30. Docs and round-2 recap
+- `VISION.md` (Amber: Daily Haul and Bounties, the "log-ins never beat playing" bars),
+  `ARCHITECTURE.md` (layout: `Shared/Bounties`; §4: Progression owns the rewards state),
+  `CLAUDE.md` status, `UPGRADES.md` if T20/T23 changed what a tier does.
+- The Director appends the round-2 recap to `RECAP.md`: what changed (with model before/
+  after), what to playtest first, and the ask-Jovan list (DECISIONS #58, #60, #61, #62, #64,
+  the 🦖 names).
+
+**Stop here. Phase 7 is out of scope.**
+
+---
+
+# Round 1 (history) — Step 2 + wide polish (Director, 2026-09-30)
 
 Scope (Jovan, 2026-09-30): Step 2 "the dinos fight back" (`VISION.md`), plus a wide polish
 pass that proves Amber pays out correctly and that every tower and every upgrade path does
