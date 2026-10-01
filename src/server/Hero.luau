@@ -472,10 +472,11 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 	if stats.jawLockSeconds > 0 then
 		for _, other in live do
 			if other == enemy or (stats.jawLockSpread > 0 and (other.part.Position - position).Magnitude <= stats.jawLockSpread) then
+				local spread = other ~= enemy -- Lullaby Rounds: the strap flashes
 				if other.def.boss then
-					Enemies.disarm(other, stats.jawLockSeconds * Config.Tuning.BossJawLockX, true)
+					Enemies.disarm(other, stats.jawLockSeconds * Config.Tuning.BossJawLockX, true, spread)
 				else
-					Enemies.disarm(other, stats.jawLockSeconds)
+					Enemies.disarm(other, stats.jawLockSeconds, false, spread)
 				end
 			end
 		end

@@ -66,6 +66,7 @@ export type Enemy = {
 	sedatedShown: boolean, -- what the model currently shows
 	asleepShown: boolean,
 	muzzledShown: boolean,
+	muzzleFlash: boolean, -- flash the strap once it's on (Lullaby Rounds spread)
 	fire: Fire?, -- burning: one damage tick when it runs out (Server/Hazards)
 }
 
@@ -191,6 +192,7 @@ local function spawnNow(item: Pending)
 		sedatedShown = false,
 		asleepShown = false,
 		muzzledShown = false,
+		muzzleFlash = false,
 		fire = nil,
 	}
 	dress(enemy)
@@ -310,12 +312,14 @@ function Enemies.isStunned(enemy: Enemy): boolean
 end
 
 -- A disarmed dino keeps walking but can't bite or shoot (Server/DinoAttacks
--- checks). Bosses shrug it off unless `affectsBosses`.
-function Enemies.disarm(enemy: Enemy, seconds: number, affectsBosses: boolean?)
+-- checks). Bosses shrug it off unless `affectsBosses`. `flash` flashes the
+-- muzzle strap (Lullaby Rounds spreading the lock).
+function Enemies.disarm(enemy: Enemy, seconds: number, affectsBosses: boolean?, flash: boolean?)
 	if not enemy.alive or seconds <= 0 or (enemy.def.boss and not affectsBosses) then
 		return
 	end
 	enemy.disarmedUntil = math.max(enemy.disarmedUntil, os.clock() + seconds)
+	enemy.muzzleFlash = enemy.muzzleFlash or flash == true
 end
 
 function Enemies.isDisarmed(enemy: Enemy): boolean
@@ -439,6 +443,10 @@ function Enemies.step(dt: number)
 		if muzzled ~= enemy.muzzledShown then
 			enemy.muzzledShown = muzzled
 			DinoLook.setMuzzled(enemy.model, muzzled)
+		end
+		if enemy.muzzleFlash then
+			enemy.muzzleFlash = false
+			DinoLook.flashMuzzle(enemy.model)
 		end
 		if enemy.distance >= path.length then
 			remove(enemy)

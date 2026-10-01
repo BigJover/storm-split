@@ -252,7 +252,7 @@ test("Field Medic Triage: Clean Bandages x1.25, Belt Pouch x0.8 cooldown, Patch 
 	end
 end)
 
-test("Field Medic Lever Action: Oiled Lever x1.2, Loading Gate mag x1.5 reload x0.75, Rapid Cycle 2-burst, Smooth Action recoil x0.5, Hip Fire auto x1.6", function()
+test("Field Medic Lever Action: Oiled Lever x1.2, Loading Gate mag x1.5 reload x0.75, Rapid Cycle 2-burst, Smooth Action recoil x0.5, Runaway Lever auto x1.6", function()
 	eq(Config.Heroes.MEDIC.paths[2].id, "Lever Action")
 	local b = base("MEDIC")
 	near(at("MEDIC", 2, 1, "Oiled Lever").rate, b.rate * 1.2, "rate x1.2")
@@ -267,9 +267,9 @@ test("Field Medic Lever Action: Oiled Lever x1.2, Loading Gate mag x1.5 reload x
 	near(smooth.recoilPerShot, b.recoilPerShot * 0.5, "recoil x0.5")
 	near(smooth.recoilMax, b.recoilMax * 0.5, "recoil max x0.5")
 	eq(smooth.fireMode, "burst", "still bursts")
-	local hip = at("MEDIC", 2, 5, "Hip Fire")
-	eq(hip.fireMode, "auto", "Hip Fire full auto")
-	near(hip.rate, b.rate * 1.6, "Hip Fire rate x1.6")
+	local hip = at("MEDIC", 2, 5, "Runaway Lever")
+	eq(hip.fireMode, "auto", "Runaway Lever full auto")
+	near(hip.rate, b.rate * 1.6, "Runaway Lever rate x1.6")
 	near(hip.recoilPerShot, b.recoilPerShot * 0.5, "keeps Smooth Action")
 	eq(hip.magazine, 15, "keeps Loading Gate")
 	for tier = 1, 5 do

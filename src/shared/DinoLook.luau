@@ -283,15 +283,20 @@ function DinoLook.setSedated(model: Model, on: boolean)
 	dart.Parent = model
 end
 
--- Jaw Lock (Field Medic): a dark strap across the snout, a muzzle. On the
--- T-Rex's jutting Jaw if it has one, otherwise round the Head.
-local MUZZLE_COLOR = Color3.fromRGB(45, 35, 30)
+-- Jaw Lock (Field Medic): a tan leather strap across the snout, a muzzle,
+-- with a small steel buckle on top (DECISIONS #50: it must show on the dark
+-- T-Rex jaw). On the T-Rex's jutting Jaw if it has one, otherwise round the Head.
+DinoLook.MUZZLE_COLOR = Color3.fromRGB(165, 115, 65)
+local MUZZLE_FLASH_COLOR = Color3.fromRGB(235, 200, 150)
+local MUZZLE_FLASH = 0.3 -- seconds
+local BUCKLE_COLOR = Color3.fromRGB(150, 155, 160)
+local BUCKLE_SIZE = Vector3.new(0.35, 0.1, 0.35)
 function DinoLook.setMuzzled(model: Model, on: boolean)
 	local strap = model:FindFirstChild("Muzzle")
 	local snout = model:FindFirstChild("Jaw") or model:FindFirstChild("Head")
 	if not on or not snout or not snout:IsA("BasePart") then
 		if strap then
-			strap:Destroy()
+			strap:Destroy() -- the buckle is its child
 		end
 		return
 	end
@@ -304,17 +309,47 @@ function DinoLook.setMuzzled(model: Model, on: boolean)
 	-- A band a little wider and taller than the snout, a quarter of its length,
 	-- near its tip.
 	strap.Size = Vector3.new(size.X * 1.08, size.Y * 1.08, math.max(0.15, size.Z * 0.25))
-	strap.Color = MUZZLE_COLOR
+	strap.Color = DinoLook.MUZZLE_COLOR
 	strap.Anchored = false
 	strap.Massless = true
 	cosmetic(strap)
-	strap.Material = Enum.Material.Fabric
+	strap.Material = Enum.Material.Leather
 	strap.CFrame = snout.CFrame * CFrame.new(0, 0, -size.Z * 0.25)
 	local weld = Instance.new("WeldConstraint")
 	weld.Part0 = snout
 	weld.Part1 = strap
 	weld.Parent = strap
 	strap.Parent = model
+
+	local buckle = Instance.new("Part")
+	buckle.Name = "Buckle"
+	buckle.Size = BUCKLE_SIZE
+	buckle.Color = BUCKLE_COLOR
+	buckle.Anchored = false
+	buckle.Massless = true
+	cosmetic(buckle)
+	buckle.Material = Enum.Material.Metal
+	buckle.CFrame = strap.CFrame * CFrame.new(0, strap.Size.Y / 2 + BUCKLE_SIZE.Y / 2, 0)
+	local buckleWeld = Instance.new("WeldConstraint")
+	buckleWeld.Part0 = strap
+	buckleWeld.Part1 = buckle
+	buckleWeld.Parent = buckle
+	buckle.Parent = strap
+end
+
+-- Lullaby Rounds spread the lock to this dino: its strap flashes lighter for
+-- a moment (no "zzz": that means knocked out, DECISIONS #50).
+function DinoLook.flashMuzzle(model: Model)
+	local strap = model:FindFirstChild("Muzzle")
+	if not strap or not strap:IsA("BasePart") or strap:GetAttribute("Flashing") then
+		return
+	end
+	strap:SetAttribute("Flashing", true)
+	strap.Color = MUZZLE_FLASH_COLOR
+	task.delay(MUZZLE_FLASH, function()
+		strap.Color = DinoLook.MUZZLE_COLOR
+		strap:SetAttribute("Flashing", nil)
+	end)
 end
 
 -- Knocked out by a Tranq Station pulse: "zzz" floats above the dino.

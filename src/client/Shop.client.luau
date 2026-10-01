@@ -607,7 +607,7 @@ local function describeHeroStep(path, current: number): string
 		table.insert(parts, `everything healed takes {nextStep.guardPercent}% less damage for {nextStep.guardSeconds}s`)
 	end
 	if newly("slowPercent", 0) or newly("slowSeconds", 0) then
-		table.insert(parts, `hits slow dinos {nextStep.slowPercent}% for {nextStep.slowSeconds}s`)
+		table.insert(parts, `dinos you hit are slowed {nextStep.slowPercent}% for {nextStep.slowSeconds}s (not bosses)`)
 	end
 	local lock = newly("jawLockSeconds", 0)
 	if lock then

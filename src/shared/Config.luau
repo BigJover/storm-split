@@ -8737,7 +8737,7 @@ return table.freeze({
 							jawLockSpread = 0,
 						},
 						{
-							name = "Hip Fire",
+							name = "Runaway Lever",
 							cost = 3200,
 							rateMult = 1.6,
 							magazineMult = 1.5,

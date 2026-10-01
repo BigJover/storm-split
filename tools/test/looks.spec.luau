@@ -273,7 +273,7 @@ test("T12b: dust cloud, tip direction varies by spot, one low-HP orange, hit fla
 	eq(down:FindFirstChild("Hide").Color, slate, "no flash on a trampled tower")
 end)
 
-test("Jaw Lock muzzle: one dark strap on the snout of every species, removed after", function()
+test("Jaw Lock muzzle: one tan strap with a buckle on the snout of every species, removed after", function()
 	for _, key in Config.EnemyOrder do
 		local model = DinoLook.build(key, 0.75, CFrame.new(0, 5, 0))
 		local snout = model:FindFirstChild("Jaw") or model:FindFirstChild("Head")
@@ -289,7 +289,12 @@ test("Jaw Lock muzzle: one dark strap on the snout of every species, removed aft
 		eq(straps, 1, `{key} one strap`)
 		local strap = model:FindFirstChild("Muzzle") :: BasePart
 		ok((strap.CFrame.Position - (snout :: BasePart).CFrame.Position).Magnitude < (snout :: BasePart).Size.Magnitude, `{key} strap sits on the snout`)
-		ok(strap.Color.R < 0.3 and strap.Color.G < 0.3 and strap.Color.B < 0.3, `{key} strap is dark`)
+		eq(strap.Color, DinoLook.MUZZLE_COLOR, `{key} strap is tan leather`)
+		local buckle = strap:FindFirstChild("Buckle") :: BasePart
+		ok(buckle ~= nil, `{key} buckle`)
+		eq(buckle.Material, Enum.Material.Metal, `{key} buckle steel`)
+		near(buckle.Size.X, 0.35, `{key} buckle 0.35 studs`, 1e-3)
+		ok(buckle.CFrame.Position.Y > strap.CFrame.Position.Y, `{key} buckle on top`)
 		DinoLook.setMuzzled(model, false)
 		ok(model:FindFirstChild("Muzzle") == nil, `{key} strap removed`)
 	end
@@ -410,4 +415,43 @@ test("a med kit is only taken by a hurt, living hunter (DECISIONS #45)", functio
 	eq(Combat.takesMedKit(100, 100), false, "full HP leaves it")
 	eq(Combat.takesMedKit(99.5, 100), true, "missing HP takes it")
 	eq(Combat.takesMedKit(0, 100), false, "dead hunters don't")
+end)
+
+test("Jaw Lock strap (165,115,65) stands apart from every dino's head and jaw (R8-1)", function()
+	eq(rgb(DinoLook.MUZZLE_COLOR), "165,115,65", "strap colour")
+	local function distance(a: Color3, b: Color3): number
+		return math.sqrt((a.R - b.R) ^ 2 + (a.G - b.G) ^ 2 + (a.B - b.B) ^ 2) * 255
+	end
+	local closest, closestKey = math.huge, ""
+	for _, key in Config.EnemyOrder do
+		local model = DinoLook.build(key, 1, CFrame.new())
+		for _, name in { "Head", "Jaw" } do
+			local part = model:FindFirstChild(name) :: BasePart?
+			if part then
+				local d = distance(part.Color, DinoLook.MUZZLE_COLOR)
+				if d < closest then
+					closest, closestKey = d, `{key} {name}`
+				end
+			end
+		end
+		if key == "BARGE" then
+			ok(distance((model:FindFirstChild("Jaw") :: BasePart).Color, DinoLook.MUZZLE_COLOR) > 100, "clear on the dark T-Rex jaw")
+		end
+	end
+	-- The Pachycephalosaurus head (150,110,80) is the nearest, about 22 apart; the
+	-- steel buckle and the Leather material carry it there. Any closer fails.
+	ok(closest >= 20, `strap too close to {closestKey} ({closest})`)
+end)
+
+test("Lullaby Rounds strap flash: lighter for 0.3s, then back to tan (R8-4, no zzz)", function()
+	local model = DinoLook.build("BARGE", 1, CFrame.new(0, 5, 0))
+	DinoLook.flashMuzzle(model) -- no strap yet: nothing happens
+	DinoLook.setMuzzled(model, true)
+	local strap = model:FindFirstChild("Muzzle") :: BasePart
+	DinoLook.flashMuzzle(model)
+	ok(strap.Color ~= DinoLook.MUZZLE_COLOR, "flashes")
+	ok(strap.Color.R + strap.Color.G + strap.Color.B > DinoLook.MUZZLE_COLOR.R + DinoLook.MUZZLE_COLOR.G + DinoLook.MUZZLE_COLOR.B, "lighter")
+	ok(model.PrimaryPart:FindFirstChild("Asleep") == nil, "no zzz")
+	task.wait(0.4)
+	eq(strap.Color, DinoLook.MUZZLE_COLOR, "restored")
 end)
