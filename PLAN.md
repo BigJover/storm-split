@@ -308,9 +308,17 @@ the spreadsheet, never for code.
   stud off the lane, at the midpoint between lanes (15 studs), and at an inside corner, on Easy.
   It assumes a dino at full size for its first lane, halving after. It prints the per-round
   totals and the rounds where a mid-gap tower of each type would be KO'd.
-- **Target:** on Easy, a mid-gap tower is never knocked out by bites, and ranged damage
-  per round stays below ~50% of a T0 tower's max HP until round 30. Tune the Enemies attack
-  cells (not code) until it does, and log the final numbers as DECISIONS rows.
+- **Target (DECISIONS #42):** bites never reach a mid-gap tower (already met). Add a
+  **defended** column to the report = the worst case × 0.5 (a named constant in threat.py with a
+  comment citing #42). Rounds 11–30, mid-gap, defended ranged damage per round < 50% of **that
+  tower's own** T0 Max HP for the Hunting Blind (50), Mortar Pit (75), Tranq Station (60) and
+  Supply Camp (100). The Longshot Perch is checked at a back-line spot (≥ 25 studs from every
+  lane, e.g. (−105, 0)) and must take 0. Hug and corner spots are reported, with no target.
+- **Spreadsheet (Enemies, assert old values first):** Skull Toss damage 5→3, every 5→8;
+  Spike Flick 6→4, 5→8; Gravel Spray 8→5, 4→6.5; Stone Drop 8→5, 4→6.5. Change nothing else.
+- **If it still misses,** in this order, re-running after each step: (1) Gravel Spray reach
+  25→20; (2) +1s on the cooldown of whichever species dominates the failing rounds. Don't
+  touch bites, bosses, Max HP or the targets. Log the final numbers in a DECISIONS row.
 - **Accept:** the report is in the commit message; the Config diff is accounted for.
 
 ### T13b. Projectile readability (visual only) — 🦖
