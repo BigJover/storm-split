@@ -312,3 +312,48 @@ Skybreaker (M5/M6) and "Pops".
 | R8-2 | nice | The panel line "hits slow dinos 20% for 1s" can be read as "it hits *slow* dinos". It also doesn't say that bosses ignore the slow (HEROES.md does). | `src/client/Shop.client.luau` (Field Medic block): change it to `` `dinos you hit are slowed {p}% for {s}s (not bosses)` ``. |
 | R8-3 | nice | **Hip Fire** = full auto on a lever-action is the one modern-shooter term in the tree, and it's about stance, not the lever. | `Hero Upgrades` Field Medic / Lever Action / T5 → **Lever Storm** (or **Fanned Lever**), plus the HEROES.md table and line 115. |
 | R8-4 | nice | **Lullaby Rounds** suggests sleep (the Tranq "zzz"), but its effect is the muzzle strap spreading. Players may look for a "zzz". | Keep the name, but when the lock spreads, give the strap a brief (0.3s) lighter flash or a tiny "zzz" billboard on the spread targets (`DinoLook.setMuzzled`, visual only), so the name and the look agree. |
+
+---
+
+## Round 9 — Hunt Board (T25–T29, DECISIONS #63–#70)
+
+**1. Names: verdict**
+
+| Name | Verdict | Note |
+|---|---|---|
+| **Hunt Board** | keep | It's the camp notice board where hunters pick up work. It doesn't collide with Trophies (#27), Base Camp or Supply Camp. |
+| **Daily Haul** | keep | A hunter's haul is what they bring home. It fits a log-in reward and says "daily" plainly. |
+| **Big Haul** (day 7) | keep | Clear, and it echoes Daily Haul. Don't use "Jackpot" or "Mega" (casino or brainrot tone). |
+| **Bounties** | keep | It's the standard hunter word and young players know it. Label the sections **Daily Bounties** and **Weekly Bounties**. Don't show the easy/medium/hard slot names; the Amber value already says it. Don't rename the hard slot "Big Game" (it collides with the Big Game Hunter hero). |
+| **Swap** | keep | Plain words beat theme for a button. Button text: `Swap (1 left)`. |
+| **G key** | keep | It's free (#70). The mnemonic is weak, so print `[G]` on the home button and in its tooltip. |
+| Toast "Bounty done: …" | nice-to-have | → **"Bounty bagged: Raptor Cull (+15 Amber)"**. "Bagged" is the hunter word for a finished kill and it's still short. |
+| Reset payout notice | nice | → "Unclaimed bounties paid: +35 Amber", shown once as a line on the board, not as a pop-up. |
+
+**2. Bounty titles** (`{n}` = the Builder's count; the title goes before the Text column's line)
+
+| Title | Pool | Text |
+|---|---|---|
+| Compy Sweep | daily | Pop {n} Compies |
+| Raptor Cull | daily | Pop {n} Raptors |
+| Headbutt Hunt | daily | Pop {n} Pachycephalosaurs |
+| Shell Cracker | daily | Pop {n} Ankylosaurs |
+| Run Them Down | daily | Pop {n} Gallimimus |
+| Clear Skies | daily | Pop {n} Pteranodons (Builder: confirm a free tower or Tracker can hit air before it goes in the pool, #66) |
+| Busy Day / Stampede | daily / weekly | Pop {n} dinos of any kind |
+| Deep Trail | daily / weekly | Reach round {n} (weekly: reach round 31 {n} times). Avoid "Last Stand", which is the Field Hospital T5. |
+| Gear Check | daily / weekly | Use your ability {n} times |
+| Pitch Camp | daily | Build {n} towers |
+| Sharpen Up | daily | Upgrade towers {n} times |
+| Patch Job | daily / weekly | Repair {n} trampled towers |
+| Scavenger | daily | Collect {n} supply chests |
+| Clean Sweep / Rough Country / Badlands | daily (hard) / weekly | Clear any track (weekly: {n} times) / clear on Normal or harder / clear on Hard or harder |
+| Horn Breaker | weekly | Pop {n} Triceratops (every hunter in the match gets credit) |
+| Tyrant's End | weekly | Pop a T-Rex (every hunter in the match gets credit) |
+
+**3. Look: a camp notice board, uncluttered**
+- **Frame:** one dark wood board (warm brown 70,50,35, a thin lighter rim) on the existing dark `BG`. Header: "HUNT BOARD" in the amber title colour (245,175,60) with the **X in the header bar, outside the scrolling area**. Under it, one dim line: `New bounties in 5h 12m`.
+- **Bounty cards:** pinned paper notes (cream 235,225,200, dark text, one small tack at the top). Each card has a title, one text line, a thin progress bar (`12 / 40`) and an Amber chip on the right (`+15`). No species art beyond a small colour dot in the dino's `DinoLook` colour.
+- **Claim states:** *in progress*: no Claim button, just the bar and a small `Swap (1 left)` text button (hidden once the bounty is done, claimed or out of swaps). *Done*: a solid amber **Claim** button (no pulsing or shaking). *In flight*: grey `…`, disabled. *Claimed*: the card dims and gets a tilted red-ink **BAGGED** stamp, with no buttons.
+- **Daily Haul strip:** 7 small tiles in a row. Claimed days get a dino-footprint stamp; today gets an amber outline and **Claim**; future days are dim. Day 7 is about 1.5× wide, labelled **Big Haul** with an amber-chunk icon. One dim line underneath: "Missed days don't reset your Haul." On narrow windows the strip wraps to 4+3 instead of overflowing.
+- **No-trap (DIRECTION):** only the bounty list scrolls (capped like the other panels); the X, the header and the Haul strip never scroll away. Don't add a full-screen dimmer that covers Play. A claim gives an inline `+15 Amber` float on the card, never a reward pop-up or confetti modal. The home button's claimable dot is a small amber dot, not a bouncing badge.
