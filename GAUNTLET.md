@@ -29,6 +29,18 @@ and write the recap.
 
 **Status (2026-10-01):** scope done (T1–T16c). The recap is `RECAP.md`.
 
+## Round 2 scope (Jovan, 2026-10-01)
+
+1. **Balance pass** across the whole game — towers, upgrade paths, heroes, levels, dino attacks,
+   difficulty, cash and Amber pacing — using the tools (threat model, Balance Check sheet,
+   specs). Jovan hasn't sent playtest numbers yet; prefer changes the models can justify, and
+   flag anything that needs a playtest to settle.
+2. **New feature: daily log-in rewards plus daily and weekly challenges**, to boost player
+   retention. Rewards in Amber (and anything else that fits), balanced against the clear
+   rewards so logging in never beats playing.
+
+Stop before phase 7 again and write a round-2 recap (append to `RECAP.md`).
+
 ## Rules
 
 - **Verify every step:** `tools/check.sh` clean; `python3 tools/export_constants.py` clean;

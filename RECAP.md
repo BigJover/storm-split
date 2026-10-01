@@ -57,8 +57,7 @@ numbers are seeds in the spreadsheet. The full reasoning is in `DECISIONS.md` (#
 
   **Done (Jovan, 2026-10-01):** Skybreaker → Extinction Round, Crack Armor → Find the Gap,
   Quick Mark → Quick Dart, Storm of Steel → Meteor Shower. The rest are still open.
-- **Tier-5 glow (#33):** keep the whole tower going Neon (it hides the new silhouettes), or a
-  single amber accent?
+- **Tier-5 glow (#33):** **Done (Jovan):** stays full Neon (#53).
 - **Linebreaker "×2 damage" (#17):** ×2 over tier 3 (as it is, 6.41) or over tier 4 (8.84)?
 - **Dragon's Breath ground patch (#37):** it's now 3 studs wide instead of 1. The ignite you
   tuned is unchanged.
