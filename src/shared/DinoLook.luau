@@ -332,8 +332,10 @@ end
 	  capsule  Bone Spit (T-Rex): a bone-white capsule along its flight
 
 	Thrown earth is earth-coloured; only a dino's own spike or bone is bone-white.
-	Every attack shares one orange warning ring at the landing point that grows
-	more solid as the shot comes in.
+	Every attack shares one red-orange warning ring at the landing point, with a
+	bright thin edge, that grows more solid as the shot comes in (DECISIONS #41:
+	red-orange so it never reads as a friendly range disc). The thrower's head
+	flashes at launch.
 ]]
 
 export type ProjectileStyle = "lob" | "spike" | "gravel" | "drop" | "roll" | "capsule"
@@ -364,7 +366,11 @@ DinoLook.PROJECTILE_DUST = table.freeze({
 -- Rock-type shots leave a few chips where they land.
 DinoLook.PROJECTILE_CHIPS = table.freeze({ lob = 2, drop = 2, roll = 3 } :: { [string]: number })
 
-DinoLook.RING_COLOR = Color3.fromRGB(255, 150, 40)
+DinoLook.RING_COLOR = Color3.fromRGB(255, 70, 40) -- red-orange: "incoming"
+DinoLook.RING_EDGE_COLOR = Color3.fromRGB(255, 205, 150)
+local RING_EDGE_SEGMENTS = 12
+local HEAD_FLASH_COLOR = Color3.fromRGB(255, 235, 200)
+local HEAD_FLASH_TIME = 0.2 -- seconds
 DinoLook.RING_FADE = table.freeze({ 0.75, 0.35 }) -- transparency at launch, just before impact
 
 local function shotPart(model: Model, name: string, size: Vector3, color: Color3, material: Enum.Material, shape: Enum.PartType?): Part
@@ -395,9 +401,10 @@ function DinoLook.buildProjectile(key: string, radius: number, scale: number): M
 	if style == "spike" then
 		shot = shotPart(model, "Shot", Vector3.new(0.3, 0.3, 1.4) * s, BONE, Enum.Material.SmoothPlastic)
 	elseif style == "gravel" then
-		shot = shotPart(model, "Shot", Vector3.one * 0.4 * s, SAND, Enum.Material.Sand, Enum.PartType.Ball)
-		for i, offset in { Vector3.new(0.45, 0.15, 0.2), Vector3.new(-0.35, -0.1, 0.4) } do
-			local pebble = shotPart(model, `Pebble{i}`, Vector3.one * 0.35 * s, SAND, Enum.Material.Sand, Enum.PartType.Ball)
+		-- three fist-sized pebbles; the cluster stays well inside the 3-stud cap
+		shot = shotPart(model, "Shot", Vector3.one * 0.75 * s, SAND, Enum.Material.Sand, Enum.PartType.Ball)
+		for i, offset in { Vector3.new(0.75, 0.2, 0.3), Vector3.new(-0.6, -0.15, 0.55) } do
+			local pebble = shotPart(model, `Pebble{i}`, Vector3.one * 0.65 * s, SAND, Enum.Material.Sand, Enum.PartType.Ball)
 			pebble.CFrame = CFrame.new(offset * s)
 		end
 	elseif style == "drop" then
@@ -465,7 +472,52 @@ function DinoLook.buildWarningRing(point: Vector3, radius: number): Part
 	cosmetic(ring)
 	ring.Material = Enum.Material.Neon
 	ring.Transparency = DinoLook.RING_FADE[1]
+	-- A bright thin edge (static blocks around the rim, children of the disc),
+	-- so overlapping rings stay distinct.
+	local centre = point + Vector3.new(0, 0.12, 0)
+	local chord = 2 * radius * math.sin(math.pi / RING_EDGE_SEGMENTS)
+	for i = 1, RING_EDGE_SEGMENTS do
+		local angle = (i - 0.5) / RING_EDGE_SEGMENTS * 2 * math.pi
+		local edge = Instance.new("Part")
+		edge.Name = `Edge{i}`
+		edge.Size = Vector3.new(0.25, 0.12, chord + 0.1)
+		-- on the rim, lying along the tangent
+		edge.CFrame = CFrame.new(centre) * CFrame.Angles(0, -angle, 0) * CFrame.new(radius, 0, 0)
+		edge.Color = DinoLook.RING_EDGE_COLOR
+		edge.Anchored = true
+		cosmetic(edge)
+		edge.Material = Enum.Material.Neon
+		edge.Transparency = 0.15
+		edge.Parent = ring
+	end
 	return ring
+end
+
+-- The thrower's head flashes at launch, a cue to dodge. Restored afterwards.
+function DinoLook.endHeadFlash(model: Model)
+	local head = model:FindFirstChild("Head")
+	if not head or not head:IsA("BasePart") then
+		return
+	end
+	local color = head:GetAttribute("FlashColor")
+	if typeof(color) == "Color3" then
+		head.Color = color
+		head.Material = Enum.Material.SmoothPlastic
+	end
+	head:SetAttribute("FlashColor", nil)
+end
+
+function DinoLook.flashHead(model: Model)
+	local head = model:FindFirstChild("Head")
+	if not head or not head:IsA("BasePart") or head:GetAttribute("FlashColor") ~= nil then
+		return
+	end
+	head:SetAttribute("FlashColor", head.Color)
+	head.Color = HEAD_FLASH_COLOR
+	head.Material = Enum.Material.Neon
+	task.delay(HEAD_FLASH_TIME, function()
+		DinoLook.endHeadFlash(model)
+	end)
 end
 
 -- The ring grows more solid as the shot comes in.

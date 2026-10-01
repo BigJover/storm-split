@@ -184,6 +184,7 @@ local function throw(enemy: Enemies.Enemy, target: Combat.Target)
 		model = model,
 		ring = ring,
 	}
+	DinoLook.flashHead(enemy.model) -- telegraphs the throw (visual only)
 	model:PivotTo(DinoLook.projectilePose(style, from, to, 0, 0, model:GetAttribute("Height") or 1))
 	model.Parent = folder
 	ring.Parent = folder

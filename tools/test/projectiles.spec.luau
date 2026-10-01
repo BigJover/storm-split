@@ -112,10 +112,10 @@ test("projectile paths: start at the thrower, end on the ring; lob arcs, drop fa
 	end
 end)
 
-test("warning ring: impact-radius wide, orange, fades in toward impact", function()
+test("warning ring: impact-radius wide, red-orange, fades in toward impact", function()
 	local ring = DinoLook.buildWarningRing(Vector3.new(5, 0.1, 5), 8)
 	eq(ring.Size.Y, 16, "diameter = 2 x impact radius")
-	eq(ring.Color, Color3.fromRGB(255, 150, 40), "one orange for every attack")
+	eq(ring.Color, Color3.fromRGB(255, 70, 40), "one red-orange for every attack")
 	eq(ring.Material, Enum.Material.Neon, "Neon")
 	near(ring.Transparency, 0.75, "faint at launch", 1e-3)
 	near(DinoLook.ringTransparency(1), 0.35, "solid just before impact", 1e-9)
@@ -139,4 +139,47 @@ test("round 40 projectile estimate", function()
 	end
 	print(`       round 40 (Easy, 1 player): {shooters} ranged dinos spawned; if all were alive and in reach at once: {string.format("%.1f", throwsPerSecond)} throws/s x <= {string.format("%.2f", flight)}s flight = {string.format("%.1f", throwsPerSecond * flight)} in the air vs cap {Config.Tuning.MaxProjectiles}`)
 	ok(true)
+end)
+
+test("T13b: ring unlike any tower colour, bright edge, bigger pebbles, head flash", function()
+	local TowerLook = require(src.shared.TowerLook)
+	local function distance(a: Color3, b: Color3): number
+		return math.sqrt((a.R - b.R) ^ 2 + (a.G - b.G) ^ 2 + (a.B - b.B) ^ 2) * 255
+	end
+	for key, color in TowerLook.COLORS do
+		ok(distance(DinoLook.RING_COLOR, color) > 60, `ring colour clearly differs from {key}'s`)
+	end
+	local ring = DinoLook.buildWarningRing(Vector3.new(0, 0.1, 0), 5)
+	local edges = 0
+	for _, child in ring:GetChildren() do
+		if child:IsA("BasePart") then
+			edges += 1
+			eq(child.Material, Enum.Material.Neon, `{child.Name} bright`)
+			near(Vector2.new(child.CFrame.Position.X, child.CFrame.Position.Z).Magnitude, 5, `{child.Name} on the rim`, 1e-3)
+			eq(child.CanCollide, false, `{child.Name} no collision`)
+		end
+	end
+	ok(edges >= 8, "a thin edge all round")
+	local gravel = DinoLook.buildProjectile("STORM", 3, 1)
+	local lo, hi = Vector3.one * math.huge, -Vector3.one * math.huge
+	for _, part in gravel:GetChildren() do
+		if part:IsA("BasePart") then
+			ok(part.Size.X >= 0.6, `{part.Name} is a bigger pebble`)
+			local p, h = part.CFrame.Position, part.Size / 2
+			lo = Vector3.new(math.min(lo.X, p.X - h.X), math.min(lo.Y, p.Y - h.Y), math.min(lo.Z, p.Z - h.Z))
+			hi = Vector3.new(math.max(hi.X, p.X + h.X), math.max(hi.Y, p.Y + h.Y), math.max(hi.Z, p.Z + h.Z))
+		end
+	end
+	local extent = hi - lo
+	ok(math.max(extent.X, extent.Y, extent.Z) <= 3, "the cluster stays within 3 studs")
+	for key in RANGED do
+		local dino = DinoLook.build(key, 1, CFrame.new())
+		local head = dino:FindFirstChild("Head")
+		local color, material = head.Color, head.Material
+		DinoLook.flashHead(dino)
+		ok(head.Color ~= color and head.Material == Enum.Material.Neon, `{key} head flashes`)
+		DinoLook.endHeadFlash(dino)
+		eq(head.Color, color, `{key} head colour restored`)
+		eq(head.Material, material, `{key} head material restored`)
+	end
 end)
