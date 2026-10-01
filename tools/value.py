@@ -39,6 +39,10 @@ own value line instead. Economy payback is in rounds of Easy income.
 Usage:
     python3 tools/value.py           the value report (<= ~120 lines)
     python3 tools/value.py --full    every band's cost per eDPS, every tower
+    python3 tools/value.py --pacing  the pacing model (PLAN T19): the Balance Check's
+                                     affordability per difficulty x 1/4/10 hunters (asserts
+                                     it reproduces the sheet's Easy-solo column exactly),
+                                     trampled-tower repair price vs income, Amber pace
 """
 
 import contextlib
@@ -469,10 +473,179 @@ def value_report(data, full=False):
         print(f"  - {f}")
 
 
+# ---------------------------------------------------------------- pacing (PLAN T19)
+
+PLAYER_COUNTS = (1, 4, 10)
+AFFORD_ROUNDS = range(11, 36)  # DECISIONS #55: the minimum over rounds 11-35
+# DECISIONS #55 bars: (difficulty, players) -> minimum affordability over rounds 11-35
+BARS = {("EASY", 1): 1.0, ("NORMAL", 1): 0.85, ("HARD", 1): 0.70, ("CHAOS", 4): 0.70}
+TYPICAL_TIER = ((15, 2), (25, 3), (35, 4))  # (round, tier a tower usually has by then)
+WALK_SECONDS = 14  # the Rounds sheet's round length = enemies x spawn gap + 14
+
+
+def xround(x, digits=0):
+    """Excel ROUND (half away from zero), so the sheet's numbers come out exactly."""
+    f = 10 ** digits
+    return math.copysign(math.floor(abs(x) * f + 0.5) / f, x)
+
+
+def promotion(data):
+    """Server/Waves: each ground, non-boss species promotes to the next one in EnemyOrder."""
+    out, previous = {}, None
+    for key in data["EnemyOrder"]:
+        e = data["Enemies"].get(key)
+        if e and not e["flying"] and not e["boss"]:
+            if previous:
+                out[previous] = key
+            previous = key
+    return out
+
+
+def pacing_rounds(data, wb_cost_per_dps, difficulty, players):
+    """The Balance Check's columns for one difficulty and player count, round by round.
+
+    Scaling as Server/Waves and Main do it: counts x (difficulty count x) x (1 + ExtraEnemies
+    per extra player), rounded per species, never below 1; HP x (difficulty HP x) x (1 + ExtraHP
+    per extra player); a promoted spawn has the next ground species' EHP. Density, not length:
+    the spawn gap shrinks by the count factor, so the spawn phase stays enemies x gap and only
+    the 14 s walk shortens with speed x. Cash x scales kill income and the round bonus; every
+    extra player adds StartingCashPerExtraPlayer to the shared pot. Heroes' DPS isn't counted.
+    Easy solo is exactly the Balance Check sheet (asserted by the caller)."""
+    tuning, enemies = data["Tuning"], data["Enemies"]
+    d = data["Difficulties"][difficulty]
+    extra = players - 1
+    count_x = d["countMult"] * (1 + tuning["ExtraEnemiesPerPlayer"] * extra)
+    hp_x = d["hpMult"] * (1 + tuning["ExtraHPPerPlayer"] * extra)
+    p, promote = d["promoteChance"], promotion(data)
+    cumulative = tuning["StartingCash"] + tuning["StartingCashPerExtraPlayer"] * extra
+    growth = tuning["TierCostGrowth"] / tuning["TierDamageGrowth"]
+    out = []
+    for index, rd in enumerate(data["Rounds"], start=1):
+        ehp = enemies_n = 0.0
+        for key, n in rd["counts"].items():
+            spawns = n if count_x == 1 else max(1, math.floor(n * count_x + 0.5))
+            each = enemies[key]["effectiveHp"]
+            if p and key in promote:
+                each = (1 - p) * each + p * enemies[promote[key]]["effectiveHp"]
+            ehp += spawns * each
+            enemies_n += n
+        total = xround(ehp * rd["hpMult"] * hp_x)
+        length = xround(enemies_n * rd["spawnGap"] + WALK_SECONDS / d["speedMult"])
+        required = xround(total / length, 1) if length else 0
+        income = (xround(total * tuning["CashPerEffectiveHP"]) + xround(tuning["RoundBonusBase"] + tuning["RoundBonusPerRound"] * index)) * d["cashMult"]
+        cumulative += income
+        ref_tier = min(5, index / tuning["RoundsPerTier"])
+        cost_per_dps = xround(wb_cost_per_dps * growth ** ref_tier, 1)
+        needed = xround(required * cost_per_dps / tuning["ExpectedEfficiency"])
+        in_towers = xround(cumulative * tuning["AssumedSpendOnTowers"])
+        out.append({"required": required, "length": length, "income": income, "cumulative": cumulative,
+                    "needed": needed, "afford": in_towers / needed if needed else 0})
+    return out
+
+
+def ranges(rounds):
+    """[11, 12, 13, 31] -> '11-13, 31'"""
+    out, start = [], None
+    for i, r in enumerate(rounds):
+        if start is None:
+            start = r
+        if i + 1 == len(rounds) or rounds[i + 1] != r + 1:
+            out.append(f"{start}" if start == r else f"{start}-{r}")
+            start = None
+    return ", ".join(out) or "none"
+
+
+def pacing_report(data):
+    with contextlib.redirect_stdout(io.StringIO()):
+        wb = export_constants.recalculated(export_constants.DEFAULT_XLSX)
+    cost_per_dps = wb["Towers"]["C13"].value
+    sheet = wb["Balance Check"]
+    order = data["DifficultyOrder"]
+    table = {(d, n): pacing_rounds(data, cost_per_dps, d, n) for d in order for n in PLAYER_COUNTS}
+
+    # The model must reproduce the Balance Check sheet (Easy, solo) exactly.
+    easy = table[(order[0], 1)]
+    for i, row in enumerate(easy):
+        r = 5 + i
+        assert int(sheet.cell(r, 1).value) == i + 1, f"Balance Check row {r} isn't round {i + 1}"
+        for col, field in ((2, "required"), (5, "needed"), (6, "cumulative"), (8, "afford")):
+            want = sheet.cell(r, col).value
+            assert abs(row[field] - want) < 1e-9, f"round {i + 1} {field}: model {row[field]} vs Balance Check {want}"
+
+    findings = []
+    print("pacing model (affordability = the Balance Check's cash in towers / cash needed; reproduces its Easy-solo column exactly)")
+    print("  (a) affordability, minimum over rounds 11-35, and the TIGHT (< 1.0) rounds in 11-40; bars from DECISIONS #55")
+    print(f"  {'difficulty':<10} {'hunters':>7} {'min 11-35':>9} {'at':>3} {'bar':>5}  TIGHT rounds")
+    for d in order:
+        for n in PLAYER_COUNTS:
+            rows = table[(d, n)]
+            low = min(AFFORD_ROUNDS, key=lambda r: rows[r - 1]["afford"])
+            value = rows[low - 1]["afford"]
+            bar = BARS.get((d, n))
+            verdict = "" if bar is None else (" ok" if value >= bar else " MISS")
+            tight = [r for r in range(11, 41) if rows[r - 1]["afford"] < 1]
+            print(f"  {data['Difficulties'][d]['display']:<10} {n:>7} {value:>9.2f} {low:>3} {bar if bar else '-':>5}{verdict:<5} {ranges(tight)}")
+            if bar is not None and value < bar:
+                findings.append(f"AFFORD: {data['Difficulties'][d]['display']} with {n} hunter(s): minimum {value:.2f} at round {low} < bar {bar}")
+            if (d, n) == (order[0], 1):
+                for r in range(12, 41):
+                    if rows[r - 1]["required"] > 1.5 * rows[r - 2]["required"]:
+                        findings.append(f"CLIFF: Easy solo round {r} Required DPS {rows[r - 1]['required']:g} > 1.5x round {r - 1} ({rows[r - 2]['required']:g})")
+    cols = [(d, 1) for d in order] + [(order[0], 4), (order[-1], 4), (order[-1], 10)]
+    print("  per round (solo unless marked): " + " ".join(f"{data['Difficulties'][d]['display'][:6]}{'' if n == 1 else f'x{n}'}" for d, n in cols))
+    for r in range(11, 41):
+        print(f"    r{r:<3} " + " ".join(f"{table[c][r - 1]['afford']:>{max(6, len(data['Difficulties'][c[0]]['display'][:6]) + (0 if c[1] == 1 else len(str(c[1])) + 1))}.2f}" for c in cols))
+
+    print("  (b) repair price of a fully trampled tower (Repair cost x spent; Easy solo income that round)")
+    tuning = data["Tuning"]
+    for r, tier in TYPICAL_TIER:
+        income = easy[r - 1]["income"]
+        cells = []
+        for key in data["TowerOrder"]:
+            t = data["Towers"][key]
+            price = xround(tuning["RepairCost"] * cumulative_cost(t, 0, tier))
+            cells.append(f"{t['display'].split()[0]} {fmt(price)} ({price / income:.2f})")
+        print(f"    r{r} T{tier}, income {fmt(income)}: " + ", ".join(cells))
+
+    print("  (c) Amber (Payouts: a clear pays the difficulty's Clear reward to every hunter; a loss pays "
+          f"{tuning['MultiplayerLossPayout']:g} in co-op, 0 solo)")
+    unlock = sum(t["unlockCost"] for t in data["Towers"].values()) + sum(h["unlockCost"] for h in data["Heroes"].values())
+    waves = open(os.path.join(ROOT, "src", "server", "Waves.luau"), encoding="utf-8").read()
+    intermission = float(re.search(r"INTERMISSION\s*=\s*([\d.]+)", waves).group(1))
+    for d in order:
+        dd = data["Difficulties"][d]
+        rounds_s = sum(row["length"] for row in table[(d, 1)])
+        clear_s = rounds_s + intermission * len(data["Rounds"]) + tuning.get("ResultsTime", 0)
+        clears = unlock / dd["clearReward"] if dd["clearReward"] else math.inf
+        print(f"    {dd['display']:<7} clear {dd['clearReward']:g} Amber, {rounds_s / 60:.1f} min of rounds ({clear_s / 60:.1f} with breaks):"
+              f" unlock all ({unlock:g}) = {clears:.1f} clears = {clears * clear_s / 3600:.1f} h; {dd['clearReward'] * 3600 / clear_s:.0f} Amber/h")
+    mastery = data["Mastery"]
+    total = sum(m["coreCost"] for m in mastery)
+    easy_clear = data["Difficulties"][order[0]]["clearReward"]
+    print(f"    mastery 1-{len(mastery)}: {total:g} Amber per hero = {total / easy_clear:.1f} Easy clears; cost per level (* = gives a reward):")
+    cells = [f"{i}:{m['coreCost']:g}{'*' if m['unlock'] else ''}" for i, m in enumerate(mastery, start=1)]
+    for i in range(0, len(cells), 10):
+        print("      " + " ".join(cells[i:i + 10]))
+    dead = [i for i, m in enumerate(mastery, start=1) if not m["unlock"]]
+    if dead:
+        findings.append(f"MASTERY: levels {ranges(dead)} give no reward ({sum(mastery[i - 1]['coreCost'] for i in dead):g} of {total:g} Amber; DECISIONS #61: ask Jovan)")
+    if "Daily Haul" in wb.sheetnames:
+        print("    Daily Haul/Bounties sheets found: the with-bounties pace isn't modelled yet (T25 adds it)")
+    else:
+        print("    with the daily/weekly maximum: pending T25 (no Daily Haul / Bounties sheets yet)")
+
+    print(f"Findings ({len(findings)}):")
+    for f in findings:
+        print(f"  - {f}")
+
+
 def main():
-    full = "--full" in sys.argv[1:]
+    args = sys.argv[1:]
     data = load()
-    value_report(data, full)
+    if "--pacing" in args:
+        pacing_report(data)
+    else:
+        value_report(data, "--full" in args)
 
 
 if __name__ == "__main__":
