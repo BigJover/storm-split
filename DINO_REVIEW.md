@@ -245,3 +245,32 @@ Skybreaker (M5/M6) and "Pops".
 | R5-2 | nice | The ring is a filled disc, so overlapping Bone Spit discs (16 studs wide) merge into one blob, and the sense of "edge = safe line" is weak. | `DinoLook.buildWarningRing`: keep a faint fill (0.85) plus a bright 0.3-stud edge (a second, slightly larger cylinder only 0.12 tall, or 8 thin edge blocks). Fade only the fill. |
 | R5-3 | nice | Gravel Spray pebbles are 0.4 / 0.35 studs flying at 70 studs/s (about 0.35s of flight), which is practically invisible. | `DinoLook.buildProjectile` gravel: pebbles 0.6 studs (× scale), and a thin sand trail (one 0.2×0.2×1.5 streak behind the cluster). The ring still does the warning. |
 | R5-4 | nice | A throw has no wind-up, so hunters only see the ring, not *who* threw it. That undercuts "who threw it, from where it came" (round 4). | Visual only: when a ranged attack launches, flash the thrower's Head part bone-white for 0.15s (`DinoLook.flashHead(model)`) so the source is visible. |
+
+---
+
+## Round 6 — review of bacc207 (T13b projectile readability) and 75f7382 (T14 Armory)
+
+**Reads well**
+- R5-1 to R5-4 all landed:
+  - The ring is red-orange (255,70,40) with a bright cream edge, so it can't be mistaken for the
+    Supply Camp's range disc, and overlapping rings stay separate.
+  - The pebbles are fist-sized.
+  - The thrower's head flashes cream at launch, the same family as the ring's edge, so
+    "flash → ring" reads as one warning.
+- **The Armory** shows every rename from DECISIONS #25: Hide Padding, Iron Plates, *Thorn Plating*, Tempered Steel,
+  *Bulwark* · Oiled Actions, Hand Loads, *Piercing Rounds*, Match Grade, *Master Gunsmith* · Wide
+  Rack, Recoil Pads, *Ammo Crate*, Steady Rests, *Full Kit*. No collisions, and "Big Game" stays the
+  hero's alone.
+- The panel wording is plain and in hunter terms: "dinos that bite in range take 3 damage back",
+  "towers and hunters in range take 15% less damage", "hunters in range: 25% less recoil".
+- The silhouette (a plank floor, a dark back wall, a gun rack, an angled steel plate) reads as an
+  outfitter's shed. Its plate-steel grey is distinct from every other tower.
+
+**Off / to fix (nice-to-have only, no must-fix)**
+
+| # | Issue | Fix |
+|---|---|---|
+| R6-1 | The four rack "guns" are bare vertical steel bars, which read as cell bars. | `TowerLook` ARMORY: give each gun a wooden stock (a 0.25×0.6×0.25 WOOD block at the bottom of each `Gun{i}`, y ≈ 1.25) and shorten the steel part to 1.5. That makes them rifles at a glance. |
+| R6-2 | The Armory is grey-on-grey, so its trampled state (dark Slate 60,60,64) changes less than on other towers. | `TowerLook.setKnockedOut`: no colour change is needed; the tilt, debris and label already carry it. Optionally darken the trampled tint to (45,45,48) for every tower so the contrast holds on grey. |
+| R6-3 | DECISIONS #16 still lists the pre-rename Armory names; #25 overrides them, but a reader of #16 alone sees Hot Loads / AP Crates / Big Game Arsenal / Gun Oil. | Director: add "(renamed in #25)" to row #16. That's a doc note only. |
+| R6-4 | The Tranq Station's Sedate T5 is still **Hibernation**, a cold/winter word, and the old Chiller bullets in UPGRADES.md under the Tranq table (Permafrost, Flash Freeze, Shatter, Cold Front…) may still be there. | `Tower Upgrades` Name Tranq Station / Sedate / T5 → **Deep Sleep** (round-1 nice-to-have), and check that the T5 doc rewrite of those bullets landed. |
