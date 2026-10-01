@@ -3,7 +3,7 @@
 Scope (Jovan, 2026-10-01, `GAUNTLET.md` "Round 2 scope"): (1) a balance pass across the whole
 game, justified by headless models because there's no playtest data yet; (2) daily log-in
 rewards plus daily and weekly challenges, for retention. **Stop before phase 7** and append a
-round-2 recap to `RECAP.md`. Design calls: `DECISIONS.md` #54–#71. Round 1's plan is kept
+round-2 recap to `RECAP.md`. Design calls: `DECISIONS.md` #54–#76. Round 1's plan is kept
 below as history.
 
 The round-1 rules still hold (one task = one commit, push after verifying; `tools/check.sh`,
@@ -68,44 +68,83 @@ checked + headless tests, not playtested"). Plus, for this round:
 
 ## Part D — Balance changes (each one model-justified; Director reviews the model output first)
 
-### T20. Supply Camp tiers pay for themselves
-- **Why:** today no Yield or Airdrop tier repays itself within a 40-round match (Supply Crate
-  ≈ 51 rounds, Bigger Budget ≈ 88, Amber Vault never), so the economy paths are dead
-  (DECISIONS #56).
-- **Sheet:** new Towers column **"Upgrade cost growth"** (blank = Tuning Tier cost growth);
-  Supply Camp = **1.6**. Change the Tower Upgrades cost formula to use it (array formula,
-  recalculated by the exporter). Seeds — Yield Income x: **2.0 / 3.6 / 6.3 / 10.5 / 17**
-  (Amber Vault's 5% interest, cap 500, unchanged). Airdrop Chest cash: **200 / 260 / 515 /
-  615 / 790** (chest counts 1/2/2/3/4 unchanged). Logistics unchanged.
-- **Accept:** `value.py` payback ≤ 10 rounds for every Yield and Airdrop tier, ≥ 5 rounds for
-  every tier (no instant payback); only Supply Camp cost/income/chest lines change in
-  Config; Balance Check unchanged (it doesn't model income towers); audit 0.
+### T20. Supply Camp tiers pay for themselves (cells fixed, DECISIONS #56/#73)
+- **Why (value.py):** payback today — Yield 51/88/162/233/99 rounds, Airdrop 38/88/101/233/101;
+  the base camp is 6.7.
+- **Sheet (exact cells):**
+  - `Towers!S4` = "Upgrade cost growth" (new column, assert empty), `Towers!S9` = **1.6**.
+  - `Tower Upgrades!E65:E79` (the 15 Supply Camp rows; assert each still reads
+    `=ROUND('Towers'!$C$9*POWER('Tuning'!$B$12,Dnn),0)`) →
+    `=ROUND('Towers'!$C$9*POWER('Towers'!$S$9,Dnn),0)`. Costs become 1,600 / 2,560 / 4,096 /
+    6,554 / 10,486. No other tower's formula changes.
+  - Yield rows 65–69, column **Income x** (AN): 1.3/1.7/2.2/3/4 → **2.1 / 3.85 / 6.6 / 11.1 /
+    17.9**. Amber Vault's interest (5%, cap 500) unchanged.
+  - Airdrop rows 70–74, column **Chest cash** (AR): 60/60/120/120/250 → **200 / 260 / 515 /
+    615 / 790**. Chest counts unchanged. Logistics rows unchanged.
+  - If the exporter's Towers reader breaks on column S, make it read by header; Config gains
+    nothing new (costs are already exported per tier).
+- **Accept:** `value.py` payback: Yield ≈ 9.7 / 9.8 / 9.9 / 9.7 / ≤ 7 rounds, Airdrop 8.0 each;
+  no ECONOMY finding left; only Supply Camp cost / income / chest lines change in Config;
+  Balance Check unchanged; `UPGRADES.md` Supply Camp numbers updated; audit 0.
 
-### T21. Smooth the round-21 and round-31 cliffs (also eases #44)
-- **Why:** round 30 → 31 the round's EHP jumps ×2.8 (8 Triceratops at once, Gallimimus
-  doubles, Compy gone) and affordability drops 1.58 → 0.71; round 21 dips to 0.97 when
-  Gallimimus arrive (DECISIONS #57).
-- **Sheet:** Rounds counts (blue) only, rounds 18–39. Phase Gallimimus in from round 18 and
-  Triceratops from round 31 (seed: 3 at round 31, +1 a round, 8 from 36), and Gallimimus 16 → 31
-  across rounds 31–35. Builder iterates on counts only.
-- **Accept:** Balance Check: no TIGHT before round 36, affordability ≥ 1.0 for rounds 11–35;
-  after round 11, no round's Required DPS is > 1.5× the round before; total EHP of rounds
-  31–40 within ±10% of today's (the finale stays as hard overall; round 40 untouched);
-  `threat.py` green; the Config diff touches only the Rounds block.
+### T21. Smooth the round-11, round-21 and round-31 cliffs (cells fixed, DECISIONS #57/#72)
+- **Why (value.py --pacing):** Required DPS R20→21 17.1→39.7 (×2.32), R30→31 76.3→214.2
+  (×2.81); Easy solo affordability 0.97 at 21 and 0.71 at 31; every harder level's trough is
+  round 11.
+- **Sheet:** `Rounds` counts only (row = round + 4; D Pachy, E Ankylosaurus, F Gallimimus,
+  G Pteranodon, H Triceratops). Assert the old value, write the new one; nothing else moves.
 
-### T22. Difficulty cash scaling meets its bars
-- **Why / bars (DECISIONS #55):** minimum affordability over rounds 11–35, solo: Normal
-  ≥ 0.85, Hard ≥ 0.70; Chaos at 4 players ≥ 0.70 (Chaos solo is exempt: "meant for big
-  lobbies").
-- **Sheet:** Difficulty **Cash x** only, steps of 0.05, smallest change that meets the bar.
-  If T19 shows every bar already met: no change, log it.
-- **Accept:** T19 table before/after in the commit message; only `cashMult` lines change.
+  | Round | Pachy D | Anky E | Galli F | Ptera G | Trike H |
+  |---|---|---|---|---|---|
+  | 7 | 0→2 | | | | |
+  | 8 | 0→4 | | | | |
+  | 9 | 0→6 | | | 0→1 | |
+  | 10 | 0→9 | 0→2 | | 0→2 | |
+  | 11 | 16→14 | 8→6 | | | |
+  | 12 | 17→16 | 8→7 | | | |
+  | 17 | | 11→13 | 0→2 | | |
+  | 18 | | 11→15 | 0→4 | | |
+  | 19 | | 12→17 | 0→6 | | |
+  | 20 | | 12→19 | 0→8 | | |
+  | 31 | | 31→26 | 31→16 | 18→13 | 8→1 |
+  | 32 | | 31→28 | 31→19 | 18→15 | 8→2 |
+  | 33 | | 31→29 | 31→21 | 18→17 | 8→4 |
+  | 34 | | 31→30 | 31→24 | | 8→5 |
+  | 35 | | | 31→27 | | 8→6 |
+  | 37 | | | | | 8→9 |
+  | 38 | | | | | 8→10 |
+  | 39 | | | | | 8→12 |
 
-### T23. Tier fixes from T18 (filled in by the Director after T18)
-- **Rule (DECISIONS #59):** only flagged dead/dominant damage tiers; change that tier's blue
-  multipliers (Damage x / Rate x / an ability column), never costs, at most ±25% per cell;
-  one tower per commit (T23a, T23b…); the exporter's hero-vs-tower guard stays green.
-  The Director lists the exact cells here before the Builder starts.
+  No Triceratops before round 31: one at round 29/30 breaks the #42 threat target (62.3 ≥ 50).
+- **Expected (Director's dry run on a scratch copy):** no Required-DPS step > 1.5× except
+  round 31 at 1.53× (was 2.81×); Easy solo affordability r11 1.22, r21 1.16, r31 1.18, r32
+  1.07, r33 0.95, r35 0.90, r36–39 0.86, r40 0.81; Normal solo min 0.81 (r11), Hard solo 0.59
+  (r11), Chaos ×4 0.43 (r11); rounds 31–40 total EHP 289,569 vs 323,127 (−10.4%);
+  `threat.py` 0 misses.
+- **Accept (bars, #72):** Easy solo ≥ 1.0 in rounds 11–32 and ≥ 0.85 in 33–39; no step
+  > 1.6×; finale EHP within ±12%; Normal solo ≥ 0.75, Hard solo ≥ 0.55, Chaos ×4 ≥ 0.40 over
+  rounds 11–39; `threat.py` green; the Config diff touches only the Rounds block. Update the
+  bars inside `value.py` to these (same commit) so its Findings match. If the Builder's run
+  differs from "Expected" by more than 0.02 anywhere, stop and report instead of retuning.
+
+### T22. Difficulty cash: no change (DECISIONS #72)
+- Cash x stays 1 / 0.9 / 0.8 / 0.75. Nothing to build beyond the bars updated in T21; this
+  task is closed by that commit. The round-11 trough on Hard/Chaos goes on the playtest list
+  with the option of per-difficulty starting cash (ask Jovan).
+
+### T23. "Dead" Tranq and Concussion tiers: fix the model, not the numbers (DECISIONS #74)
+- **Verdict:** Tranq Knockout T1–T5, Tranq Weak Spot T3–T5 and Perch Concussion Round are
+  control/support the model can't see, not dead tiers. **No spreadsheet cell changes.**
+- **Files:** `tools/value.py` only.
+- **Do:** (1) Tranq Station **Knockout** joins the "control: not judged" list; print its
+  value line instead: knockout seconds per cycle (Freeze (s) / Freeze every (s)) as "% of
+  the time dinos in range are stopped", and whether it holds bosses. (2) **Weak Spot** is
+  judged as support: credit Brittle % (and Aura rate % / Aura damage %) on the same **3
+  neighbour T2 Hunting Blinds** used for auras, plus its own darts; strips-armour noted.
+  (3) **Concussion Round** (Siege T3): print "stun N s on hit" beside the tier and exclude
+  that one tier from the dead flag (the path's T4–T5 are still judged).
+- **Accept:** `value.py` Findings no longer list those tiers; every other number in its
+  output is unchanged (diff of the output in the commit message); no Config change.
 
 ### T24. Threat report for the boss rounds (#44, report only)
 - **Files:** `tools/threat.py`: print rounds 31–40 mid-gap defended damage per tower type,
@@ -115,9 +154,50 @@ checked + headless tests, not playtested"). Plus, for this round:
 
 ## Part E — Daily Haul and Bounties (log-in rewards + challenges)
 
-Design: DECISIONS #63–#71. Names are proposals until 🦖 review: the screen is the **Hunt
-Board**; the log-in calendar is the **Daily Haul** (day 7 = **Big Haul**); challenges are
-**Bounties** (daily / weekly); a reroll is a **Swap**.
+Design: DECISIONS #63–#71 and #75–#76. The Dino agent's Round 9 kept all six names: the
+screen is the **Hunt Board**; the log-in calendar is the **Daily Haul** (day 7 = **Big
+Haul**); challenges are **Bounties**; a reroll is a **Swap**.
+
+**Round 9 rulings — all accepted; they override the task text below where they differ:**
+- **T25:** the Bounties sheet gets a **Title** column before Text. Titles: Compy Sweep,
+  Raptor Cull, Headbutt Hunt, Shell Cracker, Run Them Down, Clear Skies (Pteranodons), Busy
+  Day (daily pop-any) / Stampede (weekly pop-any), Deep Trail (reach round; weekly: reach
+  round 31 {n} times), Gear Check (ability), Pitch Camp (build), Sharpen Up (upgrade), Patch
+  Job (repair trampled towers), Scavenger (chests), Clean Sweep (clear any track; weekly:
+  {n} times), Rough Country (clear Normal or harder), Badlands (clear Hard or harder), Horn
+  Breaker (Triceratops), Tyrant's End (T-Rex). Text lines as in `DINO_REVIEW.md` Round 9.
+  **Clear Skies stays in the pool:** the free Hunting Blind, Longshot Perch and the Tracker
+  all have Hits air = Yes (Towers / Heroes sheets). The exporter fails if a `pop` bounty
+  targets a flying species and no free tower or hero hits air. "Repair" means a
+  **trampled** tower (#75). Slot (easy/medium/hard) stays a sheet column but is never shown.
+- **T25 pool, final (Count · Amber; the Builder makes no sizing calls, #75).** Daily easy
+  (10): Compy Sweep 150, Raptor Cull 100, Busy Day 300, Gear Check 5, Pitch Camp 6. Daily
+  medium (15): Headbutt Hunt 60, Shell Cracker 40, Clear Skies 30, Deep Trail round 15,
+  Sharpen Up 10. Daily hard (20): Run Them Down 25, Deep Trail round 25, Patch Job 2, Clean
+  Sweep 1. Weekly easy (40): Stampede 1,500, Gear Check 30, Deep Trail round 31 × 2. Weekly
+  medium (60): Clean Sweep 3, Rough Country 1, Horn Breaker 10, Patch Job 10. Weekly hard
+  (80): Badlands 1, Tyrant's End 1, Deep Trail round 31 × 4. **Scavenger (chests) is
+  dropped** and the `chest` event with it: chests need the Supply Camp, a 150-Amber unlock
+  (#66). If the model check (doable in one solo Easy match to round 25 / ≤ 5 matches) fails
+  for a row, halve that row's Count and say so in the commit; nothing else is tunable.
+- **T26/T27:** `refresh` returns the reset payout; Progression publishes it once so the board
+  can show one dim line, "Unclaimed bounties paid: +35 Amber" (never a pop-up).
+- **T28:** the toast reads **"Bounty bagged: Raptor Cull (+15 Amber)"** (title, not text).
+- **T29:** the home button reads **"Hunt Board [G]"** (and its tooltip), with a small amber
+  dot when something is claimable (no bouncing). Sections are titled **Daily Bounties** and
+  **Weekly Bounties**. Look: one dark wood board (70,50,35, thin lighter rim) on the
+  existing `BG`; header "HUNT BOARD" in the amber title colour (245,175,60) with the X in
+  the header bar, outside the scrolling area; a dim "New bounties in 5h 12m" line. Cards
+  are cream paper notes (235,225,200, dark text, one tack): title, one text line, a thin
+  progress bar with `12 / 40`, an Amber chip `+15`, and a small dot in the dino's
+  `DinoLook` colour. States: in progress = bar plus a text button `Swap (1 left)` (hidden
+  when done, claimed or out of swaps); done = a solid amber **Claim** button (no pulsing);
+  in flight = grey `…`, disabled; claimed = dimmed card with a tilted red **BAGGED** stamp.
+  Daily Haul strip: 7 tiles, claimed days get a footprint stamp, today an amber outline and
+  **Claim**, future days dim, day 7 about 1.5× wide and labelled **Big Haul**; under it
+  "Missed days don't reset your Haul."; on narrow windows it wraps 4 + 3. Only the bounty
+  list scrolls; the header, X and Haul strip never scroll away. No full-screen dimmer over
+  Play; a claim shows an inline `+15 Amber` float on the card, never a reward pop-up.
 
 ### T25. Sheets, levers and exporter — 🦖 (names and bounty text)
 - **Sheet:** new sheet **Daily Haul**: Day 1–7, Amber **5, 5, 10, 10, 15, 15, 40**, Note.
@@ -179,7 +259,7 @@ Board**; the log-in calendar is the **Daily Haul** (day 7 = **Big Haul**); chall
 - **Do:** one `Progression.bountyEvent(player, event, target, amount)`; counts only while
   State is Building/Playing; **boss pops (Triceratops, T-Rex) count for every hunter in the
   match**, other pops for the hunter credited with the pop; shrinks don't count, only
-  pops. A private in-match toast "Bounty done: …" (fades like the hit notice, no stacking).
+  pops. A private in-match toast "Bounty bagged: <Title> (+N Amber)" (fades like the hit notice, no stacking).
 - **Accept:** `audit.py` (or a spec) proves every Event kind in the Bounties sheet has a
   call site; specs green; no change to cash or Amber outside claims.
 
