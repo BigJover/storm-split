@@ -409,6 +409,12 @@ the spreadsheet, never for code.
   head and jaw colour), the buckle and the flash restore. The Config diff is exactly the 1
   name line. Exporter, audit and check clean.
 
+### T16d. Jaw Lock strap colour (one line) — 🦖
+- **Goal:** DECISIONS #51. In `DinoLook`, the strap colour goes from (165,115,65) to
+  (185,100,45). In the looks spec, raise the strap's distance threshold from 20 to 40 against
+  every dino head and jaw colour.
+- **Accept:** looks spec green; check clean.
+
 ### T17. Docs and recap
 - `CLAUDE.md` status (Step 2 and polish: statically checked and headless-tested, not
   playtested), `ARCHITECTURE.md` (layout, §4 ownership: Health, DinoAttacks, tower HP in

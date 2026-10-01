@@ -162,11 +162,18 @@ tier is its own dinosaur species that **shrinks** one size per emptied HP share 
 splitting (total HP per species = the old split-chain HP, so balance is unchanged; bosses now
 walk). Blocky dino models (`Shared/DinoLook`), hunting names for towers/heroes/abilities,
 Amber currency, dirt-trail map. Title and currency live in `Shared/Theme`; internal keys
-unchanged. Step 2 (planned, `VISION.md`): dinos bite and shoot towers/players, 100 player
-HP (+25 per round), tower HP with knock-out + repair, Field Medic hero, Field Hospital and
-Armory towers.
+unchanged.
 
-Next: playtest the reskin, then step 2.
+Step 2 + wide polish (gauntlet loop, 2026-09-30 → 10-01, Jovan away). It was statically
+checked and headless-tested (130 specs, `audit.py --strict` 0, `threat.py` 0) but **never
+playtested**. Dinos bite, and the mid/high tiers throw dodgeable projectiles with a warning
+ring. Players have 100 HP and heal 25 per round. Towers have HP: at 0 they're **Trampled** and
+need a repair from the tower panel. New: the Field Medic hero, the Field Hospital and the
+Armory. The polish pass covers the Amber payout fix, a per-path audit, the readability and
+theme fixes, and the threat model. Design calls are in `DECISIONS.md`; the summary is
+`RECAP.md`.
+
+Next: Jovan playtests Step 2 (see `RECAP.md`) and answers its "ask Jovan" list. Then phase 7.
 
 ## Open issues
 

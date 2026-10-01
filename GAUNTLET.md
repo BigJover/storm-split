@@ -27,6 +27,8 @@ Medic, Field Hospital, Armory), then a wide polish pass — including that Amber
 correctly and every tower and every upgrade path works as described. **Stop before phase 7**
 and write the recap.
 
+**Status (2026-10-01):** scope done (T1–T16c). The recap is `RECAP.md`.
+
 ## Rules
 
 - **Verify every step:** `tools/check.sh` clean; `python3 tools/export_constants.py` clean;

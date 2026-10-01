@@ -53,7 +53,7 @@ Mark), Rally Cry (Overdrive), Flare Strike (Airburst).
 **Build order (user):** step 1 reskin — names, colours, dino shapes, the shrink rule, balance
 kept. Step 2 combat — below.
 
-### Step 2: the dinos fight back (planned)
+### Step 2: the dinos fight back (built 2026-10-01, headless-tested, not yet playtested; see `RECAP.md`)
 
 - Dinos **bite** towers and players within reach as they walk the track. **Mid and high
   tiers also have ranged / projectile attacks**; the higher the tier, the deadlier. Smaller
@@ -96,7 +96,7 @@ Some of this is cheap now and expensive later, so it's built early:
 | Every tower knows who built it (owner) | ✅ phase 3c |
 | Pops credited per player (leaderboard) | ✅ phase 3c |
 | Difficulty and player-count scaling | ✅ phase 3c |
-| Towers with HP that can be damaged and destroyed | later (battle modes) |
+| Towers with HP that can be damaged and destroyed | ✅ Step 2 (dinos trample them and players repair them; players damaging towers comes with the battle modes) |
 | Cash per team / per player instead of one pot | later — `Economy` is the only cash owner, so this is one module's change |
 | Map sides: build zones per team, several tracks | later — `Shared/Placement` already decides where building is allowed; zones become one more check |
 | Network scale for 10 players (ARCHITECTURE.md §7): clients move enemy copies locally | measure first with Studio's multi-client test |
