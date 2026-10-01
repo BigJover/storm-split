@@ -137,15 +137,23 @@ Towers.init(map.towerFolder, {
 	end,
 })
 Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged })
-Health.init(remotes)
+Health.init(remotes, {
+	-- An Armory covering where the hunter stands.
+	resistOf = function(player)
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		return if root and root:IsA("BasePart") then { Towers.resistAt(root.Position) } else {}
+	end,
+})
 DinoAttacks.init({
 	damageMult = function()
 		return difficulty().dinoDamageMult
 	end,
 	folder = map.effectFolder,
+	onBite = Towers.bitten,
 })
 Shop.init(remotes)
-Hero.init(remotes, { onPop = Scoreboard.addPop })
+Hero.init(remotes, { onPop = Scoreboard.addPop, gearAt = Towers.hunterGearAt })
 
 ------------------------------------------------------------------ host
 

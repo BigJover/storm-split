@@ -71,6 +71,7 @@ type Buff = {
 	piercesArmor: boolean,
 	discountPercent: number, -- off its upgrades (Logistics)
 	sellRefund: number, -- 0 = the normal SellRefund
+	resistPercent: number, -- damage resistance (an Armory in range, itself included)
 }
 
 export type Tower = {
@@ -101,7 +102,7 @@ local nextId = 0
 local onPop: ((Player) -> ())? = nil
 local levelScale = 1 -- damage multiplier from the team's level
 local extraRatePercent: ((Tower) -> number)? = nil -- boosts from outside towers (hero Rally Cry)
-local resistOf: ((Tower) -> { number })? = nil -- damage resistance sources (Armory, later)
+local resistOf: ((Tower) -> { number })? = nil -- extra damage resistance sources (Field Medic, later)
 
 local function credit(owner: Player?, killed: boolean)
 	if killed and owner and owner.Parent and onPop then
@@ -111,22 +112,33 @@ end
 
 ------------------------------------------------------------------ stats
 
-local NO_BUFF: Buff = table.freeze({ ratePercent = 0, damagePercent = 0, piercesArmor = false, discountPercent = 0, sellRefund = 0 })
+local NO_BUFF: Buff = table.freeze({ ratePercent = 0, damagePercent = 0, piercesArmor = false, discountPercent = 0, sellRefund = 0, resistPercent = 0 })
 
 local function hasAura(s: Stats): boolean
-	return s.auraRatePercent > 0 or s.auraDamagePercent > 0 or s.auraPiercesArmor or s.discountPercent > 0 or s.sellRefund > 0
+	return s.auraRatePercent > 0
+		or s.auraDamagePercent > 0
+		or s.auraPiercesArmor
+		or s.discountPercent > 0
+		or s.sellRefund > 0
+		or s.resistPercent > 0
+end
+
+local function covers(source: Tower, point: Vector3): boolean
+	local offset = point - source.base
+	return Vector2.new(offset.X, offset.Z).Magnitude <= source.stats.range
 end
 
 -- Recomputed whenever a tower is placed, upgraded or removed. The shop panel
 -- reads Discount / RefundRate from the tower's body.
 local function refreshAuras()
 	for _, tower in towers do
-		local rate, damage, pierce, discount, refund = 0, 0, false, 0, 0
+		local rate, damage, pierce, discount, refund, resist = 0, 0, false, 0, 0, 0
 		for _, source in towers do
 			local s = source.stats
-			if source ~= tower and not source.knockedOut and hasAura(s) then
-				local offset = tower.base - source.base
-				if Vector2.new(offset.X, offset.Z).Magnitude <= s.range then
+			if not source.knockedOut and hasAura(s) and covers(source, tower.base) then
+				-- An Armory's resistance covers itself too; the other auras are for others.
+				resist = math.max(resist, s.resistPercent)
+				if source ~= tower then
 					rate = math.max(rate, s.auraRatePercent)
 					damage = math.max(damage, s.auraDamagePercent)
 					pierce = pierce or s.auraPiercesArmor
@@ -135,8 +147,8 @@ local function refreshAuras()
 				end
 			end
 		end
-		tower.buff = if rate > 0 or damage > 0 or pierce or discount > 0 or refund > 0
-			then { ratePercent = rate, damagePercent = damage, piercesArmor = pierce, discountPercent = discount, sellRefund = refund }
+		tower.buff = if rate > 0 or damage > 0 or pierce or discount > 0 or refund > 0 or resist > 0
+			then { ratePercent = rate, damagePercent = damage, piercesArmor = pierce, discountPercent = discount, sellRefund = refund, resistPercent = resist }
 			else NO_BUFF
 		local body = tower.model.PrimaryPart
 		if body then
@@ -184,7 +196,9 @@ function Towers.damage(tower: Tower, amount: number, source: any?): number
 	if tower.knockedOut or amount <= 0 or not table.find(towers, tower) then
 		return 0
 	end
-	local resist = Combat.combineResist(if resistOf then resistOf(tower) else {})
+	local sources = if resistOf then table.clone(resistOf(tower)) else {}
+	table.insert(sources, tower.buff.resistPercent) -- an Armory in range
+	local resist = Combat.combineResist(sources)
 	local dealt = math.min(tower.hp, Combat.afterResist(amount, resist))
 	tower.hp -= dealt
 	if tower.hp <= 0 then
@@ -212,6 +226,60 @@ function Towers.repair(tower: Tower)
 	tower.hp = tower.maxHp
 	setKnockedOut(tower, false)
 	showHealth(tower)
+end
+
+------------------------------------------------------------------ Armory
+
+-- The strongest Armory resistance covering a point (a hunter standing there).
+function Towers.resistAt(position: Vector3): number
+	local best = 0
+	for _, source in towers do
+		if not source.knockedOut and source.stats.resistPercent > 0 and covers(source, position) then
+			best = math.max(best, source.stats.resistPercent)
+		end
+	end
+	return best
+end
+
+-- A dino just bit something standing at `position`: the strongest Thorn
+-- Plating covering it bites back (pierces armour, scales with the team's
+-- level, kill credited to the Armory's owner), and Bulwark stuns the biter
+-- (not bosses). Called by DinoAttacks through its onBite hook.
+function Towers.bitten(enemy: Enemies.Enemy, position: Vector3)
+	local thorns, thornsOwner, stun = 0, nil, 0
+	for _, source in towers do
+		local s = source.stats
+		if not source.knockedOut and (s.thornsDamage > 0 or s.stunBitersSeconds > 0) and covers(source, position) then
+			if s.thornsDamage > thorns then
+				thorns, thornsOwner = s.thornsDamage, source.owner
+			end
+			stun = math.max(stun, s.stunBitersSeconds)
+		end
+	end
+	if stun > 0 then
+		Enemies.stun(enemy, stun, false)
+	end
+	if thorns > 0 then
+		credit(thornsOwner, Enemies.damage(enemy, thorns * levelScale, true))
+	end
+end
+
+export type HunterGear = { recoilMult: number, reloadMult: number, spreadMult: number, ratePercent: number }
+
+-- What an Outfitter Armory covering this point does for a hunter's gun: the
+-- strongest of each buff (auras don't stack).
+function Towers.hunterGearAt(position: Vector3): HunterGear
+	local gear = { recoilMult = 1, reloadMult = 1, spreadMult = 1, ratePercent = 0 }
+	for _, source in towers do
+		local s = source.stats
+		if not source.knockedOut and covers(source, position) then
+			gear.recoilMult = math.min(gear.recoilMult, s.hunterRecoilMult)
+			gear.reloadMult = math.min(gear.reloadMult, s.hunterReloadMult)
+			gear.spreadMult = math.min(gear.spreadMult, s.hunterSpreadMult)
+			gear.ratePercent = math.max(gear.ratePercent, s.hunterRatePercent)
+		end
+	end
+	return gear
 end
 
 -- Standing towers, for dinos to pick targets from.

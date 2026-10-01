@@ -72,6 +72,21 @@ built). Change a name there, not in code.
 - Amber Vault: interest on banked cash. Air Drop: chests land that players run over to collect.
 - Bulk Order: towers in range −5% upgrade cost. Recycler: towers in range sell for 90%. Forward Base: towers in range +10% attack speed. Command Center: −20% costs, full refunds.
 
+## Armory (ARMORY) — damage resistance, no attack ✅ Step 2 · unlock 150 Amber
+
+Never shoots. Towers and hunters in its range (itself included) take 15% less damage.
+Resistance doesn't stack: the strongest source wins, capped at 60% (Tuning).
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Plating** | resistance | Hide Padding | Iron Plates | *Thorn Plating* | Tempered Steel | *Bulwark* |
+| **Gunsmith** | support | Oiled Actions | Hand Loads | *Piercing Rounds* | Match Grade | *Master Gunsmith* |
+| **Outfitter** | hunters | Wide Rack | Recoil Pads | *Ammo Crate* | Steady Rests | *Full Kit* |
+
+- Hide Padding 20% · Iron Plates 25%. Thorn Plating: dinos that bite anything in range take 3 damage back (pierces armour, grows with tower levels, the kill counts for the Armory's builder). Tempered Steel: 35%, thorns 5. Bulwark: 45%, and biters are stunned 0.5s (not bosses).
+- Oiled Actions: towers in range +5% attack speed. Hand Loads: +10% damage. Piercing Rounds: towers in range pierce armour. Match Grade: +20% damage, +10% speed. Master Gunsmith: +30% damage, +15% speed.
+- Wide Rack: range ×1.3. Recoil Pads: hunters in range have 25% less recoil. Ammo Crate: reload ×0.65. Steady Rests: spread ×0.7. Full Kit: range ×1.5, hunters in range fire 20% faster.
+
 ---
 
 ## Mechanics and when they're built
@@ -91,6 +106,7 @@ built). Change a name there, not in code.
 | Support auras (buff nearby towers) | Flare Gun, Signal Tower, Eye in the Sky | ✅ phase 3b |
 | Slow, knockout pulses, damage-taken amp, armour strip | Tranq Station | ✅ phase 5 |
 | Round income, interest, airdrop chests, upgrade discounts, better refunds | Supply Camp | ✅ phase 5 |
+| Damage resistance aura, thorns, biter stun, hunter handling buffs | Armory | ✅ Step 2 |
 
 When a mechanic lands, its numbers get a column on `Tower Upgrades` and the stat-only
 multipliers get rebalanced around it — expect a tuning pass per mechanic.

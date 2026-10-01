@@ -432,6 +432,36 @@ local function describeAbilities(now, nextStep, parts: { string })
 	if refund then
 		table.insert(parts, `towers in range sell for {math.floor(refund * 100 + 0.5)}%`)
 	end
+
+	-- Armory
+	local resist = changed("resistPercent", 0)
+	if resist then
+		table.insert(parts, `towers and hunters in range take {resist}% less damage`)
+	end
+	local thorns = changed("thornsDamage", 0)
+	if thorns then
+		table.insert(parts, `dinos that bite in range take {fmt(thorns)} damage back`)
+	end
+	local stunBiters = changed("stunBitersSeconds", 0)
+	if stunBiters then
+		table.insert(parts, `biters are stunned {fmt(stunBiters)}s (not bosses)`)
+	end
+	local recoil = changed("hunterRecoilMult", 1)
+	if recoil then
+		table.insert(parts, `hunters in range: {math.floor((1 - recoil) * 100 + 0.5)}% less recoil`)
+	end
+	local reload = changed("hunterReloadMult", 1)
+	if reload then
+		table.insert(parts, `hunters in range: {math.floor((1 - reload) * 100 + 0.5)}% faster reload`)
+	end
+	local spread = changed("hunterSpreadMult", 1)
+	if spread then
+		table.insert(parts, `hunters in range: {math.floor((1 - spread) * 100 + 0.5)}% tighter spread`)
+	end
+	local hunterRate = changed("hunterRatePercent", 0)
+	if hunterRate then
+		table.insert(parts, `hunters in range fire {hunterRate}% faster`)
+	end
 end
 
 -- "+30% damage · +15% rate · 2 shots per trigger" for going from `current`

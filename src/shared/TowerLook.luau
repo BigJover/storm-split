@@ -28,6 +28,7 @@ TowerLook.COLORS = table.freeze({
 	GRENADIER = Color3.fromRGB(120, 115, 70), -- Mortar Pit: olive
 	CHILLER = Color3.fromRGB(70, 190, 180), -- Tranq Station: tranquilizer teal
 	QUARTERMASTER = Color3.fromRGB(230, 150, 50), -- Supply Camp: supply-crate orange
+	ARMORY = Color3.fromRGB(115, 125, 140), -- Armory: plate-steel grey
 })
 
 TowerLook.BODY_HEIGHT = 5
@@ -117,6 +118,21 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 			table.insert(parts, block(`Dart{i}`, Vector3.new(0.15, 1.3, 0.15), at(x, 3.0, -0.3), WOOD, Enum.Material.Wood))
 			table.insert(parts, block(`Tip{i}`, Vector3.new(0.22, 0.35, 0.22), at(x, 3.8, -0.3), DART_TIP, Enum.Material.Neon))
 			table.insert(parts, block(`Fletching{i}`, Vector3.new(0.45, 0.3, 0.05), at(x, 2.5, -0.3), Color3.fromRGB(230, 225, 210), Enum.Material.Fabric))
+		end
+		return parts
+	end,
+	-- Armory: a dark wood back wall with a gun rack, a steel plate shield in front.
+	ARMORY = function(color)
+		local parts = {
+			block("Floor", Vector3.new(3, 0.3, 3), at(0, 0.15, 0), WOOD, Enum.Material.WoodPlanks),
+			block("Wall", Vector3.new(3, 3.6, 0.4), at(0, 1.8, 1.3), DARK_WOOD, Enum.Material.Wood),
+			block("RackLow", Vector3.new(2.6, 0.15, 0.2), at(0, 1.2, 1), DARK_WOOD, Enum.Material.Wood),
+			block("RackHigh", Vector3.new(2.6, 0.15, 0.2), at(0, 2.8, 1), DARK_WOOD, Enum.Material.Wood),
+			block("Plate", Vector3.new(1.8, 2, 0.25), at(0, 1.3, -0.9) * CFrame.Angles(math.rad(-10), 0, 0), color, Enum.Material.Metal),
+			block("Boss", Vector3.new(0.5, 0.5, 0.15), at(0, 1.35, -1.08) * CFrame.Angles(math.rad(-10), 0, 0), STEEL, Enum.Material.Metal),
+		}
+		for i, x in { -0.9, -0.3, 0.3, 0.9 } do
+			table.insert(parts, block(`Gun{i}`, Vector3.new(0.15, 2.1, 0.15), at(x, 2.05, 0.85), STEEL, Enum.Material.Metal))
 		end
 		return parts
 	end,

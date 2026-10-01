@@ -56,6 +56,9 @@ local function expected(def, tiers: { number })
 		armoredMult = product("armoredMult"),
 		bossMult = product("bossMult"),
 		incomeMult = product("incomeMult"),
+		hunterRecoilMult = product("hunterRecoilMult"),
+		hunterReloadMult = product("hunterReloadMult"),
+		hunterSpreadMult = product("hunterSpreadMult"),
 	}
 	for _, field in TowerStats.HIGHEST do
 		local value = highest(field)
@@ -65,6 +68,7 @@ local function expected(def, tiers: { number })
 		e[field] = value
 	end
 	e.slowPercent = math.max(def.slowPercent, highest("slowPercent"))
+	e.resistPercent = math.max(def.resistPercent, highest("resistPercent"))
 	for _, field in TowerStats.FLAGS do
 		e[field] = any(field)
 	end
@@ -117,7 +121,7 @@ test("an untouched tower is its base row", function()
 	end
 end)
 
-test("each of the 75 tiers alone gives that Config row's numbers", function()
+test("each tier alone gives that Config row's numbers (15 per tower)", function()
 	local count = 0
 	for _, key in Config.TowerOrder do
 		local def = Config.Towers[key]
@@ -130,7 +134,7 @@ test("each of the 75 tiers alone gives that Config row's numbers", function()
 			end
 		end
 	end
-	eq(count, 75, "tower tiers in Config")
+	eq(count, 15 * #Config.TowerOrder, "tower tiers in Config")
 end)
 
 test("every legal two-path crossover multiplies, takes the highest and ORs", function()

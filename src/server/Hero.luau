@@ -39,6 +39,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
@@ -73,6 +74,7 @@ type State = {
 	overdriveUntil: number,
 	overdrivePercent: number,
 	overdriveRadius: number,
+	gear: HeroStats.Gear, -- an Outfitter Armory's buffs where the hunter stands
 }
 
 -- Visuals only.
@@ -91,6 +93,8 @@ local SPIN_KEEP = 0.35 -- seconds between pulls that still count as holding the 
 local states: { [Player]: State } = {}
 local teamLevel = 1 -- what new players start at
 local onPop: ((Player) -> ())? = nil
+local gearAt: ((Vector3) -> HeroStats.Gear)? = nil -- Towers.hunterGearAt
+local GEAR_CHECK = 0.2 -- seconds between checks of where each hunter stands
 local fireEvent: RemoteEvent
 
 ------------------------------------------------------------------ state
@@ -116,6 +120,7 @@ local function stateOf(player: Player): State
 			overdriveUntil = 0,
 			overdrivePercent = 0,
 			overdriveRadius = 0,
+			gear = HeroStats.NO_GEAR,
 		}
 		states[player] = state
 	end
@@ -248,7 +253,7 @@ end
 
 local function refresh(player: Player, refill: boolean)
 	local s = stateOf(player)
-	s.stats = if s.hero then HeroStats.compute(s.hero, s.tiers) else nil
+	s.stats = if s.hero then HeroStats.compute(s.hero, s.tiers, s.gear) else nil
 	if s.stats and refill then
 		s.ammo = s.stats.magazine
 		s.reloadUntil = 0
@@ -675,8 +680,36 @@ function Hero.towerRateBoost(position: Vector3): number
 	return best
 end
 
-function Hero.init(remotes: Folder, hooks: { onPop: ((Player) -> ())? }?)
+function Hero.init(remotes: Folder, hooks: { onPop: ((Player) -> ())?, gearAt: ((Vector3) -> HeroStats.Gear)? }?)
 	onPop = hooks and hooks.onPop
+	gearAt = hooks and hooks.gearAt
+
+	-- Outfitter Armory buffs follow the hunter around: a few times a second,
+	-- re-read what covers where they stand; publish it (Gear* attributes, so
+	-- the client's fire loop agrees) and recompute the gun when it changes.
+	if gearAt then
+		local since = 0
+		RunService.Heartbeat:Connect(function(dt)
+			since += dt
+			if since < GEAR_CHECK then
+				return
+			end
+			since = 0
+			for player, s in states do
+				local body = root(player)
+				local gear = if body and gearAt then gearAt(body.Position) else HeroStats.NO_GEAR
+				local old = s.gear
+				if gear.recoilMult ~= old.recoilMult or gear.reloadMult ~= old.reloadMult or gear.spreadMult ~= old.spreadMult or gear.ratePercent ~= old.ratePercent then
+					s.gear = gear
+					player:SetAttribute("GearRecoil", gear.recoilMult)
+					player:SetAttribute("GearReload", gear.reloadMult)
+					player:SetAttribute("GearSpread", gear.spreadMult)
+					player:SetAttribute("GearRate", gear.ratePercent)
+					refresh(player, false)
+				end
+			end
+		end)
+	end
 
 	local request = Instance.new("RemoteFunction")
 	request.Name = "HeroRequest"

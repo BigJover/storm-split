@@ -12,6 +12,10 @@
 	Damage is per shot: the hero's base damage x base pellets is split across
 	however many pellets the gun now fires (HEROES.md). A slug concentrates it,
 	extra pellets spread it.
+
+	Gear: an Outfitter Armory the hunter stands near (Server/Towers.hunterGearAt,
+	published as the Gear* player attributes so the client fire loop agrees)
+	scales recoil, reload and spread, and adds a fire-rate percent. Never damage.
 ]]
 
 local Config = require(script.Parent.Config)
@@ -84,7 +88,26 @@ local HIGHEST = {
 }
 local FLAGS = { "piercesArmor", "hitsAir", "beltFed", "scope" }
 
-function HeroStats.compute(heroKey: string, tiers: { number }): Stats?
+export type Gear = { recoilMult: number, reloadMult: number, spreadMult: number, ratePercent: number }
+
+HeroStats.NO_GEAR = table.freeze({ recoilMult = 1, reloadMult = 1, spreadMult = 1, ratePercent = 0 }) :: Gear
+
+-- The gear a player's Gear* attributes describe (set by Server/Hero).
+function HeroStats.gearOf(player: Player): Gear
+	local function attribute(name: string, default: number): number
+		local value = player:GetAttribute(name)
+		return if typeof(value) == "number" then value else default
+	end
+	return {
+		recoilMult = attribute("GearRecoil", 1),
+		reloadMult = attribute("GearReload", 1),
+		spreadMult = attribute("GearSpread", 1),
+		ratePercent = attribute("GearRate", 0),
+	}
+end
+
+function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?): Stats?
+	local g = gear or HeroStats.NO_GEAR
 	local hero = Config.Heroes[heroKey]
 	if not hero then
 		return nil
@@ -136,17 +159,17 @@ function HeroStats.compute(heroKey: string, tiers: { number }): Stats?
 	return {
 		damage = hero.damage * hero.pellets / pellets * mult.damageMult,
 		shotDamage = hero.damage * hero.pellets * mult.damageMult,
-		rate = hero.rate * mult.rateMult,
+		rate = hero.rate * mult.rateMult * (1 + g.ratePercent / 100),
 		fireMode = fireMode,
 		burstCount = math.max(1, math.floor(burstCount)),
 		guns = math.max(1, math.floor(high.guns or 1)),
 		magazine = math.max(1, math.floor(hero.magazine * mult.magazineMult * math.max(1, high.guns or 1) + 0.5)),
-		reload = hero.reload * mult.reloadMult,
+		reload = hero.reload * mult.reloadMult * g.reloadMult,
 		pellets = pellets,
 		shotsPerTrigger = math.max(1, math.floor(high.shotsPerTrigger or 1)),
-		spread = hero.spread * mult.spreadMult,
-		recoilPerShot = hero.recoilPerShot * mult.recoilMult,
-		recoilMax = hero.recoilMax * mult.recoilMult,
+		spread = hero.spread * mult.spreadMult * g.spreadMult,
+		recoilPerShot = hero.recoilPerShot * mult.recoilMult * g.recoilMult,
+		recoilMax = hero.recoilMax * mult.recoilMult * g.recoilMult,
 		recoilRecovery = hero.recoilRecovery,
 		stillRecoilMult = mult.stillRecoilMult,
 		range = hero.range * mult.rangeMult,

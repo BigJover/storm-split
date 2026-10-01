@@ -171,3 +171,17 @@ test("Incendiary's burning ground is readable: patch reach >= 3 (DECISIONS #32)"
 	-- Hazards.burn: reach = max(splash radius, BurnPatchMinReach)
 	ok(math.max(incendiary.splashRadius, Config.Tuning.BurnPatchMinReach) >= 3, "Incendiary patch reach")
 end)
+
+test("Outfitter gear changes handling, never damage (HeroStats.compute with gear)", function()
+	local plain = HeroStats.compute("RIFLE", { 0, 0, 0 }) :: any
+	local gear = { recoilMult = 0.75, reloadMult = 0.65, spreadMult = 0.7, ratePercent = 20 }
+	local geared = HeroStats.compute("RIFLE", { 0, 0, 0 }, gear) :: any
+	near(geared.recoilPerShot, plain.recoilPerShot * 0.75, "recoil per shot")
+	near(geared.recoilMax, plain.recoilMax * 0.75, "recoil max")
+	near(geared.reload, plain.reload * 0.65, "reload")
+	near(geared.spread, plain.spread * 0.7, "spread")
+	near(geared.rate, plain.rate * 1.2, "fire rate +20%")
+	eq(geared.shotDamage, plain.shotDamage, "damage unchanged")
+	local none = HeroStats.compute("RIFLE", { 0, 0, 0 }, HeroStats.NO_GEAR) :: any
+	eq(none.rate, plain.rate, "no gear = plain")
+end)

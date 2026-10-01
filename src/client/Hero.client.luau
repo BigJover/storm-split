@@ -62,7 +62,7 @@ local function currentStats(): HeroStats.Stats?
 	for i = 1, 3 do
 		tiers[i] = player:GetAttribute(`HeroPath{i}`) or 0
 	end
-	return HeroStats.compute(key, tiers)
+	return HeroStats.compute(key, tiers, HeroStats.gearOf(player)) -- Outfitter buffs agree with the server
 end
 
 local function equippedGun(): Tool?

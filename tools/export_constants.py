@@ -93,6 +93,14 @@ ABILITY_COLUMNS = [
     ("chestCash", 44, "num", 0),
     ("discountPercent", 45, "num", 0),
     ("sellRefund", 46, "num", 0),
+    # Armory (Step 2)
+    ("resistPercent", 47, "num", 0),
+    ("thornsDamage", 48, "num", 0),
+    ("stunBitersSeconds", 49, "num", 0),
+    ("hunterRecoilMult", 50, "num", 1),
+    ("hunterReloadMult", 51, "num", 1),
+    ("hunterSpreadMult", 52, "num", 1),
+    ("hunterRatePercent", 53, "num", 0),
 ]
 
 
@@ -107,11 +115,14 @@ def read_tuning(ws):
 
 def read_towers(ws):
     towers, order = {}, []
-    r = 5
-    while True:
+    # Tower rows run from 5 down to the "Cost per DPS" line; a blank row in
+    # between is a slot kept free (the Field Hospital's row 10 until T15).
+    for r in range(5, 40):
         name = v(ws, r, 1)
-        if not name or str(name).startswith("Cost per DPS"):
+        if name and str(name).startswith("Cost per DPS"):
             break
+        if not name:
+            continue
         # Internal key (Key column) stays fixed while the display name can change.
         key = str(v(ws, r, 15) or name).strip().upper()
         towers[key] = {
@@ -128,10 +139,11 @@ def read_towers(ws):
             "slowPercent": num(v(ws, r, 13)),
             "unlockCost": num(v(ws, r, 14)),
             "maxHp": num(v(ws, r, 16)),
+            "healPerSecond": num(v(ws, r, 17)),
+            "resistPercent": num(v(ws, r, 18)),
             "paths": [],
         }
         order.append(key)
-        r += 1
     return towers, order
 
 

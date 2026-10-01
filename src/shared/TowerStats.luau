@@ -49,9 +49,29 @@ export type Stats = {
 	chestCash: number,
 	discountPercent: number,
 	sellRefund: number,
+	-- Armory (Step 2): resistance and thorns for everything in range, buffs for hunters in range
+	resistPercent: number,
+	thornsDamage: number,
+	stunBitersSeconds: number,
+	hunterRecoilMult: number,
+	hunterReloadMult: number,
+	hunterSpreadMult: number,
+	hunterRatePercent: number,
 }
 
-local MULTIPLIERS = { "damageMult", "rateMult", "targetsMult", "rangeMult", "armoredMult", "bossMult", "splashMult", "incomeMult" }
+local MULTIPLIERS = {
+	"damageMult",
+	"rateMult",
+	"targetsMult",
+	"rangeMult",
+	"armoredMult",
+	"bossMult",
+	"splashMult",
+	"incomeMult",
+	"hunterRecoilMult",
+	"hunterReloadMult",
+	"hunterSpreadMult",
+}
 local HIGHEST = {
 	"shots",
 	"lineHits",
@@ -75,6 +95,10 @@ local HIGHEST = {
 	"chestCash",
 	"discountPercent",
 	"sellRefund",
+	"resistPercent",
+	"thornsDamage",
+	"stunBitersSeconds",
+	"hunterRatePercent",
 }
 local FLAGS = { "piercesArmor", "stunsBosses", "auraPiercesArmor", "slowsBosses", "freezeHoldsBosses", "stripsArmor" }
 
@@ -144,6 +168,13 @@ function TowerStats.compute(def, pathTiers: { number }): Stats
 		chestCash = high.chestCash or 0,
 		discountPercent = high.discountPercent or 0,
 		sellRefund = high.sellRefund or 0,
+		resistPercent = math.max(def.resistPercent or 0, high.resistPercent or 0),
+		thornsDamage = high.thornsDamage or 0,
+		stunBitersSeconds = high.stunBitersSeconds or 0,
+		hunterRecoilMult = mult.hunterRecoilMult,
+		hunterReloadMult = mult.hunterReloadMult,
+		hunterSpreadMult = mult.hunterSpreadMult,
+		hunterRatePercent = high.hunterRatePercent or 0,
 	}
 end
 

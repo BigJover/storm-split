@@ -201,3 +201,67 @@ test("Supply Camp Logistics: Bulk Order -5%, Recycler 90%, Forward Base +10% rat
 	eq(command.discountPercent, 20, "Command Center discount")
 	eq(command.sellRefund, 1, "Command Center refund")
 end)
+
+-- Armory (DECISIONS #16, names per #25) -------------------------------------------
+
+test("Armory: 600, range 15, no attack, 250 HP, 15% resist, unlock 150", function()
+	local def = Config.Towers.ARMORY
+	eq(def.display, "Armory")
+	eq(def.baseCost, 600, "cost")
+	eq(def.range, 15, "range")
+	eq(def.hitsAir, false, "hits air")
+	eq(def.maxHp, 250, "Max HP")
+	eq(def.unlockCost, 150, "unlock")
+	local s = base("ARMORY")
+	ok(s.rate <= 0 or s.damage <= 0, "never shoots")
+	eq(s.resistPercent, 15, "resist aura")
+end)
+
+test("Armory Plating: 20/25/25/35/45 resist, Thorn Plating 3, Tempered Steel 5, Bulwark stuns 0.5s", function()
+	local names = { "Hide Padding", "Iron Plates", "Thorn Plating", "Tempered Steel", "Bulwark" }
+	local resist = { 20, 25, 25, 35, 45 }
+	local thorns = { 0, 0, 3, 5, 5 }
+	local stun = { 0, 0, 0, 0, 0.5 }
+	for t, name in names do
+		local s = at("ARMORY", 1, t, name)
+		eq(s.resistPercent, resist[t], `{name} resist`)
+		eq(s.thornsDamage, thorns[t], `{name} thorns`)
+		eq(s.stunBitersSeconds, stun[t], `{name} stuns biters`)
+		ok(s.resistPercent <= Config.Tuning.MaxResist, `{name} under the resist cap`)
+	end
+end)
+
+test("Armory Gunsmith: Oiled Actions +5% rate, Hand Loads +10% damage, Piercing Rounds, Match Grade, Master Gunsmith", function()
+	local oiled = at("ARMORY", 2, 1, "Oiled Actions")
+	eq(oiled.auraRatePercent, 5, "Oiled Actions rate")
+	eq(oiled.auraDamagePercent, 0, "no damage yet")
+	eq(at("ARMORY", 2, 2, "Hand Loads").auraDamagePercent, 10, "Hand Loads damage")
+	eq(at("ARMORY", 2, 2, "Hand Loads").auraPiercesArmor, false, "no pierce yet")
+	eq(at("ARMORY", 2, 3, "Piercing Rounds").auraPiercesArmor, true, "Piercing Rounds")
+	local match = at("ARMORY", 2, 4, "Match Grade")
+	eq(match.auraDamagePercent, 20, "Match Grade damage")
+	eq(match.auraRatePercent, 10, "Match Grade rate")
+	local master = at("ARMORY", 2, 5, "Master Gunsmith")
+	eq(master.auraDamagePercent, 30, "Master Gunsmith damage")
+	eq(master.auraRatePercent, 15, "Master Gunsmith rate")
+	eq(master.resistPercent, 15, "keeps the base resist")
+end)
+
+test("Armory Outfitter: Wide Rack range, Recoil Pads, Ammo Crate, Steady Rests, Full Kit", function()
+	local def = Config.Towers.ARMORY
+	near(at("ARMORY", 3, 1, "Wide Rack").range, def.range * 1.3, "Wide Rack range x1.3")
+	eq(at("ARMORY", 3, 2, "Recoil Pads").hunterRecoilMult, 0.75, "Recoil Pads")
+	eq(at("ARMORY", 3, 3, "Ammo Crate").hunterReloadMult, 0.65, "Ammo Crate")
+	eq(at("ARMORY", 3, 4, "Steady Rests").hunterSpreadMult, 0.7, "Steady Rests")
+	local kit = at("ARMORY", 3, 5, "Full Kit")
+	near(kit.range, def.range * 1.5, "Full Kit range x1.5")
+	eq(kit.hunterRatePercent, 20, "Full Kit fire rate")
+	eq(kit.hunterRecoilMult, 0.75, "keeps Recoil Pads")
+end)
+
+test("Armory crossover: Bulwark + Hand Loads keeps both", function()
+	local s = TowerStats.compute(Config.Towers.ARMORY, { 5, 2, 0 })
+	eq(s.resistPercent, 45, "resist")
+	eq(s.stunBitersSeconds, 0.5, "stun")
+	eq(s.auraDamagePercent, 10, "aura damage")
+end)
