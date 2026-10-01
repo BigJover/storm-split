@@ -54,7 +54,8 @@ src/
 │   │                        fire modes, pellets/pierce/ricochet, abilities — all validated here
 │   ├── Hazards.luau         Burning patches on the track (towers and hero rounds)
 │   ├── Airdrops.luau        Quartermaster chests players run over to collect
-│   ├── DinoAttacks.luau     Dino bites: per-dino timers, nearest standing tower or hunter in reach (reads enemies only)
+│   ├── DinoAttacks.luau     Dino bites and projectiles: per-dino timers, nearest standing tower or hunter in reach,
+│   │                        projectiles as data (capped), landing hits (reads enemies only)
 │   ├── Health.luau          The only mutator of player HP: setUp (max HP, spawn force field), damage (resist), heal
 │   ├── Progression.luau     Saved per player: Storm Cores, hero mastery, highest round (DataStore)
 │   ├── Effects.luau         Tracers, blasts, burn discs (visual only)
@@ -96,7 +97,7 @@ This dissolves most of the problems the UEFN plan was built around:
 | State | Sole owner | Everyone else |
 |---|---|---|
 | Enemies (create / move / damage / remove; stun, disarm, chill) | `Enemies` | Read `getLive()` and `isStunned` / `isDisarmed` / `slowFraction`, call `damage()` |
-| Dino attack timers | `DinoAttacks` | — (it hurts towers and players only through `Towers.damage` / `Health.damage`) |
+| Dino attack timers and projectiles in flight | `DinoAttacks` | — (it hurts towers and players only through `Towers.damage` / `Health.damage`) |
 | A tower's tiers and stats | `Towers` | Call `upgrade()` after paying |
 | A tower's HP and trampled state | `Towers` | Call `damage()` / `heal()` / `repair()` (after paying); dinos pick from `targets()`; clients read the body's `HP` / `MaxHP` / `KO` attributes |
 | Cash and lives | `Economy` | Call `trySpend()` / `earn()` / `lose()` |

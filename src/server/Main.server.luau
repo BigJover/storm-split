@@ -142,6 +142,7 @@ DinoAttacks.init({
 	damageMult = function()
 		return difficulty().dinoDamageMult
 	end,
+	folder = map.effectFolder,
 })
 Shop.init(remotes)
 Hero.init(remotes, { onPop = Scoreboard.addPop })
@@ -248,7 +249,7 @@ RunService.Heartbeat:Connect(function(dt)
 	local started = os.clock()
 	Enemies.step(dt)
 	Towers.step(dt)
-	DinoAttacks.step(dt) -- bites (Playing only)
+	DinoAttacks.step(dt) -- bites and projectiles (Playing only)
 	Hazards.step(dt)
 	local cost = os.clock() - started
 
@@ -347,6 +348,7 @@ local function playMatch()
 		onRoundStart = function()
 			frames, costSum, costWorst = 0, 0, 0
 			Enemies.resetPeak()
+			DinoAttacks.resetPeak()
 			Airdrops.drop()
 		end,
 		onRoundEnd = function(index)
@@ -365,13 +367,15 @@ local function playMatch()
 
 			local average = if frames > 0 then costSum / frames else 0
 			print(string.format(
-				"[DinoHunters] Round %d cleared | %s, %d player(s) | lives %d | cash %d | peak enemies %d | script cost avg %.2f ms, worst %.2f ms",
+				"[DinoHunters] Round %d cleared | %s, %d player(s) | lives %d | cash %d | peak enemies %d | peak projectiles %d/%d | script cost avg %.2f ms, worst %.2f ms",
 				index,
 				chosen.display,
 				#Players:GetPlayers(),
 				Economy.lives(),
 				math.floor(Economy.cash()),
 				Enemies.peak(),
+				DinoAttacks.peak(),
+				Config.Tuning.MaxProjectiles,
 				average * 1000,
 				costWorst * 1000
 			))

@@ -13,6 +13,8 @@
 	                less a Logistics discount, rounded to the nearest whole
 	  pickTarget    the nearest standing target within reach, measured sideways
 	                (ignoring height); towers and players alike (DECISIONS #6)
+	  landingHits   every standing target within a projectile's impact radius
+	                of where it lands, measured sideways (DECISIONS #5)
 ]]
 
 local Config = require(script.Parent.Config)
@@ -78,6 +80,21 @@ function Combat.pickTarget(point: Vector3, candidates: { Target }, reach: number
 		end
 	end
 	return best
+end
+
+-- Everything a landing projectile hurts: each standing target within
+-- `radius` (horizontal studs, inclusive) of `point`.
+function Combat.landingHits(point: Vector3, radius: number, candidates: { Target }): { Target }
+	local hits = {}
+	for _, candidate in candidates do
+		if candidate.standing then
+			local offset = candidate.position - point
+			if Vector2.new(offset.X, offset.Z).Magnitude <= radius then
+				table.insert(hits, candidate)
+			end
+		end
+	end
+	return hits
 end
 
 return Combat

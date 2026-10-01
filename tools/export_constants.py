@@ -286,6 +286,13 @@ def read_enemies(ws):
             "meleeDamage": num(v(ws, r, 16)),
             "meleeEvery": num(v(ws, r, 17)),
             "meleeReach": num(v(ws, r, 18)),
+            # Step 2: the ranged attack (a projectile; values at the largest size, on Easy)
+            "rangedName": str(v(ws, r, 19) or ""),
+            "rangedDamage": num(v(ws, r, 20)),
+            "rangedEvery": num(v(ws, r, 21)),
+            "rangedReach": num(v(ws, r, 22)),
+            "projectileSpeed": num(v(ws, r, 23)),
+            "impactRadius": num(v(ws, r, 24)),
         }
         r += 1
     return enemies
@@ -356,6 +363,8 @@ def validate(data):
             problems.append(f"{key} bites (Melee damage > 0) but needs Melee every and Melee reach above 0")
         if e["meleeDamage"] > 0 and not e["meleeName"]:
             problems.append(f"{key} bites but its Melee name is empty")
+        if e["rangedDamage"] > 0 and (min(e["rangedEvery"], e["rangedReach"], e["projectileSpeed"], e["impactRadius"]) <= 0 or not e["rangedName"]):
+            problems.append(f"{key} has a ranged attack but needs a name, Ranged every, reach, Projectile speed and Impact radius above 0")
     for key, d in data["Difficulties"].items():
         if d["dinoDamageMult"] <= 0:
             problems.append(f"Difficulty {key} needs a Dino damage x above 0")

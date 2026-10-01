@@ -310,4 +310,163 @@ function DinoLook.setAsleep(model: Model, on: boolean)
 	billboard.Parent = root
 end
 
+------------------------------------------------------------------ projectiles
+
+--[[
+	What each ranged attack looks like in flight (Dino review round 4). Visuals
+	only: where it lands and whom it hurts is Server/DinoAttacks' job. Keyed by
+	species (the attack names live on the spreadsheet and can change).
+
+	  lob      Skull Toss (Pachycephalosaurus): a stone on a high, spinning arc
+	  spike    Spike Flick (Ankylosaurus): a bone spike pointing along a flat,
+	           fast path; it sticks in the ground for a moment
+	  gravel   Gravel Spray (Gallimimus): 3 pebbles in a tight cluster, low arc
+	  drop     Stone Drop (Pteranodon): a stone falling straight down onto the ring
+	  roll     Horn Toss (Triceratops): a big boulder rolling and bouncing along
+	           the ground
+	  capsule  Bone Spit (T-Rex): a bone-white capsule along its flight
+
+	Thrown earth is earth-coloured; only a dino's own spike or bone is bone-white.
+	Every attack shares one orange warning ring at the landing point that grows
+	more solid as the shot comes in.
+]]
+
+export type ProjectileStyle = "lob" | "spike" | "gravel" | "drop" | "roll" | "capsule"
+
+local ROCK = Color3.fromRGB(120, 105, 90)
+local BONE = Color3.fromRGB(230, 225, 210)
+local SAND = Color3.fromRGB(170, 140, 100)
+local BOULDER = Color3.fromRGB(95, 85, 75)
+
+DinoLook.PROJECTILE_STYLE = table.freeze({
+	SHIELD = "lob",
+	ARMOR = "spike",
+	STORM = "gravel",
+	LLAMA = "drop",
+	ZEP = "roll",
+	BARGE = "capsule",
+} :: { [string]: ProjectileStyle })
+
+-- The colour of the dust a landing shot throws up (nil: none, e.g. a spike).
+DinoLook.PROJECTILE_DUST = table.freeze({
+	lob = ROCK,
+	gravel = SAND,
+	drop = ROCK,
+	roll = BOULDER,
+	capsule = BONE,
+} :: { [string]: Color3 })
+
+-- Rock-type shots leave a few chips where they land.
+DinoLook.PROJECTILE_CHIPS = table.freeze({ lob = 2, drop = 2, roll = 3 } :: { [string]: number })
+
+DinoLook.RING_COLOR = Color3.fromRGB(255, 150, 40)
+DinoLook.RING_FADE = table.freeze({ 0.75, 0.35 }) -- transparency at launch, just before impact
+
+local function shotPart(model: Model, name: string, size: Vector3, color: Color3, material: Enum.Material, shape: Enum.PartType?): Part
+	local part = Instance.new("Part")
+	part.Name = name
+	if shape then
+		part.Shape = shape
+	end
+	part.Size = size
+	part.Color = color
+	part.Anchored = true
+	cosmetic(part)
+	part.Material = material
+	part.Parent = model
+	return part
+end
+
+-- A projectile model for this species' ranged attack. `radius` is the impact
+-- radius and `scale` the dino's size share (size / sizes): bigger dinos throw
+-- bigger shots. PrimaryPart "Shot".
+function DinoLook.buildProjectile(key: string, radius: number, scale: number): Model
+	local style = DinoLook.PROJECTILE_STYLE[key] or "lob"
+	local model = Instance.new("Model")
+	model.Name = `Projectile_{key}`
+	local s = math.max(scale, MIN_SCALE)
+	local base = math.min(0.35 * radius, 3) * s
+	local shot: Part
+	if style == "spike" then
+		shot = shotPart(model, "Shot", Vector3.new(0.3, 0.3, 1.4) * s, BONE, Enum.Material.SmoothPlastic)
+	elseif style == "gravel" then
+		shot = shotPart(model, "Shot", Vector3.one * 0.4 * s, SAND, Enum.Material.Sand, Enum.PartType.Ball)
+		for i, offset in { Vector3.new(0.45, 0.15, 0.2), Vector3.new(-0.35, -0.1, 0.4) } do
+			local pebble = shotPart(model, `Pebble{i}`, Vector3.one * 0.35 * s, SAND, Enum.Material.Sand, Enum.PartType.Ball)
+			pebble.CFrame = CFrame.new(offset * s)
+		end
+	elseif style == "drop" then
+		shot = shotPart(model, "Shot", Vector3.one * math.max(base, 1.2 * s), ROCK, Enum.Material.Slate, Enum.PartType.Ball)
+	elseif style == "roll" then
+		shot = shotPart(model, "Shot", Vector3.one * math.max(base, 2.5 * s), BOULDER, Enum.Material.Rock, Enum.PartType.Ball)
+	elseif style == "capsule" then
+		local length = math.max(base, 1.6 * s)
+		local width = length * 0.4
+		-- a cylinder lying along Z with rounded ends
+		shot = shotPart(model, "Shot", Vector3.new(length, width, width), BONE, Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
+		shot.CFrame = CFrame.Angles(0, math.rad(90), 0)
+		shot.PivotOffset = shot.CFrame:Inverse() -- the model's pivot faces along the capsule
+		for i, z in { -length / 2, length / 2 } do
+			local cap = shotPart(model, `Cap{i}`, Vector3.one * width, BONE, Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+			cap.CFrame = CFrame.new(0, 0, z)
+		end
+	else -- lob
+		shot = shotPart(model, "Shot", Vector3.one * math.max(base, 0.8 * s), ROCK, Enum.Material.Rock, Enum.PartType.Ball)
+	end
+	model.PrimaryPart = shot
+	model:SetAttribute("Style", style)
+	model:SetAttribute("Height", shot.Size.Y) -- for rolling along the ground
+	return model
+end
+
+-- Where a shot is `frac` (0..1) of the way through its flight, `age` seconds
+-- after launch. `from` is the thrower, `to` the landing point on the ground.
+function DinoLook.projectilePose(style: string, from: Vector3, to: Vector3, frac: number, age: number, height: number): CFrame
+	local f = math.clamp(frac, 0, 1)
+	local flat = Vector3.new(to.X - from.X, 0, to.Z - from.Z)
+	local heading = if flat.Magnitude > 0.01 then flat.Unit else Vector3.new(0, 0, -1)
+	if style == "drop" then
+		-- straight down from the flier's height onto the ring
+		local top = Vector3.new(to.X, from.Y, to.Z)
+		return CFrame.new(top:Lerp(to, f * f)) -- it speeds up as it falls
+	elseif style == "roll" then
+		local ground = Vector3.new(from.X, to.Y, from.Z):Lerp(to, f)
+		local bounce = math.abs(math.sin(f * math.pi * 3)) * 0.6
+		local spin = CFrame.fromAxisAngle(heading:Cross(Vector3.yAxis), -age * 6)
+		return CFrame.new(ground + Vector3.new(0, height / 2 + bounce, 0)) * spin
+	end
+	local arc = if style == "lob" then math.max(4, flat.Magnitude * 0.35) elseif style == "gravel" then 1 else 0
+	local point = from:Lerp(to, f) + Vector3.new(0, arc * 4 * f * (1 - f), 0)
+	if style == "lob" then
+		return CFrame.new(point) * CFrame.Angles(age * 5, age * 3, 0)
+	end
+	-- spike, gravel, capsule: point along the flight
+	local ahead = from:Lerp(to, math.min(1, f + 0.02)) + Vector3.new(0, arc * 4 * (f + 0.02) * (1 - f - 0.02), 0)
+	if (ahead - point).Magnitude < 1e-3 then
+		return CFrame.lookAt(point, point + heading)
+	end
+	return CFrame.lookAt(point, ahead)
+end
+
+-- The orange ring on the ground where a shot will land.
+function DinoLook.buildWarningRing(point: Vector3, radius: number): Part
+	local ring = Instance.new("Part")
+	ring.Name = "WarningRing"
+	ring.Shape = Enum.PartType.Cylinder
+	ring.Size = Vector3.new(0.1, radius * 2, radius * 2)
+	ring.CFrame = CFrame.new(point + Vector3.new(0, 0.08, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	ring.Color = DinoLook.RING_COLOR
+	ring.Anchored = true
+	cosmetic(ring)
+	ring.Material = Enum.Material.Neon
+	ring.Transparency = DinoLook.RING_FADE[1]
+	return ring
+end
+
+-- The ring grows more solid as the shot comes in.
+function DinoLook.ringTransparency(frac: number): number
+	local f = math.clamp(frac, 0, 1)
+	return DinoLook.RING_FADE[1] + (DinoLook.RING_FADE[2] - DinoLook.RING_FADE[1]) * f
+end
+
 return DinoLook
