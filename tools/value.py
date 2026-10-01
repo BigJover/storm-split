@@ -476,9 +476,18 @@ def value_report(data, full=False):
 # ---------------------------------------------------------------- pacing (PLAN T19)
 
 PLAYER_COUNTS = (1, 4, 10)
-AFFORD_ROUNDS = range(11, 36)  # DECISIONS #55: the minimum over rounds 11-35
-# DECISIONS #55 bars: (difficulty, players) -> minimum affordability over rounds 11-35
-BARS = {("EASY", 1): 1.0, ("NORMAL", 1): 0.85, ("HARD", 1): 0.70, ("CHAOS", 4): 0.70}
+AFFORD_ROUNDS = range(11, 40)  # DECISIONS #72: the minimum over rounds 11-39 (round 40 is the finale)
+# DECISIONS #72 bars (they replace #55's): (difficulty, players) -> ((rounds, minimum affordability), ...)
+BARS = {
+    ("EASY", 1): ((range(11, 33), 1.0), (range(33, 40), 0.85)),
+    ("NORMAL", 1): ((AFFORD_ROUNDS, 0.75),),
+    ("HARD", 1): ((AFFORD_ROUNDS, 0.55),),
+    ("CHAOS", 4): ((AFFORD_ROUNDS, 0.40),),
+}
+MAX_STEP = 1.6  # #72: no round's Required DPS above this x the round before (Easy solo, from round 12)
+FINALE_ROUNDS = range(31, 41)
+FINALE_EHP_BEFORE = 323127  # Easy solo EHP of rounds 31-40 before T21 reshaped the Rounds counts (#57)
+FINALE_EHP_TOLERANCE = 0.12  # #72: the finale's total EHP stays within +/-12% of that
 TYPICAL_TIER = ((15, 2), (25, 3), (35, 4))  # (round, tier a tower usually has by then)
 WALK_SECONDS = 14  # the Rounds sheet's round length = enemies x spawn gap + 14
 
@@ -538,7 +547,7 @@ def pacing_rounds(data, wb_cost_per_dps, difficulty, players):
         cost_per_dps = xround(wb_cost_per_dps * growth ** ref_tier, 1)
         needed = xround(required * cost_per_dps / tuning["ExpectedEfficiency"])
         in_towers = xround(cumulative * tuning["AssumedSpendOnTowers"])
-        out.append({"required": required, "length": length, "income": income, "cumulative": cumulative,
+        out.append({"ehp": total, "required": required, "length": length, "income": income, "cumulative": cumulative,
                     "needed": needed, "afford": in_towers / needed if needed else 0})
     return out
 
@@ -574,28 +583,41 @@ def pacing_report(data):
 
     findings = []
     print("pacing model (affordability = the Balance Check's cash in towers / cash needed; reproduces its Easy-solo column exactly)")
-    print("  (a) affordability, minimum over rounds 11-35, and the TIGHT (< 1.0) rounds in 11-40; bars from DECISIONS #55")
-    print(f"  {'difficulty':<10} {'hunters':>7} {'min 11-35':>9} {'at':>3} {'bar':>5}  TIGHT rounds")
+    print("  (a) affordability, minimum over rounds 11-39, and the TIGHT (< 1.0) rounds in 11-40; bars from DECISIONS #72")
+    print(f"  {'difficulty':<10} {'hunters':>7} {'min 11-39':>9} {'at':>3} {'bar':>8}  TIGHT rounds")
     for d in order:
         for n in PLAYER_COUNTS:
             rows = table[(d, n)]
             low = min(AFFORD_ROUNDS, key=lambda r: rows[r - 1]["afford"])
             value = rows[low - 1]["afford"]
-            bar = BARS.get((d, n))
-            verdict = "" if bar is None else (" ok" if value >= bar else " MISS")
+            bars = BARS.get((d, n), ())
+            missed = []
+            for span, bar in bars:
+                worst = min(span, key=lambda r: rows[r - 1]["afford"])
+                if rows[worst - 1]["afford"] < bar:
+                    missed.append(f"AFFORD: {data['Difficulties'][d]['display']} with {n} hunter(s): minimum {rows[worst - 1]['afford']:.2f} at round {worst} < bar {bar:g} (rounds {span[0]}-{span[-1]})")
+            findings.extend(missed)
+            verdict = "" if not bars else (" MISS" if missed else " ok")
+            shown = "/".join(f"{bar:g}" for _, bar in bars) or "-"
             tight = [r for r in range(11, 41) if rows[r - 1]["afford"] < 1]
-            print(f"  {data['Difficulties'][d]['display']:<10} {n:>7} {value:>9.2f} {low:>3} {bar if bar else '-':>5}{verdict:<5} {ranges(tight)}")
-            if bar is not None and value < bar:
-                findings.append(f"AFFORD: {data['Difficulties'][d]['display']} with {n} hunter(s): minimum {value:.2f} at round {low} < bar {bar}")
+            print(f"  {data['Difficulties'][d]['display']:<10} {n:>7} {value:>9.2f} {low:>3} {shown:>8}{verdict:<5} {ranges(tight)}")
             if (d, n) == (order[0], 1):
                 for r in range(12, 41):
-                    if rows[r - 1]["required"] > 1.5 * rows[r - 2]["required"]:
-                        findings.append(f"CLIFF: Easy solo round {r} Required DPS {rows[r - 1]['required']:g} > 1.5x round {r - 1} ({rows[r - 2]['required']:g})")
+                    if rows[r - 1]["required"] > MAX_STEP * rows[r - 2]["required"]:
+                        findings.append(f"CLIFF: Easy solo round {r} Required DPS {rows[r - 1]['required']:g} > {MAX_STEP:g}x round {r - 1} ({rows[r - 2]['required']:g})")
     cols = [(d, 1) for d in order] + [(order[0], 4), (order[-1], 4), (order[-1], 10)]
     print("  per round (solo unless marked): " + " ".join(f"{data['Difficulties'][d]['display'][:6]}{'' if n == 1 else f'x{n}'}" for d, n in cols))
     for r in range(11, 41):
         print(f"    r{r:<3} " + " ".join(f"{table[c][r - 1]['afford']:>{max(6, len(data['Difficulties'][c[0]]['display'][:6]) + (0 if c[1] == 1 else len(str(c[1])) + 1))}.2f}" for c in cols))
 
+    steps = [(easy[r - 1]["required"] / easy[r - 2]["required"], r) for r in range(12, 41)]
+    step, at = max(steps)
+    print(f"  Easy solo Required DPS: biggest step x{step:.2f} at round {at} ({easy[at - 2]['required']:g} -> {easy[at - 1]['required']:g}; bar x{MAX_STEP:g})")
+    finale = sum(easy[r - 1]["ehp"] for r in FINALE_ROUNDS)
+    change = finale / FINALE_EHP_BEFORE - 1
+    print(f"  Easy solo finale EHP (rounds {FINALE_ROUNDS[0]}-{FINALE_ROUNDS[-1]}): {finale:,.0f} vs {FINALE_EHP_BEFORE:,} before T21 ({change:+.1%}; bar +/-{FINALE_EHP_TOLERANCE:.0%})")
+    if abs(change) > FINALE_EHP_TOLERANCE:
+        findings.append(f"FINALE: rounds {FINALE_ROUNDS[0]}-{FINALE_ROUNDS[-1]} EHP {finale:,.0f} is {change:+.1%} from {FINALE_EHP_BEFORE:,} (bar +/-{FINALE_EHP_TOLERANCE:.0%})")
     print("  (b) repair price of a fully trampled tower (Repair cost x spent; Easy solo income that round)")
     tuning = data["Tuning"]
     for r, tier in TYPICAL_TIER:
