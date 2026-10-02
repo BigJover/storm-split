@@ -97,6 +97,24 @@ test("the sheet is the one this spec means", function()
 	eq(Config.Bounties.W_DEEP_TRAIL_4.round, 31, "weekly Deep Trail round")
 end)
 
+test("bounty wording: no two titles alike in a pool, and no balloon words (DECISIONS #93)", function()
+	local seen: { [string]: string } = {}
+	for _, id in Config.BountyOrder do
+		local def = Config.Bounties[id]
+		local key = `{def.pool}/{def.title}`
+		eq(seen[key], nil, `{id} shares the title "{def.title}" in the {def.pool} pool`)
+		seen[key] = id
+		eq(string.find(string.lower(def.text), "pop", 1, true), nil, `{id} text says "pop": {def.text}`)
+	end
+	eq(Config.Bounties.D_DEEP_TRAIL_15.title, "Deep Trail", "daily, round 15")
+	eq(Config.Bounties.D_DEEP_TRAIL_25.title, "Deeper Trail", "daily, round 25")
+	eq(Config.Bounties.W_DEEP_TRAIL_2.title, "Long Trail", "weekly, twice")
+	eq(Config.Bounties.W_DEEP_TRAIL_4.title, "Longest Trail", "weekly, four times")
+	eq(Config.Bounties.W_HORN_BREAKER.text, "Take down {n} Triceratops (team take-downs count)", "Horn Breaker")
+	eq(Config.Bounties.W_TYRANTS_END.text, "Take down a T-Rex (team take-downs count)", "Tyrant's End")
+	eq(Config.Bounties.D_RAPTOR_CULL.text, "Take down {n} Raptors", "Raptor Cull")
+end)
+
 test("a new day starts at 00:00 UTC", function()
 	eq(Bounties.dayIndex(THURSDAY), 20727, "2026-10-01")
 	eq(Bounties.dayIndex(THURSDAY - 1), 20726, "23:59:59 the day before")

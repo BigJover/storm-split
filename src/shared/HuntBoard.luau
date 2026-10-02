@@ -10,10 +10,11 @@
 
 	  shown        is the board on screen (Shared/PanelRules: the home screen only)
 	  countdown    "5h 12m", "3d 4h", "12m" — minutes rounded up, so it never reads 0m
-	  resetLine    "New bounties in 5h 12m"
+	  resetLine    "New daily bounties in 5h 12m", under the header
+	  weeklyLine   "New in 3d 4h", beside the Weekly Bounties title
 	  remaining    seconds left, `elapsed` seconds after the server said `seconds`
 	  payoutLine   "Unclaimed bounties paid: +35 Amber", or nil when nothing was paid
-	  haulNote     the line under the Daily Haul, or nil when missed days do reset it
+	  haulNote     the line under the Daily Haul: what missing days does to it (never nil)
 	  card         one bounty card, or nil for a bounty this client doesn't know
 	  cards        the cards of one pool, in board order
 	  haul         the Daily Haul tiles, day 1 to the last
@@ -70,11 +71,12 @@ HuntBoard.KEY = "G" -- toggles it (DECISIONS #70)
 HuntBoard.HAUL = "haul" -- `inFlight` for the Daily Haul claim
 
 HuntBoard.TITLE = string.upper(Theme.HuntBoard)
-HuntBoard.BUTTON = `{Theme.HuntBoard} [{HuntBoard.KEY}]` -- the home-screen button
+HuntBoard.BUTTON = `{Theme.HuntBoard}  ({HuntBoard.KEY})` -- the home-screen button, like "Choose hero  (H)" (DECISIONS #92)
 HuntBoard.CLAIM = "Claim"
-HuntBoard.WAIT = "…"
+HuntBoard.WAIT = "…" -- the pressed button
+HuntBoard.LOADING = "Checking the board…" -- the line shown before the first answer
 HuntBoard.BAGGED = "BAGGED" -- the stamp on a claimed bounty
-HuntBoard.UNREACHABLE = "Couldn't reach the server"
+HuntBoard.UNREACHABLE = `Couldn't reach the {Theme.HuntBoard}. Try again in a moment.`
 
 -- Pixels, before the board's scale.
 HuntBoard.WIDTH = 560 -- on windows wide enough
@@ -123,7 +125,11 @@ function HuntBoard.countdown(seconds: number): string
 end
 
 function HuntBoard.resetLine(seconds: number): string
-	return `New bounties in {HuntBoard.countdown(seconds)}`
+	return `New daily bounties in {HuntBoard.countdown(seconds)}`
+end
+
+function HuntBoard.weeklyLine(seconds: number): string
+	return `New in {HuntBoard.countdown(seconds)}`
 end
 
 function HuntBoard.remaining(seconds: number, elapsed: number): number
@@ -137,11 +143,16 @@ function HuntBoard.payoutLine(amber: number?): string?
 	return `Unclaimed bounties paid: +{grouped(amber)} {Theme.Currency}`
 end
 
-function HuntBoard.haulNote(): string?
-	if Tuning.HaulResetsAfterMissedDays > 0 then
-		return nil
+-- `resetAfter` defaults to the "Haul resets after missed days" lever, like
+-- Bounties.nextHaulDay. The note always says the rule (DECISIONS #91).
+function HuntBoard.haulNote(resetAfter: number?): string
+	local after = resetAfter or Tuning.HaulResetsAfterMissedDays
+	if after <= 0 then
+		return "Missed days don't reset your Haul."
+	elseif after == 1 then
+		return "Miss a day and your Haul starts over."
 	end
-	return "Missed days don't reset your Haul."
+	return `Miss {after} days in a row and your Haul starts over.`
 end
 
 -- Bounty cards -----------------------------------------------------------------

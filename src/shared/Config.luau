@@ -9956,7 +9956,7 @@ return table.freeze({
 	Bounties = {
 		D_COMPY_SWEEP = {
 			title = "Compy Sweep",
-			text = "Pop {n} Compies",
+			text = "Take down {n} Compies",
 			pool = "daily",
 			slot = "easy",
 			event = "pop",
@@ -9967,7 +9967,7 @@ return table.freeze({
 		},
 		D_RAPTOR_CULL = {
 			title = "Raptor Cull",
-			text = "Pop {n} Raptors",
+			text = "Take down {n} Raptors",
 			pool = "daily",
 			slot = "easy",
 			event = "pop",
@@ -9978,7 +9978,7 @@ return table.freeze({
 		},
 		D_BUSY_DAY = {
 			title = "Busy Day",
-			text = "Pop {n} dinos of any kind",
+			text = "Take down {n} dinos of any kind",
 			pool = "daily",
 			slot = "easy",
 			event = "popTotal",
@@ -10011,7 +10011,7 @@ return table.freeze({
 		},
 		D_HEADBUTT_HUNT = {
 			title = "Headbutt Hunt",
-			text = "Pop {n} Pachycephalosaurs",
+			text = "Take down {n} Pachycephalosaurs",
 			pool = "daily",
 			slot = "medium",
 			event = "pop",
@@ -10022,7 +10022,7 @@ return table.freeze({
 		},
 		D_SHELL_CRACKER = {
 			title = "Shell Cracker",
-			text = "Pop {n} Ankylosaurs",
+			text = "Take down {n} Ankylosaurs",
 			pool = "daily",
 			slot = "medium",
 			event = "pop",
@@ -10033,7 +10033,7 @@ return table.freeze({
 		},
 		D_CLEAR_SKIES = {
 			title = "Clear Skies",
-			text = "Pop {n} Pteranodons",
+			text = "Take down {n} Pteranodons",
 			pool = "daily",
 			slot = "medium",
 			event = "pop",
@@ -10066,7 +10066,7 @@ return table.freeze({
 		},
 		D_RUN_THEM_DOWN = {
 			title = "Run Them Down",
-			text = "Pop {n} Gallimimus",
+			text = "Take down {n} Gallimimus",
 			pool = "daily",
 			slot = "hard",
 			event = "pop",
@@ -10076,7 +10076,7 @@ return table.freeze({
 			amber = 20,
 		},
 		D_DEEP_TRAIL_25 = {
-			title = "Deep Trail",
+			title = "Deeper Trail",
 			text = "Reach round {n}",
 			pool = "daily",
 			slot = "hard",
@@ -10110,7 +10110,7 @@ return table.freeze({
 		},
 		W_STAMPEDE = {
 			title = "Stampede",
-			text = "Pop {n} dinos of any kind",
+			text = "Take down {n} dinos of any kind",
 			pool = "weekly",
 			slot = "easy",
 			event = "popTotal",
@@ -10131,7 +10131,7 @@ return table.freeze({
 			amber = 40,
 		},
 		W_DEEP_TRAIL_2 = {
-			title = "Deep Trail",
+			title = "Long Trail",
 			text = "Reach round 31 {n} times",
 			pool = "weekly",
 			slot = "easy",
@@ -10165,7 +10165,7 @@ return table.freeze({
 		},
 		W_HORN_BREAKER = {
 			title = "Horn Breaker",
-			text = "Pop {n} Triceratops (team pops count)",
+			text = "Take down {n} Triceratops (team take-downs count)",
 			pool = "weekly",
 			slot = "medium",
 			event = "pop",
@@ -10198,7 +10198,7 @@ return table.freeze({
 		},
 		W_TYRANTS_END = {
 			title = "Tyrant's End",
-			text = "Pop a T-Rex (team pops count)",
+			text = "Take down a T-Rex (team take-downs count)",
 			pool = "weekly",
 			slot = "hard",
 			event = "pop",
@@ -10208,7 +10208,7 @@ return table.freeze({
 			amber = 80,
 		},
 		W_DEEP_TRAIL_4 = {
-			title = "Deep Trail",
+			title = "Longest Trail",
 			text = "Reach round 31 {n} times",
 			pool = "weekly",
 			slot = "hard",

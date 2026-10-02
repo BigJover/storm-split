@@ -329,16 +329,17 @@ task.spawn(function()
 	end)
 end)
 
--- Private bounty toast above the HP bar: "Bounty bagged: Raptor Cull (+15 Amber)"
--- (DECISIONS #70, #76). Only this hunter's bounties arrive here (Server/Progression
+-- Private bounty toast above the HP bar: "Bounty ready: Raptor Cull (claim +15 Amber
+-- at the Hunt Board)" (DECISIONS #70, #94); a long line wraps inside the window. Only this hunter's bounties arrive here (Server/Progression
 -- fires to them alone). No panel, nothing to click: lines show for a moment and go.
 local TOAST_SECONDS = 4 -- UI timing, not a gameplay number
 local toast = Instance.new("TextLabel")
 toast.Name = "BountyToast"
 toast.AnchorPoint = Vector2.new(0, 1)
 toast.Position = UDim2.new(0, 24, 1, -24 - 28 - 8)
-toast.Size = UDim2.fromOffset(0, 0)
-toast.AutomaticSize = Enum.AutomaticSize.XY
+toast.Size = UDim2.new(1, -48, 0, 0)
+toast.AutomaticSize = Enum.AutomaticSize.Y
+toast.TextWrapped = true
 toast.BackgroundTransparency = 1
 toast.TextColor3 = Color3.fromRGB(245, 175, 60) -- the amber title colour
 toast.TextStrokeTransparency = 0.4

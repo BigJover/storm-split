@@ -70,6 +70,7 @@ local onMasteryChanged: ((Player) -> ())? = nil
 local canSave: { [Player]: boolean } = {} -- false = session-only (store unreachable at load)
 local bountyDone: RemoteEvent? = nil -- (bounty id), to the hunter who finished it only
 local store: DataStore? = nil
+local saveHintGiven = false -- the developer's "publish the place" hint: one warn per session
 do
 	local ok, result = pcall(function()
 		return DataStoreService:GetDataStore(STORE_NAME)
@@ -77,7 +78,8 @@ do
 	if ok then
 		store = result
 	else
-		warn(`[Progression] No data store (is the place published?): {result}`)
+		warn(`[Progression] No data store, so progress isn't saving. Publish the place to Roblox to keep it (SETUP.md): {result}`)
+		saveHintGiven = true
 	end
 end
 
@@ -160,6 +162,11 @@ local function load(player: Player)
 	-- Only a successful load may ever be saved back, so a failed load can't
 	-- overwrite real progress with a blank profile.
 	canSave[player] = profile ~= nil
+	if not profile and not saveHintGiven then
+		-- Players only read "Progress isn't saving right now." (DECISIONS #94).
+		saveHintGiven = true
+		warn("[Progression] Progress isn't saving. In Studio, publish the place to Roblox to keep it (SETUP.md).")
+	end
 	local loaded = profile or Profile.blank(os.time(), rng)
 	if not loaded.rewards then
 		warn(`[Progression] No Hunt Board for {player.Name} this session; their stored one is kept`)
@@ -278,7 +285,7 @@ local function boardOpen(player: Player): (Profile?, string)
 		return nil, "Still loading your progress"
 	end
 	if not profile.rewards then
-		return nil, "The Hunt Board isn't available right now"
+		return nil, "The Hunt Board is closed right now"
 	end
 	return profile, ""
 end
@@ -300,7 +307,7 @@ local function claimHaul(player: Player): (boolean, string, number?)
 	local ok, amber = Profile.claimHaul(profile, os.time(), rng)
 	settle(player, profile.rewardsVersion ~= version)
 	if not ok then
-		return false, "Already claimed today"
+		return false, "Today's Haul is already claimed"
 	end
 	return true, `+{amber} {Theme.Currency}`, amber
 end
@@ -330,7 +337,7 @@ local function swapBounty(player: Player, id: unknown): (boolean, string, string
 	if not ok or not newId then
 		return false, "That bounty can't be swapped"
 	end
-	return true, "Swapped", newId
+	return true, "Bounty swapped", newId
 end
 
 -- The owner's own board (Profile.View). `open` = true when the board is on their
@@ -341,7 +348,7 @@ local function getRewards(player: Player, open: unknown): (boolean, any)
 		return false, "Still loading your progress"
 	end
 	if not profile.rewards then
-		return false, "The Hunt Board isn't available right now"
+		return false, "The Hunt Board is closed right now"
 	end
 	if ReplicatedStorage:GetAttribute("State") == "Lobby" then
 		local version = profile.rewardsVersion

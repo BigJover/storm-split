@@ -168,7 +168,7 @@ haulTitle.Size = UDim2.fromScale(1, 1)
 local strip = section(4, HuntBoard.TILE)
 strip.Name = "Haul"
 
-local haulNote = label(section(5, HuntBoard.LINE), HuntBoard.haulNote() or "", 13, Enum.Font.Gotham, TEXT_DIM)
+local haulNote = label(section(5, HuntBoard.LINE), HuntBoard.haulNote(), 13, Enum.Font.Gotham, TEXT_DIM)
 haulNote.Size = UDim2.fromScale(1, 1)
 
 -- The only part that scrolls.
@@ -265,7 +265,7 @@ local function updateLines()
 	local elapsed = os.clock() - viewAt
 	resetLabel.Text = if current then HuntBoard.resetLine(HuntBoard.remaining(current.secondsToDaily, elapsed)) else ""
 	if weeklyLabel then
-		weeklyLabel.Text = if current then HuntBoard.resetLine(HuntBoard.remaining(current.secondsToWeekly, elapsed)) else ""
+		weeklyLabel.Text = if current then HuntBoard.weeklyLine(HuntBoard.remaining(current.secondsToWeekly, elapsed)) else ""
 	end
 	if said then
 		message.Text, message.TextColor3 = said, saidColor
@@ -511,9 +511,17 @@ local function addCard(order: number, card: HuntBoard.Card)
 	chip.TextTransparency = fade
 
 	local text = label(frame, card.text, 14, Enum.Font.Gotham, INK_DIM)
-	text.Position = UDim2.fromOffset(10, 30)
-	text.Size = UDim2.new(1, -20, 0, 16)
+	text.Position = UDim2.fromOffset(10, 29)
+	text.Size = UDim2.new(1, -20, 0, 18)
 	text.TextTransparency = fade
+	-- One line, never cut short: the longest text ("Take down 6 Triceratops (team
+	-- take-downs count)") shrinks to fit a narrow board instead of ending in "…".
+	text.TextScaled = true
+	text.TextTruncate = Enum.TextTruncate.None
+	local fitText = Instance.new("UITextSizeConstraint")
+	fitText.MaxTextSize = 14
+	fitText.MinTextSize = 9
+	fitText.Parent = text
 
 	-- Bottom row: bar, "12 / 40", then the button (or the stamp).
 	local ACTION = 104
@@ -639,12 +647,12 @@ render = function()
 		end
 		if player:GetAttribute("SaveStatus") == "offline" then
 			-- The same words as Unlocks & Mastery (Shop.client).
-			addLine(order + 1, "Progress isn't saving: publish the place to Roblox to keep it (SETUP.md).", TEXT_DIM, 36)
+			addLine(order + 1, "Progress isn't saving right now.", TEXT_DIM, 36)
 			table.insert(heights, 36)
 		end
 	else
 		-- No board to show: say why. The header, the X and Play all still work.
-		addLine(1, problem or HuntBoard.WAIT, if problem then BAD else TEXT_DIM, 36)
+		addLine(1, problem or HuntBoard.LOADING, if problem then BAD else TEXT_DIM, 36)
 		table.insert(heights, 36)
 	end
 	listContent = 0
@@ -654,7 +662,7 @@ render = function()
 	list.CanvasSize = UDim2.fromOffset(0, listContent)
 	-- Blank, not hidden, without a board: the sections keep their places.
 	haulTitle.Text = if current then Theme.DailyHaul else ""
-	haulNote.Text = if current then HuntBoard.haulNote() or "" else ""
+	haulNote.Text = if current then HuntBoard.haulNote() else ""
 	lastStripWidth = -1 -- redraw the Haul tiles too
 	fit()
 	updateLines()

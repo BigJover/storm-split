@@ -463,8 +463,8 @@ test("an unknown event or a bad amount changes nothing", function()
 end)
 
 test("the toast names the bounty by its title and Amber", function()
-	eq(Bounties.doneText("D_RAPTOR_CULL"), `Bounty bagged: Raptor Cull (+{amberOf("D_RAPTOR_CULL")} Amber)`, "Raptor Cull")
-	eq(Bounties.doneText("W_TYRANTS_END"), `Bounty bagged: Tyrant's End (+{amberOf("W_TYRANTS_END")} Amber)`, "Tyrant's End")
+	eq(Bounties.doneText("D_RAPTOR_CULL"), `Bounty ready: Raptor Cull (claim +{amberOf("D_RAPTOR_CULL")} Amber at the Hunt Board)`, "Raptor Cull")
+	eq(Bounties.doneText("W_TYRANTS_END"), `Bounty ready: Tyrant's End (claim +{amberOf("W_TYRANTS_END")} Amber at the Hunt Board)`, "Tyrant's End")
 	eq(Bounties.doneText("NOT_A_BOUNTY"), nil, "unknown id")
 	for _, id in Config.BountyOrder do
 		ok(Bounties.doneText(id) ~= nil, `{id} has a toast`)

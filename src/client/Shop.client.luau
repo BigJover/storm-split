@@ -1043,7 +1043,7 @@ render = function()
 		end
 
 		local note = if status == "offline"
-			then "Progress isn't saving: publish the place to Roblox to keep it (SETUP.md)."
+			then "Progress isn't saving right now."
 			else `Clear a track to earn {Theme.Currency} (more on harder difficulties). Mastery never adds damage.`
 		addRow(50, `<font size="13">{note}</font>`, PANEL_COLOR, false)
 	elseif mode == "manage" and managed then

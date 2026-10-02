@@ -476,13 +476,14 @@ function Bounties.claimable(state: State, now: number): boolean
 	return false
 end
 
--- "Bounty bagged: Raptor Cull (+15 Amber)" (DECISIONS #76), or nil for an unknown id.
+-- "Bounty ready: Raptor Cull (claim +15 Amber at the Hunt Board)" (DECISIONS #94), or
+-- nil for an unknown id. "Bagged" only ever means claimed.
 function Bounties.doneText(id: string): string?
 	local def = definition(id)
 	if not def then
 		return nil
 	end
-	return `Bounty bagged: {def.title} (+{def.amber} {Theme.Currency})`
+	return `Bounty ready: {def.title} (claim +{def.amber} {Theme.Currency} at the {Theme.HuntBoard})`
 end
 
 return Bounties
