@@ -3,7 +3,7 @@
 Scope (Jovan, 2026-10-01, `GAUNTLET.md` "Round 2 scope"): (1) a balance pass across the whole
 game, justified by headless models because there's no playtest data yet; (2) daily log-in
 rewards plus daily and weekly challenges, for retention. **Stop before phase 7** and append a
-round-2 recap to `RECAP.md`. Design calls: `DECISIONS.md` #54–#79. Round 1's plan is kept
+round-2 recap to `RECAP.md`. Design calls: `DECISIONS.md` #54–#83. Round 1's plan is kept
 below as history.
 
 The round-1 rules still hold (one task = one commit, push after verifying; `tools/check.sh`,
@@ -252,29 +252,53 @@ Haul**); challenges are **Bounties**; a reroll is a **Swap**.
   done bounty refused; swap limit; unclaimed payout on reset; Haul loop after day 7; missed
   day pauses. All existing specs still green.
 
-### T27. Progression: save, load, claim and swap
-- **Files:** `src/server/Progression.luau` (sole owner of the saved profile), the Progress
-  remote.
-- **Do:** profile field `rewards` (sanitised on load by `Bounties.sanitize`; old saves load
-  cleanly); refresh on load, on every claim/swap and at match end; actions `claimHaul`,
-  `claimBounty(id)`, `swapBounty(id)` validated server-side, Amber added by the server
-  only, save right after a claim; publish state for the client (attribute JSON or a
-  RemoteFunction `getRewards`). Claims and swaps only outside a match (Lobby), like unlocks.
-  Studio J sessions keep not saving.
-- **Accept:** check.sh, specs green; a spec or harness test of the claim path using a fake
-  store if the existing harness allows; old-save sanitize case in the spec.
+### T27. Progression: save, load, claim and swap (final; uses the T26 API as built)
+- **Files:** `src/server/Progression.luau` (sole owner of the saved profile), its remote.
+  Plus two text cells on the Bounties sheet (#82): Horn Breaker Text → "Pop {n} Triceratops
+  (team pops count)", Tyrant's End Text → "Pop a T-Rex (team pops count)" (assert the old
+  text; the Config diff is those two `text` lines).
+- **Do:** profile field `rewards`, written by `save` and read through
+  `Bounties.sanitize(raw.rewards, os.time(), rng)` (rng = one `Random.new()` per server; a
+  missing or broken field becomes `Bounties.fresh`, so old saves load cleanly). Call
+  `Bounties.refresh(state, os.time(), rng)` on load, before every claim/swap, and at match
+  end; add the Amber it returns to `cores` and remember it as `lastResetPayout` (published
+  once, cleared when the board is next opened). Remote actions, validated server-side and
+  **Lobby only** (like unlocks): `claimHaul` (`Bounties.claimHaul`), `claimBounty(id)`
+  (`Bounties.claim`), `swapBounty(id)` (`Bounties.swap`); Amber is added only from the
+  module's return values; save right after each success. Publish the state to the owner
+  only: a `getRewards` action on the same RemoteFunction returning the entries (id,
+  progress, claimed), Haul day and claimed-today, swaps left, seconds to daily/weekly reset
+  and `lastResetPayout`, plus a player attribute `RewardsClaimable` (bool, from
+  `Bounties.claimable`) and `RewardsVersion` (a counter bumped on every change, so the client
+  knows to re-ask). Studio J sessions keep not saving.
+- **Accept:** check.sh and specs green; a spec for the load path through `sanitize` with a
+  round-1 profile (`{cores, owned, mastery, highestRound}` only); grep shows no Amber number
+  in the code; export clean after the two text cells.
 
-### T28. Bounty progress from match events
-- **Files:** `Scoreboard`/`Main` hook (onPop gains the species key: Towers, Hero, Hazards
-  call sites), `Shop` (build, upgrade, repair), `Hero` (ability used), `Airdrops` (chest
-  collected), `Progression.endMatch` (clear + difficulty, round reached), `Waves` (round
-  reached).
-- **Do:** one `Progression.bountyEvent(player, event, target, amount)`; counts only while
-  State is Building/Playing; **boss pops (Triceratops, T-Rex) count for every hunter in the
-  match**, other pops for the hunter credited with the pop; shrinks don't count, only
-  pops. A private in-match toast "Bounty bagged: <Title> (+N Amber)" (fades like the hit notice, no stacking).
-- **Accept:** `audit.py` (or a spec) proves every Event kind in the Bounties sheet has a
-  call site; specs green; no change to cash or Amber outside claims.
+### T28. Bounty progress from match events (final)
+- **Files:** `Progression` (one entry point), `Main` (wiring), `Scoreboard`/`Towers`/`Hero`/
+  `Hazards` (the onPop hook gains the species key), `Shop` (build, upgrade, repair), `Hero`
+  (ability used), `Waves` or `Main` (round started), `Progression.endMatch` (clear). No
+  `Airdrops` hook (the chest event was dropped, #75).
+- **Do:** `Progression.bountyEvent(player, event, target, amount, context)` calls
+  `Bounties.progress` and, for each id it returns, fires the private toast "Bounty bagged:
+  <Title> (+N Amber)" and republishes. It ignores calls unless State is Building or Playing.
+  Call sites, exactly:
+  - `pop`: on every pop (not a shrink), for **every hunter in the match**, target = species
+    key, `context.credited = true` for the hunter Scoreboard credits and `false` for the
+    rest (the module then counts it for them only if the species is a boss). This one event
+    also feeds the pop-any bounties (Busy Day, Stampede); there is no separate `popTotal`
+    call.
+  - `reachRound`: once per round, when the round starts, amount = the round number, for
+    every hunter in the match.
+  - `clear`: at match end on a clear, target = the difficulty key, for every hunter still
+    in the server.
+  - `ability`: when the server accepts an ability use. `build`: a tower placed. `upgrade`:
+    an upgrade bought (a teammate's tower counts for the buyer). `repair`: only when the
+    repaired tower was **trampled** (KO before the repair), for the hunter who paid.
+- **Accept:** a spec or audit check proves each of `Bounties.EVENTS` has a call site;
+  specs green; no cash or Amber changes outside claims; the Scoreboard's pop counts are
+  unchanged.
 
 ### T29. Hunt Board screen on the home screen — 🦖 (wording, look)
 - **Files:** `src/client/Home.client.luau` (or a new `HuntBoard.client.luau`),
@@ -289,6 +313,12 @@ Haul**); challenges are **Bounties**; a reroll is a **Swap**.
   `huntBoard` is allowed only in Lobby and closes on every state change (Play pressed,
   match start); Play stays reachable for every player while it's open; every player can
   open it, not just the host.
+- **Data (final):** read state with the `getRewards` action; re-ask when the player's
+  `RewardsVersion` attribute changes and when the board opens; the dot follows
+  `RewardsClaimable`; count the reset timer down locally from the seconds returned. Card
+  text = the sheet's Text with `{n}` filled in; the Amber chip and Title come from
+  `Config.Bounties`. Haul amounts come from `Config.DailyHaul`. Show `lastResetPayout` as
+  the one dim line when it's above 0. The look and wording are in "Round 9 rulings" above.
 - **Accept:** panelrules spec covers `huntBoard`; check.sh green; screenshots not possible:
   "statically checked, not playtested".
 
