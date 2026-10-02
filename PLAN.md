@@ -3,7 +3,8 @@
 Scope (Jovan, 2026-10-01, `GAUNTLET.md` "Round 2 scope"): (1) a balance pass across the whole
 game, justified by headless models because there's no playtest data yet; (2) daily log-in
 rewards plus daily and weekly challenges, for retention. **Stop before phase 7** and append a
-round-2 recap to `RECAP.md`. Design calls: `DECISIONS.md` #54–#95. Round 1's plan is kept
+round-2 recap to `RECAP.md`. Design calls: `DECISIONS.md` #54–#96.
+**Status (2026-10-01): T18–T30 done and signed off; T31 (Studio playtest) is open.** Round 1's plan is kept
 below as history.
 
 The round-1 rules still hold (one task = one commit, push after verifying; `tools/check.sh`,
@@ -365,6 +366,7 @@ Haul**); challenges are **Bounties**; a reroll is a **Swap**.
   n > 1 → "Miss {n} days in a row and your Haul starts over."
 - **Key hint (#92):** `HuntBoard.BUTTON` = "Hunt Board  (G)" (two spaces, round brackets,
   like "Choose hero  (H)"). This overrides "Hunt Board [G]" in the Round 9 rulings above.
+- **Signed off (Director, b8af6b1, DECISIONS #96):** all strings as written; 214 specs.
 - **Accept:** specs for the three note cases (0, 1, 3), the button text, both countdown
   lines, the toast and the unreachable line; a spec (or exporter check) that no two bounties
   in one pool share a Title; `grep -n '"Pop \|pops count' src/shared/Config.luau` finds
@@ -437,7 +439,11 @@ Haul**); challenges are **Bounties**; a reroll is a **Swap**.
 - **Accept:** `PLAYTEST.md` covers every step with evidence or NOT TESTABLE and why; play
   mode stopped; nothing but `PLAYTEST.md` and `playtest/` changed (`git status`).
 
-### T30. Docs and round-2 recap (after T31's results, or noting "Studio testing unavailable")
+**T31 status (2026-10-01): OPEN, not run.** `tools/studio/mcp.py call list_roblox_studios`
+returns no Studio: Jovan has to turn on Assistant Settings → Manage MCP Servers → "Enable
+Studio as MCP server". Run T31 as soon as a Studio is listed; its bugs become new tasks.
+
+### T30. Docs and round-2 recap — **done 2026-10-01**, noting "Studio testing pending" (DECISIONS #96)
 - `VISION.md` (Amber: Daily Haul and Bounties, the "log-ins never beat playing" bars),
   `ARCHITECTURE.md` (layout: `Shared/Bounties`; §4: Progression owns the rewards state),
   `CLAUDE.md` status, `UPGRADES.md` if T20/T23 changed what a tier does.

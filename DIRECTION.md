@@ -54,5 +54,7 @@ point, then log it in `DECISIONS.md`.
 - He likes being asked before big design changes, and approves quickly. When he's away
   (the gauntlet loop), decide in line with this file and log it instead.
 - He wants every verified step committed and pushed.
+- He wants builds **tested in Roblox Studio whenever that's possible** (2026-10-01), by a
+  Tester agent through Studio's MCP server (`GAUNTLET.md`). Headless specs don't replace it.
 - Be honest about what was and wasn't verified. Never claim something works in Studio
   unless it was run there.

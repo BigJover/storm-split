@@ -14,7 +14,7 @@ and the Fortnite-specific parts of §09 do not. The old UEFN architecture is in 
 |---|---|
 | **Roblox Studio** (native on Mac) | Runs and playtests the game |
 | **Rojo** | Code lives as `.luau` files in this folder, synced live into Studio. This is what makes git work. |
-| **Studio MCP server** | Lets Claude start playtests, run code in Studio and read the Output window — the write → run → read errors loop |
+| **Studio MCP server** | Lets Claude start playtests, run code in Studio and read the Output window — the write → run → read errors loop. Built into Studio (switch on Assistant Settings → Manage MCP Servers → "Enable Studio as MCP server"); `tools/studio/mcp.py` is the command-line way in (`tools`, `call <tool> '<json>'`), used by the Tester (`GAUNTLET.md`) |
 | **`tools/export_constants.py`** | Spreadsheet → `src/shared/Config.luau` |
 
 ---
@@ -40,6 +40,9 @@ src/
 │   ├── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
 │   ├── Modes.luau           Game modes and tracks the home screen offers (availability, display)
 │   ├── PanelRules.luau      Which panel may be open in which match state, and what a state change closes
+│   ├── Bounties.luau        Daily Haul and bounty rules: roll, reset, progress, claim, swap, sanitise a save; pure
+│   ├── Profile.luau         The saved profile as plain data and pure rules (load, save, Hunt Board paths);
+│   │                        only Server/Progression holds profiles and calls it
 │   └── HuntBoard.luau       What the Hunt Board screen draws: tiles, cards, button states, text, fit-to-window
 ├── server/   → ServerScriptService.Server
 │   ├── Main.server.luau     Entry point, wiring, and the match loop: Lobby → Building → Playing
@@ -59,7 +62,9 @@ src/
 │   ├── DinoAttacks.luau     Dino bites and projectiles: per-dino timers, nearest standing tower or hunter in reach,
 │   │                        projectiles as data (capped), landing hits (reads enemies only)
 │   ├── Health.luau          The only mutator of player HP: setUp (max HP, spawn force field), damage (resist), heal
-│   ├── Progression.luau     Saved per player: Storm Cores, hero mastery, highest round (DataStore)
+│   ├── Progression.luau     Saved per player: Amber, unlocks, hero mastery, highest round, and the Hunt Board
+│   │                        (Daily Haul + bounties) (DataStore). Answers getRewards / claim / swap requests;
+│   │                        `bountyEvent` is the one way in for match events
 │   ├── Effects.luau         Tracers, blasts, burn discs (visual only)
 │   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
 ├── starter/StarterCharacterScripts → StarterPlayer.StarterCharacterScripts
@@ -113,6 +118,8 @@ This dissolves most of the problems the UEFN plan was built around:
 | Burning patches | `Hazards` | Towers and Hero call `Hazards.burn()` |
 | Current round | `Waves` | Read the `Round` attribute |
 | Saved progression: Cores, owned heroes/towers, mastery, highest round | `Progression` | Hero asks `ownsHero` and reads mastery; Shop asks `ownsTower` (placing only); buying only outside a match |
+| Hunt Board state: Daily Haul day, active bounties, progress, swaps (the profile's `rewards` field) | `Progression` (rules in the pure `Shared/Bounties` and `Shared/Profile`) | Main, Shop and Hero report match events through `Progression.bountyEvent()`; the client asks with `getRewards` / claim / swap on `ProgressRequest` and reads `RewardsClaimable` / `RewardsVersion`; claims and swaps only in the Lobby |
+| Which client panel is open | `Shop.client` (allowed states in `Shared/PanelRules`) | `Home.client` and `HuntBoard.client` ask through the `OpenPanel` attribute; `HuntBoard.client` shows its board while `HuntBoardOpen` is set |
 
 **Server authoritative, always.** On Roblox the client is untrusted — exploiters can fire any
 RemoteEvent with any arguments. The client *requests* ("upgrade the tower on pad 4, path 2");
@@ -185,6 +192,7 @@ second test client.
 | **6** — progression | `Progression`: DataStore save (Cores, owned heroes/towers, mastery per hero, highest round; failed loads never overwrite). Casual payouts (clear reward per difficulty; multiplayer loss 5; solo loss 0). Core unlocks: Pistol + Scout/Sniper/Grenadier free; Rifle/Shotgun 75, Chiller 100, Quartermaster 150; place only what you own, upgrade anyone's. Mastery screen (M). Deferred: level 10/15 ability variants; competitive buy-ins/pots (phase 7) | **Written 2026-09-29, statically checked**, not yet playtested; saving needs the place published |
 | **6b** — home screen | Match loop in `Main` (Lobby → match → results → reset → Lobby), no characters until Play, host picks mode (Co-op; Team Battle / Battle Royale shown as coming soon), track and difficulty; result screen with Cores earned. A separate lobby place with matchmaking comes with phase 7 | **Done, confirmed in Studio** |
 | **Step 2** — the dinos fight back | `Combat` (pure rules), `Health` (player HP), `DinoAttacks` (bites and projectiles), tower HP / Trampled / repair / auras in `Towers`, Field Medic (`Hero`), Field Hospital and Armory towers, med kits (`Airdrops`), Rescue Beacon respawn (`Main`). The polish pass adds `tools/test.sh` (Lune specs), `audit.py`, `threat.py` | **Written 2026-10-01, statically checked + 130 headless specs**, not yet playtested (`RECAP.md`) |
+| **Round 2** — balance pass, Daily Haul and Bounties | Balance: `tools/value.py` (value and pacing models), Supply Camp tiers, Rounds counts for rounds 7–12, 17–20 and 31–39 (spreadsheet only). Hunt Board: `Daily Haul` and `Bounties` sheets with exporter checks, `Shared/Bounties`, `Shared/Profile`, rewards in `Progression`, `Shared/HuntBoard` + `HuntBoard.client`, `PanelRules` mode `huntBoard`. `tools/studio/mcp.py` talks to Studio's MCP server for the Tester | **Written 2026-10-01, statically checked + 214 headless specs**, not yet playtested (`RECAP.md`, "Round 2"); Studio playtest T31 open |
 | **7** — battle modes | Team battle (sides, tower HP, per-team cash) and battle royale (most pops) — `VISION.md` | |
 
 ---

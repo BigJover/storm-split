@@ -18,7 +18,8 @@ design in the PDF still holds; its UEFN-specific sections don't. Old UEFN materi
 - `Storm-Split-Balance.xlsx` — every number. Source of truth.
 - `ARCHITECTURE.md` — code structure, ownership rules, phase plan. **Read before changing code.**
 - `DIRECTION.md` — how Jovan decides: his taste and past calls. Read before any design call.
-- `GAUNTLET.md` — the multi-agent build loop (Director, Builder, Dino agent) and its rules.
+- `GAUNTLET.md` — the multi-agent build loop (Director, Builder, Dino agent, Tester) and its rules.
+- `RECAP.md` — what the loop built, what to playtest first, and the questions for Jovan.
 - `DECISIONS.md` — design calls made while Jovan was away, for his review.
 - `UPGRADES.md` — the approved vision for every tower's paths, tier names and abilities.
   Build tower mechanics to match it.
@@ -30,6 +31,8 @@ design in the PDF still holds; its UEFN-specific sections don't. Old UEFN materi
 - `src/` — Luau, synced into Studio by Rojo (`default.project.json`)
 - `tools/export_constants.py` — spreadsheet → `src/shared/Config.luau`
 - `tools/test/` — headless specs (`*.spec.luau`) and their Lune runner (`run.luau`)
+- `tools/value.py`, `tools/threat.py` — balance models (tower value and pacing; dino threat)
+- `tools/studio/mcp.py` — command-line access to Studio's built-in MCP server (playtests)
 
 ## Rules
 
@@ -173,7 +176,21 @@ Armory. The polish pass covers the Amber payout fix, a per-path audit, the reada
 theme fixes, and the threat model. Design calls are in `DECISIONS.md`; the summary is
 `RECAP.md`.
 
-Next: Jovan playtests Step 2 (see `RECAP.md`) and answers its "ask Jovan" list. Then phase 7.
+Round 2 (gauntlet loop, 2026-10-01): a balance pass and the **Hunt Board**. Statically
+checked and headless-tested (214 specs, `audit.py --strict` 0, `threat.py` 0, `value.py`
+bars met) but **never playtested**. Balance (spreadsheet only, each change backed by
+`tools/value.py`): Supply Camp upgrades now pay for themselves in about 7–10 rounds, and
+the round-11, round-21 and round-31 difficulty cliffs are smoothed by previewing new species
+a few rounds early; no cash multipliers changed. Hunt Board (G, home screen only): the
+**Daily Haul** log-in calendar (100 Amber a week, never resets) and **Bounties** (3 daily,
+3 weekly, one free Swap each), saved by `Progression` with pure rules in `Shared/Bounties`
+and `Shared/Profile`; the exporter enforces "logging in never beats playing". A **Tester**
+agent role was added to playtest in Studio through `tools/studio/mcp.py`; its first run
+(PLAN T31) waits for Studio's "Enable Studio as MCP server" switch.
+
+Next: Jovan turns on the Studio MCP switch so the Tester can run T31, playtests Step 2 and
+round 2 himself (see `RECAP.md`), and answers the "ask Jovan" lists. Then phase 7 (not
+started).
 
 ## Open issues
 

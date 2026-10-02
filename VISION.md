@@ -87,6 +87,21 @@ Grenadier towers. Other heroes and towers — Chiller, Quartermaster and everyth
 later — are bought with Cores. You can only place towers you own, but you can pay to
 upgrade a teammate's tower of a type you don't own.
 
+**Daily Haul and Bounties (round 2, 2026-10-01; built, headless-tested, not yet playtested).**
+They live on the **Hunt Board** (G, home screen only). All numbers are on the `Daily Haul`
+and `Bounties` sheets and the REWARDS levers on `Tuning`.
+- **Daily Haul** (the log-in reward): one claim per UTC day, 5 / 5 / 10 / 10 / 15 / 15 / 40
+  Amber over seven days (100 a week), then it loops. A missed day pauses it; it never resets.
+- **Bounties** (earned by playing matches): 3 daily (10 + 15 + 20 = 45 Amber) and 3 weekly
+  (40 + 60 + 80 = 180 Amber). One free Swap per day and per week. A finished bounty is
+  claimed on the Hunt Board; one left unclaimed is paid at the reset.
+- **Logging in never beats playing.** The exporter refuses a sheet that breaks any of these:
+  each Haul day is below the Easy clear reward; the Haul week is at most 2× the Easy clear;
+  the daily bounties together are below the Easy clear; each weekly is below the Chaos
+  clear and the weeklies together are at most the Chaos clear (DECISIONS #71).
+- A perfect week adds up to 595 Amber (Haul 100 + dailies 315 + weeklies 180), of which
+  only the Haul's 100 comes from logging in (DECISIONS #81).
+
 ## What the code needs for those modes
 
 Some of this is cheap now and expensive later, so it's built early:
