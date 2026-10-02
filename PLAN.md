@@ -1,3 +1,441 @@
+# Plan — Round 4: Jovan's answers (Director, 2026-10-02)
+
+Scope (Jovan, 2026-10-02; his words in `DIRECTION.md` "Round-4 answers", `GAUNTLET.md`
+"Round 4 scope"). Cheap, independent work first (renames, Linebreaker, UI, Hard cash, boss
+throws), big systems after (one health pool + pierce-through with model updates, Chaos,
+mastery small perks, hero tier 6, overall player level + cosmetics + titles + level
+leaderboard). The next tower batch is **not built**: `TOWERS_NEXT.md` is a proposal for
+Jovan to pick from. Design calls: `DECISIONS.md` #118–#142. **T31 + T38 (the Studio
+playtest) stay open**; T60 adds round 4's steps. **Stop before phase 7** and append a
+round-4 recap to `RECAP.md` (T61).
+
+Round 1–3 rules hold (one task = one commit, pushed; `tools/check.sh`,
+`export_constants.py`, `tools/test.sh` green; diff `Config.luau` after every sheet change
+and account for every line; openpyxl only, assert a cell is empty or the one you mean before
+writing; append rows/columns, never insert; "statically checked + headless tests, not
+playtested"; 🦖 = Dino agent reviews; player-facing text says **take-downs**, never "pop").
+For this round:
+
+- **New Tuning levers go below row 95** (row 96 blank, then a header per block named in the
+  task; assert each cell empty). New sheet columns go in the **first empty column** of that
+  sheet (assert the header cell is empty), never between existing ones.
+- Internal keys never change (`SCOUT`, `pops`, `QUARTERMASTER`…). Renames are display text
+  and sheet `Name` cells only.
+- **Fresh Builder per batch.** Batches, in order:
+
+| Batch | Tasks | What |
+|---|---|---|
+| 1 | T40, T41, T42 | renames; Linebreaker ×2 over T4 + Dragon's Breath 3 studs confirmed; Hard starting cash |
+| 2 | T43, T44 | home row (bigger PLAY), Amber on the Hunt Board, XP line; softer boss throws vs towers |
+| — | T45 🦖 | review batches 1–2 |
+| 3 | T46, T47, T48 | one health pool + pierce-through; models count overkill honestly; set the break seeds |
+| 4 | T49, T50, T51 | boss health bar with notches; Chaos = gun skill; mastery small perks |
+| 5 | T52, T53 | hero tier 6 (12 tiers): sheet + mechanics; panel, crossover, models |
+| — | T54 🦖 | tier-6 names, small-perk names, pierce-through and Chaos wording |
+| 6 | T55, T56 | player level rule + levers; banking at match end, saving, solo take-down boost |
+| 7 | T57, T58 | cosmetics + titles + Profile screen; level leaderboard + showing off |
+| — | T59 🦖, T60 Tester, T61 Director | names review; Studio steps (waits on Jovan's MCP switch); docs + recap |
+
+## The design in one place
+
+### One health pool and pierce-through (DECISIONS #125–#129)
+
+**Pool.** A dino has **one HP pool** = its species' total HP (Scaled HP × round HP ×
+difficulty, as today). Its sizes are **thresholds** on that pool, evenly spaced: with
+`sizes` = s and share = pool ÷ s, the dino is size k while HP is in ((k−1)·share, k·share].
+Crossing a threshold shrinks it one size and pays like today (cash + one Bone + bounty
+counts unchanged), so **a dino still pays exactly what it pays today** however it dies.
+
+**Breaks.** Each hit has **breaks** b ≥ 1 = the most thresholds it may cross. The hit's
+damage (after mark and brittle, as today) lowers the pool, but never below
+(k − b)·share, where k is the size when the hit lands; the rest of the damage is lost. If
+k − b ≤ 0 and the damage reaches 0 HP, the dino dies. **With b = 1 this is exactly today's
+rule** (overflow lost, the next size starts full), so every non-raw tower is unchanged.
+
+b = min(`Max size breaks` 4, max(1, base + level bonus − resist)):
+
+- **base** = the tier's `Size breaks` (new column on `Tower Upgrades` and `Hero Upgrades`,
+  cumulative per tier like the others; blank = 1).
+- **level bonus** = floor((tower level − 1) ÷ `Break level step` 3) — +1 at tower level 4
+  (rounds 16–30), +2 at level 7 (rounds 31–40) — **only when base ≥ 2** (only raw-damage
+  tiers grow with level). Heroes get no level bonus (hero levels already add 25% each).
+- **resist** = the species' `Break resist` (new column on `Enemies`).
+
+| Raw-damage tier (seed) | Size breaks |
+|---|---|
+| Longshot Perch · Deadeye T4 Tungsten Core / T5 Linebreaker | 2 / 3 |
+| Longshot Perch · Big Bore (was Siege) T2 Bone Breaker / T4 Punt Gun / T5 Extinction Round | 2 / 3 / 4 |
+| Hunting Blind · Hardliner T4 Railshot / T5 Hide Buster | 2 / 2 |
+| Brush Beater · Slug T6 (new) / Tracker · Marksman T6 (new) | 2 / 2 |
+| everything else | 1 |
+
+| Species | Compy | Raptor | Pachy | Ankylosaurus | Gallimimus | Pteranodon | Triceratops | T-Rex |
+|---|---|---|---|---|---|---|---|---|
+| Sizes | 1 | 2 | 3 | 3 | 3 | 3 | 4 | 5 |
+| Break resist | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 2 |
+
+Examples: Railshot in round 10 vs a Raptor → 2 (the whole dino, if the damage is there).
+Linebreaker at tower level 4 vs Pachys → 3 + 1 = 4 → every dino in the line can drop all
+three sizes. Extinction Round at level 7 vs the T-Rex → 4 + 2 − 2 = 4 (one shot can take
+four of its five sizes); vs a Triceratops → min(4, 5) = 4. Heart Shot vs an Ankylosaurus
+→ 2 − 1 = 1.
+
+**What breaks 1, always:** splash and bomblets (every target), burn ticks and burning
+ground (Napalm, Dragon's Breath, Smoulder, Incendiary), thorns, Barbed Darts and freeze
+damage, ricochet and Chain Shot bounces, Flare Strike. **Line pierce** (Railshot, Deadeye,
+Railslug): every dino in the line gets the shot's b. Marks and brittle raise the damage, not
+b. A hunter's gun breaks 1 except the two tier-6 precision rounds above.
+
+**Seen on screen:** dinos keep shrinking as today (one redress per hit, however many sizes
+it dropped). Bosses (Triceratops, T-Rex) get a thin health bar over the head showing the
+whole pool with a notch at every threshold (T49). Small dinos get no bar (clean UI).
+
+**Models.** Today's models count every point of damage (no overkill), which flatters big
+single hits. `value.py` gains an **overkill factor**: per species in a band's mix, a hit of
+damage D lands min(D, b · share) where share is that species' size HP at the band's round
+HP; direct damage is multiplied by the mix-weighted factor. `threat.py` is unchanged (it
+assumes nobody kills anything) and says so. T48 then sets the break seeds so the raw-damage
+paths get back what honest overkill takes away, not more.
+
+### Overall player level (DECISIONS #118–#124)
+
+Working name **player level** (on screen 🦖, never "Lv N", which is the in-match hunter
+level).
+
+- **Player XP from a match** = the hero XP you banked on every cleared round of that match
+  (100 + the take-down bonus, as `Shared/HeroXp` banks it, counted before the level clamp)
+  + a **clear bonus** if the track is cleared: Easy 500 / Normal 1,000 / Hard 1,500 /
+  Chaos 2,000 (10× the Amber clear reward; new `Difficulty` column). It is **added when
+  the match ends**, won or lost, for every hunter in the match at the end. Leaving early
+  banks nothing (Jovan: count at the end, entice finishing).
+- **Solo take-down boost** (DECISIONS #124): in a solo match the take-down part of Player
+  XP is ×`Solo take-down XP x` 2 (so up to 30 a round, not 15). It does **not** touch the
+  in-match hunter level (the models and the lead cap stay valid). Co-op is unchanged.
+- **Curve, infinite:** level n → n+1 costs `Player XP base` 500 + `Player XP step` 50 ×
+  (n−1), at most `Player XP per level max` 10,000 (from level 191). Total to reach level n
+  = 500(n−1) + 25(n−1)(n−2) (until the cap): **L10 6,300 · L50 83,300 · L100 292,050 ·
+  L150 625,800 · L200 ≈ 1.08 M**.
+- **Pace:** a solo Easy full clear ≈ 4,000 + 1,200 + 500 = 5,700 XP (co-op ≈ 5,100). The
+  first full clear reaches about level 9; level 100 ≈ 51 solo Easy clears; level 200 ≈ 190.
+- **Rewards (cosmetics and titles only, never gameplay):**
+
+| Levels | Reward | Count |
+|---|---|---|
+| 2–99, not a multiple of 10 | one **common** cosmetic each level, rotating: name colour, gun tint, tracer colour, crosshair colour, tower flag, leaderboard banner | 89 |
+| 10, 20 … 100 | **rare**: a **title** + a nicer cosmetic (hunting hat, gun pattern/material, hit-marker, sprint trail) | 10 |
+| 150, 200 | **legendary**: an animated set (e.g. fossil-bone tower trims, amber-glow gun, amber trail) + a title | 2 |
+| 250, 300 … (forever) | a title every 50 levels | ∞ |
+
+  The level badge frame changes by band (1–49, 50–99, 100–149, 150–199, 200+) for free.
+  Gold stays mastery 20's alone. Unlocks are **derived from the level** (no inventory);
+  only XP and what's equipped are saved.
+- **Saving:** `Progression`'s existing path (offline status when unpublished; a failed load
+  never overwrites a save; the Studio J key turns saving off).
+- **Leaderboard:** top 50 by Player XP from an OrderedDataStore when published, cached and
+  refreshed every 60 s; your own row always shown. Unpublished, Studio, or any DataStore
+  failure → a "This server" board of the hunters present with one line: "The world board
+  goes live when the game is published." It never errors, blocks or traps.
+
+### Hero tier 6 (DECISIONS #133–#134)
+
+Every hero path gets a **sixth tier** (12 tiers), handling and fire-mode, not raw damage.
+Cost = `Hero upgrade base cost` 200 × growth 2^5 = **6,400** (the ladder continues).
+Crossover rule unchanged in words: two paths at most, only one past tier 2; tier 6 needs
+tier 5 on the same path. Max build **6/2/0** (6/3/0 at mastery 20). Working names, 🦖 in T54.
+
+| Hero | Path | Tier 6 (working name): effect |
+|---|---|---|
+| Tracker | Gunslinger | *Hot Swap*: the two guns reload one at a time, so firing never stops; reload ×0.8 |
+| Tracker | Marksman | *Heart Shot*: scoped shots have no spread and **break 2 sizes** |
+| Tracker | Trick Shot | *Trick Reload*: each ricochet take-down puts a round back in the cylinder; ricochets prefer dinos not yet hit |
+| Big Game Hunter | Stalker (was Tactical) | *Five-Round Burst*: bursts of 5 with Precision Burst's grouping; recoil resets between bursts |
+| Big Game Hunter | Heavy | *Endless Belt*: no reloading while fully spun up (Belt Fed's rule without Rally Cry) |
+| Big Game Hunter | Special Ammo | *Powder Tips*: Explosive Tips' splash radius ×1.5, and the splash pierces armour |
+| Brush Beater | Slug | *Thunder Slug*: slugs **break 2 sizes**; no spread while standing still |
+| Brush Beater | Buckshot | *Wildfire Drum*: Dragon's Breath's burning ground **4 studs** wide (from 3); the drum holds +50% shells |
+| Brush Beater | Point Blank (was Breacher) | *Quad Barrel*: four blasts per trigger (from two); reload ×1.25 longer |
+| Field Medic | Triage | *Rapid Response*: Triage Kit holds 2 charges |
+| Field Medic | Lever Action | *Tube Feed*: magazine +50%, reload ×0.5 |
+| Field Medic | Muzzle | *Nightcap*: Jaw Lock lasts 4s (from 3) and spreads within 9 studs (from 6); bosses still half |
+
+### Mastery small perks (DECISIONS #135)
+
+Same ladder for every hero (it applies while you play that hero); four non-damage lines, three
+steps each. New `Mastery` columns; nothing touches damage, fire rate, reload, recoil,
+spread, max HP or move speed.
+
+| Line | Step 1 | Step 2 | Step 3 |
+|---|---|---|---|
+| Pick-up reach (chests, med kits) | 6: +2 studs | 11: +4 | 16: +6 |
+| Round-clear heal (25 today) | 7: +5 | 12: +10 | 17: +15 |
+| Respawn time (3s today) | 8: −10% | 13: −20% | 18: −30% |
+| Repair cost (towers you repair) | 9: −5% | 14: −10% | 19: −15% |
+
+### Difficulty (DECISIONS #136–#137)
+
+- **Hard: more starting cash.** New `Difficulty` column `Starting cash`: Easy / Normal /
+  Chaos 450, **Hard 650** (seed; T42 confirms it with the model). `Cash x` unchanged, so
+  Hard still pays less per dino.
+- **Chaos: gun skill.** New `Difficulty` columns `Tower damage x` (Chaos **0.6**, others 1)
+  and `Hero damage x` (Chaos **1.5**, others 1). Towers alone can't hold Chaos; a hunter who
+  hits their shots nearly can. The hero-vs-tower rule still holds in Chaos (top hero 206 ×
+  1.5 = 309 < best tower 751 × 0.6 = 451). T50 tunes the two seeds to the model's bars.
+
+---
+
+## Batch 1 — cheap and independent
+
+### T40. Renames (DECISIONS #130)
+- **Do:** display text and sheet `Name` cells only. Lives → **Fence** (HUD, result screen,
+  docs); leaderboard Pops → **Bones** (column header, "Most bones wins", docs; the text
+  elsewhere still says take-downs); Care Package → **Chopper Drop**; Command Center →
+  **Base Camp**; Forward Base → **Forward Camp**; Longshot path Siege → **Big Bore**,
+  Anti-Materiel → **Bone Breaker**, Siege Gun → **Punt Gun**; Tactical Spotter → **Game
+  Spotter**; Big Game Hunter path Tactical → **Stalker**; Brush Beater path Breacher →
+  **Point Blank**, Street Sweeper → **Thicket Sweeper**; role Ordnance → **Close range**;
+  Hibernation → **Deep Sleep**. Update UPGRADES.md, HEROES.md, VISION.md (battle royale:
+  most Bones), Bounties/Hunt Board text that names any of these, and every player-facing
+  string (grep `src/` for each old name, case-insensitive).
+- **Accept:** `grep -ri` for each old name in `src/` and the three design docs returns only
+  internal keys/comments you list in the commit message; `audit.py --strict` 0 (its
+  name-collision check passes: no two tiers, perks or abilities share a name); Config diff =
+  only `name`/label lines; 245+ specs green.
+
+### T41. Linebreaker ×2 over tier 4; Dragon's Breath 3 studs confirmed (#131, #132)
+- **Do:** Longshot Perch Deadeye T5 `Damage x` 6.41 → **8.84** (= 2 × Tungsten Core 4.42;
+  assert the old value). `Burn patch min reach` stays **3** (Jovan approved #37). Add a spec
+  that a Dragon's Breath ground patch is 3 studs wide.
+- **Accept:** Config diff = one line; `value.py` re-run: report Linebreaker's peak and eDPS
+  per band and confirm the hero-vs-tower guard still passes (the best tower may change);
+  any new finding goes to the Director, not fixed.
+
+### T42. Starting cash per difficulty (#136)
+- **Do:** `Difficulty` first empty column header `Starting cash`: Easy 450, Normal 450,
+  Hard **650**, Chaos 450. Exporter emits it per difficulty; the code that seeds the pot
+  reads it instead of `Tuning` → `Starting cash` (keep the Tuning cell as the documented
+  default the exporter checks Easy against; `Starting cash per extra player` unchanged).
+  `value.py` pacing uses it.
+- **Accept:** Config diff = the new field ×4; spec: Hard match starts with 650 (+200 per
+  extra player). `value.py` report: Hard solo **floor over rounds 11–39 ≥ 0.65** (was
+  0.59) **and Hard < Normal at every round 1–15** (harder stays harder). If 650 can't meet
+  both, try 600 and 700 and report all three; the Director picks.
+
+## Batch 2 — UI and boss throws
+
+### T43. Home row, Amber on the Hunt Board, XP line (#138)
+- **Do:** (1) Home screen: Hunt Board moves to **its own row above** the action row; the
+  action row becomes Choose hero 200, Unlocks & Mastery 240, **PLAY 240 wide, 28 px text**
+  (was 142 / 24 px), its colour kept. (2) Hunt Board header shows the Amber balance
+  ("{N} Amber", live) beside the title; the "+15 Amber" float stays. (3) HUD: "+{N} on round
+  clear" moves to **its own line** under the XP bar, same width as the bar, readable size.
+- **Accept:** layout fits a 740 px column with no wrap at the smallest supported window
+  (#96 rules); `panelrules.spec.luau` green; no new Modal/input sink; the no-trap rules hold
+  (close with key and X). Commit message lists the measured or computed text sizes.
+
+### T44. Softer boss throws vs towers (#138)
+- **Do:** Tuning block `BOSS THROWS`, lever `Boss ranged vs towers x` **0.5**: a Boss
+  species' projectile damage to a **tower** is multiplied by it (hunters unchanged: they can
+  dodge; Horn Toss's look and ring are unchanged, #40). `threat.py` reads it and now judges
+  **rounds 31–39** with the 11–30 target (defended mid-gap < 50% of T0 max HP, every tower
+  but the Perch); round 40 (T-Rex) stays report-only.
+- **Accept:** `threat.py` 0 with 31–39 included. If 0.5 misses, step down by 0.1 to at
+  least 0.3 and report; below that, stop and report. Spec: a boss projectile on a tower deals
+  ×0.5, on a hunter ×1.
+
+### T45. 🦖 Dino review of batches 1–2
+Bones beside Bone Breaker, Bone Broth and Bone Spit (clash?), Big Bore, Fence wording in the
+HUD and result screen, the Hunt Board Amber line, the XP line. Must-fixes go to the Director.
+
+## Batch 3 — one health pool and pierce-through
+
+### T46. Pool + breaks in play (#125–#127)
+- **Sheet:** `Tower Upgrades` and `Hero Upgrades` first empty column `Size breaks` (seeds in
+  the table above; blank = 1); `Enemies` first empty column `Break resist` (table above);
+  Tuning block `PIERCE-THROUGH`: `Break level step` 3, `Max size breaks` 4. Exporter
+  refuses a break below 1, a break on a tier whose path isn't listed in the design table
+  (audit rule, so new ones are a Director call), or resist < 0.
+- **New `Shared/SizeBreaks`** (pure): `breaks(base, towerLevel, resist, isHero)` and
+  `apply(hp, share, sizes, amount, b)` → new hp, sizes dropped, dead.
+- **`Enemies`:** the dino holds one pool (`hp` = pool, `share`); `size` = ceil(hp ÷ share).
+  `Enemies.damage(enemy, amount, piercesArmor, breaks?)` (default 1) calls `apply`;
+  `onKilled` fires **once per size dropped** (cash + Bone each), one `dress` per hit;
+  `leakCost` unchanged in meaning. Callers: `Towers` passes the tier's breaks + tower
+  level, per line-pierce target; `Hero` passes the hero tier's breaks; `Hazards`, splash,
+  bomblets, bounces, thorns, Flare Strike pass nothing (1). Grep every reader of
+  `enemy.hp`/`maxHp` (targeting "strongest", HP shares) and keep it correct.
+- **Accept (headless, new `sizebreaks.spec.luau`):** b = 1 reproduces today's results on a
+  table of cases (old rule written into the spec as the oracle); a 2-break hit with enough
+  damage drops 2 sizes and pays 2 Bones + 2 × cash; a capped hit loses the rest; death only
+  when allowed; resist and the cap; level bonus only when base ≥ 2; a dino's total cash and
+  Bones are the same whatever kills it. All old specs green.
+
+### T47. Models count overkill (#128)
+- **Do:** `value.py` applies the overkill factor (design above) to direct damage, per
+  species, using each tier's breaks at the band's tower level. Print, per tower path tier
+  4–5 and per band, eDPS **before → after**. `threat.py`: one docstring line ("assumes no
+  kills; pierce-through doesn't change it"). Report only: no number changes.
+- **Accept:** spec or doctest for the factor (D ≤ share → 1; D = 3·share, b = 1 → 1/3;
+  b = 3 → 1); the report pasted in the commit message for the Director.
+
+### T48. Set the break seeds (#128)
+- **Do (after the Director reads T47's report):** keep the seeds unless a bar below fails;
+  adjust **breaks, never damage**, to meet them.
+- **Bars:** each raw-damage tier's after-eDPS in bands 21–30 and 31–40 is within **−5% …
+  +15%** of its before (zero-waste) number; `value.py` findings don't rise; #72's pacing
+  floors hold; the hero-vs-tower guard passes; `threat.py` 0. Non-raw towers that lose more
+  than 25% in a band are **reported, not changed** (the Director decides; Jovan's call if
+  it's a big tower).
+- **Accept:** Config diff = only `sizeBreaks`/`breakResist` lines; the final table in the
+  commit message.
+
+## Batch 4 — boss bar, Chaos, small perks
+
+### T49. Boss health bar with notches (#129)
+- **Do:** Triceratops and T-Rex only: a thin BillboardGui bar over the head, the whole pool,
+  a notch at each threshold, drawn by `DinoLook` (visual-only values inline). No bar on other
+  species. Updates on damage, hides at death.
+- **Accept:** spec on the pure part (fill = hp ÷ pool; notch positions k ÷ sizes); no input
+  capture; MaxDistance set so 10 players' worth of bars can't flood the screen.
+
+### T50. Chaos = gun skill (#137)
+- **Do:** `Difficulty` columns `Tower damage x` and `Hero damage x` (Chaos 0.6 / 1.5, others
+  1 / 1); `TowerStats` and `HeroStats` apply them; the hero-vs-tower guard runs per
+  difficulty. `value.py` adds a **Chaos skill report**: solo cash-to-required ratio with
+  towers only, and with the hero's peak DPS × accuracy **0.5** (average) and **0.9**
+  (skilled) added.
+- **Bars:** towers only: floor over 11–39 **≤ 0.35**; average: below **0.7** before round 20;
+  skilled: **≥ 0.85** through round 30 and a minimum over 31–40 **between 0.6 and 0.95**
+  ("nearly impossible"). Tune within tower x 0.5–0.75 and hero x 1.25–1.75; if no pair meets
+  all bars, report the closest and stop.
+- **Accept:** Config diff = the new fields; guard passes on every difficulty; report in the
+  commit message.
+
+### T51. Mastery small perks (#135)
+- **Do:** `Mastery` first empty columns `Pick-up reach +`, `Heal per round +`, `Respawn x`,
+  `Repair cost x` (cumulative per level, per the table; levels 1–5 blank/1). Wire: chests and
+  med kits (`Airdrops`, hospital kits) use the reach; the round-clear heal, respawn time and
+  repair price use the playing hero's mastery. Mastery screen: each level 6–9, 11–14, 16–19
+  shows its perk in plain words (working names "Long Arms", "Field Dressing", "Quick
+  Recovery", "Handyman" I–III; 🦖 T54).
+- **Accept:** exporter refuses a perk column outside these four or non-monotone values;
+  audit: no mastery column touches damage, fire rate, reload, recoil, spread, max HP or move
+  speed; specs for each line at levels 5/6/11/16/19; the screen fits (no-trap rules).
+
+## Batch 5 — hero tier 6
+
+### T52. Twelve tier-6 rows + mechanics (#133–#134)
+- **Do:** `Hero Upgrades`: append one tier-6 row per path (12), effect columns cumulative as
+  today, `Size breaks` 2 on Marksman and Slug T6, a per-tier `Burn patch reach` (Buckshot T6
+  = 4; others inherit 3). Cost formula extended to tier 6 (6,400). New mechanics: staggered
+  dual reload (Hot Swap), ammo-on-ricochet-take-down (Trick Reload), burst count 5 + recoil
+  reset (Five-Round Burst), no-reload-while-spun (Endless Belt), splash radius x + splash
+  pierce (Powder Tips), still-spread 0 (Thunder Slug), drum +50% (Wildfire Drum), 4 blasts
+  (Quad Barrel), 2 ability charges (Rapid Response), Jaw Lock 4s / 9 studs (Nightcap).
+- **Accept:** per-hero specs that each tier 6 does what the table says; `audit.py` per-path
+  check covers 6 tiers; Config diff accounted for.
+
+### T53. Panel, crossover, models for 6 tiers (#133)
+- **Do:** `Shared/Upgrades` crossover: tier 6 needs tier 5 on the same path; still one path
+  past 2 (3 at mastery 20). Hero upgrade panel shows six tiers and fits every window (no-trap
+  rules). Mastery discounts and the free first upgrade apply as today. `value.py` and the
+  guard include tier 6; HEROES.md gains the column and the Rules line "six tiers".
+- **Accept:** `upgrades.spec` for 6/2/0, 6/3/0 (mastery 20), refusing 6 without 5 and
+  3/3/0; guard passes (hero at the highest level in play with tier 6 < best tower; if a tier 6
+  breaks it, lower that tier's number, never a tower's); `value.py` findings don't rise.
+
+### T54. 🦖 Dino review: tier-6 names, small-perk names, wording
+The 12 tier-6 names and texts, the four small-perk lines, the boss bar look, any
+pierce-through wording ("breaks 2 sizes"), the Chaos difficulty card text.
+
+## Batch 6 — player level
+
+### T55. `Shared/PlayerLevel` + levers (#118–#121)
+- **Sheet:** Tuning block `PLAYER LEVEL`: `Player XP base` 500, `Player XP step` 50,
+  `Player XP per level max` 10000, `Solo take-down XP x` 2; `Difficulty` column `Clear XP`
+  (500 / 1000 / 1500 / 2000). Exporter checks Clear XP rises with difficulty.
+- **New `Shared/PlayerLevel`** (pure): `level(xp)`, `xpFor(level)`, `progress(xp)`,
+  `matchXp(bankedRoundXp, bankedTakedownXp, solo, cleared, difficulty)`,
+  `rewardAt(level)` (reads the T57 sheet; until then returns the tier: common / rare /
+  legendary / title / none per the table).
+- **Accept (new `playerlevel.spec.luau`):** totals L10 6,300, L50 83,300, L100 292,050,
+  L200 1,082,750 (cap from level 191); level is monotone and unbounded (level 10,000 computes); matchXp for a
+  solo Easy clear of 40 rounds with capped take-downs = 5,700; co-op 5,100; a lost match
+  gets no clear XP; rewardAt(10) rare, (37) common, (150) legendary, (250) title,
+  (120) none.
+
+### T56. Banking at match end, saving, solo boost (#119, #122, #124)
+- **Do:** `Hero` records per hunter the round XP and take-down XP it banked this match
+  (pre-clamp). At match end (`Main`, win or lose) `Progression.addPlayerXp(player, n)` for
+  every hunter present; leavers get nothing. Solo = one hunter in the match at the end.
+  `Profile` gains `playerXp` and `equipped` (title + one cosmetic per kind) with defaults and
+  migration of old profiles; saved on the existing path (offline-safe). Result screen: "+N
+  player XP" and a level-up line.
+- **Accept:** specs: win/lose/leave cases, solo ×2 only on the take-down part, co-op
+  unchanged, the in-match hunter level and `HeroXp` untouched (all heroxp specs green); an
+  old profile loads with `playerXp` 0; a failed load never overwrites (existing spec still
+  green).
+
+## Batch 7 — rewards and showing off
+
+### T57. Cosmetics, titles, Profile screen (#121, #123)
+- **Sheet `Cosmetics`** (new): Level, Kind, Name, Rarity, Colour/Material/Pattern (data);
+  rows for every reward level 2–200 and the title rule past 200; **names are working names**
+  (🦖 T59). Kinds: name colour, gun tint, tracer colour, crosshair colour, tower flag,
+  leaderboard banner (common); title, hunting hat, gun pattern/material, hit-marker, sprint
+  trail (rare); animated sets (legendary). Exporter: one reward per listed level, no gold
+  (mastery 20's), commons only at non-multiples of 10 below 100.
+- **Profile screen** (home screen, new button on the Hunt Board row; key 🦖): level, XP bar,
+  the next rewards, and equip slots per kind + title. No-trap rules; mouse freed; closes with
+  key and X; closes on match-state change.
+- **In play:** equipped cosmetics show on your gun, tracers, crosshair, towers' flags and
+  your leaderboard row; **no gameplay effect** (no size or hitbox change, no extra
+  visibility of anything).
+- **Accept:** specs for unlock-by-level and equip validation (server refuses equipping an
+  item above your level); `panelrules.spec` green.
+
+### T58. Level leaderboard + showing off (#122)
+- **Do:** `LevelBoard` service: OrderedDataStore (published) top 50 by Player XP, cached,
+  refreshed every 60 s, pcall'd; fallback "This server" board + the one-line note. A
+  "Leaderboard" tab on the Profile screen; your own row always. In-match leaderboard and the
+  lobby show each hunter's player level badge and title.
+- **Accept:** spec on the pure merge/sort/fallback; with DataStores unavailable (Studio) the
+  tab shows the server board and logs one warning, no error loop; no request more than once
+  a minute per server.
+
+## Review, playtest, docs
+
+### T59. 🦖 Dino review: player level
+The player-level label (must differ from "Lv N"), the titles, the cosmetic names (all
+working names from T57), the Profile screen and leaderboard wording.
+
+### T60. Tester: round-4 steps (run with T31 + T38 when Studio's MCP switch is on)
+1. Home: PLAY 240 px, Hunt Board on its own row; Hunt Board shows Amber; Profile opens and
+   closes with key and X.
+2. Easy, K for cash: Linebreaker on a Pachy line; in round 16+ one shot drops more than one
+   size (console: sizes dropped per hit); a Mortar never drops more than one.
+3. Round 31 (start-round constant): a boss throw on a tower deals half; on the hunter, full.
+   Triceratops shows the notched bar.
+4. Hard: starts at 650. Chaos: towers hit softer, gun harder (console values).
+5. Buy a hero path to tier 6 (J then K); Wildfire Drum's patch is 4 studs; the panel fits.
+6. Mastery 6/7/8/9 (J): pick-up reach, heal on clear, respawn, repair price change.
+7. Finish or lose a short match: "+N player XP" on the result screen; the level persists to
+   the next match in the session; the leaderboard tab shows the server board and the note.
+8. Leave mid-match from a second client: no player XP for the leaver.
+Report each step pass / fail / not testable with console output and screenshots.
+
+### T61. Docs and round-4 recap (Director)
+Update `CLAUDE.md` status, `ARCHITECTURE.md` phase table, `VISION.md` (player level,
+cosmetics, ranked trophies note for phase 7), and append "Round 4 recap" to `RECAP.md`:
+what changed, what to playtest first, the Ask-Jovan list (including the `TOWERS_NEXT.md`
+picks), decisions he may want to overturn. Honest status: "statically checked + headless,
+not playtested" unless T60 ran. Stop before phase 7.
+
+**Phase 7 notes (not this round, #139):** mastery perks stay on in competitive modes; other
+perks may be buffed so money doesn't decide matches; ranked uses a **Clash Royale-style
+trophy system** (Trophies are reserved for it; take-downs are Bones).
+
+---
+
 # Plan — Round 3: mastery ability perks + hero XP (Director, 2026-10-02)
 
 Scope (Jovan, 2026-10-02, `GAUNTLET.md` "Round 3 scope"): the two leftovers of Phase 6.

@@ -68,6 +68,20 @@ Tester's Studio playtest.** It waits for Jovan to restart Studio, turn on "Enabl
 MCP server" and reconnect Rojo (disconnected since 2026-10-01 afternoon: Studio holds
 pre-round-2 code until then). Phase 7 is not started.
 
+## Round 4 scope (Jovan, 2026-10-02)
+
+Jovan answered the open questions (his words: `DIRECTION.md` "Round-4 answers"). Round 4
+turns them into work: the renames (Pops → **Bones**), Linebreaker ×2 over tier 4, a bigger
+PLAY button and three small UI fixes, more starting cash on Hard, softer round-31 boss
+throws; then **one health pool per dino with pierce-through** for the raw-damage towers
+(models updated so they stay honest), Chaos as a gun-skill mode, a **sixth tier on every
+hero path**, **small mastery perks** on the empty levels, and a saved **overall player
+level** with cosmetics, titles and a level leaderboard (works unpublished). The next tower
+batch is a proposal only (`TOWERS_NEXT.md`): nothing is built until Jovan picks.
+Plan: `PLAN.md` "Round 4" (T40–T61); design calls `DECISIONS.md` #118–#142. T31 + T38 (the
+Studio playtest) stay open. Stop before phase 7 again and append a round-4 recap to
+`RECAP.md`.
+
 ## Rules
 
 - **Verify every step:** `tools/check.sh` clean; `python3 tools/export_constants.py` clean;

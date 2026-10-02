@@ -50,6 +50,59 @@ point, then log it in `DECISIONS.md`.
   the end**: XP is banked when a round is finished, to entice players to finish rounds and
   games.
 - **Saving and publishing can wait** until the game is published. Don't build for it now.
+  (2026-10-02 update below: the player level does save, on the same offline-tolerant path
+  as Amber, and must degrade gracefully while unpublished.)
+
+## Round-4 answers (Jovan, 2026-10-02)
+
+His words, verbatim where quoted; how the agents read them is in `DECISIONS.md` #118–#142.
+
+1. **XP "count at the end" = a new overall player level**, not the hero level. Hero level
+   stays as built (rises mid-match per cleared round); the match's XP *also* counts at the
+   end of the game toward the overall level. Saved between matches; "the cap should be
+   infinite for now"; "i want a level leader board". Rewards: "cosmetics and titles as well
+   as being shown off… we need a lot of cosmetics, nothing too good from levels 1-100 then
+   some nicer ones that are more spaced out like every 10 levels then from 100-200 ones
+   that are really nice spaced out by 50 each". A cross-server leaderboard needs the place
+   published: build it so it works unpublished and degrades gracefully.
+2. **Take-down XP:** "not too small as there are a lot of dinos per round maybe consider a
+   slight increase if it is not noticeable in practice (single player maybe we buff xp from
+   take downs as to speed up the leveling process for new players but dont change it much
+   or at all in multiplayer/co-op modes". Perk names approved.
+3. **Competitive (phase 7 only):** "mastery perks stay on in competitive modes; other perks
+   may need to be buffed to be in line so money advantage isnt too big (players who have
+   maxed heros and towers would be the target audience for the competitive mode)".
+4. **Raw damage and pierce-through:** "hunter vs longshot is good some towers should be
+   better than others in terms of raw damage, also some that are more powerful in raw
+   damage should be able to 'pierce through' levels meaning one shot can take the dino down
+   2 or more levels based on how leveled up the tower is and the level of the balloon [dino
+   size], dinos should have one health pool which have thresholds so hitting a threshold
+   would de-level the dino not depleting the level health bar".
+5. **Empty mastery levels (6–9, 11–14, 16–19):** "Small perks" — non-damage, PvP-safe.
+6. **Difficulty:** "more cash for hard; chaos should be nearly impossible relying on player
+   gun skill rather than tower defense".
+7. **Towers:** unlock pace "fine as is but we need more towers, the next batch needs to be
+   2x the cost but worth it (some that dont take damage) (lightning chaining abilities
+   reaching all dinos on the field at once)". He wants ideas and to be asked about the
+   highest tiers (`TOWERS_NEXT.md`, a proposal until he picks).
+8. **Renames:** "apply all but change trophies to bones, i want to use a clash royale trophy
+   system for ranked". So take-downs are **Bones**; **Trophies** are reserved for ranked.
+9. **Linebreaker:** ×2 over tier 4. 10. **Dragon's Breath:** ground patch 3 studs; a new
+   tier may make it 4 ("so its more powerful and feels right as a high tier upgrade"), and
+   then every hero path gets the same number of tiers. 11. **Horn Toss:** unchanged.
+12. **UI:** bigger PLAY, Amber shown on the Hunt Board, the "+N on round clear" line on its
+   own, softer round-31 boss throws.
+
+What this adds to his taste:
+- **Raw damage is allowed to differ** between towers, and the hard hitters earn a mechanic
+  (pierce-through) rather than just a bigger number. Keep the models honest about it.
+- **Difficulty has character, not just multipliers:** Hard is generous with starting cash;
+  Chaos is a gun-skill mode where towers alone can't win.
+- **Progression wants lots of small, frequent rewards early and rarer, showier ones late.**
+  Cosmetics and titles only: never gameplay power.
+- **New players get help in solo, never at co-op's expense.**
+- **Bigger, pricier content must be "worth it"**, and he wants options to choose from for
+  the top tiers.
 
 ## Economy (his numbers)
 
@@ -57,7 +110,9 @@ point, then log it in `DECISIONS.md`.
   Amber); multiplayer losers 5, winners the clear reward. Competitive (phase 7): 10–20
   Amber buy-in pot, battle royale split 72/23/5 rounded down.
 - Unlocks: Tracker + Hunting Blind / Longshot Perch / Mortar Pit free; Big Game Hunter 75,
-  Brush Beater 75, Tranq Station 100, Supply Camp 150.
+  Brush Beater 75, Tranq Station 100, Supply Camp 150. The next tower batch costs about 2×
+  (2026-10-02).
+- Starting cash: 450, and more on Hard (2026-10-02; the number is PLAN T42's).
 
 ## How he works
 
