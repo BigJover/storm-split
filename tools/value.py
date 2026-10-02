@@ -33,8 +33,12 @@ Flags (DECISIONS #59), damage paths only:
                  that tier, in the band it's typically bought (T1-2: 11-20, T3: 21-30,
                  T4-5: 31-40)
   dominant path  cost per eDPS < 0.5x the median at every tier in every band
-Support and control paths (Lookout, Sedate, Armory, Field Hospital, Supply Camp) get their
-own value line instead. Economy payback is in rounds of Easy income.
+Support and control paths (Lookout, Sedate, Knockout, Weak Spot, Armory, Field Hospital,
+Supply Camp) get their own value line instead and are left out of the medians. Knockout's
+line is the share of time dinos in range are stopped; Weak Spot's credits its Brittle % and
+auras on the 3 neighbour Blinds as well as its own darts. A single control tier on a damage
+path (Concussion Round's stun) is noted and never flagged (DECISIONS #74).
+Economy payback is in rounds of Easy income.
 
 Usage:
     python3 tools/value.py           the value report (<= ~120 lines)
@@ -61,7 +65,12 @@ import export_constants  # noqa: E402
 
 BANDS = [(1, 10), (11, 20), (21, 30), (31, 40)]
 BOUGHT_BAND = {1: 1, 2: 1, 3: 2, 4: 3, 5: 3}  # tier -> index into BANDS
-SUPPORT_PATHS = {("SCOUT", "Lookout"), ("CHILLER", "Sedate")}
+# Support and control paths: judged on their own effect, not DPS (DECISIONS #59). #74 added the
+# Tranq Station's Knockout (hard stops) and Weak Spot (damage amp for every tower in range).
+SUPPORT_PATHS = {("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knockout"), ("CHILLER", "Weak Spot")}
+# Single tiers that buy control on a damage path (#74): still in the table and the medians,
+# never flagged dead. Longshot Perch Siege T3 = Concussion Round (a stun on hit).
+CONTROL_TIERS = {("SNIPER", "Siege", 3)}
 SUPPORT_TOWERS = {"QUARTERMASTER", "HOSPITAL", "ARMORY"}
 NEIGHBOUR_TOWER, NEIGHBOUR_TIER, NEIGHBOURS = "SCOUT", 2, 3
 DEAD_X, DOMINANT_X = 2.0, 0.5
@@ -114,6 +123,8 @@ def tower_stats(t, tiers):
         "burnDps": high.get("burnDps", 0), "burnSeconds": high.get("burnSeconds", 0),
         "bomblets": math.floor(high.get("bomblets", 0)), "bombletGenerations": math.floor(high.get("bombletGenerations", 0)),
         "freezeEvery": freeze_every, "freezeDamage": high.get("freezeDamage", 0),
+        "freezeSeconds": high.get("freezeSeconds", 0), "freezeHoldsBosses": flag.get("freezeHoldsBosses", False),
+        "stripsArmor": flag.get("stripsArmor", False), "stunSeconds": high.get("stunSeconds", 0),
         "auraRatePercent": high.get("auraRatePercent", 0), "auraDamagePercent": high.get("auraDamagePercent", 0),
         "auraPiercesArmor": flag.get("auraPiercesArmor", False),
         "slowPercent": max(t["slowPercent"], high.get("slowPercent", 0)), "slowLinger": high.get("slowLinger", 0),
@@ -173,7 +184,7 @@ def edps(s, mix, tuning, buff=None):
         hits = s["lineHits"] if s["lineHits"] > 1 else s["targets"]
         share = tuning.get("BombletDamage", 0)
         bomb = sum((s["bomblets"] * share) ** g for g in range(1, s["bombletGenerations"] + 1)) if s["bomblets"] else 0
-        damage = s["damage"] * (1 + buff.get("damage", 0) / 100)
+        damage = s["damage"] * (1 + buff.get("damage", 0) / 100) * (1 + buff.get("brittle", 0) / 100)
         per_shot = damage * (1 + s["markPercent"] / 100) * (1 + s["brittlePercent"] / 100) * (hits + bomb)
         pierces = s["pierces"] or buff.get("pierces", False)
         weight = (mix["plain"] + mix["armoured"] * (s["armoredMult"] if pierces else 0)
@@ -191,10 +202,14 @@ def edps(s, mix, tuning, buff=None):
     return direct + burn + freeze
 
 
-def aura_credit(data, s, mix):
-    """What this tower's aura adds to 3 neighbour T2 Hunting Blinds, one per Blind path."""
-    buff = {"rate": s["auraRatePercent"], "damage": s["auraDamagePercent"], "pierces": s["auraPiercesArmor"]}
-    if not (buff["rate"] or buff["damage"] or buff["pierces"]):
+def aura_credit(data, s, mix, brittle=False):
+    """What this tower's aura adds to 3 neighbour T2 Hunting Blinds, one per Blind path.
+
+    `brittle` (support paths only, #74): the neighbours' shots also get the tower's Brittle %,
+    assuming the dinos they shoot are the sedated ones in its range."""
+    buff = {"rate": s["auraRatePercent"], "damage": s["auraDamagePercent"], "pierces": s["auraPiercesArmor"],
+            "brittle": s["brittlePercent"] if brittle else 0}
+    if not (buff["rate"] or buff["damage"] or buff["pierces"] or buff["brittle"]):
         return 0.0
     blind = data["Towers"][NEIGHBOUR_TOWER]
     tuning = data["Tuning"]
@@ -221,7 +236,7 @@ def value_table(data, mixes):
             for tier in range(0, len(path["tiers"]) + 1):
                 s = path_stats(t, pi, tier)
                 own = [edps(s, m, tuning) for m in mixes]
-                aura = [aura_credit(data, s, m) for m in mixes]
+                aura = [aura_credit(data, s, m, brittle=is_support(key, path)) for m in mixes]
                 rows[(key, pi, tier)] = {
                     "cost": cumulative_cost(t, pi, tier),
                     "step": path["tiers"][tier - 1]["cost"] if tier else t["baseCost"],
@@ -257,7 +272,8 @@ def judge(data, rows):
             continue
         b = BOUGHT_BAND[tier]
         r["vsMedian"] = r["marginal"][b] / medians[tier]["marginal"]
-        r["dead"] = r["vsMedian"] > DEAD_X
+        r["control"] = (key, data["Towers"][key]["paths"][pi]["id"], tier) in CONTROL_TIERS
+        r["dead"] = r["vsMedian"] > DEAD_X and not r["control"]
     for key in data["TowerOrder"]:
         t = data["Towers"][key]
         if key in SUPPORT_TOWERS:
@@ -307,6 +323,14 @@ def support_lines(data, mixes):
                     bit = f"range x{s['rangeMult']:.2f}"
                     if s["auraRatePercent"] or s["auraDamagePercent"]:
                         bit += f" aura +{s['auraRatePercent']:g}%r/+{s['auraDamagePercent']:g}%d{'/AP' if s['auraPiercesArmor'] else ''} (+{aura_credit(data, s, late):.1f})"
+                elif key == "CHILLER" and path["id"] == "Knockout":
+                    stopped = s["freezeSeconds"] / s["freezeEvery"] if s["freezeEvery"] else 0
+                    bit = f"knockout {s['freezeSeconds']:g}s every {s['freezeEvery']:g}s = stopped {stopped:.0%}" + (" holds bosses" if s["freezeHoldsBosses"] else "")
+                elif key == "CHILLER" and path["id"] == "Weak Spot":
+                    bit = f"brittle +{s['brittlePercent']:g}%" + (" strips armour" if s["stripsArmor"] else "")
+                    if s["auraRatePercent"] or s["auraDamagePercent"]:
+                        bit += f" aura +{s['auraRatePercent']:g}%r/+{s['auraDamagePercent']:g}%d"
+                    bit += f" (+{aura_credit(data, s, late, brittle=True):.1f}, darts {edps(s, late, data['Tuning']):.1f})"
                 elif key == "CHILLER":
                     bit = f"slow {s['slowPercent']:g}%"
                     if s["slowLinger"]:
@@ -452,11 +476,13 @@ def value_report(data, full=False):
                     line += f"  marg {fmt(r['marginal'][b])}"
                     if not r["support"]:
                         line += f" ({r['vsMedian']:.1f}x med){'  DEAD' if r['dead'] else ''}"
+                        if r["control"]:
+                            line += f"  stun {path_stats(t, pi, tier)['stunSeconds']:g} s on hit: control, not flagged"
                 if any(r["aura"]):
-                    line += f"  (aura {fmt(r['aura'][b])})"
+                    line += f"  ({'brittle + aura on Blinds' if r['support'] and path_stats(t, pi, tier)['brittlePercent'] else 'aura'} {fmt(r['aura'][b])})"
                 print(line)
     print("  medians (damage paths) marginal cash/eDPS: " + ", ".join(f"T{t} {fmt(m['marginal'])}" for t, m in medians.items()))
-    print("support and control (own effect, not DPS; aura credit in rounds 31-40 on 3 T2 Blinds in brackets):")
+    print("support and control (own effect, not DPS; aura credit in rounds 31-40 on 3 T2 Blinds in brackets; Weak Spot's adds its Brittle on them):")
     for line in support_lines(data, mixes):
         print(line)
     print("economy payback (Easy rounds of extra income; chests all collected; interest at its cap):")
@@ -612,7 +638,7 @@ def pacing_report(data):
 
     steps = [(easy[r - 1]["required"] / easy[r - 2]["required"], r) for r in range(12, 41)]
     step, at = max(steps)
-    print(f"  Easy solo Required DPS: biggest step x{step:.2f} at round {at} ({easy[at - 2]['required']:g} -> {easy[at - 1]['required']:g}; bar x{MAX_STEP:g})")
+    print(f"  Easy solo Required DPS: biggest step from round 12 on x{step:.2f} at round {at} ({easy[at - 2]['required']:g} -> {easy[at - 1]['required']:g}; bar x{MAX_STEP:g})")
     finale = sum(easy[r - 1]["ehp"] for r in FINALE_ROUNDS)
     change = finale / FINALE_EHP_BEFORE - 1
     print(f"  Easy solo finale EHP (rounds {FINALE_ROUNDS[0]}-{FINALE_ROUNDS[-1]}): {finale:,.0f} vs {FINALE_EHP_BEFORE:,} before T21 ({change:+.1%}; bar +/-{FINALE_EHP_TOLERANCE:.0%})")
