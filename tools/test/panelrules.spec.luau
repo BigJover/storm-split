@@ -4,11 +4,12 @@
 ]]
 local PanelRules = require(src.shared.PanelRules)
 
-local MODES = { "list", "placing", "manage", "heroUpgrade", "heroPick", "mastery" }
+local MODES = { "list", "placing", "manage", "heroUpgrade", "heroPick", "mastery", "huntBoard" }
+local STATES = { "Lobby", "Building", "Playing", "GameOver", "Victory" }
 
-test("the home screen allows only hero select and mastery", function()
+test("the home screen allows only hero select, mastery and the Hunt Board", function()
 	for _, mode in MODES do
-		local expected = mode == "heroPick" or mode == "mastery"
+		local expected = mode == "heroPick" or mode == "mastery" or mode == "huntBoard"
 		eq(PanelRules.allowed(mode, "Lobby", true), expected, `{mode} in Lobby`)
 	end
 end)
@@ -42,4 +43,22 @@ test("the results screen and going home close everything", function()
 			eq(PanelRules.keepOnStateChange(mode, state, true), false, `{mode} into {state}`)
 		end
 	end
+end)
+
+test("the Hunt Board opens on the home screen only, hero or not (DECISIONS #70)", function()
+	for _, state in STATES do
+		for _, hasHero in { true, false } do
+			eq(PanelRules.allowed("huntBoard", state, hasHero), state == "Lobby", `{state}, hero {hasHero}`)
+		end
+	end
+	eq(PanelRules.allowed("huntBoard", nil, true), false, "before the state is known")
+end)
+
+test("the Hunt Board never survives a state change (no-trap rule)", function()
+	for _, state in STATES do
+		for _, hasHero in { true, false } do
+			eq(PanelRules.keepOnStateChange("huntBoard", state, hasHero), false, `into {state}, hero {hasHero}`)
+		end
+	end
+	eq(PanelRules.keepOnStateChange("huntBoard", nil, true), false, "into an unknown state")
 end)

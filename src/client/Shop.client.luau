@@ -23,6 +23,10 @@
 	next level gives (Server/Progression). Unowned towers and heroes show their
 	price in the Build list and hero select.
 
+	Hunt Board (G, home screen): drawn by HuntBoard.client, but it's one of this
+	script's panel modes, so opening it closes the others and Shared/PanelRules
+	closes it like them.
+
 	Everything here is a request. The server re-checks the spot, the distance
 	and the cash with the same rules and has the final say. Prices shown come
 	from Config for display only.
@@ -43,6 +47,7 @@ local CUR = string.lower(Theme.Currency) -- "amber" in running text
 local Placement = require(Shared:WaitForChild("Placement"))
 local ShopRules = require(Shared:WaitForChild("ShopRules"))
 local PanelRules = require(Shared:WaitForChild("PanelRules"))
+local HuntBoard = require(Shared:WaitForChild("HuntBoard"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
@@ -301,7 +306,9 @@ message.Parent = panel
 
 ------------------------------------------------------------------ state
 
-type Mode = "closed" | "list" | "placing" | "manage" | "heroPick" | "heroUpgrade" | "mastery"
+-- "huntBoard" is HuntBoard.client's screen, not this panel. It's a mode here so
+-- that only one screen is open at a time and it closes by the same rules.
+type Mode = "closed" | "list" | "placing" | "manage" | "heroPick" | "heroUpgrade" | "mastery" | "huntBoard"
 
 local mode: Mode = "closed"
 local placingKey: string? = nil
@@ -824,6 +831,7 @@ local function setMode(newMode: Mode)
 	-- Hero.client: first person always, third person only while placing.
 	player:SetAttribute("PanelOpen", newMode ~= "closed")
 	player:SetAttribute("Placing", newMode == "placing")
+	player:SetAttribute("HuntBoardOpen", newMode == HuntBoard.MODE) -- HuntBoard.client shows it
 	say("")
 	render()
 end
@@ -882,7 +890,7 @@ render = function()
 		end
 	end
 
-	panel.Visible = mode ~= "closed"
+	panel.Visible = mode ~= "closed" and mode ~= HuntBoard.MODE
 	title.TextColor3 = TEXT -- the tower panel turns it red for a trampled tower
 	buildButton.Text = if mode == "list" or mode == "placing" then "Close  (B)" else "Build  (B)"
 	local state = ReplicatedStorage:GetAttribute("State")
@@ -1182,6 +1190,14 @@ local function toggleMastery()
 	end
 end
 masteryButton.Activated:Connect(toggleMastery)
+
+local function toggleHuntBoard()
+	if mode == HuntBoard.MODE then
+		setMode("closed")
+	else
+		openIfAllowed(HuntBoard.MODE) -- on the home screen only
+	end
+end
 closeButton.Activated:Connect(function()
 	setMode("closed")
 end)
@@ -1198,6 +1214,8 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		toggleMastery()
 	elseif input.KeyCode == Enum.KeyCode.U then
 		toggleHeroUpgrade()
+	elseif input.KeyCode.Name == HuntBoard.KEY then
+		toggleHuntBoard()
 	elseif mode == "placing" then
 		if input.KeyCode == Enum.KeyCode.Q then
 			setMode("list")
@@ -1263,7 +1281,8 @@ player.AttributeChanged:Connect(function(name)
 	end
 end)
 
--- The home screen asks for a panel by setting this local attribute.
+-- The home screen asks for a panel by setting this local attribute; the Hunt
+-- Board's X asks for "closed".
 player:GetAttributeChangedSignal("OpenPanel"):Connect(function()
 	local wanted = player:GetAttribute("OpenPanel")
 	if wanted == nil or wanted == "" then
@@ -1274,6 +1293,10 @@ player:GetAttributeChangedSignal("OpenPanel"):Connect(function()
 		openIfAllowed("heroPick")
 	elseif wanted == "mastery" then
 		openIfAllowed("mastery")
+	elseif wanted == HuntBoard.MODE then
+		toggleHuntBoard()
+	elseif wanted == "closed" and mode == HuntBoard.MODE then
+		setMode("closed")
 	end
 end)
 

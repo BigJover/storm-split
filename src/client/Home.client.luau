@@ -2,8 +2,9 @@
 	Home screen, shown while the server is in the Lobby state (Main).
 
 	Game mode, track and difficulty cards, your Amber and hero, buttons
-	for hero select and Unlocks & Mastery (they open Shop.client's panels), and
-	Play. The host — the longest-connected player — makes the choices and
+	for hero select, Unlocks & Mastery (they open Shop.client's panels) and the
+	Hunt Board (HuntBoard.client's screen; an amber dot says something is waiting
+	to be claimed), and Play. The host — the longest-connected player — makes the choices and
 	presses Play; everyone else sees them live and waits. Choices are only
 	requests to the server.
 
@@ -17,6 +18,7 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local HuntBoard = require(Shared:WaitForChild("HuntBoard"))
 local Modes = require(Shared:WaitForChild("Modes"))
 local Theme = require(Shared:WaitForChild("Theme"))
 
@@ -34,6 +36,7 @@ local CARD_LOCKED = Color3.fromRGB(30, 27, 38)
 local TEXT = Color3.fromRGB(240, 236, 250)
 local TEXT_DIM = Color3.fromRGB(150, 145, 165)
 local PLAY = Color3.fromRGB(70, 180, 110)
+local AMBER = Color3.fromRGB(245, 175, 60)
 local ORBIT_CENTRE = Vector3.new(-10, 0, 0)
 local ORBIT_RADIUS = 150
 local ORBIT_HEIGHT = 110
@@ -148,7 +151,7 @@ local function card(parent: Instance, order: number, width: number, height: numb
 	return button
 end
 
-text(1, string.upper(Theme.Title), 56, Enum.Font.GothamBlack, Color3.fromRGB(245, 175, 60)) -- amber
+text(1, string.upper(Theme.Title), 56, Enum.Font.GothamBlack, AMBER)
 local profileLine = text(2, "", 18, Enum.Font.GothamBold, TEXT_DIM)
 
 text(3, "GAME MODE", 16, Enum.Font.GothamBold, TEXT_DIM)
@@ -193,8 +196,12 @@ end
 
 local hostLine = text(9, "", 16, Enum.Font.GothamBold, TEXT_DIM)
 
+-- HuntBoard.client keeps its board above this row (found by name), so Play and
+-- these buttons stay in reach while the board is open.
 local actionRow = row(10, 56)
-local heroCard = card(actionRow, 1, 200, 56)
+actionRow.Name = "Actions"
+local heroCard = card(actionRow, 1, 176, 56)
+heroCard.TextSize = 16
 heroCard.Text = "Choose hero  (H)"
 -- Modal on a button every player sees: frees the mouse on the home screen for
 -- non-hosts too (Play, the host's Modal button, is hidden for them).
@@ -202,12 +209,30 @@ heroCard.Modal = true
 heroCard.Activated:Connect(function()
 	player:SetAttribute("OpenPanel", "heroPick")
 end)
-local unlockCard = card(actionRow, 2, 240, 56)
+local unlockCard = card(actionRow, 2, 216, 56)
+unlockCard.TextSize = 16
 unlockCard.Text = "Unlocks & Mastery  (M)"
 unlockCard.Activated:Connect(function()
 	player:SetAttribute("OpenPanel", "mastery")
 end)
-local playButton = card(actionRow, 3, 200, 56)
+-- Every player has this button, host or not. Pressing it again closes the board.
+local huntCard = card(actionRow, 3, 176, 56)
+huntCard.TextSize = 16
+huntCard.Text = HuntBoard.BUTTON
+huntCard.Activated:Connect(function()
+	player:SetAttribute("OpenPanel", HuntBoard.MODE)
+end)
+local huntDot = Instance.new("Frame") -- something to claim: a still amber dot
+huntDot.Name = "Claimable"
+huntDot.AnchorPoint = Vector2.new(1, 0)
+huntDot.Position = UDim2.new(1, 4, 0, 6)
+huntDot.Size = UDim2.fromOffset(12, 12)
+huntDot.BackgroundColor3 = AMBER
+huntDot.BorderSizePixel = 0
+huntDot.Visible = false
+huntDot.Parent = huntCard
+corner(huntDot, 6)
+local playButton = card(actionRow, 4, 142, 56)
 playButton.BackgroundColor3 = PLAY
 playButton.TextSize = 24
 playButton.Text = "PLAY"
@@ -258,6 +283,7 @@ local function refresh()
 		then "You're the host: pick a mode, track and difficulty, then Play."
 		else `Waiting for {if hostPlayer then hostPlayer.DisplayName else "the host"} to start…`
 	playButton.Visible = host
+	huntDot.Visible = player:GetAttribute("RewardsClaimable") == true
 
 	local heroKey = player:GetAttribute("Hero") or ""
 	local hero = Config.Heroes[heroKey]
@@ -268,7 +294,7 @@ for _, name in { "State", "Host", "Mode", "Track", "Difficulty" } do
 	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refresh)
 end
 player.AttributeChanged:Connect(function(name)
-	if name == "Cores" or name == "Hero" then
+	if name == "Cores" or name == "Hero" or name == "RewardsClaimable" then
 		refresh()
 	end
 end)

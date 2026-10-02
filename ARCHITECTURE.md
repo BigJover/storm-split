@@ -38,7 +38,9 @@ src/
 │   ├── Payouts.luau         Casual Amber payout at match end; pure, used by Progression
 │   ├── Combat.luau          Dino attack scaling, resistance cap, tower max HP, repair cost; pure
 │   ├── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
-│   └── Modes.luau           Game modes and tracks the home screen offers (availability, display)
+│   ├── Modes.luau           Game modes and tracks the home screen offers (availability, display)
+│   ├── PanelRules.luau      Which panel may be open in which match state, and what a state change closes
+│   └── HuntBoard.luau       What the Hunt Board screen draws: tiles, cards, button states, text, fit-to-window
 ├── server/   → ServerScriptService.Server
 │   ├── Main.server.luau     Entry point, wiring, and the match loop: Lobby → Building → Playing
 │   │                        → GameOver/Victory → reset → Lobby. Spawns characters.
@@ -66,6 +68,7 @@ src/
     ├── Home.client.luau     Home screen (Lobby): mode, track, difficulty, Play (host only)
     ├── Hud.client.luau      Status bar, Start button, level-up banner, result screen
     ├── Shop.client.luau     Build, hero select and hero upgrade screens; placement ghost; tower panel
+    ├── HuntBoard.client.luau  Hunt Board (G, home screen): Daily Haul and bounties; claim and swap requests
     └── Hero.client.luau     Trigger (semi/auto/burst), reload, ammo, scope, camera, crosshair (requests only)
 ```
 

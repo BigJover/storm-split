@@ -6,6 +6,9 @@
 	  heroPick                             before the round starts (Lobby,
 	                                       Building), or any time without a hero
 	  mastery                              before the round starts (Lobby, Building)
+	  huntBoard                            on the home screen only (Lobby); it's
+	                                       HuntBoard.client's screen, but Shop.client
+	                                       still owns which panel is open
 
 	When the state changes, a panel only survives the step from Building into
 	Playing, and only if it's still allowed there. Every other change closes
@@ -31,6 +34,8 @@ function PanelRules.allowed(mode: string, state: string?, hasHero: boolean): boo
 		return BEFORE_ROUND[s] == true or (s == "Playing" and not hasHero)
 	elseif mode == "mastery" then
 		return BEFORE_ROUND[s] == true
+	elseif mode == "huntBoard" then
+		return s == "Lobby"
 	end
 	return false
 end
