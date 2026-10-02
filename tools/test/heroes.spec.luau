@@ -7,6 +7,7 @@
 
 local Config = require(src.shared.Config)
 local HeroStats = require(src.shared.HeroStats)
+local Combat = require(src.shared.Combat)
 
 local function at(key: string, path: number, tier: number, name: string)
 	local hero = Config.Heroes[key]
@@ -170,6 +171,14 @@ test("Incendiary's burning ground is readable: patch reach >= 3 (DECISIONS #32)"
 	eq(Config.Tuning.BurnPatchMinReach, 3, "Tuning Burn patch min reach")
 	-- Hazards.burn: reach = max(splash radius, BurnPatchMinReach)
 	ok(math.max(incendiary.splashRadius, Config.Tuning.BurnPatchMinReach) >= 3, "Incendiary patch reach")
+end)
+
+test("Dragon's Breath ground patch is 3 studs (DECISIONS #37, #132), tiers 3-5", function()
+	for tier = 3, 5 do
+		local stats = HeroStats.compute("SHOTGUN", { 0, tier, 0 }) :: any
+		ok(stats.burnDps > 0, `Buckshot {tier} lays burning ground`)
+		eq(Combat.burnPatchReach(stats.splashRadius), 3, `Buckshot {tier} patch reach`)
+	end
 end)
 
 test("Outfitter gear changes handling, never damage (HeroStats.compute with gear)", function()

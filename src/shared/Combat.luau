@@ -20,6 +20,8 @@
 	                (DECISIONS #106)
 	  nearestWithin the few nearest points within reach of a point (the Split
 	                Dart perk's extra marks)
+	  burnPatchReach a burning ground patch reaches its splash radius, never less
+	                than Tuning Burn patch min reach (DECISIONS #32, #37, #132)
 ]]
 
 local Config = require(script.Parent.Config)
@@ -153,6 +155,11 @@ function Combat.nearestWithin(point: Vector3, positions: { Vector3 }, reach: num
 		nearest[i] = inReach[i].index
 	end
 	return nearest
+end
+
+-- How far a burning ground patch reaches either side of where it lands.
+function Combat.burnPatchReach(splashRadius: number): number
+	return math.max(splashRadius, Config.Tuning.BurnPatchMinReach)
 end
 
 return Combat

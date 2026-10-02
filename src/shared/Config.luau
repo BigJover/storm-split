@@ -1220,7 +1220,7 @@ return table.freeze({
 						{
 							name = "Linebreaker",
 							cost = 22527,
-							damageMult = 6.41,
+							damageMult = 8.84,
 							rateMult = 1,
 							targetsMult = 4.01,
 							rangeMult = 1,
