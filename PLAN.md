@@ -3,7 +3,7 @@
 Scope (Jovan, 2026-10-01, `GAUNTLET.md` "Round 2 scope"): (1) a balance pass across the whole
 game, justified by headless models because there's no playtest data yet; (2) daily log-in
 rewards plus daily and weekly challenges, for retention. **Stop before phase 7** and append a
-round-2 recap to `RECAP.md`. Design calls: `DECISIONS.md` #54–#86. Round 1's plan is kept
+round-2 recap to `RECAP.md`. Design calls: `DECISIONS.md` #54–#95. Round 1's plan is kept
 below as history.
 
 The round-1 rules still hold (one task = one commit, push after verifying; `tools/check.sh`,
@@ -330,10 +330,114 @@ Haul**); challenges are **Bounties**; a reroll is a **Swap**.
   the one dim line when it's above 0. The look and wording are in "Round 9 rulings" above.
 - **Accept:** panelrules spec covers `huntBoard`; check.sh green; screenshots not possible:
   "statically checked, not playtested".
+- **Signed off (Director, de6a828, DECISIONS #87–#90):** every no-trap item checked in the
+  code; 213 specs, audit strict 0; not playtested. No tooltip (#88); four-button action row
+  (#89); the board covers the mode/track/difficulty cards while open (#90). Two small text
+  follow-ups are T29b.
 
-## Part F — Wrap-up
+### T29b. Hunt Board wording follow-ups (text only; DECISIONS #91–#94) — 🦖 Round 10
+- **Files:** the Bounties sheet (Title / Text cells, openpyxl, then re-export and diff
+  `Config.luau`: only the lines below may change), `src/shared/HuntBoard.luau`,
+  `src/shared/Bounties.luau` (`doneText`), `src/client/HuntBoard.client.luau`,
+  `src/client/Shop.client.luau` and `src/server/Progression.luau` (strings only),
+  the comment in `Hud.client.luau`, specs. No layout, rule or number change. Event keys
+  `pop` / `popTotal` and the "Pops" leaderstat (#27, Jovan's list) stay.
+- **Sheet, Text (#93):** every `Pop {n} X` → `Take down {n} X` (Compies, Raptors,
+  Pachycephalosaurs, Ankylosaurs, Pteranodons, Gallimimus; both `dinos of any kind` rows);
+  `Pop {n} Triceratops (team pops count)` → `Take down {n} Triceratops (team take-downs count)`;
+  `Pop a T-Rex (team pops count)` → `Take down a T-Rex (team take-downs count)`.
+- **Sheet, Title (#93):** `D_DEEP_TRAIL_25` → `Deeper Trail`; `W_DEEP_TRAIL_2` → `Long Trail`;
+  `W_DEEP_TRAIL_4` → `Longest Trail` (`D_DEEP_TRAIL_15` stays `Deep Trail`).
+- **Toast (#94):** `Bounties.doneText` → `Bounty ready: Raptor Cull (claim +15 Amber at the Hunt Board)`.
+- **Board strings (#94):** loading line (not the buttons) `…` → `Checking the board…`;
+  `HuntBoard.UNREACHABLE` → `Couldn't reach the Hunt Board. Try again in a moment.`; the line
+  under the header → `New daily bounties in 5h 12m`; the line beside Weekly Bounties →
+  `New in 3d 4h`.
+- **Server replies (#94):** `Already claimed today` → `Today's Haul is already claimed`;
+  `Swapped` → `Bounty swapped`; `The Hunt Board isn't available right now` (both places) →
+  `The Hunt Board is closed right now`. `That bounty can't be claimed` stays.
+- **Not-saving note (#94):** in `HuntBoard.client` and `Shop.client`, →
+  `Progress isn't saving right now.`; the "publish the place (SETUP.md)" hint becomes one
+  server `warn` per session if Progression doesn't already print one.
+- **Haul note (#91):** `HuntBoard.haulNote(resetAfter: number?)` (default: the
+  `HaulResetsAfterMissedDays` lever, like `Bounties.nextHaulDay`) never returns nil:
+  0 → "Missed days don't reset your Haul."; 1 → "Miss a day and your Haul starts over.";
+  n > 1 → "Miss {n} days in a row and your Haul starts over."
+- **Key hint (#92):** `HuntBoard.BUTTON` = "Hunt Board  (G)" (two spaces, round brackets,
+  like "Choose hero  (H)"). This overrides "Hunt Board [G]" in the Round 9 rulings above.
+- **Accept:** specs for the three note cases (0, 1, 3), the button text, both countdown
+  lines, the toast and the unreachable line; a spec (or exporter check) that no two bounties
+  in one pool share a Title; `grep -n '"Pop \|pops count' src/shared/Config.luau` finds
+  nothing; the Config diff is only those Text / Title lines; the longest card text
+  (`Take down {n} Triceratops (team take-downs count)`) and the toast wrap or fit without
+  clipping (say how); `tools/test.sh` and `check.sh` green, audit strict 0; "statically
+  checked, not playtested".
 
-### T30. Docs and round-2 recap
+## Part F — Studio playtest and wrap-up
+
+### T31. Studio playtest by the Tester (Jovan, 2026-10-01; DECISIONS #95) — runs before T30
+- **Who / how:** the Tester (`GAUNTLET.md`), through `tools/studio/mcp.py` (`tools`, then
+  `call <tool> '<json>'`; every call needs the `studio_id` from `list_roblox_studios`).
+  Runs after T29b is committed. If no Studio is listed (Jovan hasn't enabled "Enable Studio
+  as MCP server"), write that in `PLAYTEST.md` and stop: T30 then says "Studio testing
+  unavailable".
+- **Must not:** edit game code, the spreadsheet or any doc but `PLAYTEST.md`; publish or
+  save the place; change the place outside play mode (no edit-mode `execute_luau` that
+  writes, no moving or deleting instances); wipe or write DataStores; leave play mode
+  running (always `start_stop_play` stop at the end, also after a failure). In play mode
+  `execute_luau` is for **reading** state (attributes, GUI positions and sizes); drive the
+  game with keys and the mouse like a player, plus the Studio keys K (cash), J (Amber +
+  unlocks, turns saving off for the session) and L (halve the nearest tower's HP).
+  **Before any claim, swap or unlock:** read the player's `SaveStatus`; if it is `saved`,
+  press J first; if it still says `saved`, skip those steps and report it.
+- **Output:** `PLAYTEST.md`: one row per step: PASS / FAIL / NOT TESTABLE, what was seen,
+  and the evidence (console lines; screenshots in `playtest/`, named by step). After every
+  step check `get_console_output`: any error or warning from our scripts is a FAIL for
+  that step. Bugs go to the Director, who queues fixes for the Builder. Feel questions
+  (is round 11/21/31 too hard, is PLAY too small) are **not** judged: list them for Jovan.
+- **Script, in priority order** (solo, Easy, first track unless said):
+  1. **Boot.** Start play. *Pass:* home screen shows, no console errors, mouse free, Play
+     starts Building, Start begins round 1, dinos walk and towers fire.
+  2. **Hunt Board.** In the Lobby: G opens, G closes; the home button opens and closes; the
+     X closes. Open it and press H, then M: the board gives way, nothing overlaps. Open it
+     and press Play: it closes. In Building and Playing, G does nothing. *Pass:* all of
+     that; 7 Haul tiles, 3 daily and 3 weekly cards, both countdowns; PLAY is visible and
+     clickable while the board is open.
+  3. **Claim and swap.** Claim today's Haul: the tile gets its stamp, the Amber line on the
+     home screen rises by the tile's amount, the dot on the button follows. Swap one daily:
+     the card changes, the button goes away at 0 left. Claim again / swap again: refused with
+     a plain line, no error. *Pass:* amounts match `Config.DailyHaul`; no double pay.
+  4. **Bounty progress.** Play a match that advances a rolled bounty (Pitch Camp, Sharpen
+     Up, Busy Day or a species one; K for cash). *Pass:* the toast shows once when one
+     finishes; back in the Lobby the card shows the progress or Claim; Claim pays the chip's
+     amount and stamps BAGGED. Gear Check: the ability in Building adds nothing (#85).
+  5. **Dino attacks and hunter HP.** Stand near the trail from round ~5. *Pass:* dinos bite
+     when close; mid/high tiers throw with a warning ring that can be walked out of; HP
+     drops on a hit and comes back +25 when a round ends (cap 100); what happens at 0 HP
+     matches `VISION.md`; no errors.
+  6. **Trample and repair.** L twice on a tower (or let dinos do it). *Pass:* at 0 HP it
+     reads Trampled and stops firing; the tower panel offers Repair with a price; paying
+     takes that cash and the tower fires again; it can't be upgraded while trampled if the
+     docs say so.
+  7. **Field Medic, Field Hospital, Armory.** J for unlocks, then pick the Medic (H) and
+     build both towers. *Pass:* each does what `HEROES.md` / `UPGRADES.md` say (heals
+     hunters / repairs or heals in range / damage resist), visible in HP numbers read
+     before and after; no errors.
+  8. **Supply Camp.** Build one, buy Yield tier 1 and Airdrop tier 1 (K). *Pass:* round
+     income rises by the sheet's amount at round end; a chest drops, can be picked up and
+     pays the sheet's cash.
+  9. **No-trap sweep, every panel** (B list, placing, tower panel, H, U, M, Hunt Board,
+     result screen): opens with its key, closes with the same key and its X, mouse free
+     while open, closes on the state changes `Shared/PanelRules` says. Read each open
+     panel's close button `AbsolutePosition` / `AbsoluteSize` against the viewport: *Pass*
+     = fully inside. **Small windows:** only if the tools can change the viewport size;
+     otherwise NOT TESTABLE, for Jovan (try ~800×450 and a phone emulator).
+  10. **A full match end.** Lose on purpose (no towers): result screen, Amber as the rules
+      say (solo loss 0), back to the Lobby, the Hunt Board still opens.
+- **Accept:** `PLAYTEST.md` covers every step with evidence or NOT TESTABLE and why; play
+  mode stopped; nothing but `PLAYTEST.md` and `playtest/` changed (`git status`).
+
+### T30. Docs and round-2 recap (after T31's results, or noting "Studio testing unavailable")
 - `VISION.md` (Amber: Daily Haul and Bounties, the "log-ins never beat playing" bars),
   `ARCHITECTURE.md` (layout: `Shared/Bounties`; §4: Progression owns the rewards state),
   `CLAUDE.md` status, `UPGRADES.md` if T20/T23 changed what a tier does.

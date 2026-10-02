@@ -357,3 +357,39 @@ Skybreaker (M5/M6) and "Pops".
 - **Claim states:** *in progress*: no Claim button, just the bar and a small `Swap (1 left)` text button (hidden once the bounty is done, claimed or out of swaps). *Done*: a solid amber **Claim** button (no pulsing or shaking). *In flight*: grey `…`, disabled. *Claimed*: the card dims and gets a tilted red-ink **BAGGED** stamp, with no buttons.
 - **Daily Haul strip:** 7 small tiles in a row. Claimed days get a dino-footprint stamp; today gets an amber outline and **Claim**; future days are dim. Day 7 is about 1.5× wide, labelled **Big Haul** with an amber-chunk icon. One dim line underneath: "Missed days don't reset your Haul." On narrow windows the strip wraps to 4+3 instead of overflowing.
 - **No-trap (DIRECTION):** only the bounty list scrolls (capped like the other panels); the X, the header and the Haul strip never scroll away. Don't add a full-screen dimmer that covers Play. A claim gives an inline `+15 Amber` float on the card, never a reward pop-up or confetti modal. The home button's claimable dot is a small amber dot, not a bouncing badge.
+
+## Round 10 — Hunt Board as built (Daily Haul + Bounties)
+
+Read: the `DailyHaul` and `Bounties` blocks in `src/shared/Config.luau`, `src/shared/HuntBoard.luau`, `src/client/HuntBoard.client.luau`, the home button in `Home.client.luau`, the toast in `Hud.client.luau`, `Bounties.doneText`, and the board's reply messages in `src/server/Progression.luau`. Read from code only; nothing was run in Studio.
+
+**Verdict: it reads as a hunters' camp board, not a "daily quests" menu. One must-fix word, one must-fix title clash, the rest is polish.**
+
+**What's right**
+- **Names match Round 9 and all come from `Theme.luau`:** Hunt Board, Daily Haul, Big Haul, Daily Bounties, Weekly Bounties, Swap. Slot names (easy/medium/hard) are never shown.
+- **All 24 bounty titles are Round 9's**, spelled as specified: Compy Sweep, Raptor Cull, Busy Day, Gear Check, Pitch Camp, Headbutt Hunt, Shell Cracker, Clear Skies, Deep Trail, Sharpen Up, Run Them Down, Patch Job, Clean Sweep, Stampede, Rough Country, Badlands, Horn Breaker, Tyrant's End. Scavenger isn't in the pool, which is fine. No "Last Stand", no "Big Game".
+- **Currency is Amber everywhere**, always through `Theme.Currency` (toast, claim float, payout line). No "coins", "gems", "cores" or "quest" in any player-facing string.
+- **No old-theme words on screen.** "StormSplitHome" (`HuntBoard.client.luau:231`) is an internal GUI name, which Theme.luau says stays.
+- **The look is the spec:** wood 70,50,35 with a lighter rim, amber 245,175,60 title, cream 235,225,200 paper cards with a tack, red-ink **BAGGED** stamp, footprint stamp on claimed Haul days, amber chunk on Big Haul, the X in the header.
+- **Plain, kid-readable wording:** `Claim`, `Swap (1 left)`, `12 / 40`, `+15`, "Day 1"–"Day 6", "Missed days don't reset your Haul.", "Unclaimed bounties paid: +35 Amber". Countdowns `3d 4h` / `5h 12m` / `12m` are the standard Roblox form and never read `0m`.
+
+**Fixes**
+
+1. **must-fix — "Pop" is balloon wording, and the Hunt Board is the only place in the game that uses it.** Round 9 wrote "Pop" itself; that was this reviewer's mistake, carried over from BTD. Dinos shrink and are taken down; nothing pops. In the Bounties sheet's Text column (exported to `src/shared/Config.luau`):
+   - `Pop {n} Compies` → `Take down {n} Compies` (same for Raptors, Pachycephalosaurs, Ankylosaurs, Pteranodons, Gallimimus)
+   - `Pop {n} dinos of any kind` → `Take down {n} dinos of any kind` (Busy Day, Stampede)
+   - `Pop {n} Triceratops (team pops count)` → `Take down {n} Triceratops (your team's count too)`
+   - `Pop a T-Rex (team pops count)` → `Take down a T-Rex (your team's counts too)`
+   - Only the words change. The internal event keys `pop` / `popTotal` stay.
+2. **must-fix — two cards on one board can share a title.** `D_DEEP_TRAIL_15` (medium) and `D_DEEP_TRAIL_25` (hard) are both "Deep Trail", as are `W_DEEP_TRAIL_2` (easy) and `W_DEEP_TRAIL_4` (hard). The toast "Bounty bagged: Deep Trail" then doesn't say which. Titles only:
+   - `D_DEEP_TRAIL_25`: `Deep Trail` → `Deeper Trail`
+   - `W_DEEP_TRAIL_2`: `Deep Trail` → `Long Trail`
+   - `W_DEEP_TRAIL_4`: `Deep Trail` → `Longest Trail`
+3. **nice-to-have — the toast promises Amber the hunter doesn't have yet.** `Bounties.luau:485`: `Bounty bagged: Raptor Cull (+15 Amber)` shows when the bounty is finished, but the Amber arrives on Claim, and the board's BAGGED stamp means claimed. → `Bounty ready: Raptor Cull (claim +15 Amber at the Hunt Board)`. This also revises Round 9's own wording. "Bagged" then means one thing: claimed.
+4. **nice-to-have — the loading state is a lone "…".** `HuntBoard.client.luau:650` (`problem or HuntBoard.WAIT`): → `Checking the board…`. Keep `…` on the buttons.
+5. **nice-to-have — the failed-load line is tech-speak.** `HuntBoard.luau:77`: `Couldn't reach the server` → `Couldn't load the Hunt Board. Close it and open it again.`
+6. **nice-to-have — the two countdowns read the same.** `HuntBoard.resetLine` gives `New bounties in 5h 12m` both under the header (daily) and beside Weekly Bounties (weekly). → top line `New daily bounties in 5h 12m`; weekly side `New in 3d 4h`.
+7. **nice-to-have — key hint style differs along the home row.** `Home.client.luau`: `Choose hero  (H)`, `Unlocks & Mastery  (M)`, then `Hunt Board [G]` (Round 9 asked for brackets without checking the neighbours). → `Hunt Board  (G)` in `HuntBoard.BUTTON`, to match.
+8. **nice-to-have — server replies shown on the board's message line** (`src/server/Progression.luau`): `Already claimed today` → `Today's Haul is already claimed`; `Swapped` → `Bounty swapped`; `That bounty can't be claimed` → `That bounty isn't ready yet`; `The Hunt Board isn't available right now` → `The Hunt Board is closed right now`.
+9. **nice-to-have — the "not saving" note is for the developer.** `HuntBoard.client.luau:642`: `Progress isn't saving: publish the place to Roblox to keep it (SETUP.md).` shows whenever `SaveStatus` is "offline". If that can ever happen in the published game, a player needs: `Progress isn't saving right now.` It's the same string as in Shop.client, so change both or neither.
+
+Left alone on purpose: "Pachycephalosaurs" (long, but it's the species' in-game name), "Day 1"–"Day 6", `Claim`, `Swap (n left)`, the countdown format, every colour, and all numbers and rules.

@@ -11,6 +11,7 @@ time.
 | **Director** | Knows Jovan's taste (`DIRECTION.md`) and the plans (`VISION.md`, `UPGRADES.md`, `HEROES.md`, `ARCHITECTURE.md`). Breaks work into tasks with acceptance checks, answers open design questions, reviews every build against the vision. | `PLAN.md`, `DECISIONS.md` |
 | **Builder** | Builds and polishes game functionality, one task at a time, and verifies it. Doesn't make design calls; asks the Director through the coordinator. | code, spreadsheet, docs |
 | **Dino agent** | Guards the dinosaur vision: names, looks, attack flavour, wording. Reviews each build and proposes theme fixes. | review notes (fixes go through the Director to the Builder) |
+| **Tester** (added 2026-10-01, Jovan's request) | Playtests in Roblox Studio through Studio's built-in MCP server, using `tools/studio/mcp.py` (`tools` / `call <tool> '<json>'`), following the playtest script in `PLAN.md`. Reports each step as pass, fail or not testable, with console output and screenshots. Doesn't judge feel or balance; doesn't fix anything. Bugs go to the Director, who queues fixes for the Builder. | `PLAYTEST.md`, screenshots in `playtest/` |
 
 ## Cycle
 
@@ -53,6 +54,12 @@ Stop before phase 7 again and write a round-2 recap (append to `RECAP.md`).
 - **Commit and push each verified step** (Jovan's choice). Use
   `/Library/Developer/CommandLineTools/usr/bin/git` (the Xcode licence blocks `/usr/bin/git`).
   Never commit `ideas/`. Commit messages end with the Co-Authored-By line used in history.
+- **Studio testing (Tester only):** needs Jovan to switch on Studio's Assistant Settings →
+  Manage MCP Servers → "Enable Studio as MCP server"; if no Studio is listed, say "Studio
+  testing unavailable" and stop. The Tester never edits game code, the spreadsheet or the
+  place outside play mode, never publishes or saves the place, never wipes or writes
+  DataStores (turn saving off with the Studio key J before any claim or unlock), and always
+  stops play mode when done. Only what was run in Studio may be called playtested.
 - **Log every design call** in `DECISIONS.md`: what was decided, why (which preference), and
   how to reverse it.
 - Keep `CLAUDE.md` status, `ARCHITECTURE.md` phase table and the design docs current.
