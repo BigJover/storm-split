@@ -3,7 +3,7 @@
 Scope (Jovan, 2026-10-01, `GAUNTLET.md` "Round 2 scope"): (1) a balance pass across the whole
 game, justified by headless models because there's no playtest data yet; (2) daily log-in
 rewards plus daily and weekly challenges, for retention. **Stop before phase 7** and append a
-round-2 recap to `RECAP.md`. Design calls: `DECISIONS.md` #54–#83. Round 1's plan is kept
+round-2 recap to `RECAP.md`. Design calls: `DECISIONS.md` #54–#86. Round 1's plan is kept
 below as history.
 
 The round-1 rules still hold (one task = one commit, push after verifying; `tools/check.sh`,
@@ -299,6 +299,15 @@ Haul**); challenges are **Bounties**; a reroll is a **Swap**.
 - **Accept:** a spec or audit check proves each of `Bounties.EVENTS` has a call site;
   specs green; no cash or Amber changes outside claims; the Scoreboard's pop counts are
   unchanged.
+
+### T28b. Gear Check counts only during a round (small server fix, DECISIONS #85)
+- **Files:** `src/server/Progression.luau` (or `Shared/Profile`), spec.
+- **Rule:** the `ability` event advances bounties **only while State is `Playing`**; every
+  other event keeps counting in Building and Playing as now. Nothing else changes (build,
+  sell-and-rebuild and upgrade loops are accepted: they cost cash).
+- **Accept:** a spec: `ability` in Building gives no progress, in Playing it does; `build`
+  in Building still counts; specs and audit green. Run after T29's Builder is done if the
+  files overlap.
 
 ### T29. Hunt Board screen on the home screen — 🦖 (wording, look)
 - **Files:** `src/client/Home.client.luau` (or a new `HuntBoard.client.luau`),
