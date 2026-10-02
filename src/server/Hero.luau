@@ -177,9 +177,14 @@ local function mastery(player: Player, s: State): any?
 	return Progression.masteryRewards(Progression.masteryLevel(player, s.hero))
 end
 
-local function credit(player: Player, killed: boolean, gone: string?)
+-- One pop per size dropped (pierce-through can drop several); the last says "gone".
+local function credit(player: Player, killed: boolean, gone: string?, dropped: number?)
 	if killed and onPop then
-		onPop(if player.Parent then player else nil, gone)
+		local who = if player.Parent then player else nil
+		local pops = math.max(1, dropped or 1)
+		for i = 1, pops do
+			onPop(who, if i == pops then gone else nil)
+		end
 	end
 end
 
@@ -470,7 +475,9 @@ end
 type Outcome = { hit: boolean, killed: boolean }
 
 -- One enemy taking a round: damage, then what the round does on impact.
-local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Enemy, live, outcome: Outcome)
+-- `direct` is true for the pellet's own path (pierce included): it gets the
+-- gun's Size breaks unless the round splashes; ricochet bounces break 1 (#127).
+local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Enemy, live, outcome: Outcome, direct: boolean?)
 	if not enemy.alive then
 		return
 	end
@@ -510,8 +517,11 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 			end
 		end
 	end
-	local killed, gone = Enemies.damage(enemy, damage, stats.piercesArmor)
-	credit(player, killed, gone)
+	local breaks = if direct and stats.splashRadius <= 0 and stats.sizeBreaks > 1
+		then Enemies.breaksFor(enemy, stats.sizeBreaks, 1, true)
+		else 1
+	local killed, gone, dropped = Enemies.damage(enemy, damage, stats.piercesArmor, breaks)
+	credit(player, killed, gone, dropped)
 	outcome.killed = outcome.killed or killed
 
 	if stats.splashRadius > 0 then
@@ -615,7 +625,7 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 				local hit: { [any]: boolean } = {}
 				for _, enemy in struck do
 					hit[enemy] = true
-					impact(player, stats, enemy, live, outcome)
+					impact(player, stats, enemy, live, outcome, true)
 				end
 				if stats.bounces > 0 then
 					ricochet(player, stats, struck[#struck], live, hit, color, outcome)

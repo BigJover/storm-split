@@ -17,12 +17,15 @@
 	range; Lingering Dose makes it linger after it leaves. A chilled (sedated)
 	dino shows a tranq dart; one knocked out by a Tranq Station pulse shows "zzz".
 
-	SHRINKING (VISION.md): each tier is its own species, and a dino never turns
-	into a different enemy. It spawns at its largest size; each size holds an
-	equal share of the species' HP. Emptying a size pays out like a kill
-	(onKilled: cash, pops) and the dino shrinks one size — same species,
-	smaller model — keeping its mark, chill and fire. Emptying the smallest
-	size kills it. Excess damage doesn't carry into the next size.
+	SHRINKING (VISION.md, DECISIONS #125-#127): each tier is its own species,
+	and a dino never turns into a different enemy. It has ONE health pool (the
+	species' HP); its sizes are evenly spaced thresholds on it (`share` each).
+	It spawns at its largest size; crossing a threshold pays out like a kill
+	(onKilled once per size: cash, a Bone) and the dino shrinks — same species,
+	smaller model — keeping its mark, chill and fire. Crossing the last kills
+	it. A hit may cross at most `breaks` thresholds (pierce-through; default 1,
+	which is the old rule: excess damage doesn't carry into the next size).
+	The rule is Shared/SizeBreaks.
 
 	THE CAP (ARCHITECTURE.md §5): nothing spawns directly — everything goes
 	through a queue that only drains while live enemies are under
@@ -37,6 +40,7 @@ local Track = require(Shared:WaitForChild("Track"))
 local Path = require(Shared:WaitForChild("Path"))
 local DinoLook = require(Shared:WaitForChild("DinoLook"))
 local Combat = require(Shared:WaitForChild("Combat"))
+local SizeBreaks = require(Shared:WaitForChild("SizeBreaks"))
 
 local Enemies = {}
 
@@ -44,8 +48,8 @@ export type Enemy = {
 	id: number,
 	key: string,
 	def: any,
-	hp: number,
-	maxHp: number,
+	hp: number, -- what's left of the one pool (all sizes)
+	share: number, -- HP per size: the pool's thresholds are multiples of it
 	hpMult: number,
 	distance: number,
 	speed: number,
@@ -170,8 +174,8 @@ local function spawnNow(item: Pending)
 		id = nextId,
 		key = item.key,
 		def = def,
-		hp = hpPerSize,
-		maxHp = hpPerSize,
+		hp = hpPerSize * sizes,
+		share = hpPerSize,
 		hpMult = item.hpMult,
 		distance = item.distance,
 		speed = baseSpeed * speedMult * def.speedMult,
@@ -242,14 +246,16 @@ function Enemies.canHurt(enemy: Enemy, piercesArmor: boolean): boolean
 	return piercesArmor or not enemy.def.armored or (enemy.armorStripped and chilled(enemy))
 end
 
--- Apply damage. Returns true if this hit emptied a size (a pop: it shrank or
--- died), and then the species key if it emptied the smallest size, so the dino
--- is gone (nil for a shrink; bounties count dinos, DECISIONS #66). A hit that
+-- Apply damage. Returns true if this hit crossed a threshold (a pop: it shrank
+-- or died), then the species key if the dino is gone (nil for a shrink;
+-- bounties count dinos, DECISIONS #66), then how many sizes it dropped (one pop
+-- each). `breaks` is the most thresholds this hit may cross (Shared/SizeBreaks;
+-- default 1: splash, damage over time, bounces and everything else). A hit that
 -- can't pierce an Armored enemy does nothing. An active mark or brittle chill
--- adds its percentage.
-function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?): (boolean, string?)
+-- adds its percentage (to the damage, never to the breaks).
+function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?, breaks: number?): (boolean, string?, number)
 	if not enemy.alive or not Enemies.canHurt(enemy, piercesArmor == true) then
-		return false
+		return false, nil, 0
 	end
 	if enemy.markPercent > 0 and os.clock() < enemy.markedUntil then
 		amount *= 1 + enemy.markPercent / 100
@@ -257,22 +263,30 @@ function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?): (
 	if enemy.brittlePercent > 0 and chilled(enemy) then
 		amount *= 1 + enemy.brittlePercent / 100
 	end
-	enemy.hp -= amount
-	if enemy.hp > 0 then
-		return false
+	local hp, dropped, dead = SizeBreaks.apply(enemy.hp, enemy.share, enemy.size, amount, breaks)
+	enemy.hp = hp
+	if dropped == 0 then
+		return false, nil, 0
 	end
 
-	if callbacks.onKilled then
-		callbacks.onKilled(enemy) -- this size is done: cash and a pop
+	for _ = 1, dropped do
+		if callbacks.onKilled then
+			callbacks.onKilled(enemy) -- a size is done: cash and a pop
+		end
 	end
-	if enemy.size > 1 then
-		enemy.size -= 1
-		enemy.hp = enemy.maxHp
-		dress(enemy) -- one size smaller, same species
-		return true
+	if not dead then
+		enemy.size -= dropped
+		dress(enemy) -- smaller, same species (one redress however many sizes dropped)
+		return true, nil, dropped
 	end
 	remove(enemy)
-	return true, enemy.key
+	return true, enemy.key, dropped
+end
+
+-- The breaks a direct hit gets on this dino: the hitter's base and level less
+-- the species' Break resist (Shared/SizeBreaks).
+function Enemies.breaksFor(enemy: Enemy, base: number, level: number, isHero: boolean): number
+	return SizeBreaks.breaks(base, level, enemy.def.breakResist, isHero)
 end
 
 function Enemies.isMarked(enemy: Enemy): boolean

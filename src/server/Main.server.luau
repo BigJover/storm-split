@@ -124,7 +124,7 @@ Enemies.init(map.path, map.enemyFolder, {
 	-- Each split layer pays for its own HP, so a full cascade pays the round's
 	-- effective HP x CashPerEffectiveHP — the spreadsheet's "Kill income".
 	onKilled = function(enemy)
-		Economy.earn(enemy.maxHp * Config.Tuning.CashPerEffectiveHP * difficulty().cashMult)
+		Economy.earn(enemy.share * Config.Tuning.CashPerEffectiveHP * difficulty().cashMult)
 	end,
 })
 

@@ -49,6 +49,7 @@ export type Stats = {
 	range: number,
 	pierce: number, -- enemies one pellet passes through
 	bounces: number,
+	sizeBreaks: number,
 	piercesArmor: boolean,
 	hitsAir: boolean,
 	burnDps: number,
@@ -132,6 +133,7 @@ local HIGHEST = {
 	"slowSeconds",
 	"jawLockSeconds",
 	"jawLockSpread",
+	"sizeBreaks",
 }
 local FLAGS = { "piercesArmor", "hitsAir", "beltFed", "scope", "healRepairsTowers" }
 
@@ -261,6 +263,7 @@ function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?, mast
 		range = hero.range * mult.rangeMult,
 		pierce = math.max(1, math.floor(high.pierce or 1)),
 		bounces = math.floor(high.bounces or 0),
+		sizeBreaks = math.max(1, math.floor(high.sizeBreaks or 1)), -- pierce-through base (Shared/SizeBreaks)
 		piercesArmor = hero.piercesArmor or flag.piercesArmor == true,
 		hitsAir = hero.hitsAir or flag.hitsAir == true,
 		burnDps = high.burnDps or 0,

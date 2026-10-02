@@ -75,6 +75,8 @@ return table.freeze({
 		HeroLevelLeadCap = 1,
 		MasteryPerkWorthCap = 40,
 		BossRangedVsTowersX = 0.3,
+		BreakLevelStep = 3,
+		MaxSizeBreaks = 4,
 	},
 	Towers = {
 		SCOUT = {
@@ -154,6 +156,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Long Barrel",
@@ -211,6 +214,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Flare Gun",
@@ -268,6 +272,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Watch Post",
@@ -325,6 +330,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Signal Tower",
@@ -382,6 +388,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -445,6 +452,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Extended Mag",
@@ -502,6 +510,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Double Tap",
@@ -559,6 +568,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Bullet Hose",
@@ -616,6 +626,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Lead Rain",
@@ -673,6 +684,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -736,6 +748,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Armor Breaker",
@@ -793,6 +806,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Hollow Points",
@@ -850,6 +864,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Railshot",
@@ -907,6 +922,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 2,
 						},
 						{
 							name = "Hide Buster",
@@ -964,6 +980,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 2,
 						},
 					},
 				},
@@ -1046,6 +1063,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Through-and-Through",
@@ -1103,6 +1121,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Ricochet",
@@ -1160,6 +1179,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Tungsten Core",
@@ -1217,6 +1237,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 2,
 						},
 						{
 							name = "Linebreaker",
@@ -1274,6 +1295,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 3,
 						},
 					},
 				},
@@ -1337,6 +1359,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Bolt Racking",
@@ -1394,6 +1417,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Marked Target",
@@ -1451,6 +1475,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Game Spotter",
@@ -1508,6 +1533,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Eye in the Sky",
@@ -1565,6 +1591,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -1628,6 +1655,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Bone Breaker",
@@ -1685,6 +1713,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 2,
 						},
 						{
 							name = "Concussion Round",
@@ -1742,6 +1771,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 2,
 						},
 						{
 							name = "Punt Gun",
@@ -1799,6 +1829,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 3,
 						},
 						{
 							name = "Extinction Round",
@@ -1856,6 +1887,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 4,
 						},
 					},
 				},
@@ -1938,6 +1970,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Shrapnel",
@@ -1995,6 +2028,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Napalm",
@@ -2052,6 +2086,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Firestorm",
@@ -2109,6 +2144,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Scorched Earth",
@@ -2166,6 +2202,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -2229,6 +2266,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Rapid Loader",
@@ -2286,6 +2324,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Chain Reaction",
@@ -2343,6 +2382,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Carpet Shelling",
@@ -2400,6 +2440,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Meteor Shower",
@@ -2457,6 +2498,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -2520,6 +2562,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Armor Crack",
@@ -2577,6 +2620,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Stun Grenade",
@@ -2634,6 +2678,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Earthshaker",
@@ -2691,6 +2736,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Tectonic Slam",
@@ -2748,6 +2794,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -2830,6 +2877,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Heavy Dose",
@@ -2887,6 +2935,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Lingering Dose",
@@ -2944,6 +2993,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Sedative Cloud",
@@ -3001,6 +3051,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Deep Sleep",
@@ -3058,6 +3109,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -3121,6 +3173,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Heavy Sedative",
@@ -3178,6 +3231,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Barbed Darts",
@@ -3235,6 +3289,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Quick Cycle",
@@ -3292,6 +3347,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Big Game Tranq",
@@ -3349,6 +3405,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -3412,6 +3469,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Find the Gap",
@@ -3469,6 +3527,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Hunter's Call",
@@ -3526,6 +3585,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Vital Points",
@@ -3583,6 +3643,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Apex Predator",
@@ -3640,6 +3701,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -3722,6 +3784,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Bigger Budget",
@@ -3779,6 +3842,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Trade Route",
@@ -3836,6 +3900,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "War Chest",
@@ -3893,6 +3958,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Amber Vault",
@@ -3950,6 +4016,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -4013,6 +4080,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Double Drop",
@@ -4070,6 +4138,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Chopper Drop",
@@ -4127,6 +4196,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Supply Chain",
@@ -4184,6 +4254,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Treasure Haul",
@@ -4241,6 +4312,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -4304,6 +4376,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Field Engineer",
@@ -4361,6 +4434,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Recycler",
@@ -4418,6 +4492,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Forward Camp",
@@ -4475,6 +4550,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Base Camp",
@@ -4532,6 +4608,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -4614,6 +4691,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Extra Cots",
@@ -4671,6 +4749,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Stitch-Up",
@@ -4728,6 +4807,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Night Shift",
@@ -4785,6 +4865,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Miracle Ward",
@@ -4842,6 +4923,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -4905,6 +4987,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Signal Whistle",
@@ -4962,6 +5045,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Med Kits",
@@ -5019,6 +5103,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Pack Mules",
@@ -5076,6 +5161,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Rescue Beacon",
@@ -5133,6 +5219,7 @@ return table.freeze({
 							rescueRespawnMult = 0.5,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -5196,6 +5283,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 10,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Iron Tonic",
@@ -5253,6 +5341,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 20,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Smelling Salts",
@@ -5310,6 +5399,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 20,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Bone Broth",
@@ -5367,6 +5457,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 35,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Last Stand",
@@ -5424,6 +5515,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 50,
 							lastStand = true,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -5506,6 +5598,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Iron Plates",
@@ -5563,6 +5656,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Thorn Plating",
@@ -5620,6 +5714,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Tempered Steel",
@@ -5677,6 +5772,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Bulwark",
@@ -5734,6 +5830,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -5797,6 +5894,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Hand Loads",
@@ -5854,6 +5952,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Piercing Rounds",
@@ -5911,6 +6010,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Match Grade",
@@ -5968,6 +6068,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Master Gunsmith",
@@ -6025,6 +6126,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -6088,6 +6190,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Recoil Pads",
@@ -6145,6 +6248,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Ammo Crate",
@@ -6202,6 +6306,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Steady Rests",
@@ -6259,6 +6364,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Full Kit",
@@ -6316,6 +6422,7 @@ return table.freeze({
 							rescueRespawnMult = 0,
 							auraHpPercent = 0,
 							lastStand = false,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -6379,6 +6486,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Hair Trigger",
@@ -6421,6 +6529,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Dual Pistols",
@@ -6463,6 +6572,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Fan the Hammer",
@@ -6505,6 +6615,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Akimbo Frenzy",
@@ -6547,6 +6658,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -6595,6 +6707,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Steady Hands",
@@ -6637,6 +6750,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Scope",
@@ -6679,6 +6793,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Hollow Tips",
@@ -6721,6 +6836,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Deadshot",
@@ -6763,6 +6879,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -6811,6 +6928,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Extended Mag",
@@ -6853,6 +6971,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Ricochet",
@@ -6895,6 +7014,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Quick Dart",
@@ -6937,6 +7057,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Chain Shot",
@@ -6979,6 +7100,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -7055,6 +7177,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Compensator",
@@ -7097,6 +7220,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Burst Fire",
@@ -7139,6 +7263,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Trigger Discipline",
@@ -7181,6 +7306,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Precision Burst",
@@ -7223,6 +7349,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -7271,6 +7398,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Fast Hands",
@@ -7313,6 +7441,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Belt Fed",
@@ -7355,6 +7484,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Bipod",
@@ -7397,6 +7527,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Spin-Up",
@@ -7439,6 +7570,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -7487,6 +7619,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Incendiary",
@@ -7529,6 +7662,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "AP Rounds",
@@ -7571,6 +7705,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Hot Load",
@@ -7613,6 +7748,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Explosive Tips",
@@ -7655,6 +7791,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -7731,6 +7868,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Rifled Barrel",
@@ -7773,6 +7911,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Sabot",
@@ -7815,6 +7954,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Long Barrel",
@@ -7857,6 +7997,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Railslug",
@@ -7899,6 +8040,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -7947,6 +8089,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Extra Pellets",
@@ -7989,6 +8132,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Dragon's Breath",
@@ -8031,6 +8175,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Auto-Loader",
@@ -8073,6 +8218,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Thicket Sweeper",
@@ -8115,6 +8261,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -8163,6 +8310,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Extended Tube",
@@ -8205,6 +8353,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Double Barrel",
@@ -8247,6 +8396,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Kickback",
@@ -8289,6 +8439,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Frag Shells",
@@ -8331,6 +8482,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -8407,6 +8559,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Belt Pouch",
@@ -8449,6 +8602,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Patch Up",
@@ -8491,6 +8645,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Triage Tent",
@@ -8533,6 +8688,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Second Wind",
@@ -8575,6 +8731,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -8623,6 +8780,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Loading Gate",
@@ -8665,6 +8823,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Rapid Cycle",
@@ -8707,6 +8866,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Smooth Action",
@@ -8749,6 +8909,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Runaway Lever",
@@ -8791,6 +8952,7 @@ return table.freeze({
 							slowSeconds = 0,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -8839,6 +9001,7 @@ return table.freeze({
 							slowSeconds = 1,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Double Dose",
@@ -8881,6 +9044,7 @@ return table.freeze({
 							slowSeconds = 1.5,
 							jawLockSeconds = 0,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Jaw Lock",
@@ -8923,6 +9087,7 @@ return table.freeze({
 							slowSeconds = 1.5,
 							jawLockSeconds = 2,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Long Dose",
@@ -8965,6 +9130,7 @@ return table.freeze({
 							slowSeconds = 1.5,
 							jawLockSeconds = 3,
 							jawLockSpread = 0,
+							sizeBreaks = 1,
 						},
 						{
 							name = "Lullaby Rounds",
@@ -9007,6 +9173,7 @@ return table.freeze({
 							slowSeconds = 1.5,
 							jawLockSeconds = 3,
 							jawLockSpread = 6,
+							sizeBreaks = 1,
 						},
 					},
 				},
@@ -9342,6 +9509,7 @@ return table.freeze({
 			rangedReach = 0,
 			projectileSpeed = 0,
 			impactRadius = 0,
+			breakResist = 0,
 		},
 		BRUTE = {
 			display = "Raptor",
@@ -9365,6 +9533,7 @@ return table.freeze({
 			rangedReach = 0,
 			projectileSpeed = 0,
 			impactRadius = 0,
+			breakResist = 0,
 		},
 		SHIELD = {
 			display = "Pachycephalosaurus",
@@ -9388,6 +9557,7 @@ return table.freeze({
 			rangedReach = 22,
 			projectileSpeed = 40,
 			impactRadius = 3,
+			breakResist = 0,
 		},
 		ARMOR = {
 			display = "Ankylosaurus",
@@ -9411,6 +9581,7 @@ return table.freeze({
 			rangedReach = 20,
 			projectileSpeed = 50,
 			impactRadius = 3,
+			breakResist = 1,
 		},
 		STORM = {
 			display = "Gallimimus",
@@ -9434,6 +9605,7 @@ return table.freeze({
 			rangedReach = 25,
 			projectileSpeed = 70,
 			impactRadius = 3,
+			breakResist = 0,
 		},
 		LLAMA = {
 			display = "Pteranodon",
@@ -9457,6 +9629,7 @@ return table.freeze({
 			rangedReach = 18,
 			projectileSpeed = 35,
 			impactRadius = 4,
+			breakResist = 0,
 		},
 		ZEP = {
 			display = "Triceratops",
@@ -9480,6 +9653,7 @@ return table.freeze({
 			rangedReach = 30,
 			projectileSpeed = 45,
 			impactRadius = 5,
+			breakResist = 1,
 		},
 		BARGE = {
 			display = "T-Rex",
@@ -9503,6 +9677,7 @@ return table.freeze({
 			rangedReach = 35,
 			projectileSpeed = 35,
 			impactRadius = 8,
+			breakResist = 2,
 		},
 	},
 	EnemyOrder = {

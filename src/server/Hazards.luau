@@ -60,7 +60,8 @@ function Hazards.burn(distance: number, reach: number, dps: number, seconds: num
 	Effects.disc(Enemies.pointAt(distance) + Vector3.new(0, 0.45, 0), reach, BURN_COLOR, seconds, 0.5)
 end
 
-local function credit(owner: Player?, killed: boolean, gone: string?)
+-- Burns always break 1 size (DECISIONS #127), so `dropped` is at most 1 here.
+local function credit(owner: Player?, killed: boolean, gone: string?, _dropped: number?)
 	if killed and onPop then
 		onPop(if owner and owner.Parent then owner else nil, gone)
 	end

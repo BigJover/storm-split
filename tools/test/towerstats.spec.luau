@@ -9,7 +9,7 @@ local TowerStats = require(src.shared.TowerStats)
 local Upgrades = require(src.shared.Upgrades)
 
 local ROUNDED_DOWN = { bomblets = true, bombletGenerations = true, chests = true, medKits = true }
-local AT_LEAST_ONE = { shots = true, lineHits = true }
+local AT_LEAST_ONE = { shots = true, lineHits = true, sizeBreaks = true }
 
 local function where(key: string, tiers: { number }): string
 	return `{key} {table.concat(tiers, "/")}`

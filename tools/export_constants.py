@@ -110,7 +110,16 @@ ABILITY_COLUMNS = [
     ("rescueRespawnMult", 59, "num", 0),
     ("auraHpPercent", 60, "num", 0),
     ("lastStand", 61, "bool", False),
+    # Pierce-through (DECISIONS #126, #127): sizes one hit may drop; blank = 1
+    ("sizeBreaks", 62, "num", 1),
 ]
+
+# Paths allowed a Size breaks above 1 (DECISIONS #127, #134). A new one is a
+# Director call: add it here and to PLAN's design table together.
+BREAK_PATHS = {
+    ("Longshot Perch", "Deadeye"), ("Longshot Perch", "Big Bore"), ("Hunting Blind", "Hardliner"),
+}
+HERO_BREAK_PATHS = {("Tracker", "Marksman"), ("Brush Beater", "Slug")}
 
 
 def read_tuning(ws):
@@ -223,6 +232,8 @@ HERO_UPGRADE_COLUMNS = [
     ("guardPercent", 39, "num", 0), ("guardSeconds", 40, "num", 0),
     ("slowPercent", 41, "num", 0), ("slowSeconds", 42, "num", 0),
     ("jawLockSeconds", 43, "num", 0), ("jawLockSpread", 44, "num", 0),
+    # Pierce-through (DECISIONS #134): blank = 1
+    ("sizeBreaks", 45, "num", 1),
 ]
 
 ABILITY_KINDS = ("MARK", "OVERDRIVE", "AIRBURST", "HEAL")
@@ -375,6 +386,8 @@ def read_enemies(ws):
             "rangedReach": num(v(ws, r, 22)),
             "projectileSpeed": num(v(ws, r, 23)),
             "impactRadius": num(v(ws, r, 24)),
+            # Pierce-through (DECISIONS #126): sizes taken off every hit's breaks
+            "breakResist": num(v(ws, r, 25)),
         }
         r += 1
     return enemies
@@ -723,6 +736,8 @@ def validate(data):
     for key, e in enemies.items():
         if e["meleeDamage"] > 0 and (e["meleeEvery"] <= 0 or e["meleeReach"] <= 0):
             problems.append(f"{key} bites (Melee damage > 0) but needs Melee every and Melee reach above 0")
+        if not isinstance(e["breakResist"], (int, float)) or e["breakResist"] < 0 or e["breakResist"] != int(e["breakResist"]):
+            problems.append(f"{key}: Break resist must be a whole number >= 0")
         if e["meleeDamage"] > 0 and not e["meleeName"]:
             problems.append(f"{key} bites but its Melee name is empty")
         if e["rangedDamage"] > 0 and (min(e["rangedEvery"], e["rangedReach"], e["projectileSpeed"], e["impactRadius"]) <= 0 or not e["rangedName"]):
@@ -748,9 +763,11 @@ def validate(data):
                 for field, _, kind, _ in ABILITY_COLUMNS:
                     if kind == "num" and (not isinstance(step[field], (int, float)) or step[field] < 0):
                         problems.append(f"{key} {p['id']} tier {i}: {field} must be a number >= 0")
-                for field in ("shots", "lineHits"):
+                for field in ("shots", "lineHits", "sizeBreaks"):
                     if step[field] < 1 or step[field] != int(step[field]):
                         problems.append(f"{key} {p['id']} tier {i}: {field} must be a whole number >= 1")
+                if step["sizeBreaks"] > 1 and (t["display"], p["id"]) not in BREAK_PATHS:
+                    problems.append(f"{key} {p['id']} tier {i}: Size breaks above 1 on a path not in the design table (DECISIONS #127; a Director call)")
 
     for key, h in data["Heroes"].items():
         name = h["display"]
@@ -784,6 +801,10 @@ def validate(data):
                     problems.append(f"{where}: Slow on hit % and Slow on hit (s) go together")
                 if step["jawLockSpread"] > 0 and step["jawLockSeconds"] <= 0:
                     problems.append(f"{where}: Jaw lock spread needs Jaw lock (s)")
+                if step["sizeBreaks"] < 1 or step["sizeBreaks"] != int(step["sizeBreaks"]):
+                    problems.append(f"{where}: Size breaks must be a whole number >= 1")
+                if step["sizeBreaks"] > 1 and (name, p["id"]) not in HERO_BREAK_PATHS:
+                    problems.append(f"{where}: Size breaks above 1 on a path not in the design table (DECISIONS #134; a Director call)")
 
     # Tuning levers the game code reads by name. A renamed or overwritten row would
     # otherwise only show up as nil in Studio.
@@ -797,10 +818,16 @@ def validate(data):
         "HeroDamagePerLevel", "TowerDamagePerLevel", "MultiplayerLossPayout", "RespawnTime", "ResultsTime",
         "PlayerMaxHealth", "HealPerRound", "SpawnProtection", "MaxResist", "MaxProjectiles",
         "TowerHPPerTier", "RepairCost", "BurnPatchMinReach", "BossJawLockX",
+        "BreakLevelStep", "MaxSizeBreaks",
     ]
     for key in needed:
         if key not in data["Tuning"]:
             problems.append(f"Tuning is missing '{key}' (the game reads it by name)")
+    tuning = data["Tuning"]
+    if tuning.get("BreakLevelStep", 1) <= 0:
+        problems.append("Tuning Break level step must be above 0")
+    if tuning.get("MaxSizeBreaks", 1) < 1:
+        problems.append("Tuning Max size breaks must be 1 or more (1 turns pierce-through off)")
 
     for i, lvl in enumerate(data["Mastery"], start=1):
         if not isinstance(lvl["coreCost"], (int, float)) or lvl["coreCost"] <= 0:

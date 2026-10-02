@@ -113,14 +113,20 @@ local towerFolder: Instance
 local nextId = 0
 local onPop: ((Player?, string?) -> ())? = nil
 local levelScale = 1 -- damage multiplier from the team's level
+local towerLevel = 1 -- the team's level itself (pierce-through's level bonus)
 local extraRatePercent: ((Tower) -> number)? = nil -- boosts from outside towers (hero Rally Cry)
 local resistOf: ((Tower) -> { number })? = nil -- extra damage resistance sources (Field Medic Second Wind)
 
 -- A pop goes to the tower's owner; if they've left, nobody gets it, but the hook still
--- hears which dino is gone (a boss counts for the whole team's bounties).
-local function credit(owner: Player?, killed: boolean, gone: string?)
+-- hears which dino is gone (a boss counts for the whole team's bounties). A hit that
+-- dropped several sizes (pierce-through) is one pop per size; the last says "gone".
+local function credit(owner: Player?, killed: boolean, gone: string?, dropped: number?)
 	if killed and onPop then
-		onPop(if owner and owner.Parent then owner else nil, gone)
+		local who = if owner and owner.Parent then owner else nil
+		local pops = math.max(1, dropped or 1)
+		for i = 1, pops do
+			onPop(who, if i == pops then gone else nil)
+		end
 	end
 end
 
@@ -507,7 +513,9 @@ end
 
 ------------------------------------------------------------------ hitting
 
-local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number)
+-- `breaks` is the tier's Size breaks for a direct hit (line pierce gives every dino
+-- in the line the shot's); splash and bomblets pass nothing (1, DECISIONS #127).
+local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number?)
 	local stats = tower.stats
 	local pierce = piercing(tower)
 	if not Enemies.canHurt(enemy, pierce) then
@@ -521,7 +529,8 @@ local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number)
 	end
 	Enemies.stun(enemy, stats.stunSeconds, stats.stunsBosses)
 	Enemies.knockback(enemy, stats.knockback)
-	credit(tower.owner, Enemies.damage(enemy, damage, pierce))
+	local b = if breaks and breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
+	credit(tower.owner, Enemies.damage(enemy, damage, pierce, b))
 end
 
 -- Bomblets land along the track around `distance`, alternating behind and
@@ -574,9 +583,13 @@ local function fire(tower: Tower, live): boolean
 		end
 		addBurn(tower, target)
 
-		local hits = if stats.lineHits > 1 then lineTargets(tower, target, live) else splashTargets(tower, target, live)
+		local line = stats.lineHits > 1
+		local hits = if line then lineTargets(tower, target, live) else splashTargets(tower, target, live)
+		-- Pierce-through: a line or a single target gets the tier's breaks; a splash breaks 1.
+		local splash = not line and stats.targets > 1 and stats.splashRadius > 0
+		local breaks = if splash then 1 else stats.sizeBreaks
 		for _, enemy in hits do
-			hit(tower, enemy, damage)
+			hit(tower, enemy, damage, breaks)
 		end
 		bomblets(tower, targetDistance, damage, 1, live)
 
@@ -780,6 +793,7 @@ end
 -- Level 1 is the start; each level multiplies tower damage by 1 + TowerDamagePerLevel.
 function Towers.setLevel(level: number)
 	levelScale = (1 + Config.Tuning.TowerDamagePerLevel) ^ math.max(0, level - 1)
+	towerLevel = math.max(1, level)
 end
 
 -- Quartermaster income for the round that just ended. Interest is on the
@@ -819,6 +833,7 @@ function Towers.clearAll()
 		towers[i] = nil
 	end
 	levelScale = 1
+	towerLevel = 1
 end
 
 function Towers.all(): { Tower }

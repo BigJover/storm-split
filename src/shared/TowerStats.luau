@@ -66,6 +66,7 @@ export type Stats = {
 	rescueRespawnMult: number, -- 0 = no Rescue Beacon; else x respawn time, at the hospital
 	auraHpPercent: number, -- towers in range get +% max HP
 	lastStand: boolean, -- once a round, a tower in range that would be trampled stays at 1 HP
+	sizeBreaks: number, -- pierce-through base: sizes one direct hit may drop (Shared/SizeBreaks)
 }
 
 local MULTIPLIERS = {
@@ -114,6 +115,7 @@ local HIGHEST = {
 	"medKitHeal",
 	"rescueRespawnMult",
 	"auraHpPercent",
+	"sizeBreaks",
 }
 local FLAGS = { "piercesArmor", "stunsBosses", "auraPiercesArmor", "slowsBosses", "freezeHoldsBosses", "stripsArmor", "revives", "lastStand" }
 
@@ -198,6 +200,7 @@ function TowerStats.compute(def, pathTiers: { number }): Stats
 		rescueRespawnMult = high.rescueRespawnMult or 0,
 		auraHpPercent = high.auraHpPercent or 0,
 		lastStand = flag.lastStand == true,
+		sizeBreaks = math.max(1, math.floor(high.sizeBreaks or 1)),
 	}
 end
 
