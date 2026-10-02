@@ -468,6 +468,41 @@ test("ability, build, upgrade and repair count their own bounties only", functio
 	eq(#Bounties.progress(state, "pop", "BARGE"), 1, "a T-Rex finishes Tyrant's End")
 end)
 
+-- What Progression.bountyEvent does with a match event: Bounties.counts decides, then
+-- Bounties.progress counts it.
+local function fire(state, matchState: any, event: string)
+	if Bounties.counts(event, matchState) then
+		Bounties.progress(state, event)
+	end
+end
+
+test("an ability use counts only while a round is running (DECISIONS #85)", function()
+	local state = board(THURSDAY)
+	state.daily = { entry("D_GEAR_CHECK"), entry("D_PITCH_CAMP"), entry("D_PATCH_JOB") }
+	state.weekly = { entry("W_GEAR_CHECK"), entry("W_PATCH_JOB"), entry("W_TYRANTS_END") }
+	fire(state, "Building", "ability")
+	eq(state.daily[1].progress, 0, "daily Gear Check, ability while Building")
+	eq(state.weekly[1].progress, 0, "weekly Gear Check, ability while Building")
+	fire(state, "Playing", "ability")
+	eq(state.daily[1].progress, 1, "daily Gear Check, ability while Playing")
+	eq(state.weekly[1].progress, 1, "weekly Gear Check, ability while Playing")
+	fire(state, "Building", "build")
+	eq(state.daily[2].progress, 1, "Pitch Camp, build while Building")
+	fire(state, "Playing", "build")
+	eq(state.daily[2].progress, 2, "Pitch Camp, build while Playing")
+end)
+
+test("every other event counts in Building and Playing; nothing counts outside a match", function()
+	for _, event in Bounties.EVENTS do
+		eq(Bounties.counts(event, "Playing"), true, event .. " while Playing")
+		eq(Bounties.counts(event, "Building"), event ~= "ability", event .. " while Building")
+		for _, matchState in { "Lobby", "Victory", "Defeat", "", false } do
+			eq(Bounties.counts(event, matchState), false, event .. " in " .. tostring(matchState))
+		end
+		eq(Bounties.counts(event, nil), false, event .. " with no State")
+	end
+end)
+
 test("claim pays a finished bounty once; a double claim is refused", function()
 	local state = board(THURSDAY)
 	local early, nothing = Bounties.claim(state, "D_COMPY_SWEEP")

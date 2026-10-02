@@ -48,6 +48,7 @@
 	                swap allowance
 	  claimable     is there anything to claim (the dot on the Hunt Board button)
 	  doneText      the in-match toast for a finished bounty
+	  counts        whether an event counts in the match's current State (#66, #85)
 
 	Events for `progress` (EVENTS below); `amount` defaults to 1:
 	  pop         target = the species key. Advances that species' `pop` bounties and
@@ -338,6 +339,18 @@ local function atLeast(cleared: string?, wanted: string): boolean
 	local order = Config.DifficultyOrder
 	local c, w = table.find(order, cleared :: any), table.find(order, wanted)
 	return c ~= nil and w ~= nil and c >= w
+end
+
+-- Does this event count while the match is in `matchState` (the ReplicatedStorage "State"
+-- attribute)? Nothing counts outside a match (DECISIONS #66). An `ability` use counts only
+-- while a round is running: the Building phase has no timer, so Gear Check could be
+-- finished there without facing a dino (DECISIONS #85). Every other event counts in
+-- Building and in Playing.
+function Bounties.counts(event: string, matchState: any): boolean
+	if matchState == "Playing" then
+		return true
+	end
+	return matchState == "Building" and event ~= "ability"
 end
 
 function Bounties.progress(state: State, event: string, target: string?, amount: number?, context: Context?): { string }

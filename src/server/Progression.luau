@@ -34,7 +34,8 @@
 	                left as it was.
 	  Bounty progress   Progression.bountyEvent is the one way in for match events
 	                (Main, Shop and Hero call it; the events are Bounties.EVENTS). It
-	                only listens while a match is on, never pays, and tells the owner
+	                only listens while a match is on (`ability` only during a round,
+	                DECISIONS #85), never pays, and tells the owner
 	                alone when a bounty is finished (the BountyDone remote).
 
 	SAVING needs a place published to Roblox (Studio: Game Settings > Security >
@@ -375,10 +376,10 @@ end
 
 -- A match event for this hunter: one of Bounties.EVENTS, with its target (species or
 -- difficulty key), amount and context as Shared/Bounties describes. Ignored outside a
--- match, so nothing can be finished in the lobby (DECISIONS #66).
+-- match, so nothing can be finished in the lobby (DECISIONS #66); `ability` also waits
+-- for a round to be running (DECISIONS #85). The rule is Bounties.counts.
 function Progression.bountyEvent(player: Player, event: string, target: string?, amount: number?, context: Bounties.Context?)
-	local state = ReplicatedStorage:GetAttribute("State")
-	if state ~= "Building" and state ~= "Playing" then
+	if not Bounties.counts(event, ReplicatedStorage:GetAttribute("State")) then
 		return
 	end
 	bountyProgress(player, event, target, amount, context)
