@@ -34,7 +34,17 @@ For this round:
 | — | T54 🦖 | tier-6 names, small-perk names, pierce-through and Chaos wording |
 | 6 | T55, T56 | player level rule + levers; banking at match end, saving, solo take-down boost |
 | 7 | T57, T58 | cosmetics + titles + Profile screen; level leaderboard + showing off |
-| — | T59 🦖, T60 Tester, T61 Director | names review; Studio steps (waits on Jovan's MCP switch); docs + recap |
+| — | T59 🦖, T60 Tester | player-level names review; Studio steps (waits on Jovan's MCP switch) |
+| — | T62 🦖 | naming pass for the four approved towers (before any build) |
+| 8 | T63, T64 | shared tower groundwork (can't-be-damaged, on-track placement, sheet rows); Storm Coil |
+| 9 | T65, T66 | Falcon Roost; Harpoon Ballista |
+| 10 | T67, T68 | Tar Pit; unlock screen + balance pass for all four |
+| — | T69 🦖, T70 Tester, T61 Director (last) | review of the towers; Studio steps; docs + recap |
+
+**Batch 1 done (2026-10-02):** T40 befac6a, T41 61b77b4, T42 1b66379 (247 specs, audit 0,
+threat 0). Follow-ups: Hard starting cash → **850** (#143; 810 if Hard ≥ Normal in rounds
+1–15), one sheet cell for batch 2's Builder; Eye in the Sky's DEAD flag waits for T48
+(#144); no Fence text on the result screen (#145).
 
 ## The design in one place
 
@@ -241,6 +251,19 @@ spread, max HP or move speed.
 - **Accept:** `threat.py` 0 with 31–39 included. If 0.5 misses, step down by 0.1 to at
   least 0.3 and report; below that, stop and report. Spec: a boss projectile on a tower deals
   ×0.5, on a hunter ×1.
+- **T44 (revised, #154 — replaces the two bullets above):** the first run showed that rounds
+  31–39 miss the old target even with boss throws at 0 (other dinos alone: 47–65 against a
+  Hunting Blind), so the target now measures **what Jovan asked about: the boss throws**.
+  - `threat.py` splits each round's mid-gap defended damage into **boss** (Triceratops /
+    T-Rex projectiles, × the lever) and **other**, rounds 31–39. **New target: boss-only
+    defended damage per round < 50% of T0 max HP for every tower type except the Perch**
+    (Hunting Blind 100 is the binding one: boss share < 50). Totals and "other" stay
+    report-only for 31–40, as #44 had it. Rounds 11–30's target is unchanged.
+  - `Boss ranged vs towers x` (Tuning, `BOSS THROWS`): the **highest of 0.5 / 0.4 / 0.3**
+    that meets the new target; below 0.3, stop and report. No other cell changes.
+  - **Accept:** `threat.py` 0 with the new target; its output lists, per round 31–39, boss /
+    other / total for the Hunting Blind; spec: a boss projectile on a tower deals × the lever,
+    on a hunter ×1; Config diff = one Tuning line.
 
 ### T45. 🦖 Dino review of batches 1–2
 Bones beside Bone Breaker, Bone Broth and Bone Spit (clash?), Big Bore, Fence wording in the
@@ -282,7 +305,8 @@ HUD and result screen, the Hunt Board Amber line, the XP line. Must-fixes go to 
   adjust **breaks, never damage**, to meet them.
 - **Bars:** each raw-damage tier's after-eDPS in bands 21–30 and 31–40 is within **−5% …
   +15%** of its before (zero-waste) number; `value.py` findings don't rise; #72's pacing
-  floors hold; the hero-vs-tower guard passes; `threat.py` 0. Non-raw towers that lose more
+  floors hold; the hero-vs-tower guard passes; `threat.py` 0; findings no higher than the
+  post-T41 baseline, and **Eye in the Sky's DEAD flag cleared or explained** (#144). Non-raw towers that lose more
   than 25% in a band are **reported, not changed** (the Director decides; Jovan's call if
   it's a big tower).
 - **Accept:** Config diff = only `sizeBreaks`/`breakResist` lines; the final table in the
@@ -423,7 +447,78 @@ working names from T57), the Profile screen and leaderboard wording.
 8. Leave mid-match from a second client: no player XP for the leaver.
 Report each step pass / fail / not testable with console output and screenshots.
 
-### T61. Docs and round-4 recap (Director)
+## The approved tower batch (TOWERS_NEXT.md "Jovan's picks"; DECISIONS #146–#152)
+
+Needs T46–T48 (pierce-through) and T49 (the boss bar isn't needed, but `Enemies` must be
+stable). Numbers are seeds on the sheet; the tier 1–3 tiers are as in `TOWERS_NEXT.md`, the
+tier 4s and 5s are the picks table. Unlock Amber: Storm Coil 300, Falcon Roost 200, Tar Pit
+250, Harpoon Ballista 300; in-match cost 550 / 400 / 450 / 600.
+
+### T62. 🦖 Naming pass for the four towers (before any build)
+Tower names, path names, all 60 tier names, ability texts. Must avoid every existing name
+(the audit's collision check) and "Trophy" (reserved for ranked, #130/#139). The Director
+logs the final names; the Builders use them from T63.
+
+### T63. Groundwork: sheet rows, can't-be-damaged, on-track placement (#148, #152)
+- **Sheet:** append 4 `Towers` rows (new keys, e.g. `COIL`, `FALCON`, `TARPIT`, `BALLISTA`)
+  and 60 `Tower Upgrades` rows; a `Towers` column `Untouchable` (Yes for Falcon Roost, Tar
+  Pit); Tuning blocks `STORM COIL`, `FALCON ROOST`, `TAR PIT`, `HARPOON BALLISTA` for
+  ability levers (Power Grid per-coil range 0.15 / damage 0.25 / base 0.5 / cap 6 / every 6s;
+  Eruption every 10s, sizes 2; Judgement Bolt every 10s ×8; Tow Line every 15s, 10 studs).
+- **Code:** untouchable towers have no HP, are never targeted by bites or projectiles, can't
+  be repaired, and are skipped by Armory/Hospital auras. `Shared/Placement`: a tower flagged
+  `On track` must be placed on the track (not off it), never overlapping another pit; the
+  ghost shows it. The four towers are **not sold** until their behaviour task lands.
+- **Accept:** exporter/audit clean (UPGRADES.md gains the four sections from TOWERS_NEXT);
+  placement spec (pit on track yes, off track no, overlapping no; other towers unchanged);
+  combat spec (an untouchable tower takes 0 and is never chosen as a target).
+
+### T64. Storm Coil (#151)
+Chain arcs (nearest within reach, falloff 80%, breaks 1); Fork Lightning; Jumper; **Power
+Grid** (n = standing Storm Coils, ≤ 6; range × (1 + 0.15(n−1)), damage × (0.5 + 0.25n);
+one shared strike every 6s); Thunderclap; High Voltage; **Judgement Bolt** (biggest dino,
+×8, breaks 3, boss stun 0.5s); Conductor; Grounding Spike; Storm Warning; **Lightning
+Rodeo** (towers in range: each shot arcs once to one more dino at 50%). Accept: specs per
+tier; Power Grid numbers at n = 1, 2, 6, 8 (= 6); `value.py` reads the new mechanics.
+
+### T65. Falcon Roost
+Birds fly out (travel time), dive, return; untouchable; Stoop Dive breaks 2, Iron Talons 3;
+**Eagle of the Peak** (one eagle, ×6, stun 0.5s, breaks 3); **Murmuration** (12 birds,
+continuous pecks in range); Lure; **Hunting Party** (+15% attack speed to towers in range
+while a bird dives). Accept: specs; the 0.8× eDPS-per-cash bar (#148) in `value.py`.
+
+### T66. Harpoon Ballista
+Heavy bolts (breaks per tier: Bone Splitter 2, Whale Iron 3); **Skewer** (line through every
+dino, each breaks 3); Pin Down; Reel In; **Tow Line** (boss pulled 10 studs every 15s,
+uses `Enemies.knockback`'s rules for bosses as an explicit exception); Spread Volley;
+Auto-Crank; **Chain Harpoons** (bolt pairs hit everything on the segment between them).
+Accept: specs; knockback of bosses only through Tow Line.
+
+### T67. Tar Pit (#150, #152)
+On-track pool; slow; last-size sinking (not bosses or Pteranodons); Clinging Tar; **Tar
+Lake** (×3 length); Boiling Pit (burn ticks break 1); Pitch Fire; **Eruption** (every 10s
+every dino in the pool drops 2 sizes outright, bosses included, resist ignored, each size
+pays); Bone Yard cash tiers; Sticky Trail; **Tar Totem** (towers in range +15% vs slowed).
+Accept: specs (Eruption on a 5-size T-Rex → 3; a sunk dino pays like a kill); untouchable.
+
+### T68. Shop, unlocks, balance pass for all four
+Sell them; Unlocks screen lists them under Towers with their Amber price; `value.py` bars:
+untouchables ≤ 0.8× median eDPS-per-cash (#148), no new DEAD/OP findings, hero-vs-tower
+guard passes, `threat.py` 0, #72 pacing floors hold. Adjust the seeds (in-match costs and
+damage), never existing towers. Report the table.
+
+### T69. 🦖 Review of the four built towers (looks, wording, ability texts)
+
+### T70. Tester: new-tower steps (with T31/T38/T60)
+1. J unlocks all; place each tower; Tar Pit only places on the track.
+2. Bites and throws never hit a Falcon Roost or Tar Pit; no repair button on them.
+3. Storm Coil: arcs visible; Power Grid with 1 coil vs 3 coils (console damage/range).
+4. Judgement Bolt on a boss drops up to 3 sizes; Skewer through a line drops each up to 3.
+5. Eruption: dinos in the pool drop 2 sizes every ~10s; a T-Rex too.
+6. Tow Line drags a boss back; Murmuration and Eagle of the Peak animate; Hunting Party and
+   Tar Totem buffs show on towers in range.
+
+### T61. Docs and round-4 recap (Director) — runs last, after T70
 Update `CLAUDE.md` status, `ARCHITECTURE.md` phase table, `VISION.md` (player level,
 cosmetics, ranked trophies note for phase 7), and append "Round 4 recap" to `RECAP.md`:
 what changed, what to playtest first, the Ask-Jovan list (including the `TOWERS_NEXT.md`

@@ -1,6 +1,10 @@
-# The next tower batch — PROPOSAL
+# The next tower batch — APPROVED (Jovan's picks, 2026-10-02)
 
-> **PROPOSAL — not to be built until Jovan picks.** Director, 2026-10-02 (DECISIONS #140).
+> **APPROVED with picks** — see "Jovan's picks" at the bottom; they override the options
+> below. Build order: `PLAN.md` round 4, T62–T70 (DECISIONS #146–#152). The 4×-Amber batch
+> is a separate proposal: `TOWERS_LATER.md`.
+>
+> *Original proposal note:* Director, 2026-10-02 (DECISIONS #140).
 > Jovan: "we need more towers, the next batch needs to be 2x the cost but worth it (some
 > that dont take damage) (lightning chaining abilities reaching all dinos on the field at
 > once)… ask for more input on highest tier towers but come with some ideas".
@@ -204,3 +208,46 @@ takes +20% from everything for 3s.
    pay for it (proposed), or fully priced by the 2× cost alone?
 5. **Tar Pit touches the track** (an exception to the placement rule). OK?
 6. **Price:** 200–300 Amber and about 2× in-match cash. Right reading of "2x the cost"?
+
+---
+
+## Jovan's picks (2026-10-02) — these are what gets built
+
+**All four towers** ("these are all good at the 2x price point of amber").
+
+- **Price: Amber only is 2×.** Unlocks: Storm Coil 300, Falcon Roost 200, Tar Pit 250,
+  Harpoon Ballista 300 Amber. **In-match prices are normal** (not doubled), in today's
+  200–600 band: Storm Coil 550, Falcon Roost 400, Tar Pit 450, Harpoon Ballista 600 (seeds;
+  T68 checks them with `value.py`).
+- **Can't be damaged = "somewhat weaker"** in raw numbers: Falcon Roost and Tar Pit get at
+  most **0.8×** the median eDPS-per-cash of the damageable towers at the same tier
+  (`value.py` bar, DECISIONS #148).
+- **Tar Pit sits on the track itself**; dinos walk through it (no blocking). Pits can't
+  overlap each other.
+
+| Tower | Path | Tier 4 (Director's pick, #149) | Tier 5 (Jovan's pick) |
+|---|---|---|---|
+| Storm Coil | Chain | *Jumper* (arcs jump between Storm Coils' ranges) | **Power Grid** — scales with the number of Storm Coils (below) |
+| Storm Coil | Charge | *High Voltage* (pierces armour, +40%) | **Judgement Bolt** — every 10s ×8 on the biggest dino, breaks 3, stuns bosses 0.5s |
+| Storm Coil | Storm | *Storm Warning* (towers in range +15% damage) | **Lightning Rodeo** — towers in range chain their shots once (one more dino at 50%) |
+| Falcon Roost | Talons | *Iron Talons* (pierce armour, breaks 3) | **Eagle of the Peak** — one giant eagle, ×6 dives, stuns 0.5s, breaks 3 |
+| Falcon Roost | Flock | *Wide Circle* (radius 60) | **Murmuration** — 12 small birds peck every dino in range |
+| Falcon Roost | Falconer | *Lure* (struck dinos pulled 2 studs back, not bosses) | **Hunting Party** — towers in range +15% attack speed while a bird dives |
+| Tar Pit | Deep Tar | *Clinging Tar* (dinos leaving stay slowed 3s) | **Tar Lake** — the pool covers three times as much track |
+| Tar Pit | Bubbling | *Pitch Fire* (dinos leave burning) | **Eruption** — every 10s "takes 2 levels of any dino in the pool" |
+| Tar Pit | Bone Yard | *Sticky Trail* (dinos leaving slow those behind 15%) | **Tar Totem** — towers in range +15% damage vs slowed dinos |
+| Harpoon Ballista | Barbed | *Whale Iron* (pierces armour, breaks 3) | **Skewer** — through every dino in a line, each keeps breaks 3 |
+| Harpoon Ballista | Chain Line | *Reel In* (drags the hit dino 6 studs back) | **Tow Line** — every 15s pulls a boss 10 studs back |
+| Harpoon Ballista | Volley | *Auto-Crank* (fires twice as fast) | **Chain Harpoons** — linked bolt pairs hit everything between them |
+
+**Power Grid** (Jovan: "the more storm coils you have increases the aoe and damage, only
+having one can be nerfed"). n = Storm Coils on the map (any owner, any tier, standing). Every
+6s a Power Grid coil sends a strike that chains through every dino in the grid's area:
+each coil's range × (1 + 0.15 × (n − 1)), damage × (0.5 + 0.25 × n), both counted up to
+n = 6. One coil: ×0.75 (the nerf); two ×1.0; six ×2.0 and range ×1.75. Several Power Grid
+coils don't stack strikes: the grid fires once per 6s. Breaks 1 (area).
+
+**Eruption** ("takes 2 levels of any dino in the pool"): every 10s every dino in the pool
+drops **2 sizes outright**, whatever its HP, bosses included; Break resist doesn't reduce
+it (it's a size drop, not a hit). Each size pays as usual. Playtest watch: a slowed T-Rex in
+a Tar Lake (#150).

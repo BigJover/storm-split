@@ -93,6 +93,16 @@ His words, verbatim where quoted; how the agents read them is in `DECISIONS.md` 
 12. **UI:** bigger PLAY, Amber shown on the Hunt Board, the "+N on round clear" line on its
    own, softer round-31 boss throws.
 
+**Tower picks (Jovan, 2026-10-02, later the same day):** all four proposed towers ("these
+are all good at the 2x price point of amber"). **Only the Amber unlock doubles**; in-match
+prices stay normal. Towers that can't be damaged are "somewhat weaker". Tar Pit sits on the
+track itself. Tier 5s: Power Grid ("the more storm coils you have increases the aoe and
+damage, only having one can be nerfed"), Judgement Bolt, Lightning Rodeo; Eagle of the
+Peak, Murmuration, Hunting Party; Tar Lake, Eruption ("takes 2 levels of any dino in the
+pool"), Tar Totem; Skewer, Tow Line, Chain Harpoons. Next: "we now only need the 4x amber
+costing ones" (`TOWERS_LATER.md`, a proposal). He picks from options quickly, so keep
+offering 3–4 per top tier.
+
 What this adds to his taste:
 - **Raw damage is allowed to differ** between towers, and the hard hitters earn a mechanic
   (pierce-through) rather than just a bigger number. Keep the models honest about it.
