@@ -431,3 +431,83 @@ Checked against every tier, perk and ability name in `HEROES.md`, `UPGRADES.md` 
 **XP: keep plain "XP".** Every Roblox player knows it, it's two letters in a tight row, and Amber is the one themed currency: a second themed word (Trophies, Renown, Tracks) would need explaining and could be mistaken for something you spend.
 
 Left alone on purpose: `Lv {N}`, `{shown} / {needed} XP`, `Hunter level {N} — your shots hit {P}% harder`, `Tower level {N} · +{X}% damage` (tower panel), `{ability} perks: {names}`, ` (owned)`, the British spelling of Smoulder (the game says "armour"), and all numbers.
+
+## Round 12 — batches 1–2 as built (T45) and the four new towers' names (T62)
+
+### T45 — renames, home, Hunt Board and HUD strings
+
+Read: `git show` of befac6a, 61b77b4, 1b66379, dd94629; greps of `src/client`, the name/role/blurb/text fields of `src/shared/Config.luau`, `Theme.luau`, `HuntBoard.luau`, `HomeLayout.luau`, `Modes.luau`, `Scoreboard.luau`, `UPGRADES.md`, `HEROES.md`. Read from code only; nothing was run.
+
+**Verdict: the renames are clean. One must-fix (a number that reads wrong), the rest is polish. No "Trophy" anywhere.**
+
+**What's right**
+- **Every #130 rename landed** in Config and docs: Fence (HUD), Bones (leaderboard), Chopper Drop, Base Camp, Forward Camp, Big Bore / Bone Breaker / Punt Gun, Game Spotter, Stalker, Point Blank / Thicket Sweeper, Close range, Deep Sleep (plus the earlier Meteor Shower, Extinction Round, Quick Dart, Find the Gap). **Zero leftovers** of Lives, Pops, Siege, Tactical, Command Center, Forward Base, Care Package, Anti-Materiel, Hibernation, Breacher, Street Sweeper, Ordnance, Cores or Trophy in any player-facing string. What's left is internal and stays: the `Lives`/`Cores` attributes, the `pop` bounty event key, code comments.
+- **Bones next to Bone Breaker, Bone Broth and Bone Spit: no clash.** They sit on different screens (leaderboard count, tower panel, hero upgrade, dino attack), and nobody will mistake a leaderboard count for an upgrade. Keep all four.
+- **Home and Hunt Board:** `PLAY`, `Choose hero  (H)`, `Unlocks & Mastery  (M)`, `Hunt Board  (G)` all use the same key-hint style. The Hunt Board balance reads `1,250 Amber` (with a thousands comma, through `Theme.Currency`), in amber on the wood header. Good.
+- **HUD:** `Cash {cash}  ·  Fence {lives}  ·  Dinos {alive}` reads well; Fence needs no explaining once the first dino breaks through it.
+
+**Fixes**
+
+1. **must-fix — the XP line under-promises by 100.** `Hud.client.luau:229`: `+{pending} on round clear`. `HeroXpPending` is only the take-down bonus (`HeroXp.popXp`, ≤15, ≤30 solo), but the bar gains the round's 100 XP plus it on the clear. A hunter reads "+12", then sees the bar jump by 112. → `+{pending} bonus on round clear` (Round 11 fix 9, which was half-applied; it's still Jovan's line, on its own row as he asked).
+2. **nice-to-have — `Modes.luau:15`: `Most bones wins.` → `Most Bones wins.`** It's the leaderboard column's name, so capitalise it like a name, the same as Amber.
+3. **nice-to-have — put Fence and Bones in `Theme.luau`.** Its header says it holds the game's wording in one place, but these two are hard-coded: `Hud.client.luau:244/246` ("Fence"), `Scoreboard.luau:22` ("Bones"), `Modes.luau:15`. → `Theme.Fence = "Fence"`, `Theme.Bones = "Bones"`, used in all four.
+4. **nice-to-have — the loss screen could name the fence.** `Hud.client.luau:238`: `Reached round {round} on {difficultyName}` → `The fence fell on round {round} ({difficultyName})`. It explains why it's over and ties back to the HUD word. Only if it fits the 18-size line.
+
+Left alone on purpose: `VICTORY` / `GAME OVER`, `Lv {N}`, `{shown} / {needed} XP`, `Dinos {alive}`, `Close range` (hero role, matches Precision's style), every colour and number.
+
+### T62 — the four new towers
+
+Rules used: no name already in `Config.luau`, `UPGRADES.md`, `HEROES.md` or the proposals in `TOWERS_LATER.md` (all 60 checked by grep, zero hits); no "Trophy", no "split", no "pop"; words a 9-year-old reads at once; Jovan's twelve tier-5 picks keep their names (he picked them by name). *Italics* = grants an ability, as in UPGRADES.md.
+
+**Tower display names: keep all four working names.** Storm Coil (Jovan says "storm coils" himself; lightning is weather, not the old Storm Split storm), Falcon Roost, Tar Pit, Harpoon Ballista: all plain, all say what the tower is.
+
+**Storm Coil** — paths **Arc**, **Charge**, **Lightning Rod**
+
+| Path | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|
+| Arc (was Chain) | Copper Wire | Long Arc | *Fork Lightning* | *Jump Spark* | **Power Grid** |
+| Charge | Battery Pack | Static Shock | *Thunderclap* | *High Voltage* | **Judgement Bolt** |
+| Lightning Rod (was Storm) | Tall Mast | Charged Air | *Grounding Spike* | *Storm Warning* | **Lightning Rodeo** |
+
+- Chain → **Arc**: the game already has Chain Shot, Chain Reaction, Chain Harpoons and the Ballista's rope path; one more "Chain" blurs them. Copper Coil → **Copper Wire** (it read as the tower's own name). Jumper → **Jump Spark** ("jumper" is a sweater to half the players).
+- Capacitor → **Battery Pack**, Static Build-up → **Static Shock**: kid words, same meaning.
+- Storm → **Lightning Rod**, so the tower isn't "Storm Coil, Storm path". The old T1 Lightning Rod moves up to path name; T1 becomes **Tall Mast**; Conductor → **Charged Air** ("conductor" reads as a train driver). Lightning Rod path → Lightning Rodeo is a pun on purpose.
+
+**Falcon Roost** — paths **Talons**, **Flock**, **Falconer** (all kept)
+
+| Path | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|
+| Talons | Sharp Talons | Hooked Beak | *Power Dive* | *Iron Talons* | **Eagle of the Peak** |
+| Flock | Second Pair | Quick Return | *Flock of Six* | *Wide Circle* | **Murmuration** |
+| Falconer | Long Leash | Falcon Bells | *Hooded Scout* | *Lure* | **Hunting Party** |
+
+- Falconry jargon out: Stoop Dive → **Power Dive**, Cast of Six → **Flock of Six**, Jesses → **Long Leash**, Bells → **Falcon Bells**.
+- **Ask Jovan (one word):** "Murmuration" is the right word for a swirling flock but hard for a kid to read or say. Kept because he picked it; if he wants plainer: **Sky Swarm**.
+
+**Tar Pit** — paths **Deep Tar**, **Bubbling**, **Dig Site**
+
+| Path | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|
+| Deep Tar | Thick Tar | Wide Pool | *Fast Sink* | *Clinging Tar* | **Tar Lake** |
+| Bubbling | Warm Tar | Simmer | *Boiling Pit* | *Tar Fire* | **Eruption** |
+| Dig Site (was Bone Yard) | Pick and Shovel | Fossil Hunter | *Lucky Finds* | *Tar Tracks* | **Tar Totem** |
+
+- Bone Yard → **Dig Site**: Bones now means take-downs, and Bone Breaker / Bone Broth already exist; a cash path is a dig, not a graveyard.
+- Sucking Mire → **Fast Sink** (says the effect). Pitch Fire → **Tar Fire** ("pitch" is a sports field to a kid). Sticky Trail → **Tar Tracks** (tar footprints; also avoids Sticky Dart).
+- Amber Seep → **Lucky Finds**: must-fix in spirit. The chest pays **cash**, and "Amber" is the saved currency; a tier named Amber promises Amber.
+
+**Harpoon Ballista** — paths **Spearhead**, **Reel**, **Volley**
+
+| Path | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|
+| Spearhead (was Barbed) | Steel Head | Saw Tip | *Crusher Bolt* | *Great Harpoon* | **Skewer** |
+| Reel (was Chain Line) | Rope Line | Winch | *Pin Down* | *Reel In* | **Tow Line** |
+| Volley | Twin Bolts | Fast Crank | *Spread Volley* | *Steam Crank* | **Chain Harpoons** |
+
+- Barbed → **Spearhead** and Barbed Tip → **Saw Tip**: Tranq Station has Barbed Darts (Round 11 rejected "Barbed Dart" for the same reason).
+- Bone Splitter → **Crusher Bolt**: "Bone Splitter" beside Longshot's Bone Breaker is a near-twin on the other pierce-through path, and "split" is the one word the theme bans.
+- Whale Iron → **Great Harpoon** (whales in a dino game confuse; the T4 is the big harpoon).
+- Chain Line → **Reel**: leaves Chain Harpoons as the only "chain" on this tower.
+- Twin Bow → **Twin Bolts** (it's a ballista, not a bow). Auto-Crank → **Steam Crank** (Fast Crank / Auto-Crank were near-twins on one path).
+
+**Kept as-is (good enough):** the four tower names; paths Charge, Talons, Flock, Falconer, Deep Tar, Bubbling, Volley; tiers Long Arc, Fork Lightning, Thunderclap, High Voltage, Grounding Spike, Storm Warning, Sharp Talons, Hooked Beak, Iron Talons, Second Pair, Quick Return, Wide Circle, Hooded Scout, Lure, Thick Tar, Wide Pool, Clinging Tar, Warm Tar, Simmer, Boiling Pit, Pick and Shovel, Fossil Hunter, Steel Head, Rope Line, Winch, Pin Down, Reel In, Fast Crank, Spread Volley, and all twelve tier 5s.
