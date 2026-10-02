@@ -29,7 +29,7 @@ them in T37.
 | Tracker (Tracking Dart: +50% for 8s) | **Lingering Dart**: the mark lasts **+2s** (8 → 10) | **Split Dart**: also marks the **1** nearest other dino within **10** studs of the target, at **0.4×** strength (+20%), same time | 25 / 40 |
 | Big Game Hunter (Rally Cry: 10s, towers within 25 studs +40%) | **Carrying Voice**: radius **+5** studs (25 → 30) | **Long Rally**: lasts **+3s** (10 → 13), for the hunter and the towers | 20 / 30 |
 | Brush Beater (Flare Strike: 30 damage, 2s stun, radius 10) | **Wide Flare**: radius **+1.5** studs (10 → 11.5) | **Smoulder**: leaves burning ground on the strike for **3s**, each second dealing **12%** of the strike's damage (36% in all) | 15 / 36 |
-| Field Medic (Triage Kit: 40 HP within 20 studs) | **Long Reach**: radius **+4** studs (20 → 24) | **Full Kit**: heals **+10** HP (40 → 50) | 20 / 25 |
+| Field Medic (Triage Kit: 40 HP within 20 studs) | **Long Reach**: radius **+4** studs (20 → 24) | **Stocked Kit** (was "Full Kit", #104): heals **+10** HP (40 → 50) | 20 / 25 |
 
 - Perk values are **added to the hero's base ability value, before path multipliers** (Full
   Kit + Clean Bandages = 50 × 1.25; Long Reach + Triage Tent = 24 × 1.5).
@@ -141,6 +141,29 @@ one level ahead; a hunter with no pops is exactly on the old curve.
   radius used by `Hero.towerRateBoost` is the merged one (assert through the stats). The mark
   spread and the burn call are server-only: statically checked, listed for T38.
 
+**T32 (9f85187) and T33 (2fdd30d): reviewed 2026-10-02, accepted with the fixes in T33b**
+(DECISIONS #104–#108). Statically checked + 223 headless specs, not playtested.
+
+### T33b. Perk follow-ups (after T34–T36 are committed: one Builder edits code at a time)
+- **Name (#104):** `Mastery Perks` C12 `Full Kit` (assert) → **`Stocked Kit`**; `Text`
+  unchanged. Audit: a finding when a perk `Name` equals any tier name on `Tower Upgrades` or
+  `Hero Upgrades`, or any hero's ability name (case-insensitive). The spec or audit run
+  shows the check failing on "Full Kit" once (temp copy), in the commit message.
+- **Wording (#105):** `Shop.client` "Mastery never adds damage." → **"Mastery never makes
+  your gun hit harder."** `HEROES.md` "Mastery": "Never damage." → **"Never gun damage:
+  perks change abilities only."** `Mastery!A2` must read "… never gun damage multipliers."
+  (fix if T32 left it). `HeroStats.luau` line 18's "Never damage" is about Armory gear:
+  leave it.
+- **Marks (#106):** `Combat.mergeMark` — while a mark is running, a **weaker** new mark
+  changes nothing (not the strength, not the time); an **equal** one keeps the strength and
+  the longer of the two times; a **stronger** one replaces both, as now. Specs in
+  `combat.spec.luau`: (50, 2s) + (20, 3s) → (50, 2s); (50, 2s) + (50, 3s) → (50, 3s);
+  (50, 5s) + (50, 3s) → (50, 5s); (20, 5s) + (50, 3s) → (50, 3s); expired + anything → the
+  new mark. Update the header comments in `Combat` and `Enemies`.
+- **Accept:** Config diff = one `name` line; `tools/check.sh`, exporter, `tools/test.sh`
+  green; audit `--strict` 0; the three strings grep clean ("never adds damage" has no hit
+  in `src/` or `HEROES.md`).
+
 ## Part H — Hero XP (Builder run 2)
 
 ### T34. XP rule (pure) and server wiring
@@ -191,6 +214,13 @@ one level ahead; a hunter with no pops is exactly on the old curve.
   numbers (hero, best tower) are quoted in the commit message; if the ceiling hero now beats
   a tower it didn't before (#58: Longshot Perch ~223), list it for the Director, change no
   number.
+
+### T36b. Notes for the XP Builder (no rule changes to T34–T36)
+- `tools/audit.py` `DEAD_PENDING` lists the five XP levers (#108). Remove each entry in the
+  commit that first reads the lever (the audit already fails if a read lever is still
+  listed). When T36 is done the list must be **empty**; say so in the commit message.
+- T33b follows your last commit and touches `Combat.mergeMark`, `Shop.client` (one string),
+  the sheet (one cell) and `HEROES.md`: leave those alone.
 
 ## Part I — Review, playtest, docs
 
