@@ -415,6 +415,9 @@ def hero_lines(data, rows, mixes):
     tuning = data["Tuning"]
     per = int(tuning.get("RoundsPerLevel", 5))
     hero_x, tower_x = tuning.get("HeroDamagePerLevel", 0), tuning.get("TowerDamagePerLevel", 0)
+    # Hero XP (DECISIONS #101): a hunter's level sits between the round level (the
+    # FLOOR: no pops, and what towers use) and the floor + the lead cap (the CEILING).
+    lead = int(tuning.get("HeroLevelLeadCap", 0))
     rounds = data["Rounds"]
 
     def required(r):
@@ -422,14 +425,20 @@ def hero_lines(data, rows, mixes):
         length = round(sum(rd["counts"].values()) * rd["spawnGap"] + 14)
         return round(rd["effectiveHp"] / length, 1) if length else 0
 
-    checkpoints = [(1, 1, 0), (5, 20, 1), (9, 40, 3)]  # (level, first round at it, band)
+    # (round level, round, band). As before hero XP, L5 and L9 are the levels that
+    # clearing rounds 20 and 40 gives, one above the level those rounds are fought at:
+    # the model's long-standing, slightly generous reading, kept so its numbers don't move.
+    checkpoints = [(1, 1, 0), (5, 20, 1), (9, 40, 3)]
     t5 = {}
     for (key, pi, tier), r in rows.items():
         if tier == 5 and not r["support"]:
             t5[(key, pi)] = r["edps"]
-    out = [f"  level (round): " + ", ".join(f"L{lv} (r{rd}) Required DPS {required(rd):g}, T5 towers {fmt(min(e[b] for e in t5.values()))}-{fmt(max(e[b] for e in t5.values()))} x{(1 + tower_x) ** (lv - 1):.2f}"
+    out = [f"  round level (round), towers at it: " + ", ".join(f"L{lv} (r{rd}) Required DPS {required(rd):g}, T5 towers {fmt(min(e[b] for e in t5.values()))}-{fmt(max(e[b] for e in t5.values()))} x{(1 + tower_x) ** (lv - 1):.2f}"
                                         for lv, rd, b in checkpoints)]
+    out.append(f"  hunters: each checkpoint at the FLOOR (the round level, a hunter with no take-downs) and in [brackets] at the CEILING"
+               f" (floor + {lead}, the most hero XP allows); towers stay on the round level")
     findings = []
+    lead_only = []  # T5 tower paths a hunter passes only at the ceiling: listed, not a finding
     for key in data["HeroOrder"]:
         h = data["Heroes"][key]
         base, _ = hero_dps(h, 0, 0)
@@ -439,12 +448,25 @@ def hero_lines(data, rows, mixes):
         cells = []
         for lv, rd, b in checkpoints:
             hs, ts = (1 + hero_x) ** (lv - 1), (1 + tower_x) ** (lv - 1)
+            cs = (1 + hero_x) ** (lv + lead - 1)
             best_tower = max(e[b] for e in t5.values()) * ts
-            cells.append(f"L{lv} {peak * hs:.0f}/{sustained * hs:.0f}")
-            if peak * hs > best_tower:
-                findings.append(f"HERO: {h['display']} {h['paths'][best]['id']} T5 at L{lv} ({peak * hs:.0f}) out-damages every T5 tower path's eDPS ({best_tower:.0f})")
+            cells.append(f"L{lv} {peak * hs:.0f}/{sustained * hs:.0f} [L{lv + lead} {peak * cs:.0f}/{sustained * cs:.0f}]")
+            # The rule (DECISIONS #58, #101): the highest hero level in play against the
+            # best tower at the round level.
+            if peak * cs > best_tower:
+                findings.append(f"HERO: {h['display']} {h['paths'][best]['id']} T5 at L{lv + lead} (ceiling, {peak * cs:.0f}) out-damages every T5 tower path's eDPS at round level {lv} ({best_tower:.0f})")
+            for (tower_key, pi), e in t5.items():
+                if peak * hs <= e[b] * ts < peak * cs:
+                    tower = data["Towers"][tower_key]
+                    lead_only.append(f"{h['display']} L{lv + lead} {peak * cs:.0f} > {tower['display']} {tower['paths'][pi]['id']} T5 {e[b] * ts:.0f} (round level {lv})")
         out.append(f"  {h['display'][:15]:<15} base {base:5.1f}  best {h['paths'][best]['id'][:10]:<10} T5 {' '.join(cells)}"
                    f"  cash/DPS {cash / max(1e-9, peak - base):.0f}")
+    if lead_only:
+        out.append("  only at the ceiling does a hunter's peak pass these T5 tower paths (for the Director; not a finding, the rule is the best tower):")
+        out += [f"    {line}" for line in lead_only]
+    else:
+        out.append("  the ceiling level passes no T5 tower path that the floor level doesn't")
+    out.append(f"  (L5 and L9 are the levels clearing r20 and r40 gives; r40 itself is fought at round level 8, hunters at most L{8 + lead}: the exporter's guard uses those)")
     return out, findings
 
 

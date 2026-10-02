@@ -812,13 +812,16 @@ def validate(data):
     notes.append("difficulties: " + ", ".join(d["display"] for d in data["Difficulties"].values()))
 
     best_tower = 0.0
+    best_by_tower = {}  # display -> that tower kind's best maxed path, unlevelled
     for t in data["Towers"].values():
         base = t["baseDamage"] * t["baseRate"] * t["baseTargets"]
         for p in t["paths"]:
             if p["focus"] == "economy" or not p["tiers"]:
                 continue
             top = p["tiers"][-1]
-            best_tower = max(best_tower, base * top["damageMult"] * top["rateMult"] * top["targetsMult"])
+            dps = base * top["damageMult"] * top["rateMult"] * top["targetsMult"]
+            best_tower = max(best_tower, dps)
+            best_by_tower[t["display"]] = max(best_by_tower.get(t["display"], 0.0), dps)
     def hero_peak_dps(h):
         best = 0.0
         for p in h["paths"]:
@@ -831,16 +834,30 @@ def validate(data):
             dps = h["damage"] * t["damageMult"] * h["rate"] * t["rateMult"] * t["spinUp"] * guns * pellets * shots
             best = max(best, dps * max(1, t["pierce"] or 1))
         return best
-    # Compare at the last round's level: both sides scale with hero levels.
+    # Compare in the last round (PLAN round 3 T36, DECISIONS #101). Towers fight it at
+    # the round level (1 + rounds cleared before it / RoundsPerLevel); hero XP can put a
+    # hunter HeroLevelLeadCap levels above that, so the hero side uses the highest hero
+    # level in play. tools/test/heroxp.spec.luau holds Shared/HeroXp to the same clamp.
     tuning = data["Tuning"]
-    last_level = 1 + (len(data["Rounds"]) // max(1, int(tuning.get("RoundsPerLevel", 5))))
-    hero_scale = (1 + tuning.get("HeroDamagePerLevel", 0)) ** (last_level - 1)
-    tower_scale = (1 + tuning.get("TowerDamagePerLevel", 0)) ** (last_level - 1)
-    best_weapon = max(hero_peak_dps(h) for h in data["Heroes"].values()) * hero_scale
+    round_level = 1 + (len(data["Rounds"]) - 1) // max(1, int(tuning.get("RoundsPerLevel", 5)))
+    hero_level = round_level + int(tuning.get("HeroLevelLeadCap", 0))
+    hero_x = 1 + tuning.get("HeroDamagePerLevel", 0)
+    tower_scale = (1 + tuning.get("TowerDamagePerLevel", 0)) ** (round_level - 1)
+    hero_peak = max(hero_peak_dps(h) for h in data["Heroes"].values())
+    best_weapon = hero_peak * hero_x ** (hero_level - 1)
+    floor_weapon = hero_peak * hero_x ** (round_level - 1)
     best_tower_leveled = best_tower * tower_scale
-    notes.append(f"at level {last_level}: max hero DPS {best_weapon:.0f} vs max tower DPS {best_tower_leveled:.0f}")
+    notes.append(f"last round: max hero DPS {best_weapon:.0f} at hero level {hero_level} (round level {round_level} + lead cap; {floor_weapon:.0f} at the round level)"
+                 f" vs max tower DPS {best_tower_leveled:.0f} at tower level {round_level}")
     if best_tower_leveled and best_weapon > best_tower_leveled:
-        problems.append("A maxed hero out-damages the best maxed tower. The game becomes a horde shooter.")
+        problems.append(f"A maxed hero at the highest hero level in play (level {hero_level}: {best_weapon:.0f} DPS) out-damages the best maxed tower"
+                        f" (tower level {round_level}: {best_tower_leveled:.0f}). The game becomes a horde shooter.")
+    # Not a failure (the rule is the BEST tower, DECISIONS #58): tower kinds whose best
+    # maxed path the hero only passes because of the lead level.
+    lead_only = [f"{name} ({dps * tower_scale:.0f})" for name, dps in best_by_tower.items()
+                 if dps > 0 and floor_weapon <= dps * tower_scale < best_weapon]
+    if lead_only:
+        notes.append(f"  only at the lead level does that hero ({best_weapon:.0f}) pass a maxed: " + ", ".join(lead_only))
 
     validate_rewards(data, problems, notes)
     validate_perks(data, problems, notes)

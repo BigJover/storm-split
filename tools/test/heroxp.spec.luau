@@ -186,3 +186,23 @@ test("the XP bar: pending pop XP is shown beside it, not counted in it", functio
 	eq(progress(240, 2), before, "the bar doesn't move while the round is on")
 	eq(progress(HeroXp.bank(240, 48, 48, 3), 3), "Lv 1 352/500", "the clear banks 100 + 12")
 end)
+
+-- What the balance tools assume (PLAN round 3 T36, DECISIONS #101).
+
+test("the last round is fought at round level 8, and no hunter is above level 9 in play", function()
+	-- tools/export_constants.py compares the best hero at this level with the best
+	-- tower at the round level; tools/value.py prints heroes at the floor and floor + 1.
+	local lastRoundLevel = HeroXp.roundLevel(LAST - 1)
+	eq(lastRoundLevel, 8, "round level during the last round")
+	local highest = 0
+	for round = 1, LAST do
+		local cleared = round - 1 -- what a hunter has while round `round` is fought
+		for _, xp in { after(cleared, 0, 0), after(cleared, 400, 400), 1e9 } do
+			local level = HeroXp.level(xp, cleared)
+			ok(level <= HeroXp.roundLevel(cleared) + T.HeroLevelLeadCap, `round {round}: level {level}`)
+			highest = math.max(highest, level)
+		end
+	end
+	eq(highest, lastRoundLevel + T.HeroLevelLeadCap, "highest hero level in play")
+	eq(HeroXp.level(after(LAST - 1, 400, 400), LAST - 1), 9, "capped take-downs reach it honestly")
+end)
