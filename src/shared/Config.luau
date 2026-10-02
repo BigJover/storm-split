@@ -10033,7 +10033,7 @@ return table.freeze({
 			startingLives = 20,
 			clearReward = 150,
 			dinoDamageMult = 1.6,
-			startingCash = 650,
+			startingCash = 850,
 		},
 		CHAOS = {
 			display = "Chaos",
