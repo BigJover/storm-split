@@ -25,6 +25,10 @@ Targets (PLAN.md T13, DECISIONS #42):
     under 50% of that tower's own T0 max HP, for every tower except the Longshot Perch;
   - the Longshot Perch, at its back-line spot (>= 25 studs from every lane), takes 0;
   - hugging and corner spots are reported with no target (they're meant to be at risk).
+
+Boss rounds (PLAN.md round 2 T24, DECISIONS #44/#62): rounds 31-40 are reported with no
+target and no failure: the mid-gap defended damage of each round as a share of each tower
+type's T0 max HP, plain and with the Armory's top resist applied. It stays a playtest item.
 """
 
 import contextlib
@@ -48,6 +52,8 @@ RANGED_TARGET = 0.5  # share of the tower's own T0 max HP
 RANGED_ROUNDS = range(11, 31)  # rounds 11-30
 BACK_LINE_TOWER = "SNIPER"  # the Longshot Perch is judged at the back line instead
 BACK_LINE = (-105.0, 0.0)  # >= 25 studs from every lane (checked below)
+BOSS_ROUNDS = range(31, 41)  # reported only (#44/#62)
+RESIST_TOWER = "ARMORY"  # its best resist tier is the "with Armory" column
 
 
 def track():
@@ -132,6 +138,7 @@ def main():
     print(f"  {'round':>5} | {'bites hug':>9} {'mid':>6} {'corner':>7} | {'ranged hug':>10} {'mid':>6} {'corner':>7} {'mid def':>8} {'back':>5}")
     findings = []
     trampled = {name: [] for name in t0}
+    boss_rounds = []
     for index, round_ in enumerate(data["Rounds"], start=1):
         totals = {name: {"melee": 0.0, "ranged": 0.0} for name in spots}
         for key, count in round_["counts"].items():
@@ -149,6 +156,8 @@ def main():
             findings.append(f"round {index}: bites reach a mid-gap tower ({mid['melee']:.0f} damage)")
         if back > 0:
             findings.append(f"round {index}: the Longshot Perch's back line takes {back:.0f} damage")
+        if index in BOSS_ROUNDS:
+            boss_rounds.append((index, defended))
         if index in RANGED_ROUNDS:
             for name, hp in mid_gap.items():
                 if defended >= RANGED_TARGET * hp:
@@ -159,6 +168,15 @@ def main():
     print("  mid-gap tower trampled within one round (no repair), by type:")
     for name, rounds in trampled.items():
         print(f"    {name}: " + (f"from round {rounds[0]} ({len(rounds)} rounds)" if rounds else "never"))
+    resist = max((step.get("resistPercent", 0) for path in towers[RESIST_TOWER]["paths"] for step in path["tiers"]),
+                 default=0)
+    print(f"  boss rounds {BOSS_ROUNDS[0]}-{BOSS_ROUNDS[-1]}, mid-gap defended ranged damage per round as % of T0 max HP,"
+          f" plain / with the {towers[RESIST_TOWER]['display']}'s top resist ({resist:g}%); no target (DECISIONS #44/#62)")
+    print(f"  {'round':>5} {'mid def':>8} {'resisted':>8} | " + " ".join(f"{name.split()[0][:8]:>9}" for name in mid_gap))
+    for index, defended in boss_rounds:
+        kept = defended * (1 - resist / 100)
+        print(f"  {index:>5} {defended:>8.1f} {kept:>8.1f} | "
+              + " ".join(f"{f'{defended / hp:.0%}/{kept / hp:.0%}':>9}" for hp in mid_gap.values()))
     print(f"threat: {len(findings)} target miss(es)")
     for f in findings:
         print(f"  - {f}")
