@@ -20,6 +20,7 @@ if [ $# -eq 0 ]; then
 	echo
 	"$PYTHON" tools/threat.py || status=1
 	echo
+	"$PYTHON" -m doctest tools/value.py || status=1 # the overkill factor (PLAN T47)
 	"$PYTHON" tools/value.py || status=1
 	echo
 	"$PYTHON" tools/value.py --pacing || status=1

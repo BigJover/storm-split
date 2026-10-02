@@ -23,10 +23,19 @@ Shared/TowerStats.compute, whose field lists are read from the Luau file):
   burn       Burn DPS x uptime min(1, rate x Shots x Burn seconds) x hits, ground only
              (armoured only if it pierces)
   freeze     Freeze damage / Freeze every x Targets (dinos in range stand-in)
+  overkill   (PLAN T47, DECISIONS #128) direct damage only, per species and round in the
+             band: a hit of damage D lands min(D, b x share), share = that species' size HP
+             at the round's HP x (Easy), b = Shared/SizeBreaks' breaks for the tier at the
+             round's tower level vs the species' Break resist (line or single target: the
+             tier's Size breaks; splash and bomblets: 1). D is the hit as it lands: damage x
+             mark x brittle x Armoured/Boss x, at the round's tower level (levels matter
+             for overkill, so only the factor uses them). Each species-round is weighted by
+             its share of the band's EHP. "before" = the old zero-waste number.
   aura       aura towers are credited with what their aura (rate %, damage %, pierces
              armour) adds to 3 neighbour T2 Hunting Blinds, one on each Blind path
              (a stated assumption). Stun, knockback and slow are not DPS: not credited.
-Levels scale every tower alike, so they're left out of the tower tables.
+Levels scale every tower alike, so they're left out of the tower tables (except inside the
+overkill factor). Heroes break 1 and hit small: their lines are left as they were.
 
 Flags (DECISIONS #59), damage paths only:
   dead tier      marginal cash per marginal eDPS > 2x the median of all damage paths at
@@ -43,6 +52,8 @@ Economy payback is in rounds of Easy income.
 Usage:
     python3 tools/value.py           the value report (<= ~120 lines)
     python3 tools/value.py --full    every band's cost per eDPS, every tower
+    python3 tools/value.py --overkill  eDPS before (zero-waste) -> after (overkill counted),
+                                     every damage path's T4-T5 in every band (PLAN T47/T48)
     python3 tools/value.py --pacing  the pacing model (PLAN T19): the Balance Check's
                                      affordability per difficulty x 1/4/10 hunters (asserts
                                      it reproduces the sheet's Easy-solo column exactly),
@@ -96,7 +107,7 @@ MULTIPLIERS, HIGHEST, FLAGS = (_luau_list(_TS, n) for n in ("MULTIPLIERS", "HIGH
 def tower_stats(t, tiers):
     """Shared/TowerStats.compute: `tiers` is the tier bought on each path (0 = none)."""
     mult = {f: 1 for f in MULTIPLIERS}
-    high = {"shots": 1, "lineHits": 1}
+    high = {"shots": 1, "lineHits": 1, "sizeBreaks": 1}
     flag = {}
     freeze_every = 0
     for path, tier in zip(t["paths"], tiers):
@@ -117,6 +128,7 @@ def tower_stats(t, tiers):
         "targets": max(1, math.floor(t["baseTargets"] * mult["targetsMult"] + 0.5)),
         "shots": max(1, math.floor(high["shots"])),
         "lineHits": max(1, math.floor(high["lineHits"])),
+        "sizeBreaks": max(1, math.floor(high["sizeBreaks"])),
         "hitsAir": t["hitsAir"],
         "pierces": flag.get("piercesArmor", False) or flag.get("stripsArmor", False),
         "armoredMult": mult["armoredMult"], "bossMult": mult["bossMult"],
@@ -155,27 +167,67 @@ def cumulative_cost(t, path_index, tier):
 
 # ---------------------------------------------------------------- wave mix
 
+def round_level(tuning, r):
+    """The team (tower) level in play during round r: 1 + rounds cleared before it / RoundsPerLevel."""
+    return 1 + (r - 1) // max(1, int(tuning.get("RoundsPerLevel", 5)))
+
+
 def band_mix(data):
-    """Per band: share of Easy-solo EHP that is plain / armoured / flying / boss, and the total."""
+    """Per band: share of Easy-solo EHP that is plain / armoured / flying / boss, and the total.
+    `parts` lists every species-round of the band for the overkill factor: (EHP weight, kind,
+    size HP that round, Break resist, tower level that round)."""
     enemies = data["Enemies"]
+    tuning = data["Tuning"]
     out = []
     for lo, hi in BANDS:
         share = {"plain": 0.0, "armoured": 0.0, "flying": 0.0, "boss": 0.0}
-        for rd in data["Rounds"][lo - 1:hi]:
+        parts = []
+        for r, rd in enumerate(data["Rounds"][lo - 1:hi], start=lo):
             for key, n in rd["counts"].items():
                 e = enemies[key]
                 ehp = n * e["effectiveHp"] * rd["hpMult"]
                 kind = "boss" if e["boss"] else "flying" if e["flying"] else "armoured" if e["armored"] else "plain"
                 share[kind] += ehp
+                parts.append((ehp, kind, e["hp"] * rd["hpMult"] / max(1, e["sizes"]), e["breakResist"], round_level(tuning, r)))
         total = sum(share.values())
-        out.append({**{k: v / total for k, v in share.items()}, "total": total})
+        out.append({**{k: v / total for k, v in share.items()}, "total": total,
+                    "parts": [(w / total, kind, hp, resist, lv) for w, kind, hp, resist, lv in parts]})
     return out
+
+
+def size_breaks(tuning, base, level, resist):
+    """Shared/SizeBreaks.breaks for a tower (heroes never get the level bonus)."""
+    b = max(1, math.floor(base))
+    if b >= 2:
+        step = tuning.get("BreakLevelStep", 3)
+        if step > 0:
+            b += (max(1, level) - 1) // step
+    b -= max(0, math.floor(resist))
+    return min(max(1, math.floor(tuning.get("MaxSizeBreaks", 4))), max(1, b))
+
+
+def overkill_factor(damage, breaks, share):
+    """The fraction of one hit's damage that does work: min(D, b x share) / D (DECISIONS #128).
+
+    >>> overkill_factor(50, 1, 100)    # D <= share: all of it
+    1.0
+    >>> overkill_factor(300, 1, 100)   # D = 3 x share, b = 1: a third
+    0.3333333333333333
+    >>> overkill_factor(300, 3, 100)   # b = 3: all of it again
+    1.0
+    >>> overkill_factor(300, 2, 100)
+    0.6666666666666666
+    """
+    if damage <= 0 or share <= 0:
+        return 1.0
+    return min(1.0, breaks * share / damage)
 
 
 # ---------------------------------------------------------------- effective DPS
 
-def edps(s, mix, tuning, buff=None):
-    """One tower's effective DPS against a band's mix (`buff`: an aura it stands in)."""
+def edps(s, mix, tuning, buff=None, overkill=True):
+    """One tower's effective DPS against a band's mix (`buff`: an aura it stands in).
+    `overkill` False = the old zero-waste number (every point of damage counted)."""
     buff = buff or {}
     rate = s["rate"] * (1 + buff.get("rate", 0) / 100)
     if s["damage"] <= 0 or rate <= 0:
@@ -191,6 +243,8 @@ def edps(s, mix, tuning, buff=None):
         weight = (mix["plain"] + mix["armoured"] * (s["armoredMult"] if pierces else 0)
                   + mix["flying"] * (1 if s["hitsAir"] else 0) + mix["boss"] * s["bossMult"])
         direct = rate * s["shots"] * per_shot * weight
+        if overkill and direct > 0:
+            direct = rate * s["shots"] * honest_hits(s, mix, tuning, damage, hits, pierces)
     burn = 0.0
     if s["burnDps"] > 0 and rate > 0:
         uptime = min(1.0, rate * s["shots"] * s["burnSeconds"])
@@ -201,6 +255,30 @@ def edps(s, mix, tuning, buff=None):
         weight = mix["plain"] + mix["flying"] + mix["boss"] + (mix["armoured"] if s["pierces"] else 0)
         freeze = s["freezeDamage"] / s["freezeEvery"] * s["targets"] * weight
     return direct + burn + freeze
+
+
+def honest_hits(s, mix, tuning, damage, hits, pierces):
+    """Damage one shot does with overkill counted, summed over the band's species-rounds
+    (the overkill paragraph in the module docstring)."""
+    hit = damage * (1 + s["markPercent"] / 100) * (1 + s["brittlePercent"] / 100)
+    splash = s["lineHits"] <= 1 and s["targets"] > 1
+    base = 1 if splash else s["sizeBreaks"]
+    level_x = 1 + tuning.get("TowerDamagePerLevel", 0)
+    bomb_share = tuning.get("BombletDamage", 0)
+    blasts = [(s["bomblets"] ** g, bomb_share ** g) for g in range(1, s["bombletGenerations"] + 1)] if s["bomblets"] else []
+    total = 0.0
+    for w, kind, size_hp, resist, level in mix["parts"]:
+        m = {"plain": 1, "armoured": s["armoredMult"] if pierces else 0,
+             "flying": 1 if s["hitsAir"] else 0, "boss": s["bossMult"]}[kind]
+        if m <= 0:
+            continue
+        landed = hit * m * level_x ** (level - 1)  # what the hit is as it lands, at the level in play
+        b = size_breaks(tuning, base, level, resist)
+        part = hits * hit * overkill_factor(landed, b, size_hp)
+        for count, x in blasts:
+            part += count * hit * x * overkill_factor(landed * x, 1, size_hp)
+        total += w * m * part
+    return total
 
 
 def aura_credit(data, s, mix, brittle=False):
@@ -237,12 +315,15 @@ def value_table(data, mixes):
             for tier in range(0, len(path["tiers"]) + 1):
                 s = path_stats(t, pi, tier)
                 own = [edps(s, m, tuning) for m in mixes]
+                zero_waste = [edps(s, m, tuning, overkill=False) for m in mixes]
                 aura = [aura_credit(data, s, m, brittle=is_support(key, path)) for m in mixes]
                 rows[(key, pi, tier)] = {
                     "cost": cumulative_cost(t, pi, tier),
                     "step": path["tiers"][tier - 1]["cost"] if tier else t["baseCost"],
                     "edps": [a + b for a, b in zip(own, aura)],
                     "aura": aura,
+                    "before": [a + b for a, b in zip(zero_waste, aura)],
+                    "breaks": s["sizeBreaks"],
                     "support": is_support(key, path),
                 }
     return rows
@@ -523,6 +604,30 @@ def value_report(data, full=False):
     print(f"Findings ({len(findings)}):")
     for f in findings:
         print(f"  - {f}")
+
+
+def overkill_report(data):
+    """PLAN T47: every damage path's T4-T5 eDPS per band, before (zero-waste) -> after."""
+    mixes = band_mix(data)
+    rows = value_table(data, mixes)
+    print("overkill (PLAN T47, DECISIONS #128): eDPS before (zero-waste) -> after (overkill counted), Easy solo,"
+          " levels left out of the numbers; breaks = the tier's Size breaks")
+    print("  " + " " * 38 + "  ".join(f"r{lo}-{hi}".center(19) for lo, hi in BANDS))
+    for key in data["TowerOrder"]:
+        if key in SUPPORT_TOWERS:
+            continue
+        t = data["Towers"][key]
+        for pi, path in enumerate(t["paths"]):
+            for tier in (4, 5):
+                r = rows[(key, pi, tier)]
+                cells = "  ".join(f"{fmt(a):>7}->{fmt(b):>7} {pct(a, b):>4}" if a > 1e-9 else f"{'-':>19}"
+                                  for a, b in zip(r["before"], r["edps"]))
+                label = f"{t['display'][:14]} {path['id'][:12]} T{tier} b{r['breaks']}"
+                print(f"  {label:<38}{cells}{'  (support)' if r['support'] else ''}")
+
+
+def pct(before, after):
+    return f"{(after / before - 1) * 100:+.0f}%" if before > 1e-9 else ""
 
 
 # ---------------------------------------------------------------- pacing (PLAN T19)
@@ -825,6 +930,8 @@ def main():
     data = load()
     if "--pacing" in args:
         pacing_report(data)
+    elif "--overkill" in args:
+        overkill_report(data)
     else:
         value_report(data, "--full" in args)
 

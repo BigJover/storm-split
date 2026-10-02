@@ -12,6 +12,7 @@ bite and projectile damage one tower takes per round on Easy, solo, at three spo
 
 Assumptions (deliberately pessimistic):
   - every dino of the round walks the whole track (nobody kills it), at Easy speed;
+    it assumes no kills, so pierce-through (DECISIONS #126) doesn't change it;
   - this tower is the only thing in reach, so every attack that can reach it does;
   - attacks come round every `every` seconds while it's in reach (expected value);
   - projectiles always hit (towers can't dodge); a Boss species' projectiles deal
