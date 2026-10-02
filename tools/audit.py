@@ -333,6 +333,43 @@ def check_species(findings, data):
 
 # ---------------------------------------------------------------- main
 
+# Bounty events (PLAN round 2 T28): every event in Shared/Bounties EVENTS must be fired
+# from server code, through Progression's one entry point (bountyEvent), the hook Shop
+# and Hero are handed (onBounty), or Progression's own match-end call (bountyProgress);
+# and nothing may fire an event that isn't in EVENTS.
+BOUNTY_CALL = re.compile(r'\b(?:bountyEvent|onBounty|bountyProgress)\(\s*[\w.]+\s*,\s*"(\w+)"')
+
+
+def bounty_call_sites(sources):
+    """{event: [file, ...]} for every literal event name fired in `sources` ({file: text})."""
+    sites = {}
+    for name, text in sorted(sources.items()):
+        for event in BOUNTY_CALL.findall(text):
+            sites.setdefault(event, []).append(name)
+    return sites
+
+
+def check_bounty_events(findings, notes, sources=None):
+    match = re.search(r"Bounties\.EVENTS = table\.freeze\(\{([^}]*)\}\)", read("src/shared/Bounties.luau"))
+    if not match:
+        findings.append("src/shared/Bounties.luau has no Bounties.EVENTS list")
+        return
+    events = re.findall(r'"(\w+)"', match.group(1))
+    if sources is None:
+        sources = {}
+        for path in glob.glob(os.path.join(ROOT, "src", "server", "*.luau")):
+            sources[os.path.basename(path)] = read(os.path.relpath(path, ROOT))
+    sites = bounty_call_sites(sources)
+    for event in events:
+        if event not in sites:
+            findings.append(f"bounty event '{event}' (Bounties.EVENTS) is never fired from src/server")
+    for event, files in sites.items():
+        if event not in events:
+            findings.append(f"{files[0]} fires bounty event '{event}', which isn't in Bounties.EVENTS")
+    if not findings:
+        notes.append("bounty events fired: " + "; ".join(f"{e} ({', '.join(sorted(set(sites[e])))})" for e in events))
+
+
 def main():
     strict = "--strict" in sys.argv[1:]
     with contextlib.redirect_stdout(io.StringIO()):
@@ -345,6 +382,7 @@ def main():
         ("unlocks", lambda f, n: check_unlocks(f, data)),
         ("dead columns", lambda f, n: check_dead(f, data, n)),
         ("species", lambda f, n: check_species(f, data)),
+        ("bounty events", lambda f, n: check_bounty_events(f, n)),
     ]
     total = 0
     for name, run in checks:

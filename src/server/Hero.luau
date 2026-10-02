@@ -105,7 +105,10 @@ local SPIN_KEEP = 0.35 -- seconds between pulls that still count as holding the 
 
 local states: { [Player]: State } = {}
 local teamLevel = 1 -- what new players start at
-local onPop: ((Player) -> ())? = nil
+-- (who gets the pop, or nil if they've left; the species key if the dino is gone, nil
+-- for a shrink)
+local onPop: ((Player?, string?) -> ())? = nil
+local onBounty: ((Player, string) -> ())? = nil -- (hunter, a Bounties event): "ability"
 local gearAt: ((Vector3) -> HeroStats.Gear)? = nil -- Towers.hunterGearAt
 local GEAR_CHECK = 0.2 -- seconds between checks of where each hunter stands
 local fireEvent: RemoteEvent
@@ -159,9 +162,9 @@ local function mastery(player: Player, s: State): any?
 	return Progression.masteryRewards(Progression.masteryLevel(player, s.hero))
 end
 
-local function credit(player: Player, killed: boolean)
-	if killed and onPop and player.Parent then
-		onPop(player)
+local function credit(player: Player, killed: boolean, gone: string?)
+	if killed and onPop then
+		onPop(if player.Parent then player else nil, gone)
 	end
 end
 
@@ -488,15 +491,15 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 			end
 		end
 	end
-	local killed = Enemies.damage(enemy, damage, stats.piercesArmor)
-	credit(player, killed)
+	local killed, gone = Enemies.damage(enemy, damage, stats.piercesArmor)
+	credit(player, killed, gone)
 	outcome.killed = outcome.killed or killed
 
 	if stats.splashRadius > 0 then
 		for _, other in live do
 			if other ~= enemy and canHit(other, stats) and (other.part.Position - position).Magnitude <= stats.splashRadius then
-				local splashKill = Enemies.damage(other, damage, stats.piercesArmor)
-				credit(player, splashKill)
+				local splashKill, splashGone = Enemies.damage(other, damage, stats.piercesArmor)
+				credit(player, splashKill, splashGone)
 				outcome.killed = outcome.killed or splashKill
 			end
 		end
@@ -703,6 +706,9 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 	local rewards = mastery(player, s)
 	s.abilityReadyAt = now + stats.abilityCooldown * (if rewards then rewards.abilityCooldownMult else 1)
 	publish(player)
+	if onBounty then
+		onBounty(player, "ability")
+	end
 	return true, `{hero.ability}!`
 end
 
@@ -779,8 +785,15 @@ function Hero.towerGuardOf(tower: any): number
 	return guardFrom(towerGuards, tower)
 end
 
-function Hero.init(remotes: Folder, hooks: { onPop: ((Player) -> ())?, gearAt: ((Vector3) -> HeroStats.Gear)? }?)
+export type Hooks = {
+	onPop: ((Player?, string?) -> ())?,
+	onBounty: ((Player, string) -> ())?,
+	gearAt: ((Vector3) -> HeroStats.Gear)?,
+}
+
+function Hero.init(remotes: Folder, hooks: Hooks?)
 	onPop = hooks and hooks.onPop
+	onBounty = hooks and hooks.onBounty
 	gearAt = hooks and hooks.gearAt
 
 	-- Outfitter Armory buffs follow the hunter around: a few times a second,

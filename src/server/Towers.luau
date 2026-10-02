@@ -111,14 +111,16 @@ local BOMBLET_COLOR = Color3.fromRGB(255, 190, 90)
 local towers: { Tower } = {}
 local towerFolder: Instance
 local nextId = 0
-local onPop: ((Player) -> ())? = nil
+local onPop: ((Player?, string?) -> ())? = nil
 local levelScale = 1 -- damage multiplier from the team's level
 local extraRatePercent: ((Tower) -> number)? = nil -- boosts from outside towers (hero Rally Cry)
 local resistOf: ((Tower) -> { number })? = nil -- extra damage resistance sources (Field Medic Second Wind)
 
-local function credit(owner: Player?, killed: boolean)
-	if killed and owner and owner.Parent and onPop then
-		onPop(owner)
+-- A pop goes to the tower's owner; if they've left, nobody gets it, but the hook still
+-- hears which dino is gone (a boss counts for the whole team's bounties).
+local function credit(owner: Player?, killed: boolean, gone: string?)
+	if killed and onPop then
+		onPop(if owner and owner.Parent then owner else nil, gone)
 	end
 end
 
@@ -363,7 +365,9 @@ end
 ------------------------------------------------------------------ public
 
 export type Hooks = {
-	onPop: ((Player) -> ())?,
+	-- (who gets the pop, or nil if they've left; the species key if the dino is gone,
+	-- nil for a shrink)
+	onPop: ((Player?, string?) -> ())?,
 	extraRatePercent: ((Tower) -> number)?,
 	resistOf: ((Tower) -> { number })?,
 }

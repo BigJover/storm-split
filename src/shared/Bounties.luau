@@ -47,6 +47,7 @@
 	                (never itself, never one already on the board), within the
 	                swap allowance
 	  claimable     is there anything to claim (the dot on the Hunt Board button)
+	  doneText      the in-match toast for a finished bounty
 
 	Events for `progress` (EVENTS below); `amount` defaults to 1:
 	  pop         target = the species key. Advances that species' `pop` bounties and
@@ -63,6 +64,7 @@
 ]]
 
 local Config = require(script.Parent.Config)
+local Theme = require(script.Parent.Theme)
 
 local Tuning = Config.Tuning
 
@@ -459,6 +461,15 @@ function Bounties.claimable(state: State, now: number): boolean
 		end
 	end
 	return false
+end
+
+-- "Bounty bagged: Raptor Cull (+15 Amber)" (DECISIONS #76), or nil for an unknown id.
+function Bounties.doneText(id: string): string?
+	local def = definition(id)
+	if not def then
+		return nil
+	end
+	return `Bounty bagged: {def.title} (+{def.amber} {Theme.Currency})`
 end
 
 return Bounties

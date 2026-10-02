@@ -128,10 +128,43 @@ Enemies.init(map.path, map.enemyFolder, {
 
 Effects.init(map.effectFolder)
 Scoreboard.init()
-Hazards.init({ onPop = Scoreboard.addPop })
+
+-- Who has taken part in this match, by UserId (also: starting cash per extra player).
+local joinedThisMatch: { [number]: boolean } = {}
+
+-- The hunters in the match: took part and still here.
+local function hunters(): { Player }
+	local out = {}
+	for _, player in Players:GetPlayers() do
+		if joinedThisMatch[player.UserId] then
+			table.insert(out, player)
+		end
+	end
+	return out
+end
+
+-- A pop: a dino lost a size. The Scoreboard counts every one for the hunter who made
+-- it, exactly as before. Bounties count dinos, so only the pop that finishes one off
+-- (`gone` = its species key) is passed on, to every hunter in the match: `credited`
+-- says whose pop it was, and Shared/Bounties counts a teammate's pop only for bosses
+-- (DECISIONS #66, #82).
+local CREDITED = table.freeze({ credited = true })
+local NOT_CREDITED = table.freeze({ credited = false })
+local function popped(player: Player?, gone: string?)
+	if player then
+		Scoreboard.addPop(player)
+	end
+	if gone then
+		for _, hunter in hunters() do
+			Progression.bountyEvent(hunter, "pop", gone, 1, if hunter == player then CREDITED else NOT_CREDITED)
+		end
+	end
+end
+
+Hazards.init({ onPop = popped })
 Airdrops.init(map.effectFolder)
 Towers.init(map.towerFolder, {
-	onPop = Scoreboard.addPop,
+	onPop = popped,
 	extraRatePercent = function(tower)
 		return Hero.towerRateBoost(tower.position) -- Overdrive
 	end,
@@ -156,8 +189,8 @@ DinoAttacks.init({
 	folder = map.effectFolder,
 	onBite = Towers.bitten,
 })
-Shop.init(remotes)
-Hero.init(remotes, { onPop = Scoreboard.addPop, gearAt = Towers.hunterGearAt })
+Shop.init(remotes, { onBounty = Progression.bountyEvent }) -- build, upgrade, repair
+Hero.init(remotes, { onPop = popped, onBounty = Progression.bountyEvent, gearAt = Towers.hunterGearAt }) -- ability
 
 ------------------------------------------------------------------ host
 
@@ -247,8 +280,6 @@ local function watchCharacter(player: Player)
 end
 
 -- Starting cash: each player beyond the first adds to the pot, once per match.
-local joinedThisMatch: { [number]: boolean } = {}
-
 local function joinMatch(player: Player)
 	if not joinedThisMatch[player.UserId] then
 		local first = next(joinedThisMatch) == nil
@@ -375,7 +406,10 @@ local function playMatch()
 			return over or #Players:GetPlayers() == 0
 		end,
 		scale = roundScale,
-		onRoundStart = function()
+		onRoundStart = function(index)
+			for _, hunter in hunters() do
+				Progression.bountyEvent(hunter, "reachRound", nil, index) -- once per round
+			end
 			frames, costSum, costWorst = 0, 0, 0
 			Enemies.resetPeak()
 			DinoAttacks.resetPeak()

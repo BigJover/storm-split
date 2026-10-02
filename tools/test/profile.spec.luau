@@ -374,3 +374,99 @@ test("the reset payout is shown until the board is opened, then forgotten", func
 	eq(Profile.view(profile, tomorrow, true).lastResetPayout, 0, "once")
 	eq(profile.cores, 100 + paid, "the Amber stays")
 end)
+
+-- Match events (PLAN round 2 T28, DECISIONS #66, #82) --------------------------------
+
+test("the species this spec means", function()
+	eq(Config.Bounties.W_STAMPEDE.event, "popTotal", "Stampede counts any pop")
+	eq(Config.Enemies.ZEP.boss, true, "ZEP (Triceratops) is a boss")
+	eq(Config.Enemies.HUSK.boss, false, "HUSK (Compy) isn't")
+end)
+
+test("one pop event feeds the species bounty and the pop-any bounty", function()
+	local profile = loaded(NOON)
+	Profile.bountyEvent(profile, "pop", "HUSK", 1, { credited = true })
+	eq(profile.rewards.daily[1].progress, 1, "Compy Sweep")
+	eq(profile.rewards.weekly[1].progress, 1, "Stampede")
+	Profile.bountyEvent(profile, "pop", "ZEP", 1, { credited = true })
+	eq(profile.rewards.daily[1].progress, 1, "another species doesn't count for Compy Sweep")
+	eq(profile.rewards.weekly[1].progress, 2, "but does for Stampede")
+end)
+
+test("a teammate's pop counts only when it's a boss", function()
+	local raw = saved(NOON)
+	raw.rewards.weekly[2] = entry("W_HORN_BREAKER")
+	local profile = Profile.sanitize(raw, NOON, first)
+	Profile.bountyEvent(profile, "pop", "HUSK", 1, { credited = false })
+	eq(profile.rewards.daily[1].progress, 0, "a teammate's Compy: not Compy Sweep")
+	eq(profile.rewards.weekly[1].progress, 0, "nor Stampede")
+	Profile.bountyEvent(profile, "pop", "ZEP", 1, { credited = false })
+	eq(profile.rewards.weekly[2].progress, 1, "a teammate's Triceratops: Horn Breaker")
+	eq(profile.rewards.weekly[1].progress, 1, "and Stampede")
+end)
+
+test("reaching a round, once per round, finishes Deep Trail at its round", function()
+	local profile = loaded(NOON)
+	local done = ""
+	for round = 1, Config.Bounties.D_DEEP_TRAIL_15.count do
+		done ..= table.concat(Profile.bountyEvent(profile, "reachRound", nil, round), ",")
+	end
+	eq(done, "D_DEEP_TRAIL_15", "finished exactly once, at round 15")
+	eq(profile.rewardsVersion, 1, "one change")
+	eq(profile.cores, 100, "no Amber until it's claimed")
+end)
+
+test("a clear counts for the difficulty cleared or an easier bar", function()
+	local profile = loaded(NOON)
+	local done = Profile.bountyEvent(profile, "clear", "EASY", 1)
+	eq(table.concat(done, ","), "D_CLEAN_SWEEP", "Easy: Clean Sweep only")
+	eq(profile.rewards.weekly[2].progress, 0, "Rough Country wants Normal or harder")
+	done = Profile.bountyEvent(profile, "clear", "HARD", 1)
+	eq(table.concat(done, ","), "W_ROUGH_COUNTRY", "Hard clears Rough Country")
+end)
+
+test("every event a caller may fire moves some bounty in the pool", function()
+	for _, event in Bounties.EVENTS do
+		local moved = false
+		for _, id in Config.BountyOrder do
+			local def = Config.Bounties[id]
+			local raw = saved(NOON)
+			raw.rewards[def.pool] = { entry(id) }
+			local profile = Profile.sanitize(raw, NOON, first)
+			local target = if event == "pop" then (if def.event == "pop" then def.target else "HUSK") elseif event == "clear" then "CHAOS" else nil
+			local amount = if event == "reachRound" then math.max(def.round, 1) else 1
+			Profile.bountyEvent(profile, event, target, amount, { credited = true })
+			for _, e in profile.rewards[def.pool] do
+				if e.id == id and e.progress > 0 then
+					moved = true
+				end
+			end
+		end
+		ok(moved, `{event} moves at least one bounty`)
+	end
+end)
+
+test("an unknown event or a bad amount changes nothing", function()
+	local profile = loaded(NOON)
+	for _, call in { { "chest", nil, 1 }, { "popTotal", nil, 50 }, { "pop", "HUSK", 0 }, { "pop", "HUSK", -3 }, { "pop", "HUSK", 0.5 }, { "pop", "NOPE", 5 } } do
+		eq(#Profile.bountyEvent(profile, call[1], call[2], call[3], { credited = true }), 0, `{call[1]} finished nothing`)
+	end
+	local total = 0
+	for _, pool in Bounties.POOLS do
+		for _, e in profile.rewards[pool] do
+			total += e.progress
+		end
+	end
+	eq(total, 5, "only the unknown species counted, and only for Stampede")
+	eq(profile.rewards.weekly[1].progress, 5, "Stampede")
+	eq(profile.cores, 100, "no Amber")
+end)
+
+test("the toast names the bounty by its title and Amber", function()
+	eq(Bounties.doneText("D_RAPTOR_CULL"), `Bounty bagged: Raptor Cull (+{amberOf("D_RAPTOR_CULL")} Amber)`, "Raptor Cull")
+	eq(Bounties.doneText("W_TYRANTS_END"), `Bounty bagged: Tyrant's End (+{amberOf("W_TYRANTS_END")} Amber)`, "Tyrant's End")
+	eq(Bounties.doneText("NOT_A_BOUNTY"), nil, "unknown id")
+	for _, id in Config.BountyOrder do
+		ok(Bounties.doneText(id) ~= nil, `{id} has a toast`)
+	end
+end)

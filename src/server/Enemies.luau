@@ -242,9 +242,11 @@ function Enemies.canHurt(enemy: Enemy, piercesArmor: boolean): boolean
 end
 
 -- Apply damage. Returns true if this hit emptied a size (a pop: it shrank or
--- died). A hit that can't pierce an Armored enemy does nothing. An active mark
--- or brittle chill adds its percentage.
-function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?): boolean
+-- died), and then the species key if it emptied the smallest size, so the dino
+-- is gone (nil for a shrink; bounties count dinos, DECISIONS #66). A hit that
+-- can't pierce an Armored enemy does nothing. An active mark or brittle chill
+-- adds its percentage.
+function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?): (boolean, string?)
 	if not enemy.alive or not Enemies.canHurt(enemy, piercesArmor == true) then
 		return false
 	end
@@ -266,10 +268,10 @@ function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?): b
 		enemy.size -= 1
 		enemy.hp = enemy.maxHp
 		dress(enemy) -- one size smaller, same species
-	else
-		remove(enemy)
+		return true
 	end
-	return true
+	remove(enemy)
+	return true, enemy.key
 end
 
 function Enemies.isMarked(enemy: Enemy): boolean

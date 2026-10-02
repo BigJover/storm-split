@@ -44,6 +44,8 @@ local MIN_REQUEST_GAP = 0.15 -- seconds; drops spammed requests from one player
 local DISTANCE_SLACK = 6 -- studs of lag allowance on top of client-side distances
 
 local spent: { [Towers.Tower]: number } = {} -- cash put into each tower
+-- (hunter, a Bounties event): "build", "upgrade" or "repair", once the purchase went through
+local onBounty: ((Player, string) -> ())? = nil
 local lastRequest: { [Player]: number } = {}
 
 ------------------------------------------------------------------ towers
@@ -135,6 +137,9 @@ local function build(player: Player, towerKey: unknown, position: unknown): (boo
 	end
 	spent[tower] = def.baseCost
 	decorate(tower)
+	if onBounty then
+		onBounty(player, "build")
+	end
 	return true, `Built {def.display}`
 end
 
@@ -183,6 +188,9 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 	end
 	spent[tower] = (spent[tower] or 0) + cost
 	decorate(tower)
+	if onBounty then
+		onBounty(player, "upgrade") -- the buyer's, whoever owns the tower (DECISIONS #83)
+	end
 	return true, `{step.name or path.id}!`
 end
 
@@ -206,7 +214,11 @@ local function repair(player: Player, towerId: unknown): (boolean, string)
 	if cost > 0 and not Economy.trySpend(cost) then
 		return false, "Not enough cash"
 	end
+	local trampled = tower.knockedOut
 	Towers.repair(tower) -- not added to spent: a repair doesn't raise the refund
+	if trampled and onBounty then
+		onBounty(player, "repair") -- only a trampled tower put back up counts (DECISIONS #75)
+	end
 	return true, if cost > 0 then `Repaired for {cost}` else "Repaired"
 end
 
@@ -268,7 +280,8 @@ function Shop.reset()
 	table.clear(spent)
 end
 
-function Shop.init(remotes: Folder)
+function Shop.init(remotes: Folder, hooks: { onBounty: ((Player, string) -> ())? }?)
+	onBounty = hooks and hooks.onBounty
 	local request = Instance.new("RemoteFunction")
 	request.Name = "ShopRequest"
 	-- ("build", towerKey, position), ("upgrade", towerId, pathIndex), ("repair", towerId) or ("sell", towerId)

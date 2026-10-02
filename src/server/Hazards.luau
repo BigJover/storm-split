@@ -35,9 +35,11 @@ type Burn = {
 local BURN_COLOR = Color3.fromRGB(255, 110, 40)
 
 local burns: { Burn } = {}
-local onPop: ((Player) -> ())? = nil
+-- (who gets the pop, or nil if they've left; the species key if the dino is gone, nil
+-- for a shrink)
+local onPop: ((Player?, string?) -> ())? = nil
 
-function Hazards.init(hooks: { onPop: ((Player) -> ())? }?)
+function Hazards.init(hooks: { onPop: ((Player?, string?) -> ())? }?)
 	onPop = hooks and hooks.onPop
 end
 
@@ -58,9 +60,9 @@ function Hazards.burn(distance: number, reach: number, dps: number, seconds: num
 	Effects.disc(Enemies.pointAt(distance) + Vector3.new(0, 0.45, 0), reach, BURN_COLOR, seconds, 0.5)
 end
 
-local function credit(owner: Player?, killed: boolean)
-	if killed and owner and owner.Parent and onPop then
-		onPop(owner)
+local function credit(owner: Player?, killed: boolean, gone: string?)
+	if killed and onPop then
+		onPop(if owner and owner.Parent then owner else nil, gone)
 	end
 end
 

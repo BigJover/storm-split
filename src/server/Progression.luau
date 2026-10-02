@@ -32,6 +32,10 @@
 	                ask again) are attributes on their Player. If the Hunt Board can't
 	                be read the player plays on without it and their stored board is
 	                left as it was.
+	  Bounty progress   Progression.bountyEvent is the one way in for match events
+	                (Main, Shop and Hero call it; the events are Bounties.EVENTS). It
+	                only listens while a match is on, never pays, and tells the owner
+	                alone when a bounty is finished (the BountyDone remote).
 
 	SAVING needs a place published to Roblox (Studio: Game Settings > Security >
 	Enable Studio Access to API Services). If the data store can't be reached,
@@ -48,6 +52,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Payouts = require(Shared:WaitForChild("Payouts"))
+local Bounties = require(Shared:WaitForChild("Bounties"))
 local Profile = require(Shared:WaitForChild("Profile"))
 local Theme = require(Shared:WaitForChild("Theme"))
 
@@ -62,6 +67,7 @@ local RETRY_DELAY = 2 -- seconds between load attempts
 local profiles: { [Player]: Profile } = {}
 local onMasteryChanged: ((Player) -> ())? = nil
 local canSave: { [Player]: boolean } = {} -- false = session-only (store unreachable at load)
+local bountyDone: RemoteEvent? = nil -- (bounty id), to the hunter who finished it only
 local store: DataStore? = nil
 do
 	local ok, result = pcall(function()
@@ -344,6 +350,40 @@ local function getRewards(player: Player, open: unknown): (boolean, any)
 	return true, Profile.view(profile, os.time(), open == true)
 end
 
+-- Count a match event for one hunter. Never errors (it's called from the middle of
+-- combat and the shop) and never pays: a finished bounty is claimed on the Hunt Board.
+local function bountyProgress(player: Player, event: string, target: string?, amount: number?, context: Bounties.Context?)
+	local profile = profiles[player]
+	if not profile or not profile.rewards then
+		return
+	end
+	local ok, finished = pcall(Profile.bountyEvent, profile, event, target, amount, context)
+	if not ok then
+		warn(`[Progression] bounty event {event} failed for {player.Name}: {finished}`)
+		return
+	end
+	if #finished == 0 then
+		return
+	end
+	for _, id in finished do
+		if bountyDone then
+			bountyDone:FireClient(player, id) -- the client shows Bounties.doneText(id)
+		end
+	end
+	publish(player)
+end
+
+-- A match event for this hunter: one of Bounties.EVENTS, with its target (species or
+-- difficulty key), amount and context as Shared/Bounties describes. Ignored outside a
+-- match, so nothing can be finished in the lobby (DECISIONS #66).
+function Progression.bountyEvent(player: Player, event: string, target: string?, amount: number?, context: Bounties.Context?)
+	local state = ReplicatedStorage:GetAttribute("State")
+	if state ~= "Building" and state ~= "Playing" then
+		return
+	end
+	bountyProgress(player, event, target, amount, context)
+end
+
 ------------------------------------------------------------------ match end
 
 export type MatchResult = {
@@ -362,6 +402,10 @@ function Progression.endMatch(result: MatchResult)
 	for player, profile in profiles do
 		profile.cores += payout
 		profile.highestRound = math.max(profile.highestRound, result.roundReached)
+		if result.cleared then
+			-- Straight in: the match state is already Victory.
+			bountyProgress(player, "clear", result.difficulty)
+		end
 		pcall(Profile.refresh, profile, os.time(), rng) -- the match may have run past a reset
 		player:SetAttribute("LastPayout", payout) -- the results screen shows it
 		publish(player)
@@ -404,6 +448,11 @@ function Progression.init(remotes: Folder, hooks: { onMasteryChanged: ((Player) 
 		return success, message, detail
 	end
 	request.Parent = remotes
+
+	local done = Instance.new("RemoteEvent")
+	done.Name = "BountyDone"
+	done.Parent = remotes
+	bountyDone = done
 
 	-- Studio-only test shortcut (J): +100 Amber for this session, so buying
 	-- unlocks and mastery can be tried. Never saved, never present in a

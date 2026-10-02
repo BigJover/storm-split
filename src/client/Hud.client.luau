@@ -18,6 +18,7 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 local Theme = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Theme"))
 local TowerLook = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("TowerLook"))
 local HitNotice = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HitNotice"))
+local Bounties = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Bounties"))
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "StormSplitHud"
@@ -324,6 +325,46 @@ task.spawn(function()
 			if noticeState == state then -- no newer hit since
 				notice.Visible = false
 			end
+		end)
+	end)
+end)
+
+-- Private bounty toast above the HP bar: "Bounty bagged: Raptor Cull (+15 Amber)"
+-- (DECISIONS #70, #76). Only this hunter's bounties arrive here (Server/Progression
+-- fires to them alone). No panel, nothing to click: lines show for a moment and go.
+local TOAST_SECONDS = 4 -- UI timing, not a gameplay number
+local toast = Instance.new("TextLabel")
+toast.Name = "BountyToast"
+toast.AnchorPoint = Vector2.new(0, 1)
+toast.Position = UDim2.new(0, 24, 1, -24 - 28 - 8)
+toast.Size = UDim2.fromOffset(0, 0)
+toast.AutomaticSize = Enum.AutomaticSize.XY
+toast.BackgroundTransparency = 1
+toast.TextColor3 = Color3.fromRGB(245, 175, 60) -- the amber title colour
+toast.TextStrokeTransparency = 0.4
+toast.Font = Enum.Font.GothamBold
+toast.TextSize = 17
+toast.TextXAlignment = Enum.TextXAlignment.Left
+toast.Visible = false
+toast.Parent = gui
+
+local toastLines: { string } = {}
+local function showToasts()
+	toast.Text = table.concat(toastLines, "\n")
+	toast.Visible = #toastLines > 0
+end
+task.spawn(function()
+	local done = remotes:WaitForChild("BountyDone") :: RemoteEvent
+	done.OnClientEvent:Connect(function(id: unknown)
+		local line = if typeof(id) == "string" then Bounties.doneText(id) else nil
+		if not line then
+			return
+		end
+		table.insert(toastLines, line)
+		showToasts()
+		task.delay(TOAST_SECONDS, function()
+			table.remove(toastLines, 1) -- the oldest line; they all last the same time
+			showToasts()
 		end)
 	end)
 end)
