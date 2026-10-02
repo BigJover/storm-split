@@ -39,6 +39,17 @@ point, then log it in `DECISIONS.md`.
   small one-tick burn (35% of the shot), not an automatic kill. Expect him to prefer
   "small, readable effect" over "big automatic effect".
 
+## Mastery perks and hero XP (Jovan, 2026-10-02)
+
+- **Mastery ability perks scale up:** the objectively stronger perk sits at level 15, the
+  lesser one at level 10. If two are equal, make one edge out the other.
+- **Designed for PvP too:** "nothing extremely strong, just something that gives a somewhat
+  fair advantage". An edge, never a fight-winner; no hard crowd control on hunters.
+- **Hero XP from pops is good, but small**, so nobody farms pops, and it **only counts at
+  the end**: XP is banked when a round is finished, to entice players to finish rounds and
+  games.
+- **Saving and publishing can wait** until the game is published. Don't build for it now.
+
 ## Economy (his numbers)
 
 - Casual: solo pays only on a track clear (Easy 50 / Normal 100 / Hard 150 / Chaos 200

@@ -1,3 +1,239 @@
+# Plan — Round 3: mastery ability perks + hero XP (Director, 2026-10-02)
+
+Scope (Jovan, 2026-10-02, `GAUNTLET.md` "Round 3 scope"): the two leftovers of Phase 6.
+(1) Mastery levels 10 and 15 carry an **ability perk** per hunter, the level-15 one
+objectively stronger, both modest and PvP-safe. (2) **Hero XP**: pops give a little XP that
+is only banked when the round is cleared. Saving and publishing are deferred: nothing here
+may need a DataStore. **Stop before phase 7** and append a round-3 recap to `RECAP.md`.
+Design calls: `DECISIONS.md` #97–#103. **T31 (Studio playtest) is still open.**
+
+The round-1 and round-2 rules hold (one task = one commit; `tools/check.sh`,
+`export_constants.py`, `tools/test.sh` green; diff `Config.luau` after every sheet change;
+openpyxl only, assert a cell before writing it; append, never insert; "statically checked +
+headless tests, not playtested"; 🦖 = Dino agent reviews). For this round:
+
+- New Tuning levers go **below row 85** (row 86 blank, then the headers named below; assert
+  each cell is empty first).
+- Player-facing text never says "pop" (#93): it says **take-downs**. Code and sheet keys may.
+- Builder run 1 = T32–T33. Builder run 2 = T34–T36. Then T37 🦖, T38 (Tester), T39 (docs).
+
+## The design in one place
+
+### Mastery ability perks (DECISIONS #97–#99)
+
+A hunter with mastery 10+ has the level-10 perk; with 15+ has both. Working names: 🦖 names
+them in T37.
+
+| Hunter (ability) | Level 10 perk | Level 15 perk | Worth % (10 / 15) |
+|---|---|---|---|
+| Tracker (Tracking Dart: +50% for 8s) | **Lingering Dart**: the mark lasts **+2s** (8 → 10) | **Split Dart**: also marks the **1** nearest other dino within **10** studs of the target, at **0.4×** strength (+20%), same time | 25 / 40 |
+| Big Game Hunter (Rally Cry: 10s, towers within 25 studs +40%) | **Carrying Voice**: radius **+5** studs (25 → 30) | **Long Rally**: lasts **+3s** (10 → 13), for the hunter and the towers | 20 / 30 |
+| Brush Beater (Flare Strike: 30 damage, 2s stun, radius 10) | **Wide Flare**: radius **+1.5** studs (10 → 11.5) | **Smoulder**: leaves burning ground on the strike for **3s**, each second dealing **12%** of the strike's damage (36% in all) | 15 / 36 |
+| Field Medic (Triage Kit: 40 HP within 20 studs) | **Long Reach**: radius **+4** studs (20 → 24) | **Full Kit**: heals **+10** HP (40 → 50) | 20 / 25 |
+
+- Perk values are **added to the hero's base ability value, before path multipliers** (Full
+  Kit + Clean Bandages = 50 × 1.25; Long Reach + Triage Tent = 24 × 1.5).
+- **Worth %** = 100 × (seconds added ÷ base seconds + radius added ÷ base radius + power
+  added ÷ base power + extra marks × extra-mark strength) + burn % per second × burn seconds.
+  The exporter computes it and fails unless, per hunter, **level 15 > level 10** and both are
+  **≤ `Mastery perk worth cap` (40)**.
+- **PvP reasoning:** every perk acts on dinos or on allies; none stuns, slows, knocks or
+  marks a hunter; none adds stun time (the exporter rejects `Ability seconds +` on an
+  AIRBURST row); none raises gun damage. Each is worth at most 40% of one cast of an ability
+  on a 35–45s cooldown: a few percent of a team's damage or healing, an edge and never a
+  fight-winner. If a battle mode ever lets abilities touch other hunters, that mode needs
+  its own numbers (phase 7).
+- **Existing rewards stay alongside:** level 10 keeps the free first upgrade, level 15 keeps
+  cooldown −30%. #61's question (12 empty levels: 6–9, 11–14, 16–19) is unchanged and still
+  Jovan's.
+
+### Hero XP (DECISIONS #100–#103)
+
+1. Clearing a round banks **Round XP** (100 = `XP per level` 500 ÷ `Rounds per level` 5) for
+   every hunter in the match, plus **pop XP**: `XP per pop` 0.25 × (your pops + `Team pop
+   share` 0.25 × your teammates' pops), rounded down, at most `Pop XP cap per round` **15**.
+   "Pops" are the leaderboard's Pops (your gun, your towers, your fire).
+2. Pop XP earned during a round is **pending**: it banks only when the round is cleared. A
+   lost round (the match ends) or leaving mid-round drops it.
+3. Hero level = 1 + floor(XP ÷ 500), held between the **round level** (1 + rounds cleared ÷ 5,
+   the old curve: the floor) and round level + `Hero level lead cap` **1** (the ceiling).
+   Late joiners and re-joiners start with the floor's XP. **Towers stay on the round level.**
+   XP is **per match**: it resets every match and nothing is saved.
+
+With the seeds a hunter who caps pop XP every round gains 115 a round: level 3 after round 9
+(not 10), level 5 after 18 (not 20), level 9 after 35 (never in play before). Never more than
+one level ahead; a hunter with no pops is exactly on the old curve.
+
+---
+
+## Part G — Mastery ability perks (Builder run 1)
+
+### T32. Sheet, exporter and audit for perks and XP levers
+- **Sheet — new sheet `Mastery Perks`** (title A1, note A2, header row 4, data rows 5–12):
+  A `Hero key`, B `Mastery level`, C `Name`, D `Text`, E `Ability seconds +`,
+  F `Ability radius +`, G `Ability power +`, H `Extra marks`, I `Extra mark power x`,
+  J `Extra mark reach`, K `Strike burn % per s`, L `Strike burn (s)`. Blank = 0.
+
+  | Row | A | B | C | Effect cells |
+  |---|---|---|---|---|
+  | 5 | PISTOL | 10 | Lingering Dart | E = 2 |
+  | 6 | PISTOL | 15 | Split Dart | H = 1, I = 0.4, J = 10 |
+  | 7 | RIFLE | 10 | Carrying Voice | F = 5 |
+  | 8 | RIFLE | 15 | Long Rally | E = 3 |
+  | 9 | SHOTGUN | 10 | Wide Flare | F = 1.5 |
+  | 10 | SHOTGUN | 15 | Smoulder | K = 12, L = 3 |
+  | 11 | MEDIC | 10 | Long Reach | F = 4 |
+  | 12 | MEDIC | 15 | Full Kit | G = 10 |
+
+  `Text` (D) is one plain sentence per perk, e.g. "Tracking Dart lasts 2s longer", "Tracking
+  Dart also marks the nearest dino within 10 studs at 40% strength", "Rally Cry reaches 5
+  studs further", "Rally Cry lasts 3s longer", "Flare Strike is 1.5 studs wider", "Flare
+  Strike leaves burning ground for 3s (12% of the strike each second)", "Triage Kit reaches
+  4 studs further", "Triage Kit heals 10 more HP".
+- **Sheet — `Mastery`:** E14 → "Start every match with your first upgrade free, plus your
+  hunter's level-10 ability perk"; E19 → "Ability cooldown -30%, plus your hunter's level-15
+  ability perk" (assert both still hold the "coming later" text). A2 → "… never gun damage
+  multipliers." Columns F–I unchanged.
+- **Sheet — `Tuning`** (rows 86+; assert empty): header `HERO XP`; `XP per level` 500;
+  `XP per pop` 0.25; `Pop XP cap per round` 15; `Team pop share` 0.25; `Hero level lead cap`
+  1; blank; header `MASTERY PERKS`; `Mastery perk worth cap` 40.
+- **Exporter:** reads `Mastery Perks` by header; emits `Config.MasteryPerks[heroKey] =
+  { { level, name, text, <effect fields, zeros included> }, … }` sorted by level, and the six
+  Tuning levers. Fails when: a hero key isn't on `Heroes`; a level isn't 1–20 or repeats for
+  a hero; a hero on `Heroes` has no level-10 or no level-15 row; worth(15) ≤ worth(10); any
+  worth > the cap; an AIRBURST row has `Ability seconds +`; a non-HEAL row has `Ability
+  power +`; `Extra marks` on a non-MARK row or burn cells on a non-AIRBURST row; `XP per
+  level` isn't a whole multiple of `Rounds per level`; any XP lever is negative; or a hunter
+  at the pop-XP cap every round would be more than `Hero level lead cap` levels above the
+  round level after any round 1…last (so the clamp is a safety net, not the rule).
+- **Audit (`tools/audit.py`):** every number in a perk's `Text` equals one of that row's
+  effect cells (`Extra mark power x` as a percentage); no `Text` contains "pop"; each perk
+  name appears in `HEROES.md` "Mastery" (after T39; a note until then, not `--strict` fail);
+  no perk column is all-blank (dead column).
+- **Accept:** exporter clean; Config diff = the `MasteryPerks` block, six Tuning lines and
+  two Mastery `unlock` strings, nothing else; a spec in `heroes.spec.luau` checks every hero
+  has perks at 10 and 15; the exporter's own failure cases shown once each in the commit
+  message (run on a temp copy of the sheet, never the real one); audit `--strict` 0.
+
+### T33. Perks in play + the mastery screen
+- **Pure rule:** `HeroStats.compute(heroKey, tiers, gear, masteryLevel?)` merges every perk
+  with `level ≤ masteryLevel` into the hero's **base** ability values before path multipliers,
+  and returns the new fields `markExtra`, `markExtraPowerMult`, `markExtraReach`,
+  `strikeBurnPercent`, `strikeBurnSeconds`. `nil`/0 mastery = today's stats exactly. The
+  client passes its `Mastery_{heroKey}` attribute, the server `Progression.masteryLevel`, so
+  both agree. `Hero.masteryChanged` recomputes stats.
+- **Server (`Hero.luau` ability):** MARK — after marking the target, mark the `markExtra`
+  nearest other live dinos within `markExtraReach` studs of it at `abilityPower ×
+  markExtraPowerMult` for the same seconds; never weaken a dino's stronger mark (check
+  `Enemies.mark`; if it overwrites, keep the stronger inside `Enemies`, the only mutator).
+  OVERDRIVE and HEAL — nothing new: they read the merged seconds, radius and heal. AIRBURST —
+  after the strike lands, if `strikeBurnPercent > 0`, `Hazards.burn` at the strike's centre
+  and radius for `strikeBurnSeconds`, DPS = the strike's damage (level-scaled) ×
+  `strikeBurnPercent` ÷ 100, armour-piercing like the strike, credited to the hunter. No
+  literals in code.
+- **UI (`Shop.client` Unlocks & Mastery):** the level-10 and level-15 rows of a hero show
+  the perk's name and `Text` from `Config.MasteryPerks` (owned perks marked as owned); the
+  hero-upgrades panel (U) shows owned perks in one line under the ability. Text shrinks or
+  wraps to fit, never clips (#96); the panel still obeys `Shared/PanelRules`.
+- **Accept (headless, `heroes.spec.luau`):** for each hero, stats at mastery 0 / 9 equal
+  today's; at 10 only the level-10 lever moves, by the sheet value; at 15 both; Full Kit and
+  Long Reach multiply through Clean Bandages / Triage Tent as stated above; the Rally Cry
+  radius used by `Hero.towerRateBoost` is the merged one (assert through the stats). The mark
+  spread and the burn call are server-only: statically checked, listed for T38.
+
+## Part H — Hero XP (Builder run 2)
+
+### T34. XP rule (pure) and server wiring
+- **New `Shared/HeroXp`** (pure, Config only): `roundXp()`, `roundLevel(roundsCleared)`
+  (replaces `levelAfter` in Main), `popXp(ownPops, teamPops)` (teamPops includes own),
+  `floorXp(roundsCleared)`, `bank(xp, ownPops, teamPops, roundsClearedAfter)` → new XP
+  (never below the floor, never at or above the XP of round level + lead cap + 1), and
+  `level(xp, roundsCleared)` (clamped).
+- **Server:** `Hero` is the only mutator of a hunter's XP, pending pops and level. Main's pop
+  hook calls `Hero.addPop(player)` beside `Scoreboard.addPop` (every credited pop, shrinks
+  included). On `onRoundEnd`, `Hero.roundCleared(index)` banks for every hunter present,
+  clears pending and republishes; Main keeps `Towers.setLevel(HeroXp.roundLevel(index))` and
+  the `Level` attribute (now "tower level"). A hunter who joins or re-joins mid-match starts
+  at `floorXp(rounds cleared)` with no pending; `Hero.resetMatch` zeroes XP and pending. A
+  lost match banks nothing. `Hero.setLevel` goes away (or only seeds the floor for the
+  Studio start-round constant). Attributes for the HUD: `HeroLevel`, `HeroXp`,
+  `HeroXpPending` (the pop XP this round so far, already capped). No DataStore, no Profile
+  field.
+- **Accept (headless, new `heroxp.spec.luau`):** no pops → after r rounds the level equals
+  the old `1 + floor(r/5)` for r = 0…40; capped pops every round → level 3 after 9, 5 after
+  18, 9 after 35, and never > round level + 1; `popXp(0, 400)` (a Medic in a busy lobby) = 15
+  and `popXp(0, 0)` = 0; `popXp` rounds down and caps; a joiner at round 23 gets floor XP
+  2,300 → level 5; a huge pending value can't pass the ceiling; nothing in the module reads
+  a clock or a player. `tools/check.sh` clean.
+
+### T35. HUD: level, XP readout, banner
+- **Do (`Hud.client`):** the existing "Lv" readout becomes **"Lv N"** with a thin XP bar and
+  "240 / 500 XP" beside it, and "+12 on clear" while there is pending pop XP (wording 🦖).
+  It is a HUD label: not a panel, takes no input, never captures or frees the mouse, sits
+  inside the screen at any window size (scale or shrink, #96 rules) and hides with the rest
+  of the HUD outside a match. The level banner fires when **your** `HeroLevel` rises
+  ("Hunter level N — your shots hit 25% harder", percentage from Config) and, when the tower
+  level rises, adds or shows the tower line ("Towers level N — +10%"); one banner, at most
+  two lines, never stacked. The leaderboard keeps showing each hunter's own level if it does
+  today.
+- **Accept:** the bar's numbers come from a pure helper (`HeroXp.progress(xp, roundsCleared)`
+  → shown XP, needed XP, level) with a spec (level-up edge, clamp edge, pending shown but not
+  counted); `panelrules.spec.luau` still green; no new ScreenGui with `Modal` or input sink
+  (grep in the commit message); strings contain no "pop".
+
+### T36. Models and guards follow the new levels
+- **Do:** `tools/value.py` hero lines print each checkpoint at the **floor** level and at
+  **floor + lead cap**, and say which is which; tower lines stay on the round level. The
+  exporter's hero-vs-tower guard compares the highest hero level in play (round level of the
+  last round + lead cap) against the best tower at the round level of the last round.
+  `threat.py` doesn't read levels: confirm and say so.
+- **Accept:** `value.py` and `threat.py` exit 0 with no new finding; the guard passes and its
+  numbers (hero, best tower) are quoted in the commit message; if the ceiling hero now beats
+  a tower it didn't before (#58: Longshot Perch ~223), list it for the Director, change no
+  number.
+
+## Part I — Review, playtest, docs
+
+### T37. 🦖 Dino review: perk names and XP wording
+- The eight perk names and `Text` lines (working names above; watch collisions with tier
+  names such as Second Wind, Steady Hands, Long Dose — scope by sheet, as always), the HUD
+  strings ("on clear", "Hunter level", "Towers level"), the two Mastery `unlock` lines.
+  Output: `DINO_REVIEW.md` Round 11. The Director accepts or rewords (DECISIONS), the Builder
+  applies sheet/text changes in one commit. No number changes.
+
+### T38. Tester: round-3 steps (run with T31 when Studio's MCP switch is on)
+- T31 stays open and unchanged. Added steps, same rules (saving off with J first):
+  1. J, buy Tracker mastery to 15 in Unlocks & Mastery: rows 10 and 15 show the perk name and
+     text, nothing clipped at 800×600; X and M both close the panel.
+  2. Tracking Dart on a dino in a pack: a second dino nearby shows a mark; the marks end
+     after ~10s. Rally Cry: disc looks wider than at mastery 0 (read the radius attribute or
+     stat if exposed), lasts ~13s. Flare Strike: burning ground stays ~3s. Triage Kit from
+     40 HP: heals to 90 (50 HP), where mastery 0 heals to 80.
+  3. Round 1: the XP readout shows pending "+N on clear" rising with take-downs, capped at
+     15; on clear the bar gains 100 + N; pending returns to 0.
+  4. K cash, clear to round 9 with capped pops: banner "Hunter level 3" after round 9; tower
+     level 2 → 3 only after round 10.
+  5. Lose a round on purpose: result screen appears, no XP banked from that round (read
+     `HeroXp` before/after); back in the lobby and in the next match the level is 1, XP 0.
+  6. The XP readout never blocks a click on Start, the shop or the hotbar at 800×600.
+- Report pass / fail / not testable per step in `PLAYTEST.md`; feel and balance stay Jovan's.
+
+### T39. Docs and round-3 recap
+- `HEROES.md` "Mastery" (perk table, existing rewards kept) and "Hero levels" (the XP rule
+  replaces "Now / Planned"); `DIRECTION.md` line "Levels (+25% hero / +10% tower every 5
+  rounds)" reworded to the floor/lead rule if the audit allows (keep the numbers it checks);
+  `ARCHITECTURE.md` (ownership: `Hero` owns XP and hero level, `Shared/HeroXp`, tower level
+  from Main); `CLAUDE.md` status; `GAUNTLET.md` status line; `RECAP.md` "Round 3": what
+  changed, what to try first, what was and wasn't verified, and the questions for Jovan
+  (#61 empty levels; whether competitive buy-in modes should switch mastery perks off;
+  whether "count at the end" should later also mean a match-clear bonus once saving exists).
+- **Accept:** audit `--strict` 0; spec count and tool results quoted; nothing called
+  playtested unless T38 ran.
+
+**Stop here. Phase 7 is not started.**
+
+---
+
 # Plan — Round 2: balance pass + daily log-in rewards and bounties (Director, 2026-10-01)
 
 Scope (Jovan, 2026-10-01, `GAUNTLET.md` "Round 2 scope"): (1) a balance pass across the whole

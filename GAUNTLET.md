@@ -47,6 +47,20 @@ Stop before phase 7 again and write a round-2 recap (append to `RECAP.md`).
 **Still open: T31, the Tester's Studio playtest** (`PLAN.md`). It waits for Jovan to turn on
 Studio's "Enable Studio as MCP server". Phase 7 is not started.
 
+## Round 3 scope (Jovan, 2026-10-02)
+
+Jovan read the round-2 recap ("it looks really good to me") and asked for the two leftovers
+of Phase 6:
+
+1. **Mastery ability perks** at levels 10 and 15 for every hunter: the stronger one at 15,
+   both modest and PvP-safe ("a somewhat fair advantage").
+2. **Hero XP:** pops give a small amount of XP that is only banked when the round is
+   cleared; levels stay close to the old every-5-rounds curve.
+
+Saving and publishing are deferred ("we can deal with that later when it is published").
+Plan: `PLAN.md` "Round 3" (T32–T39); design calls `DECISIONS.md` #97–#103. T31 (the Studio
+playtest) is still open. Stop before phase 7 again and append a round-3 recap to `RECAP.md`.
+
 ## Rules
 
 - **Verify every step:** `tools/check.sh` clean; `python3 tools/export_constants.py` clean;
