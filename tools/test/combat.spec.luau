@@ -14,6 +14,7 @@ test("the Tuning levers are the seeds this spec means", function()
 	eq(Config.Tuning.MaxProjectiles, 80)
 	eq(Config.Tuning.TowerHPPerTier, 0.15)
 	eq(Config.Tuning.RepairCost, 0.3)
+	eq(Config.Tuning.BossRangedVsTowersX, 0.3)
 end)
 
 test("attack damage scales with size and difficulty", function()
@@ -150,4 +151,12 @@ test("nearestWithin: the nearest few points in reach, nearest first, ties to the
 	eq(picked(3, 2), "", "nothing in reach")
 	eq(picked(10, 0), "", "no marks asked for")
 	eq(#Combat.nearestWithin(at, {}, 10, 1), 0, "no other dinos")
+end)
+
+test("a boss throw on a tower deals x Boss ranged vs towers x; on a hunter x1 (DECISIONS #138, #154)", function()
+	local x = Config.Tuning.BossRangedVsTowersX
+	eq(Combat.throwDamage(20, true, true), 20 * x, "boss throw on a tower")
+	eq(Combat.throwDamage(20, true, false), 20, "boss throw on a hunter: full")
+	eq(Combat.throwDamage(20, false, true), 20, "other dinos' throws on a tower: full")
+	eq(Combat.throwDamage(20, false, false), 20, "other dinos' throws on a hunter: full")
 end)

@@ -63,6 +63,7 @@ type Projectile = {
 	style: string,
 	species: string, -- for the hit notice
 	attack: string,
+	boss: boolean, -- a Boss species: x Tuning Boss ranged vs towers x on a tower (#154)
 	model: Model,
 	ring: BasePart,
 }
@@ -187,6 +188,7 @@ local function throw(enemy: Enemies.Enemy, target: Combat.Target)
 		style = style,
 		species = def.display,
 		attack = def.rangedName,
+		boss = def.boss == true,
 		model = model,
 		ring = ring,
 	}
@@ -226,7 +228,8 @@ end
 local function land(p: Projectile)
 	local targets = candidates()
 	for _, target in Combat.landingHits(p.to, p.radius, targets) do
-		hurt(target, p.damage, nil, { species = p.species, attack = p.attack })
+		local onTower = not (typeof(target.ref) == "Instance" and target.ref:IsA("Player"))
+		hurt(target, Combat.throwDamage(p.damage, p.boss, onTower), nil, { species = p.species, attack = p.attack })
 	end
 	landingLook(p)
 	destroy(p)

@@ -22,6 +22,9 @@
 	                Dart perk's extra marks)
 	  burnPatchReach a burning ground patch reaches its splash radius, never less
 	                than Tuning Burn patch min reach (DECISIONS #32, #37, #132)
+	  throwDamage   what a landing throw deals to one target: a Boss species'
+	                throw on a tower x Tuning Boss ranged vs towers x; hunters
+	                take it in full (they can dodge; DECISIONS #138, #154)
 ]]
 
 local Config = require(script.Parent.Config)
@@ -31,6 +34,14 @@ local Combat = {}
 -- Damage one attack deals: `base` is the value at the dino's largest size.
 function Combat.attackDamage(base: number, size: number, sizes: number, difficultyMult: number): number
 	return base * size / math.max(1, sizes) * difficultyMult
+end
+
+-- What a landing throw deals to one target (DECISIONS #138, #154).
+function Combat.throwDamage(damage: number, boss: boolean, onTower: boolean): number
+	if boss and onTower then
+		return damage * Config.Tuning.BossRangedVsTowersX
+	end
+	return damage
 end
 
 -- The resistance that applies (percent, 0..MaxResist) from every active source.

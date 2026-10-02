@@ -74,6 +74,7 @@ return table.freeze({
 		TeamPopShare = 0.25,
 		HeroLevelLeadCap = 1,
 		MasteryPerkWorthCap = 40,
+		BossRangedVsTowersX = 0.3,
 	},
 	Towers = {
 		SCOUT = {

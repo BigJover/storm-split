@@ -14,7 +14,8 @@ Assumptions (deliberately pessimistic):
   - every dino of the round walks the whole track (nobody kills it), at Easy speed;
   - this tower is the only thing in reach, so every attack that can reach it does;
   - attacks come round every `every` seconds while it's in reach (expected value);
-  - projectiles always hit (towers can't dodge);
+  - projectiles always hit (towers can't dodge); a Boss species' projectiles deal
+    x `Boss ranged vs towers x` to towers (Tuning, BOSS THROWS; DECISIONS #138, #154);
   - a dino is full size on its first lane and half size after (its damage halves).
 It prints per-round damage at each spot and, for each tower type at T0 max HP, the
 rounds where one round's worst-case damage at the mid-gap spot would trample it.
@@ -24,11 +25,15 @@ Targets (PLAN.md T13, DECISIONS #42):
   - rounds 11-30, mid-gap, the DEFENDED ranged damage per round (worst case x 0.5) stays
     under 50% of that tower's own T0 max HP, for every tower except the Longshot Perch;
   - the Longshot Perch, at its back-line spot (>= 25 studs from every lane), takes 0;
-  - hugging and corner spots are reported with no target (they're meant to be at risk).
+  - hugging and corner spots are reported with no target (they're meant to be at risk);
+  - rounds 31-39, mid-gap, the DEFENDED damage of the BOSS throws alone (Boss species'
+    projectiles, x the lever) stays under 50% of every tower's T0 max HP but the Perch's
+    (DECISIONS #154). The other dinos' share and the totals stay report-only.
 
-Boss rounds (PLAN.md round 2 T24, DECISIONS #44/#62): rounds 31-40 are reported with no
-target and no failure: the mid-gap defended damage of each round as a share of each tower
-type's T0 max HP, plain and with the Armory's top resist applied. It stays a playtest item.
+Boss rounds (PLAN.md round 2 T24, DECISIONS #44/#62/#154): rounds 31-40 are reported: boss /
+other / total mid-gap defended damage per round against the weakest mid-gap tower, and the
+total as a share of each tower type's T0 max HP, plain and with the Armory's top resist
+applied. Totals stay a playtest item; round 40 (the T-Rex) is report-only.
 """
 
 import contextlib
@@ -52,7 +57,8 @@ RANGED_TARGET = 0.5  # share of the tower's own T0 max HP
 RANGED_ROUNDS = range(11, 31)  # rounds 11-30
 BACK_LINE_TOWER = "SNIPER"  # the Longshot Perch is judged at the back line instead
 BACK_LINE = (-105.0, 0.0)  # >= 25 studs from every lane (checked below)
-BOSS_ROUNDS = range(31, 41)  # reported only (#44/#62)
+BOSS_ROUNDS = range(31, 41)  # reported (#44/#62)
+BOSS_THROW_ROUNDS = range(31, 40)  # boss share judged (#154); 40 report-only
 RESIST_TOWER = "ARMORY"  # its best resist tier is the "with Armory" column
 
 
@@ -99,6 +105,7 @@ def main():
     path = samples(points)
     easy = data["Difficulties"][data["DifficultyOrder"][0]]
     speed_scalar = data["Tuning"].get("GlobalSpeedScalar", 1)
+    boss_vs_towers = data["Tuning"]["BossRangedVsTowersX"]  # DECISIONS #138, #154
 
     hug = lane_width / 2 + tower_radius
     # Lanes 2 and 3 run along z = -15 and z = 15 between x = -60 and 60.
@@ -127,6 +134,8 @@ def main():
                 first, later = exposure(path, spot, reach)
                 seconds_full, seconds_half = first / speed, later / speed
                 out[kind] = damage * easy["dinoDamageMult"] * (seconds_full + 0.5 * seconds_half) / every
+                if kind == "ranged" and e["boss"]:
+                    out[kind] *= boss_vs_towers  # every spot is a tower
             per_dino[key][name] = out
 
     towers = data["Towers"]
@@ -134,15 +143,18 @@ def main():
     mid_gap = {t["display"]: t["maxHp"] for key, t in towers.items() if key != BACK_LINE_TOWER}
     print(f"threat (Easy, solo, every dino walks the whole track, worst case); hug = {hug} studs from the lane centre")
     print(f"  T0 max HP: " + ", ".join(f"{k} {v:g}" for k, v in t0.items()))
-    print(f"  defended = worst case x {DEFENDED} (DECISIONS #42)")
+    print(f"  defended = worst case x {DEFENDED} (DECISIONS #42); boss throws vs towers x {boss_vs_towers:g} (DECISIONS #154)")
     print(f"  {'round':>5} | {'bites hug':>9} {'mid':>6} {'corner':>7} | {'ranged hug':>10} {'mid':>6} {'corner':>7} {'mid def':>8} {'back':>5}")
     findings = []
     trampled = {name: [] for name in t0}
     boss_rounds = []
     for index, round_ in enumerate(data["Rounds"], start=1):
         totals = {name: {"melee": 0.0, "ranged": 0.0} for name in spots}
+        boss_mid = 0.0  # the Boss species' share of the mid-gap ranged damage
         for key, count in round_["counts"].items():
             n = count * easy["countMult"]
+            if enemies[key]["boss"]:
+                boss_mid += n * per_dino[key]["mid-gap"]["ranged"]
             for name in spots:
                 for kind in ("melee", "ranged"):
                     totals[name][kind] += n * per_dino[key][name][kind]
@@ -156,8 +168,13 @@ def main():
             findings.append(f"round {index}: bites reach a mid-gap tower ({mid['melee']:.0f} damage)")
         if back > 0:
             findings.append(f"round {index}: the Longshot Perch's back line takes {back:.0f} damage")
+        boss_def = boss_mid * DEFENDED
         if index in BOSS_ROUNDS:
-            boss_rounds.append((index, defended))
+            boss_rounds.append((index, defended, boss_def))
+        if index in BOSS_THROW_ROUNDS:
+            for name, hp in mid_gap.items():
+                if boss_def >= RANGED_TARGET * hp:
+                    findings.append(f"round {index}: mid-gap defended BOSS throw damage {boss_def:.1f} >= {RANGED_TARGET:.0%} of {name}'s {hp:g} HP (DECISIONS #154)")
         if index in RANGED_ROUNDS:
             for name, hp in mid_gap.items():
                 if defended >= RANGED_TARGET * hp:
@@ -168,14 +185,18 @@ def main():
     print("  mid-gap tower trampled within one round (no repair), by type:")
     for name, rounds in trampled.items():
         print(f"    {name}: " + (f"from round {rounds[0]} ({len(rounds)} rounds)" if rounds else "never"))
+    weakest = min(mid_gap, key=mid_gap.get)
+    weakest_hp = mid_gap[weakest]
     resist = max((step.get("resistPercent", 0) for path in towers[RESIST_TOWER]["paths"] for step in path["tiers"]),
                  default=0)
     print(f"  boss rounds {BOSS_ROUNDS[0]}-{BOSS_ROUNDS[-1]}, mid-gap defended ranged damage per round as % of T0 max HP,"
-          f" plain / with the {towers[RESIST_TOWER]['display']}'s top resist ({resist:g}%); no target (DECISIONS #44/#62)")
-    print(f"  {'round':>5} {'mid def':>8} {'resisted':>8} | " + " ".join(f"{name.split()[0][:8]:>9}" for name in mid_gap))
-    for index, defended in boss_rounds:
+          f" plain / with the {towers[RESIST_TOWER]['display']}'s top resist ({resist:g}%);"
+          f" boss / other / total vs the {weakest} ({weakest_hp:g} HP, boss target < {RANGED_TARGET * weakest_hp:g});"
+          f" rounds {BOSS_THROW_ROUNDS[0]}-{BOSS_THROW_ROUNDS[-1]} judge the boss share only (DECISIONS #154)")
+    print(f"  {'round':>5} {'boss':>6} {'other':>6} {'total':>6} {'resisted':>8} | " + " ".join(f"{name.split()[0][:8]:>9}" for name in mid_gap))
+    for index, defended, boss_def in boss_rounds:
         kept = defended * (1 - resist / 100)
-        print(f"  {index:>5} {defended:>8.1f} {kept:>8.1f} | "
+        print(f"  {index:>5} {boss_def:>6.1f} {defended - boss_def:>6.1f} {defended:>6.1f} {kept:>8.1f} | "
               + " ".join(f"{f'{defended / hp:.0%}/{kept / hp:.0%}':>9}" for hp in mid_gap.values()))
     print(f"threat: {len(findings)} target miss(es)")
     for f in findings:
