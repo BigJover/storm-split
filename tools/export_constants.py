@@ -289,6 +289,55 @@ def read_mastery(ws):
     return out
 
 
+# Mastery Perks effect columns, found by header text: (Config field, header, kind).
+# Blank = 0. There is no gun-damage column, on purpose (DECISIONS #99).
+PERK_COLUMNS = [
+    ("abilitySecondsAdd", "Ability seconds +"),
+    ("abilityRadiusAdd", "Ability radius +"),
+    ("abilityPowerAdd", "Ability power +"),
+    ("markExtra", "Extra marks"),
+    ("markExtraPowerMult", "Extra mark power x"),
+    ("markExtraReach", "Extra mark reach"),
+    ("strikeBurnPercent", "Strike burn % per s"),
+    ("strikeBurnSeconds", "Strike burn (s)"),
+]
+PERK_HEADER_ROW = 4
+# The mastery levels every hero must have a perk at (PLAN round 3 T32).
+PERK_LEVELS = (10, 15)
+
+
+def read_mastery_perks(ws):
+    """Mastery Perks: one row per (hero key, mastery level), columns found by header.
+
+    Returns {heroKey: [perk, ...]} sorted by level, each perk with `level`, `name`,
+    `text` and every PERK_COLUMNS field (zeros included)."""
+    columns = {}
+    for c in range(1, ws.max_column + 1):
+        head = v(ws, PERK_HEADER_ROW, c)
+        if head is not None:
+            columns[str(head).strip()] = c
+    wanted = ["Hero key", "Mastery level", "Name", "Text"] + [head for _, head in PERK_COLUMNS]
+    for head in wanted:
+        if head not in columns:
+            sys.exit(f"Mastery Perks row {PERK_HEADER_ROW}: no '{head}' column (columns are found by header)")
+    perks = {}
+    r = PERK_HEADER_ROW + 1
+    while v(ws, r, columns["Hero key"]):
+        key = str(v(ws, r, columns["Hero key"])).strip().upper()
+        perk = {
+            "level": num(v(ws, r, columns["Mastery level"])),
+            "name": str(v(ws, r, columns["Name"]) or "").strip(),
+            "text": str(v(ws, r, columns["Text"]) or "").strip(),
+        }
+        for field, head in PERK_COLUMNS:
+            perk[field] = num(v(ws, r, columns[head]))
+        perks.setdefault(key, []).append(perk)
+        r += 1
+    for rows in perks.values():
+        rows.sort(key=lambda p: p["level"] if isinstance(p["level"], (int, float)) else 0)
+    return perks
+
+
 def read_enemies(ws):
     enemies = {}
     r = 5
@@ -503,6 +552,120 @@ def validate_rewards(data, problems, notes):
                  f"{sum(1 for b in bounties.values() if b['pool'] == 'weekly')} weekly in the pools")
 
 
+def perk_worth(hero, perk):
+    """Worth % of one perk (DECISIONS #99): 100 x (seconds added / base + radius added /
+    base + power added / base + extra marks x extra-mark strength) + burn % per second
+    x burn seconds. None when a perk adds to a base of 0 (reported by the caller)."""
+    share = 0.0
+    for add, base in (("abilitySecondsAdd", "abilitySeconds"), ("abilityRadiusAdd", "abilityRadius"),
+                      ("abilityPowerAdd", "abilityPower")):
+        if perk[add]:
+            if not hero[base]:
+                return None
+            share += perk[add] / hero[base]
+    share += perk["markExtra"] * perk["markExtraPowerMult"]
+    return round(100 * share + perk["strikeBurnPercent"] * perk["strikeBurnSeconds"], 6)
+
+
+def validate_perks(data, problems, notes):
+    """Mastery Perks (PLAN round 3 T32). "Level 15 is objectively stronger" and
+    "PvP-safe" are rules here, not opinions (DECISIONS #99)."""
+    tuning, heroes, perks = data["Tuning"], data["Heroes"], data["MasteryPerks"]
+    cap = tuning.get("MasteryPerkWorthCap")
+    if not isinstance(cap, (int, float)) or cap <= 0:
+        problems.append("Tuning is missing 'Mastery perk worth cap' (MASTERY PERKS; the exporter checks every perk against it)")
+        cap = None
+    shown = []
+    for key, rows in perks.items():
+        hero = heroes.get(key)
+        if hero is None:
+            problems.append(f"Mastery Perks: hero key '{key}' is not on the Heroes sheet")
+            continue
+        kind = hero["abilityKind"].upper()
+        seen, worth = set(), {}
+        for perk in rows:
+            level = perk["level"]
+            where = f"Mastery Perks {key} level {level}"
+            if (not isinstance(level, (int, float)) or isinstance(level, bool) or not float(level).is_integer()
+                    or not 1 <= level <= len(data["Mastery"])):
+                problems.append(f"{where}: Mastery level must be a whole number 1-{len(data['Mastery'])}")
+                continue
+            if level in seen:
+                problems.append(f"{where}: this hero has two perks at that level")
+            seen.add(level)
+            if not perk["name"] or not perk["text"]:
+                problems.append(f"{where}: needs a Name and a Text")
+            bad = [head for field, head in PERK_COLUMNS
+                   if not isinstance(perk[field], (int, float)) or isinstance(perk[field], bool) or perk[field] < 0]
+            if bad:
+                problems.append(f"{where}: {', '.join(bad)} must be a number >= 0")
+                continue
+            if kind == "AIRBURST" and perk["abilitySecondsAdd"]:
+                problems.append(f"{where}: 'Ability seconds +' on an AIRBURST hero would add stun time (no perk adds stun, DECISIONS #99)")
+            if kind != "HEAL" and perk["abilityPowerAdd"]:
+                problems.append(f"{where}: 'Ability power +' is only for a HEAL hero (no perk raises damage or a damage bonus, DECISIONS #99)")
+            marks = (perk["markExtra"], perk["markExtraPowerMult"], perk["markExtraReach"])
+            if kind != "MARK" and any(marks):
+                problems.append(f"{where}: the Extra mark columns are only for a MARK hero")
+            elif any(marks) and not (all(marks) and float(perk["markExtra"]).is_integer()):
+                problems.append(f"{where}: Extra marks (a whole number), Extra mark power x and Extra mark reach go together")
+            burn = (perk["strikeBurnPercent"], perk["strikeBurnSeconds"])
+            if kind != "AIRBURST" and any(burn):
+                problems.append(f"{where}: the Strike burn columns are only for an AIRBURST hero")
+            elif any(burn) and not all(burn):
+                problems.append(f"{where}: Strike burn % per s and Strike burn (s) go together")
+            w = perk_worth(hero, perk)
+            if w is None:
+                problems.append(f"{where}: adds to an ability value that is 0 on the Heroes sheet, so its worth can't be measured")
+                continue
+            worth[level] = w
+            if cap is not None and w > cap:
+                problems.append(f"{where}: worth {w:g}% is above the Mastery perk worth cap ({cap:g}%)")
+        low, high = PERK_LEVELS
+        if low in worth and high in worth:
+            if worth[high] <= worth[low]:
+                problems.append(f"Mastery Perks {key}: level {high} (worth {worth[high]:g}%) must be worth more than level {low} ({worth[low]:g}%)")
+            shown.append(f"{hero['display']} {worth[low]:g} / {worth[high]:g}")
+    for key, hero in heroes.items():
+        have = {p["level"] for p in perks.get(key, [])}
+        for level in PERK_LEVELS:
+            if level not in have:
+                problems.append(f"Mastery Perks: {hero['display']} ({key}) has no level-{level} perk")
+    if shown:
+        limit = f", cap {cap:g}" if cap is not None else ""
+        notes.append(f"mastery perks worth % (level {PERK_LEVELS[0]} / {PERK_LEVELS[1]}{limit}): " + ", ".join(shown))
+
+
+XP_LEVERS = ["XPPerLevel", "XPPerPop", "PopXPCapPerRound", "TeamPopShare", "HeroLevelLeadCap"]
+
+
+def validate_xp(data, problems, notes):
+    """Hero XP levers (PLAN round 3 T32, DECISIONS #100-#101)."""
+    tuning = data["Tuning"]
+    missing = [k for k in XP_LEVERS if k not in tuning]
+    for key in missing:
+        problems.append(f"Tuning is missing '{key}' (HERO XP; the game reads it by name)")
+    negative = [k for k in XP_LEVERS if k in tuning and tuning[k] < 0]
+    for key in negative:
+        problems.append(f"Tuning {key}: must not be negative")
+    per_level, rounds_per_level = tuning.get("XPPerLevel", 0), tuning.get("RoundsPerLevel", 0)
+    if missing or negative or rounds_per_level <= 0:
+        return
+    if per_level <= 0 or per_level % rounds_per_level != 0:
+        problems.append(f"Tuning XPPerLevel ({per_level:g}) must be a whole multiple of RoundsPerLevel ({rounds_per_level:g}), so a cleared round banks a whole Round XP")
+        return
+    # A hunter at the pop-XP cap every round: the lead cap must be a safety net, not the rule.
+    per_round = per_level / rounds_per_level + tuning["PopXPCapPerRound"]
+    lead_cap, worst, worst_round = tuning["HeroLevelLeadCap"], 0, 0
+    for r in range(1, len(data["Rounds"]) + 1):
+        lead = (1 + int(r * per_round // per_level)) - (1 + r // int(rounds_per_level))
+        if lead > worst:
+            worst, worst_round = lead, r
+    if worst > lead_cap:
+        problems.append(f"Hero XP: a hunter at the pop-XP cap every round is {worst} levels above the round level after round {worst_round}, more than HeroLevelLeadCap ({lead_cap:g})")
+    notes.append(f"hero XP: {per_level / rounds_per_level:g} a cleared round + up to {tuning['PopXPCapPerRound']:g} pop XP; at the cap a hunter leads the round level by at most {worst} (lead cap {lead_cap:g})")
+
+
 def validate(data):
     problems = []
     enemies = data["Enemies"]
@@ -680,6 +843,8 @@ def validate(data):
         problems.append("A maxed hero out-damages the best maxed tower. The game becomes a horde shooter.")
 
     validate_rewards(data, problems, notes)
+    validate_perks(data, problems, notes)
+    validate_xp(data, problems, notes)
 
     return problems, notes
 
@@ -817,6 +982,8 @@ def read_data(xlsx):
     for name in ("Daily Haul", "Bounties"):
         if name not in wb.sheetnames:
             sys.exit(f"The spreadsheet has no '{name}' sheet (PLAN round 2 T25)")
+    if "Mastery Perks" not in wb.sheetnames:
+        sys.exit("The spreadsheet has no 'Mastery Perks' sheet (PLAN round 3 T32)")
     bounties, bounty_order = read_bounties(wb["Bounties"])
 
     data = {
@@ -826,6 +993,7 @@ def read_data(xlsx):
         "Heroes": heroes,
         "HeroOrder": hero_order,
         "Mastery": read_mastery(wb["Mastery"]),
+        "MasteryPerks": read_mastery_perks(wb["Mastery Perks"]),
         "Enemies": read_enemies(wb["Enemies"]),
         "EnemyOrder": [k for k in TIER_KEYS],
         "Rounds": read_rounds(wb["Rounds"]),

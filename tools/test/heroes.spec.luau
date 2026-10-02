@@ -313,3 +313,42 @@ test("Field Medic crossover: Triage 5 + Muzzle 2 keeps both; Second Wind guard o
 	eq(Combat.combineResist({ 0, s.guardPercent }), 30, "Second Wind alone")
 	near(Combat.afterResist(100, Combat.combineResist({ s.guardPercent })), 70, "30% less damage")
 end)
+
+-- Mastery perks (PLAN round 3 T32): the sheet's rows as Config.MasteryPerks.
+local PERK_FIELDS = {
+	"abilitySecondsAdd",
+	"abilityRadiusAdd",
+	"abilityPowerAdd",
+	"markExtra",
+	"markExtraPowerMult",
+	"markExtraReach",
+	"strikeBurnPercent",
+	"strikeBurnSeconds",
+}
+
+test("mastery perks: every hero has a named perk at mastery 10 and 15, sorted by level, every field a number", function()
+	for _, key in Config.HeroOrder do
+		local perks = Config.MasteryPerks[key]
+		ok(perks ~= nil, `{key} has perks`)
+		local levels = {}
+		local last = 0
+		for _, perk in perks do
+			ok(perk.level > last, `{key} perks are sorted by level, none repeated`)
+			last = perk.level
+			levels[perk.level] = perk
+			ok(perk.level >= 1 and perk.level <= #Config.Mastery, `{key} level {perk.level} is a mastery level`)
+			ok(perk.name ~= "" and perk.text ~= "", `{key} level {perk.level} has a name and a text`)
+			local set = 0
+			for _, field in PERK_FIELDS do
+				eq(type(perk[field]), "number", `{key} level {perk.level} {field}`)
+				set += if perk[field] ~= 0 then 1 else 0
+			end
+			ok(set > 0, `{key} level {perk.level} does something`)
+		end
+		ok(levels[10] ~= nil, `{key} has a level-10 perk`)
+		ok(levels[15] ~= nil, `{key} has a level-15 perk`)
+	end
+	for key in Config.MasteryPerks do
+		ok(Config.Heroes[key] ~= nil, `{key} is a hero`)
+	end
+end)

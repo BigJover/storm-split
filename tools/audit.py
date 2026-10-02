@@ -17,6 +17,10 @@ Config.luau, and prints a findings list:
               that only sheet formulas read ("sheet-only", DECISIONS #28), and the
               DEAD_ALLOWED entries below
   4. species  every species in VISION.md's table exists with that display name
+  5. perks    Mastery Perks (PLAN round 3 T32): every number in a perk's Text is one
+              of that row's effect cells (Extra mark power x as a percentage), no Text
+              says "pop" (DECISIONS #93), no effect column is blank on every row, and
+              each perk name is in HEROES.md "Mastery" (a note until the docs task)
 
 Usage:
     python3 tools/audit.py            report; exits 0 whatever it finds
@@ -54,6 +58,27 @@ DEAD_ALLOWED = {
     ("Enemies", "cashValue"): "display column; the code pays maxHp x CashPerEffectiveHP, the same value unrounded",
     ("Bounties", "title"): "display text: the Hunt Board card and the in-match toast (PLAN round 2 T28/T29)",
     ("Bounties", "text"): "display text: the Hunt Board card (PLAN round 2 T29)",
+    ("Tuning", "MasteryPerkWorthCap"): "an exporter rule, not a game number: every perk's worth is checked against it (DECISIONS #99)",
+}
+
+
+# Config fields whose reader is a later task of the plan in progress. Listed as notes;
+# an entry becomes a finding the moment some src file reads the field, so it can't
+# outlive its task. (block, field): the task that reads it
+DEAD_PENDING = {
+    ("Tuning", "XPPerLevel"): "PLAN round 3 T34 (hero XP)",
+    ("Tuning", "XPPerPop"): "PLAN round 3 T34 (hero XP)",
+    ("Tuning", "PopXPCapPerRound"): "PLAN round 3 T34 (hero XP)",
+    ("Tuning", "TeamPopShare"): "PLAN round 3 T34 (hero XP)",
+    ("Tuning", "HeroLevelLeadCap"): "PLAN round 3 T34 (hero XP)",
+    ("MasteryPerks", "abilitySecondsAdd"): "PLAN round 3 T33 (perks in play)",
+    ("MasteryPerks", "abilityRadiusAdd"): "PLAN round 3 T33 (perks in play)",
+    ("MasteryPerks", "abilityPowerAdd"): "PLAN round 3 T33 (perks in play)",
+    ("MasteryPerks", "markExtra"): "PLAN round 3 T33 (perks in play)",
+    ("MasteryPerks", "markExtraPowerMult"): "PLAN round 3 T33 (perks in play)",
+    ("MasteryPerks", "markExtraReach"): "PLAN round 3 T33 (perks in play)",
+    ("MasteryPerks", "strikeBurnPercent"): "PLAN round 3 T33 (perks in play)",
+    ("MasteryPerks", "strikeBurnSeconds"): "PLAN round 3 T33 (perks in play)",
 }
 
 
@@ -228,6 +253,9 @@ def config_fields(data):
         note("Difficulties", difficulty, key)
     for i, row in enumerate(data["Mastery"], start=1):
         note("Mastery", row, f"level {i}")
+    for key, perks in data["MasteryPerks"].items():
+        for perk in perks:
+            note("MasteryPerks", perk, f"{key} level {perk['level']}")
     for i, row in enumerate(data["Rounds"], start=1):
         note("Rounds", row, f"round {i}")
         fields.setdefault(("Rounds", "counts"), []).append(f"round {i}")
@@ -275,9 +303,14 @@ def check_dead(findings, data, notes):
             with open(path, encoding="utf-8") as f:
                 code += f.read() + "\n"
     for (block, field), where in sorted(config_fields(data).items()):
-        if where and not re.search(r"\b" + re.escape(field) + r"\b", code):
+        used = re.search(r"\b" + re.escape(field) + r"\b", code)
+        if used and (block, field) in DEAD_PENDING:
+            findings.append(f"DEAD_PENDING lists {block}.{field}, which a src file now reads: remove the entry")
+        if where and not used:
             uses = tuning_uses.get(field, 0) if block == "Tuning" else 0
-            if (block, field) in DEAD_ALLOWED:
+            if (block, field) in DEAD_PENDING:
+                notes.append(f"pending: {block}.{field} (read from {DEAD_PENDING[(block, field)]})")
+            elif (block, field) in DEAD_ALLOWED:
                 notes.append(f"allowed: {block}.{field} ({DEAD_ALLOWED[(block, field)]})")
             elif uses:
                 notes.append(f"sheet-only: {block}.{field} (sheet formulas read it {uses}x)")
@@ -290,6 +323,9 @@ def check_dead(findings, data, notes):
     for (block, field) in DEAD_ALLOWED:
         if (block, field) not in config_fields(data):
             findings.append(f"DEAD_ALLOWED lists {block}.{field}, which Config no longer has")
+    for (block, field) in DEAD_PENDING:
+        if (block, field) not in config_fields(data):
+            findings.append(f"DEAD_PENDING lists {block}.{field}, which Config no longer has")
 
 
 # ---------------------------------------------------------------- 4. species
@@ -329,6 +365,43 @@ def check_species(findings, data):
     for key, enemy in enemies.items():
         if key not in listed:
             findings.append(f"Enemies.{key} ({enemy['display']}) isn't in VISION.md's species table")
+
+
+# ---------------------------------------------------------------- 5. mastery perks
+
+def heroes_mastery_section():
+    """The text of HEROES.md's "## Mastery" section."""
+    match = re.search(r"^## Mastery[^\n]*\n(.*?)(?=^## |\Z)", read("HEROES.md"), re.S | re.M)
+    return match.group(1) if match else ""
+
+
+def check_perks(findings, notes, data, doc=None):
+    perks = data["MasteryPerks"]
+    doc = heroes_mastery_section() if doc is None else doc
+    fields = [field for field, _ in export_constants.PERK_COLUMNS]
+    undocumented, count = [], 0
+    for key, rows in perks.items():
+        for perk in rows:
+            count += 1
+            where = f"MasteryPerks.{key} level {perk['level']} ({perk['name']})"
+            allowed = [perk[f] for f in fields if isinstance(perk[f], (int, float)) and perk[f]]
+            if isinstance(perk["markExtraPowerMult"], (int, float)):
+                allowed.append(perk["markExtraPowerMult"] * 100)
+            for number in re.findall(r"\d+(?:\.\d+)?", perk["text"]):
+                if not any(abs(float(number) - value) < 1e-6 for value in allowed):
+                    findings.append(f"{where}: Text says {number}, which is none of the row's effect cells")
+            if "pop" in perk["text"].lower():
+                findings.append(f"{where}: Text says \"pop\"; players read take-downs (DECISIONS #93)")
+            if perk["name"] and perk["name"] not in doc:
+                undocumented.append(perk["name"])
+    for field, head in export_constants.PERK_COLUMNS:
+        if count and not any(live(perk[field]) for rows in perks.values() for perk in rows):
+            findings.append(f"Mastery Perks column '{head}' is blank on every row (dead column)")
+    if undocumented:
+        notes.append(f"not yet in HEROES.md \"Mastery\" ({len(undocumented)} of {count} perk names; PLAN round 3 T39 adds them): "
+                     + ", ".join(undocumented))
+    else:
+        notes.append(f"{count} perk names found in HEROES.md \"Mastery\"")
 
 
 # ---------------------------------------------------------------- main
@@ -383,6 +456,7 @@ def main():
         ("dead columns", lambda f, n: check_dead(f, data, n)),
         ("species", lambda f, n: check_species(f, data)),
         ("bounty events", lambda f, n: check_bounty_events(f, n)),
+        ("mastery perks", lambda f, n: check_perks(f, n, data)),
     ]
     total = 0
     for name, run in checks:
