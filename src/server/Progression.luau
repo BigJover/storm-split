@@ -2,7 +2,9 @@
 	Progression: what a player keeps between matches (design doc §05, phase 6).
 
 	Saved per player (DataStoreService): Amber (stored as `cores`), what they own, a mastery
-	level per hero, and the highest round they've ever reached.
+	level per hero, the highest round they've ever reached, and their Hunt Board (`rewards`).
+	The profile's shape and rules are Shared/Profile (pure, spec-tested); this module is
+	the only one that holds profiles, changes them and talks to the data store.
 
 	  Amber         the permanent currency (VISION.md). Casual payouts:
 	                clearing the track pays the difficulty's Clear reward to
@@ -20,6 +22,17 @@
 	Unlocks and mastery can only be bought outside a running match, so a match
 	always plays with what everyone started it with.
 
+	  Hunt Board    the Daily Haul and the daily and weekly Bounties (Shared/Bounties,
+	                DECISIONS #63-#71). Claims and swaps are Lobby only and save
+	                straight away; a reset is checked on load, before every claim or
+	                swap, when the board is read in the Lobby, and at match end, and
+	                pays bounties that were done but not claimed. The owner reads their
+	                board with the "getRewards" request; RewardsClaimable (is there
+	                something to claim) and RewardsVersion (bumped on every change:
+	                ask again) are attributes on their Player. If the Hunt Board can't
+	                be read the player plays on without it and their stored board is
+	                left as it was.
+
 	SAVING needs a place published to Roblox (Studio: Game Settings > Security >
 	Enable Studio Access to API Services). If the data store can't be reached,
 	the player plays on a session-only profile and their "SaveStatus"
@@ -35,16 +48,12 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Payouts = require(Shared:WaitForChild("Payouts"))
+local Profile = require(Shared:WaitForChild("Profile"))
 local Theme = require(Shared:WaitForChild("Theme"))
 
 local Progression = {}
 
-type Profile = {
-	cores: number,
-	owned: { [string]: boolean }, -- "tower:CHILLER", "hero:RIFLE"; free ones aren't stored
-	mastery: { [string]: number }, -- hero key -> level
-	highestRound: number,
-}
+type Profile = Profile.Profile
 
 local STORE_NAME = "StormSplitProgress_v1"
 local LOAD_ATTEMPTS = 3
@@ -69,41 +78,10 @@ local function key(player: Player): string
 	return `player_{player.UserId}`
 end
 
-local function blank(): Profile
-	return { cores = 0, owned = {}, mastery = {}, highestRound = 0 }
-end
-
--- Anything read from the store is data from an older version or a bad write
--- until proven otherwise.
-local function sanitize(raw: any): Profile
-	local profile = blank()
-	if typeof(raw) ~= "table" then
-		return profile
-	end
-	if typeof(raw.cores) == "number" and raw.cores >= 0 then
-		profile.cores = math.floor(raw.cores)
-	end
-	if typeof(raw.highestRound) == "number" and raw.highestRound >= 0 then
-		profile.highestRound = math.floor(raw.highestRound)
-	end
-	if typeof(raw.owned) == "table" then
-		for id, value in raw.owned do
-			if value == true and typeof(id) == "string" then
-				local kind, itemKey = string.match(id, "^(%a+):(.+)$")
-				if (kind == "tower" and Config.Towers[itemKey]) or (kind == "hero" and Config.Heroes[itemKey]) then
-					profile.owned[id] = true
-				end
-			end
-		end
-	end
-	if typeof(raw.mastery) == "table" then
-		for heroKey, level in raw.mastery do
-			if Config.Heroes[heroKey] and typeof(level) == "number" then
-				profile.mastery[heroKey] = math.clamp(math.floor(level), 0, #Config.Mastery)
-			end
-		end
-	end
-	return profile
+-- One random stream per server, for rolling bounties.
+local random = Random.new()
+local function rng(n: number): number
+	return random:NextInteger(1, n)
 end
 
 ------------------------------------------------------------------ replication
@@ -142,6 +120,8 @@ local function publish(player: Player)
 		player:SetAttribute(`OwnsHero_{heroKey}`, owns(player, "hero", heroKey))
 	end
 	player:SetAttribute("SaveStatus", if canSave[player] then "saved" else "offline")
+	player:SetAttribute("RewardsClaimable", Profile.claimable(profile, os.time()))
+	player:SetAttribute("RewardsVersion", profile.rewardsVersion)
 end
 
 ------------------------------------------------------------------ load / save
@@ -154,7 +134,13 @@ local function load(player: Player)
 				return (store :: DataStore):GetAsync(key(player))
 			end)
 			if ok then
-				profile = sanitize(raw)
+				-- A stored value that can't be read at all counts as a failed load.
+				ok, raw = pcall(Profile.sanitize, raw, os.time(), rng)
+				if ok then
+					profile = raw
+				else
+					warn(`[Progression] Couldn't read {player.Name}'s save: {raw}`)
+				end
 				break
 			end
 			warn(`[Progression] Load {attempt}/{LOAD_ATTEMPTS} failed for {player.Name}: {raw}`)
@@ -167,7 +153,12 @@ local function load(player: Player)
 	-- Only a successful load may ever be saved back, so a failed load can't
 	-- overwrite real progress with a blank profile.
 	canSave[player] = profile ~= nil
-	profiles[player] = profile or blank()
+	local loaded = profile or Profile.blank(os.time(), rng)
+	if not loaded.rewards then
+		warn(`[Progression] No Hunt Board for {player.Name} this session; their stored one is kept`)
+	end
+	pcall(Profile.refresh, loaded, os.time(), rng) -- a new day or week since they last played
+	profiles[player] = loaded
 	publish(player)
 end
 
@@ -177,12 +168,7 @@ local function save(player: Player)
 		return
 	end
 	local ok, err = pcall(function()
-		(store :: DataStore):SetAsync(key(player), {
-			cores = profile.cores,
-			owned = profile.owned,
-			mastery = profile.mastery,
-			highestRound = profile.highestRound,
-		})
+		(store :: DataStore):SetAsync(key(player), Profile.toSave(profile))
 	end)
 	if not ok then
 		warn(`[Progression] Save failed for {player.Name}: {err}`)
@@ -273,6 +259,91 @@ local function buyUnlock(player: Player, kind: unknown, itemKey: unknown): (bool
 	return true, `{def.display} unlocked!`
 end
 
+------------------------------------------------------------------ hunt board
+
+-- Claims and swaps happen on the home screen only (DECISIONS #69).
+local function boardOpen(player: Player): (Profile?, string)
+	if ReplicatedStorage:GetAttribute("State") ~= "Lobby" then
+		return nil, "The Hunt Board is on the home screen"
+	end
+	local profile = profiles[player]
+	if not profile then
+		return nil, "Still loading your progress"
+	end
+	if not profile.rewards then
+		return nil, "The Hunt Board isn't available right now"
+	end
+	return profile, ""
+end
+
+-- After a claim or swap was tried: show what changed, and save it if it worked.
+local function settle(player: Player, changed: boolean)
+	publish(player)
+	if changed then
+		task.spawn(save, player)
+	end
+end
+
+local function claimHaul(player: Player): (boolean, string, number?)
+	local profile, why = boardOpen(player)
+	if not profile then
+		return false, why
+	end
+	local version = profile.rewardsVersion
+	local ok, amber = Profile.claimHaul(profile, os.time(), rng)
+	settle(player, profile.rewardsVersion ~= version)
+	if not ok then
+		return false, "Already claimed today"
+	end
+	return true, `+{amber} {Theme.Currency}`, amber
+end
+
+local function claimBounty(player: Player, id: unknown): (boolean, string, number?)
+	local profile, why = boardOpen(player)
+	if not profile then
+		return false, why
+	end
+	local version = profile.rewardsVersion
+	local ok, amber = Profile.claimBounty(profile, id, os.time(), rng)
+	settle(player, profile.rewardsVersion ~= version)
+	if not ok then
+		return false, "That bounty can't be claimed"
+	end
+	return true, `+{amber} {Theme.Currency}`, amber
+end
+
+local function swapBounty(player: Player, id: unknown): (boolean, string, string?)
+	local profile, why = boardOpen(player)
+	if not profile then
+		return false, why
+	end
+	local version = profile.rewardsVersion
+	local ok, newId = Profile.swapBounty(profile, id, os.time(), rng)
+	settle(player, profile.rewardsVersion ~= version)
+	if not ok or not newId then
+		return false, "That bounty can't be swapped"
+	end
+	return true, "Swapped", newId
+end
+
+-- The owner's own board (Profile.View). `open` = true when the board is on their
+-- screen: the "unclaimed bounties paid" amount is then handed over once.
+local function getRewards(player: Player, open: unknown): (boolean, any)
+	local profile = profiles[player]
+	if not profile then
+		return false, "Still loading your progress"
+	end
+	if not profile.rewards then
+		return false, "The Hunt Board isn't available right now"
+	end
+	if ReplicatedStorage:GetAttribute("State") == "Lobby" then
+		local version = profile.rewardsVersion
+		Profile.refresh(profile, os.time(), rng)
+		settle(player, profile.rewardsVersion ~= version)
+	end
+	return true, Profile.view(profile, os.time(), open == true)
+end
+
 ------------------------------------------------------------------ match end
 
 export type MatchResult = {
@@ -291,6 +362,7 @@ function Progression.endMatch(result: MatchResult)
 	for player, profile in profiles do
 		profile.cores += payout
 		profile.highestRound = math.max(profile.highestRound, result.roundReached)
+		pcall(Profile.refresh, profile, os.time(), rng) -- the match may have run past a reset
 		player:SetAttribute("LastPayout", payout) -- the results screen shows it
 		publish(player)
 		task.spawn(save, player)
@@ -304,13 +376,24 @@ function Progression.init(remotes: Folder, hooks: { onMasteryChanged: ((Player) 
 	onMasteryChanged = hooks and hooks.onMasteryChanged
 	local request = Instance.new("RemoteFunction")
 	request.Name = "ProgressRequest"
-	-- ("mastery", heroKey) or ("unlock", "tower" | "hero", key)
+	-- ("mastery", heroKey) or ("unlock", "tower" | "hero", key) -> ok, message
+	-- Hunt Board: ("claimHaul") or ("claimBounty", id) -> ok, message, Amber
+	--             ("swapBounty", id) -> ok, message, the new bounty's id
+	--             ("getRewards", boardIsOpen) -> true, Profile.View | false, message
 	request.OnServerInvoke = function(player: Player, action: unknown, a: unknown, b: unknown)
-		local ok, success, message = pcall(function()
+		local ok, success, message, detail = pcall(function(): (boolean, any, any)
 			if action == "mastery" then
 				return buyMastery(player, a)
 			elseif action == "unlock" then
 				return buyUnlock(player, a, b)
+			elseif action == "claimHaul" then
+				return claimHaul(player)
+			elseif action == "claimBounty" then
+				return claimBounty(player, a)
+			elseif action == "swapBounty" then
+				return swapBounty(player, a)
+			elseif action == "getRewards" then
+				return getRewards(player, a)
 			end
 			return false, "Unknown request"
 		end)
@@ -318,7 +401,7 @@ function Progression.init(remotes: Folder, hooks: { onMasteryChanged: ((Player) 
 			warn(`[Progression] request from {player.Name} failed: {success}`)
 			return false, "Something went wrong"
 		end
-		return success, message
+		return success, message, detail
 	end
 	request.Parent = remotes
 

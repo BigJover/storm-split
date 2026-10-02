@@ -10165,7 +10165,7 @@ return table.freeze({
 		},
 		W_HORN_BREAKER = {
 			title = "Horn Breaker",
-			text = "Pop {n} Triceratops",
+			text = "Pop {n} Triceratops (team pops count)",
 			pool = "weekly",
 			slot = "medium",
 			event = "pop",
@@ -10198,7 +10198,7 @@ return table.freeze({
 		},
 		W_TYRANTS_END = {
 			title = "Tyrant's End",
-			text = "Pop a T-Rex",
+			text = "Pop a T-Rex (team pops count)",
 			pool = "weekly",
 			slot = "hard",
 			event = "pop",

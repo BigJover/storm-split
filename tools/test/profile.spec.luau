@@ -1,0 +1,376 @@
+--[[
+	Shared/Profile: the saved profile and its Hunt Board paths (PLAN round 2 T27,
+	DECISIONS #68-#69, #83). What Server/Progression loads, changes and saves, run
+	headlessly: an old save loads cleanly, Amber only moves by what Shared/Bounties
+	returns, and a broken Hunt Board never costs a player their save or their game.
+]]
+
+local Config = require(src.shared.Config)
+local Bounties = require(src.shared.Bounties)
+local Profile = require(src.shared.Profile)
+
+local DAY = 86400
+local THURSDAY = 1790812800 -- 2026-10-01 00:00:00 UTC
+local NOON = THURSDAY + 12 * 3600
+
+local function first(_n: number): number
+	return 1
+end
+
+local function entry(id: string, progress: number?, claimed: boolean?)
+	return { id = id, progress = progress or 0, claimed = claimed or false }
+end
+
+local function amberOf(id: string): number
+	return Config.Bounties[id].amber
+end
+local function countOf(id: string): number
+	return Config.Bounties[id].count
+end
+
+-- A stored save with a known board rolled for `now`, and 100 Amber.
+local function saved(now: number)
+	return {
+		cores = 100,
+		owned = { ["hero:RIFLE"] = true },
+		mastery = { RIFLE = 2 },
+		highestRound = 17,
+		rewards = {
+			day = Bounties.dayIndex(now),
+			week = Bounties.weekIndex(now),
+			daily = { entry("D_COMPY_SWEEP"), entry("D_DEEP_TRAIL_15"), entry("D_CLEAN_SWEEP") },
+			weekly = { entry("W_STAMPEDE"), entry("W_ROUGH_COUNTRY"), entry("W_DEEP_TRAIL_4") },
+			dailySwaps = 0,
+			weeklySwaps = 0,
+			haul = { day = 0 },
+		},
+	}
+end
+
+local function loaded(now: number)
+	return Profile.sanitize(saved(now), now, first)
+end
+
+local function ids(entries): string
+	local out = {}
+	for _, e in entries do
+		table.insert(out, e.id)
+	end
+	return table.concat(out, ",")
+end
+
+local function checkBoard(state, what: string)
+	ok(state ~= nil, `{what}: has a Hunt Board`)
+	for _, pool in Bounties.POOLS do
+		local slots = Bounties.slots(pool)
+		eq(#state[pool], #slots, `{what}: {pool} count`)
+		for i, e in state[pool] do
+			local def = Config.Bounties[e.id]
+			ok(def ~= nil and def.pool == pool and def.slot == slots[i], `{what}: {pool} #{i} fits its slot`)
+		end
+	end
+end
+
+test("the sheet is the one this spec means", function()
+	ok(Config.Heroes.RIFLE ~= nil and Config.Heroes.RIFLE.unlockCost > 0, "RIFLE is a paid hero")
+	eq(Config.Bounties.D_COMPY_SWEEP.slot, "easy", "Compy Sweep slot")
+	eq(Config.Bounties.D_COMPY_SWEEP.target, "HUSK", "Compy Sweep species key (internal keys predate the theme)")
+	eq(Config.Bounties.D_CLEAN_SWEEP.event, "clear", "Clean Sweep event")
+	eq(Config.Tuning.DailySwaps, 1, "Daily swaps")
+	ok(amberOf("D_COMPY_SWEEP") > 0 and Config.DailyHaul[1].amber > 0, "rewards pay something")
+end)
+
+-- Loading ---------------------------------------------------------------------------
+
+test("a round-1 save (no rewards field) keeps everything and gets a fresh Hunt Board", function()
+	local old = { cores = 240, owned = { ["hero:RIFLE"] = true, ["tower:NOPE"] = true }, mastery = { RIFLE = 3 }, highestRound = 22 }
+	local profile = Profile.sanitize(old, NOON, first)
+	eq(profile.cores, 240, "Amber kept")
+	eq(profile.owned["hero:RIFLE"], true, "unlock kept")
+	eq(profile.owned["tower:NOPE"], nil, "unknown unlock dropped")
+	eq(profile.mastery.RIFLE, 3, "mastery kept")
+	eq(profile.highestRound, 22, "highest round kept")
+	checkBoard(profile.rewards, "old save")
+	eq(profile.rewards.haul.day, 0, "Haul not started")
+	eq(profile.rewards.day, Bounties.dayIndex(NOON), "rolled for today")
+	eq(profile.lastResetPayout, 0, "no reset payout")
+	ok(Profile.claimable(profile, NOON), "the first Haul day is waiting")
+end)
+
+test("nothing stored, or garbage, is a new player's profile", function()
+	for _, raw in { nil :: any, "x", 7, true } do
+		local profile = Profile.sanitize(raw, NOON, first)
+		eq(profile.cores, 0, "no Amber")
+		eq(next(profile.owned), nil, "owns nothing")
+		eq(profile.highestRound, 0, "no rounds")
+		checkBoard(profile.rewards, "new player")
+	end
+	checkBoard(Profile.blank(NOON, first).rewards, "blank")
+end)
+
+test("a garbage rewards field becomes a fresh board; the rest of the save is kept", function()
+	for _, bad in { "x" :: any, 5, true, {}, { daily = "no", weekly = { 1, 2 }, haul = 9 }, { daily = { entry("NOT_A_BOUNTY", 5) } } } do
+		local raw = saved(NOON)
+		raw.rewards = bad
+		local profile = Profile.sanitize(raw, NOON, first)
+		eq(profile.cores, 100, "Amber kept")
+		eq(profile.owned["hero:RIFLE"], true, "unlock kept")
+		checkBoard(profile.rewards, "garbage rewards")
+	end
+end)
+
+test("negative or wrong-typed Amber never loads as Amber", function()
+	eq(Profile.sanitize({ cores = -5 }, NOON, first).cores, 0, "negative")
+	eq(Profile.sanitize({ cores = "999" }, NOON, first).cores, 0, "a string")
+	eq(Profile.sanitize({ cores = 12.9 }, NOON, first).cores, 12, "floored")
+end)
+
+-- Saving ----------------------------------------------------------------------------
+
+test("what is saved loads back the same", function()
+	local profile = loaded(NOON)
+	Profile.bountyEvent(profile, "pop", "HUSK", 7, { credited = true })
+	ok(Profile.claimHaul(profile, NOON, first), "Haul claimed")
+	ok(Profile.swapBounty(profile, "D_DEEP_TRAIL_15", NOON, first), "swapped")
+	local again = Profile.sanitize(Profile.toSave(profile), NOON, first)
+	eq(again.cores, profile.cores, "Amber")
+	eq(again.owned["hero:RIFLE"], true, "unlock")
+	eq(again.mastery.RIFLE, 2, "mastery")
+	eq(again.highestRound, 17, "highest round")
+	eq(ids(again.rewards.daily), ids(profile.rewards.daily), "dailies")
+	eq(ids(again.rewards.weekly), ids(profile.rewards.weekly), "weeklies")
+	eq(again.rewards.daily[1].progress, 7, "progress")
+	eq(again.rewards.dailySwaps, 1, "swap used")
+	eq(again.rewards.haul.day, 1, "Haul day")
+	eq(again.rewards.haul.claimedOn, Bounties.dayIndex(NOON), "Haul claimed on")
+	ok(not Bounties.canClaimHaul(again.rewards, NOON), "the Haul stays claimed after a reload")
+end)
+
+test("only the saved fields are stored", function()
+	local profile = loaded(NOON)
+	profile.lastResetPayout = 35
+	local out = Profile.toSave(profile)
+	local keys = {}
+	for k in out do
+		table.insert(keys, k)
+	end
+	table.sort(keys)
+	eq(table.concat(keys, ","), "cores,highestRound,mastery,owned,rewards", "stored keys")
+	ok(out.rewards == profile.rewards, "the Hunt Board state itself")
+end)
+
+-- A broken Hunt Board ---------------------------------------------------------------
+
+local function withBrokenRules(fn: () -> ())
+	local real = Profile.rules
+	Profile.rules = setmetatable({}, {
+		__index = function()
+			return function()
+				error("the Hunt Board is broken")
+			end
+		end,
+	}) :: any
+	local passed, err = pcall(fn)
+	Profile.rules = real
+	if not passed then
+		error(err, 0)
+	end
+end
+
+test("a Hunt Board that fails to load never blocks the profile or wipes the stored board", function()
+	local raw = saved(NOON)
+	raw.rewards.daily[1].progress = 40
+	local profile
+	withBrokenRules(function()
+		profile = Profile.sanitize(raw, NOON, first)
+	end)
+	eq(profile.cores, 100, "Amber loaded")
+	eq(profile.owned["hero:RIFLE"], true, "unlock loaded")
+	eq(profile.mastery.RIFLE, 2, "mastery loaded")
+	eq(profile.rewards, nil, "no Hunt Board this session")
+
+	-- Every Hunt Board call answers "no" and changes nothing.
+	eq(Profile.refresh(profile, NOON + DAY, first), 0, "refresh")
+	eq((Profile.claimHaul(profile, NOON, first)), false, "claimHaul")
+	eq((Profile.claimBounty(profile, "D_COMPY_SWEEP", NOON, first)), false, "claimBounty")
+	eq((Profile.swapBounty(profile, "D_COMPY_SWEEP", NOON, first)), false, "swapBounty")
+	eq(#Profile.bountyEvent(profile, "pop", "HUSK", 500, { credited = true }), 0, "bountyEvent")
+	eq(Profile.claimable(profile, NOON), false, "claimable")
+	eq(Profile.view(profile, NOON), nil, "view")
+	eq(profile.cores, 100, "Amber untouched")
+	eq(profile.rewardsVersion, 0, "nothing changed")
+
+	-- The save writes the stored board back exactly as it was.
+	local out = Profile.toSave(profile)
+	ok(out.rewards == raw.rewards, "the stored board is written back untouched")
+	eq(out.rewards.daily[1].progress, 40, "its progress is still there")
+	eq(out.cores, 100, "Amber saved")
+end)
+
+test("a new player still gets a profile when the Hunt Board is broken", function()
+	local profile
+	withBrokenRules(function()
+		profile = Profile.blank(NOON, first)
+	end)
+	eq(profile.cores, 0, "blank profile")
+	eq(profile.rewards, nil, "no Hunt Board")
+	eq(Profile.toSave(profile).rewards, nil, "nothing to write")
+end)
+
+-- Daily Haul ------------------------------------------------------------------------
+
+test("claiming the Haul pays that day's Amber once per UTC day", function()
+	local profile = loaded(NOON)
+	local claimed, amber, day = Profile.claimHaul(profile, NOON, first)
+	eq(claimed, true, "claimed")
+	eq(day, 1, "day 1")
+	eq(amber, Config.DailyHaul[1].amber, "day 1 Amber")
+	eq(profile.cores, 100 + Config.DailyHaul[1].amber, "paid")
+	eq(profile.rewardsVersion, 1, "one change")
+
+	eq((Profile.claimHaul(profile, NOON + 3600, first)), false, "same day refused")
+	eq(profile.cores, 100 + Config.DailyHaul[1].amber, "not paid twice")
+	eq(profile.rewardsVersion, 1, "a refusal isn't a change")
+
+	local again, amber2, day2 = Profile.claimHaul(profile, NOON + DAY, first)
+	eq(again, true, "next day")
+	eq(day2, 2, "day 2")
+	eq(profile.cores, 100 + Config.DailyHaul[1].amber + amber2, "paid day 2")
+end)
+
+-- Bounties --------------------------------------------------------------------------
+
+test("a bounty pays its Amber once, only when done", function()
+	local profile = loaded(NOON)
+	eq((Profile.claimBounty(profile, "D_COMPY_SWEEP", NOON, first)), false, "not done yet")
+	eq(profile.cores, 100, "nothing paid")
+	eq(profile.rewardsVersion, 0, "nothing changed")
+
+	local finished = Profile.bountyEvent(profile, "pop", "HUSK", countOf("D_COMPY_SWEEP"), { credited = true })
+	eq(table.concat(finished, ","), "D_COMPY_SWEEP", "finished")
+	eq(profile.cores, 100, "finishing pays nothing by itself")
+	eq(profile.rewardsVersion, 1, "finishing is a change")
+	ok(Profile.claimable(profile, NOON), "claimable")
+
+	local claimed, amber = Profile.claimBounty(profile, "D_COMPY_SWEEP", NOON, first)
+	eq(claimed, true, "claimed")
+	eq(amber, amberOf("D_COMPY_SWEEP"), "its Amber")
+	eq(profile.cores, 100 + amberOf("D_COMPY_SWEEP"), "paid")
+
+	eq((Profile.claimBounty(profile, "D_COMPY_SWEEP", NOON, first)), false, "double claim refused")
+	eq(profile.cores, 100 + amberOf("D_COMPY_SWEEP"), "not paid twice")
+end)
+
+test("claims and swaps refuse ids that aren't on the board or aren't strings", function()
+	local profile = loaded(NOON)
+	for _, id in { nil :: any, 5, true, {}, "", "D_RAPTOR_CULL", "NOT_A_BOUNTY" } do
+		eq((Profile.claimBounty(profile, id, NOON, first)), false, "claim refused")
+		eq((Profile.swapBounty(profile, id, NOON, first)), false, "swap refused")
+	end
+	eq(profile.cores, 100, "nothing paid")
+	eq(profile.rewardsVersion, 0, "nothing changed")
+	eq(ids(profile.rewards.daily), "D_COMPY_SWEEP,D_DEEP_TRAIL_15,D_CLEAN_SWEEP", "board unchanged")
+end)
+
+test("progress that doesn't finish a bounty isn't announced", function()
+	local profile = loaded(NOON)
+	eq(#Profile.bountyEvent(profile, "pop", "HUSK", 3, { credited = true }), 0, "nothing finished")
+	eq(profile.rewards.daily[1].progress, 3, "but counted")
+	eq(profile.rewardsVersion, 0, "no re-ask for every pop")
+	eq(#Profile.bountyEvent(profile, "pop", "HUSK", 3, { credited = false }), 0, "a teammate's pop")
+	eq(profile.rewards.daily[1].progress, 3, "doesn't count unless it's a boss")
+end)
+
+test("a swap changes the board, costs nothing, and is limited", function()
+	local profile = loaded(NOON)
+	local swapped, newId = Profile.swapBounty(profile, "D_COMPY_SWEEP", NOON, first)
+	eq(swapped, true, "swapped")
+	ok(newId ~= nil and newId ~= "D_COMPY_SWEEP", "a different bounty")
+	eq(profile.rewards.daily[1].id, newId, "on the board")
+	eq(profile.cores, 100, "free")
+	eq(profile.rewardsVersion, 1, "one change")
+	eq((Profile.swapBounty(profile, "D_DEEP_TRAIL_15", NOON, first)), false, "out of daily swaps")
+	eq(profile.rewardsVersion, 1, "a refusal isn't a change")
+end)
+
+-- Resets ----------------------------------------------------------------------------
+
+test("a reset pays done-but-unclaimed bounties once and remembers the amount", function()
+	local profile = loaded(NOON)
+	Profile.bountyEvent(profile, "clear", "EASY", 1)
+	ok(Bounties.isDone(profile.rewards.daily[3]), "Clean Sweep done")
+	eq(Profile.refresh(profile, NOON, first), 0, "same day: nothing")
+
+	local tomorrow = NOON + DAY
+	local paid = Profile.refresh(profile, tomorrow, first)
+	eq(paid, amberOf("D_CLEAN_SWEEP"), "paid at the reset")
+	eq(profile.cores, 100 + paid, "into Amber")
+	eq(profile.lastResetPayout, paid, "remembered")
+	eq(profile.rewards.day, Bounties.dayIndex(tomorrow), "rolled")
+	eq(Profile.refresh(profile, tomorrow, first), 0, "not paid again")
+	eq(profile.cores, 100 + paid, "Amber unchanged")
+
+	-- Claiming yesterday's bounty after the reset can't pay it a second time.
+	eq((Profile.claimBounty(profile, "D_CLEAN_SWEEP", tomorrow, first)), false, "old claim refused")
+	eq(profile.cores, 100 + paid, "still paid once")
+end)
+
+test("a claim that arrives after midnight is checked against the new board", function()
+	local profile = loaded(NOON)
+	Profile.bountyEvent(profile, "clear", "EASY", 1)
+	local tomorrow = NOON + DAY
+	-- The claim itself runs the reset first: paid once, by the reset.
+	Profile.claimBounty(profile, "D_CLEAN_SWEEP", tomorrow, first)
+	eq(profile.cores, 100 + amberOf("D_CLEAN_SWEEP"), "paid exactly once")
+	eq(profile.lastResetPayout, amberOf("D_CLEAN_SWEEP"), "as a reset payout")
+end)
+
+test("a reset with nothing unclaimed still counts as a change", function()
+	local profile = loaded(NOON)
+	eq(Profile.refresh(profile, NOON + DAY, first), 0, "nothing to pay")
+	eq(profile.rewardsVersion, 1, "new bounties: ask again")
+	eq(profile.lastResetPayout, 0, "no payout line")
+	eq(profile.cores, 100, "Amber unchanged")
+end)
+
+-- The board the owner sees ----------------------------------------------------------
+
+test("the view shows the board, the Haul, swaps and the time left", function()
+	local profile = loaded(NOON)
+	Profile.bountyEvent(profile, "pop", "HUSK", 12, { credited = true })
+	local view = Profile.view(profile, NOON)
+	eq(ids(view.daily), "D_COMPY_SWEEP,D_DEEP_TRAIL_15,D_CLEAN_SWEEP", "dailies")
+	eq(ids(view.weekly), "W_STAMPEDE,W_ROUGH_COUNTRY,W_DEEP_TRAIL_4", "weeklies")
+	eq(view.daily[1].progress, 12, "progress")
+	eq(view.daily[1].claimed, false, "claimed")
+	eq(view.haulDay, 1, "Haul day")
+	eq(view.haulClaimed, false, "Haul not claimed")
+	eq(view.dailySwapsLeft, Config.Tuning.DailySwaps, "daily swaps left")
+	eq(view.weeklySwapsLeft, Config.Tuning.WeeklySwaps, "weekly swaps left")
+	eq(view.secondsToDaily, 12 * 3600, "to the daily reset")
+	eq(view.secondsToWeekly, 3 * DAY + 12 * 3600, "to Monday")
+	eq(view.lastResetPayout, 0, "no payout")
+
+	Profile.claimHaul(profile, NOON, first)
+	local after = Profile.view(profile, NOON)
+	eq(after.haulDay, 1, "still day 1")
+	eq(after.haulClaimed, true, "claimed today")
+
+	-- The view is a copy: changing it can't change the profile.
+	view.daily[1].progress = 9999
+	view.daily[1].claimed = true
+	eq(profile.rewards.daily[1].progress, 12, "state progress untouched")
+	eq(profile.rewards.daily[1].claimed, false, "state claimed untouched")
+end)
+
+test("the reset payout is shown until the board is opened, then forgotten", function()
+	local profile = loaded(NOON)
+	Profile.bountyEvent(profile, "clear", "EASY", 1)
+	local tomorrow = NOON + DAY
+	local paid = Profile.refresh(profile, tomorrow, first)
+	eq(Profile.view(profile, tomorrow).lastResetPayout, paid, "a background read keeps it")
+	eq(Profile.view(profile, tomorrow, false).lastResetPayout, paid, "and again")
+	eq(Profile.view(profile, tomorrow, true).lastResetPayout, paid, "the open board gets it")
+	eq(Profile.view(profile, tomorrow, true).lastResetPayout, 0, "once")
+	eq(profile.cores, 100 + paid, "the Amber stays")
+end)
