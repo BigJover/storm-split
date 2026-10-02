@@ -533,9 +533,10 @@ AFFORD_ROUNDS = range(11, 40)  # DECISIONS #72: the minimum over rounds 11-39 (r
 BARS = {
     ("EASY", 1): ((range(11, 33), 1.0), (range(33, 40), 0.85)),
     ("NORMAL", 1): ((AFFORD_ROUNDS, 0.75),),
-    ("HARD", 1): ((AFFORD_ROUNDS, 0.55),),
+    ("HARD", 1): ((AFFORD_ROUNDS, 0.65),),  # #136 (was 0.55 under #72)
     ("CHAOS", 4): ((AFFORD_ROUNDS, 0.40),),
 }
+HARDER_ROUNDS = range(1, 16)  # #136: Hard solo stays below Normal solo in these rounds
 MAX_STEP = 1.6  # #72: no round's Required DPS above this x the round before (Easy solo, from round 2)
 # #77: the one named exception, with its own bar so the step can't creep back up.
 STEP_EXCEPTIONS = {11: (2.1, "first armour and air wave")}
@@ -577,7 +578,8 @@ def pacing_rounds(data, wb_cost_per_dps, difficulty, players):
     per extra player); a promoted spawn has the next ground species' EHP. Density, not length:
     the spawn gap shrinks by the count factor, so the spawn phase stays enemies x gap and only
     the 14 s walk shortens with speed x. Cash x scales kill income and the round bonus; every
-    extra player adds StartingCashPerExtraPlayer to the shared pot. Heroes' DPS isn't counted.
+    extra player adds StartingCashPerExtraPlayer to the shared pot, on top of the difficulty's
+    Starting cash (DECISIONS #136). Heroes' DPS isn't counted.
     Easy solo is exactly the Balance Check sheet (asserted by the caller)."""
     tuning, enemies = data["Tuning"], data["Enemies"]
     d = data["Difficulties"][difficulty]
@@ -585,7 +587,7 @@ def pacing_rounds(data, wb_cost_per_dps, difficulty, players):
     count_x = d["countMult"] * (1 + tuning["ExtraEnemiesPerPlayer"] * extra)
     hp_x = d["hpMult"] * (1 + tuning["ExtraHPPerPlayer"] * extra)
     p, promote = d["promoteChance"], promotion(data)
-    cumulative = tuning["StartingCash"] + tuning["StartingCashPerExtraPlayer"] * extra
+    cumulative = d["startingCash"] + tuning["StartingCashPerExtraPlayer"] * extra  # per difficulty (#136)
     growth = tuning["TierCostGrowth"] / tuning["TierDamageGrowth"]
     out = []
     for index, rd in enumerate(data["Rounds"], start=1):
@@ -666,6 +668,14 @@ def pacing_report(data):
                     if rows[r - 1]["required"] > bar * rows[r - 2]["required"]:
                         findings.append(f"CLIFF: Easy solo round {r} Required DPS {rows[r - 1]['required']:g} > {bar:g}x round {r - 1} ({rows[r - 2]['required']:g})"
                                         + (f" (named exception: {name}, DECISIONS #77)" if name else ""))
+    # #136: Hard's bigger opening pot must not make it easier than Normal early on.
+    hard, normal = table[("HARD", 1)], table[("NORMAL", 1)]
+    gaps = [(r, normal[r - 1]["afford"] - hard[r - 1]["afford"]) for r in HARDER_ROUNDS]
+    closest = min(gaps, key=lambda g: g[1])
+    print(f"  Hard solo below Normal solo every round {HARDER_ROUNDS[0]}-{HARDER_ROUNDS[-1]} (#136): smallest gap {closest[1]:.2f} at round {closest[0]}")
+    for r, gap in gaps:
+        if gap <= 0:
+            findings.append(f"HARDER: Hard solo affordability {hard[r - 1]['afford']:.2f} >= Normal {normal[r - 1]['afford']:.2f} at round {r} (DECISIONS #136)")
     cols = [(d, 1) for d in order] + [(order[0], 4), (order[-1], 4), (order[-1], 10)]
     print("  per round (solo unless marked): " + " ".join(f"{data['Difficulties'][d]['display'][:6]}{'' if n == 1 else f'x{n}'}" for d, n in cols))
     for r in range(11, 41):

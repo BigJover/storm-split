@@ -74,3 +74,14 @@ test("DECISIONS #35: selling a damaged tower refunds less its repair price, neve
 	eq(Pricing.sellRefund(1000, COMMAND_CENTER.sellRefund, 300), 700, "trampled at 1.0: 1000 - 300")
 	eq(Pricing.sellRefund(100, 0, 500), 0, "never below 0")
 end)
+
+test("starting pot per difficulty (DECISIONS #136): Hard 650, others 450, +200 per extra player", function()
+	local D = Config.Difficulties
+	eq(Pricing.startingPot(D.HARD, 1), 650, "Hard solo")
+	eq(Pricing.startingPot(D.HARD, 2), 850, "Hard, 2 players")
+	eq(Pricing.startingPot(D.HARD, 10), 650 + 9 * 200, "Hard, 10 players")
+	for _, key in { "EASY", "NORMAL", "CHAOS" } do
+		eq(Pricing.startingPot(D[key], 1), 450, `{key} solo`)
+	end
+	eq(D.EASY.startingCash, Config.Tuning.StartingCash, "Easy = the Tuning default")
+end)

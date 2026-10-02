@@ -818,12 +818,19 @@ def validate(data):
     if "EASY" not in data["Difficulties"]:
         problems.append("Difficulty sheet needs an 'Easy' row (the baseline)")
     for key, d in data["Difficulties"].items():
-        for field in ("hpMult", "countMult", "speedMult", "cashMult", "startingLives"):
+        for field in ("hpMult", "countMult", "speedMult", "cashMult", "startingLives", "startingCash"):
             if not isinstance(d[field], (int, float)) or d[field] <= 0:
                 problems.append(f"Difficulty {d['display']}: {field} must be > 0")
         if not isinstance(d["promoteChance"], (int, float)) or not 0 <= d["promoteChance"] <= 1:
             problems.append(f"Difficulty {d['display']}: Promote chance must be between 0 and 1")
+    easy = data["Difficulties"].get("EASY")
+    if easy and easy["startingCash"] != data["Tuning"]["StartingCash"]:
+        problems.append(
+            f"Difficulty Easy Starting cash ({easy['startingCash']}) must equal Tuning Starting cash "
+            f"({data['Tuning']['StartingCash']}), the documented default (DECISIONS #136)"
+        )
     notes.append("difficulties: " + ", ".join(d["display"] for d in data["Difficulties"].values()))
+    notes.append("starting cash: " + ", ".join(f"{d['display']} {d['startingCash']}" for d in data["Difficulties"].values()))
 
     best_tower = 0.0
     best_by_tower = {}  # display -> that tower kind's best maxed path, unlevelled
@@ -956,6 +963,7 @@ def read_difficulty(ws):
             "startingLives": num(v(ws, r, 7)),
             "clearReward": num(v(ws, r, 9)),
             "dinoDamageMult": num(v(ws, r, 10), 1),
+            "startingCash": num(v(ws, r, 11)),
         }
         order.append(key)
         r += 1

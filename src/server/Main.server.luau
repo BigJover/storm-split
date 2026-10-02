@@ -26,6 +26,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Modes = require(Shared:WaitForChild("Modes"))
 local HeroXp = require(Shared:WaitForChild("HeroXp"))
+local Pricing = require(Shared:WaitForChild("Pricing"))
 
 local MapBuilder = require(script.Parent.MapBuilder)
 local Enemies = require(script.Parent.Enemies)
@@ -358,7 +359,7 @@ local function playMatch()
 	local chosen = difficulty()
 
 	-- Building: fresh economy, everyone on the track.
-	Economy.init(Config.Tuning.StartingCash, chosen.startingLives, function()
+	Economy.init(Pricing.startingPot(chosen, 1), chosen.startingLives, function()
 		over = true
 	end)
 	setState("Building")
