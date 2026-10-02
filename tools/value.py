@@ -261,6 +261,7 @@ def judge(data, rows):
             r["marginal"] = [ratio(r["step"], e - p) if e - p > 1e-9 else math.inf for e, p in zip(r["edps"], prev)]
     medians = {}
     for tier in range(1, 6):
+        # #79: control and support paths stay out of the medians (they aren't judged on DPS).
         damage = [r for (k, p, t), r in rows.items() if t == tier and not r["support"]]
         b = BOUGHT_BAND[tier]
         medians[tier] = {
@@ -511,7 +512,14 @@ BARS = {
     ("HARD", 1): ((AFFORD_ROUNDS, 0.55),),
     ("CHAOS", 4): ((AFFORD_ROUNDS, 0.40),),
 }
-MAX_STEP = 1.6  # #72: no round's Required DPS above this x the round before (Easy solo, from round 12)
+MAX_STEP = 1.6  # #72: no round's Required DPS above this x the round before (Easy solo, from round 2)
+# #77: the one named exception, with its own bar so the step can't creep back up.
+STEP_EXCEPTIONS = {11: (2.1, "first armour and air wave")}
+
+
+def step_bar(r):
+    """(bar, name) for the Required DPS step into round r; name is None for the usual bar."""
+    return STEP_EXCEPTIONS.get(r, (MAX_STEP, None))
 FINALE_ROUNDS = range(31, 41)
 FINALE_EHP_BEFORE = 323127  # Easy solo EHP of rounds 31-40 before T21 reshaped the Rounds counts (#57)
 FINALE_EHP_TOLERANCE = 0.12  # #72: the finale's total EHP stays within +/-12% of that
@@ -629,17 +637,21 @@ def pacing_report(data):
             tight = [r for r in range(11, 41) if rows[r - 1]["afford"] < 1]
             print(f"  {data['Difficulties'][d]['display']:<10} {n:>7} {value:>9.2f} {low:>3} {shown:>8}{verdict:<5} {ranges(tight)}")
             if (d, n) == (order[0], 1):
-                for r in range(12, 41):
-                    if rows[r - 1]["required"] > MAX_STEP * rows[r - 2]["required"]:
-                        findings.append(f"CLIFF: Easy solo round {r} Required DPS {rows[r - 1]['required']:g} > {MAX_STEP:g}x round {r - 1} ({rows[r - 2]['required']:g})")
+                for r in range(2, 41):
+                    bar, name = step_bar(r)
+                    if rows[r - 1]["required"] > bar * rows[r - 2]["required"]:
+                        findings.append(f"CLIFF: Easy solo round {r} Required DPS {rows[r - 1]['required']:g} > {bar:g}x round {r - 1} ({rows[r - 2]['required']:g})"
+                                        + (f" (named exception: {name}, DECISIONS #77)" if name else ""))
     cols = [(d, 1) for d in order] + [(order[0], 4), (order[-1], 4), (order[-1], 10)]
     print("  per round (solo unless marked): " + " ".join(f"{data['Difficulties'][d]['display'][:6]}{'' if n == 1 else f'x{n}'}" for d, n in cols))
     for r in range(11, 41):
         print(f"    r{r:<3} " + " ".join(f"{table[c][r - 1]['afford']:>{max(6, len(data['Difficulties'][c[0]]['display'][:6]) + (0 if c[1] == 1 else len(str(c[1])) + 1))}.2f}" for c in cols))
 
-    steps = [(easy[r - 1]["required"] / easy[r - 2]["required"], r) for r in range(12, 41)]
+    steps = [(easy[r - 1]["required"] / easy[r - 2]["required"], r) for r in range(2, 41) if r not in STEP_EXCEPTIONS]
     step, at = max(steps)
-    print(f"  Easy solo Required DPS: biggest step from round 12 on x{step:.2f} at round {at} ({easy[at - 2]['required']:g} -> {easy[at - 1]['required']:g}; bar x{MAX_STEP:g})")
+    print(f"  Easy solo Required DPS: biggest step from round 2 on x{step:.2f} at round {at} ({easy[at - 2]['required']:g} -> {easy[at - 1]['required']:g}; bar x{MAX_STEP:g})")
+    for r, (bar, name) in sorted(STEP_EXCEPTIONS.items()):
+        print(f"    named exception, round {r} ({name}, DECISIONS #77): x{easy[r - 1]['required'] / easy[r - 2]['required']:.2f} ({easy[r - 2]['required']:g} -> {easy[r - 1]['required']:g}; bar x{bar:g})")
     finale = sum(easy[r - 1]["ehp"] for r in FINALE_ROUNDS)
     change = finale / FINALE_EHP_BEFORE - 1
     print(f"  Easy solo finale EHP (rounds {FINALE_ROUNDS[0]}-{FINALE_ROUNDS[-1]}): {finale:,.0f} vs {FINALE_EHP_BEFORE:,} before T21 ({change:+.1%}; bar +/-{FINALE_EHP_TOLERANCE:.0%})")

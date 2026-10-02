@@ -9857,11 +9857,11 @@ return table.freeze({
 				ARMOR = 31,
 				STORM = 31,
 				LLAMA = 18,
-				ZEP = 12,
+				ZEP = 10,
 			},
 			hpMult = 6.864,
 			spawnGap = 0.65,
-			effectiveHp = 44314,
+			effectiveHp = 40470,
 		},
 		{
 			counts = {
