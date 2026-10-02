@@ -186,7 +186,7 @@ local function refresh()
 	local pending = math.floor(player:GetAttribute("HeroXpPending") or 0)
 	xpLevel.Text = `Lv {heroLevel}`
 	xpFill.Size = UDim2.fromScale(shown / needed, 1)
-	xpNumbers.Text = if pending > 0 then `{shown} / {needed} XP  ·  +{pending} bonus on round clear` else `{shown} / {needed} XP`
+	xpNumbers.Text = if pending > 0 then `{shown} / {needed} XP  ·  +{pending} on round clear` else `{shown} / {needed} XP`
 
 	local difficultyKey = attr("Difficulty", Config.DifficultyOrder[1])
 	local difficultyName = Config.Difficulties[difficultyKey] and Config.Difficulties[difficultyKey].display or ""

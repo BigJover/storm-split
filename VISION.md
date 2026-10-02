@@ -69,6 +69,8 @@ kept. Step 2 combat — below.
 ## Amber economy (user, 2026-09-29; was "Storm Cores")
 
 Cores are the permanent currency: they buy tower and hero unlocks and hero mastery.
+Mastery 10 and 15 give small ability perks, sized to stay fair in the battle modes
+(`HEROES.md` "Mastery"); hero XP is per match and never saved.
 
 **Casual modes (no buy-in, only pay out):**
 - Solo: pays only for **clearing a track** — Easy 50, Normal 100, Hard 150, Chaos 200. Each

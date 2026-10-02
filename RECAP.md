@@ -209,3 +209,127 @@ reasoning is in `DECISIONS.md` (#54–#96).
    bugs get fixed before anything new.
 2. Your answers to the lists above.
 3. **Phase 7** (team battle, battle royale, buy-ins). Not started.
+
+---
+
+# Round 3 recap for Jovan: mastery ability perks + hero XP (2026-10-02)
+
+**Your direction (2026-10-02):** "for hero ability we need the objectively stronger one at
+level 15 and the less strong one at level 10 if they are the same pick one to make it edge
+out the other so that it scales, with in mind that this is designed to be pvp as well so
+nothing extremely strong just something that gives a somewhat fair advantage, xp from pops
+is good just make sure it is small so that players dont just farm pops and have it only
+count at the end enticing players to finish rounds/games saving is fine and we can deal with
+that later when it is published"
+
+**Honest status:** everything below is statically checked and headless-tested (245 specs,
+`audit.py --strict` 0, `threat.py` 0, `value.py` no new findings: its three pacing notes
+from round 2 remain). **None of it has been playtested in Studio.** The Tester still can't run: Studio's MCP server shows no Studio, and
+Rojo has been disconnected in your Studio since the afternoon of 2026-10-01, so **your
+Studio is still running the code from before round 2** until you reconnect it (three steps
+under "Ask Jovan"). All numbers are in the spreadsheet. The reasoning is in `DECISIONS.md`
+(#97–#117). Nothing here needs saving or publishing.
+
+## What was built
+
+**Mastery ability perks (mastery 10 and 15, every hero)**
+
+| Hero | Mastery 10 (the lesser) | Mastery 15 (the stronger) |
+|---|---|---|
+| Tracker | **Sticky Dart**: Tracking Dart lasts 2s longer (8 → 10) | **Spare Dart**: also marks the nearest dino within 10 studs at 40% strength |
+| Big Game Hunter | **Hunting Horn**: Rally Cry reaches 5 studs further (25 → 30) | **Long Rally**: Rally Cry lasts 3s longer (10 → 13) |
+| Brush Beater | **Wide Flare**: Flare Strike reaches 1.5 studs further (10 → 11.5) | **Smoulder**: burning ground for 3s, 12% of the strike's damage each second |
+| Field Medic | **Far Reach**: Triage Kit reaches 4 studs further (20 → 24) | **Stocked Kit**: Triage Kit heals 10 more HP (40 → 50) |
+
+- **"Stronger at 15" is a rule, not an opinion.** The exporter scores each perk as a share
+  of one cast of the ability (10 / 15: Tracker 25% / 40%, Big Game Hunter 20% / 30%, Brush
+  Beater 15% / 36%, Field Medic 20% / 25%) and refuses a sheet where 15 isn't above 10 or
+  any perk is above 40% (#99).
+- **PvP-safe:** perks act on dinos and allies only. None stuns, slows or marks a hunter,
+  none adds stun time, none raises gun damage. Each is a small edge on an ability with a
+  35–45s cooldown.
+- **Nothing was taken away:** mastery 10 still gives the free first upgrade and mastery 15
+  the −30% cooldown (#98). The mastery screen shows each perk's name and what it does, and
+  now says "Mastery perks boost your ability, never your gun's damage."
+- **Marks no longer stack (#106).** The stronger mark wins; a weaker one changes neither its
+  strength nor its time. Before, a tower's 3s mark could cut a dart short.
+
+**Hero XP (your own level, per match)**
+- **Clearing a round banks 100 XP** for every hunter. 500 XP is a level, so finishing rounds
+  alone gives a level every 5 rounds, exactly as before.
+- **Take-downs add a small bonus:** 0.25 XP per pop, a quarter of that for teammates' pops,
+  **at most 15 a round**. It shows as pending during the round and is **banked only when the
+  round is cleared**. Lose the round or leave, and it's gone. Farming pops can never add
+  more than 15% (#100).
+- **Never behind, never far ahead:** a hunter is never below the old every-5-rounds level and
+  never more than one level above it. With the bonus capped every round you reach level 3
+  after round 9 (not 10), level 5 after 18, level 9 after 35 (#101).
+- **Fair in co-op:** teammates' pops count a little, so a Field Medic who pops nothing still
+  earns the bonus; late joiners start on the round's level (#102).
+- **Towers still level every 5 rounds** for the whole team. The tower panel now shows
+  "Tower level N · +X% damage" (#112).
+- **XP resets every match.** Nothing is saved (#103).
+- **HUD:** "Lv N", an XP bar, "240 / 500 XP", and the pending bonus; a banner when you level
+  ("Hunter level 3 — your shots hit 25% harder") and when towers do.
+- **Models follow:** `value.py` and the hero-vs-tower guard now use the level a round is
+  really fought at. Hero peak DPS at rounds 1 / 20 / 40, on the old curve [one level ahead]:
+  Tracker 24 [30], 47 [59], 114 [143]; Big Game Hunter 16 [20], 31 [39], 76 [95]; Brush
+  Beater 35 [43], 68 [84], 165 [206]; Field Medic 5 [6], 9 [12], 23 [29]. Best tower: 751.
+
+## Playtest first
+
+1. **Reconnect Rojo first** (see below), or you'll be testing old code.
+2. Home screen → Unlocks & Mastery (M). Press **J** (free Amber, turns saving off), buy a
+   hero's mastery to 15. Do rows 10 and 15 read clearly? Does anything get cut off?
+3. Play that hero. Tracker: dart a dino in a pack; a second dino nearby should get a
+   smaller mark, both for about 10s. Big Game Hunter: Rally Cry about 13s, wider ring. Brush
+   Beater: the strike leaves fire for about 3s. Medic: a heal from 40 HP lands on 90.
+4. Round 1: watch the XP row. The bonus should climb to 15 and stop; on the clear the bar
+   jumps by 100 plus the bonus. Is the text big enough to read?
+5. Lose a round on purpose with a bonus pending: it should not be banked.
+6. Play to round 10: you should hit level 3 one round before the towers do. Does being a
+   level ahead feel like a reward, or is it invisible?
+7. Open a tower's panel after round 5: "Tower level 2 · +10% damage".
+8. The round-1 and round-2 lists above still stand.
+
+## Ask Jovan
+
+**New in round 3**
+- **Three steps so the Tester can playtest:** restart Studio; Assistant Settings → Manage
+  MCP Servers → "Enable Studio as MCP server"; reconnect Rojo (`rojo serve`, then Connect in
+  the Rojo plugin).
+- **"Only count at the end":** we read it as the end of each **cleared round**, because
+  levels have to rise during a match. Is that right, or did you mean the end of the game?
+- **Competitive buy-in modes (phase 7):** should mastery perks (and the free first upgrade
+  and cooldown) be switched off there, so money matches start even?
+- **A hunter one level ahead edges past a maxed Longshot Perch** (206 vs 204 DPS, Brush
+  Beater at the very end; #110). Your rule is "never the best tower" (751), which holds.
+  OK, or should the lead be removed (one lever, `Hero level lead cap`)?
+- **The take-down bonus is small on purpose (15 of 115).** Too small to notice? The levers
+  are `Pop XP cap per round` and `XP per pop`.
+- **Pending-bonus text size:** even shortened it may be small in the HUD row. Say if you
+  want it on its own line.
+- **Perk names:** Sticky Dart, Spare Dart, Hunting Horn, Long Rally, Wide Flare, Smoulder,
+  Far Reach, Stocked Kit. Say if any should change.
+
+**Still open from rounds 1 and 2:** everything under "Ask Jovan" in the two sections above,
+most of all the empty mastery levels 6–9, 11–14 and 16–19 (#61), publishing the place, and
+the renames (#27).
+
+## Decisions you may want to overturn
+
+- #98: the old mastery 10 and 15 rewards stay next to the new perks.
+- #99: no perk may be worth more than 40% of one cast.
+- #101: hunters can run at most one level ahead; towers stay on the every-5-rounds curve.
+- #102: teammates' pops count at a quarter. #111: a leaver's pops leave the team count.
+- #105: Smoulder deals damage, so the promise is now "never gun damage".
+- #106: marks don't stack or extend each other; the stronger wins.
+- #112: tower level lives in the tower panel, not on the HUD.
+- #114 / #115: the final perk names; menus say "hero", matches say "hunter".
+
+## What's next
+
+1. **T31 + T38, the Studio playtest** by the Tester, as soon as Studio is restarted, the MCP
+   switch is on and Rojo is reconnected. Its bugs get fixed before anything new.
+2. Your answers to the lists above.
+3. **Phase 7** (team battle, battle royale, buy-ins). Not started.

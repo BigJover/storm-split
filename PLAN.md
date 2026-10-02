@@ -5,7 +5,8 @@ Scope (Jovan, 2026-10-02, `GAUNTLET.md` "Round 3 scope"): the two leftovers of P
 objectively stronger, both modest and PvP-safe. (2) **Hero XP**: pops give a little XP that
 is only banked when the round is cleared. Saving and publishing are deferred: nothing here
 may need a DataStore. **Stop before phase 7** and append a round-3 recap to `RECAP.md`.
-Design calls: `DECISIONS.md` #97–#103. **T31 (Studio playtest) is still open.**
+Design calls: `DECISIONS.md` #97–#117. **Status (2026-10-02): T32–T37 and T39 done and signed
+off; T36c (one HUD string) is queued; T31 + T38 (the Studio playtest) are still open.**
 
 The round-1 and round-2 rules hold (one task = one commit; `tools/check.sh`,
 `export_constants.py`, `tools/test.sh` green; diff `Config.luau` after every sheet change;
@@ -21,8 +22,10 @@ headless tests, not playtested"; 🦖 = Dino agent reviews). For this round:
 
 ### Mastery ability perks (DECISIONS #97–#99)
 
-A hunter with mastery 10+ has the level-10 perk; with 15+ has both. Working names: 🦖 names
-them in T37.
+A hunter with mastery 10+ has the level-10 perk; with 15+ has both. The names in this table
+and in T32–T33b are the **working names**. Final names (🦖 Round 11, #114–#115): Tracker
+Sticky Dart / Spare Dart, Big Game Hunter Hunting Horn / Long Rally, Brush Beater Wide Flare
+/ Smoulder, Field Medic Far Reach / Stocked Kit.
 
 | Hunter (ability) | Level 10 perk | Level 15 perk | Worth % (10 / 15) |
 |---|---|---|---|
@@ -262,6 +265,16 @@ is empty (#108 met).
   exit 0; Config diff = four perk `name` lines, two perk `text` lines and two Mastery
   `unlock` lines, nothing else.
 
+**T36b (b4e6ccb, eb5778b): signed off 2026-10-02** (DECISIONS #116). 245 specs, audit strict
+0, threat 0, `value.py` no new findings (its three round-2 pacing notes remain); Config diff
+exactly the eight lines. Not playtested.
+
+### T36c. Shorter pending-XP text (one string; DECISIONS #117)
+- `Hud.client`: `+{pending} bonus on round clear` → **`+{pending} on round clear`** (assert
+  the old string). Nothing else changes; the row still shrinks rather than clips.
+- **Accept:** `check.sh` and `test.sh` green; the Builder's estimate of the text size in the
+  420 px row, before and after, in the commit message; specs quoting the old string updated.
+
 ## Part I — Review, playtest, docs
 
 ### T37. 🦖 Dino review: perk names and XP wording
@@ -279,16 +292,30 @@ is empty (#108 met).
      after ~10s. Rally Cry: disc looks wider than at mastery 0 (read the radius attribute or
      stat if exposed), lasts ~13s. Flare Strike: burning ground stays ~3s. Triage Kit from
      40 HP: heals to 90 (50 HP), where mastery 0 heals to 80.
-  3. Round 1: the XP readout shows pending "+N on clear" rising with take-downs, capped at
-     15; on clear the bar gains 100 + N; pending returns to 0.
-  4. K cash, clear to round 9 with capped pops: banner "Hunter level 3" after round 9; tower
-     level 2 → 3 only after round 10.
+  3. Round 1: the XP readout shows "Lv 1", "0 / 500 XP" and a pending "+N on round clear"
+     (T36c; "+N bonus on round clear" before it) rising with take-downs, capped at 15; on
+     clear the bar gains 100 + N; pending returns to 0. Read the label's `TextBounds` / font
+     size at 1280×720 and 800×600 and report the pixel height (#117).
+  4. K cash, clear to round 9 with capped pops: banner "Hunter level 3 — your shots hit 25%
+     harder" after round 9; "Tower level 3 — towers hit 10% harder" only after round 10. Open
+     a tower's panel after round 5: it shows "Tower level 2 · +10% damage"; in round 1 it
+     shows no such line.
   5. Lose a round on purpose: result screen appears, no XP banked from that round (read
      `HeroXp` before/after); back in the lobby and in the next match the level is 1, XP 0.
   6. The XP readout never blocks a click on Start, the shop or the hotbar at 800×600.
+  7. Mastery screen wording: rows read "Mastery 10 perk · Sticky Dart" and "Mastery 15 perk ·
+     Spare Dart" (owned ones say "(owned)"); the note reads "Mastery perks boost your
+     ability, never your gun's damage."; U shows one "Tracking Dart perks: …" line.
+  8. Marks (#106): with a Longshot Perch that marks (or Tracer Rounds) hitting a darted dino,
+     the dart's mark still ends ~10s after the dart, not later and not sooner.
+- **Before any of it:** Studio must be running the current code. Rojo has been disconnected
+  in Jovan's Studio since the afternoon of 2026-10-01, so until he reconnects it Studio holds
+  **pre-round-2 code**. The Tester first checks that `ReplicatedStorage.Shared.HeroXp` exists
+  and that `RoundsCleared` is an attribute; if not, it writes "Studio is not synced (Rojo
+  disconnected)" in `PLAYTEST.md` and stops.
 - Report pass / fail / not testable per step in `PLAYTEST.md`; feel and balance stay Jovan's.
 
-### T39. Docs and round-3 recap
+### T39. Docs and round-3 recap — **done 2026-10-02** (Director; "Studio testing pending")
 - `HEROES.md` "Mastery" (perk table, existing rewards kept) and "Hero levels" (the XP rule
   replaces "Now / Planned"); `DIRECTION.md` line "Levels (+25% hero / +10% tower every 5
   rounds)" reworded to the floor/lead rule if the audit allows (keep the numbers it checks);

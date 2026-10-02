@@ -20,7 +20,8 @@ point, then log it in `DECISIONS.md`.
 - **Hero upgrades are about handling** (reload, recoil, fire modes, special rounds), not
   raw damage. Power growth comes from levels.
 - **Towers and heroes must both stay useful.** A hero must never out-damage the best tower
-  (the exporter checks). Levels (+25% hero / +10% tower every 5 rounds) keep pace with HP.
+  (the exporter checks). Levels (+25% hero / +10% tower every 5 rounds) keep pace with HP;
+  since 2026-10-02 a hunter's own level comes from hero XP and may run one level ahead.
 - **Clean, uncluttered UI.** Separate screens for separate jobs (hero select vs upgrades;
   unlocks split into Heroes and Towers). Show prices, discounts and what an upgrade does in
   plain words.

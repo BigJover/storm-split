@@ -61,6 +61,13 @@ Saving and publishing are deferred ("we can deal with that later when it is publ
 Plan: `PLAN.md` "Round 3" (T32–T39); design calls `DECISIONS.md` #97–#103. T31 (the Studio
 playtest) is still open. Stop before phase 7 again and append a round-3 recap to `RECAP.md`.
 
+**Status (2026-10-02):** round 3 built (T32–T37, T39; T36c is a one-string follow-up) and the
+recap is written (`RECAP.md`, "Round 3"; design calls #97–#117). 245 headless specs,
+`audit.py --strict` 0, `threat.py` 0; **not playtested**. **Still open: T31 + T38, the
+Tester's Studio playtest.** It waits for Jovan to restart Studio, turn on "Enable Studio as
+MCP server" and reconnect Rojo (disconnected since 2026-10-01 afternoon: Studio holds
+pre-round-2 code until then). Phase 7 is not started.
+
 ## Rules
 
 - **Verify every step:** `tools/check.sh` clean; `python3 tools/export_constants.py` clean;

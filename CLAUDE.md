@@ -188,9 +188,22 @@ and `Shared/Profile`; the exporter enforces "logging in never beats playing". A 
 agent role was added to playtest in Studio through `tools/studio/mcp.py`; its first run
 (PLAN T31) waits for Studio's "Enable Studio as MCP server" switch.
 
-Next: Jovan turns on the Studio MCP switch so the Tester can run T31, playtests Step 2 and
-round 2 himself (see `RECAP.md`), and answers the "ask Jovan" lists. Then phase 7 (not
-started).
+Round 3 (gauntlet loop, 2026-10-02, Jovan's direction in `DIRECTION.md`): the two leftovers
+of Phase 6. Statically checked and headless-tested (245 specs, `audit.py --strict` 0,
+`threat.py` 0, `value.py` no new findings) but **never playtested**. **Mastery ability perks:**
+mastery 10 and 15 give each hero an ability perk, the stronger at 15 (Sticky Dart / Spare
+Dart, Hunting Horn / Long Rally, Wide Flare / Smoulder, Far Reach / Stocked Kit), on the new
+`Mastery Perks` sheet; the exporter enforces "15 beats 10" and a worth cap; the free first
+upgrade (10) and cooldown −30% (15) stay. **Hero XP:** each hunter has their own level; a
+cleared round banks 100 XP plus a take-down bonus of at most 15, banked only on the clear;
+the level is never below the old every-5-rounds curve and never more than one above it;
+towers stay on the old curve; XP is per match and never saved (`Shared/HeroXp`, `HEROES.md`).
+Marks no longer stack: the stronger wins.
+
+Next: Jovan restarts Studio, turns on "Enable Studio as MCP server" and **reconnects Rojo**
+(disconnected since 2026-10-01 afternoon, so Studio holds pre-round-2 code) so the Tester can
+run T31 + T38; playtests Step 2, round 2 and round 3 himself (see `RECAP.md`); and answers
+the "ask Jovan" lists. Then phase 7 (not started).
 
 ## Open issues
 

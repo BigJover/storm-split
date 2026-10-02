@@ -32,14 +32,19 @@ src/
 │   ├── TowerLook.luau       Tower models, shared by real towers and the placement ghost;
 │   │                        upgrade visuals (ring size, tier label, crown/glow swaps)
 │   ├── Upgrades.luau        The crossover rule, shared so the client greys out what the server refuses
-│   ├── HeroStats.luau       A hero's gun right now (base + upgrades), shared by server and client HUD
+│   ├── HeroStats.luau       A hero's gun and ability right now (base + mastery perks + upgrades), shared by
+│   │                        server and client; which mastery perks a mastery level has (`Config.MasteryPerks`)
+│   ├── HeroXp.luau          Hero XP and levels in a match: round XP, take-down bonus and its cap, floor and
+│   │                        ceiling, leavers, the HUD bar's numbers; pure
 │   ├── TowerStats.luau      A tower's stats right now (base + upgrades); pure, used by Towers
 │   ├── Pricing.luau         Upgrade discounts and sell refunds; pure, used by Shop
 │   ├── Payouts.luau         Casual Amber payout at match end; pure, used by Progression
-│   ├── Combat.luau          Dino attack scaling, resistance cap, tower max HP, repair cost; pure
+│   ├── Combat.luau          Dino attack scaling, resistance cap, tower max HP, repair cost, how marks merge
+│   │                        (the stronger wins), nearest dinos to a point; pure
 │   ├── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
 │   ├── Modes.luau           Game modes and tracks the home screen offers (availability, display)
-│   ├── PanelRules.luau      Which panel may be open in which match state, and what a state change closes
+│   ├── PanelRules.luau      Which panel may be open in which match state, and what a state change closes;
+│   │                        the tower panel's "Tower level" line
 │   ├── Bounties.luau        Daily Haul and bounty rules: roll, reset, progress, claim, swap, sanitise a save; pure
 │   ├── Profile.luau         The saved profile as plain data and pure rules (load, save, Hunt Board paths);
 │   │                        only Server/Progression holds profiles and calls it
@@ -71,7 +76,7 @@ src/
 │   └── Health.server.luau   Empty on purpose: replaces Roblox's health regeneration
 └── client/   → StarterPlayer.StarterPlayerScripts.Client
     ├── Home.client.luau     Home screen (Lobby): mode, track, difficulty, Play (host only)
-    ├── Hud.client.luau      Status bar, Start button, level-up banner, result screen
+    ├── Hud.client.luau      Status bar, Start button, hunter level + XP bar, level-up banner, result screen
     ├── Shop.client.luau     Build, hero select and hero upgrade screens; placement ghost; tower panel
     ├── HuntBoard.client.luau  Hunt Board (G, home screen): Daily Haul and bounties; claim and swap requests
     └── Hero.client.luau     Trigger (semi/auto/burst), reload, ammo, scope, camera, crosshair (requests only)
@@ -113,6 +118,8 @@ This dissolves most of the problems the UEFN plan was built around:
 | What a tower cost (for refunds) | `Shop` | — |
 | Who built a tower | `Towers` (`tower.owner`) | Shop reads it: only the builder sells |
 | Pops per player | `Scoreboard` | Towers report kills through the `onPop` hook |
+| A hunter's XP, pending pops and hero level (per match, never saved) | `Hero` (rules in the pure `Shared/HeroXp`) | Main calls `Hero.addPop()` on every credited pop, `Hero.roundCleared()` when a round is cleared and `Hero.startMatch()` at Start; clients read the `HeroLevel`, `HeroXp`, `HeroXpPending` player attributes |
+| Tower level (the round level) and rounds cleared | `Main` | Main calls `Towers.setLevel(HeroXp.roundLevel(...))`; clients read the `Level` and `RoundsCleared` attributes on ReplicatedStorage |
 | Match state (`State`), mode, track, difficulty, host | `Main` | Clients read the attributes; the host changes mode/track/difficulty through the `Lobby` remote, in the Lobby only |
 | A player's hero, upgrades, ammo, recoil, cooldown, Overdrive | `Hero` | Clients read `Hero`, `HeroPath1-3`, `Ammo`, `Magazine`, `ReloadUntil`, `AbilityReadyAt` player attributes; Towers ask `Hero.towerRateBoost` |
 | Burning patches | `Hazards` | Towers and Hero call `Hazards.burn()` |
@@ -188,11 +195,12 @@ second test client.
 | **3c** — difficulty and scale | Difficulty levels (Easy = baseline, Normal, Hard, Chaos) and per-player scaling from the spreadsheet; tower owners; pops leaderboard; owner-only selling. See `VISION.md` | **Written, statically checked**, not yet playtested |
 | **4** — the hero | Free hero pick (Pistol, Assault Rifle, Shotgun); three named upgrade paths each about handling, not damage (`HEROES.md`); magazines, recoil, fire modes, pellets/slugs, pierce, ricochet, special rounds; first-person gunplay; abilities Mark / Overdrive / Airburst | **Done, confirmed in Studio** (redesign 2026-09-29) |
 | **5** — roster and rounds | Chiller (chill: slow, brittle, armour strip; freeze pulses) and Quartermaster (round income, interest, airdrop chests, Logistics discounts/refunds) per `UPGRADES.md` | **Written 2026-09-29, statically checked**, not yet playtested |
-| **5b** — levels | Heroes +25% and towers +10% damage per level, a level every 5 rounds cleared (`HEROES.md`). Next step, planned: hero XP from pops drives each player's level | **Done, confirmed in Studio** |
+| **5b** — levels | Heroes +25% and towers +10% damage per level, a level every 5 rounds cleared (`HEROES.md`). Since round 3 each hunter's level comes from hero XP; towers keep this curve | **Done, confirmed in Studio** |
 | **6** — progression | `Progression`: DataStore save (Cores, owned heroes/towers, mastery per hero, highest round; failed loads never overwrite). Casual payouts (clear reward per difficulty; multiplayer loss 5; solo loss 0). Core unlocks: Pistol + Scout/Sniper/Grenadier free; Rifle/Shotgun 75, Chiller 100, Quartermaster 150; place only what you own, upgrade anyone's. Mastery screen (M). Deferred: level 10/15 ability variants; competitive buy-ins/pots (phase 7) | **Written 2026-09-29, statically checked**, not yet playtested; saving needs the place published |
 | **6b** — home screen | Match loop in `Main` (Lobby → match → results → reset → Lobby), no characters until Play, host picks mode (Co-op; Team Battle / Battle Royale shown as coming soon), track and difficulty; result screen with Cores earned. A separate lobby place with matchmaking comes with phase 7 | **Done, confirmed in Studio** |
 | **Step 2** — the dinos fight back | `Combat` (pure rules), `Health` (player HP), `DinoAttacks` (bites and projectiles), tower HP / Trampled / repair / auras in `Towers`, Field Medic (`Hero`), Field Hospital and Armory towers, med kits (`Airdrops`), Rescue Beacon respawn (`Main`). The polish pass adds `tools/test.sh` (Lune specs), `audit.py`, `threat.py` | **Written 2026-10-01, statically checked + 130 headless specs**, not yet playtested (`RECAP.md`) |
 | **Round 2** — balance pass, Daily Haul and Bounties | Balance: `tools/value.py` (value and pacing models), Supply Camp tiers, Rounds counts for rounds 7–12, 17–20 and 31–39 (spreadsheet only). Hunt Board: `Daily Haul` and `Bounties` sheets with exporter checks, `Shared/Bounties`, `Shared/Profile`, rewards in `Progression`, `Shared/HuntBoard` + `HuntBoard.client`, `PanelRules` mode `huntBoard`. `tools/studio/mcp.py` talks to Studio's MCP server for the Tester | **Written 2026-10-01, statically checked + 214 headless specs**, not yet playtested (`RECAP.md`, "Round 2"); Studio playtest T31 open |
+| **Round 3** — mastery ability perks, hero XP | `Mastery Perks` sheet (one row per hero and mastery level) and Tuning HERO XP / MASTERY PERKS levers, with exporter rules (level 15 worth more than level 10, worth cap, no extra stun) and audit checks; perks merged by `HeroStats.compute(…, masteryLevel)`; Spare Dart and Smoulder in `Hero`; `Combat.mergeMark`; `Shared/HeroXp`, per-hunter XP and level in `Hero`, towers on the round level; HUD XP bar and banners; `value.py` and the hero-vs-tower guard use the level in play (`PLAN.md` round 3, `DECISIONS.md` #97–#117) | **Written 2026-10-02, statically checked + headless tests** (245 specs), not yet playtested |
 | **7** — battle modes | Team battle (sides, tower HP, per-team cash) and battle royale (most pops) — `VISION.md` | |
 
 ---

@@ -21,20 +21,54 @@ on the spreadsheet plus any new fire mechanic.
 Amber (`VISION.md` for how it's earned) buys up to 20 mastery levels per owned hero: -5% to -20% hero
 upgrade costs (levels 1-4), ability cooldown -15% (5) and -30% (15), a free first upgrade
 each match (10), and at 20 a gold gun and a crossover cap of 3 for this hero. Never gun damage: perks change abilities only.
-Planned later: a second ability variant (10) and a secondary ability effect (15).
+
+**Ability perks (Jovan, 2026-10-02; DECISIONS #97–#99, #114–#115).** Mastery 10 and 15 also
+give each hero an ability perk: the stronger one at 15, both small ("a somewhat fair
+advantage", safe for the PvP modes). A hero with mastery 15 has both.
+
+| Hero | Mastery 10 | Mastery 15 |
+|---|---|---|
+| Tracker | **Sticky Dart**: Tracking Dart lasts 2s longer (8 → 10) | **Spare Dart**: also marks the nearest dino within 10 studs at 40% strength |
+| Big Game Hunter | **Hunting Horn**: Rally Cry reaches 5 studs further (25 → 30) | **Long Rally**: Rally Cry lasts 3s longer (10 → 13) |
+| Brush Beater | **Wide Flare**: Flare Strike reaches 1.5 studs further (10 → 11.5) | **Smoulder**: leaves burning ground for 3s (12% of the strike's damage each second) |
+| Field Medic | **Far Reach**: Triage Kit reaches 4 studs further (20 → 24) | **Stocked Kit**: Triage Kit heals 10 more HP (40 → 50) |
+
+- Numbers: the `Mastery Perks` sheet, one row per hero and level. A perk adds to the hero's
+  base ability value, before path upgrades multiply it (Stocked Kit + Clean Bandages = 50 ×
+  1.25).
+- The exporter refuses a sheet where a hero's mastery-15 perk isn't worth more than the
+  mastery-10 one, where any perk is worth more than 40% of one cast (`Tuning` → MASTERY
+  PERKS), or where a perk adds stun time. No perk column raises gun damage.
+- Perks act on dinos and allies only: nothing stuns, slows or marks another hunter.
+- Marks don't stack (DECISIONS #106): the stronger mark wins; a weaker one changes neither
+  its strength nor its time; an equal one keeps the longer time.
+- Levels 6–9, 11–14 and 16–19 still give nothing (DECISIONS #61, Jovan's call).
 
 ## Hero levels
 
 Dino HP grows ~5% a round (x7 by round 40) while hero upgrades don't add much damage, so
 heroes **level up**: each level multiplies all hero damage — rounds, splash, fire, Flare Strike —
-by +25%, compounding. Towers ride the same levels at +10% a level (they already scale with
-upgrades), so both stay useful. A banner announces each level. Numbers: `Tuning` → HERO
-LEVELS.
+by +25%, compounding. Towers level too, at +10% a level (they already scale with
+upgrades), so both stay useful. Numbers: `Tuning` → HERO LEVELS and HERO XP.
 
-- **Now:** everyone levels up together every 5 rounds cleared.
-- **Planned (user-approved 2026-09-29):** hero **XP from your own pops** drives your level
-  instead, BTD6-style, with perks at some levels. Levels are already stored per player
-  (`HeroLevel`), so only the trigger changes.
+**Hero XP (Jovan, 2026-10-02; DECISIONS #100–#103, #111).** Each hunter has their own level,
+driven by XP. XP lasts for one match and is never saved.
+
+- **Clearing a round** banks 100 XP for every hunter (500 XP a level, so a level every 5
+  rounds from this alone), plus a small **take-down bonus**: 0.25 XP per pop (your gun, your
+  towers, your fire) and a quarter of that for each teammate's pop, rounded down, at most
+  **15 a round**. A Field Medic who pops nothing still gets the bonus from the team.
+- The bonus is **pending** during the round and is banked only when the round is cleared. A
+  lost round, or leaving mid-round, drops it; a leaver's pops also leave the team count.
+- A hunter is never below the **round level** (1 + rounds cleared ÷ 5, the old curve) and
+  never more than **one level above** it. With the bonus capped every round: level 3 after
+  round 9, level 5 after 18, level 9 after 35. Late joiners start on the round level.
+- **Towers stay on the round level** for the whole team (a level every 5 rounds cleared).
+- On screen: "Lv N", an XP bar and "+N on round clear" on the HUD; a banner for your own
+  level ("Hunter level N — your shots hit 25% harder") and for the towers' ("Tower level N —
+  towers hit 10% harder"); the tower panel shows "Tower level N · +X% damage".
+- Rules: `Shared/HeroXp` (pure). The balance models print heroes at the round level and one
+  above it; the exporter's hero-vs-tower guard uses the highest level in play.
 
 ## Gun mechanics
 
