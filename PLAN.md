@@ -215,12 +215,28 @@ one level ahead; a hunter with no pops is exactly on the old curve.
   a tower it didn't before (#58: Longshot Perch ~223), list it for the Director, change no
   number.
 
-### T36b. Notes for the XP Builder (no rule changes to T34–T36)
-- `tools/audit.py` `DEAD_PENDING` lists the five XP levers (#108). Remove each entry in the
-  commit that first reads the lever (the audit already fails if a read lever is still
-  listed). When T36 is done the list must be **empty**; say so in the commit message.
-- T33b follows your last commit and touches `Combat.mergeMark`, `Shop.client` (one string),
-  the sheet (one cell) and `HEROES.md`: leave those alone.
+**T34 (18074b1), T35 (40a34ee), T36 (7996f48): reviewed 2026-10-02, accepted with T36b**
+(DECISIONS #109–#113). 241 specs, audit strict 0, threat 0; not playtested. `DEAD_PENDING`
+is empty (#108 met).
+
+### T36b. XP follow-ups (after T33b is committed)
+- **Model checkpoints (#109):** `tools/value.py` hero lines keep rounds 1 / 20 / 40 but take
+  the level **in play during that round**, computed, not typed: floor = 1 +
+  floor((round − 1) ÷ `Rounds per level`) → L1 / L4 / L8, ceiling = floor + `Hero level lead
+  cap` → L2 / L5 / L9; towers at the floor. Remove the literal `(5, 20, 1), (9, 40, 3)`
+  levels and the closing "(L5 and L9 are …)" line. An assert in `value.py` (or a spec) that
+  its round-40 hero ceiling and tower floor are the same levels the exporter's guard uses.
+  **Report only:** quote the hero block before and after; new findings go to the Director,
+  no number changes.
+- **Tower level readout (#112):** the tower panel shows one line, **"Tower level N · +X%
+  damage"** (X = round((1 + `Tower damage per level`)^(N − 1) × 100 − 100), from Config; N
+  from the `Level` attribute), hidden at level 1. Nothing returns to the HUD status line.
+  The text comes from a pure helper with a spec (level 1 → no line; level 3 → "+21%"); the
+  panel still fits (PanelRules spec green, text shrinks rather than clips). 🦖 words it.
+- **Leavers (#111):** a spec or comment-backed test that when a hunter leaves mid-round the
+  team count drops by their pops and nobody's pending XP rises; no behaviour change.
+- **Accept:** `check.sh`, exporter, `test.sh` green; audit strict 0; `value.py` / `threat.py`
+  exit 0; Config unchanged.
 
 ## Part I — Review, playtest, docs
 
