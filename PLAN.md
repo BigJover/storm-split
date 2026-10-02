@@ -6,7 +6,7 @@ objectively stronger, both modest and PvP-safe. (2) **Hero XP**: pops give a lit
 is only banked when the round is cleared. Saving and publishing are deferred: nothing here
 may need a DataStore. **Stop before phase 7** and append a round-3 recap to `RECAP.md`.
 Design calls: `DECISIONS.md` #97–#117. **Status (2026-10-02): T32–T37 and T39 done and signed
-off; T36c (one HUD string) is queued; T31 + T38 (the Studio playtest) are still open.**
+off; T36c (one HUD string) is done (bebb40c); T31 + T38 (the Studio playtest) are still open.**
 
 The round-1 and round-2 rules hold (one task = one commit; `tools/check.sh`,
 `export_constants.py`, `tools/test.sh` green; diff `Config.luau` after every sheet change;
