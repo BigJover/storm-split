@@ -239,7 +239,7 @@ local function sell(player: Player, towerId: unknown): (boolean, string)
 		return false, `Only {tower.owner.DisplayName} can sell this`
 	end
 
-	-- Recycler / Command Center raise the refund for towers in their range.
+	-- Recycler / Base Camp raise the refund for towers in their range.
 	-- A damaged tower refunds less its repair price (DECISIONS #35).
 	local repairPrice = Combat.repairCost(spent[tower] or 0, tower.hp, tower.maxHp, tower.buff.discountPercent)
 	local refund = Pricing.sellRefund(spent[tower] or 0, tower.buff.sellRefund, repairPrice)

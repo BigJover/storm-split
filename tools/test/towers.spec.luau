@@ -82,8 +82,8 @@ test("Longshot Perch Spotter: Marked Target mark 25, Eye in the Sky mark 60 and 
 	eq(eye.auraRatePercent, 15, "Eye in the Sky aura rate")
 end)
 
-test("Longshot Perch Siege: Anti-Materiel boss x3, Concussion stun, Extinction Round boss x10 and stuns bosses", function()
-	eq(at("SNIPER", 3, 2, "Anti-Materiel").bossMult, 3, "Anti-Materiel vs bosses")
+test("Longshot Perch Big Bore: Bone Breaker boss x3, Concussion stun, Extinction Round boss x10 and stuns bosses", function()
+	eq(at("SNIPER", 3, 2, "Bone Breaker").bossMult, 3, "Bone Breaker vs bosses")
 	local concussion = at("SNIPER", 3, 3, "Concussion Round")
 	ok(concussion.stunSeconds > 0, "Concussion Round stuns")
 	eq(concussion.stunsBosses, false, "Concussion Round leaves bosses")
@@ -128,10 +128,10 @@ end)
 
 -- Tranq Station -----------------------------------------------------------------
 
-test("Tranq Station Sedate: slow ladder never drops, Lingering Dose lingers, Hibernation slows bosses", function()
+test("Tranq Station Sedate: slow ladder never drops, Lingering Dose lingers, Deep Sleep slows bosses", function()
 	local previous = base("CHILLER").slowPercent
 	ok(previous > 0, "base slows")
-	local names = { "Mild Dose", "Heavy Dose", "Lingering Dose", "Sedative Cloud", "Hibernation" }
+	local names = { "Mild Dose", "Heavy Dose", "Lingering Dose", "Sedative Cloud", "Deep Sleep" }
 	for t, name in names do
 		local s = at("CHILLER", 1, t, name)
 		ok(s.slowPercent >= previous, `{name} slow doesn't drop`)
@@ -139,8 +139,8 @@ test("Tranq Station Sedate: slow ladder never drops, Lingering Dose lingers, Hib
 	end
 	eq(at("CHILLER", 1, 2, "Heavy Dose").slowLinger, 0, "no linger before Lingering Dose")
 	ok(at("CHILLER", 1, 3, "Lingering Dose").slowLinger > 0, "Lingering Dose lingers")
-	eq(at("CHILLER", 1, 4, "Sedative Cloud").slowsBosses, false, "bosses immune before Hibernation")
-	eq(at("CHILLER", 1, 5, "Hibernation").slowsBosses, true, "Hibernation slows bosses")
+	eq(at("CHILLER", 1, 4, "Sedative Cloud").slowsBosses, false, "bosses immune before Deep Sleep")
+	eq(at("CHILLER", 1, 5, "Deep Sleep").slowsBosses, true, "Deep Sleep slows bosses")
 end)
 
 test("Tranq Station Knockout: periodic knockout, Barbed Darts damage, Big Game Tranq holds bosses", function()
@@ -193,13 +193,13 @@ test("Supply Camp Airdrop: Air Drop lands chests, more and richer after", functi
 	ok(haul.chests > drop.chests and haul.chestCash > drop.chestCash, "Treasure Haul more and richer")
 end)
 
-test("Supply Camp Logistics: Bulk Order -5%, Recycler 90%, Forward Base +10% rate, Command Center -20% and 100%", function()
+test("Supply Camp Logistics: Bulk Order -5%, Recycler 90%, Forward Camp +10% rate, Base Camp -20% and 100%", function()
 	eq(at("QUARTERMASTER", 3, 1, "Bulk Order").discountPercent, 5, "Bulk Order")
 	eq(at("QUARTERMASTER", 3, 3, "Recycler").sellRefund, 0.9, "Recycler")
-	eq(at("QUARTERMASTER", 3, 4, "Forward Base").auraRatePercent, 10, "Forward Base aura rate")
-	local command = at("QUARTERMASTER", 3, 5, "Command Center")
-	eq(command.discountPercent, 20, "Command Center discount")
-	eq(command.sellRefund, 1, "Command Center refund")
+	eq(at("QUARTERMASTER", 3, 4, "Forward Camp").auraRatePercent, 10, "Forward Camp aura rate")
+	local command = at("QUARTERMASTER", 3, 5, "Base Camp")
+	eq(command.discountPercent, 20, "Base Camp discount")
+	eq(command.sellRefund, 1, "Base Camp refund")
 end)
 
 -- Armory (DECISIONS #16, names per #25) -------------------------------------------

@@ -1452,7 +1452,7 @@ return table.freeze({
 							lastStand = false,
 						},
 						{
-							name = "Tactical Spotter",
+							name = "Game Spotter",
 							cost = 9794,
 							damageMult = 3.32,
 							rateMult = 4.07,
@@ -1568,7 +1568,7 @@ return table.freeze({
 					},
 				},
 				{
-					id = "Siege",
+					id = "Big Bore",
 					focus = "damage",
 					tiers = {
 						{
@@ -1629,7 +1629,7 @@ return table.freeze({
 							lastStand = false,
 						},
 						{
-							name = "Anti-Materiel",
+							name = "Bone Breaker",
 							cost = 1851,
 							damageMult = 3.61,
 							rateMult = 1,
@@ -1743,7 +1743,7 @@ return table.freeze({
 							lastStand = false,
 						},
 						{
-							name = "Siege Gun",
+							name = "Punt Gun",
 							cost = 9794,
 							damageMult = 13.03,
 							rateMult = 1,
@@ -3002,7 +3002,7 @@ return table.freeze({
 							lastStand = false,
 						},
 						{
-							name = "Hibernation",
+							name = "Deep Sleep",
 							cost = 25745,
 							damageMult = 3.71,
 							rateMult = 2.01,
@@ -4071,7 +4071,7 @@ return table.freeze({
 							lastStand = false,
 						},
 						{
-							name = "Care Package",
+							name = "Chopper Drop",
 							cost = 4096,
 							damageMult = 1,
 							rateMult = 1,
@@ -4419,7 +4419,7 @@ return table.freeze({
 							lastStand = false,
 						},
 						{
-							name = "Forward Base",
+							name = "Forward Camp",
 							cost = 6554,
 							damageMult = 1,
 							rateMult = 1,
@@ -4476,7 +4476,7 @@ return table.freeze({
 							lastStand = false,
 						},
 						{
-							name = "Command Center",
+							name = "Base Camp",
 							cost = 10486,
 							damageMult = 1,
 							rateMult = 1,
@@ -7010,7 +7010,7 @@ return table.freeze({
 		RIFLE = {
 			paths = {
 				{
-					id = "Tactical",
+					id = "Stalker",
 					focus = "control",
 					tiers = {
 						{
@@ -8074,7 +8074,7 @@ return table.freeze({
 							jawLockSpread = 0,
 						},
 						{
-							name = "Street Sweeper",
+							name = "Thicket Sweeper",
 							cost = 3200,
 							rateMult = 2.2,
 							magazineMult = 2,
@@ -8118,7 +8118,7 @@ return table.freeze({
 					},
 				},
 				{
-					id = "Breacher",
+					id = "Point Blank",
 					focus = "burst",
 					tiers = {
 						{
@@ -8335,7 +8335,7 @@ return table.freeze({
 				},
 			},
 			display = "Brush Beater",
-			role = "Ordnance",
+			role = "Close range",
 			ability = "Flare Strike",
 			damage = 0.8,
 			rate = 1.2,

@@ -70,8 +70,8 @@ BOUGHT_BAND = {1: 1, 2: 1, 3: 2, 4: 3, 5: 3}  # tier -> index into BANDS
 # Tranq Station's Knockout (hard stops) and Weak Spot (damage amp for every tower in range).
 SUPPORT_PATHS = {("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knockout"), ("CHILLER", "Weak Spot")}
 # Single tiers that buy control on a damage path (#74): still in the table and the medians,
-# never flagged dead. Longshot Perch Siege T3 = Concussion Round (a stun on hit).
-CONTROL_TIERS = {("SNIPER", "Siege", 3)}
+# never flagged dead. Longshot Perch Big Bore T3 = Concussion Round (a stun on hit).
+CONTROL_TIERS = {("SNIPER", "Big Bore", 3)}
 SUPPORT_TOWERS = {"QUARTERMASTER", "HOSPITAL", "ARMORY"}
 NEIGHBOUR_TOWER, NEIGHBOUR_TIER, NEIGHBOURS = "SCOUT", 2, 3
 DEAD_X, DOMINANT_X = 2.0, 0.5

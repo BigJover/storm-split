@@ -10,7 +10,7 @@ this covers scale, difficulty and modes. Build toward it; don't paint the code i
   spectators.
 - **Difficulty levels.** The current balance is **Easy** — the baseline. Harder levels scale
   enemy **density** (more enemies in the same time) and **troop difficulty** (tougher enemy
-  tiers show up sooner), plus HP, speed, income and lives. Numbers live on the spreadsheet's
+  tiers show up sooner), plus HP, speed, income and the Fence. Numbers live on the spreadsheet's
   `Difficulty` sheet.
 - **Player-count scaling** on top of difficulty: every extra player adds enemy density, a bit
   of HP, and starting cash to the shared pot (spreadsheet `Tuning`, CO-OP).
@@ -21,8 +21,8 @@ this covers scale, difficulty and modes. Build toward it; don't paint the code i
 Players can cross onto other sides, but can only build towers on their own team's side.
 Teams attack each other's towers; the focus is surviving longer than the other teams.
 
-**Battle royale.** Every player for themselves. Winner is whoever gets the most **pops**
-(kills credited to their towers).
+**Battle royale.** Every player for themselves. Winner is whoever gets the most **Bones**
+(take-downs credited to their towers).
 
 ## Theme: Dino Hunters (user, 2026-09-29)
 
@@ -111,7 +111,7 @@ Some of this is cheap now and expensive later, so it's built early:
 | Need | Status |
 |---|---|
 | Every tower knows who built it (owner) | ✅ phase 3c |
-| Pops credited per player (leaderboard) | ✅ phase 3c |
+| Bones (take-downs) credited per player (leaderboard) | ✅ phase 3c |
 | Difficulty and player-count scaling | ✅ phase 3c |
 | Towers with HP that can be damaged and destroyed | ✅ Step 2 (dinos trample them and players repair them; players damaging towers comes with the battle modes) |
 | Cash per team / per player instead of one pot | later — `Economy` is the only cash owner, so this is one module's change |

@@ -57,9 +57,9 @@ driven by XP. XP lasts for one match and is never saved.
 - **Clearing a round** banks 100 XP for every hunter (500 XP a level, so a level every 5
   rounds from this alone), plus a small **take-down bonus**: 0.25 XP per pop (your gun, your
   towers, your fire) and a quarter of that for each teammate's pop, rounded down, at most
-  **15 a round**. A Field Medic who pops nothing still gets the bonus from the team.
+  **15 a round**. A Field Medic who takes down nothing still gets the bonus from the team.
 - The bonus is **pending** during the round and is banked only when the round is cleared. A
-  lost round, or leaving mid-round, drops it; a leaver's pops also leave the team count.
+  lost round, or leaving mid-round, drops it; a leaver's take-downs also leave the team count.
 - A hunter is never below the **round level** (1 + rounds cleared ÷ 5, the old curve) and
   never more than **one level above** it. With the bonus capped every round: level 3 after
   round 9, level 5 after 18, level 9 after 35. Late joiners start on the round level.
@@ -105,7 +105,7 @@ bounces to a second dino. Quick Dart: shorter Tracking Dart cooldown. Chain Shot
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
-| **Tactical** | control | Foregrip | Compensator | *Burst Fire* | Trigger Discipline | *Precision Burst* |
+| **Stalker** | control | Foregrip | Compensator | *Burst Fire* | Trigger Discipline | *Precision Burst* |
 | **Heavy** | sustain | Drum Mag | Fast Hands | *Belt Fed* | Bipod | *Spin-Up* |
 | **Special Ammo** | rounds | Tracer Rounds | *Incendiary* | *AP Rounds* | Hot Load | *Explosive Tips* |
 
@@ -114,19 +114,19 @@ much less recoil while standing still. Spin-Up: fire rate climbs while you hold.
 Rounds: hits briefly mark. Incendiary: burning ground. AP Rounds: pierce armour. Explosive
 Tips: small splash.
 
-### Brush Beater (shotgun) — Ordnance · ability **Flare Strike** (delayed strike on the track: damage + stun)
+### Brush Beater (shotgun) — Close range · ability **Flare Strike** (delayed strike on the track: damage + stun)
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
 | **Slug** | reach | *Slug Rounds* | Rifled Barrel | *Sabot* | Long Barrel | *Railslug* |
-| **Buckshot** | crowds | Tight Choke | Extra Pellets | *Dragon's Breath* | Auto-Loader | *Street Sweeper* |
-| **Breacher** | burst | Speed Shells | Extended Tube | *Double Barrel* | Kickback | *Frag Shells* |
+| **Buckshot** | crowds | Tight Choke | Extra Pellets | *Dragon's Breath* | Auto-Loader | *Thicket Sweeper* |
+| **Point Blank** | burst | Speed Shells | Extended Tube | *Double Barrel* | Kickback | *Frag Shells* |
 
 Slug Rounds: one accurate shot through 2 dinos. Rifled Barrel: slugs reach air. Sabot:
 pierces armour. Railslug: through 6. Dragon's Breath: pellets set dinos on fire — after a moment they take one burn tick worth
 35% of the shot. The fire stays lit as a dino shrinks, so a dino shot down a size still
 takes the tick, which often finishes off small ones in early rounds. Also leaves burning
-ground behind. Street Sweeper:
+ground behind. Thicket Sweeper:
 full-auto drum. Double Barrel: two blasts per trigger. Kickback: knocks dinos back. Frag
 Shells: explode on impact.
 

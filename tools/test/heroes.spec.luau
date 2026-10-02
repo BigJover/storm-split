@@ -73,7 +73,7 @@ end)
 
 -- Big Game Hunter -----------------------------------------------------------------
 
-test("Big Game Hunter Tactical: Burst Fire 3-round bursts, tighter", function()
+test("Big Game Hunter Stalker: Burst Fire 3-round bursts, tighter", function()
 	local burst = at("RIFLE", 1, 3, "Burst Fire")
 	eq(burst.fireMode, "burst", "Burst Fire mode")
 	eq(burst.burstCount, 3, "Burst Fire count")
@@ -109,15 +109,15 @@ test("Brush Beater Slug: Slug Rounds 1 pellet through 2, Rifled Barrel air, Sabo
 	eq(at("SHOTGUN", 1, 5, "Railslug").pierce, 6, "Railslug pierce")
 end)
 
-test("Brush Beater Buckshot: Dragon's Breath ignite 0.35, Street Sweeper auto", function()
+test("Brush Beater Buckshot: Dragon's Breath ignite 0.35, Thicket Sweeper auto", function()
 	local dragon = at("SHOTGUN", 2, 3, "Dragon's Breath")
 	eq(dragon.igniteShare, 0.35, "Dragon's Breath ignite share")
 	ok(dragon.igniteSeconds > 0, "Dragon's Breath ignite delay")
 	ok(dragon.burnDps > 0, "Dragon's Breath burning ground")
-	eq(at("SHOTGUN", 2, 5, "Street Sweeper").fireMode, "auto", "Street Sweeper auto")
+	eq(at("SHOTGUN", 2, 5, "Thicket Sweeper").fireMode, "auto", "Thicket Sweeper auto")
 end)
 
-test("Brush Beater Breacher: Double Barrel 2 shots, Kickback knockback, Frag splash", function()
+test("Brush Beater Point Blank: Double Barrel 2 shots, Kickback knockback, Frag splash", function()
 	eq(at("SHOTGUN", 3, 3, "Double Barrel").shotsPerTrigger, 2, "Double Barrel")
 	ok(at("SHOTGUN", 3, 4, "Kickback").knockback > 0, "Kickback knocks back")
 	ok(at("SHOTGUN", 3, 5, "Frag Shells").splashRadius > 0, "Frag Shells explode")
@@ -157,10 +157,10 @@ end)
 test("fire mode: a path that sets it wins over the base; others leave it", function()
 	-- In Config only one path per hero sets a fire mode, so the tie rule for fire
 	-- mode can't be exercised with real rows; it shares the pellets ordering above.
-	eq((HeroStats.compute("SHOTGUN", { 0, 5, 2 }) :: any).fireMode, "auto", "Street Sweeper with Breacher 2")
-	eq((HeroStats.compute("SHOTGUN", { 2, 5, 0 }) :: any).fireMode, "auto", "Street Sweeper with Slug 2")
+	eq((HeroStats.compute("SHOTGUN", { 0, 5, 2 }) :: any).fireMode, "auto", "Thicket Sweeper with Point Blank 2")
+	eq((HeroStats.compute("SHOTGUN", { 2, 5, 0 }) :: any).fireMode, "auto", "Thicket Sweeper with Slug 2")
 	eq((HeroStats.compute("RIFLE", { 3, 2, 0 }) :: any).fireMode, "burst", "Burst Fire with Heavy 2")
-	eq((HeroStats.compute("RIFLE", { 2, 5, 0 }) :: any).fireMode, "auto", "Tactical 2 sets no mode: base auto")
+	eq((HeroStats.compute("RIFLE", { 2, 5, 0 }) :: any).fireMode, "auto", "Stalker 2 sets no mode: base auto")
 	eq((HeroStats.compute("PISTOL", { 5, 0, 2 }) :: any).fireMode, "auto", "Akimbo Frenzy")
 	eq((HeroStats.compute("PISTOL", { 2, 0, 5 }) :: any).fireMode, "semi", "base semi")
 end)

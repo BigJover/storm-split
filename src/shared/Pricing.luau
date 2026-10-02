@@ -6,7 +6,7 @@
 	                (percent), rounded to the nearest whole
 	  sellRefund    everything put into the tower (base + upgrades paid) times
 	                the refund rate: Tuning SellRefund, or a Logistics aura's
-	                higher rate (Recycler, Command Center), rounded down, less
+	                higher rate (Recycler, Base Camp), rounded down, less
 	                what repairing it would cost right now (never below 0;
 	                DECISIONS #35), so selling and rebuying a damaged tower
 	                never beats repairing it

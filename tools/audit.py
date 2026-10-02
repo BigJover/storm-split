@@ -154,6 +154,9 @@ def direction_ladder():
             break
     else:
         return None
+    # The ladder is the bullet's first sentence; later sentences are notes
+    # ("The next tower batch costs about 2× (2026-10-02).").
+    text = re.split(r"\.\s", text.strip(), maxsplit=1)[0]
     ladder = []
     for part in text.strip().rstrip(".").split(";"):
         part = part.strip()

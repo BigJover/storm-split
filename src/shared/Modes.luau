@@ -12,7 +12,7 @@ return table.freeze({
 	Modes = table.freeze({
 		COOP = { display = "Co-op", blurb = "Defend the track together. Casual: no buy-in.", available = true },
 		TEAM = { display = "Team Battle", blurb = "Two or three teams, each defending its own side.", available = false },
-		ROYALE = { display = "Battle Royale", blurb = "Every player for themselves. Most pops wins.", available = false },
+		ROYALE = { display = "Battle Royale", blurb = "Every player for themselves. Most bones wins.", available = false },
 	} :: { [string]: Mode }),
 
 	-- Each track is its own level (VISION.md). One for now: Shared/Track.

@@ -19,7 +19,7 @@ local function setUp(player: Player)
 	local stats = Instance.new("Folder")
 	stats.Name = "leaderstats"
 	local value = Instance.new("IntValue")
-	value.Name = "Pops"
+	value.Name = "Bones" -- display name only (DECISIONS #130); per match, never saved
 	value.Parent = stats
 	local badge = Instance.new("IntValue")
 	badge.Name = "Mastery"

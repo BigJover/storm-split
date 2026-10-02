@@ -30,12 +30,12 @@ built). Change a name there, not in code.
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
 | **Deadeye** | line pierce | *Full Metal Jacket* | *Through-and-Through* | Ricochet | Tungsten Core | *Linebreaker* |
-| **Spotter** | speed + mark | Steady Breath | Bolt Racking | *Marked Target* | Tactical Spotter | *Eye in the Sky* |
-| **Siege** | boss killer | Large Calibre | *Anti-Materiel* | *Concussion Round* | Siege Gun | *Extinction Round* |
+| **Spotter** | speed + mark | Steady Breath | Bolt Racking | *Marked Target* | Game Spotter | *Eye in the Sky* |
+| **Big Bore** | boss killer | Large Calibre | *Bone Breaker* | *Concussion Round* | Punt Gun | *Extinction Round* |
 
 - Full Metal Jacket: hits 2 in a line. Through-and-Through: hits 3, pierces armour. Linebreaker: hits 10, ×2 damage.
 - Marked Target: its target takes +25% from every tower. Eye in the Sky: mark +60%, towers in range +15% attack speed.
-- Anti-Materiel: ×3 vs bosses. Concussion Round: stun on hit. Extinction Round: ×10 vs bosses, stuns bosses.
+- Bone Breaker: ×3 vs bosses. Concussion Round: stun on hit. Extinction Round: ×10 vs bosses, stuns bosses.
 
 ## Mortar Pit (Grenadier) — area damage, ground only
 
@@ -53,11 +53,11 @@ built). Change a name there, not in code.
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
-| **Sedate** | slow radius | Mild Dose | Heavy Dose | *Lingering Dose* | Sedative Cloud | *Hibernation* |
+| **Sedate** | slow radius | Mild Dose | Heavy Dose | *Lingering Dose* | Sedative Cloud | *Deep Sleep* |
 | **Knockout** | hard stops | *Knockout Dart* | Heavy Sedative | *Barbed Darts* | Quick Cycle | *Big Game Tranq* |
 | **Weak Spot** | damage amp | *Exposed Hide* | *Find the Gap* | *Hunter's Call* | Vital Points | *Apex Predator* |
 
-- Mild Dose → Sedative Cloud: a stronger slow each tier. Lingering Dose: the slow lingers after a dino leaves the zone. Hibernation: slows bosses too.
+- Mild Dose → Sedative Cloud: a stronger slow each tier. Lingering Dose: the slow lingers after a dino leaves the zone. Deep Sleep: slows bosses too.
 - Knockout Dart: knocks out every dino in range every few seconds. Barbed Darts: knockouts also deal damage. Big Game Tranq: a long knockout that holds bosses.
 - Exposed Hide: sedated dinos take +25% damage. Find the Gap: +35%, and sedated dinos lose their armour. Hunter's Call: towers in range +10% attack speed. Apex Predator: +75%, towers in range +20% damage.
 
@@ -66,14 +66,14 @@ built). Change a name there, not in code.
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
 | **Yield** | income | Supply Crate | Bigger Budget | Trade Route | War Chest | *Amber Vault* |
-| **Airdrop** | loot chests | *Air Drop* | Double Drop | *Care Package* | Supply Chain | *Treasure Haul* |
-| **Logistics** | discounts | *Bulk Order* | Field Engineer | *Recycler* | *Forward Base* | *Command Center* |
+| **Airdrop** | loot chests | *Air Drop* | Double Drop | *Chopper Drop* | Supply Chain | *Treasure Haul* |
+| **Logistics** | discounts | *Bulk Order* | Field Engineer | *Recycler* | *Forward Camp* | *Base Camp* |
 
 - Amber Vault: interest on banked cash. Air Drop: chests land that players run over to collect.
 - Supply Camp upgrades cost less than other towers' (each tier ×1.6, not ×2.3: 1,600 / 2,560 / 4,096 / 6,554 / 10,486) so every tier repays itself in about 8–10 rounds, like the base camp (round 2, #56/#73).
 - Yield: round income ×2.1 / ×3.85 / ×6.6 / ×11.1 / ×17.9 of the base 150; Amber Vault adds 5% interest (up to 500 a round).
 - Airdrop: 1 / 2 / 2 / 3 / 4 chests a round worth 200 / 260 / 515 / 615 / 790 cash each.
-- Bulk Order: towers in range −5% upgrade cost. Recycler: towers in range sell for 90%. Forward Base: towers in range +10% attack speed. Command Center: −20% costs, full refunds.
+- Bulk Order: towers in range −5% upgrade cost. Recycler: towers in range sell for 90%. Forward Camp: towers in range +10% attack speed. Base Camp: −20% costs, full refunds.
 
 ## Field Hospital (HOSPITAL) — heals towers and hunters, no attack ✅ Step 2 · unlock 100 Amber
 
@@ -114,7 +114,7 @@ Resistance doesn't stack: the strongest source wins, capped at 60% (Tuning).
 | Upgrade names in the tower panel | all | ✅ phase 3 |
 | Range multiplier | Lookout, Sedate | ✅ phase 3 |
 | **Armored** and **Boss** dino flags; armour blocks damage without pierce | dinos | ✅ phase 3b |
-| Armour pierce, bonus vs armoured, bonus vs bosses | Hardliner, Deadeye, Siege, Concussive, Signal Tower | ✅ phase 3b |
+| Armour pierce, bonus vs armoured, bonus vs bosses | Hardliner, Deadeye, Big Bore, Concussive, Signal Tower | ✅ phase 3b |
 | Multi-shot per trigger | Double Tap, Lead Rain | ✅ phase 3b |
 | Line pierce (hits N in a line) | Railshot, Deadeye | ✅ phase 3b |
 | Mark (target takes +X% from all towers) | Marked Target, Eye in the Sky | ✅ phase 3b |
