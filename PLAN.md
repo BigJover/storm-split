@@ -3,7 +3,7 @@
 Scope (Jovan, 2026-10-01, `GAUNTLET.md` "Round 2 scope"): (1) a balance pass across the whole
 game, justified by headless models because there's no playtest data yet; (2) daily log-in
 rewards plus daily and weekly challenges, for retention. **Stop before phase 7** and append a
-round-2 recap to `RECAP.md`. Design calls: `DECISIONS.md` #54–#76. Round 1's plan is kept
+round-2 recap to `RECAP.md`. Design calls: `DECISIONS.md` #54–#79. Round 1's plan is kept
 below as history.
 
 The round-1 rules still hold (one task = one commit, push after verifying; `tools/check.sh`,
@@ -151,6 +151,19 @@ checked + headless tests, not playtested"). Plus, for this round:
   also with the Armory's top resist (45%) applied. **No target, no failure** (#44 stays a
   playtest item).
 - **Accept:** output shows rounds 31–40 before/after T21 in the commit message; test.sh green.
+
+### T24b. Round 39 below the finale; round-11 step named in the model (DECISIONS #77–#79)
+- **Sheet:** `Rounds!H43` (round 39, Triceratops) **12 → 10** (assert 12). Nothing else.
+- **Files:** `tools/value.py`: the step check runs from round 2; the bar stays 1.6× for
+  rounds 12–40, and **round 11 is a named exception with its own bar of ≤ 2.1×** ("first
+  armour and air wave", today ×2.02), printed in the output, so a regression is still
+  caught. The damage medians keep excluding the control/support paths (as f26a78a does);
+  add a one-line comment citing #79. No other model change.
+- **Accept:** `threat.py` report: round 39 mid-gap worst case ≤ round 40's (expected ≈ 212
+  vs 215.8); finale EHP within ±12% of the pre-T21 323,127 (expected ≈ −11.6%); Normal solo
+  minimum over rounds 11–39 ≥ 0.75 (expected up from 0.77 at r39); no new value.py finding;
+  the Config diff is the one round-39 line; test.sh green. If any expected number is off by
+  more than 0.02 (or 2 damage), stop and report.
 
 ## Part E — Daily Haul and Bounties (log-in rewards + challenges)
 
