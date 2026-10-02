@@ -235,8 +235,32 @@ is empty (#108 met).
   panel still fits (PanelRules spec green, text shrinks rather than clips). 🦖 words it.
 - **Leavers (#111):** a spec or comment-backed test that when a hunter leaves mid-round the
   team count drops by their pops and nobody's pending XP rises; no behaviour change.
+- **🦖 Round 11 wording (DECISIONS #114–#115; names and strings only, no numbers).** Assert
+  each cell or string holds the old text first.
+  - `Mastery Perks` names: C5 `Lingering Dart` → **`Sticky Dart`**; C6 `Split Dart` →
+    **`Spare Dart`**; C7 `Carrying Voice` → **`Hunting Horn`**; C11 `Long Reach` →
+    **`Far Reach`**. C8 Long Rally, C9 Wide Flare, C10 Smoulder, C12 Stocked Kit stay.
+  - `Mastery Perks` text: D9 → **`Flare Strike reaches 1.5 studs further`**; D10 →
+    **`Flare Strike leaves burning ground for 3s (12% of the strike's damage each second)`**.
+  - `Mastery` E14 → **`Start every match with your first upgrade free, plus this hero's
+    mastery-10 ability perk`**; E19 → **`Ability cooldown -30%, plus this hero's mastery-15
+    ability perk`**.
+  - `Shop.client` `perkLines`: `Level {perk.level} perk` → **`Mastery {perk.level} perk`**.
+    The Amber note: `Mastery never makes your gun hit harder.` → **`Mastery perks boost your
+    ability, never your gun's damage.`**
+  - `Hud.client`: `+{pending} on clear` → **`+{pending} bonus on round clear`** (the row
+    must still fit: shrink the text, never clip); `Towers level {level} — +{percent}%` →
+    **`Tower level {level} — towers hit {percent}% harder`**.
+  - Unchanged on purpose: "XP", `Lv {N}`, `Hunter level {N} — your shots hit {P}% harder`,
+    the tower-panel line above, ` (owned)`. In menus the class is a "hero" ("Choose your
+    hero", "this hero's …"); "hunter" is the player in a match. Don't change either.
+  - Checks: the audit's perk-name collision check and number-in-text check stay 0; grep
+    shows no `Split Dart`, `Lingering Dart`, `Carrying Voice`, `Long Reach`, `Level {perk`,
+    `on clear\`` (without "round") or `Towers level` in `src/` or the sheet's exported
+    Config; specs that quote the old names or strings are updated, not deleted.
 - **Accept:** `check.sh`, exporter, `test.sh` green; audit strict 0; `value.py` / `threat.py`
-  exit 0; Config unchanged.
+  exit 0; Config diff = four perk `name` lines, two perk `text` lines and two Mastery
+  `unlock` lines, nothing else.
 
 ## Part I — Review, playtest, docs
 

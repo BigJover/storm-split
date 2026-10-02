@@ -393,3 +393,41 @@ Read: the `DailyHaul` and `Bounties` blocks in `src/shared/Config.luau`, `src/sh
 9. **nice-to-have — the "not saving" note is for the developer.** `HuntBoard.client.luau:642`: `Progress isn't saving: publish the place to Roblox to keep it (SETUP.md).` shows whenever `SaveStatus` is "offline". If that can ever happen in the published game, a player needs: `Progress isn't saving right now.` It's the same string as in Shop.client, so change both or neither.
 
 Left alone on purpose: "Pachycephalosaurs" (long, but it's the species' in-game name), "Day 1"–"Day 6", `Claim`, `Swap (n left)`, the countdown format, every colour, and all numbers and rules.
+
+## Round 11 — mastery perk names and XP wording (T37)
+
+Read: `Config.MasteryPerks` and the `Mastery` `unlock` lines in `src/shared/Config.luau`, `perkLines` / `ownedPerkLine` and the Amber note in `src/client/Shop.client.luau`, the XP row and level banners in `src/client/Hud.client.luau`, against `HEROES.md` and `UPGRADES.md`. Read from code only; nothing was run. No numbers or rules change below.
+
+**Verdict: five of eight perk names stay. Two names and three strings are must-fix; "XP" stays as plain "XP".**
+
+**Perk names (final table)**
+
+| Hunter | Mastery | Working name | Final name | Final text |
+|---|---|---|---|---|
+| Tracker | 10 | Lingering Dart | **Sticky Dart** | Tracking Dart lasts 2s longer |
+| Tracker | 15 | Split Dart | **Spare Dart** | Tracking Dart also marks the nearest dino within 10 studs at 40% strength |
+| Big Game Hunter | 10 | Carrying Voice | **Hunting Horn** | Rally Cry reaches 5 studs further |
+| Big Game Hunter | 15 | Long Rally | Long Rally (keep) | Rally Cry lasts 3s longer |
+| Brush Beater | 10 | Wide Flare | Wide Flare (keep) | Flare Strike reaches 1.5 studs further |
+| Brush Beater | 15 | Smoulder | Smoulder (keep) | Flare Strike leaves burning ground for 3s (12% of the strike's damage each second) |
+| Field Medic | 10 | Long Reach | **Far Reach** | Triage Kit reaches 4 studs further |
+| Field Medic | 15 | Stocked Kit | Stocked Kit (keep) | Triage Kit heals 10 more HP |
+
+Checked against every tier, perk and ability name in `HEROES.md`, `UPGRADES.md` and `Config.luau`: Sticky Dart, Spare Dart, Hunting Horn and Far Reach are unused. Rejected: Barbed Dart (Tranq Station already has "Barbed Darts"), Scorched Ground (too close to "Scorched Earth").
+
+**Fixes**
+
+1. **must-fix — `Split Dart` → `Spare Dart`.** "Split" is the old Storm Split word, and the theme's one hard rule is that nothing splits (dinos shrink). The dart doesn't split either: a second, weaker mark lands on a neighbour. "Spare" also says "the lesser one" without a number.
+2. **must-fix — `Lingering Dart` → `Sticky Dart`.** Tranq Station's tier 3 is "Lingering Dose", another dart that lasts longer: two near-twin names for different things. "Sticky" is also a word a kid reads at once.
+3. **must-fix — Wide Flare's text: `Flare Strike is 1.5 studs wider` → `Flare Strike reaches 1.5 studs further`.** The radius grows 1.5, so the strike is 3 studs wider across; "wider" reads as the wrong number. This also matches the wording of the other two radius perks.
+4. **must-fix — `Level {N} perk` → `Mastery {N} perk`** (`Shop.client.luau`, `perkLines`). The HUD now shows "Lv N" and "Hunter level N" for the in-match level; a hunter at match level 10 will read "Level 10 perk" as theirs. The row already says "mastery 9 → 10", so the word is on screen. Same for the two `unlock` lines: `plus your hunter's level-10 ability perk` → `plus this hero's mastery-10 ability perk`; `plus your hunter's level-15 ability perk` → `plus this hero's mastery-15 ability perk` ("this hero's" is what the other unlock lines in the same list say).
+5. **must-fix — tower banner: `Towers level {N} — +{P}%` → `Tower level {N} — towers hit {P}% harder`.** "+10%" of what isn't said; the hunter banner beside it says it in full, and the new tower-panel line says "Tower level", singular.
+6. **nice-to-have — `Carrying Voice` → `Hunting Horn`.** "Carrying" is a grown-up idiom; a horn is hunting gear and says "heard further" on its own.
+7. **nice-to-have — `Long Reach` → `Far Reach`.** The Medic's own Muzzle path has "Long Dose", and "Long Rally" is another perk in the same set.
+8. **nice-to-have — Smoulder's text:** `(12% of the strike each second)` → `(12% of the strike's damage each second)`.
+9. **nice-to-have — `+{N} on clear` → `+{N} bonus on round clear`.** "Clear" alone means a track clear elsewhere ("Clear a track to earn Amber"), and the bar gains the round's XP plus this number, so it is a bonus, not the whole gain. Fits the 420-wide row: `240 / 500 XP  ·  +12 bonus on round clear`.
+10. **nice-to-have — `Mastery never makes your gun hit harder.` → `Mastery boosts your ability, never your gun's damage.`** Says what mastery does before what it doesn't; about the same length, so the 50-high row still fits.
+
+**XP: keep plain "XP".** Every Roblox player knows it, it's two letters in a tight row, and Amber is the one themed currency: a second themed word (Trophies, Renown, Tracks) would need explaining and could be mistaken for something you spend.
+
+Left alone on purpose: `Lv {N}`, `{shown} / {needed} XP`, `Hunter level {N} — your shots hit {P}% harder`, `Tower level {N} · +{X}% damage` (tower panel), `{ability} perks: {names}`, ` (owned)`, the British spelling of Smoulder (the game says "armour"), and all numbers.
