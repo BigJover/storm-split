@@ -46,7 +46,8 @@ Usage:
     python3 tools/value.py --pacing  the pacing model (PLAN T19): the Balance Check's
                                      affordability per difficulty x 1/4/10 hunters (asserts
                                      it reproduces the sheet's Easy-solo column exactly),
-                                     trampled-tower repair price vs income, Amber pace
+                                     trampled-tower repair price vs income, Amber pace,
+                                     and whether each bounty fits a match (PLAN T25)
 """
 
 import contextlib
@@ -677,14 +678,100 @@ def pacing_report(data):
     dead = [i for i, m in enumerate(mastery, start=1) if not m["unlock"]]
     if dead:
         findings.append(f"MASTERY: levels {ranges(dead)} give no reward ({sum(mastery[i - 1]['coreCost'] for i in dead):g} of {total:g} Amber; DECISIONS #61: ask Jovan)")
-    if "Daily Haul" in wb.sheetnames:
-        print("    Daily Haul/Bounties sheets found: the with-bounties pace isn't modelled yet (T25 adds it)")
-    else:
-        print("    with the daily/weekly maximum: pending T25 (no Daily Haul / Bounties sheets yet)")
+    bounty_report(data, easy, unlock, findings)
 
     print(f"Findings ({len(findings)}):")
     for f in findings:
         print(f"  - {f}")
+
+
+# A daily bounty must fit one solo Easy match reaching this round; a weekly must fit this
+# many such matches or clears (DECISIONS #66, PLAN round 2 T25).
+BOUNTY_MATCH_ROUND = 25
+BOUNTY_WEEK_MATCHES = 5
+
+
+def bounty_report(data, easy, unlock, findings):
+    """(d) of the pacing report: can each bounty be done, and the most Amber a week of
+    log-ins and bounties adds. `easy` is pacing_rounds for Easy solo.
+
+    One match = solo Easy to round BOUNTY_MATCH_ROUND; a clear = all the rounds. What one
+    match can hold: pops = the Rounds sheet's counts; ability uses = round seconds / the
+    best free hero's cooldown; builds = cash earned / the cheapest free tower; upgrades =
+    the n that cash covers at two tier-1 upgrades per cheapest free tower. Repairs of
+    trampled towers aren't modelled (how often a tower falls depends on where it stands)."""
+    tuning, rounds = data["Tuning"], data["Rounds"]
+    free_towers = [t for t in data["Towers"].values() if t["unlockCost"] == 0]
+    free_heroes = [h for h in data["Heroes"].values() if h["unlockCost"] == 0]
+    tower = min(t["baseCost"] for t in free_towers)
+    upgrade = min(p["tiers"][0]["cost"] for t in free_towers for p in t["paths"] if p["tiers"])
+    cooldown = min(h["abilityCooldown"] for h in free_heroes)
+
+    def capacity(b, upto):
+        """How much of bounty b one match to round `upto` can do; None = not modelled."""
+        played = rounds[:upto]
+        cash = easy[upto - 1]["cumulative"]
+        event = b["event"]
+        if event == "pop":
+            return sum(rd["counts"].get(b["target"], 0) for rd in played)
+        if event == "popTotal":
+            return sum(sum(rd["counts"].values()) for rd in played)
+        if event == "reachRound":
+            return (1 if upto >= b["round"] else 0) if b["round"] else upto
+        if event == "clear":
+            return 1 if upto >= len(rounds) else 0
+        if event == "ability":
+            return math.floor(sum(row["length"] for row in easy[:upto]) / cooldown)
+        if event == "build":
+            return math.floor(cash / tower)
+        if event == "upgrade":
+            n = 0
+            while math.ceil((n + 1) / 2) * tower + (n + 1) * upgrade <= cash:
+                n += 1
+            return n
+        return None
+
+    print(f"  (d) bounties: a daily must fit one solo Easy match to round {BOUNTY_MATCH_ROUND}, a weekly {BOUNTY_WEEK_MATCHES} such matches or clears (DECISIONS #66)")
+    cells, unmodelled = [], []
+    for key in data["BountyOrder"]:
+        b = data["Bounties"][key]
+        match, clear = capacity(b, BOUNTY_MATCH_ROUND), capacity(b, len(rounds))
+        if match is None:
+            unmodelled.append(f"{b['title']} {b['count']:g}")
+            continue
+        daily = b["pool"] == "daily"
+        # A reach-round bounty with no Target counts the round itself, so more matches don't add up.
+        once = b["event"] == "reachRound" and not b["round"]
+        room = match if daily else (max(match, clear) if once else BOUNTY_WEEK_MATCHES * max(match, clear))
+        mark = ""
+        if b["count"] > room:
+            if daily and b["count"] <= clear:
+                mark = " (needs a full clear)"
+                findings.append(f"BOUNTY: {key} ({b['title']}, daily) needs a full clear, not a match to round {BOUNTY_MATCH_ROUND} (PLAN's final pool; ask the Director)")
+            else:
+                mark = " MISS"
+                findings.append(f"BOUNTY: {key} ({b['title']}) asks {b['count']:g}, the model allows {room:g}")
+        cells.append(f"{key[:1].lower()} {b['title']} {b['count']:g}/{room:g}{mark}")
+    for i in range(0, len(cells), 6):
+        print("    " + ", ".join(cells[i:i + 6]))
+    if unmodelled:
+        print(f"    not modelled (needs a trampled tower; see threat.py's hugging column): {', '.join(unmodelled)}")
+        findings.append(f"BOUNTY: {', '.join(unmodelled)} can't be checked: no model of how often a tower is trampled (playtest)")
+
+    order, difficulties = data["DifficultyOrder"], data["Difficulties"]
+    easy_clear = difficulties[order[0]]["clearReward"]
+    haul = sum(day["amber"] for day in data["DailyHaul"])
+    best = {}
+    for pool, lever in (("daily", "DailyBounties"), ("weekly", "WeeklyBounties")):
+        slots = export_constants.active_slots(tuning[lever])
+        best[pool] = sum(
+            sum(sorted((b["amber"] for b in data["Bounties"].values() if b["pool"] == pool and b["slot"] == slot), reverse=True)[:slots.count(slot)])
+            for slot in export_constants.BOUNTY_SLOTS)
+    days = len(data["DailyHaul"])
+    week = haul * 7 / days + 7 * best["daily"] + best["weekly"]
+    print(f"    the most a week adds: Daily Haul {haul * 7 / days:g} + dailies 7 x {best['daily']:g} + weeklies {best['weekly']:g} = {week:g} Amber"
+          f" = {week / easy_clear:.1f} Easy clears; alone it unlocks everything ({unlock:g}) in {unlock / week:.1f} weeks")
+    print(f"    log-in only (no play): {haul * 7 / days:g} Amber a week = {haul * 7 / days / easy_clear:g} Easy clears")
 
 
 def main():

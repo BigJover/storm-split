@@ -52,7 +52,15 @@ LADDER_EXTENSIONS = {
 DEAD_ALLOWED = {
     ("Tuning", "StartingLives"): "superseded by Difficulty -> Starting lives",
     ("Enemies", "cashValue"): "display column; the code pays maxHp x CashPerEffectiveHP, the same value unrounded",
+    ("Bounties", "title"): "display text: the Hunt Board card and the in-match toast (PLAN round 2 T28/T29)",
+    ("Bounties", "text"): "display text: the Hunt Board card (PLAN round 2 T29)",
 }
+# Until PLAN round 2 T26 adds Shared/Bounties, which reads these. T26 deletes this block.
+_PENDING_T26 = "read by Shared/Bounties, built next (PLAN round 2 T26)"
+for _field in ("DailyBounties", "WeeklyBounties", "DailySwaps", "WeeklySwaps", "WeeklyResetDay"):
+    DEAD_ALLOWED[("Tuning", _field)] = _PENDING_T26
+for _field in ("pool", "slot", "event"):
+    DEAD_ALLOWED[("Bounties", _field)] = _PENDING_T26
 
 
 def read(name):
@@ -229,6 +237,10 @@ def config_fields(data):
     for i, row in enumerate(data["Rounds"], start=1):
         note("Rounds", row, f"round {i}")
         fields.setdefault(("Rounds", "counts"), []).append(f"round {i}")
+    for i, row in enumerate(data["DailyHaul"], start=1):
+        note("DailyHaul", row, f"day {i}")
+    for key, bounty in data["Bounties"].items():
+        note("Bounties", bounty, key)
     return fields
 
 

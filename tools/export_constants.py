@@ -344,7 +344,164 @@ def read_rounds(ws):
     return out
 
 
+def read_daily_haul(ws):
+    """Daily Haul: one row per calendar day (Day, Amber, Note)."""
+    out = []
+    r = 5
+    while v(ws, r, 1) is not None:
+        if v(ws, r, 1) != len(out) + 1:
+            sys.exit(f"Daily Haul row {r}: Day must be {len(out) + 1} (days run 1, 2, 3, ...)")
+        out.append({"amber": num(v(ws, r, 2))})
+        r += 1
+    return out
+
+
+BOUNTY_POOLS = ["daily", "weekly"]
+BOUNTY_SLOTS = ["easy", "medium", "hard"]  # the order active slots fill in (Shared/Bounties)
+# Event -> what its Target column may hold
+BOUNTY_EVENTS = {
+    "pop": "species", "popTotal": "none", "clear": "difficulty", "reachRound": "round",
+    "ability": "none", "build": "none", "upgrade": "none", "repair": "none",
+}
+
+
+def read_bounties(ws):
+    """Bounties: Id, Pool, Slot, Event, Target, Count, Amber, Title, Text.
+
+    Target is a species key (pop), a difficulty key (clear: that one or harder) or a
+    round (reachRound: reach that round Count times; blank = reach round Count). The
+    round goes out as `round`, so `target` is always a string."""
+    bounties, order = {}, []
+    r = 5
+    while v(ws, r, 1):
+        key = str(v(ws, r, 1)).strip()
+        event, target = str(v(ws, r, 4) or "").strip(), v(ws, r, 5)
+        is_round = event == "reachRound" and isinstance(target, (int, float)) and not isinstance(target, bool)
+        if key in bounties:
+            sys.exit(f"Bounties row {r}: Id '{key}' is used twice")
+        order.append(key)
+        bounties[key] = {
+            "title": str(v(ws, r, 8) or "").strip(),
+            "text": str(v(ws, r, 9) or "").strip(),
+            "pool": str(v(ws, r, 2) or "").strip().lower(),
+            "slot": str(v(ws, r, 3) or "").strip().lower(),
+            "event": event,
+            "target": "" if target is None or is_round else str(target).strip().upper(),
+            "round": target if is_round else 0,
+            "count": num(v(ws, r, 6)),
+            "amber": num(v(ws, r, 7)),
+        }
+        r += 1
+    return bounties, order
+
+
 # ---------------------------------------------------------------- validation
+
+def active_slots(count):
+    """The slots of `count` active bounties: easy, medium, hard, easy, ... (Shared/Bounties)."""
+    return [BOUNTY_SLOTS[i % len(BOUNTY_SLOTS)] for i in range(max(0, int(count)))]
+
+
+def validate_rewards(data, problems, notes):
+    """Daily Haul and Bounties (PLAN round 2 T25). "Log-ins never beat playing" is
+    checked here, not left to today's seeds (DECISIONS #71)."""
+    tuning, difficulties = data["Tuning"], data["Difficulties"]
+
+    def whole(x, low=0, high=None):
+        return (isinstance(x, (int, float)) and not isinstance(x, bool) and float(x).is_integer()
+                and x >= low and (high is None or x <= high))
+
+    levers = {
+        "DailyBounties": (1, None), "WeeklyBounties": (1, None), "DailySwaps": (0, None),
+        "WeeklySwaps": (0, None), "HaulResetsAfterMissedDays": (0, None),
+        "DailyResetHourUTC": (0, 23), "WeeklyResetDay": (1, 7),
+    }
+    for key, (low, high) in levers.items():
+        if key not in tuning:
+            problems.append(f"Tuning is missing '{key}' (REWARDS; Shared/Bounties reads it by name)")
+        elif not whole(tuning[key], low, high):
+            problems.append(f"Tuning {key}: must be a whole number {low}{'+' if high is None else f'-{high}'}")
+    if "EASY" not in difficulties or "CHAOS" not in difficulties:
+        problems.append("Rewards are checked against the Easy and Chaos clear rewards: the Difficulty sheet needs both rows")
+        return
+    easy, chaos = difficulties["EASY"]["clearReward"], difficulties["CHAOS"]["clearReward"]
+
+    haul = data["DailyHaul"]
+    if not haul:
+        problems.append("Daily Haul: needs at least one day")
+    for i, day in enumerate(haul, start=1):
+        if not whole(day["amber"], 1):
+            problems.append(f"Daily Haul day {i}: Amber must be a whole number above 0")
+        elif day["amber"] >= easy:
+            problems.append(f"Daily Haul day {i}: {day['amber']:g} Amber is not below the Easy clear reward ({easy:g}); log-ins must never beat playing")
+    week = sum(day["amber"] for day in haul if isinstance(day["amber"], (int, float)))
+    if week > 2 * easy:
+        problems.append(f"Daily Haul: the whole calendar pays {week:g} Amber, more than two Easy clears ({2 * easy:g})")
+
+    bounties = data["Bounties"]
+    free_air = [x["display"] for block in ("Towers", "Heroes") for x in data[block].values()
+                if x["unlockCost"] == 0 and x["hitsAir"]]
+    for key, b in bounties.items():
+        where = f"Bounty {key}"
+        if not re.match(r"^[A-Z][A-Z0-9_]*$", key):
+            problems.append(f"{where}: Id must be CAPITALS_AND_UNDERSCORES (it is saved in profiles)")
+        if b["pool"] not in BOUNTY_POOLS:
+            problems.append(f"{where}: Pool must be one of {', '.join(BOUNTY_POOLS)}")
+        if b["slot"] not in BOUNTY_SLOTS:
+            problems.append(f"{where}: Slot must be one of {', '.join(BOUNTY_SLOTS)}")
+        if not b["title"] or not b["text"]:
+            problems.append(f"{where}: needs a Title and a Text")
+        if not whole(b["count"], 1):
+            problems.append(f"{where}: Count must be a whole number above 0")
+        if not whole(b["amber"], 1):
+            problems.append(f"{where}: Amber must be a whole number above 0")
+        kind = BOUNTY_EVENTS.get(b["event"])
+        target = b["target"]
+        if kind is None:
+            problems.append(f"{where}: Event must be one of {', '.join(BOUNTY_EVENTS)}")
+        elif kind == "species":
+            enemy = data["Enemies"].get(target)
+            if not enemy:
+                problems.append(f"{where}: Target '{target}' is no key on the Enemies sheet")
+            elif enemy["flying"] and not free_air:
+                problems.append(f"{where}: {enemy['display']} flies, and no free tower or hero has Hits air (DECISIONS #66: bounties only ask for what the free roster can do)")
+        elif kind == "difficulty":
+            if target and target not in difficulties:
+                problems.append(f"{where}: Target '{target}' is no difficulty (blank = any)")
+        elif kind == "round":
+            if target:
+                problems.append(f"{where}: Target must be a round number or blank, not '{target}'")
+            reach = b["round"] or b["count"]
+            if not whole(reach, 1, len(data["Rounds"])):
+                problems.append(f"{where}: round {reach} isn't one of the {len(data['Rounds'])} rounds")
+        elif target:
+            problems.append(f"{where}: a '{b['event']}' bounty takes no Target")
+
+    def amber(b):
+        return b["amber"] if isinstance(b["amber"], (int, float)) else 0
+
+    best = {}  # pool -> the most one set can pay
+    for pool, lever in zip(BOUNTY_POOLS, ("DailyBounties", "WeeklyBounties")):
+        slots = active_slots(tuning.get(lever, 0) if whole(tuning.get(lever), 0) else 0)
+        total = 0
+        for slot in BOUNTY_SLOTS:
+            rows = sorted((amber(b) for b in bounties.values() if b["pool"] == pool and b["slot"] == slot), reverse=True)
+            used = slots.count(slot)
+            if used and len(rows) < used + 2:
+                problems.append(f"Bounties: {pool} {slot} has {len(rows)} entries; it needs {used + 2} ({used} on the board + 2, so a swap always has a choice)")
+            total += sum(rows[:used])
+        best[pool] = total
+    if best["daily"] >= easy:
+        problems.append(f"Bounties: a day's set can pay {best['daily']:g} Amber, not below the Easy clear reward ({easy:g})")
+    for key, b in bounties.items():
+        if b["pool"] == "weekly" and amber(b) >= chaos:
+            problems.append(f"Bounty {key}: {b['amber']:g} Amber is not below the Chaos clear reward ({chaos:g})")
+    if best["weekly"] > chaos:
+        problems.append(f"Bounties: a week's set can pay {best['weekly']:g} Amber, more than the Chaos clear reward ({chaos:g})")
+    notes.append(f"rewards: Daily Haul {week:g} Amber over {len(haul)} days (bar {2 * easy:g}); daily bounties up to {best['daily']:g} (< {easy:g}),"
+                 f" weekly up to {best['weekly']:g} (<= {chaos:g}); {sum(1 for b in bounties.values() if b['pool'] == 'daily')} daily + "
+                 f"{sum(1 for b in bounties.values() if b['pool'] == 'weekly')} weekly in the pools")
+
 
 def validate(data):
     problems = []
@@ -522,6 +679,8 @@ def validate(data):
     if best_tower_leveled and best_weapon > best_tower_leveled:
         problems.append("A maxed hero out-damages the best maxed tower. The game becomes a horde shooter.")
 
+    validate_rewards(data, problems, notes)
+
     return problems, notes
 
 
@@ -655,6 +814,10 @@ def read_data(xlsx):
     heroes, hero_order = read_heroes(wb["Heroes"])
     attach_hero_paths(wb["Hero Upgrades"], heroes)
     difficulties, difficulty_order = read_difficulty(wb["Difficulty"])
+    for name in ("Daily Haul", "Bounties"):
+        if name not in wb.sheetnames:
+            sys.exit(f"The spreadsheet has no '{name}' sheet (PLAN round 2 T25)")
+    bounties, bounty_order = read_bounties(wb["Bounties"])
 
     data = {
         "Tuning": read_tuning(wb["Tuning"]),
@@ -668,6 +831,9 @@ def read_data(xlsx):
         "Rounds": read_rounds(wb["Rounds"]),
         "Difficulties": difficulties,
         "DifficultyOrder": difficulty_order,
+        "DailyHaul": read_daily_haul(wb["Daily Haul"]),
+        "Bounties": bounties,
+        "BountyOrder": bounty_order,
     }
     return data
 
