@@ -41,9 +41,14 @@
 
 	HERO LEVELS: each level multiplies all of the hero's damage — rounds,
 	splash, fire, Airburst — by 1 + HeroDamagePerLevel, compounding, so the
-	hero keeps pace with enemy HP. For now every hero levels up together every
-	RoundsPerLevel rounds cleared (Hero.setLevel from Main); levels are kept per
-	player so hero XP from their own pops can drive them later (HEROES.md).
+	hero keeps pace with enemy HP. The level comes from HERO XP (Shared/HeroXp
+	is the rule, this module the only mutator of a hunter's XP, pending pops and
+	level): a cleared round banks Round XP plus a little pop XP (own pops and a
+	share of teammates'), and the level is held between the round level (the old
+	every-RoundsPerLevel curve, which towers stay on) and one lead level above
+	it. Pops are PENDING until Main reports the round cleared
+	(Hero.roundCleared); a lost round or leaving drops them. Joiners and
+	re-joiners start at the floor. XP is per match: nothing is saved.
 
 	SERVER AUTHORITATIVE: a client only says "I pulled the trigger along this
 	camera ray", "reload", or "use my ability along this ray". Hits are echoed
@@ -57,6 +62,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local HeroStats = require(Shared:WaitForChild("HeroStats"))
+local HeroXp = require(Shared:WaitForChild("HeroXp"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local Track = require(Shared:WaitForChild("Track"))
 local Theme = require(Shared:WaitForChild("Theme"))
@@ -84,7 +90,9 @@ type State = {
 	bloom: number, -- extra spread in degrees from recoil
 	bloomAt: number,
 	gunSide: number, -- alternates 1 / -1 for dual guns (visual)
-	level: number,
+	xp: number, -- banked this match (Shared/HeroXp)
+	pops: number, -- this round's pops, pending until the round is cleared
+	level: number, -- HeroXp.level(xp, roundsCleared)
 	freeUpgrade: boolean, -- mastery 10: the first upgrade of the match costs nothing
 	abilityReadyAt: number,
 	overdriveUntil: number,
@@ -108,7 +116,8 @@ local RAY_ORIGIN_SLACK = 20 -- studs beyond max camera zoom a ray may start from
 local SPIN_KEEP = 0.35 -- seconds between pulls that still count as holding the trigger
 
 local states: { [Player]: State } = {}
-local teamLevel = 1 -- what new players start at
+local roundsCleared = 0 -- this match; sets the XP floor and the level clamp
+local teamPops = 0 -- this round's pending pops over every hunter present
 -- (who gets the pop, or nil if they've left; the species key if the dino is gone, nil
 -- for a shrink)
 local onPop: ((Player?, string?) -> ())? = nil
@@ -140,7 +149,9 @@ local function stateOf(player: Player): State
 			bloom = 0,
 			bloomAt = 0,
 			gunSide = 1,
-			level = teamLevel,
+			xp = HeroXp.floorXp(roundsCleared), -- joiners and re-joiners start on the floor
+			pops = 0,
+			level = HeroXp.roundLevel(roundsCleared),
 			freeUpgrade = false,
 			abilityReadyAt = 0,
 			overdriveUntil = 0,
@@ -211,6 +222,8 @@ local function publish(player: Player)
 	local clockToServer = workspace:GetServerTimeNow() - os.clock()
 	player:SetAttribute("Hero", s.hero or "")
 	player:SetAttribute("HeroLevel", s.level)
+	player:SetAttribute("HeroXp", s.xp)
+	player:SetAttribute("HeroXpPending", HeroXp.popXp(s.pops, teamPops)) -- already capped
 	player:SetAttribute("FreeUpgrade", s.freeUpgrade)
 	for i = 1, 3 do
 		player:SetAttribute(`HeroPath{i}`, s.tiers[i])
@@ -743,14 +756,17 @@ end
 ------------------------------------------------------------------ public
 
 -- Between matches: everyone keeps their hero pick but starts over — no
--- upgrades, a full magazine, level 1, ability ready, first upgrade free again
--- with mastery 10+.
+-- upgrades, a full magazine, no XP (level 1), ability ready, first upgrade
+-- free again with mastery 10+.
 function Hero.resetMatch()
-	teamLevel = 1
+	roundsCleared = 0
+	teamPops = 0
 	for player, s in states do
 		s.tiers = { 0, 0, 0 }
 		s.spent = 0
 		s.bloom = 0
+		s.xp = 0
+		s.pops = 0
 		s.level = 1
 		s.abilityReadyAt = 0
 		s.overdriveUntil = 0
@@ -777,12 +793,47 @@ function Hero.masteryChanged(player: Player)
 	refresh(player, false) -- recomputes the stats, then the tool and the HUD attributes
 end
 
--- Level every hero (and anyone who joins later) to `level`; each player's
--- level shows on their HeroLevel attribute.
-function Hero.setLevel(level: number)
-	teamLevel = level
+-- The match starts with `cleared` rounds already behind it (0, unless Main's
+-- Studio start-round constant skips ahead): everyone gets at least that floor.
+function Hero.startMatch(cleared: number)
+	roundsCleared = cleared
+	teamPops = 0
 	for player, s in states do
-		s.level = level
+		s.xp = math.max(s.xp, HeroXp.floorXp(cleared))
+		s.pops = 0
+		s.level = HeroXp.level(s.xp, cleared)
+		publish(player)
+	end
+end
+
+-- A pop credited to this hunter (their gun, towers or fire; shrinks included).
+-- It is pending: worth XP only if the round is cleared. Everyone's pending XP
+-- can move, because teammates' pops count at Tuning TeamPopShare.
+function Hero.addPop(player: Player)
+	local s = states[player]
+	if not s then
+		return
+	end
+	s.pops += 1
+	teamPops += 1
+	for other, state in states do
+		other:SetAttribute("HeroXpPending", HeroXp.popXp(state.pops, teamPops))
+	end
+end
+
+-- Round `index` was cleared: bank Round XP and the pending pop XP for every
+-- hunter present, then start the next round's count from nothing. A lost round
+-- never gets here, so its pops are dropped by Hero.resetMatch.
+function Hero.roundCleared(index: number)
+	roundsCleared = index
+	local team = teamPops
+	teamPops = 0
+	for _, s in states do
+		s.xp = HeroXp.bank(s.xp, s.pops, team, index)
+		s.pops = 0
+		s.level = HeroXp.level(s.xp, index)
+	end
+	for player in states do
 		publish(player)
 	end
 end
@@ -903,8 +954,16 @@ function Hero.init(remotes: Folder, hooks: Hooks?)
 		setUp(player)
 	end
 	Players.PlayerRemoving:Connect(function(player)
+		-- Leaving drops the hunter's pending pops, for them and for the team share.
+		local s = states[player]
+		if s then
+			teamPops = math.max(0, teamPops - s.pops)
+		end
 		states[player] = nil
 		playerGuards[player] = nil
+		for other, state in states do
+			other:SetAttribute("HeroXpPending", HeroXp.popXp(state.pops, teamPops))
+		end
 	end)
 end
 

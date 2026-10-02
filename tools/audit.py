@@ -65,13 +65,7 @@ DEAD_ALLOWED = {
 # Config fields whose reader is a later task of the plan in progress. Listed as notes;
 # an entry becomes a finding the moment some src file reads the field, so it can't
 # outlive its task. (block, field): the task that reads it
-DEAD_PENDING = {
-    ("Tuning", "XPPerLevel"): "PLAN round 3 T34 (hero XP)",
-    ("Tuning", "XPPerPop"): "PLAN round 3 T34 (hero XP)",
-    ("Tuning", "PopXPCapPerRound"): "PLAN round 3 T34 (hero XP)",
-    ("Tuning", "TeamPopShare"): "PLAN round 3 T34 (hero XP)",
-    ("Tuning", "HeroLevelLeadCap"): "PLAN round 3 T34 (hero XP)",
-}
+DEAD_PENDING = {}
 
 
 def read(name):

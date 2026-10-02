@@ -25,6 +25,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Modes = require(Shared:WaitForChild("Modes"))
+local HeroXp = require(Shared:WaitForChild("HeroXp"))
 
 local MapBuilder = require(script.Parent.MapBuilder)
 local Enemies = require(script.Parent.Enemies)
@@ -153,6 +154,7 @@ local NOT_CREDITED = table.freeze({ credited = false })
 local function popped(player: Player?, gone: string?)
 	if player then
 		Scoreboard.addPop(player)
+		Hero.addPop(player) -- pending hero XP, banked when the round is cleared
 	end
 	if gone then
 		for _, hunter in hunters() do
@@ -329,10 +331,6 @@ end)
 
 ------------------------------------------------------------------ one match
 
-local function levelAfter(roundsCleared: number): number
-	return 1 + math.floor(roundsCleared / Config.Tuning.RoundsPerLevel)
-end
-
 -- Back to a clean board. Unlocks, mastery and hero picks are kept.
 local function resetBoard()
 	Enemies.clearAll()
@@ -346,7 +344,8 @@ local function resetBoard()
 	table.clear(joinedThisMatch)
 	over = false
 	ReplicatedStorage:SetAttribute("Round", 0)
-	ReplicatedStorage:SetAttribute("Level", 1)
+	ReplicatedStorage:SetAttribute("Level", 1) -- the tower level
+	ReplicatedStorage:SetAttribute("RoundsCleared", 0)
 	for _, player in Players:GetPlayers() do
 		if player.Character then
 			player.Character:Destroy()
@@ -383,9 +382,12 @@ local function playMatch()
 
 	-- Playing.
 	setState("Playing")
-	local level = levelAfter(START_ROUND - 1)
+	-- Towers ride the round level (the old every-RoundsPerLevel curve); each
+	-- hunter's own level comes from their XP and is Hero's to change.
+	local level = HeroXp.roundLevel(START_ROUND - 1)
 	ReplicatedStorage:SetAttribute("Level", level)
-	Hero.setLevel(level)
+	ReplicatedStorage:SetAttribute("RoundsCleared", START_ROUND - 1)
+	Hero.startMatch(START_ROUND - 1)
 	Towers.setLevel(level)
 	Enemies.setSpeedMult(chosen.speedMult)
 	print(`[DinoHunters] {Modes.Modes[ReplicatedStorage:GetAttribute("Mode")].display} on {chosen.display} with {#Players:GetPlayers()} player(s)`)
@@ -421,13 +423,14 @@ local function playMatch()
 			Economy.earn(Towers.roundIncome(Economy.cash()) * chosen.cashMult) -- Quartermasters
 			Health.healAll(Config.Tuning.HealPerRound)
 
-			local newLevel = levelAfter(index)
+			ReplicatedStorage:SetAttribute("RoundsCleared", index)
+			Hero.roundCleared(index) -- banks Round XP and this round's pending pop XP
+			local newLevel = HeroXp.roundLevel(index)
 			if newLevel > level then
 				level = newLevel
-				Hero.setLevel(level)
 				Towers.setLevel(level)
 				ReplicatedStorage:SetAttribute("Level", level) -- the HUD announces it
-				print(`[DinoHunters] Level {level}: heroes and towers hit harder`)
+				print(`[DinoHunters] Tower level {level}: towers hit harder`)
 			end
 
 			local average = if frames > 0 then costSum / frames else 0
