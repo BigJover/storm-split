@@ -671,6 +671,15 @@ def validate_xp(data, problems, notes):
     notes.append(f"hero XP: {per_level / rounds_per_level:g} a cleared round + up to {tuning['PopXPCapPerRound']:g} pop XP; at the cap a hunter leads the round level by at most {worst} (lead cap {lead_cap:g})")
 
 
+
+def guard_levels(data):
+    """(tower level, highest hero level) in play during the last round: what the
+    hero-vs-tower guard compares. tools/value.py asserts its last checkpoint matches."""
+    tuning = data["Tuning"]
+    round_level = 1 + (len(data["Rounds"]) - 1) // max(1, int(tuning.get("RoundsPerLevel", 5)))
+    return round_level, round_level + int(tuning.get("HeroLevelLeadCap", 0))
+
+
 def validate(data):
     problems = []
     enemies = data["Enemies"]
@@ -844,8 +853,7 @@ def validate(data):
     # hunter HeroLevelLeadCap levels above that, so the hero side uses the highest hero
     # level in play. tools/test/heroxp.spec.luau holds Shared/HeroXp to the same clamp.
     tuning = data["Tuning"]
-    round_level = 1 + (len(data["Rounds"]) - 1) // max(1, int(tuning.get("RoundsPerLevel", 5)))
-    hero_level = round_level + int(tuning.get("HeroLevelLeadCap", 0))
+    round_level, hero_level = guard_levels(data)
     hero_x = 1 + tuning.get("HeroDamagePerLevel", 0)
     tower_scale = (1 + tuning.get("TowerDamagePerLevel", 0)) ** (round_level - 1)
     hero_peak = max(hero_peak_dps(h) for h in data["Heroes"].values())

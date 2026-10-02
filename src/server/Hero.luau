@@ -957,7 +957,7 @@ function Hero.init(remotes: Folder, hooks: Hooks?)
 		-- Leaving drops the hunter's pending pops, for them and for the team share.
 		local s = states[player]
 		if s then
-			teamPops = math.max(0, teamPops - s.pops)
+			teamPops = HeroXp.teamPopsAfterLeave(teamPops, s.pops)
 		end
 		states[player] = nil
 		playerGuards[player] = nil

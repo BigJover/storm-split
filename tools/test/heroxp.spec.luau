@@ -206,3 +206,32 @@ test("the last round is fought at round level 8, and no hunter is above level 9 
 	eq(highest, lastRoundLevel + T.HeroLevelLeadCap, "highest hero level in play")
 	eq(HeroXp.level(after(LAST - 1, 400, 400), LAST - 1), 9, "capped take-downs reach it honestly")
 end)
+
+-- Leavers (PLAN round 3 T36b, DECISIONS #111). Server/Hero's PlayerRemoving handler
+-- calls teamPopsAfterLeave and then re-sends popXp to everyone still in the match.
+
+test("a hunter who leaves mid-round takes their pops out of the team count", function()
+	local pops = { 20, 12, 8 } -- three hunters; the second leaves
+	local team = pops[1] + pops[2] + pops[3]
+	local left = HeroXp.teamPopsAfterLeave(team, pops[2])
+	eq(left, 28, "team count drops by the leaver's 12")
+	eq(HeroXp.popXp(pops[1], team), 6, "first hunter before")
+	eq(HeroXp.popXp(pops[1], left), 5, "first hunter after: one less, not more")
+	eq(HeroXp.popXp(pops[3], team), 4, "third hunter before")
+	eq(HeroXp.popXp(pops[3], left), 3, "third hunter after")
+	eq(HeroXp.teamPopsAfterLeave(5, 9), 0, "never below zero")
+	eq(HeroXp.teamPopsAfterLeave(28, 0), 28, "a leaver with no pops changes nothing")
+end)
+
+test("nobody's pending XP rises when a hunter leaves", function()
+	for own = 0, 80, 4 do
+		for mate = 0, 80, 4 do
+			for leaver = 0, 80, 4 do
+				local team = own + mate + leaver
+				local left = HeroXp.teamPopsAfterLeave(team, leaver)
+				eq(left, own + mate, `{own}+{mate}, {leaver} left: team count`)
+				ok(HeroXp.popXp(own, left) <= HeroXp.popXp(own, team), `{own}+{mate}, {leaver} left: pending rose`)
+			end
+		end
+	end
+end)

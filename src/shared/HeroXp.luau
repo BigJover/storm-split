@@ -43,6 +43,12 @@ function HeroXp.popXp(ownPops: number, teamPops: number): number
 	return math.min(xp, Config.Tuning.PopXPCapPerRound)
 end
 
+-- The team's pops this round once a hunter with `leaverPops` has left (DECISIONS
+-- #111): their pops leave the count, so no one still here gains pending XP from it.
+function HeroXp.teamPopsAfterLeave(teamPops: number, leaverPops: number): number
+	return math.max(0, whole(teamPops) - whole(leaverPops))
+end
+
 -- The XP of a hunter with no pops at all: where late joiners and re-joiners start.
 function HeroXp.floorXp(roundsCleared: number): number
 	return whole(roundsCleared) * HeroXp.roundXp()

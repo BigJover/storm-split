@@ -425,10 +425,13 @@ def hero_lines(data, rows, mixes):
         length = round(sum(rd["counts"].values()) * rd["spawnGap"] + 14)
         return round(rd["effectiveHp"] / length, 1) if length else 0
 
-    # (round level, round, band). As before hero XP, L5 and L9 are the levels that
-    # clearing rounds 20 and 40 gives, one above the level those rounds are fought at:
-    # the model's long-standing, slightly generous reading, kept so its numbers don't move.
-    checkpoints = [(1, 1, 0), (5, 20, 1), (9, 40, 3)]
+    # (round level, round, band): the level IN PLAY during that round (DECISIONS #109),
+    # computed the way Shared/HeroXp and the exporter's guard do: 1 + rounds cleared
+    # before it / RoundsPerLevel. Clearing the round is what gives the next level.
+    checkpoints = [(1 + (rd - 1) // max(1, per), rd, b) for rd, b in ((1, 0), (20, 1), (len(rounds), 3))]
+    # The last checkpoint must be the same pair of levels the exporter's guard compares.
+    assert (checkpoints[-1][0], checkpoints[-1][0] + lead) == export_constants.guard_levels(data), \
+        f"value.py's last checkpoint (tower L{checkpoints[-1][0]}, hero L{checkpoints[-1][0] + lead}) is not the exporter guard's {export_constants.guard_levels(data)}"
     t5 = {}
     for (key, pi, tier), r in rows.items():
         if tier == 5 and not r["support"]:
@@ -466,7 +469,6 @@ def hero_lines(data, rows, mixes):
         out += [f"    {line}" for line in lead_only]
     else:
         out.append("  the ceiling level passes no T5 tower path that the floor level doesn't")
-    out.append(f"  (L5 and L9 are the levels clearing r20 and r40 gives; r40 itself is fought at round level 8, hunters at most L{8 + lead}: the exporter's guard uses those)")
     return out, findings
 
 
