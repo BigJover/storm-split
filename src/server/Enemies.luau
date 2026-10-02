@@ -36,6 +36,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local Track = require(Shared:WaitForChild("Track"))
 local Path = require(Shared:WaitForChild("Path"))
 local DinoLook = require(Shared:WaitForChild("DinoLook"))
+local Combat = require(Shared:WaitForChild("Combat"))
 
 local Enemies = {}
 
@@ -355,16 +356,16 @@ function Enemies.knockback(enemy: Enemy, studs: number)
 end
 
 -- Marked enemies take +percent damage from every source until the mark expires.
--- A stronger mark replaces a weaker one; any mark refreshes the timer.
+-- An equal or stronger mark replaces the one it carries; a weaker one never weakens
+-- it (the stronger percent stays and its time is never cut short): Combat.mergeMark.
 function Enemies.mark(enemy: Enemy, percent: number, seconds: number)
 	if not enemy.alive or percent <= 0 then
 		return
 	end
 	local now = os.clock()
-	if now >= enemy.markedUntil or percent >= enemy.markPercent then
-		enemy.markPercent = percent
-	end
-	enemy.markedUntil = now + seconds
+	local merged, remaining = Combat.mergeMark(enemy.markPercent, enemy.markedUntil - now, percent, seconds)
+	enemy.markPercent = merged
+	enemy.markedUntil = now + remaining
 end
 
 -- Set an enemy on fire, or refresh its fire (biggest tick and latest end

@@ -35,6 +35,9 @@
 	hero upgrades cheaper, shortens the ability cooldown, can make the first
 	upgrade of the match free, raises the crossover cap at level 20, and turns
 	the gun gold at max mastery. Read at pick time and on every purchase.
+	At 10 and 15 it also grants the hero's ability perks (Config.MasteryPerks,
+	merged into the stats by Shared/HeroStats): a longer or wider ability, the
+	dart marking a second dino (MARK), burning ground under the strike (AIRBURST).
 
 	HERO LEVELS: each level multiplies all of the hero's damage — rounds,
 	splash, fire, Airburst — by 1 + HeroDamagePerLevel, compounding, so the
@@ -54,6 +57,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local HeroStats = require(Shared:WaitForChild("HeroStats"))
+local Combat = require(Shared:WaitForChild("Combat"))
 local Track = require(Shared:WaitForChild("Track"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
@@ -275,7 +279,9 @@ end
 
 local function refresh(player: Player, refill: boolean)
 	local s = stateOf(player)
-	s.stats = if s.hero then HeroStats.compute(s.hero, s.tiers, s.gear) else nil
+	-- Mastery perks ride on the saved mastery level (the client computes the same
+	-- stats from its Mastery_{hero} attribute).
+	s.stats = if s.hero then HeroStats.compute(s.hero, s.tiers, s.gear, Progression.masteryLevel(player, s.hero)) else nil
 	if s.stats and refill then
 		s.ammo = s.stats.magazine
 		s.reloadUntil = 0
@@ -652,6 +658,22 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 		end
 		Enemies.mark(target, stats.abilityPower, stats.abilitySeconds)
 		Effects.part(Vector3.one * 3, CFrame.new(target.part.Position + Vector3.new(0, 3, 0)), color, 0.6, Enum.PartType.Ball)
+		if stats.markExtra > 0 then
+			-- Mastery perk: the dart also marks the nearest other dinos, at a share of
+			-- its strength, for the same time. Enemies.mark never weakens a stronger mark.
+			local others, positions = {}, {}
+			for _, other in Enemies.getLive() do
+				if other ~= target and other.alive then
+					table.insert(others, other)
+					table.insert(positions, other.part.Position)
+				end
+			end
+			for _, index in Combat.nearestWithin(target.part.Position, positions, stats.markExtraReach, stats.markExtra) do
+				local other = others[index]
+				Enemies.mark(other, stats.abilityPower * stats.markExtraPowerMult, stats.abilitySeconds)
+				Effects.part(Vector3.one * 2, CFrame.new(other.part.Position + Vector3.new(0, 3, 0)), color, 0.6, Enum.PartType.Ball)
+			end
+		end
 	elseif hero.abilityKind == "OVERDRIVE" then
 		s.overdriveUntil = now + stats.abilitySeconds
 		s.overdrivePercent = stats.abilityPower
@@ -670,6 +692,7 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 		local ground = Enemies.pointAt(centre) + Vector3.new(0, 0.5, 0)
 		local delay = Config.Tuning.AirburstDelay
 		local power, stun, radius = stats.abilityPower * levelScale(s), stats.abilitySeconds, stats.abilityRadius
+		local burnPercent, burnSeconds = stats.strikeBurnPercent, stats.strikeBurnSeconds
 		Effects.disc(ground, radius, color, delay, 0.75) -- the warning
 		task.delay(delay, function()
 			Effects.part(Vector3.one * radius * 2, CFrame.new(ground), color, 0.25, Enum.PartType.Ball).Transparency = 0.4
@@ -678,6 +701,11 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 					Enemies.stun(enemy, stun)
 					credit(player, Enemies.damage(enemy, power, true))
 				end
+			end
+			if burnPercent > 0 then
+				-- Mastery perk: the strike leaves burning ground, each second a share of
+				-- the strike's damage; armour-piercing like the strike, credited to the hunter.
+				Hazards.burn(centre, radius, power * burnPercent / 100, burnSeconds, true, player)
 			end
 		end)
 	elseif hero.abilityKind == "HEAL" then
@@ -736,7 +764,7 @@ function Hero.resetMatch()
 end
 
 -- Mastery was just bought: apply a new free first upgrade (if nothing has
--- been bought yet this match) and the gold gun right away.
+-- been bought yet this match), any new ability perk and the gold gun right away.
 function Hero.masteryChanged(player: Player)
 	local s = states[player]
 	if not s or not s.hero then
@@ -746,8 +774,7 @@ function Hero.masteryChanged(player: Player)
 	if s.spent == 0 and s.tiers[1] + s.tiers[2] + s.tiers[3] == 0 then
 		s.freeUpgrade = rewards ~= nil and rewards.freeFirstUpgrade == true
 	end
-	syncTool(player)
-	publish(player)
+	refresh(player, false) -- recomputes the stats, then the tool and the HUD attributes
 end
 
 -- Level every hero (and anyone who joins later) to `level`; each player's

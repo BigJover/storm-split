@@ -71,14 +71,6 @@ DEAD_PENDING = {
     ("Tuning", "PopXPCapPerRound"): "PLAN round 3 T34 (hero XP)",
     ("Tuning", "TeamPopShare"): "PLAN round 3 T34 (hero XP)",
     ("Tuning", "HeroLevelLeadCap"): "PLAN round 3 T34 (hero XP)",
-    ("MasteryPerks", "abilitySecondsAdd"): "PLAN round 3 T33 (perks in play)",
-    ("MasteryPerks", "abilityRadiusAdd"): "PLAN round 3 T33 (perks in play)",
-    ("MasteryPerks", "abilityPowerAdd"): "PLAN round 3 T33 (perks in play)",
-    ("MasteryPerks", "markExtra"): "PLAN round 3 T33 (perks in play)",
-    ("MasteryPerks", "markExtraPowerMult"): "PLAN round 3 T33 (perks in play)",
-    ("MasteryPerks", "markExtraReach"): "PLAN round 3 T33 (perks in play)",
-    ("MasteryPerks", "strikeBurnPercent"): "PLAN round 3 T33 (perks in play)",
-    ("MasteryPerks", "strikeBurnSeconds"): "PLAN round 3 T33 (perks in play)",
 }
 
 

@@ -352,3 +352,170 @@ test("mastery perks: every hero has a named perk at mastery 10 and 15, sorted by
 		ok(Config.Heroes[key] ~= nil, `{key} is a hero`)
 	end
 end)
+
+-- Mastery perks in play (PLAN round 3 T33): HeroStats.compute(key, tiers, gear, mastery).
+
+-- heal / healRadius are the ability power / radius times the Medic's path multipliers,
+-- computed for every hero but read only by the HEAL ability: for the other heroes they
+-- just mirror the ability fields, so the "what changed" lists leave them out.
+local function mirrors(key: string): { [string]: boolean }
+	return if Config.Heroes[key].abilityKind == "HEAL" then {} else { heal = true, healRadius = true }
+end
+
+-- The Stats fields that differ between two computed stats, sorted, as "a,b,c".
+local function changed(a: any, b: any, ignore: { [string]: boolean }?): string
+	local fields = {}
+	for field, value in a do
+		if ignore and ignore[field] then
+			continue
+		end
+		local other = b[field]
+		local same = if type(value) == "number" and type(other) == "number"
+			then math.abs(value - other) < 1e-9
+			else value == other
+		if not same then
+			table.insert(fields, field)
+		end
+	end
+	for field in b do
+		if a[field] == nil then
+			table.insert(fields, field)
+		end
+	end
+	table.sort(fields)
+	return table.concat(fields, ",")
+end
+
+local function mastered(key: string, mastery: number?, tiers: { number }?)
+	return (HeroStats.compute(key, tiers or { 0, 0, 0 }, nil, mastery) :: any)
+end
+
+local function perkAt(key: string, level: number)
+	for _, perk in Config.MasteryPerks[key] do
+		if perk.level == level then
+			return perk
+		end
+	end
+	error(`{key} has no level-{level} perk`)
+end
+
+test("mastery perks: perksAt gives every perk at or below the mastery level, none without mastery", function()
+	for _, key in Config.HeroOrder do
+		local names = function(level: number?): string
+			local out = {}
+			for _, perk in HeroStats.perksAt(key, level) do
+				table.insert(out, perk.name)
+			end
+			return table.concat(out, "+")
+		end
+		local ten, fifteen = perkAt(key, 10), perkAt(key, 15)
+		eq(names(nil), "", `{key} no mastery`)
+		eq(names(0), "", `{key} mastery 0`)
+		eq(names(9), "", `{key} mastery 9`)
+		eq(names(10), ten.name, `{key} mastery 10`)
+		eq(names(14), ten.name, `{key} mastery 14`)
+		eq(names(15), `{ten.name}+{fifteen.name}`, `{key} mastery 15 has both`)
+		eq(names(20), `{ten.name}+{fifteen.name}`, `{key} mastery 20 has both`)
+		eq(HeroStats.hasPerk(ten, 9), false, `{key} level-10 perk at 9`)
+		eq(HeroStats.hasPerk(ten, 10), true, `{key} level-10 perk at 10`)
+		eq(HeroStats.hasPerk(fifteen, 14), false, `{key} level-15 perk at 14`)
+		eq(HeroStats.hasPerk(fifteen, 15), true, `{key} level-15 perk at 15`)
+		eq(HeroStats.hasPerk(fifteen, nil), false, `{key} level-15 perk with no mastery`)
+		eq(#HeroStats.perksOf(key), #Config.MasteryPerks[key], `{key} perksOf lists them all`)
+	end
+	eq(#HeroStats.perksAt("NOBODY", 20), 0, "an unknown hero has none")
+	eq(#HeroStats.perksOf("NOBODY"), 0, "perksOf an unknown hero")
+end)
+
+test("mastery perks: below 10 the stats are exactly the stats without mastery (every hero, every legal tier set)", function()
+	for _, key in Config.HeroOrder do
+		local hero = Config.Heroes[key]
+		for _, tiers in legalTierSets() do
+			local plain = (HeroStats.compute(key, tiers) :: any)
+			for _, mastery in { 0, 1, 5, 9 } do
+				eq(changed(plain, mastered(key, mastery, tiers)), "", `{key} mastery {mastery} tiers {table.concat(tiers, "-")}`)
+			end
+		end
+		local plain = base(key)
+		eq(plain.abilityPower, hero.abilityPower, `{key} base ability power`)
+		eq(plain.abilitySeconds, hero.abilitySeconds, `{key} base ability seconds`)
+		eq(plain.abilityRadius, hero.abilityRadius, `{key} base ability radius`)
+		for _, field in { "markExtra", "markExtraPowerMult", "markExtraReach", "strikeBurnPercent", "strikeBurnSeconds" } do
+			eq(plain[field], 0, `{key} {field} without mastery`)
+		end
+	end
+end)
+
+test("mastery 10: only the level-10 lever moves, by the sheet value (and stays to 14)", function()
+	-- hero -> the fields that change at 10, and the lever's new value (PLAN round 3)
+	local want = {
+		PISTOL = { fields = "abilitySeconds", lever = "abilitySeconds", add = "abilitySecondsAdd", value = 10 }, -- Lingering Dart 8 -> 10
+		RIFLE = { fields = "abilityRadius", lever = "abilityRadius", add = "abilityRadiusAdd", value = 30 }, -- Carrying Voice 25 -> 30
+		SHOTGUN = { fields = "abilityRadius", lever = "abilityRadius", add = "abilityRadiusAdd", value = 11.5 }, -- Wide Flare 10 -> 11.5
+		MEDIC = { fields = "abilityRadius,healRadius", lever = "healRadius", add = "abilityRadiusAdd", value = 24 }, -- Long Reach 20 -> 24
+	}
+	for _, key in Config.HeroOrder do
+		local w = want[key]
+		ok(w ~= nil, `{key} is covered by this spec`)
+		local before, at10 = mastered(key, 9), mastered(key, 10)
+		eq(changed(before, at10, mirrors(key)), w.fields, `{key}: what changes at mastery 10`)
+		near(at10[w.lever], w.value, `{key} {w.lever} at mastery 10`)
+		near(at10[w.lever] - before[w.lever], perkAt(key, 10)[w.add], `{key} moves by the sheet value`)
+		eq(changed(at10, mastered(key, 14)), "", `{key}: nothing more until 15`)
+	end
+end)
+
+test("mastery 15: both perks (and nothing more at 20); perks never touch the gun", function()
+	local want = {
+		-- Lingering Dart + Split Dart: 10s, 1 extra mark at 0.4x within 10 studs
+		PISTOL = { fields = "abilitySeconds,markExtra,markExtraPowerMult,markExtraReach",
+			values = { abilitySeconds = 10, abilityPower = 50, markExtra = 1, markExtraPowerMult = 0.4, markExtraReach = 10 } },
+		-- Carrying Voice + Long Rally: 30 studs, 13s, still +40%
+		RIFLE = { fields = "abilityRadius,abilitySeconds", values = { abilityRadius = 30, abilitySeconds = 13, abilityPower = 40 } },
+		-- Wide Flare + Smoulder: 11.5 studs, 12% a second for 3s; the stun and the damage don't move
+		SHOTGUN = { fields = "abilityRadius,strikeBurnPercent,strikeBurnSeconds",
+			values = { abilityRadius = 11.5, strikeBurnPercent = 12, strikeBurnSeconds = 3, abilitySeconds = 2, abilityPower = 30 } },
+		-- Long Reach + Full Kit: 24 studs, 50 HP
+		MEDIC = { fields = "abilityPower,abilityRadius,heal,healRadius", values = { healRadius = 24, heal = 50, abilityPower = 50 } },
+	}
+	local gun = { "damage", "shotDamage", "rate", "magazine", "reload", "pellets", "spread", "recoilPerShot", "recoilMax", "range",
+		"pierce", "bounces", "burnDps", "burnSeconds", "splashRadius", "knockback", "markPercent", "markedDamageMult", "abilityCooldown" }
+	for _, key in Config.HeroOrder do
+		local w = want[key]
+		ok(w ~= nil, `{key} is covered by this spec`)
+		local none, at15 = mastered(key, 0), mastered(key, 15)
+		eq(changed(none, at15, mirrors(key)), w.fields, `{key}: what changes by mastery 15`)
+		for field, value in w.values do
+			near(at15[field], value, `{key} {field} at mastery 15`)
+		end
+		eq(changed(at15, mastered(key, 20)), "", `{key}: mastery 20 adds no perk`)
+		for _, tiers in legalTierSets() do
+			local plain, maxed = (HeroStats.compute(key, tiers) :: any), mastered(key, 20, tiers)
+			for _, field in gun do
+				eq(maxed[field], plain[field], `{key} {field} at mastery 20, tiers {table.concat(tiers, "-")}`)
+			end
+		end
+	end
+end)
+
+test("mastery perks add to the base before path multipliers: Full Kit x Clean Bandages, Long Reach x Triage Tent", function()
+	eq(Config.Heroes.MEDIC.paths[1].tiers[1].name, "Clean Bandages")
+	eq(Config.Heroes.MEDIC.paths[1].tiers[4].name, "Triage Tent")
+	near(mastered("MEDIC", 15, { 1, 0, 0 }).heal, 50 * 1.25, "Full Kit + Clean Bandages = 50 x 1.25")
+	near(mastered("MEDIC", 10, { 1, 0, 0 }).heal, 40 * 1.25, "no Full Kit at 10")
+	near(mastered("MEDIC", 10, { 4, 0, 0 }).healRadius, 24 * 1.5, "Long Reach + Triage Tent = 24 x 1.5")
+	near(mastered("MEDIC", 9, { 4, 0, 0 }).healRadius, 20 * 1.5, "no Long Reach at 9")
+	near(mastered("MEDIC", 15, { 4, 0, 0 }).heal, 50 * 1.25, "both, through the whole Triage path")
+	near(mastered("MEDIC", 15, { 4, 0, 0 }).healRadius, 24 * 1.5, "both, through the whole Triage path")
+end)
+
+test("Rally Cry: the radius and seconds Server/Hero hands towerRateBoost are the merged ones", function()
+	-- Hero.ability copies stats.abilityRadius / abilitySeconds / abilityPower into the
+	-- overdrive state that Hero.towerRateBoost reads.
+	eq(Config.Heroes.RIFLE.abilityKind, "OVERDRIVE")
+	near(mastered("RIFLE", 0).abilityRadius, 25, "no mastery")
+	near(mastered("RIFLE", 10).abilityRadius, 30, "Carrying Voice")
+	near(mastered("RIFLE", 10).abilitySeconds, 10, "not longer yet")
+	near(mastered("RIFLE", 15).abilitySeconds, 13, "Long Rally")
+	near(mastered("RIFLE", 15).abilityPower, 40, "never stronger")
+end)

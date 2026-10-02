@@ -20,7 +20,8 @@
 
 	Unlocks & Mastery (M, between matches): Amber, buying the heroes and
 	towers you don't own yet, and each owned hero's mastery level with what the
-	next level gives (Server/Progression). Unowned towers and heroes show their
+	next level gives (Server/Progression) and its level-10 and level-15 ability
+	perks (Config.MasteryPerks; the U panel lists the ones you have). Unowned towers and heroes show their
 	price in the Build list and hero select.
 
 	Hunt Board (G, home screen): drawn by HuntBoard.client, but it's one of this
@@ -41,6 +42,7 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Combat = require(Shared:WaitForChild("Combat"))
 local Config = require(Shared:WaitForChild("Config"))
+local HeroStats = require(Shared:WaitForChild("HeroStats"))
 local Pricing = require(Shared:WaitForChild("Pricing"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local CUR = string.lower(Theme.Currency) -- "amber" in running text
@@ -323,6 +325,30 @@ local busy = false
 
 local function escape(text: string): string
 	return (text:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"))
+end
+
+-- A hero's mastery ability perks for the Unlocks & Mastery row: one small line per
+-- perk (name and text from Config.MasteryPerks), the ones this mastery level has
+-- marked as owned. Starts with a line break; "" for a hero without perks.
+local function perkLines(key: string, level: number): string
+	local lines = ""
+	for _, perk in HeroStats.perksOf(key) do
+		local owned = if HeroStats.hasPerk(perk, level) then " (owned)" else ""
+		lines ..= `\n<font size="13">Level {perk.level} perk  ·  <b>{escape(perk.name)}</b>{owned}: {escape(perk.text)}</font>`
+	end
+	return lines
+end
+
+-- The perks this mastery level has, as one line for the hero-upgrades panel, or nil.
+local function ownedPerkLine(key: string, level: number): string?
+	local names = {}
+	for _, perk in HeroStats.perksAt(key, level) do
+		table.insert(names, escape(perk.name))
+	end
+	if #names == 0 then
+		return nil
+	end
+	return `<font size="13">{escape(Config.Heroes[key].ability)} perks: {table.concat(names, "  ·  ")}</font>`
 end
 
 local function say(text: string, color: Color3?)
@@ -978,6 +1004,12 @@ render = function()
 					end)
 				end
 			end
+			-- Mastery perks this hunter has for the ability: one line, only if any.
+			local heroKey = player:GetAttribute("Hero") or ""
+			local perks = ownedPerkLine(heroKey, player:GetAttribute(`Mastery_{heroKey}`) or 0)
+			if perks then
+				addRow(#hero.paths + 1, perks, PANEL_COLOR, false)
+			end
 		end
 	elseif mode == "mastery" then
 		local cores = player:GetAttribute("Cores") or 0
@@ -1008,7 +1040,7 @@ render = function()
 			local level = player:GetAttribute(`Mastery_{key}`) or 0
 			local nextLevel = Config.Mastery[level + 1]
 			if not nextLevel then
-				addRow(order, `<b>{name}</b>  ·  mastery {level}  ·  maxed`, LOCKED_COLOR, false)
+				addRow(order, `<b>{name}</b>  ·  mastery {level}  ·  maxed{perkLines(key, level)}`, LOCKED_COLOR, false)
 			else
 				local milestone, reward = nextMilestone(level)
 				local toward = if milestone == level + 1
@@ -1016,7 +1048,7 @@ render = function()
 					elseif milestone then `toward level {milestone}: {escape(reward or "")}`
 					else ""
 				local affordable = between and cores >= nextLevel.coreCost
-				local text = `<b>{name}</b>  ·  mastery {level} → {level + 1}  ·  {nextLevel.coreCost} {CUR}\n<font size="13">{toward}</font>`
+				local text = `<b>{name}</b>  ·  mastery {level} → {level + 1}  ·  {nextLevel.coreCost} {CUR}\n<font size="13">{toward}</font>{perkLines(key, level)}`
 				addRow(order, text, if affordable then Color3.fromRGB(120, 90, 200) else LOCKED_COLOR, affordable, function()
 					send("mastery", key, nil, progressRequest)
 				end)

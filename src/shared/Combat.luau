@@ -15,6 +15,10 @@
 	                (ignoring height); towers and players alike (DECISIONS #6)
 	  landingHits   every standing target within a projectile's impact radius
 	                of where it lands, measured sideways (DECISIONS #5)
+	  mergeMark     a new mark on a dino that may already carry one: a weaker
+	                mark never weakens a stronger one (DECISIONS #97)
+	  nearestWithin the few nearest points within reach of a point (the Split
+	                Dart perk's extra marks)
 ]]
 
 local Config = require(script.Parent.Config)
@@ -111,6 +115,39 @@ function Combat.landingHits(point: Vector3, radius: number, candidates: { Target
 		end
 	end
 	return hits
+end
+
+-- A new mark landing on a dino (Server/Enemies.mark is the only caller). `percent`
+-- and `remaining` describe the mark it carries now (remaining <= 0 = none), and the
+-- result is the mark it carries afterwards. An equal or stronger mark replaces it. A
+-- weaker one never weakens it: the stronger percent stays, and its time is only ever
+-- extended, never cut short (the Split Dart perk marks a second dino at reduced
+-- strength, DECISIONS #97).
+function Combat.mergeMark(percent: number, remaining: number, newPercent: number, newSeconds: number): (number, number)
+	if remaining <= 0 or newPercent >= percent then
+		return newPercent, newSeconds
+	end
+	return percent, math.max(remaining, newSeconds)
+end
+
+-- The indexes of the `count` nearest `positions` within `reach` studs of `point`
+-- (inclusive), nearest first; ties go to the earlier one. Fewer if fewer are in reach.
+function Combat.nearestWithin(point: Vector3, positions: { Vector3 }, reach: number, count: number): { number }
+	local inReach = {}
+	for index, position in positions do
+		local gap = (position - point).Magnitude
+		if gap <= reach then
+			table.insert(inReach, { index = index, gap = gap })
+		end
+	end
+	table.sort(inReach, function(a, b)
+		return a.gap < b.gap or (a.gap == b.gap and a.index < b.index)
+	end)
+	local nearest = {}
+	for i = 1, math.min(#inReach, math.max(0, math.floor(count))) do
+		nearest[i] = inReach[i].index
+	end
+	return nearest
 end
 
 return Combat

@@ -62,7 +62,9 @@ local function currentStats(): HeroStats.Stats?
 	for i = 1, 3 do
 		tiers[i] = player:GetAttribute(`HeroPath{i}`) or 0
 	end
-	return HeroStats.compute(key, tiers, HeroStats.gearOf(player)) -- Outfitter buffs agree with the server
+	-- Outfitter buffs and mastery perks agree with the server.
+	local mastery = player:GetAttribute(`Mastery_{key}`)
+	return HeroStats.compute(key, tiers, HeroStats.gearOf(player), if typeof(mastery) == "number" then mastery else 0)
 end
 
 local function equippedGun(): Tool?

@@ -16,6 +16,14 @@
 	Gear: an Outfitter Armory the hunter stands near (Server/Towers.hunterGearAt,
 	published as the Gear* player attributes so the client fire loop agrees)
 	scales recoil, reload and spread, and adds a fire-rate percent. Never damage.
+
+	Mastery perks (Config.MasteryPerks, DECISIONS #97-#99): a hunter whose saved
+	mastery with the hero is at or above a perk's level has it, so level 15 has the
+	level-10 perk too. A perk's seconds / radius / power are added to the hero's
+	BASE ability values, before any path multiplier; its other fields come out as
+	markExtra*, strikeBurn*. No mastery (nil or 0) = the stats without perks. The
+	server passes Progression.masteryLevel and the client its Mastery_{heroKey}
+	attribute, so both compute the same numbers. Perks never touch the gun.
 ]]
 
 local Config = require(script.Parent.Config)
@@ -69,6 +77,26 @@ export type Stats = {
 	slowSeconds: number,
 	jawLockSeconds: number, -- a hit dino can't bite or shoot
 	jawLockSpread: number, -- the lock also reaches dinos this close to the hit one
+	-- Mastery perks (0 without the perk).
+	markExtra: number, -- MARK: how many other dinos near the target are marked too
+	markExtraPowerMult: number, -- ... at this share of abilityPower
+	markExtraReach: number, -- ... within this many studs of the target
+	strikeBurnPercent: number, -- AIRBURST: burning ground, % of the strike's damage per second
+	strikeBurnSeconds: number,
+}
+
+export type Perk = {
+	level: number,
+	name: string,
+	text: string,
+	abilitySecondsAdd: number,
+	abilityRadiusAdd: number,
+	abilityPowerAdd: number,
+	markExtra: number,
+	markExtraPowerMult: number,
+	markExtraReach: number,
+	strikeBurnPercent: number,
+	strikeBurnSeconds: number,
 }
 
 local MULTIPLY = {
@@ -125,11 +153,50 @@ function HeroStats.gearOf(player: Player): Gear
 	}
 end
 
-function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?): Stats?
+-- Every mastery perk of a hero, lowest level first (empty for an unknown hero).
+function HeroStats.perksOf(heroKey: string): { Perk }
+	return (Config.MasteryPerks :: any)[heroKey] or {}
+end
+
+-- The perks a hunter with this mastery level has: every perk at or below it.
+function HeroStats.perksAt(heroKey: string, masteryLevel: number?): { Perk }
+	local level = masteryLevel or 0
+	local owned = {}
+	for _, perk in HeroStats.perksOf(heroKey) do
+		if perk.level <= level then
+			table.insert(owned, perk)
+		end
+	end
+	return owned
+end
+
+-- Does a hunter with this mastery level have this perk?
+function HeroStats.hasPerk(perk: Perk, masteryLevel: number?): boolean
+	return perk.level <= (masteryLevel or 0)
+end
+
+function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?, masteryLevel: number?): Stats?
 	local g = gear or HeroStats.NO_GEAR
 	local hero = Config.Heroes[heroKey]
 	if not hero then
 		return nil
+	end
+
+	-- Mastery perks first: they change the hero's base ability values, which the
+	-- path multipliers below then scale. Added amounts add up; for the rest the
+	-- highest wins, like the path amounts.
+	local abilityPower, abilitySeconds, abilityRadius = hero.abilityPower, hero.abilitySeconds, hero.abilityRadius
+	local markExtra, markExtraPowerMult, markExtraReach = 0, 0, 0
+	local strikeBurnPercent, strikeBurnSeconds = 0, 0
+	for _, perk in HeroStats.perksAt(heroKey, masteryLevel) do
+		abilityPower += perk.abilityPowerAdd
+		abilitySeconds += perk.abilitySecondsAdd
+		abilityRadius += perk.abilityRadiusAdd
+		markExtra += perk.markExtra
+		markExtraPowerMult = math.max(markExtraPowerMult, perk.markExtraPowerMult)
+		markExtraReach = math.max(markExtraReach, perk.markExtraReach)
+		strikeBurnPercent = math.max(strikeBurnPercent, perk.strikeBurnPercent)
+		strikeBurnSeconds = math.max(strikeBurnSeconds, perk.strikeBurnSeconds)
 	end
 
 	local mult: { [string]: number } = {}
@@ -207,12 +274,12 @@ function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?): Sta
 		scope = flag.scope == true,
 		igniteSeconds = high.igniteSeconds or 0,
 		igniteShare = high.igniteShare or 0,
-		abilityPower = hero.abilityPower,
-		abilitySeconds = hero.abilitySeconds,
-		abilityRadius = hero.abilityRadius,
+		abilityPower = abilityPower,
+		abilitySeconds = abilitySeconds,
+		abilityRadius = abilityRadius,
 		abilityCooldown = hero.abilityCooldown * mult.abilityCooldownMult,
-		heal = hero.abilityPower * mult.healMult,
-		healRadius = hero.abilityRadius * mult.healRadiusMult,
+		heal = abilityPower * mult.healMult,
+		healRadius = abilityRadius * mult.healRadiusMult,
 		healRepairsTowers = flag.healRepairsTowers == true,
 		guardPercent = high.guardPercent or 0,
 		guardSeconds = high.guardSeconds or 0,
@@ -220,6 +287,11 @@ function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?): Sta
 		slowSeconds = high.slowSeconds or 0,
 		jawLockSeconds = high.jawLockSeconds or 0,
 		jawLockSpread = high.jawLockSpread or 0,
+		markExtra = math.floor(markExtra),
+		markExtraPowerMult = markExtraPowerMult,
+		markExtraReach = markExtraReach,
+		strikeBurnPercent = strikeBurnPercent,
+		strikeBurnSeconds = strikeBurnSeconds,
 	}
 end
 

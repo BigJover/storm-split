@@ -115,3 +115,32 @@ test("pickTarget: the nearest standing target in reach, sideways only", function
 	local tie1, tie2 = target(0, 6, true, "first"), target(6, 0, true, "second")
 	eq((Combat.pickTarget(dino, { tie1, tie2 }, 10) :: any).ref, "first", "ties go to the earlier candidate")
 end)
+
+test("mergeMark: an equal or stronger mark replaces; a weaker one never weakens the mark it lands on", function()
+	local function merged(percent: number, remaining: number, newPercent: number, newSeconds: number): string
+		local p, r = Combat.mergeMark(percent, remaining, newPercent, newSeconds)
+		return `{p} for {r}`
+	end
+	eq(merged(0, 0, 50, 8), "50 for 8", "an unmarked dino takes the mark")
+	eq(merged(50, -2, 20, 10), "20 for 10", "an expired mark is gone: the new one stands")
+	eq(merged(20, 6, 50, 8), "50 for 8", "a stronger mark replaces a weaker one")
+	eq(merged(50, 6, 50, 8), "50 for 8", "an equal mark refreshes the time")
+	eq(merged(50, 12, 60, 3), "60 for 3", "a stronger, shorter mark still replaces")
+	-- Split Dart: 0.4 x 50 = 20 for 10s landing on a dino that already carries the dart.
+	eq(merged(50, 6, 20, 10), "50 for 10", "a weaker mark keeps the stronger percent")
+	eq(merged(50, 9, 20, 3), "50 for 9", "a weaker, shorter mark doesn't cut the stronger one short")
+end)
+
+test("nearestWithin: the nearest few points in reach, nearest first, ties to the earlier", function()
+	local at = Vector3.new(0, 0, 0)
+	local points = { Vector3.new(9, 0, 0), Vector3.new(0, 0, 4), Vector3.new(0, 10, 0), Vector3.new(11, 0, 0), Vector3.new(4, 0, 0) }
+	local function picked(reach: number, count: number): string
+		return table.concat(Combat.nearestWithin(at, points, reach, count), ",")
+	end
+	eq(picked(10, 1), "2", "one: the nearest, the earlier of a tie")
+	eq(picked(10, 2), "2,5", "two: both at 4 studs")
+	eq(picked(10, 9), "2,5,1,3", "exactly at reach counts (height too); 11 studs is out")
+	eq(picked(3, 2), "", "nothing in reach")
+	eq(picked(10, 0), "", "no marks asked for")
+	eq(#Combat.nearestWithin(at, {}, 10, 1), 0, "no other dinos")
+end)
