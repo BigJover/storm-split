@@ -475,7 +475,7 @@ test("mastery 15: both perks (and nothing more at 20); perks never touch the gun
 		-- Wide Flare + Smoulder: 11.5 studs, 12% a second for 3s; the stun and the damage don't move
 		SHOTGUN = { fields = "abilityRadius,strikeBurnPercent,strikeBurnSeconds",
 			values = { abilityRadius = 11.5, strikeBurnPercent = 12, strikeBurnSeconds = 3, abilitySeconds = 2, abilityPower = 30 } },
-		-- Long Reach + Full Kit: 24 studs, 50 HP
+		-- Long Reach + Stocked Kit: 24 studs, 50 HP
 		MEDIC = { fields = "abilityPower,abilityRadius,heal,healRadius", values = { healRadius = 24, heal = 50, abilityPower = 50 } },
 	}
 	local gun = { "damage", "shotDamage", "rate", "magazine", "reload", "pellets", "spread", "recoilPerShot", "recoilMax", "range",
@@ -498,11 +498,11 @@ test("mastery 15: both perks (and nothing more at 20); perks never touch the gun
 	end
 end)
 
-test("mastery perks add to the base before path multipliers: Full Kit x Clean Bandages, Long Reach x Triage Tent", function()
+test("mastery perks add to the base before path multipliers: Stocked Kit x Clean Bandages, Long Reach x Triage Tent", function()
 	eq(Config.Heroes.MEDIC.paths[1].tiers[1].name, "Clean Bandages")
 	eq(Config.Heroes.MEDIC.paths[1].tiers[4].name, "Triage Tent")
-	near(mastered("MEDIC", 15, { 1, 0, 0 }).heal, 50 * 1.25, "Full Kit + Clean Bandages = 50 x 1.25")
-	near(mastered("MEDIC", 10, { 1, 0, 0 }).heal, 40 * 1.25, "no Full Kit at 10")
+	near(mastered("MEDIC", 15, { 1, 0, 0 }).heal, 50 * 1.25, "Stocked Kit + Clean Bandages = 50 x 1.25")
+	near(mastered("MEDIC", 10, { 1, 0, 0 }).heal, 40 * 1.25, "no Stocked Kit at 10")
 	near(mastered("MEDIC", 10, { 4, 0, 0 }).healRadius, 24 * 1.5, "Long Reach + Triage Tent = 24 x 1.5")
 	near(mastered("MEDIC", 9, { 4, 0, 0 }).healRadius, 20 * 1.5, "no Long Reach at 9")
 	near(mastered("MEDIC", 15, { 4, 0, 0 }).heal, 50 * 1.25, "both, through the whole Triage path")

@@ -9305,7 +9305,7 @@ return table.freeze({
 			},
 			{
 				level = 15,
-				name = "Full Kit",
+				name = "Stocked Kit",
 				text = "Triage Kit heals 10 more HP",
 				abilitySecondsAdd = 0,
 				abilityRadiusAdd = 0,

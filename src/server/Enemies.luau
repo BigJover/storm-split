@@ -356,8 +356,9 @@ function Enemies.knockback(enemy: Enemy, studs: number)
 end
 
 -- Marked enemies take +percent damage from every source until the mark expires.
--- An equal or stronger mark replaces the one it carries; a weaker one never weakens
--- it (the stronger percent stays and its time is never cut short): Combat.mergeMark.
+-- The stronger mark wins outright (DECISIONS #106): while a mark is running a weaker
+-- one changes nothing, an equal one keeps the longer time, and a stronger one
+-- replaces it. The rule is Combat.mergeMark.
 function Enemies.mark(enemy: Enemy, percent: number, seconds: number)
 	if not enemy.alive or percent <= 0 then
 		return

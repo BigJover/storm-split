@@ -20,7 +20,7 @@ on the spreadsheet plus any new fire mechanic.
 
 Amber (`VISION.md` for how it's earned) buys up to 20 mastery levels per owned hero: -5% to -20% hero
 upgrade costs (levels 1-4), ability cooldown -15% (5) and -30% (15), a free first upgrade
-each match (10), and at 20 a gold gun and a crossover cap of 3 for this hero. Never damage.
+each match (10), and at 20 a gold gun and a crossover cap of 3 for this hero. Never gun damage: perks change abilities only.
 Planned later: a second ability variant (10) and a secondary ability effect (15).
 
 ## Hero levels

@@ -116,19 +116,26 @@ test("pickTarget: the nearest standing target in reach, sideways only", function
 	eq((Combat.pickTarget(dino, { tie1, tie2 }, 10) :: any).ref, "first", "ties go to the earlier candidate")
 end)
 
-test("mergeMark: an equal or stronger mark replaces; a weaker one never weakens the mark it lands on", function()
+test("mergeMark: the stronger mark wins outright; an equal one keeps the longer time (DECISIONS #106)", function()
 	local function merged(percent: number, remaining: number, newPercent: number, newSeconds: number): string
 		local p, r = Combat.mergeMark(percent, remaining, newPercent, newSeconds)
 		return `{p} for {r}`
 	end
-	eq(merged(0, 0, 50, 8), "50 for 8", "an unmarked dino takes the mark")
-	eq(merged(50, -2, 20, 10), "20 for 10", "an expired mark is gone: the new one stands")
-	eq(merged(20, 6, 50, 8), "50 for 8", "a stronger mark replaces a weaker one")
-	eq(merged(50, 6, 50, 8), "50 for 8", "an equal mark refreshes the time")
-	eq(merged(50, 12, 60, 3), "60 for 3", "a stronger, shorter mark still replaces")
-	-- Split Dart: 0.4 x 50 = 20 for 10s landing on a dino that already carries the dart.
-	eq(merged(50, 6, 20, 10), "50 for 10", "a weaker mark keeps the stronger percent")
+	-- Weaker: nothing changes, neither the strength nor the time.
+	eq(merged(50, 2, 20, 3), "50 for 2", "a weaker, longer mark doesn't extend the stronger one")
 	eq(merged(50, 9, 20, 3), "50 for 9", "a weaker, shorter mark doesn't cut the stronger one short")
+	-- Equal: the strength stays, the longer of the two times stands.
+	eq(merged(50, 2, 50, 3), "50 for 3", "an equal, longer mark extends the time")
+	eq(merged(50, 5, 50, 3), "50 for 5", "an equal, shorter mark doesn't cut the time")
+	-- Stronger: replaces both, even when it is shorter.
+	eq(merged(20, 5, 50, 3), "50 for 3", "a stronger, shorter mark replaces strength and time")
+	eq(merged(20, 2, 50, 3), "50 for 3", "a stronger, longer mark replaces strength and time")
+	-- Expired (or never marked): the new mark stands, whatever its strength.
+	eq(merged(0, 0, 50, 8), "50 for 8", "an unmarked dino takes the mark")
+	eq(merged(50, 0, 20, 3), "20 for 3", "a mark that has just run out is gone: the weaker new one stands")
+	eq(merged(50, -2, 20, 10), "20 for 10", "an expired mark is gone: the new one stands")
+	eq(merged(50, -2, 50, 3), "50 for 3", "expired + equal: the new one")
+	eq(merged(20, -2, 50, 3), "50 for 3", "expired + stronger: the new one")
 end)
 
 test("nearestWithin: the nearest few points in reach, nearest first, ties to the earlier", function()

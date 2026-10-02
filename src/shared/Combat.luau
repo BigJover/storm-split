@@ -15,8 +15,9 @@
 	                (ignoring height); towers and players alike (DECISIONS #6)
 	  landingHits   every standing target within a projectile's impact radius
 	                of where it lands, measured sideways (DECISIONS #5)
-	  mergeMark     a new mark on a dino that may already carry one: a weaker
-	                mark never weakens a stronger one (DECISIONS #97)
+	  mergeMark     a new mark on a dino that may already carry one: the stronger
+	                mark wins outright, an equal one keeps the longer time
+	                (DECISIONS #106)
 	  nearestWithin the few nearest points within reach of a point (the Split
 	                Dart perk's extra marks)
 ]]
@@ -119,13 +120,17 @@ end
 
 -- A new mark landing on a dino (Server/Enemies.mark is the only caller). `percent`
 -- and `remaining` describe the mark it carries now (remaining <= 0 = none), and the
--- result is the mark it carries afterwards. An equal or stronger mark replaces it. A
--- weaker one never weakens it: the stronger percent stays, and its time is only ever
--- extended, never cut short (the Split Dart perk marks a second dino at reduced
--- strength, DECISIONS #97).
+-- result is the mark it carries afterwards. The stronger mark wins outright
+-- (DECISIONS #106, the same rule as resistance: nothing stacks). While a mark is
+-- running, a weaker new mark changes nothing, neither the strength nor the time (it
+-- can't cut a Tracking Dart short, and it can't hold one up either); an equal one
+-- keeps the strength and the longer of the two times; a stronger one replaces both.
 function Combat.mergeMark(percent: number, remaining: number, newPercent: number, newSeconds: number): (number, number)
-	if remaining <= 0 or newPercent >= percent then
+	if remaining <= 0 or newPercent > percent then
 		return newPercent, newSeconds
+	end
+	if newPercent < percent then
+		return percent, remaining
 	end
 	return percent, math.max(remaining, newSeconds)
 end

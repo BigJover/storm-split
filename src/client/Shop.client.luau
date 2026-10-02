@@ -1076,7 +1076,7 @@ render = function()
 
 		local note = if status == "offline"
 			then "Progress isn't saving right now."
-			else `Clear a track to earn {Theme.Currency} (more on harder difficulties). Mastery never adds damage.`
+			else `Clear a track to earn {Theme.Currency} (more on harder difficulties). Mastery never makes your gun hit harder.`
 		addRow(50, `<font size="13">{note}</font>`, PANEL_COLOR, false)
 	elseif mode == "manage" and managed then
 		local key = managed:GetAttribute("Tower") :: string

@@ -19,8 +19,10 @@ Config.luau, and prints a findings list:
   4. species  every species in VISION.md's table exists with that display name
   5. perks    Mastery Perks (PLAN round 3 T32): every number in a perk's Text is one
               of that row's effect cells (Extra mark power x as a percentage), no Text
-              says "pop" (DECISIONS #93), no effect column is blank on every row, and
-              each perk name is in HEROES.md "Mastery" (a note until the docs task)
+              says "pop" (DECISIONS #93), no effect column is blank on every row, no
+              perk name equals a tower or hero tier name or a hero's ability name,
+              whatever the case (DECISIONS #104), and each perk name is in HEROES.md
+              "Mastery" (a note until the docs task)
 
 Usage:
     python3 tools/audit.py            report; exits 0 whatever it finds
@@ -361,15 +363,37 @@ def heroes_mastery_section():
     return match.group(1) if match else ""
 
 
+def taken_names(data):
+    """{lower-cased name: where it is used} for every tier name on Tower Upgrades and
+    Hero Upgrades and every hero's ability name: the names a perk may not reuse."""
+    taken = {}
+    for block in ("Towers", "Heroes"):
+        for key, item in data[block].items():
+            for path in item["paths"]:
+                for t, tier in enumerate(path["tiers"], start=1):
+                    name = str(tier.get("name") or "").strip()
+                    if name:
+                        taken.setdefault(name.lower(), f"{block}.{key} {path['id']} tier {t}")
+    for key, hero in data["Heroes"].items():
+        name = str(hero.get("ability") or "").strip()
+        if name:
+            taken.setdefault(name.lower(), f"Heroes.{key}'s ability")
+    return taken
+
+
 def check_perks(findings, notes, data, doc=None):
     perks = data["MasteryPerks"]
     doc = heroes_mastery_section() if doc is None else doc
     fields = [field for field, _ in export_constants.PERK_COLUMNS]
+    taken = taken_names(data)
     undocumented, count = [], 0
     for key, rows in perks.items():
         for perk in rows:
             count += 1
             where = f"MasteryPerks.{key} level {perk['level']} ({perk['name']})"
+            if perk["name"].lower() in taken:
+                findings.append(f"{where}: the name is already {taken[perk['name'].lower()]}; "
+                                "a perk needs a name of its own (DECISIONS #104)")
             allowed = [perk[f] for f in fields if isinstance(perk[f], (int, float)) and perk[f]]
             if isinstance(perk["markExtraPowerMult"], (int, float)):
                 allowed.append(perk["markExtraPowerMult"] * 100)

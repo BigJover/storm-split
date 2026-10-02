@@ -303,6 +303,11 @@ PERK_COLUMNS = [
 ]
 PERK_HEADER_ROW = 4
 # The mastery levels every hero must have a perk at (PLAN round 3 T32).
+# To remove the perks (DECISIONS #107, which restates #97's reversal): delete rows
+# 5-12 of Mastery Perks and set PERK_LEVELS = (); Config.MasteryPerks is then empty
+# and HeroStats merges nothing. Blanking the effect cells instead fails the export
+# (every hero needs both perks, level 15 worth more than level 10). To weaken them,
+# lower the cells but keep 15 > 10.
 PERK_LEVELS = (10, 15)
 
 
