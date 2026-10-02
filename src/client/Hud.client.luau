@@ -159,6 +159,44 @@ xpFill.BorderSizePixel = 0
 xpFill.Active = false
 xpFill.Parent = xpBar
 
+-- This round's pending XP on its own line under the XP bar, the same width
+-- (DECISIONS #138). Also a label only; shown while there is some.
+local clearRow = Instance.new("Frame")
+clearRow.Name = "HeroXpClear"
+clearRow.AnchorPoint = Vector2.new(0.5, 0)
+clearRow.Position = UDim2.new(0.5, 0, 0, 56 + 24 + 4) -- under the XP bar
+clearRow.Size = UDim2.new(1, -XP_ROW_EDGE * 2, 0, 24)
+clearRow.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
+clearRow.BackgroundTransparency = 0.25
+clearRow.BorderSizePixel = 0
+clearRow.Active = false
+clearRow.Visible = false
+clearRow.Parent = gui
+do
+	local limit = Instance.new("UISizeConstraint")
+	limit.MaxSize = Vector2.new(XP_ROW_WIDTH, 24)
+	limit.Parent = clearRow
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 8)
+	c.Parent = clearRow
+end
+local clearText = Instance.new("TextLabel")
+clearText.Name = "Pending"
+clearText.Position = UDim2.fromScale(0.03, 0.12)
+clearText.Size = UDim2.fromScale(0.94, 0.76)
+clearText.BackgroundTransparency = 1
+clearText.TextColor3 = Color3.fromRGB(250, 205, 80)
+clearText.Font = Enum.Font.GothamBold
+clearText.TextScaled = true -- shrinks to fit, never clips
+clearText.Active = false
+clearText.Parent = clearRow
+do
+	local limit = Instance.new("UITextSizeConstraint")
+	limit.MaxTextSize = 16
+	limit.MinTextSize = 10
+	limit.Parent = clearText
+end
+
 local function attr(name: string, default: any): any
 	local value = ReplicatedStorage:GetAttribute(name)
 	if value == nil then
@@ -179,14 +217,16 @@ local function refresh()
 	results.Visible = state == "GameOver" or state == "Victory"
 	label.TextColor3 = Color3.fromRGB(240, 236, 250)
 
-	-- Banked XP fills the bar; this round's pending XP is only named beside it,
+	-- Banked XP fills the bar; this round's pending XP is only named under it,
 	-- because it isn't yours until the round is cleared.
 	xpRow.Visible = state == "Playing"
 	local shown, needed, heroLevel = HeroXp.progress(player:GetAttribute("HeroXp") or 0, attr("RoundsCleared", 0))
 	local pending = math.floor(player:GetAttribute("HeroXpPending") or 0)
 	xpLevel.Text = `Lv {heroLevel}`
 	xpFill.Size = UDim2.fromScale(shown / needed, 1)
-	xpNumbers.Text = if pending > 0 then `{shown} / {needed} XP  ·  +{pending} on round clear` else `{shown} / {needed} XP`
+	xpNumbers.Text = `{shown} / {needed} XP`
+	clearRow.Visible = xpRow.Visible and pending > 0
+	clearText.Text = `+{pending} on round clear`
 
 	local difficultyKey = attr("Difficulty", Config.DifficultyOrder[1])
 	local difficultyName = Config.Difficulties[difficultyKey] and Config.Difficulties[difficultyKey].display or ""

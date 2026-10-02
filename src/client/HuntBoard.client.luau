@@ -9,7 +9,7 @@
 
 	No pop-up may trap a player (DIRECTION):
 	  - Shared/HuntBoard.layout fits the board between the top bar and the home
-	    screen's Play row on any window: the bounty list scrolls first, then the whole
+	    screen's Hunt Board row on any window: the bounty list scrolls first, then the whole
 	    board scales down. The header and its X are outside the scrolling list.
 	  - Nothing here dims or covers the rest of the screen, and Play stays in reach.
 	  - The X is Modal, so the mouse is free while the board is open.
@@ -29,6 +29,7 @@ local TweenService = game:GetService("TweenService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local DinoLook = require(Shared:WaitForChild("DinoLook"))
 local HuntBoard = require(Shared:WaitForChild("HuntBoard"))
+local HomeLayout = require(Shared:WaitForChild("HomeLayout"))
 local Theme = require(Shared:WaitForChild("Theme"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -142,8 +143,35 @@ end
 -- Header bar: the title and the X. Never inside the scrolling list.
 local header = section(1, HuntBoard.HEADER)
 header.Name = "Header"
-local title = label(header, HuntBoard.TITLE, 24, Enum.Font.GothamBlack, AMBER)
-title.Size = UDim2.new(1, -(HuntBoard.HEADER + 8), 1, 0)
+local title = label(header, HuntBoard.TITLE, HuntBoard.TITLE_SIZE, Enum.Font.GothamBlack, AMBER)
+title.Size = UDim2.new(1, -(HuntBoard.HEADER + HuntBoard.BALANCE + 16), 1, 0) -- fit() sets it
+-- Shrinks on a narrow board instead of ending in "…".
+title.TextScaled = true
+do
+	local limit = Instance.new("UITextSizeConstraint")
+	limit.MaxTextSize = HuntBoard.TITLE_SIZE
+	limit.MinTextSize = HuntBoard.TITLE_MIN
+	limit.Parent = title
+end
+
+-- Your Amber, live, between the title and the X (DECISIONS #138). The "+15 Amber"
+-- float still drifts up from a claim.
+local balanceLabel = label(header, HuntBoard.balance(player:GetAttribute("Cores")), HuntBoard.BALANCE_SIZE, Enum.Font.GothamBold, AMBER)
+balanceLabel.Name = "Balance"
+balanceLabel.AnchorPoint = Vector2.new(1, 0)
+balanceLabel.Position = UDim2.new(1, -(HuntBoard.HEADER + 8), 0, 0)
+balanceLabel.Size = UDim2.new(0, HuntBoard.BALANCE, 1, 0)
+balanceLabel.TextXAlignment = Enum.TextXAlignment.Right
+balanceLabel.TextScaled = true
+do
+	local limit = Instance.new("UITextSizeConstraint")
+	limit.MaxTextSize = HuntBoard.BALANCE_SIZE
+	limit.MinTextSize = HuntBoard.BALANCE_MIN
+	limit.Parent = balanceLabel
+end
+player:GetAttributeChangedSignal("Cores"):Connect(function()
+	balanceLabel.Text = HuntBoard.balance(player:GetAttribute("Cores"))
+end)
 
 local closeButton = Instance.new("TextButton")
 closeButton.Name = "Close"
@@ -224,12 +252,13 @@ local function shown(): boolean
 	return HuntBoard.shown(player:GetAttribute("HuntBoardOpen") == true, ReplicatedStorage:GetAttribute("State"))
 end
 
--- The band the board may use: under the top bar, above the home screen's Play row.
+-- The band the board may use: under the top bar, above the home screen's Hunt Board
+-- row (its button, Play and the action row below it stay uncovered).
 local function band(): (number, number)
 	local top = GuiService:GetGuiInset().Y + TOP_GAP
 	local bottom = gui.AbsoluteSize.Y - HuntBoard.EDGE
 	local home = playerGui:FindFirstChild("StormSplitHome")
-	local actions = home and home:FindFirstChild("Actions", true)
+	local actions = home and home:FindFirstChild(HomeLayout.HUNT_ROW, true)
 	if actions and actions:IsA("GuiObject") and actions.AbsoluteSize.Y > 0 then
 		local rowTop = actions.AbsolutePosition.Y - gui.AbsolutePosition.Y
 		if rowTop > top then
@@ -253,6 +282,8 @@ local function fit()
 	board.Size = UDim2.fromOffset(layout.width, layout.height)
 	list.Size = UDim2.new(1, 0, 0, layout.listHeight)
 	strip.Size = UDim2.new(1, 0, 0, HuntBoard.stripHeight(layout.wrap))
+	local titleWidth = HuntBoard.headerWidths(layout.width)
+	title.Size = UDim2.new(0, titleWidth, 1, 0)
 	local stripWidth = layout.width - HuntBoard.PAD * 2
 	if stripWidth ~= lastStripWidth then
 		lastStripWidth = stripWidth
@@ -748,7 +779,7 @@ gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
 -- The home screen rescales with the window, moving its Play row: follow it.
 task.spawn(function()
 	local home = playerGui:WaitForChild("StormSplitHome")
-	local actions = home:FindFirstChild("Actions", true) -- built before the home screen is parented
+	local actions = home:FindFirstChild(HomeLayout.HUNT_ROW, true) -- built before the home screen is parented
 	if actions and actions:IsA("GuiObject") then
 		actions:GetPropertyChangedSignal("AbsolutePosition"):Connect(fit)
 		fit()

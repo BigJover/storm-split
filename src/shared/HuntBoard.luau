@@ -94,6 +94,11 @@ HuntBoard.MIN_LIST = 100 -- the bounty list never shows less than a card and a t
 HuntBoard.MIN_SCALE = 0.4 -- the home screen's own floor
 HuntBoard.BIG_TILE = 1.5 -- Big Haul's width, in tiles
 HuntBoard.WRAP_BELOW = 440 -- a Haul strip narrower than this wraps to two rows
+HuntBoard.BALANCE = 110 -- the Amber balance beside the title (DECISIONS #138)
+HuntBoard.TITLE_SIZE = 24 -- the title's text, shrinking to TITLE_MIN on a narrow board
+HuntBoard.TITLE_MIN = 14
+HuntBoard.BALANCE_SIZE = 16 -- the balance's text, shrinking to BALANCE_MIN for big numbers
+HuntBoard.BALANCE_MIN = 10
 
 -- Is the board on screen? `open` is what Shop.client's panel mode says.
 function HuntBoard.shown(open: boolean, state: string?): boolean
@@ -141,6 +146,18 @@ function HuntBoard.payoutLine(amber: number?): string?
 		return nil
 	end
 	return `Unclaimed bounties paid: +{grouped(amber)} {Theme.Currency}`
+end
+
+-- The header's Amber balance, live (DECISIONS #138): "1,250 Amber".
+function HuntBoard.balance(amber: number?): string
+	local n = if type(amber) == "number" then math.max(0, math.floor(amber)) else 0
+	return `{grouped(n)} {Theme.Currency}`
+end
+
+-- The header of a board `width` wide: title | gap | balance | gap | X.
+function HuntBoard.headerWidths(width: number): (number, number)
+	local inner = width - HuntBoard.PAD * 2
+	return math.max(0, inner - HuntBoard.HEADER - HuntBoard.BALANCE - 16), HuntBoard.BALANCE
 end
 
 -- `resetAfter` defaults to the "Haul resets after missed days" lever, like

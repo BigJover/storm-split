@@ -19,6 +19,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local HuntBoard = require(Shared:WaitForChild("HuntBoard"))
+local HomeLayout = require(Shared:WaitForChild("HomeLayout"))
 local Modes = require(Shared:WaitForChild("Modes"))
 local Theme = require(Shared:WaitForChild("Theme"))
 
@@ -59,7 +60,7 @@ backdrop.Parent = gui
 local column = Instance.new("Frame")
 column.AnchorPoint = Vector2.new(0.5, 0.5)
 column.Position = UDim2.fromScale(0.5, 0.5)
-column.Size = UDim2.fromOffset(740, 0)
+column.Size = UDim2.fromOffset(HomeLayout.COLUMN, 0)
 column.AutomaticSize = Enum.AutomaticSize.Y
 column.BackgroundTransparency = 1
 column.Parent = backdrop
@@ -81,7 +82,7 @@ do
 		local viewport = camera.ViewportSize
 		local content = layout.AbsoluteContentSize / math.max(columnScale.Scale, 0.01)
 		local tall = (viewport.Y - SCREEN_MARGIN * 2) / math.max(content.Y, 1)
-		local wide = (viewport.X - SCREEN_MARGIN * 2) / 740
+		local wide = (viewport.X - SCREEN_MARGIN * 2) / HomeLayout.COLUMN
 		columnScale.Scale = math.clamp(math.min(tall, wide), 0.4, 1)
 	end
 	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fit)
@@ -118,7 +119,7 @@ local function row(order: number, height: number): Frame
 	local layout = Instance.new("UIListLayout")
 	layout.FillDirection = Enum.FillDirection.Horizontal
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	layout.Padding = UDim.new(0, 10)
+	layout.Padding = UDim.new(0, HomeLayout.GAP)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = frame
 	return frame
@@ -145,8 +146,8 @@ local function card(parent: Instance, order: number, width: number, height: numb
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = button
 	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, 10)
-	padding.PaddingRight = UDim.new(0, 10)
+	padding.PaddingLeft = UDim.new(0, HomeLayout.CARD_PAD)
+	padding.PaddingRight = UDim.new(0, HomeLayout.CARD_PAD)
 	padding.Parent = button
 	return button
 end
@@ -196,28 +197,14 @@ end
 
 local hostLine = text(9, "", 16, Enum.Font.GothamBold, TEXT_DIM)
 
--- HuntBoard.client keeps its board above this row (found by name), so Play and
--- these buttons stay in reach while the board is open.
-local actionRow = row(10, 56)
-actionRow.Name = "Actions"
-local heroCard = card(actionRow, 1, 176, 56)
-heroCard.TextSize = 16
-heroCard.Text = "Choose hero  (H)"
--- Modal on a button every player sees: frees the mouse on the home screen for
--- non-hosts too (Play, the host's Modal button, is hidden for them).
-heroCard.Modal = true
-heroCard.Activated:Connect(function()
-	player:SetAttribute("OpenPanel", "heroPick")
-end)
-local unlockCard = card(actionRow, 2, 216, 56)
-unlockCard.TextSize = 16
-unlockCard.Text = "Unlocks & Mastery  (M)"
-unlockCard.Activated:Connect(function()
-	player:SetAttribute("OpenPanel", "mastery")
-end)
+-- The Hunt Board has its own row above the action row (DECISIONS #138).
+-- HuntBoard.client keeps its board above this row (found by name), so its button,
+-- Play and the action row stay in reach while the board is open.
+local huntRow = row(10, HomeLayout.ROW_HEIGHT)
+huntRow.Name = HomeLayout.HUNT_ROW
 -- Every player has this button, host or not. Pressing it again closes the board.
-local huntCard = card(actionRow, 3, 176, 56)
-huntCard.TextSize = 16
+local huntCard = card(huntRow, 1, HomeLayout.HUNT_WIDTH, HomeLayout.ROW_HEIGHT)
+huntCard.TextSize = HomeLayout.HUNT_TEXT_SIZE
 huntCard.Text = HuntBoard.BUTTON
 huntCard.Activated:Connect(function()
 	player:SetAttribute("OpenPanel", HuntBoard.MODE)
@@ -232,10 +219,28 @@ huntDot.BorderSizePixel = 0
 huntDot.Visible = false
 huntDot.Parent = huntCard
 corner(huntDot, 6)
-local playButton = card(actionRow, 4, 142, 56)
+
+local actionRow = row(11, HomeLayout.ROW_HEIGHT)
+actionRow.Name = "Actions"
+local heroCard = card(actionRow, 1, HomeLayout.HERO.width, HomeLayout.ROW_HEIGHT)
+heroCard.TextSize = HomeLayout.HERO.textSize
+heroCard.Text = HomeLayout.HERO.text
+-- Modal on a button every player sees: frees the mouse on the home screen for
+-- non-hosts too (Play, the host's Modal button, is hidden for them).
+heroCard.Modal = true
+heroCard.Activated:Connect(function()
+	player:SetAttribute("OpenPanel", "heroPick")
+end)
+local unlockCard = card(actionRow, 2, HomeLayout.UNLOCKS.width, HomeLayout.ROW_HEIGHT)
+unlockCard.TextSize = HomeLayout.UNLOCKS.textSize
+unlockCard.Text = HomeLayout.UNLOCKS.text
+unlockCard.Activated:Connect(function()
+	player:SetAttribute("OpenPanel", "mastery")
+end)
+local playButton = card(actionRow, 3, HomeLayout.PLAY.width, HomeLayout.ROW_HEIGHT)
 playButton.BackgroundColor3 = PLAY
-playButton.TextSize = 24
-playButton.Text = "PLAY"
+playButton.TextSize = HomeLayout.PLAY.textSize
+playButton.Text = HomeLayout.PLAY.text
 playButton.Modal = true -- the mouse is free on the home screen
 playButton.Activated:Connect(function()
 	lobby:FireServer("play")
