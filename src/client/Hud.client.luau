@@ -1,5 +1,6 @@
 --[[
-	Minimal HUD: round, difficulty, level, cash, lives, dinos alive; the
+	Minimal HUD: round, difficulty, cash, lives, dinos alive; your hunter level
+	and XP under it while a round is on (a plain label: no input, no mouse); the
 	Start button in the build phase; your health bar (bottom left, flashes red
 	when you're hurt); the result screen after a match (with the Amber earned
 	and a countdown home). Hidden on the home screen
@@ -19,6 +20,7 @@ local Theme = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("The
 local TowerLook = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("TowerLook"))
 local HitNotice = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HitNotice"))
 local Bounties = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Bounties"))
+local HeroXp = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HeroXp"))
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "StormSplitHud"
@@ -91,6 +93,72 @@ do
 	c.Parent = results
 end
 
+-- Hunter level and XP, under the status line while a round is on. A label only:
+-- nothing here is a button, takes input or touches the mouse, and it is hidden in
+-- the build phase (where Start sits), on the result screen and at home. It shrinks
+-- with the window (scale layout + scaled text), never past the screen edge.
+local XP_ROW_WIDTH = 420
+local XP_ROW_EDGE = 16 -- kept clear of each screen edge
+local xpRow = Instance.new("Frame")
+xpRow.Name = "HeroXp"
+xpRow.AnchorPoint = Vector2.new(0.5, 0)
+xpRow.Position = UDim2.new(0.5, 0, 0, 56) -- just under the status line
+xpRow.Size = UDim2.new(1, -XP_ROW_EDGE * 2, 0, 24)
+xpRow.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
+xpRow.BackgroundTransparency = 0.25
+xpRow.BorderSizePixel = 0
+xpRow.Active = false
+xpRow.Visible = false
+xpRow.Parent = gui
+do
+	local limit = Instance.new("UISizeConstraint")
+	limit.MaxSize = Vector2.new(XP_ROW_WIDTH, 24)
+	limit.Parent = xpRow
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 8)
+	c.Parent = xpRow
+end
+
+local function xpText(name: string, x: number, width: number, align: Enum.TextXAlignment): TextLabel
+	local text = Instance.new("TextLabel")
+	text.Name = name
+	text.Position = UDim2.fromScale(x, 0.15)
+	text.Size = UDim2.fromScale(width, 0.7)
+	text.BackgroundTransparency = 1
+	text.TextColor3 = Color3.fromRGB(240, 236, 250)
+	text.Font = Enum.Font.GothamBold
+	text.TextScaled = true -- shrinks to fit, never clips
+	text.TextXAlignment = align
+	text.Active = false
+	text.Parent = xpRow
+	local limit = Instance.new("UITextSizeConstraint")
+	limit.MaxTextSize = 14
+	limit.MinTextSize = 6
+	limit.Parent = text
+	return text
+end
+
+local xpLevel = xpText("Level", 0.03, 0.12, Enum.TextXAlignment.Left)
+local xpNumbers = xpText("Numbers", 0.46, 0.51, Enum.TextXAlignment.Right)
+
+local xpBar = Instance.new("Frame")
+xpBar.Name = "Bar"
+xpBar.AnchorPoint = Vector2.new(0, 0.5)
+xpBar.Position = UDim2.fromScale(0.16, 0.5)
+xpBar.Size = UDim2.new(0.28, 0, 0, 6)
+xpBar.BackgroundColor3 = Color3.fromRGB(60, 54, 78)
+xpBar.BorderSizePixel = 0
+xpBar.Active = false
+xpBar.Parent = xpRow
+
+local xpFill = Instance.new("Frame")
+xpFill.Name = "Fill"
+xpFill.Size = UDim2.fromScale(0, 1)
+xpFill.BackgroundColor3 = Color3.fromRGB(250, 205, 80)
+xpFill.BorderSizePixel = 0
+xpFill.Active = false
+xpFill.Parent = xpBar
+
 local function attr(name: string, default: any): any
 	local value = ReplicatedStorage:GetAttribute(name)
 	if value == nil then
@@ -111,6 +179,15 @@ local function refresh()
 	results.Visible = state == "GameOver" or state == "Victory"
 	label.TextColor3 = Color3.fromRGB(240, 236, 250)
 
+	-- Banked XP fills the bar; this round's pending XP is only named beside it,
+	-- because it isn't yours until the round is cleared.
+	xpRow.Visible = state == "Playing"
+	local shown, needed, heroLevel = HeroXp.progress(player:GetAttribute("HeroXp") or 0, attr("RoundsCleared", 0))
+	local pending = math.floor(player:GetAttribute("HeroXpPending") or 0)
+	xpLevel.Text = `Lv {heroLevel}`
+	xpFill.Size = UDim2.fromScale(shown / needed, 1)
+	xpNumbers.Text = if pending > 0 then `{shown} / {needed} XP  ·  +{pending} on clear` else `{shown} / {needed} XP`
+
 	local difficultyKey = attr("Difficulty", Config.DifficultyOrder[1])
 	local difficultyName = Config.Difficulties[difficultyKey] and Config.Difficulties[difficultyKey].display or ""
 
@@ -126,11 +203,16 @@ local function refresh()
 	elseif state == "Building" then
 		label.Text = `Build (B), choose a hero (H), then Start  ·  {difficultyName}  ·  Cash {cash}  ·  Camp lives {lives}`
 	else
-		label.Text = `Round {round}  ·  {difficultyName}  ·  Lv {math.floor(attr("Level", 1))}  ·  Cash {cash}  ·  Camp lives {lives}  ·  Dinos {alive}`
+		label.Text = `Round {round}  ·  {difficultyName}  ·  Cash {cash}  ·  Camp lives {lives}  ·  Dinos {alive}`
 	end
 end
 
--- Level-up banner (every RoundsPerLevel rounds cleared).
+-- Level-up banner: one banner, at most two lines. Your own line when your
+-- HeroLevel rises (hero XP), the tower line when the team's tower level rises
+-- (every RoundsPerLevel rounds cleared). Both in the same clear share the banner.
+-- A label: it takes no input and goes away by itself.
+local BANNER_SECONDS = 4
+local BANNER_EDGE = 16 -- kept clear of each screen edge
 local banner = Instance.new("TextLabel")
 banner.Name = "LevelUp"
 banner.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -141,7 +223,8 @@ banner.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
 banner.BackgroundTransparency = 0.15
 banner.TextColor3 = Color3.fromRGB(250, 205, 80)
 banner.Font = Enum.Font.GothamBlack
-banner.TextSize = 26
+banner.TextSize = 24
+banner.Active = false
 banner.Visible = false
 banner.Parent = gui
 do
@@ -154,23 +237,73 @@ do
 	pad.Parent = banner
 end
 
-local shownLevel = ReplicatedStorage:GetAttribute("Level") or 1
-ReplicatedStorage:GetAttributeChangedSignal("Level"):Connect(function()
-	local level = ReplicatedStorage:GetAttribute("Level") or 1
-	if level <= shownLevel then
-		shownLevel = level
-		return
+local hunterLine: string? = nil
+local towerLine: string? = nil
+local bannerShow = 0 -- the latest showing; an older one's timer doesn't hide a newer banner
+
+local function hideBanner()
+	bannerShow += 1
+	hunterLine, towerLine = nil, nil
+	banner.Visible = false
+end
+
+local function showBanner()
+	local lines = {}
+	if hunterLine then
+		table.insert(lines, hunterLine)
 	end
-	shownLevel = level
-	local hero = math.floor(Config.Tuning.HeroDamagePerLevel * 100 + 0.5)
-	local tower = math.floor(Config.Tuning.TowerDamagePerLevel * 100 + 0.5)
-	banner.Text = `LEVEL {level}  ·  Heroes +{hero}% damage  ·  Towers +{tower}%`
+	if towerLine then
+		table.insert(lines, towerLine)
+	end
+	-- The text shrinks with the window so the longest line stays on screen.
+	local camera = workspace.CurrentCamera
+	local width = if camera then camera.ViewportSize.X else 800
+	local longest = 0
+	for _, line in lines do
+		longest = math.max(longest, utf8.len(line) or #line)
+	end
+	local room = math.max(1, width - BANNER_EDGE * 2 - 48) -- 48: the banner's padding
+	local size = math.clamp(math.floor(room / (longest * 0.62)), 10, 24) -- ~0.62 em a letter
+	banner.TextSize = size
+	banner.Size = UDim2.fromOffset(0, #lines * (size + 8) + 24)
+	banner.Text = table.concat(lines, "\n")
 	banner.Visible = true
-	task.delay(4, function()
-		if shownLevel == level then
-			banner.Visible = false
+
+	bannerShow += 1
+	local mine = bannerShow
+	task.delay(BANNER_SECONDS, function()
+		if bannerShow == mine then
+			hideBanner()
 		end
 	end)
+end
+
+local shownHeroLevel = player:GetAttribute("HeroLevel") or 1
+player:GetAttributeChangedSignal("HeroLevel"):Connect(function()
+	local level = player:GetAttribute("HeroLevel") or 1
+	local rose = level > shownHeroLevel
+	shownHeroLevel = level
+	if not rose then
+		hideBanner() -- a new match: back to level 1, nothing to announce
+		return
+	end
+	local percent = math.floor(Config.Tuning.HeroDamagePerLevel * 100 + 0.5)
+	hunterLine = `Hunter level {level} — your shots hit {percent}% harder`
+	showBanner()
+end)
+
+local shownTowerLevel = ReplicatedStorage:GetAttribute("Level") or 1
+ReplicatedStorage:GetAttributeChangedSignal("Level"):Connect(function()
+	local level = ReplicatedStorage:GetAttribute("Level") or 1
+	local rose = level > shownTowerLevel
+	shownTowerLevel = level
+	if not rose then
+		hideBanner()
+		return
+	end
+	local percent = math.floor(Config.Tuning.TowerDamagePerLevel * 100 + 0.5)
+	towerLine = `Towers level {level} — +{percent}%`
+	showBanner()
 end)
 
 -- Studio-only test button. The remote only exists when the server runs in
@@ -390,8 +523,11 @@ task.spawn(function()
 	end
 end)
 
-for _, name in { "State", "Round", "Lives", "Alive", "Cash", "Difficulty", "Level" } do
+for _, name in { "State", "Round", "Lives", "Alive", "Cash", "Difficulty", "RoundsCleared" } do
 	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refresh)
+end
+for _, name in { "HeroXp", "HeroXpPending", "HeroLevel" } do
+	player:GetAttributeChangedSignal(name):Connect(refresh)
 end
 refresh()
 

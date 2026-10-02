@@ -143,3 +143,46 @@ test("the same inputs always give the same answer (no clock, no player)", functi
 		eq(HeroXp.popXp(37, 100), 13)
 	end
 end)
+
+-- The HUD's XP bar (PLAN round 3 T35).
+
+local function progress(xp: number, roundsCleared: number): string
+	local shown, needed, level = HeroXp.progress(xp, roundsCleared)
+	return `Lv {level} {shown}/{needed}`
+end
+
+test("the XP bar: XP into the level, XP a level takes, the level", function()
+	eq(progress(0, 0), "Lv 1 0/500", "a fresh match")
+	eq(progress(240, 2), "Lv 1 240/500", "part way")
+	eq(progress(2300, 23), "Lv 5 300/500", "a joiner at round 23")
+	eq(progress(1035, 9), "Lv 3 35/500", "capped pops after round 9")
+end)
+
+test("the XP bar: the level-up edge", function()
+	eq(progress(499, 4), "Lv 1 499/500", "one short")
+	eq(progress(500, 5), "Lv 2 0/500", "on the dot")
+	eq(progress(501, 5), "Lv 2 1/500", "one over")
+end)
+
+test("the XP bar: the clamp edges never show a negative or overfull bar", function()
+	eq(progress(1e9, 0), "Lv 2 499/500", "absurd XP: the lead cap, one short of full")
+	eq(progress(999, 0), "Lv 2 499/500", "the most XP bank allows before round 5")
+	eq(progress(0, 23), "Lv 5 0/500", "XP below the floor: the round level, empty")
+	for rounds = 0, LAST do
+		for _, pops in { 0, 400 } do
+			local xp = after(rounds, pops, pops)
+			local shown, needed, level = HeroXp.progress(xp, rounds)
+			ok(shown >= 0 and shown < needed, `bar {shown}/{needed} after {rounds}`)
+			eq(level, HeroXp.level(xp, rounds), `level after {rounds}`)
+			eq((level - 1) * needed + shown, xp, `the bar accounts for every XP after {rounds}`)
+		end
+	end
+end)
+
+test("the XP bar: pending pop XP is shown beside it, not counted in it", function()
+	local before = progress(240, 2)
+	local pending = HeroXp.popXp(48, 48)
+	eq(pending, 12, "48 take-downs this round")
+	eq(progress(240, 2), before, "the bar doesn't move while the round is on")
+	eq(progress(HeroXp.bank(240, 48, 48, 3), 3), "Lv 1 352/500", "the clear banks 100 + 12")
+end)

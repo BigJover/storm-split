@@ -68,4 +68,14 @@ function HeroXp.level(xp: number, roundsCleared: number): number
 	return math.clamp(raw, floorLevel, floorLevel + Config.Tuning.HeroLevelLeadCap)
 end
 
+-- What the HUD's XP bar shows: XP into the current level, XP a level takes, and the
+-- level. Pending pop XP is not counted: it isn't the hunter's until the round is
+-- cleared. At the lead cap the bar stops one short of full.
+function HeroXp.progress(xp: number, roundsCleared: number): (number, number, number)
+	local needed = Config.Tuning.XPPerLevel
+	local level = HeroXp.level(xp, roundsCleared)
+	local shown = math.clamp(whole(xp) - (level - 1) * needed, 0, needed - 1)
+	return shown, needed, level
+end
+
 return HeroXp
