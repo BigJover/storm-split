@@ -251,3 +251,44 @@ coils don't stack strikes: the grid fires once per 6s. Breaks 1 (area).
 drops **2 sizes outright**, whatever its HP, bosses included; Break resist doesn't reduce
 it (it's a size drop, not a hit). Each size pays as usual. Playtest watch: a slowed T-Rex in
 a Tar Lake (#150).
+
+## Final names (🦖 T62, DINO_REVIEW round 12; accepted DECISIONS #159) — Builders use these
+
+These override the working names above and in "Jovan's picks" (effects and numbers unchanged).
+*Italics* = grants an ability. **Murmuration** is kept until Jovan answers whether he wants the
+plainer **Sky Swarm** (asked 2026-10-02).
+
+**Storm Coil** — Arc / Charge / Lightning Rod
+
+| Path | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|
+| Arc (was Chain) | Copper Wire | Long Arc | *Fork Lightning* | *Jump Spark* | **Power Grid** |
+| Charge | Battery Pack | Static Shock | *Thunderclap* | *High Voltage* | **Judgement Bolt** |
+| Lightning Rod (was Storm) | Tall Mast | Charged Air | *Grounding Spike* | *Storm Warning* | **Lightning Rodeo** |
+
+**Falcon Roost** — Talons / Flock / Falconer
+
+| Path | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|
+| Talons | Sharp Talons | Hooked Beak | *Power Dive* | *Iron Talons* | **Eagle of the Peak** |
+| Flock | Second Pair | Quick Return | *Flock of Six* | *Wide Circle* | **Murmuration** (pending Jovan: or Sky Swarm) |
+| Falconer | Long Leash | Falcon Bells | *Hooded Scout* | *Lure* | **Hunting Party** |
+
+**Tar Pit** — Deep Tar / Bubbling / Dig Site
+
+| Path | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|
+| Deep Tar | Thick Tar | Wide Pool | *Fast Sink* | *Clinging Tar* | **Tar Lake** |
+| Bubbling | Warm Tar | Simmer | *Boiling Pit* | *Tar Fire* | **Eruption** |
+| Dig Site (was Bone Yard) | Pick and Shovel | Fossil Hunter | *Lucky Finds* (chest pays cash) | *Tar Tracks* | **Tar Totem** |
+
+**Harpoon Ballista** — Spearhead / Reel / Volley
+
+| Path | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|
+| Spearhead (was Barbed) | Steel Head | Saw Tip | *Crusher Bolt* | *Great Harpoon* | **Skewer** |
+| Reel (was Chain Line) | Rope Line | Winch | *Pin Down* | *Reel In* | **Tow Line** |
+| Volley | Twin Bolts | Fast Crank | *Spread Volley* | *Steam Crank* | **Chain Harpoons** |
+
+Ability texts: written by the Builders from the effect lines above, with these names; T69 🦖
+reviews them. Banned in any of them: "Trophy", "split", "pop".

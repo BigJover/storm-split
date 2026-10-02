@@ -29,6 +29,7 @@ For this round:
 | 2 | T43, T44 | home row (bigger PLAY), Amber on the Hunt Board, XP line; softer boss throws vs towers |
 | — | T45 🦖 | review batches 1–2 |
 | 3 | T46, T47, T48 | one health pool + pierce-through; models count overkill honestly; set the break seeds |
+| — | T45b | Dino round 12 string fixes (after batch 3; small, own Builder or batch 4's first commit) |
 | 4 | T49, T50, T51 | boss health bar with notches; Chaos = gun skill; mastery small perks |
 | 5 | T52, T53 | hero tier 6 (12 tiers): sheet + mechanics; panel, crossover, models |
 | — | T54 🦖 | tier-6 names, small-perk names, pierce-through and Chaos wording |
@@ -45,6 +46,11 @@ For this round:
 threat 0). Follow-ups: Hard starting cash → **850** (#143; 810 if Hard ≥ Normal in rounds
 1–15), one sheet cell for batch 2's Builder; Eye in the Sky's DEAD flag waits for T48
 (#144); no Fence text on the result screen (#145).
+
+**Batch 2 done (2026-10-02):** T42 follow-up 8f27f43 (Hard 850; Hard < Normal every round
+1–15, closest round 11 0.66 vs 0.81; Hard solo floor 0.66 ≥ 0.65), T43 dd94629, T44 1caf71b
+(lever 0.3: boss-only max r31–39 44.1 < 50; 0.4 → 58.9, 0.5 → 73.6) — #155, #156. T45 and
+T62 reviewed (DINO_REVIEW Round 12): rulings #157–#159; string fixes → **T45b**.
 
 ## The design in one place
 
@@ -219,7 +225,7 @@ spread, max HP or move speed.
   per band and confirm the hero-vs-tower guard still passes (the best tower may change);
   any new finding goes to the Director, not fixed.
 
-### T42. Starting cash per difficulty (#136)
+### T42. Starting cash per difficulty (#136) — DONE (1b66379 + 8f27f43, Hard 850, #143/#156)
 - **Do:** `Difficulty` first empty column header `Starting cash`: Easy 450, Normal 450,
   Hard **650**, Chaos 450. Exporter emits it per difficulty; the code that seeds the pot
   reads it instead of `Tuning` → `Starting cash` (keep the Tuning cell as the documented
@@ -242,7 +248,7 @@ spread, max HP or move speed.
   (#96 rules); `panelrules.spec.luau` green; no new Modal/input sink; the no-trap rules hold
   (close with key and X). Commit message lists the measured or computed text sizes.
 
-### T44. Softer boss throws vs towers (#138)
+### T44. Softer boss throws vs towers (#138) — DONE (1caf71b, lever 0.3, #156)
 - **Do:** Tuning block `BOSS THROWS`, lever `Boss ranged vs towers x` **0.5**: a Boss
   species' projectile damage to a **tower** is multiplied by it (hunters unchanged: they can
   dodge; Horn Toss's look and ring are unchanged, #40). `threat.py` reads it and now judges
@@ -265,9 +271,31 @@ spread, max HP or move speed.
     other / total for the Hunting Blind; spec: a boss projectile on a tower deals × the lever,
     on a hunter ×1; Config diff = one Tuning line.
 
-### T45. 🦖 Dino review of batches 1–2
+### T45. 🦖 Dino review of batches 1–2 — DONE (DINO_REVIEW Round 12; #157–#158; fixes in T45b)
 Bones beside Bone Breaker, Bone Broth and Bone Spit (clash?), Big Bore, Fence wording in the
 HUD and result screen, the Hunt Board Amber line, the XP line. Must-fixes go to the Director.
+
+### T45b. Dino round 12 string fixes (#157, #158) — runs after batch 3 (T46–T48)
+Display text only; no sheet, Config, Enemies or Combat change. One commit.
+- `src/shared/Theme.luau`: add fields `Fence = "Fence"` and `Bones = "Bones"` beside
+  `Currency = "Amber"`, each with a short comment (#130).
+- `src/client/Hud.client.luau` (line numbers as of 1caf71b; re-grep after batch 3):
+  - ~229 `+{pending} on round clear` → **`+{pending} bonus on round clear`** (revises #117).
+  - ~244 / ~246 `Fence {lives}` → `{Theme.Fence} {lives}` (same text on screen).
+  - ~238 loss branch only: `Reached round {round} on {difficultyName}` → **`The fence fell on
+    round {round} ({difficultyName})`**. First confirm a loss is reached only when the
+    fence's lives hit 0 (grep where the match ends); if anything else can end a match as a
+    loss, keep the old string and say so. The victory string is unchanged.
+- `src/server/Scoreboard.luau:22` `value.Name = "Bones"` → `Theme.Bones` (require Theme from
+  ReplicatedStorage the way other server modules do).
+- `src/shared/Modes.luau:15` `Most bones wins.` → **`Most Bones wins.`**, built from `Theme.Bones`.
+- **Accept:** `tools/check.sh`, `export_constants.py` (Config diff empty), `tools/test.sh`
+  green; a grep of `src` for `"Fence`, `"Bones`, `Most bones` and `on round clear` shows only
+  Theme.luau and the bonus line; the commit message gives the computed text size of the bonus
+  line in the 420 px strip (#155) and of the loss line at size 18 in the results box, and
+  whether either wraps or shrinks (the loss line must not wrap at the smallest window, #96; if
+  it does, keep the old loss string). "Not playtested." The bonus line's measured size stays on
+  T38's Tester step 3.
 
 ## Batch 3 — one health pool and pierce-through
 
@@ -454,7 +482,7 @@ stable). Numbers are seeds on the sheet; the tier 1–3 tiers are as in `TOWERS_
 tier 4s and 5s are the picks table. Unlock Amber: Storm Coil 300, Falcon Roost 200, Tar Pit
 250, Harpoon Ballista 300; in-match cost 550 / 400 / 450 / 600.
 
-### T62. 🦖 Naming pass for the four towers (before any build)
+### T62. 🦖 Naming pass for the four towers (before any build) — DONE (Round 12; #159; names in TOWERS_NEXT.md "Final names")
 Tower names, path names, all 60 tier names, ability texts. Must avoid every existing name
 (the audit's collision check) and "Trophy" (reserved for ranked, #130/#139). The Director
 logs the final names; the Builders use them from T63.
