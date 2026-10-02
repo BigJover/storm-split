@@ -13,6 +13,9 @@
 	When the state changes, a panel only survives the step from Building into
 	Playing, and only if it's still allowed there. Every other change closes
 	it: pressing Play on the home screen, the results screen, going home.
+
+	Also the tower panel's level line (DECISIONS #112), so its wording and its
+	percent are tested too.
 ]]
 
 local PanelRules = {}
@@ -46,6 +49,17 @@ function PanelRules.keepOnStateChange(mode: string, newState: string?, hasHero: 
 		return true
 	end
 	return newState == "Playing" and PanelRules.allowed(mode, newState, hasHero)
+end
+
+-- The tower panel's level line, or nil at level 1 (nothing to say yet). `perLevel`
+-- is Config.Tuning.TowerDamagePerLevel; levels compound, as Server/Towers applies them.
+function PanelRules.towerLevelLine(level: number, perLevel: number): string?
+	local whole = math.floor(level)
+	if whole <= 1 then
+		return nil
+	end
+	local percent = math.floor((1 + perLevel) ^ (whole - 1) * 100 - 100 + 0.5)
+	return `Tower level {whole} · +{percent}% damage`
 end
 
 return PanelRules

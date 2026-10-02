@@ -9117,7 +9117,7 @@ return table.freeze({
 		},
 		{
 			coreCost = 111,
-			unlock = "Start every match with your first upgrade free, plus your hunter's level-10 ability perk",
+			unlock = "Start every match with your first upgrade free, plus this hero's mastery-10 ability perk",
 			upgradeDiscountPercent = 20,
 			abilityCooldownMult = 0.85,
 			freeFirstUpgrade = true,
@@ -9157,7 +9157,7 @@ return table.freeze({
 		},
 		{
 			coreCost = 254,
-			unlock = "Ability cooldown -30%, plus your hunter's level-15 ability perk",
+			unlock = "Ability cooldown -30%, plus this hero's mastery-15 ability perk",
 			upgradeDiscountPercent = 20,
 			abilityCooldownMult = 0.7,
 			freeFirstUpgrade = true,
@@ -9208,7 +9208,7 @@ return table.freeze({
 		PISTOL = {
 			{
 				level = 10,
-				name = "Lingering Dart",
+				name = "Sticky Dart",
 				text = "Tracking Dart lasts 2s longer",
 				abilitySecondsAdd = 2,
 				abilityRadiusAdd = 0,
@@ -9221,7 +9221,7 @@ return table.freeze({
 			},
 			{
 				level = 15,
-				name = "Split Dart",
+				name = "Spare Dart",
 				text = "Tracking Dart also marks the nearest dino within 10 studs at 40% strength",
 				abilitySecondsAdd = 0,
 				abilityRadiusAdd = 0,
@@ -9236,7 +9236,7 @@ return table.freeze({
 		RIFLE = {
 			{
 				level = 10,
-				name = "Carrying Voice",
+				name = "Hunting Horn",
 				text = "Rally Cry reaches 5 studs further",
 				abilitySecondsAdd = 0,
 				abilityRadiusAdd = 5,
@@ -9265,7 +9265,7 @@ return table.freeze({
 			{
 				level = 10,
 				name = "Wide Flare",
-				text = "Flare Strike is 1.5 studs wider",
+				text = "Flare Strike reaches 1.5 studs further",
 				abilitySecondsAdd = 0,
 				abilityRadiusAdd = 1.5,
 				abilityPowerAdd = 0,
@@ -9278,7 +9278,7 @@ return table.freeze({
 			{
 				level = 15,
 				name = "Smoulder",
-				text = "Flare Strike leaves burning ground for 3s (12% of the strike each second)",
+				text = "Flare Strike leaves burning ground for 3s (12% of the strike's damage each second)",
 				abilitySecondsAdd = 0,
 				abilityRadiusAdd = 0,
 				abilityPowerAdd = 0,
@@ -9292,7 +9292,7 @@ return table.freeze({
 		MEDIC = {
 			{
 				level = 10,
-				name = "Long Reach",
+				name = "Far Reach",
 				text = "Triage Kit reaches 4 studs further",
 				abilitySecondsAdd = 0,
 				abilityRadiusAdd = 4,

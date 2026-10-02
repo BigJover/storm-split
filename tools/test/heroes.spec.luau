@@ -449,10 +449,10 @@ end)
 test("mastery 10: only the level-10 lever moves, by the sheet value (and stays to 14)", function()
 	-- hero -> the fields that change at 10, and the lever's new value (PLAN round 3)
 	local want = {
-		PISTOL = { fields = "abilitySeconds", lever = "abilitySeconds", add = "abilitySecondsAdd", value = 10 }, -- Lingering Dart 8 -> 10
-		RIFLE = { fields = "abilityRadius", lever = "abilityRadius", add = "abilityRadiusAdd", value = 30 }, -- Carrying Voice 25 -> 30
+		PISTOL = { fields = "abilitySeconds", lever = "abilitySeconds", add = "abilitySecondsAdd", value = 10 }, -- Sticky Dart 8 -> 10
+		RIFLE = { fields = "abilityRadius", lever = "abilityRadius", add = "abilityRadiusAdd", value = 30 }, -- Hunting Horn 25 -> 30
 		SHOTGUN = { fields = "abilityRadius", lever = "abilityRadius", add = "abilityRadiusAdd", value = 11.5 }, -- Wide Flare 10 -> 11.5
-		MEDIC = { fields = "abilityRadius,healRadius", lever = "healRadius", add = "abilityRadiusAdd", value = 24 }, -- Long Reach 20 -> 24
+		MEDIC = { fields = "abilityRadius,healRadius", lever = "healRadius", add = "abilityRadiusAdd", value = 24 }, -- Far Reach 20 -> 24
 	}
 	for _, key in Config.HeroOrder do
 		local w = want[key]
@@ -467,15 +467,15 @@ end)
 
 test("mastery 15: both perks (and nothing more at 20); perks never touch the gun", function()
 	local want = {
-		-- Lingering Dart + Split Dart: 10s, 1 extra mark at 0.4x within 10 studs
+		-- Sticky Dart + Spare Dart: 10s, 1 extra mark at 0.4x within 10 studs
 		PISTOL = { fields = "abilitySeconds,markExtra,markExtraPowerMult,markExtraReach",
 			values = { abilitySeconds = 10, abilityPower = 50, markExtra = 1, markExtraPowerMult = 0.4, markExtraReach = 10 } },
-		-- Carrying Voice + Long Rally: 30 studs, 13s, still +40%
+		-- Hunting Horn + Long Rally: 30 studs, 13s, still +40%
 		RIFLE = { fields = "abilityRadius,abilitySeconds", values = { abilityRadius = 30, abilitySeconds = 13, abilityPower = 40 } },
 		-- Wide Flare + Smoulder: 11.5 studs, 12% a second for 3s; the stun and the damage don't move
 		SHOTGUN = { fields = "abilityRadius,strikeBurnPercent,strikeBurnSeconds",
 			values = { abilityRadius = 11.5, strikeBurnPercent = 12, strikeBurnSeconds = 3, abilitySeconds = 2, abilityPower = 30 } },
-		-- Long Reach + Stocked Kit: 24 studs, 50 HP
+		-- Far Reach + Stocked Kit: 24 studs, 50 HP
 		MEDIC = { fields = "abilityPower,abilityRadius,heal,healRadius", values = { healRadius = 24, heal = 50, abilityPower = 50 } },
 	}
 	local gun = { "damage", "shotDamage", "rate", "magazine", "reload", "pellets", "spread", "recoilPerShot", "recoilMax", "range",
@@ -498,13 +498,13 @@ test("mastery 15: both perks (and nothing more at 20); perks never touch the gun
 	end
 end)
 
-test("mastery perks add to the base before path multipliers: Stocked Kit x Clean Bandages, Long Reach x Triage Tent", function()
+test("mastery perks add to the base before path multipliers: Stocked Kit x Clean Bandages, Far Reach x Triage Tent", function()
 	eq(Config.Heroes.MEDIC.paths[1].tiers[1].name, "Clean Bandages")
 	eq(Config.Heroes.MEDIC.paths[1].tiers[4].name, "Triage Tent")
 	near(mastered("MEDIC", 15, { 1, 0, 0 }).heal, 50 * 1.25, "Stocked Kit + Clean Bandages = 50 x 1.25")
 	near(mastered("MEDIC", 10, { 1, 0, 0 }).heal, 40 * 1.25, "no Stocked Kit at 10")
-	near(mastered("MEDIC", 10, { 4, 0, 0 }).healRadius, 24 * 1.5, "Long Reach + Triage Tent = 24 x 1.5")
-	near(mastered("MEDIC", 9, { 4, 0, 0 }).healRadius, 20 * 1.5, "no Long Reach at 9")
+	near(mastered("MEDIC", 10, { 4, 0, 0 }).healRadius, 24 * 1.5, "Far Reach + Triage Tent = 24 x 1.5")
+	near(mastered("MEDIC", 9, { 4, 0, 0 }).healRadius, 20 * 1.5, "no Far Reach at 9")
 	near(mastered("MEDIC", 15, { 4, 0, 0 }).heal, 50 * 1.25, "both, through the whole Triage path")
 	near(mastered("MEDIC", 15, { 4, 0, 0 }).healRadius, 24 * 1.5, "both, through the whole Triage path")
 end)
@@ -514,8 +514,33 @@ test("Rally Cry: the radius and seconds Server/Hero hands towerRateBoost are the
 	-- overdrive state that Hero.towerRateBoost reads.
 	eq(Config.Heroes.RIFLE.abilityKind, "OVERDRIVE")
 	near(mastered("RIFLE", 0).abilityRadius, 25, "no mastery")
-	near(mastered("RIFLE", 10).abilityRadius, 30, "Carrying Voice")
+	near(mastered("RIFLE", 10).abilityRadius, 30, "Hunting Horn")
 	near(mastered("RIFLE", 10).abilitySeconds, 10, "not longer yet")
 	near(mastered("RIFLE", 15).abilitySeconds, 13, "Long Rally")
 	near(mastered("RIFLE", 15).abilityPower, 40, "never stronger")
+end)
+
+-- Names and wording from Dino review round 11 (PLAN round 3 T36b, DECISIONS #114-#115).
+
+test("the mastery perks carry their reviewed names and texts", function()
+	local want = {
+		PISTOL = { [10] = "Sticky Dart", [15] = "Spare Dart" },
+		RIFLE = { [10] = "Hunting Horn", [15] = "Long Rally" },
+		SHOTGUN = { [10] = "Wide Flare", [15] = "Smoulder" },
+		MEDIC = { [10] = "Far Reach", [15] = "Stocked Kit" },
+	}
+	local texts = {}
+	for key, names in want do
+		local seen = 0
+		for _, perk in Config.MasteryPerks[key] do
+			eq(perk.name, names[perk.level], `{key} mastery {perk.level}`)
+			texts[perk.name] = perk.text
+			seen += 1
+		end
+		eq(seen, 2, `{key}: one perk at 10, one at 15`)
+	end
+	eq(texts["Wide Flare"], "Flare Strike reaches 1.5 studs further", "Wide Flare")
+	eq(texts["Smoulder"], "Flare Strike leaves burning ground for 3s (12% of the strike's damage each second)", "Smoulder")
+	eq(Config.Mastery[10].unlock, "Start every match with your first upgrade free, plus this hero's mastery-10 ability perk", "mastery 10")
+	eq(Config.Mastery[15].unlock, "Ability cooldown -30%, plus this hero's mastery-15 ability perk", "mastery 15")
 end)

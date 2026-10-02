@@ -62,3 +62,17 @@ test("the Hunt Board never survives a state change (no-trap rule)", function()
 	end
 	eq(PanelRules.keepOnStateChange("huntBoard", nil, true), false, "into an unknown state")
 end)
+
+-- The tower panel's level line (PLAN round 3 T36b, DECISIONS #112).
+
+test("the tower level line is hidden at level 1 and says the compounded damage after", function()
+	local Config = require(src.shared.Config)
+	local perLevel = Config.Tuning.TowerDamagePerLevel
+	eq(perLevel, 0.1, "Tower damage per level is the seed this spec means")
+	eq(PanelRules.towerLevelLine(1, perLevel), nil, "level 1: no line")
+	eq(PanelRules.towerLevelLine(0, perLevel), nil, "no level yet: no line")
+	eq(PanelRules.towerLevelLine(2, perLevel), "Tower level 2 · +10% damage", "level 2")
+	eq(PanelRules.towerLevelLine(3, perLevel), "Tower level 3 · +21% damage", "level 3")
+	eq(PanelRules.towerLevelLine(8, perLevel), "Tower level 8 · +95% damage", "level 8, the last round")
+	eq(PanelRules.towerLevelLine(3, 0.25), "Tower level 3 · +56% damage", "the percent follows the lever")
+end)

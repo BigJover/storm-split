@@ -334,7 +334,7 @@ local function perkLines(key: string, level: number): string
 	local lines = ""
 	for _, perk in HeroStats.perksOf(key) do
 		local owned = if HeroStats.hasPerk(perk, level) then " (owned)" else ""
-		lines ..= `\n<font size="13">Level {perk.level} perk  ·  <b>{escape(perk.name)}</b>{owned}: {escape(perk.text)}</font>`
+		lines ..= `\n<font size="13">Mastery {perk.level} perk  ·  <b>{escape(perk.name)}</b>{owned}: {escape(perk.text)}</font>`
 	end
 	return lines
 end
@@ -1076,7 +1076,7 @@ render = function()
 
 		local note = if status == "offline"
 			then "Progress isn't saving right now."
-			else `Clear a track to earn {Theme.Currency} (more on harder difficulties). Mastery never makes your gun hit harder.`
+			else `Clear a track to earn {Theme.Currency} (more on harder difficulties). Mastery perks boost your ability, never your gun's damage.`
 		addRow(50, `<font size="13">{note}</font>`, PANEL_COLOR, false)
 	elseif mode == "manage" and managed then
 		local key = managed:GetAttribute("Tower") :: string
@@ -1098,6 +1098,16 @@ render = function()
 
 		-- Health, and a repair row when it's damaged. Mirrors Server/Shop:
 		-- Shared/Combat's price with the Logistics discount.
+		-- The tower level (DECISIONS #112): every tower shares it, so it's the match's
+		-- "Level" attribute, not the tower's. No row at level 1. A row wraps, and the
+		-- list scrolls under the header, so the panel still fits and X stays in reach.
+		local levelLine = PanelRules.towerLevelLine(
+			(ReplicatedStorage:GetAttribute("Level") or 1) :: number,
+			Config.Tuning.TowerDamagePerLevel
+		)
+		if levelLine then
+			addRow(-2, `<font size="13">{levelLine}</font>`, PANEL_COLOR, false)
+		end
 		if maxHp > 0 then
 			addRow(-1, `<font size="13">HP {math.ceil(hp)} / {math.floor(maxHp + 0.5)}</font>`, PANEL_COLOR, false)
 		end
@@ -1279,6 +1289,12 @@ end)
 ProximityPromptService.PromptHidden:Connect(function(prompt)
 	if mode == "manage" and prompt == managedPrompt then
 		setMode("closed")
+	end
+end)
+
+ReplicatedStorage:GetAttributeChangedSignal("Level"):Connect(function()
+	if mode == "manage" then
+		render() -- the tower panel's level line
 	end
 end)
 
