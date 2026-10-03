@@ -790,9 +790,10 @@ function Towers.remove(tower: Tower)
 	refreshAuras()
 end
 
--- Level 1 is the start; each level multiplies tower damage by 1 + TowerDamagePerLevel.
-function Towers.setLevel(level: number)
-	levelScale = (1 + Config.Tuning.TowerDamagePerLevel) ^ math.max(0, level - 1)
+-- Level 1 is the start; each level multiplies tower damage by 1 + TowerDamagePerLevel,
+-- and the difficulty's Tower damage x applies on top (TowerStats.damageScale).
+function Towers.setLevel(level: number, difficulty: { towerDamageMult: number }?)
+	levelScale = TowerStats.damageScale(level, difficulty)
 	towerLevel = math.max(1, level)
 end
 

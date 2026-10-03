@@ -5,7 +5,8 @@
 # the run if a DECISIONS #42 target is missed), then the value and pacing models
 # (tools/value.py and --pacing, reports: they only fail the run if they crash, e.g.
 # when the pacing model no longer reproduces the Balance Check sheet), and the break bars
-# (tools/value.py --breaks1, which fails the run if a PLAN T48 bar fails).
+# (tools/value.py --breaks1, which fails the run if a PLAN T48 bar fails) and the Chaos
+# skill bars (--chaos, which fails the run if a PLAN T50 final bar fails).
 # Pass words to run only the specs whose file name contains them (skips the audit):
 #   tools/test.sh upgrades
 cd "$(dirname "$0")/.."
@@ -25,6 +26,8 @@ if [ $# -eq 0 ]; then
 	"$PYTHON" tools/value.py || status=1
 	echo
 	"$PYTHON" tools/value.py --breaks1 || status=1 # the break bars gate (PLAN T48 final)
+	echo
+	"$PYTHON" tools/value.py --chaos || status=1 # the Chaos skill bars gate (PLAN T50 final)
 	echo
 	"$PYTHON" tools/value.py --pacing || status=1
 fi

@@ -160,3 +160,25 @@ test("a boss throw on a tower deals x Boss ranged vs towers x; on a hunter x1 (D
 	eq(Combat.throwDamage(20, false, true), 20, "other dinos' throws on a tower: full")
 	eq(Combat.throwDamage(20, false, false), 20, "other dinos' throws on a hunter: full")
 end)
+
+-- PLAN T50 final (DECISIONS #167): Chaos = gun skill. Towers hit softer, the gun harder,
+-- on top of the level curve; every other difficulty leaves damage alone.
+test("Chaos softens towers and hardens the gun", function()
+	local TowerStats = require(src.shared.TowerStats)
+	local HeroStats = require(src.shared.HeroStats)
+	local levers = { EASY = { 1, 1 }, NORMAL = { 1, 1 }, HARD = { 1, 1 }, CHAOS = { 0.6, 1.5 } }
+	for key, want in levers do
+		local d = Config.Difficulties[key]
+		eq(d.towerDamageMult, want[1], `{key} Tower damage x`)
+		eq(d.heroDamageMult, want[2], `{key} Hero damage x`)
+	end
+	local chaos, easy = Config.Difficulties.CHAOS, Config.Difficulties.EASY
+	near(TowerStats.damageScale(1, chaos), 0.6, "a level-1 tower on Chaos")
+	near(HeroStats.damageScale(1, chaos), 1.5, "a level-1 hunter on Chaos")
+	local tower5 = (1 + Config.Tuning.TowerDamagePerLevel) ^ 4
+	local hero5 = (1 + Config.Tuning.HeroDamagePerLevel) ^ 4
+	near(TowerStats.damageScale(5, easy), tower5, "level 5 tower on Easy = the level curve")
+	near(TowerStats.damageScale(5, chaos), tower5 * 0.6, "level 5 tower on Chaos")
+	near(HeroStats.damageScale(5, chaos), hero5 * 1.5, "level 5 hunter on Chaos")
+	near(HeroStats.damageScale(5), hero5, "no difficulty = the level curve")
+end)

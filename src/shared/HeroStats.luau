@@ -298,4 +298,11 @@ function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?, mast
 	}
 end
 
+-- A hunter's damage multiplier: their level (1 + HeroDamagePerLevel per level past 1)
+-- times the difficulty's Hero damage x (Chaos = gun skill, PLAN T50 final).
+function HeroStats.damageScale(level: number, difficulty: { heroDamageMult: number }?): number
+	local levelScale = (1 + Config.Tuning.HeroDamagePerLevel) ^ math.max(0, level - 1)
+	return levelScale * (if difficulty then difficulty.heroDamageMult else 1)
+end
+
 return HeroStats

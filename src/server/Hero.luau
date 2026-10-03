@@ -123,6 +123,7 @@ local teamPops = 0 -- this round's pending pops over every hunter present
 local onPop: ((Player?, string?) -> ())? = nil
 local onBounty: ((Player, string) -> ())? = nil -- (hunter, a Bounties event): "ability"
 local gearAt: ((Vector3) -> HeroStats.Gear)? = nil -- Towers.hunterGearAt
+local difficultyOf: (() -> { heroDamageMult: number })? = nil -- the chosen Difficulty row (Main)
 local GEAR_CHECK = 0.2 -- seconds between checks of where each hunter stands
 local fireEvent: RemoteEvent
 
@@ -164,9 +165,9 @@ local function stateOf(player: Player): State
 	return state
 end
 
--- Damage multiplier from this player's hero level.
+-- Damage multiplier from this player's hero level and the difficulty's Hero damage x.
 local function levelScale(s: State): number
-	return (1 + Config.Tuning.HeroDamagePerLevel) ^ math.max(0, s.level - 1)
+	return HeroStats.damageScale(s.level, difficultyOf and difficultyOf())
 end
 
 -- The mastery rewards this player has with their current hero, or nil.
@@ -877,12 +878,14 @@ export type Hooks = {
 	onPop: ((Player?, string?) -> ())?,
 	onBounty: ((Player, string) -> ())?,
 	gearAt: ((Vector3) -> HeroStats.Gear)?,
+	difficulty: (() -> { heroDamageMult: number })?,
 }
 
 function Hero.init(remotes: Folder, hooks: Hooks?)
 	onPop = hooks and hooks.onPop
 	onBounty = hooks and hooks.onBounty
 	gearAt = hooks and hooks.gearAt
+	difficultyOf = hooks and hooks.difficulty
 
 	-- Outfitter Armory buffs follow the hunter around: a few times a second,
 	-- re-read what covers where they stand; publish it (Gear* attributes, so

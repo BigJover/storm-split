@@ -9,6 +9,8 @@
 	  freezeEvery      the shortest pulse interval any path gives
 ]]
 
+local Config = require(script.Parent.Config)
+
 local TowerStats = {}
 
 export type Stats = {
@@ -208,5 +210,12 @@ end
 TowerStats.MULTIPLIERS = MULTIPLIERS
 TowerStats.HIGHEST = HIGHEST
 TowerStats.FLAGS = FLAGS
+
+-- Every tower's damage multiplier: the team's level (1 + TowerDamagePerLevel per level
+-- past 1) times the difficulty's Tower damage x (Chaos = gun skill, PLAN T50 final).
+function TowerStats.damageScale(level: number, difficulty: { towerDamageMult: number }?): number
+	local levelScale = (1 + Config.Tuning.TowerDamagePerLevel) ^ math.max(0, level - 1)
+	return levelScale * (if difficulty then difficulty.towerDamageMult else 1)
+end
 
 return TowerStats

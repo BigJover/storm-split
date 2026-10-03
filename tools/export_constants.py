@@ -957,6 +957,19 @@ def validate(data):
     if best_tower_leveled and best_weapon > best_tower_leveled:
         problems.append(f"A maxed hero at the highest hero level in play (level {hero_level}: {best_weapon:.0f} DPS) out-damages the best maxed tower"
                         f" (tower level {round_level}: {best_tower_leveled:.0f}). The game becomes a horde shooter.")
+    # The guard runs per difficulty (PLAN T50 final): Chaos softens towers and hardens the gun.
+    for key in data.get("DifficultyOrder", []):
+        d = data["Difficulties"][key]
+        if d["towerDamageMult"] <= 0 or d["heroDamageMult"] <= 0:
+            problems.append(f"Difficulty {d['display']}: Tower damage x and Hero damage x must be above 0")
+            continue
+        if d["towerDamageMult"] == 1 and d["heroDamageMult"] == 1:
+            continue
+        hero_d, tower_d = best_weapon * d["heroDamageMult"], best_tower_leveled * d["towerDamageMult"]
+        notes.append(f"  {d['display']}: hero {best_weapon:.0f} x {d['heroDamageMult']:g} = {hero_d:.0f} vs best tower {best_tower_leveled:.0f} x {d['towerDamageMult']:g} = {tower_d:.0f}")
+        if tower_d and hero_d >= tower_d:
+            problems.append(f"Difficulty {d['display']}: a maxed hero at level {hero_level} ({hero_d:.0f} DPS with Hero damage x) out-damages the best maxed tower"
+                            f" ({tower_d:.0f} with Tower damage x).")
     # Not a failure (the rule is the BEST tower, DECISIONS #58): tower kinds whose best
     # maxed path the hero only passes because of the lead level.
     lead_only = [f"{name} ({dps * tower_scale:.0f})" for name, dps in best_by_tower.items()
@@ -1050,6 +1063,10 @@ def read_difficulty(ws):
             "clearReward": num(v(ws, r, 9)),
             "dinoDamageMult": num(v(ws, r, 10), 1),
             "startingCash": num(v(ws, r, 11)),
+            # Chaos = gun skill (PLAN T50 final, DECISIONS #167): every tower's damage and
+            # every hunter's damage scale by these on top of the level curve.
+            "towerDamageMult": num(v(ws, r, 12), 1),
+            "heroDamageMult": num(v(ws, r, 13), 1),
         }
         order.append(key)
         r += 1

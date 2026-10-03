@@ -10266,6 +10266,8 @@ return table.freeze({
 			clearReward = 50,
 			dinoDamageMult = 1,
 			startingCash = 450,
+			towerDamageMult = 1,
+			heroDamageMult = 1,
 		},
 		NORMAL = {
 			display = "Normal",
@@ -10278,6 +10280,8 @@ return table.freeze({
 			clearReward = 100,
 			dinoDamageMult = 1.25,
 			startingCash = 450,
+			towerDamageMult = 1,
+			heroDamageMult = 1,
 		},
 		HARD = {
 			display = "Hard",
@@ -10290,6 +10294,8 @@ return table.freeze({
 			clearReward = 150,
 			dinoDamageMult = 1.6,
 			startingCash = 850,
+			towerDamageMult = 1,
+			heroDamageMult = 1,
 		},
 		CHAOS = {
 			display = "Chaos",
@@ -10302,6 +10308,8 @@ return table.freeze({
 			clearReward = 200,
 			dinoDamageMult = 2.2,
 			startingCash = 450,
+			towerDamageMult = 0.6,
+			heroDamageMult = 1.5,
 		},
 	},
 	DifficultyOrder = {

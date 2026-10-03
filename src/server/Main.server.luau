@@ -194,7 +194,7 @@ DinoAttacks.init({
 	onBite = Towers.bitten,
 })
 Shop.init(remotes, { onBounty = Progression.bountyEvent }) -- build, upgrade, repair
-Hero.init(remotes, { onPop = popped, onBounty = Progression.bountyEvent, gearAt = Towers.hunterGearAt }) -- ability
+Hero.init(remotes, { onPop = popped, onBounty = Progression.bountyEvent, gearAt = Towers.hunterGearAt, difficulty = difficulty }) -- ability
 
 ------------------------------------------------------------------ host
 
@@ -392,7 +392,7 @@ local function playMatch()
 	ReplicatedStorage:SetAttribute("Level", level)
 	ReplicatedStorage:SetAttribute("RoundsCleared", START_ROUND - 1)
 	Hero.startMatch(START_ROUND - 1)
-	Towers.setLevel(level)
+	Towers.setLevel(level, difficulty())
 	Enemies.setSpeedMult(chosen.speedMult)
 	print(`[DinoHunters] {Modes.Modes[ReplicatedStorage:GetAttribute("Mode")].display} on {chosen.display} with {#Players:GetPlayers()} player(s)`)
 
@@ -434,7 +434,7 @@ local function playMatch()
 			local newLevel = HeroXp.roundLevel(index)
 			if newLevel > level then
 				level = newLevel
-				Towers.setLevel(level)
+				Towers.setLevel(level, difficulty())
 				ReplicatedStorage:SetAttribute("Level", level) -- the HUD announces it
 				print(`[DinoHunters] Tower level {level}: towers hit harder`)
 			end

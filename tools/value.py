@@ -929,6 +929,66 @@ def pacing_report(data):
         print(f"  - {f}")
 
 
+# ---------------------------------------------------------------- Chaos skill (PLAN T50 final)
+
+CHAOS_AIM = {"average": 0.5, "skilled": 0.9}
+# DECISIONS #167: (label, aim, rounds, test, bar); exit 1 if any is broken.
+CHAOS_BARS = (
+    ("towers only, lowest over 11-39", None, range(11, 40), "<=", 0.35),
+    ("skilled aim, lowest through round 30", "skilled", range(1, 31), ">=", 0.85),
+    ("skilled aim, lowest over 31-40", "skilled", range(31, 41), ">=", 0.40),
+)
+CHAOS_REPORT_ROUNDS = range(1, 20)  # average aim before round 20: report only (#167)
+
+
+def chaos_report(data):
+    """Chaos solo: the cash-to-required ratio with towers only (affordability x Tower damage x)
+    and with the hunter's gun added (best hero's T5 peak at the round level x Hero damage x x
+    aim, over Required DPS). Returns the broken gated bars."""
+    with contextlib.redirect_stdout(io.StringIO()):
+        wb = export_constants.recalculated(export_constants.DEFAULT_XLSX)
+    key = data["DifficultyOrder"][-1]
+    d = data["Difficulties"][key]
+    rows = pacing_rounds(data, wb["Towers"]["C13"].value, key, 1)
+    tuning = data["Tuning"]
+    per, hero_x = int(tuning.get("RoundsPerLevel", 5)), tuning.get("HeroDamagePerLevel", 0)
+    peak = max(hero_dps(h, i, 5)[0] for h in data["Heroes"].values() for i in range(len(h["paths"])))
+
+    def ratio(r, aim):
+        row = rows[r - 1]
+        towers = d["towerDamageMult"] * row["afford"]
+        if aim is None:
+            return towers
+        level = 1 + (r - 1) // max(1, per)
+        return towers + CHAOS_AIM[aim] * d["heroDamageMult"] * peak * (1 + hero_x) ** (level - 1) / row["required"]
+
+    def lowest(rounds, aim):
+        at = min(rounds, key=lambda r: ratio(r, aim))
+        return ratio(at, aim), at
+
+    print(f"Chaos skill report ({d['display']} solo; Tower damage x {d['towerDamageMult']:g}, Hero damage x {d['heroDamageMult']:g})")
+    print(f"  ratio = cash-to-required with towers x Tower damage x, plus aim x the best hero's T5 peak ({peak:.1f} DPS at level 1)"
+          f" at the round level x Hero damage x / Required DPS")
+    print("  the hero model is an UPPER BOUND (DECISIONS #168): real hunters reach T5 later, so Chaos is at least this hard")
+    broken = []
+    for label, aim, rounds, test, bar in CHAOS_BARS:
+        value, at = lowest(rounds, aim)
+        ok = value <= bar if test == "<=" else value >= bar
+        print(f"  {label:<38} {value:.2f} (round {at})  bar {test} {bar:g}  {'ok' if ok else 'MISS'}")
+        if not ok:
+            broken.append(f"CHAOS: {label} {value:.2f} at round {at}, bar {test} {bar:g}")
+    avg, avg_at = lowest(CHAOS_REPORT_ROUNDS, "average")
+    sk, sk_at = lowest(CHAOS_REPORT_ROUNDS, "skilled")
+    print(f"  report only: average aim, lowest over {CHAOS_REPORT_ROUNDS[0]}-{CHAOS_REPORT_ROUNDS[-1]} {avg:.2f} (round {avg_at});"
+          f" skilled {sk:.2f} (round {sk_at}); skilled minus average {sk - avg:+.2f}")
+    print("  per round (towers / average / skilled): " + "  ".join(
+        f"r{r} {ratio(r, None):.2f}/{ratio(r, 'average'):.2f}/{ratio(r, 'skilled'):.2f}" for r in (1, 11, 20, 30, 31, 35, 40)))
+    print(f"Chaos bars broken ({len(broken)}):")
+    for b in broken:
+        print(f"  - {b}")
+    return broken
+
+
 # A daily bounty must fit one solo Easy match reaching this round; a weekly must fit this
 # many such matches or clears (DECISIONS #66, PLAN round 2 T25).
 BOUNTY_MATCH_ROUND = 25
@@ -1025,6 +1085,8 @@ def main():
         pacing_report(data)
     elif "--overkill" in args:
         overkill_report(data)
+    elif "--chaos" in args:
+        sys.exit(1 if chaos_report(data) else 0)
     elif "--breaks1" in args:
         sys.exit(1 if breaks_report(data) else 0)
     else:
