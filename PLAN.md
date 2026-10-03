@@ -406,6 +406,21 @@ Checked by the Director against `value.py --breaks1` on 2026-10-02: with the bar
 - **Accept:** Config diff = the new fields; guard passes on every difficulty; report in the
   commit message.
 
+### T50 (final). Chaos levers at the seeds (#167–#169) — replaces T50 above
+Checked by the Director against the Builder's 2026-10-02 Chaos run: the seeds pass these bars.
+- **Levers:** `Difficulty` Chaos `Tower damage x` **0.6**, `Hero damage x` **1.5**; other
+  difficulties 1 / 1. No tuning sweep.
+- **Hero model:** keep "best hero's T5 peak at round level"; label it in the report as an
+  **upper bound** (real heroes are weaker early, so Chaos is at least this hard).
+- **Gated bars (exit 1 if broken):** towers only, lowest over 11–39 **≤ 0.35** (today 0.28);
+  skilled aim (0.9), lowest through round 30 **≥ 0.85** (today 0.86); skilled, lowest over
+  31–40 **≥ 0.40** (today 0.42; "nearly impossible"); guard holds on every difficulty
+  (309 < 451).
+- **Report only:** average aim (0.5) lowest over 1–19 (today 0.77) and the skilled minus
+  average gap, printed beside each other.
+- **Accept:** Config diff = the two new fields; report in the commit message; all specs, audit
+  strict 0, threat 0.
+
 ### T51. Mastery small perks (#135)
 - **Do:** `Mastery` first empty columns `Pick-up reach +`, `Heal per round +`, `Respawn x`,
   `Repair cost x` (cumulative per level, per the table; levels 1–5 blank/1). Wire: chests and
