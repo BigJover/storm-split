@@ -54,6 +54,9 @@ Usage:
     python3 tools/value.py --full    every band's cost per eDPS, every tower
     python3 tools/value.py --overkill  eDPS before (zero-waste) -> after (overkill counted),
                                      every damage path's T4-T5 in every band (PLAN T47/T48)
+    python3 tools/value.py --breaks1   Z / B1 (every break forced to 1) / S per raw-damage tier
+                                     and the three break bars (PLAN T48 final, #160, #164-#166);
+                                     exits 1 if a bar fails (tools/test.sh runs it)
     python3 tools/value.py --pacing  the pacing model (PLAN T19): the Balance Check's
                                      affordability per difficulty x 1/4/10 hunters (asserts
                                      it reproduces the sheet's Easy-solo column exactly),
@@ -83,6 +86,9 @@ SUPPORT_PATHS = {("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knock
 # Single tiers that buy control on a damage path (#74): still in the table and the medians,
 # never flagged dead. Longshot Perch Big Bore T3 = Concussion Round (a stun on hit).
 CONTROL_TIERS = {("SNIPER", "Big Bore", 3)}
+# Boss specialists (#164): raw T5s whose job is a boss multiplier. `--breaks1` reports them on
+# their own line and exempts them from bar 3 (the T5 median). Extinction Round = Big Bore T5.
+BOSS_SPECIALIST = {("SNIPER", "Big Bore", 5)}
 SUPPORT_TOWERS = {"QUARTERMASTER", "HOSPITAL", "ARMORY"}
 NEIGHBOUR_TOWER, NEIGHBOUR_TIER, NEIGHBOURS = "SCOUT", 2, 3
 DEAD_X, DOMINANT_X = 2.0, 0.5
@@ -225,9 +231,10 @@ def overkill_factor(damage, breaks, share):
 
 # ---------------------------------------------------------------- effective DPS
 
-def edps(s, mix, tuning, buff=None, overkill=True):
+def edps(s, mix, tuning, buff=None, overkill=True, breaks1=False):
     """One tower's effective DPS against a band's mix (`buff`: an aura it stands in).
-    `overkill` False = the old zero-waste number (every point of damage counted)."""
+    `overkill` False = the old zero-waste number (every point of damage counted);
+    `breaks1` True = overkill counted with every Size breaks forced to 1 (today's game, B1)."""
     buff = buff or {}
     rate = s["rate"] * (1 + buff.get("rate", 0) / 100)
     if s["damage"] <= 0 or rate <= 0:
@@ -244,7 +251,7 @@ def edps(s, mix, tuning, buff=None, overkill=True):
                   + mix["flying"] * (1 if s["hitsAir"] else 0) + mix["boss"] * s["bossMult"])
         direct = rate * s["shots"] * per_shot * weight
         if overkill and direct > 0:
-            direct = rate * s["shots"] * honest_hits(s, mix, tuning, damage, hits, pierces)
+            direct = rate * s["shots"] * honest_hits(s, mix, tuning, damage, hits, pierces, breaks1)
     burn = 0.0
     if s["burnDps"] > 0 and rate > 0:
         uptime = min(1.0, rate * s["shots"] * s["burnSeconds"])
@@ -257,12 +264,12 @@ def edps(s, mix, tuning, buff=None, overkill=True):
     return direct + burn + freeze
 
 
-def honest_hits(s, mix, tuning, damage, hits, pierces):
+def honest_hits(s, mix, tuning, damage, hits, pierces, breaks1=False):
     """Damage one shot does with overkill counted, summed over the band's species-rounds
-    (the overkill paragraph in the module docstring)."""
+    (the overkill paragraph in the module docstring). `breaks1`: every break forced to 1."""
     hit = damage * (1 + s["markPercent"] / 100) * (1 + s["brittlePercent"] / 100)
     splash = s["lineHits"] <= 1 and s["targets"] > 1
-    base = 1 if splash else s["sizeBreaks"]
+    base = 1 if splash or breaks1 else s["sizeBreaks"]
     level_x = 1 + tuning.get("TowerDamagePerLevel", 0)
     bomb_share = tuning.get("BombletDamage", 0)
     blasts = [(s["bomblets"] ** g, bomb_share ** g) for g in range(1, s["bombletGenerations"] + 1)] if s["bomblets"] else []
@@ -626,6 +633,92 @@ def overkill_report(data):
                 print(f"  {label:<38}{cells}{'  (support)' if r['support'] else ''}")
 
 
+BREAKS_BANDS = (2, 3)  # PLAN T48: rounds 21-30 and 31-40 ...
+BREAKS_T1_BANDS = (1,)  # ... and 11-20 for a tier 1
+S_OVER_B1, S_OVER_Z = 1.10, 1.15  # DECISIONS #160: bars 1 and 2
+RECOVER_Z = 0.95  # #165: where Z/B1 < S_OVER_B1, bar 1 asks S >= 0.95 x Z instead
+
+
+def raw_tiers(data):
+    """The raw-damage tiers (DECISIONS #127, #165): every tier on a break path whose own
+    Size breaks cell is above 1, as (key, path index, tier)."""
+    out = []
+    for key in data["TowerOrder"]:
+        t = data["Towers"][key]
+        for pi, path in enumerate(t["paths"]):
+            if (t["display"], path["id"]) in export_constants.BREAK_PATHS:
+                out += [(key, pi, i) for i, step in enumerate(path["tiers"], start=1) if step["sizeBreaks"] > 1]
+    return out
+
+
+def break_bars(z, b1, sv, gate_median, median):
+    """PLAN T48 (final), DECISIONS #160/#164/#165: which bars a tier-band fails, and which
+    branch of bar 1 ran ("B1" where overkill matters, Z/B1 >= 1.10; "Z" where it doesn't).
+    >>> break_bars(146, 109, 144, False, 0)
+    ([], 'B1')
+    >>> break_bars(131, 122, 131, False, 0)
+    ([], 'Z')
+    >>> break_bars(131, 122, 124, False, 0)
+    (['bar 1 (S/Z)'], 'Z')
+    >>> break_bars(146, 109, 115, False, 0)
+    (['bar 1 (S/B1)'], 'B1')
+    >>> break_bars(100, 50, 120, True, 130)
+    (['bar 2 (S/Z)', 'bar 3 (T5 median)'], 'B1')
+    """
+    bad = []
+    if z >= S_OVER_B1 * b1:
+        branch = "B1"
+        if sv < S_OVER_B1 * b1:
+            bad.append("bar 1 (S/B1)")
+    else:
+        branch = "Z"
+        if sv < RECOVER_Z * z:
+            bad.append("bar 1 (S/Z)")
+    if sv > S_OVER_Z * z:
+        bad.append("bar 2 (S/Z)")
+    if gate_median and sv < median:
+        bad.append("bar 3 (T5 median)")
+    return bad, branch
+
+
+def breaks_report(data):
+    """PLAN T48 (final), DECISIONS #160/#164-#166: per raw tier and band, Z (old zero-waste),
+    B1 (honest, every break 1), S (honest, the sheet's breaks), and the bars. Bar 3 gates the
+    general raw T5s only; a boss specialist's T5 is printed, not gated. Returns the failures."""
+    mixes = band_mix(data)
+    rows = value_table(data, mixes)
+    tuning = data["Tuning"]
+    medians = [statistics.median(r["edps"][i] for (k, p, t), r in rows.items() if t == 5 and not r["support"])
+               for i in range(len(BANDS))]
+    print("breaks (PLAN T48 final, DECISIONS #160, #164-#166): Z = zero-waste, B1 = every break 1,"
+          f" S = the sheet's breaks; bar 1 S >= {S_OVER_B1}x B1 where Z/B1 >= {S_OVER_B1} [branch B1],"
+          f" else S >= {RECOVER_Z}x Z [branch Z]; bar 2 S <= {S_OVER_Z}x Z;"
+          " bar 3 general raw T5 S >= the band's damage-path T5 median")
+    print("  T5 median: " + ", ".join(f"r{BANDS[i][0]}-{BANDS[i][1]} {fmt(medians[i])}" for i in BREAKS_BANDS))
+    failures, specialists = [], []
+    for key, pi, tier in raw_tiers(data):
+        t = data["Towers"][key]
+        path = t["paths"][pi]
+        r = rows[(key, pi, tier)]
+        s = path_stats(t, pi, tier)
+        label = f"{t['display'][:14]} {path['id']} T{tier} {path['tiers'][tier - 1]['name']} b{r['breaks']}"
+        specialist = (key, path["id"], tier) in BOSS_SPECIALIST
+        for i in (BREAKS_T1_BANDS if tier == 1 else BREAKS_BANDS):
+            z, b1, sv = r["before"][i], edps(s, mixes[i], tuning, breaks1=True) + r["aura"][i], r["edps"][i]
+            bad, branch = break_bars(z, b1, sv, tier == 5 and not specialist, medians[i])
+            lo, hi = BANDS[i]
+            print(f"  {label:<46} r{lo}-{hi}  Z {fmt(z):>5}  B1 {fmt(b1):>5}  S {fmt(sv):>5}"
+                  f"  S/B1 {sv / b1:.2f}  S/Z {sv / z:.2f}  bar1:{branch}{'  FAIL ' + ', '.join(bad) if bad else ''}")
+            failures += [f"{label} r{lo}-{hi}: {b}" for b in bad]
+            if specialist:
+                specialists.append(f"{label} r{lo}-{hi} S {fmt(sv)} S/B1 {sv / b1:.2f} S/Z {sv / z:.2f}"
+                                   f" (median {fmt(medians[i])})")
+    for line in specialists:
+        print(f"  boss specialist (report, #164): {line}")
+    print(f"Break bars: {'all met' if not failures else str(len(failures)) + ' failed'}")
+    return failures
+
+
 def pct(before, after):
     return f"{(after / before - 1) * 100:+.0f}%" if before > 1e-9 else ""
 
@@ -932,6 +1025,8 @@ def main():
         pacing_report(data)
     elif "--overkill" in args:
         overkill_report(data)
+    elif "--breaks1" in args:
+        sys.exit(1 if breaks_report(data) else 0)
     else:
         value_report(data, "--full" in args)
 
