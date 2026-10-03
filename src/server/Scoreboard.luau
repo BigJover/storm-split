@@ -10,6 +10,9 @@
 ]]
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Theme = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Theme"))
 
 local Scoreboard = {}
 
@@ -19,7 +22,7 @@ local function setUp(player: Player)
 	local stats = Instance.new("Folder")
 	stats.Name = "leaderstats"
 	local value = Instance.new("IntValue")
-	value.Name = "Bones" -- display name only (DECISIONS #130); per match, never saved
+	value.Name = Theme.Bones -- display name only (DECISIONS #130); per match, never saved
 	value.Parent = stats
 	local badge = Instance.new("IntValue")
 	badge.Name = "Mastery"

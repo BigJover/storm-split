@@ -7,6 +7,8 @@
 return table.freeze({
 	Title = "Dino Hunters",
 	Currency = "Amber", -- the permanent currency (was "Storm Cores")
+	Fence = "Fence", -- what the dinos break through: the lives (DECISIONS #130)
+	Bones = "Bones", -- per-match score on the player list (DECISIONS #130)
 
 	-- The Hunt Board (DECISIONS #63, #76): log-in calendar and challenges.
 	HuntBoard = "Hunt Board",

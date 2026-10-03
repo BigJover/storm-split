@@ -226,7 +226,7 @@ local function refresh()
 	xpFill.Size = UDim2.fromScale(shown / needed, 1)
 	xpNumbers.Text = `{shown} / {needed} XP`
 	clearRow.Visible = xpRow.Visible and pending > 0
-	clearText.Text = `+{pending} on round clear`
+	clearText.Text = `+{pending} bonus on round clear` -- DECISIONS #157
 
 	local difficultyKey = attr("Difficulty", Config.DifficultyOrder[1])
 	local difficultyName = Config.Difficulties[difficultyKey] and Config.Difficulties[difficultyKey].display or ""
@@ -235,15 +235,15 @@ local function refresh()
 		local won = state == "Victory"
 		local payout = player:GetAttribute("LastPayout")
 		local cores = if payout == nil then "" elseif payout > 0 then `+{payout} {Theme.Currency}` else `No {Theme.Currency} (solo pays on a clear)`
-		results.Text = `<font color="{if won then "#8cf0aa" else "#ff788c"}">{if won then "VICTORY" else "GAME OVER"}</font>\n<font size="18">{if won then `{difficultyName} cleared` else `Reached round {round} on {difficultyName}`}\n{cores}</font>`
+		results.Text = `<font color="{if won then "#8cf0aa" else "#ff788c"}">{if won then "VICTORY" else "GAME OVER"}</font>\n<font size="18">{if won then `{difficultyName} cleared` else `The fence fell on round {round} ({difficultyName})`}\n{cores}</font>`
 		label.Text = if won then "VICTORY" else `GAME OVER  ·  round {round}`
 		label.TextColor3 = if won then Color3.fromRGB(140, 240, 170) else Color3.fromRGB(255, 120, 140)
 	elseif state == "Lobby" then
 		label.Text = ""
 	elseif state == "Building" then
-		label.Text = `Build (B), choose a hero (H), then Start  ·  {difficultyName}  ·  Cash {cash}  ·  Fence {lives}`
+		label.Text = `Build (B), choose a hero (H), then Start  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}`
 	else
-		label.Text = `Round {round}  ·  {difficultyName}  ·  Cash {cash}  ·  Fence {lives}  ·  Dinos {alive}`
+		label.Text = `Round {round}  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}  ·  Dinos {alive}`
 	end
 end
 
