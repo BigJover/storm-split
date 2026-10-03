@@ -365,6 +365,25 @@ bonus inside the hit damage as T47 built it — #161):
 - **Accept:** Config diff = only `sizeBreaks` lines; commit message holds the table
   tier × band: Z, B1, S, S/B1, S/Z, the T5 median, and the findings list.
 
+### T48 (final). Commit the seeds as they are (#164–#166) — replaces both T48s above
+Checked by the Director against `value.py --breaks1` on 2026-10-02: with the bars below, the
+**sheet's current seeds pass with zero changes**. No damage, cost, resist or break edits.
+- **Sheet:** unchanged. Big Bore T1 `Size breaks` stays **blank** (#165).
+- **Code:** finish the uncommitted `--breaks1` bar logic in `tools/value.py`:
+  1. **Bar 1, only where overkill matters:** if Z/B1 ≥ 1.10, need S/B1 ≥ 1.10; else need
+     S/Z ≥ 0.95 (breaks already recover it). Today: Hardliner T4, Big Bore T2, Big Bore T3 in
+     r31–40 take the second branch (S/Z 1.00 / 1.00 / 0.99).
+  2. **Bar 2:** S/Z ≤ 1.15 (unchanged; max today 1.00).
+  3. **Bar 3, general raw T5s only:** Linebreaker and Hide Buster S ≥ the band's damage-path T5
+     median (today 265/345 vs 196/289; 219/545 vs 196/289). **Extinction Round is a boss
+     specialist: exempt from bar 3** (`BOSS_SPECIALIST` set, like `CONTROL_TIERS`); print its
+     S, S/B1 and S/Z on a "boss specialist (report)" line, no gate.
+  Exit 0 when all bars pass; the table keeps Z, B1, S, S/B1, S/Z and which branch of bar 1 ran.
+- **Accept:** `value.py --breaks1` exits 0 on the current sheet; findings = exactly Spotter T2,
+  Spotter T4, Big Bore T1, Concussive T5 (#163, #165); #72 pacing floors hold; hero guard
+  passes; `threat.py` 0; audit strict 0; all specs green; no Config diff; commit message holds
+  the table.
+
 ## Batch 4 — boss bar, Chaos, small perks
 
 ### T49. Boss health bar with notches (#129)
