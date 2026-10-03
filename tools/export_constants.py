@@ -283,21 +283,79 @@ def attach_hero_paths(ws, heroes):
         r += 1
 
 
+# Mastery small perks (PLAN T51, DECISIONS #135): the only columns allowed after the
+# fixed ones (A-I), found by header: (Config field, header, kind). "add" columns are
+# blank = 0 and may only rise with the level; "x" columns are blank = 1, in (0, 1], and
+# may only fall. None touches damage, fire rate, reload, recoil, spread, max HP or move
+# speed (tools/audit.py checks the headers and fields too).
+MASTERY_FIXED_COLUMNS = 9
+MASTERY_SMALL_PERKS = [
+    ("pickupReachAdd", "Pick-up reach +", "add"),
+    ("healPerRoundAdd", "Heal per round +", "add"),
+    ("respawnMult", "Respawn x", "x"),
+    ("repairCostMult", "Repair cost x", "x"),
+]
+# The first level a small perk may change at (levels 1-5 stay blank / 1).
+MASTERY_SMALL_PERK_FIRST = 6
+
+
 def read_mastery(ws):
+    columns = {}
+    for c in range(MASTERY_FIXED_COLUMNS + 1, ws.max_column + 1):
+        head = v(ws, 4, c)
+        if head is None:
+            continue
+        head = str(head).strip()
+        if head not in [h for _, h, _ in MASTERY_SMALL_PERKS]:
+            sys.exit(f"Mastery row 4: column '{head}' is not a small perk this game knows"
+                     f" ({', '.join(h for _, h, _ in MASTERY_SMALL_PERKS)}; PLAN T51)")
+        columns[head] = c
+    for _, head, _ in MASTERY_SMALL_PERKS:
+        if head not in columns:
+            sys.exit(f"Mastery row 4: no '{head}' column (small perks are found by header, PLAN T51)")
     out = []
     for r in range(5, 25):
         lvl = v(ws, r, 1)
         if lvl is None:
             break
-        out.append({
+        row = {
             "coreCost": num(v(ws, r, 2)),
             "unlock": v(ws, r, 5) or "",
             "upgradeDiscountPercent": num(v(ws, r, 6)),
             "abilityCooldownMult": num(v(ws, r, 7), 1),
             "freeFirstUpgrade": yes(v(ws, r, 8)),
             "crossoverCap": int(num(v(ws, r, 9), 2)),
-        })
+        }
+        for field, head, kind in MASTERY_SMALL_PERKS:
+            row[field] = num(v(ws, r, columns[head]), 0 if kind == "add" else 1)
+        out.append(row)
     return out
+
+
+def validate_small_perks(data, problems):
+    """PLAN T51: each small perk column is monotone in the level, neutral before
+    MASTERY_SMALL_PERK_FIRST, and every level where one changes says so in its
+    'Unlock at this level' text with that number (x columns as a % off)."""
+    mastery = data["Mastery"]
+    for field, head, kind in MASTERY_SMALL_PERKS:
+        previous = 0 if kind == "add" else 1
+        for i, row in enumerate(mastery, start=1):
+            value = row[field]
+            if not isinstance(value, (int, float)):
+                problems.append(f"Mastery level {i}: '{head}' must be a number")
+                continue
+            if kind == "add" and (value < 0 or value < previous):
+                problems.append(f"Mastery level {i}: '{head}' {value:g} must be 0 or more and never below level {i - 1}'s {previous:g}")
+            if kind == "x" and (not 0 < value <= 1 or value > previous):
+                problems.append(f"Mastery level {i}: '{head}' {value:g} must be in (0, 1] and never above level {i - 1}'s {previous:g}")
+            if i < MASTERY_SMALL_PERK_FIRST and value != (0 if kind == "add" else 1):
+                problems.append(f"Mastery level {i}: '{head}' must be blank{'' if kind == 'add' else ' or 1'} below level {MASTERY_SMALL_PERK_FIRST}")
+            if value != previous:
+                shown = value if kind == "add" else round((1 - value) * 100, 6)
+                numbers = [float(n) for n in re.findall(r"\d+(?:\.\d+)?", str(row["unlock"]))]
+                if not any(abs(n - shown) < 1e-6 for n in numbers):
+                    problems.append(f"Mastery level {i}: '{head}' changes to {value:g}, but its 'Unlock at this level' text doesn't say {shown:g}")
+            previous = value
 
 
 # Mastery Perks effect columns, found by header text: (Config field, header, kind).
@@ -908,6 +966,7 @@ def validate(data):
 
     validate_rewards(data, problems, notes)
     validate_perks(data, problems, notes)
+    validate_small_perks(data, problems)
     validate_xp(data, problems, notes)
 
     return problems, notes

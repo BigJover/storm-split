@@ -84,13 +84,14 @@ function Combat.towerMaxHp(def, pathTiers: { number }, auraHpPercent: number?): 
 	return base * (1 + Config.Tuning.TowerHPPerTier * tiers) * (1 + (auraHpPercent or 0) / 100)
 end
 
--- What topping a damaged tower back up to full costs.
-function Combat.repairCost(spent: number, hp: number, maxHp: number, discountPercent: number?): number
+-- What topping a damaged tower back up to full costs. `perkMult`: the repairing
+-- hunter's Handyman mastery perk (Shared/SmallPerks repairCostMult; 1 = none).
+function Combat.repairCost(spent: number, hp: number, maxHp: number, discountPercent: number?, perkMult: number?): number
 	if maxHp <= 0 or hp >= maxHp then
 		return 0
 	end
 	local missing = 1 - math.max(0, hp) / maxHp
-	local cost = Config.Tuning.RepairCost * spent * missing * (1 - (discountPercent or 0) / 100)
+	local cost = Config.Tuning.RepairCost * spent * missing * (1 - (discountPercent or 0) / 100) * (perkMult or 1)
 	return math.floor(cost + 0.5)
 end
 

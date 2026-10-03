@@ -23,6 +23,9 @@ Config.luau, and prints a findings list:
               perk name equals a tower or hero tier name or a hero's ability name,
               whatever the case (DECISIONS #104), and each perk name is in HEROES.md
               "Mastery" (a note until the docs task)
+  6. mastery  no Mastery sheet column header and no Config.Mastery field touches damage,
+              fire rate, reload, recoil, spread, max HP or move speed (PLAN T51,
+              DECISIONS #135: mastery perks are PvP-safe)
 
 Usage:
     python3 tools/audit.py            report; exits 0 whatever it finds
@@ -417,6 +420,28 @@ def check_perks(findings, notes, data, doc=None):
         notes.append(f"{count} perk names found in HEROES.md \"Mastery\"")
 
 
+# ---------------------------------------------------------------- 6. mastery columns
+
+# Words a mastery column may never touch (PLAN T51, DECISIONS #135), matched on the
+# header text and on the Config field name, both lowercased with spaces and
+# punctuation removed.
+MASTERY_FORBIDDEN = ("damage", "firerate", "rate", "reload", "recoil", "spread", "maxhp", "maxhealth", "health", "speed", "walk")
+
+
+def check_mastery_columns(findings, notes, data):
+    import openpyxl
+    ws = openpyxl.load_workbook(export_constants.DEFAULT_XLSX, read_only=True)["Mastery"]
+    heads = [str(c.value) for c in next(ws.iter_rows(min_row=4, max_row=4)) if c.value is not None]
+    fields = sorted({f for row in data["Mastery"] for f in row})
+    for where, names in (("header", heads), ("Config.Mastery field", fields)):
+        for name in names:
+            flat = re.sub(r"[^a-z]", "", name.lower())
+            hit = [w for w in MASTERY_FORBIDDEN if w in flat]
+            if hit:
+                findings.append(f"Mastery {where} '{name}' touches {', '.join(hit)} (mastery is never combat power, DECISIONS #135)")
+    notes.append(f"{len(heads)} Mastery headers and {len(fields)} fields checked: none touches damage, fire rate, reload, recoil, spread, max HP or move speed")
+
+
 # ---------------------------------------------------------------- main
 
 # Bounty events (PLAN round 2 T28): every event in Shared/Bounties EVENTS must be fired
@@ -470,6 +495,7 @@ def main():
         ("species", lambda f, n: check_species(f, data)),
         ("bounty events", lambda f, n: check_bounty_events(f, n)),
         ("mastery perks", lambda f, n: check_perks(f, n, data)),
+        ("mastery columns", lambda f, n: check_mastery_columns(f, n, data)),
     ]
     total = 0
     for name, run in checks:

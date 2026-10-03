@@ -44,6 +44,7 @@ local Combat = require(Shared:WaitForChild("Combat"))
 local Config = require(Shared:WaitForChild("Config"))
 local HeroStats = require(Shared:WaitForChild("HeroStats"))
 local Pricing = require(Shared:WaitForChild("Pricing"))
+local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local CUR = string.lower(Theme.Currency) -- "amber" in running text
 local Placement = require(Shared:WaitForChild("Placement"))
@@ -1113,7 +1114,7 @@ render = function()
 		end
 		if trampled or (maxHp > 0 and hp < maxHp) then
 			local discount = managed:GetAttribute("Discount") or 0
-			local cost = Combat.repairCost((managed:GetAttribute("Spent") or 0) :: number, hp, maxHp, discount)
+			local cost = Combat.repairCost((managed:GetAttribute("Spent") or 0) :: number, hp, maxHp, discount, SmallPerks.ofPlayer(player).repairCostMult)
 			local affordable = cash >= cost
 			local price = if discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
 			addRow(0, `<b>Repair</b>  —  {price}`, if affordable then REPAIR_COLOR else LOCKED_COLOR, affordable, function()

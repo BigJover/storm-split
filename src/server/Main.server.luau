@@ -27,6 +27,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local Modes = require(Shared:WaitForChild("Modes"))
 local HeroXp = require(Shared:WaitForChild("HeroXp"))
 local Pricing = require(Shared:WaitForChild("Pricing"))
+local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
 
 local MapBuilder = require(script.Parent.MapBuilder)
 local Enemies = require(script.Parent.Enemies)
@@ -269,7 +270,9 @@ local function watchCharacter(player: Player)
 		local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 		humanoid.Died:Connect(function()
 			local base, share = Towers.rescueBeacon()
-			task.delay(Config.Tuning.RespawnTime * (if base then share else 1), function()
+			-- Quick Recovery (Shared/SmallPerks) stacks with a Rescue Beacon's share.
+			local perk = SmallPerks.ofPlayer(player).respawnMult
+			task.delay(Config.Tuning.RespawnTime * (if base then share else 1) * perk, function()
 				if player.Character == character then
 					local stillThere = Towers.rescueBeacon() -- still standing?
 					if stillThere then
@@ -422,7 +425,9 @@ local function playMatch()
 		onRoundEnd = function(index)
 			Economy.earn((Config.Tuning.RoundBonusBase + Config.Tuning.RoundBonusPerRound * index) * chosen.cashMult)
 			Economy.earn(Towers.roundIncome(Economy.cash()) * chosen.cashMult) -- Quartermasters
-			Health.healAll(Config.Tuning.HealPerRound)
+			for _, hunter in Players:GetPlayers() do -- plus each hunter's Field Dressing (Shared/SmallPerks)
+				Health.heal(hunter, Config.Tuning.HealPerRound + SmallPerks.ofPlayer(hunter).healPerRound)
+			end
 
 			ReplicatedStorage:SetAttribute("RoundsCleared", index)
 			Hero.roundCleared(index) -- banks Round XP and this round's pending pop XP

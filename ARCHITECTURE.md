@@ -43,6 +43,7 @@ src/
 │   │                        (the stronger wins), nearest dinos to a point; pure
 │   ├── SizeBreaks.luau      One health pool per dino with size thresholds; pierce-through breaks per hit; the boss pool bar's fill and notches
 │   │                        (tier base + level bonus − species resist, capped); pure, used by Enemies
+│   ├── SmallPerks.luau      Mastery small perks (levels 6-19): pick-up reach, round heal, respawn x, repair x
 │   ├── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
 │   ├── Modes.luau           Game modes and tracks the home screen offers (availability, display)
 │   ├── PanelRules.luau      Which panel may be open in which match state, and what a state change closes;

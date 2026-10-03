@@ -22,6 +22,13 @@ Amber (`VISION.md` for how it's earned) buys up to 20 mastery levels per owned h
 upgrade costs (levels 1-4), ability cooldown -15% (5) and -30% (15), a free first upgrade
 each match (10), and at 20 a gold gun and a crossover cap of 3 for this hero. Never gun damage: perks change abilities only.
 
+**Small perks (Jovan, 2026-10-02: "small perks"; DECISIONS #135, PLAN T51).** The levels in
+between give four non-damage lines, three steps each (Mastery sheet; working names until the
+Dino agent's T54): **Long Arms** I–III (6/11/16) picks up chests and med kits from 2/4/6 studs
+away; **Field Dressing** I–III (7/12/17) heals 5/10/15 more HP when a round is cleared;
+**Quick Recovery** I–III (8/13/18) respawns 10/20/30% sooner; **Handyman** I–III (9/14/19)
+makes repairs 5/10/15% cheaper. They follow the hero being played.
+
 **Ability perks (Jovan, 2026-10-02; DECISIONS #97–#99, #114–#115).** Mastery 10 and 15 also
 give each hero an ability perk: the stronger one at 15, both small ("a somewhat fair
 advantage", safe for the PvP modes). A hero with mastery 15 has both.

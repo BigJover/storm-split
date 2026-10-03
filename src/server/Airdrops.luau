@@ -7,15 +7,19 @@
 
 	Collection is server-side (Touched on the server, checked against a real
 	player's character), so a client can't claim a chest it isn't touching.
+	A hunter with the Long Arms mastery perk also grabs drops within its reach
+	(Shared/SmallPerks), checked here on the server every frame.
 ]]
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Placement = require(Shared:WaitForChild("Placement"))
 local Combat = require(Shared:WaitForChild("Combat"))
+local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
 
 local Economy = require(script.Parent.Economy)
 local Health = require(script.Parent.Health)
@@ -33,8 +37,33 @@ local KIT_CROSS = Color3.fromRGB(60, 190, 90) -- green "+", never a red cross
 local folder: Instance
 local random = Random.new()
 
+-- Drops on the ground: the part and what picking it up does (false = this
+-- player can't take it, e.g. a med kit at full health).
+local live: { [BasePart]: (Player) -> boolean } = {}
+
+local function reachPass()
+	if next(live) == nil then
+		return
+	end
+	for _, player in Players:GetPlayers() do
+		local reach = SmallPerks.ofPlayer(player).pickupReach
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if reach > 0 and root and root:IsA("BasePart") then
+			for part, claim in live do
+				if part.Parent == nil then
+					live[part] = nil -- cleared with the board
+				elseif SmallPerks.inReach(SmallPerks.gap(root.Position, root.Size.X / 2, part.Position, part.Size), reach) then
+					claim(player)
+				end
+			end
+		end
+	end
+end
+
 function Airdrops.init(effectFolder: Instance)
 	folder = effectFolder
+	RunService.Heartbeat:Connect(reachPass)
 end
 
 local function spawnChest(position: Vector3, cash: number)
@@ -65,21 +94,27 @@ local function spawnChest(position: Vector3, cash: number)
 	label.Parent = chest
 
 	local taken = false
-	chest.Touched:Connect(function(part)
+	local function claim(_player: Player): boolean
 		if taken then
-			return
-		end
-		local player = Players:GetPlayerFromCharacter(part.Parent)
-		if not player then
-			return
+			return false
 		end
 		taken = true
+		live[chest] = nil
 		Economy.earn(cash)
 		chest:Destroy()
+		return true
+	end
+	chest.Touched:Connect(function(part)
+		local player = Players:GetPlayerFromCharacter(part.Parent)
+		if player then
+			claim(player)
+		end
 	end)
 
 	chest.Parent = folder
+	live[chest] = claim
 	task.delay(Config.Tuning.ChestLifetime, function()
+		live[chest] = nil
 		if chest.Parent then
 			chest:Destroy()
 		end
@@ -127,22 +162,28 @@ local function spawnKit(position: Vector3, heal: number)
 	label.Parent = kit
 
 	local taken = false
-	kit.Touched:Connect(function(part)
-		if taken then
-			return
-		end
-		local player = Players:GetPlayerFromCharacter(part.Parent)
-		local humanoid = player and player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-		if not player or not humanoid or not Combat.takesMedKit(humanoid.Health, humanoid.MaxHealth) then
-			return
+	local function claim(player: Player): boolean
+		local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		if taken or not humanoid or not Combat.takesMedKit(humanoid.Health, humanoid.MaxHealth) then
+			return false
 		end
 		taken = true
+		live[kit] = nil
 		Health.heal(player, heal)
 		kit:Destroy()
+		return true
+	end
+	kit.Touched:Connect(function(part)
+		local player = Players:GetPlayerFromCharacter(part.Parent)
+		if player then
+			claim(player)
+		end
 	end)
 
 	kit.Parent = folder
+	live[kit] = claim
 	task.delay(Config.Tuning.ChestLifetime, function()
+		live[kit] = nil
 		if kit.Parent then
 			kit:Destroy()
 		end

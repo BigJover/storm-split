@@ -31,6 +31,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local ShopRules = require(Shared:WaitForChild("ShopRules"))
 local Placement = require(Shared:WaitForChild("Placement"))
 local Pricing = require(Shared:WaitForChild("Pricing"))
+local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
@@ -209,8 +210,9 @@ local function repair(player: Player, towerId: unknown): (boolean, string)
 	if tower.hp >= tower.maxHp and not tower.knockedOut then
 		return false, "It doesn't need repairs"
 	end
-	-- A Supply Camp's Logistics discount applies, as it does to upgrades.
-	local cost = Combat.repairCost(spent[tower] or 0, tower.hp, tower.maxHp, tower.buff.discountPercent)
+	-- A Supply Camp's Logistics discount applies, as it does to upgrades, and the
+	-- repairing hunter's Handyman mastery perk (Shared/SmallPerks).
+	local cost = Combat.repairCost(spent[tower] or 0, tower.hp, tower.maxHp, tower.buff.discountPercent, SmallPerks.ofPlayer(player).repairCostMult)
 	if cost > 0 and not Economy.trySpend(cost) then
 		return false, "Not enough cash"
 	end
