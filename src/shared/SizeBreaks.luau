@@ -18,6 +18,9 @@
 	          size starts full). Returns the new HP, sizes dropped and whether it
 	          died (only when k - b <= 0 and the damage reaches 0 HP).
 	  sizeOf  the size for an HP on the pool (k with HP in ((k-1)*share, k*share])
+	  fill    the part of the whole pool left: hp / (share * sizes), 0..1 (the
+	          boss pool bar, DECISIONS #129, PLAN T49)
+	  notches where the thresholds sit on that bar: k / sizes for k = 1..sizes-1
 ]]
 
 local Config = require(script.Parent.Config)
@@ -51,6 +54,23 @@ function SizeBreaks.sizeOf(hp: number, share: number): number
 		return 0
 	end
 	return math.max(1, math.ceil(hp / share - EPSILON))
+end
+
+function SizeBreaks.fill(hp: number, share: number, sizes: number): number
+	local pool = share * sizes
+	if pool <= 0 then
+		return 0
+	end
+	return math.clamp(hp / pool, 0, 1)
+end
+
+function SizeBreaks.notches(sizes: number): { number }
+	local out = {}
+	local n = math.max(1, math.floor(sizes))
+	for k = 1, n - 1 do
+		table.insert(out, k / n)
+	end
+	return out
 end
 
 -- One hit of `amount` on a dino at `size` with `hp` left on its pool.

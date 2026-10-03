@@ -137,6 +137,13 @@ local function cframeAt(distance: number, height: number): CFrame
 	return CFrame.lookAt(position, position + direction)
 end
 
+-- Bosses carry a pool bar with a notch per size threshold (DECISIONS #129).
+local function showPool(enemy: Enemy)
+	if enemy.def.boss and enemy.model then
+		DinoLook.setPoolBar(enemy.model, SizeBreaks.fill(enemy.hp, enemy.share, enemy.sizes), SizeBreaks.notches(enemy.sizes))
+	end
+end
+
 -- (Re)build an enemy's model for its current size. Visuals only; keeps the
 -- chill and fire looks.
 local function dress(enemy: Enemy)
@@ -153,6 +160,7 @@ local function dress(enemy: Enemy)
 		old:Destroy()
 	end
 	enemy.sedatedShown, enemy.asleepShown, enemy.muzzledShown = false, false, false -- step() re-applies them on the new model
+	showPool(enemy)
 	if enemy.fire then
 		Enemies.showBurning(enemy, true)
 	end
@@ -266,6 +274,7 @@ function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?, br
 	local hp, dropped, dead = SizeBreaks.apply(enemy.hp, enemy.share, enemy.size, amount, breaks)
 	enemy.hp = hp
 	if dropped == 0 then
+		showPool(enemy)
 		return false, nil, 0
 	end
 

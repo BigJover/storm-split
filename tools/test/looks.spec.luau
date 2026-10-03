@@ -455,3 +455,49 @@ test("Lullaby Rounds strap flash: lighter for 0.3s, then back to tan (R8-4, no z
 	task.wait(0.4)
 	eq(strap.Color, DinoLook.MUZZLE_COLOR, "restored")
 end)
+
+test("boss pool bar (PLAN T49): Triceratops and T-Rex only, notches, fill, no input, MaxDistance", function()
+	local SizeBreaks = require(src.shared.SizeBreaks)
+	local bosses = {}
+	for _, e in Config.Enemies do
+		if e.boss then
+			table.insert(bosses, e.display)
+		end
+	end
+	table.sort(bosses)
+	eq(table.concat(bosses, ","), "T-Rex,Triceratops", "the boss species")
+	for _, key in Config.EnemyOrder do
+		local e = Config.Enemies[key]
+		if not e.boss then
+			continue
+		end
+		local sizes = math.max(1, e.sizes or 1)
+		local model = DinoLook.build(key, 1, CFrame.new(0, 5, 0))
+		local share = 100
+		DinoLook.setPoolBar(model, SizeBreaks.fill(share * sizes, share, sizes), SizeBreaks.notches(sizes))
+		local bar = model.PrimaryPart:FindFirstChild("PoolBar")
+		ok(bar ~= nil, `{key} bar`)
+		ok(bar.MaxDistance > 0 and bar.MaxDistance <= 150, `{key} MaxDistance set`)
+		eq(bar.Active, false, `{key} bar takes no input`)
+		local notches = 0
+		for _, d in bar:GetDescendants() do
+			ok(not d:IsA("GuiButton") and not d:IsA("TextBox"), `{key} nothing clickable`)
+			if d.Name:match("^Notch") then
+				notches += 1
+				near(d.Position.X.Scale, tonumber(d.Name:sub(6)) / sizes, `{key} {d.Name}`, 1e-6)
+			end
+		end
+		eq(notches, sizes - 1, `{key} a notch per threshold`)
+		near(bar.Back.Fill.Size.X.Scale, 1, `{key} full`, 1e-6)
+		DinoLook.setPoolBar(model, SizeBreaks.fill(share * sizes * 0.4, share, sizes), SizeBreaks.notches(sizes))
+		near(bar.Back.Fill.Size.X.Scale, 0.4, `{key} updates on damage`, 1e-6)
+		DinoLook.setPoolBar(model, 0.2, SizeBreaks.notches(sizes))
+		local count = 0
+		for _, c in model.PrimaryPart:GetChildren() do
+			if c.Name == "PoolBar" then
+				count += 1
+			end
+		end
+		eq(count, 1, `{key} one bar`)
+	end
+end)

@@ -262,3 +262,21 @@ test("Size breaks per tier are PLAN's seeds and reach the tower and hero stats",
 		eq(stats and stats.sizeBreaks, 1, `{key} stats`)
 	end
 end)
+
+test("boss pool bar (PLAN T49): fill = hp / pool, notches at k / sizes", function()
+	near(SizeBreaks.fill(300, 100, 4), 0.75, "fill 300 of 400", 1e-9)
+	near(SizeBreaks.fill(400, 100, 4), 1, "full", 1e-9)
+	eq(SizeBreaks.fill(0, 100, 4), 0, "dead")
+	eq(SizeBreaks.fill(-5, 100, 4), 0, "clamped low")
+	eq(SizeBreaks.fill(500, 100, 4), 1, "clamped high")
+	eq(SizeBreaks.fill(10, 0, 4), 0, "no pool")
+	local n = SizeBreaks.notches(4)
+	eq(#n, 3, "a notch per threshold between sizes")
+	near(n[1], 0.25, "k=1", 1e-9)
+	near(n[2], 0.5, "k=2", 1e-9)
+	near(n[3], 0.75, "k=3", 1e-9)
+	eq(#SizeBreaks.notches(1), 0, "one size, no notch")
+	-- a 2-break hit on size 4 lands exactly on notch 2
+	local hp = SizeBreaks.apply(400, 100, 4, 250, 2)
+	near(SizeBreaks.fill(hp, 100, 4), n[2], "two thresholds down", 1e-9)
+end)

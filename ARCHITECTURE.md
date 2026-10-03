@@ -41,7 +41,7 @@ src/
 │   ├── Payouts.luau         Casual Amber payout at match end; pure, used by Progression
 │   ├── Combat.luau          Dino attack scaling, resistance cap, tower max HP, repair cost, how marks merge
 │   │                        (the stronger wins), nearest dinos to a point; pure
-│   ├── SizeBreaks.luau      One health pool per dino with size thresholds; pierce-through breaks per hit
+│   ├── SizeBreaks.luau      One health pool per dino with size thresholds; pierce-through breaks per hit; the boss pool bar's fill and notches
 │   │                        (tier base + level bonus − species resist, capped); pure, used by Enemies
 │   ├── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
 │   ├── Modes.luau           Game modes and tracks the home screen offers (availability, display)

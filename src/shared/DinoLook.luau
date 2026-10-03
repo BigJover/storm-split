@@ -384,6 +384,62 @@ function DinoLook.setAsleep(model: Model, on: boolean)
 	billboard.Parent = root
 end
 
+-- Boss pool bar (DECISIONS #129, PLAN T49): a thin bar over the head showing the
+-- whole health pool, with a notch at each size threshold. Bosses only (Server/
+-- Enemies decides); `fill` and `notches` come from Shared/SizeBreaks. Rebuilt with
+-- the model on a redress, so it always sits over the current size's head. Never
+-- takes input (Active off, no buttons); MaxDistance keeps far bars off screen.
+local POOL_BAR_SIZE = UDim2.fromOffset(110, 7)
+local POOL_BAR_DISTANCE = 120
+local POOL_BACK = Color3.fromRGB(24, 20, 34)
+local POOL_FILL = Color3.fromRGB(205, 70, 55)
+local POOL_NOTCH = Color3.fromRGB(240, 235, 220)
+
+function DinoLook.setPoolBar(model: Model, fill: number, notches: { number })
+	local root = model.PrimaryPart
+	if not root then
+		return
+	end
+	local bar = root:FindFirstChild("PoolBar") :: BillboardGui?
+	if not bar then
+		local species, scale = measure(model)
+		local gui = Instance.new("BillboardGui")
+		gui.Name = "PoolBar"
+		gui.Size = POOL_BAR_SIZE
+		gui.StudsOffset = Vector3.new(0, species.body.Y * scale + 3, 0)
+		gui.LightInfluence = 0
+		gui.MaxDistance = POOL_BAR_DISTANCE
+		gui.Active = false
+		local back = Instance.new("Frame")
+		back.Name = "Back"
+		back.Size = UDim2.fromScale(1, 1)
+		back.BackgroundColor3 = POOL_BACK
+		back.BorderSizePixel = 0
+		back.Parent = gui
+		local fillFrame = Instance.new("Frame")
+		fillFrame.Name = "Fill"
+		fillFrame.BackgroundColor3 = POOL_FILL
+		fillFrame.BorderSizePixel = 0
+		fillFrame.Parent = back
+		for i, x in notches do
+			local notch = Instance.new("Frame")
+			notch.Name = `Notch{i}`
+			notch.AnchorPoint = Vector2.new(0.5, 0)
+			notch.Position = UDim2.fromScale(x, 0)
+			notch.Size = UDim2.new(0, 2, 1, 0)
+			notch.BackgroundColor3 = POOL_NOTCH
+			notch.BorderSizePixel = 0
+			notch.ZIndex = 2
+			notch.Parent = back
+		end
+		gui.Parent = root
+		bar = gui
+	end
+	assert(bar)
+	local fillFrame = (bar:FindFirstChild("Back") :: Frame):FindFirstChild("Fill") :: Frame
+	fillFrame.Size = UDim2.fromScale(math.clamp(fill, 0, 1), 1)
+end
+
 ------------------------------------------------------------------ projectiles
 
 --[[
