@@ -340,6 +340,31 @@ Display text only; no sheet, Config, Enemies or Combat change. One commit.
 - **Accept:** Config diff = only `sizeBreaks`/`breakResist` lines; the final table in the
   commit message.
 
+### T48 (revised). Set the break seeds against the honest model (#160–#163) — replaces T48 above
+The −5% bar compared against the old zero-waste numbers, which the game never delivered
+(b = 1 already loses overflow today). New baselines, all from `value.py` (overkill on, level
+bonus inside the hit damage as T47 built it — #161):
+**Z** = old zero-waste eDPS (T47's "before"); **B1** = honest eDPS with every break forced to 1
+(today's real game; add a `--breaks1` flag); **S** = honest eDPS with the sheet's seeds.
+- **Do:** keep the seeds (`Tower Upgrades` column `Size breaks`: Deadeye T4/T5 2/3, Big Bore
+  T2/T4/T5 2/3/4, Hardliner T4/T5 2/2) unless a bar fails; then **raise breaks only**, +1 at a
+  time, T5 before T4, never above `Max size breaks` 4; no damage, cost or resist changes.
+  **One design-table addition:** Big Bore T1 Large Calibre `Size breaks` 2 (#162; add the row
+  to the design table and the exporter's allowed list). If that makes Big Bore T2 DEAD or
+  raises findings, set it back to blank and say so.
+- **Bars, per raw tier (the 8 above + Big Bore T1) in bands 21–30 and 31–40** (T1: 11–20):
+  1. **S ≥ 1.10 × B1** — pierce-through visibly adds to today's game.
+  2. **S ≤ 1.15 × Z** — never more than the old flattering ceiling.
+  3. **Raw is clearly better:** each raw T5 (Linebreaker, Extinction Round, Hide Buster) has S
+     eDPS at or above the **median eDPS of all damage-path T5s** in that band (honest model).
+  If a tier at breaks 4 still fails bar 1 or 3: **STOP, no commit, report** (that is the
+  point where damage may change, Director's call). Bar 2 failing → lower that tier's breaks.
+- **Also:** `value.py` findings ≤ **4** (the post-T47 set: Spotter T2, Spotter T4, Big Bore T1,
+  Concussive T5 — #163; Big Bore T1 may clear, no new names); #72's pacing floors hold;
+  hero-vs-tower guard passes; `threat.py` 0; audit strict 0; all specs green.
+- **Accept:** Config diff = only `sizeBreaks` lines; commit message holds the table
+  tier × band: Z, B1, S, S/B1, S/Z, the T5 median, and the findings list.
+
 ## Batch 4 — boss bar, Chaos, small perks
 
 ### T49. Boss health bar with notches (#129)
