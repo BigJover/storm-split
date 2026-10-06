@@ -79,6 +79,13 @@ export type Stats = {
 	judgementBolt: boolean, -- Judgement Bolt
 	groundingEvery: number, -- Grounding Spike: strikes down a throw at a tower in range every N s
 	auraArcPercent: number, -- Lightning Rodeo: towers in range arc each shot once at this %
+	-- Falcon Roost (PLAN T65; rules in Shared/Falcon). 0 / false on a tower without birds.
+	birds: number, -- birds in the flock (the Towers row's, raised by tiers; 1 with the eagle)
+	firstDiveX: number, -- Power Dive: the first dive on each dino x this (1 = off)
+	eagle: boolean, -- Eagle of the Peak: one eagle, dives x Tuning Eagle dive x
+	murmuration: boolean, -- Murmuration: pecks every dino in range instead of diving
+	bossMarkPercent: number, -- Hooded Scout: bosses in range are marked +%
+	diveAuraRatePercent: number, -- Hunting Party: towers in range +% attack speed while a bird dives
 }
 
 local MULTIPLIERS = {
@@ -134,6 +141,10 @@ local HIGHEST = {
 	"staticPercent",
 	"groundingEvery",
 	"auraArcPercent",
+	"birds",
+	"firstDiveX",
+	"bossMarkPercent",
+	"diveAuraRatePercent",
 }
 local FLAGS = {
 	"piercesArmor",
@@ -147,6 +158,8 @@ local FLAGS = {
 	"arcJumps",
 	"powerGrid",
 	"judgementBolt",
+	"eagle",
+	"murmuration",
 }
 
 function TowerStats.compute(def, pathTiers: { number }): Stats
@@ -240,6 +253,12 @@ function TowerStats.compute(def, pathTiers: { number }): Stats
 		judgementBolt = def.chains == true and flag.judgementBolt == true,
 		groundingEvery = high.groundingEvery or 0,
 		auraArcPercent = high.auraArcPercent or 0,
+		birds = if (def.birds or 0) <= 0 then 0 elseif flag.eagle then 1 else math.floor(math.max(def.birds, high.birds or 0)),
+		firstDiveX = if (def.birds or 0) > 0 then math.max(1, high.firstDiveX or 0) else 1,
+		eagle = (def.birds or 0) > 0 and flag.eagle == true,
+		murmuration = (def.birds or 0) > 0 and flag.murmuration == true,
+		bossMarkPercent = high.bossMarkPercent or 0,
+		diveAuraRatePercent = if (def.birds or 0) > 0 then high.diveAuraRatePercent or 0 else 0,
 	}
 end
 

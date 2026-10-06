@@ -31,6 +31,7 @@ TowerLook.COLORS = table.freeze({
 	ARMORY = Color3.fromRGB(115, 125, 140), -- Armory: plate-steel grey
 	HOSPITAL = Color3.fromRGB(235, 232, 220), -- Field Hospital: canvas white
 	COIL = Color3.fromRGB(190, 110, 50), -- Storm Coil: copper
+	FALCON = Color3.fromRGB(150, 105, 60), -- Falcon Roost: falcon brown
 })
 
 TowerLook.BODY_HEIGHT = 5
@@ -184,6 +185,21 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 			table.insert(parts, block(`Ring{i}`, Vector3.new(0.25, width, width), at(0, 1.95 + i * 0.45, 0) * CFrame.Angles(0, 0, math.rad(90)), color, Enum.Material.Metal, CYLINDER))
 		end
 		return parts
+	end,
+	-- Falcon Roost: a falconer's hut beside a tall perch, a falcon on the crossbar.
+	FALCON = function(color)
+		local cream = Color3.fromRGB(230, 220, 195)
+		return {
+			block("Hut", Vector3.new(1.8, 1.6, 1.8), at(-0.5, 0.8, 0.5), WOOD, Enum.Material.WoodPlanks),
+			block("Roof", Vector3.new(1.9, 0.3, 1.9), at(-0.5, 1.75, 0.5) * CFrame.Angles(0, 0, math.rad(8)), DARK_WOOD, Enum.Material.Wood),
+			block("Door", Vector3.new(0.7, 1.1, 0.1), at(-0.5, 0.55, -0.42), DARK_WOOD, Enum.Material.Wood),
+			block("Pole", Vector3.new(0.3, 4.2, 0.3), at(0.9, 2.1, -0.6), DARK_WOOD, Enum.Material.Wood),
+			block("Perch", Vector3.new(1.2, 0.2, 0.2), at(0.9, 4.1, -0.6), WOOD, Enum.Material.Wood),
+			block("Falcon", Vector3.new(0.5, 0.7, 0.5), at(0.9, 4.55, -0.6), color, Enum.Material.Fabric),
+			block("Breast", Vector3.new(0.35, 0.45, 0.1), at(0.9, 4.55, -0.87), cream, Enum.Material.Fabric),
+			block("WingL", Vector3.new(0.12, 0.55, 0.45), at(0.62, 4.5, -0.6), color, Enum.Material.Fabric),
+			block("WingR", Vector3.new(0.12, 0.55, 0.45), at(1.18, 4.5, -0.6), color, Enum.Material.Fabric),
+		}
 	end,
 	-- Supply Camp: stacked crates under an orange tarp, a flag on a pole.
 	QUARTERMASTER = function(color)

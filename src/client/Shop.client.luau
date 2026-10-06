@@ -472,6 +472,30 @@ local function describeAbilities(now, nextStep, parts: { string })
 		table.insert(parts, `towers in range: each shot arcs to one more dino at {auraArc}%`)
 	end
 
+	-- Falcon Roost (PLAN T65): tier columns (Config), so a blank one means "unchanged"
+	local birds = changed("birds", 0)
+	if birds then
+		table.insert(parts, `{birds} birds`)
+	end
+	local firstDive = changed("firstDiveX", 1)
+	if firstDive then
+		table.insert(parts, `the first dive on each dino x{fmt(firstDive)}`)
+	end
+	if changed("eagle", false) then
+		table.insert(parts, `one giant eagle instead of the flock: x{fmt(Config.Tuning.EagleDiveX)} dives`)
+	end
+	if changed("murmuration", false) then
+		table.insert(parts, "a swarm pecks every dino in range, no more dives")
+	end
+	local bossMark = changed("bossMarkPercent", 0)
+	if bossMark then
+		table.insert(parts, `bosses in range marked +{bossMark}% damage taken`)
+	end
+	local diveAura = changed("diveAuraRatePercent", 0)
+	if diveAura then
+		table.insert(parts, `towers in range +{diveAura}% attack speed while a bird dives`)
+	end
+
 	-- Tranq Station (CHILLER)
 	local slow = changed("slowPercent", 0)
 	if slow then

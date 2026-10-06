@@ -8,7 +8,7 @@ local Config = require(src.shared.Config)
 local TowerStats = require(src.shared.TowerStats)
 local Upgrades = require(src.shared.Upgrades)
 
-local ROUNDED_DOWN = { bomblets = true, bombletGenerations = true, chests = true, medKits = true, arcs = true, arcForks = true }
+local ROUNDED_DOWN = { bomblets = true, bombletGenerations = true, chests = true, medKits = true, arcs = true, arcForks = true, birds = true }
 local AT_LEAST_ONE = { shots = true, lineHits = true, sizeBreaks = true }
 
 local function where(key: string, tiers: { number }): string
@@ -91,6 +91,15 @@ local function expected(def, tiers: { number })
 		for _, field in chain do
 			e[field] = if type(e[field]) == "boolean" then false else 0
 		end
+	end
+	-- The flock (PLAN T65): a tower with birds flies the Towers row's flock unless a tier
+	-- raises it, one eagle with Eagle of the Peak, and a first dive of at least x1; on any
+	-- other tower the bird fields are off.
+	if def.birds > 0 then
+		e.birds = if e.eagle then 1 else math.max(def.birds, e.birds)
+		e.firstDiveX = math.max(1, e.firstDiveX)
+	else
+		e.birds, e.firstDiveX, e.eagle, e.murmuration, e.diveAuraRatePercent = 0, 1, false, false, 0
 	end
 	return e
 end

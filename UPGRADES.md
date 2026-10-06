@@ -131,10 +131,12 @@ Voltage; breaks 1 size per hit. Short own range (14). Rules: `Shared/StormCoil`.
 - Battery Pack: +30% damage. Static Shock: a struck dino takes +10% from the next strike. Thunderclap: the first target is stunned 0.4s (not bosses). High Voltage: pierces armour, +40% damage. Judgement Bolt: every 10s one bolt on the biggest dino in range, ×8, breaks 3 sizes, stuns bosses 0.5s.
 - Tall Mast: range ×1.2. Charged Air: towers in range +10% attack speed. Grounding Spike: every 4s strikes down one dino throw aimed at a tower in range. Storm Warning: towers in range +15% damage. Lightning Rodeo: towers in range chain their own shots once (one more dino at 50%).
 
-## Falcon Roost (FALCON) — birds of prey, can't be damaged 🔜 round 4 · unlock 200 Amber
+## Falcon Roost (FALCON) — birds of prey, can't be damaged ✅ round 4 (PLAN T65; sold from T68) · unlock 200 Amber
 
-A tall perch with a falconer's hut. Falcons fly to any dino in a huge radius, dive, strike
-and come back. Hits air and ground. No armour until Iron Talons.
+A tall perch with a falconer's hut. Two falcons fly to the first dino within 40 studs (one
+no other bird is already after), dive, strike and come back: the hit lands after the
+flight (Falcon speed 40 studs/s), and a bird can't go again until it's home. Hits air and
+ground. No armour until Iron Talons. Rules: `Shared/Falcon`.
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
@@ -142,8 +144,8 @@ and come back. Hits air and ground. No armour until Iron Talons.
 | **Flock** | more birds | Second Pair | Quick Return | *Flock of Six* | *Wide Circle* | *Murmuration* |
 | **Falconer** | support | Long Leash | Falcon Bells | *Hooded Scout* | *Lure* | *Hunting Party* |
 
-- Power Dive: the first dive on a dino ×3, breaks 2. Iron Talons: pierces armour, breaks 3. Eagle of the Peak: one giant eagle, ×6 dives, stuns 0.5s, breaks 3.
-- Second Pair: 4 birds. Flock of Six: 6 birds. Wide Circle: radius 60. Murmuration (pending Jovan: or Sky Swarm): 12 small birds peck every dino in range.
+- Power Dive: the first dive on a dino ×3, breaks 2. Iron Talons: pierces armour, breaks 3. Eagle of the Peak: one giant eagle replaces the flock, ×6 dives, stuns 0.5s (not bosses), breaks 3.
+- Second Pair: 4 birds. Flock of Six: 6 birds. Wide Circle: radius 60. Murmuration (pending Jovan: or Sky Swarm): 12 small birds peck every dino in range (no more dives or flights; breaks 1).
 - Long Leash: +10% range. Falcon Bells: a struck dino takes +10% for 2s. Hooded Scout: bosses in range marked +25%. Lure: struck dinos pulled 2 studs back (not bosses). Hunting Party: towers in range +15% attack speed while a bird dives.
 
 ## Tar Pit (TARPIT) — on the track: slows and sinks, can't be damaged 🔜 round 4 · unlock 250 Amber
@@ -200,6 +202,7 @@ A heavy crossbow on a turntable: slow, very heavy bolts. Ground and air.
 | Can't be damaged (no HP, never a target, no repair, no Armory/Hospital aura) | Falcon Roost, Tar Pit | ✅ round 4 (PLAN T63) |
 | On-track placement (pits never overlap) | Tar Pit | ✅ round 4 (PLAN T63) |
 | Chain lightning, Power Grid, Judgement Bolt, Grounding Spike, Lightning Rodeo | Storm Coil | ✅ round 4 (PLAN T64) |
+| Birds with travel time, Power Dive, Eagle of the Peak, Murmuration, Hooded Scout, Lure, Hunting Party | Falcon Roost | ✅ round 4 (PLAN T65) |
 
 When a mechanic lands, its numbers get a column on `Tower Upgrades` and the stat-only
 multipliers get rebalanced around it — expect a tuning pass per mechanic.

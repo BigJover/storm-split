@@ -62,6 +62,16 @@
 	seconds through every dino in every Storm Coil's range (scaled by how many stand),
 	from the strongest Power Grid coil. Lightning Rodeo: an aura; other towers' shots
 	in its range arc once to one more dino. Grounding Spike is DinoAttacks' (throws).
+
+	FALCON ROOST (PLAN T65, rules in Shared/Falcon): can't be damaged. Each shot sends a
+	bird from the flock at the first dino in range no other bird of the roost is already
+	after; it lands after its travel time (the hit), then flies home, and can't go out
+	again until it's back. A bird whose dino is gone by then lands nothing. Power Dive:
+	the first dive on each dino is stronger; Eagle of the Peak: one eagle, much bigger
+	dives that stun. Murmuration: no dives; every shot pecks every dino in range (breaks
+	1). Falcon Bells marks the struck dino; Hooded Scout keeps bosses in range marked;
+	Lure pulls a struck dino back (Enemies: not bosses). Hunting Party: towers in range
+	shoot faster while one of its birds is out (the strongest rate aura wins).
 ]]
 
 local Players = game:GetService("Players")
@@ -71,6 +81,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local Placement = require(Shared:WaitForChild("Placement"))
+local Falcon = require(Shared:WaitForChild("Falcon"))
 local StormCoil = require(Shared:WaitForChild("StormCoil"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
@@ -117,13 +128,21 @@ export type Tower = {
 	lastStandUsed: boolean, -- a Field Hospital's Last Stand has saved a tower this round
 	boltTimer: number, -- Storm Coil: seconds toward its next Judgement Bolt
 	static: { [any]: boolean }, -- Storm Coil Static Shock: dinos its last strike charged (weak keys)
+	sorties: { Sortie }, -- Falcon Roost: birds out of the roost
+	dived: { [any]: boolean }, -- Falcon Roost Power Dive: dinos it has dived on (weak keys)
 	model: Model,
 }
+
+-- One bird out of a Falcon Roost: it lands on `enemy` when `out` runs down, and is home
+-- when `back` does. The part is the look only.
+type Sortie = { enemy: any, out: number, back: number, landed: boolean, at: Vector3, part: BasePart }
 
 -- Visuals only.
 local BOMBLET_COLOR = Color3.fromRGB(255, 190, 90)
 local ARC_COLOR = Color3.fromRGB(170, 210, 255)
 local BOLT_COLOR = Color3.fromRGB(255, 250, 200)
+local BIRD_COLOR = Color3.fromRGB(120, 85, 55)
+local PECK_COLOR = Color3.fromRGB(200, 170, 130)
 
 local towers: { Tower } = {}
 local towerFolder: Instance
@@ -458,6 +477,8 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 		lastStandUsed = false,
 		boltTimer = 0,
 		static = setmetatable({}, { __mode = "k" }) :: any,
+		sorties = {},
+		dived = setmetatable({}, { __mode = "k" }) :: any,
 		model = model,
 	}
 	table.insert(towers, tower)
@@ -832,6 +853,138 @@ local function stepGrid(dt: number, live)
 	end
 end
 
+------------------------------------------------------------------ Falcon Roost
+
+local function hasBirds(tower: Tower): boolean
+	return (tower.def.birds or 0) > 0
+end
+
+-- How long a Hooded Scout mark lasts after the last frame a boss spent in range.
+local HOOD_REFRESH = 0.25
+
+-- One bird's (or peck's) hit: the tower's hit (armour, boss x, stun, Lure's knockback,
+-- breaks), then Falcon Bells' mark on what it struck.
+local function falconHit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number)
+	hit(tower, enemy, damage, breaks)
+	if tower.stats.markPercent > 0 then
+		Enemies.mark(enemy, tower.stats.markPercent, Config.Tuning.FalconBellsMark)
+	end
+end
+
+local function falconDamage(tower: Tower): number
+	return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
+end
+
+-- Murmuration: every dino in range takes a peck (breaks 1, no travel time).
+local function peck(tower: Tower, live): boolean
+	local range, pecked = tower.stats.range, false
+	local damage = falconDamage(tower)
+	for _, enemy in live do
+		if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= range then
+			pecked = true
+			Effects.part(Vector3.one * 0.6, CFrame.new(enemy.part.Position + Vector3.new(0, 2, 0)), PECK_COLOR, 0.12, Enum.PartType.Ball)
+			falconHit(tower, enemy, damage, 1)
+		end
+	end
+	return pecked
+end
+
+-- Sends a free bird at the first dino in range no other bird of this roost is after.
+local function fireFalcon(tower: Tower, live): boolean
+	local stats = tower.stats
+	if stats.murmuration then
+		return peck(tower, live)
+	end
+	if Falcon.free(stats.birds, #tower.sorties) <= 0 then
+		return false -- every bird is out: wait for one to come home
+	end
+	local list, distances, claimed = {}, {}, {}
+	local after = {}
+	for _, sortie in tower.sorties do
+		if not sortie.landed then
+			after[sortie.enemy] = true
+		end
+	end
+	for _, enemy in live do
+		if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= stats.range then
+			table.insert(list, enemy)
+			table.insert(distances, enemy.distance)
+			claimed[#list] = after[enemy] == true
+		end
+	end
+	local pick = Falcon.pick(distances, claimed)
+	if not pick then
+		return false
+	end
+	local enemy = list[pick]
+	local oneWay = Falcon.flight((enemy.part.Position - tower.muzzle).Magnitude)
+	local size = if stats.eagle then Vector3.new(2.4, 0.4, 1.4) else Vector3.new(1.1, 0.25, 0.7)
+	local part = Effects.part(size, CFrame.new(tower.muzzle), BIRD_COLOR, 2 * oneWay + 0.5)
+	table.insert(tower.sorties, { enemy = enemy, out = oneWay, back = 2 * oneWay, landed = false, at = tower.muzzle, part = part })
+	return true
+end
+
+-- Birds in flight: a bird lands its dive when its travel time runs out, then flies home.
+local function stepSorties(tower: Tower, dt: number)
+	for i = #tower.sorties, 1, -1 do
+		local sortie = tower.sorties[i]
+		sortie.out -= dt
+		sortie.back -= dt
+		local enemy = sortie.enemy
+		if not sortie.landed then
+			if enemy.alive then
+				sortie.at = enemy.part.Position
+			end
+			if sortie.out <= 0 then
+				sortie.landed = true
+				if enemy.alive then
+					local first = not tower.dived[enemy]
+					tower.dived[enemy] = true
+					local stats = tower.stats
+					local damage = Falcon.diveDamage(falconDamage(tower), first, stats.firstDiveX, stats.eagle)
+					Effects.tracer(sortie.at + Vector3.new(0, 6, 0), sortie.at, BIRD_COLOR)
+					falconHit(tower, enemy, damage, stats.sizeBreaks)
+				end
+			end
+		end
+		local whole = math.max(1e-3, sortie.back - sortie.out) -- one way, in seconds
+		local position = if not sortie.landed
+			then tower.muzzle:Lerp(sortie.at, math.clamp(1 - sortie.out / whole, 0, 1))
+			else sortie.at:Lerp(tower.muzzle, math.clamp(1 - sortie.back / whole, 0, 1))
+		if sortie.part.Parent then
+			sortie.part.CFrame = CFrame.lookAt(position, if sortie.landed then tower.muzzle else sortie.at + Vector3.new(0, 0.01, 0))
+		end
+		if sortie.back <= 0 then
+			sortie.part:Destroy()
+			table.remove(tower.sorties, i)
+		end
+	end
+end
+
+-- Hooded Scout: bosses in range stay marked while they're in it.
+local function stepHood(tower: Tower, live)
+	local percent = tower.stats.bossMarkPercent
+	if percent <= 0 or tower.knockedOut then
+		return
+	end
+	for _, enemy in live do
+		if enemy.alive and enemy.def.boss and (enemy.part.Position - tower.position).Magnitude <= tower.stats.range then
+			Enemies.mark(enemy, percent, HOOD_REFRESH)
+		end
+	end
+end
+
+-- Hunting Party: every roost with the aura and a bird out, for Falcon.huntingParty.
+local function huntingParties(): { Falcon.Party }
+	local parties = {}
+	for _, tower in towers do
+		if tower.stats.diveAuraRatePercent > 0 and #tower.sorties > 0 then
+			table.insert(parties, { center = tower.base, radius = tower.stats.range, percent = tower.stats.diveAuraRatePercent, diving = true, source = tower })
+		end
+	end
+	return parties
+end
+
 -- Visuals only.
 local FREEZE_COLOR = Color3.fromRGB(150, 220, 255)
 -- How long a chill lasts after the last frame an enemy spent in range (plus
@@ -977,8 +1130,11 @@ function Towers.step(dt: number)
 	for _, tower in towers do
 		stepChill(tower, dt, live)
 		stepBolt(tower, dt, live)
+		stepSorties(tower, dt)
+		stepHood(tower, live)
 	end
 	stepGrid(dt, live)
+	local parties = huntingParties()
 
 	for _, tower in towers do
 		local stats = tower.stats
@@ -991,8 +1147,14 @@ function Towers.step(dt: number)
 			continue
 		end
 
-		if (if tower.def.chains then fireChain(tower, live) else fire(tower, live)) then
-			local boost = tower.buff.ratePercent + (if extraRatePercent then extraRatePercent(tower) else 0)
+		local fired = if tower.def.chains
+			then fireChain(tower, live)
+			elseif hasBirds(tower) then fireFalcon(tower, live)
+			else fire(tower, live)
+		if fired then
+			-- Auras don't stack: Hunting Party only counts if it beats the standing ones.
+			local aura = math.max(tower.buff.ratePercent, Falcon.huntingParty(tower.base, parties, tower))
+			local boost = aura + (if extraRatePercent then extraRatePercent(tower) else 0)
 			tower.cooldown += 1 / (stats.rate * (1 + boost / 100))
 		else
 			tower.cooldown = 0 -- stay ready
@@ -1024,6 +1186,9 @@ function Towers.remove(tower: Tower)
 		return
 	end
 	table.remove(towers, index)
+	for _, sortie in tower.sorties do
+		sortie.part:Destroy()
+	end
 	tower.model:Destroy()
 	refreshAuras()
 end
@@ -1068,6 +1233,9 @@ end
 -- Between matches: every tower off the map.
 function Towers.clearAll()
 	for i = #towers, 1, -1 do
+		for _, sortie in towers[i].sorties do
+			sortie.part:Destroy()
+		end
 		towers[i].model:Destroy()
 		towers[i] = nil
 	end

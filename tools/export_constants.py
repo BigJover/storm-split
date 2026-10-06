@@ -122,15 +122,25 @@ ABILITY_COLUMNS = [
     ("judgementBolt", 69, "bool", False),  # Judgement Bolt (Tuning JUDGEMENT levers)
     ("groundingEvery", 70, "num", 0),  # Grounding Spike: strikes down a throw every N s
     ("auraArcPercent", 71, "num", 0),  # Lightning Rodeo: towers in range arc each shot once at %
+    # Falcon Roost (PLAN T65): the flock, its dives and the Falconer
+    ("birds", 72, "num", 0),  # birds in the flock; blank = the Towers row's Birds
+    ("firstDiveX", 73, "num", 1),  # Power Dive: the first dive on each dino x this
+    ("eagle", 74, "bool", False),  # Eagle of the Peak: one eagle, Tuning Eagle dive x
+    ("murmuration", 75, "bool", False),  # Murmuration: pecks every dino in range, no dives
+    ("bossMarkPercent", 76, "num", 0),  # Hooded Scout: bosses in range marked +%
+    ("diveAuraRatePercent", 77, "num", 0),  # Hunting Party: towers in range +% rate while a bird dives
 ]
 
 # Columns only a tower that chains (Towers column Chains) can use.
 CHAIN_ONLY = ("arcs", "arcReach", "arcForks", "arcJumps", "powerGrid", "staticPercent", "judgementBolt")
+# Columns only a tower with birds (Towers column Birds) can use.
+BIRD_ONLY = ("birds", "eagle", "murmuration", "diveAuraRatePercent")
 
 # Paths allowed a Size breaks above 1 (DECISIONS #127, #134). A new one is a
 # Director call: add it here and to PLAN's design table together.
 BREAK_PATHS = {
     ("Longshot Perch", "Deadeye"), ("Longshot Perch", "Big Bore"), ("Hunting Blind", "Hardliner"),
+    ("Falcon Roost", "Talons"),  # PLAN T65: Power Dive 2, Iron Talons 3, Eagle of the Peak 3
 }
 HERO_BREAK_PATHS = {("Tracker", "Marksman"), ("Brush Beater", "Slug")}
 
@@ -179,6 +189,8 @@ def read_towers(ws):
             "onTrack": yes(v(ws, r, 21)),
             # Chain lightning: each strike arcs from dino to dino (Storm Coil, PLAN T64).
             "chains": yes(v(ws, r, 22)),
+            # Birds: the flock a roost flies out (Falcon Roost, PLAN T65); 0 = no birds.
+            "birds": num(v(ws, r, 23)),
             "paths": [],
         }
         order.append(key)
@@ -1011,6 +1023,8 @@ def validate(data):
             problems.append(f"Difficulty {key} needs a Dino damage x above 0")
 
     for key, t in data["Towers"].items():
+        if t["birds"] and (t["birds"] != int(t["birds"]) or t["birds"] < 1 or t["chains"]):
+            problems.append(f"{key}: Birds must be a whole number >= 1, on a tower that doesn't chain")
         if t["untouchable"]:
             if t["maxHp"] != 0:
                 problems.append(f"{key} can't be damaged (Towers column T), so its Max HP must be blank or 0")
@@ -1038,6 +1052,15 @@ def validate(data):
                         problems.append(f"{key} {p['id']} tier {i}: {field} needs a tower that chains (Towers column V)")
                 if step["arcForks"] and step["arcForks"] != int(step["arcForks"]) or step["arcs"] != int(step["arcs"]):
                     problems.append(f"{key} {p['id']} tier {i}: Arcs and Arc forks must be whole numbers")
+                for field in BIRD_ONLY:
+                    if step[field] and not t["birds"]:
+                        problems.append(f"{key} {p['id']} tier {i}: {field} needs a tower with birds (Towers column W)")
+                if step["birds"] != int(step["birds"]):
+                    problems.append(f"{key} {p['id']} tier {i}: Birds must be a whole number")
+                if step["firstDiveX"] != 1 and not t["birds"]:
+                    problems.append(f"{key} {p['id']} tier {i}: First dive x needs a tower with birds (Towers column W)")
+                if step["firstDiveX"] < 1:
+                    problems.append(f"{key} {p['id']} tier {i}: First dive x must be 1 or more (blank = 1)")
                 if step["auraArcPercent"] > 100:
                     problems.append(f"{key} {p['id']} tier {i}: Aura arc % must be 0-100")
                 if step["sizeBreaks"] > 1 and (t["display"], p["id"]) not in BREAK_PATHS:
@@ -1102,6 +1125,7 @@ def validate(data):
         "CoilArcs", "CoilArcReach", "CoilArcFalloff", "PowerGridRangePerCoil", "PowerGridDamageBase",
         "PowerGridDamagePerCoil", "PowerGridCoilCap", "PowerGridEvery", "JudgementBoltEvery",
         "JudgementBoltX", "JudgementBoltBreaks", "JudgementBoltStun",
+        "FalconSpeed", "EagleDiveX", "FalconBellsMark",
         "PlayerXPBase", "PlayerXPStep", "PlayerXPPerLevelMax", "SoloTakeDownXPX",
     ]
     for key in needed:
@@ -1114,6 +1138,8 @@ def validate(data):
         problems.append("Tuning Coil arc falloff must be above 0 and at most 1")
     if tuning.get("PowerGridEvery", 1) <= 0 or tuning.get("JudgementBoltEvery", 1) <= 0:
         problems.append("Tuning Power Grid every and Judgement Bolt every must be above 0")
+    if min(tuning.get("FalconSpeed", 1), tuning.get("EagleDiveX", 1), tuning.get("FalconBellsMark", 1)) <= 0:
+        problems.append("Tuning Falcon speed, Eagle dive x and Falcon Bells mark must be above 0")
     if tuning.get("PowerGridCoilCap", 1) < 1:
         problems.append("Tuning Power Grid coil cap must be 1 or more")
     if tuning.get("MaxSizeBreaks", 1) < 1:

@@ -44,6 +44,15 @@ Shared/TowerStats.compute, whose field lists are read from the Luau file):
              strike every Power Grid every s at x Shared/StormCoil.grid(GRID_COILS)
              damage on as many dinos as a full strike reaches (assumed). Jump Spark and
              Grounding Spike are not DPS: not credited.
+  falcon     (Falcon Roost, PLAN T65) dives a second = the lower of the rate and birds x
+             Falcon speed / range (Shared/Falcon.diveRate with the average dive half the
+             range away, a stated assumption: the travel-time cap). Eagle of the Peak: one
+             bird, each dive x Eagle dive x. Power Dive: x (1 + (First dive x - 1) /
+             FIRST_DIVES) (assumed: a dino takes FIRST_DIVES dives). Murmuration: no dives
+             and no cap; each shot pecks MURMURATION_DINOS dinos (assumed), breaking 1.
+             Hunting Party's aura is credited as a rate aura that is always on (assumed: a
+             bird is always out while dinos are in range). Hooded Scout and Lure are not
+             DPS: not credited.
 Levels scale every tower alike, so they're left out of the tower tables (except inside the
 overkill factor). Heroes break 1 and hit small: their lines are left as they were.
 
@@ -93,7 +102,8 @@ BOUGHT_BAND = {1: 1, 2: 1, 3: 2, 4: 3, 5: 3}  # tier -> index into BANDS
 # Support and control paths: judged on their own effect, not DPS (DECISIONS #59). #74 added the
 # Tranq Station's Knockout (hard stops) and Weak Spot (damage amp for every tower in range).
 SUPPORT_PATHS = {("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knockout"), ("CHILLER", "Weak Spot"),
-                 ("COIL", "Lightning Rod")}  # PLAN T64: Charged Air, Storm Warning, Lightning Rodeo
+                 ("COIL", "Lightning Rod"),  # PLAN T64: Charged Air, Storm Warning, Lightning Rodeo
+                 ("FALCON", "Falconer")}  # PLAN T65: Falcon Bells, Hooded Scout, Lure, Hunting Party
 # Single tiers that buy control on a damage path (#74): still in the table and the medians,
 # never flagged dead. Longshot Perch Big Bore T3 = Concussion Round (a stun on hit).
 CONTROL_TIERS = {("SNIPER", "Big Bore", 3)}
@@ -103,10 +113,15 @@ BOSS_SPECIALIST = {("SNIPER", "Big Bore", 5)}
 SUPPORT_TOWERS = {"QUARTERMASTER", "HOSPITAL", "ARMORY"}
 # Towers on the sheet whose behaviour isn't built yet (the round-4 batch, PLAN T63-T67):
 # left out of every table and median until their task models them. Each task removes its key.
-PENDING_TOWERS = {"FALCON", "TARPIT", "BALLISTA"}
+PENDING_TOWERS = {"TARPIT", "BALLISTA"}
 # Power Grid is credited as if this many Storm Coils stand (x1.0 damage, range x1.15; a
 # stated assumption: the plain co-op case). One coil alone is x0.75, six x2.0 (#151).
 GRID_COILS = 2
+# Falcon Roost (PLAN T65), stated assumptions: a dino takes this many dives (Power Dive's x
+# lands on the first), and a Murmuration swarm pecks this many dinos at once (the Mortar
+# Pit's Targets, the splash stand-in).
+FIRST_DIVES = 4
+MURMURATION_DINOS = 3
 NEIGHBOUR_TOWER, NEIGHBOUR_TIER, NEIGHBOURS = "SCOUT", 2, 3
 DEAD_X, DOMINANT_X = 2.0, 0.5
 
@@ -184,6 +199,15 @@ def tower_stats(t, tiers):
         "judgementBolt": bool(t.get("chains") and flag.get("judgementBolt", False)),
         "powerGrid": bool(t.get("chains") and flag.get("powerGrid", False)),
         "groundingEvery": high.get("groundingEvery", 0), "auraArcPercent": high.get("auraArcPercent", 0),
+        # Falcon Roost (Shared/TowerStats: the Towers row's flock unless a tier raises it)
+        "range": t["range"] * mult["rangeMult"],
+        "birds": (1 if flag.get("eagle") else max(t.get("birds", 0), math.floor(high.get("birds", 0))))
+        if t.get("birds", 0) > 0 else 0,
+        "firstDiveX": max(1, high.get("firstDiveX", 0)) if t.get("birds", 0) > 0 else 1,
+        "eagle": bool(t.get("birds", 0) > 0 and flag.get("eagle", False)),
+        "murmuration": bool(t.get("birds", 0) > 0 and flag.get("murmuration", False)),
+        "bossMarkPercent": high.get("bossMarkPercent", 0), "knockback": high.get("knockback", 0),
+        "diveAuraRatePercent": high.get("diveAuraRatePercent", 0) if t.get("birds", 0) > 0 else 0,
     }
 
 
@@ -204,6 +228,17 @@ def chain_pieces(s, tuning):
         return []
     f = tuning["CoilArcFalloff"]
     return [(s["arcForks"], f ** k) for k in range(1, s["arcs"] + 1)]
+
+
+def falcon_terms(s, tuning, rate):
+    """(dives a second, x on the hit) for a roost (the falcon paragraph in the docstring)."""
+    if not s.get("birds"):
+        return rate, 1.0
+    if s["murmuration"]:
+        return rate, 1.0
+    cap = s["birds"] * tuning["FalconSpeed"] / s["range"] if s["range"] > 0 else rate
+    x = (tuning["EagleDiveX"] if s["eagle"] else 1) * (1 + (s["firstDiveX"] - 1) / FIRST_DIVES)
+    return min(rate, cap), x
 
 
 def path_stats(t, path_index, tier):
@@ -288,11 +323,14 @@ def edps(s, mix, tuning, buff=None, overkill=True, breaks1=False):
         hits = s["targets"]
     else:
         hits = s["lineHits"] if s["lineHits"] > 1 else s["targets"]
+        if s.get("murmuration"):
+            hits = MURMURATION_DINOS
+        rate, dive_x = falcon_terms(s, tuning, rate)  # PLAN T65
         share = tuning.get("BombletDamage", 0)
         bomb = sum((s["bomblets"] * share) ** g for g in range(1, s["bombletGenerations"] + 1)) if s["bomblets"] else 0
         bomb += sum(n * x for n, x in chain_pieces(s, tuning)) + buff.get("arc", 0) / 100  # PLAN T64
         damage = s["damage"] * (1 + buff.get("damage", 0) / 100) * (1 + buff.get("brittle", 0) / 100)
-        damage *= 1 + s.get("staticPercent", 0) / 100
+        damage *= (1 + s.get("staticPercent", 0) / 100) * dive_x
         per_shot = damage * (1 + s["markPercent"] / 100) * (1 + s["brittlePercent"] / 100) * (hits + bomb)
         pierces = s["pierces"] or buff.get("pierces", False)
         weight = (mix["plain"] + mix["armoured"] * (s["armoredMult"] if pierces else 0)
@@ -345,7 +383,7 @@ def honest_hits(s, mix, tuning, damage, hits, pierces, breaks1=False, arc=0):
     """Damage one shot does with overkill counted, summed over the band's species-rounds
     (the overkill paragraph in the module docstring). `breaks1`: every break forced to 1."""
     hit = damage * (1 + s["markPercent"] / 100) * (1 + s["brittlePercent"] / 100)
-    splash = s["lineHits"] <= 1 and s["targets"] > 1
+    splash = (s["lineHits"] <= 1 and s["targets"] > 1) or s.get("murmuration", False)
     base = 1 if splash or breaks1 else s["sizeBreaks"]
     level_x = 1 + tuning.get("TowerDamagePerLevel", 0)
     bomb_share = tuning.get("BombletDamage", 0)
@@ -371,7 +409,7 @@ def aura_credit(data, s, mix, brittle=False):
 
     `brittle` (support paths only, #74): the neighbours' shots also get the tower's Brittle %,
     assuming the dinos they shoot are the sedated ones in its range."""
-    buff = {"rate": s["auraRatePercent"], "damage": s["auraDamagePercent"], "pierces": s["auraPiercesArmor"],
+    buff = {"rate": max(s["auraRatePercent"], s.get("diveAuraRatePercent", 0)), "damage": s["auraDamagePercent"], "pierces": s["auraPiercesArmor"],
             "brittle": s["brittlePercent"] if brittle else 0, "arc": s.get("auraArcPercent", 0)}
     if not (buff["rate"] or buff["damage"] or buff["pierces"] or buff["brittle"] or buff["arc"]):
         return 0.0
@@ -523,6 +561,17 @@ def support_lines(data, mixes):
                         bit += f" (+{aura_credit(data, s, late):.1f}, own {edps(s, late, data['Tuning']):.1f})"
                     if s["groundingEvery"]:
                         bit += f" grounds a throw every {s['groundingEvery']:g}s"
+                elif key == "FALCON":
+                    bit = f"range x{s['rangeMult']:.1f}"
+                    if s["markPercent"]:
+                        bit += f" bells +{s['markPercent']:g}%"
+                    if s["bossMarkPercent"]:
+                        bit += f" bosses +{s['bossMarkPercent']:g}%"
+                    if s["knockback"]:
+                        bit += f" lure {s['knockback']:g}"
+                    if s["diveAuraRatePercent"]:
+                        bit += f" party +{s['diveAuraRatePercent']:g}%r (+{aura_credit(data, s, late):.1f})"
+                    bit += f" (own {edps(s, late, data['Tuning']):.1f})"
                 elif path["id"] == "Ward":
                     bit = f"heal {s['healPerSecond']:g}/s" + (" revives" if s["revives"] else "")
                 elif path["id"] == "Rescue":
@@ -805,18 +854,22 @@ def breaks_report(data):
         s = path_stats(t, pi, tier)
         label = f"{t['display'][:14]} {path['id']} T{tier} {path['tiers'][tier - 1]['name']} b{r['breaks']}"
         specialist = (key, path["id"], tier) in BOSS_SPECIALIST
+        # A tower that can't be damaged is held to at most 0.8x the median (#148, a T68 bar),
+        # so bar 3 (at least the median) doesn't gate it: reported like a boss specialist.
+        untouchable = t.get("untouchable", False)
         for i in (BREAKS_T1_BANDS if tier == 1 else BREAKS_BANDS):
             z, b1, sv = r["before"][i], edps(s, mixes[i], tuning, breaks1=True) + r["aura"][i], r["edps"][i]
-            bad, branch = break_bars(z, b1, sv, tier == 5 and not specialist, medians[i])
+            bad, branch = break_bars(z, b1, sv, tier == 5 and not specialist and not untouchable, medians[i])
             lo, hi = BANDS[i]
             print(f"  {label:<46} r{lo}-{hi}  Z {fmt(z):>5}  B1 {fmt(b1):>5}  S {fmt(sv):>5}"
                   f"  S/B1 {sv / b1:.2f}  S/Z {sv / z:.2f}  bar1:{branch}{'  FAIL ' + ', '.join(bad) if bad else ''}")
             failures += [f"{label} r{lo}-{hi}: {b}" for b in bad]
-            if specialist:
-                specialists.append(f"{label} r{lo}-{hi} S {fmt(sv)} S/B1 {sv / b1:.2f} S/Z {sv / z:.2f}"
-                                   f" (median {fmt(medians[i])})")
-    for line in specialists:
-        print(f"  boss specialist (report, #164): {line}")
+            if specialist or (untouchable and tier == 5):
+                specialists.append((("boss specialist (report, #164)" if specialist else "can't be damaged (report, #148)"),
+                                    f"{label} r{lo}-{hi} S {fmt(sv)} S/B1 {sv / b1:.2f} S/Z {sv / z:.2f}"
+                                    f" (median {fmt(medians[i])})"))
+    for why, line in specialists:
+        print(f"  {why}: {line}")
     print(f"Break bars: {'all met' if not failures else str(len(failures)) + ' failed'}")
     return failures
 

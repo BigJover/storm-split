@@ -225,6 +225,7 @@ test("Size breaks per tier are PLAN's seeds and reach the tower and hero stats",
 		["Longshot Perch/Deadeye"] = { 1, 1, 1, 2, 3 },
 		["Longshot Perch/Big Bore"] = { 1, 2, 2, 3, 4 }, -- cumulative: T3 keeps T2's 2
 		["Hunting Blind/Hardliner"] = { 1, 1, 1, 2, 2 },
+		["Falcon Roost/Talons"] = { 1, 1, 2, 3, 3 }, -- PLAN T65: Power Dive 2, Iron Talons 3, the eagle 3
 	}
 	for key, def in Config.Towers do
 		for i, path in def.paths do
