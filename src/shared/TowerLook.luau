@@ -396,7 +396,7 @@ end
 local function visibleParts(model: Model): { BasePart }
 	local parts = {}
 	for _, part in model:GetChildren() do
-		if part:IsA("BasePart") and (part:GetAttribute("LookMaterial") ~= nil or part.Name == "Crown") then
+		if part:IsA("BasePart") and (part:GetAttribute("LookMaterial") ~= nil or part.Name == "Crown" or part:GetAttribute("OwnerFlag")) then
 			table.insert(parts, part)
 		end
 	end
@@ -655,6 +655,39 @@ function TowerLook.setKnockedOut(model: Model, on: boolean)
 			end
 		end
 	end
+end
+
+-- The builder's tower flag (PLAN T57, a cosmetic): a thin pole at the body's back corner
+-- with a small pennant in `color`. Inside the tower's footprint (Track.TowerRadius), and
+-- it can't collide, be hit or be touched, so it changes nothing in play. It tips over
+-- and flashes with the tower (visibleParts) but never glows at stage 2.
+TowerLook.FLAG_POLE = "OwnerFlagPole"
+TowerLook.FLAG_CLOTH = "OwnerFlag"
+function TowerLook.addFlag(model: Model, color: Color3)
+	local body = model.PrimaryPart
+	if not body then
+		return
+	end
+	local top = model:GetAttribute("LookTop") or body.Size.Y
+	local foot = body.CFrame * CFrame.new(1.2, -body.Size.Y / 2, 1.2)
+	local poleHeight = top + 1.4
+	local function part(name: string, size: Vector3, cf: CFrame, partColor: Color3, material: Enum.Material)
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Size = size
+		p.CFrame = cf
+		p.Color = partColor
+		p.Material = material
+		p.Anchored = true
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.CastShadow = false
+		p:SetAttribute("OwnerFlag", true)
+		p.Parent = model
+	end
+	part(TowerLook.FLAG_POLE, Vector3.new(0.12, poleHeight, 0.12), foot * CFrame.new(0, poleHeight / 2, 0), Color3.fromRGB(90, 70, 50), Enum.Material.Wood)
+	part(TowerLook.FLAG_CLOTH, Vector3.new(0.06, 0.55, 0.85), foot * CFrame.new(0, poleHeight - 0.35, -0.45), color, Enum.Material.Fabric)
 end
 
 function TowerLook.refresh(model: Model, range: number, tiers: { number }, stage: number)

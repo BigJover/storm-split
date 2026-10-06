@@ -24,6 +24,7 @@ HomeLayout.UNLOCKS = { width = 240, textSize = 16, text = "Unlocks & Mastery  (M
 HomeLayout.PLAY = { width = 240, textSize = 28, text = "PLAY" } :: Card
 HomeLayout.HUNT_WIDTH = 176 -- the Hunt Board button (its text is HuntBoard.BUTTON)
 HomeLayout.HUNT_TEXT_SIZE = 16
+HomeLayout.PROFILE_WIDTH = 150 -- the Profile button beside it (its text is ProfileScreen.BUTTON; PLAN T57)
 
 -- Estimated advance per character, in em, for GothamBold.
 local CAPS_EM = 0.75

@@ -37,6 +37,7 @@ local Waves = require(script.Parent.Waves)
 local Economy = require(script.Parent.Economy)
 local Shop = require(script.Parent.Shop)
 local Scoreboard = require(script.Parent.Scoreboard)
+local Wardrobe = require(script.Parent.Wardrobe)
 local Effects = require(script.Parent.Effects)
 local Hero = require(script.Parent.Hero)
 local Hazards = require(script.Parent.Hazards)
@@ -177,7 +178,8 @@ Towers.init(map.towerFolder, {
 		return { Hero.towerGuardOf(tower) } -- Field Medic Second Wind
 	end,
 })
-Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged })
+Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged, onLookChanged = Hero.lookChanged })
+Wardrobe.init() -- hats and trails on characters (PLAN T57)
 Health.init(remotes, {
 	-- An Armory covering where the hunter stands, and a Field Medic's Second Wind.
 	resistOf = function(player)
@@ -434,7 +436,7 @@ local function playMatch()
 			end
 
 			ReplicatedStorage:SetAttribute("RoundsCleared", index)
-			Hero.roundCleared(index) -- banks Round XP and this round's pending pop XP
+			Hero.roundCleared(index, #hunters() == 1) -- banks Round XP and this round's pending pop XP; solo per round (#177)
 			local newLevel = HeroXp.roundLevel(index)
 			if newLevel > level then
 				level = newLevel
@@ -473,7 +475,8 @@ local function playMatch()
 		end
 	end
 	-- Player XP (PLAN T56, DECISIONS #119, #124): every hunter still here banks the hero
-	-- XP of their cleared rounds (+ Clear XP on a win); solo = one hunter at the end.
+	-- XP of their cleared rounds (+ Clear XP on a win); the solo boost was decided round
+	-- by round as each was cleared (#177).
 	-- Leavers aren't in hunters(), so they get nothing. Before endMatch, which saves.
 	local tallies: { [Player]: PlayerLevel.Tally } = {}
 	for _, hunter in hunters() do

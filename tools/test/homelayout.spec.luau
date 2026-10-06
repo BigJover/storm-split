@@ -5,6 +5,7 @@
 ]]
 local HomeLayout = require(src.shared.HomeLayout)
 local HuntBoard = require(src.shared.HuntBoard)
+local ProfileScreen = require(src.shared.ProfileScreen)
 
 test("the action row is Choose hero 200, Unlocks & Mastery 240, PLAY 240 at 28 px", function()
 	local cards = HomeLayout.actionCards()
@@ -24,7 +25,7 @@ test("both rows fit the 740 px column", function()
 	local row = HomeLayout.rowWidth(widths)
 	eq(row, 700, "action row")
 	ok(row <= HomeLayout.COLUMN, `action row {row} > {HomeLayout.COLUMN}`)
-	ok(HomeLayout.rowWidth({ HomeLayout.HUNT_WIDTH }) <= HomeLayout.COLUMN, "Hunt Board row")
+	ok(HomeLayout.rowWidth({ HomeLayout.HUNT_WIDTH, HomeLayout.PROFILE_WIDTH }) <= HomeLayout.COLUMN, "Hunt Board row with Profile")
 end)
 
 test("no button's text wraps", function()
@@ -33,6 +34,8 @@ test("no button's text wraps", function()
 	end
 	local hunt = { width = HomeLayout.HUNT_WIDTH, textSize = HomeLayout.HUNT_TEXT_SIZE, text = HuntBoard.BUTTON }
 	ok(HomeLayout.fits(hunt), `"{hunt.text}" in {hunt.width}`)
+	local profile = { width = HomeLayout.PROFILE_WIDTH, textSize = HomeLayout.HUNT_TEXT_SIZE, text = ProfileScreen.BUTTON }
+	ok(HomeLayout.fits(profile), `"{profile.text}" in {profile.width}`)
 end)
 
 test("the text estimate catches a button that would wrap", function()

@@ -28,6 +28,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local HeroStats = require(Shared:WaitForChild("HeroStats"))
 local GunRules = require(Shared:WaitForChild("GunRules"))
+local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local heroRequest = remotes:WaitForChild("HeroRequest") :: RemoteFunction
@@ -184,11 +185,35 @@ hitMarker.Text = "×"
 hitMarker.Visible = false
 hitMarker.Parent = crosshair
 
+-- What this hunter wears (PLAN T57, Shared/Cosmetics): the crosshair's colour, the
+-- hit-marker's glyph and plain-hit colour. A take-down keeps KILL so the two read apart.
+local function wornSlot(slot: string): Cosmetics.Item?
+	return Cosmetics.worn(function(name)
+		return player:GetAttribute(name)
+	end, slot)
+end
+local hitColour = TEXT
+local function dressCrosshair()
+	local colour = Cosmetics.crosshairColour(wornSlot, TEXT)
+	for _, bar in bars do
+		bar.BackgroundColor3 = colour
+	end
+	local glyph, colourOfHit = Cosmetics.hitMarker(wornSlot, TEXT)
+	hitMarker.Text = glyph
+	hitColour = colourOfHit
+end
+player.AttributeChanged:Connect(function(name)
+	if string.sub(name, 1, 6) == "Equip_" then
+		dressCrosshair()
+	end
+end)
+dressCrosshair()
+
 local markerToken = 0
 heroFire.OnClientEvent:Connect(function(killed: boolean)
 	markerToken += 1
 	local token = markerToken
-	hitMarker.TextColor3 = if killed then KILL else TEXT
+	hitMarker.TextColor3 = if killed then KILL else hitColour
 	hitMarker.Visible = true
 	task.delay(if killed then 0.2 else 0.1, function()
 		if markerToken == token then

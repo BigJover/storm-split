@@ -149,36 +149,48 @@ end)
 
 local HeroXp = require(src.shared.HeroXp)
 
--- Replays a match the way Server/Hero does: each cleared round banks into the tally
--- (before the clamp) and into the hunter's own XP (HeroXp.bank, clamped). `pops` is
--- each hunter's take-downs a round; `from` the first round they're in for.
-local function replay(hunters: { [string]: { pops: number, from: number? } }, rounds: number)
+-- Replays a match the way Server/Hero and Main do: each cleared round banks into the
+-- tally (before the clamp) and into the hunter's own XP (HeroXp.bank, clamped), solo
+-- when one hunter is there as it's cleared (DECISIONS #177). `pops` is each hunter's
+-- take-downs a round; `from` the first round they're in for, `to` the last (they leave
+-- after it, and Main passes only the hunters still there at the end).
+type Hunter = { pops: number, from: number?, to: number? }
+local function replay(hunters: { [string]: Hunter }, rounds: number)
 	local tallies, xp = {}, {}
 	for name, h in hunters do
 		tallies[name] = PlayerLevel.newTally()
 		xp[name] = HeroXp.floorXp((h.from or 1) - 1) -- joiners start on the floor
 	end
+	local function present(h: Hunter, round: number): boolean
+		return round >= (h.from or 1) and round <= (h.to or math.huge)
+	end
 	for round = 1, rounds do
-		local team = 0
+		local team, here = 0, 0
 		for _, h in hunters do
-			if round >= (h.from or 1) then
+			if present(h, round) then
 				team += h.pops
+				here += 1
 			end
 		end
 		for name, h in hunters do
-			if round >= (h.from or 1) then
-				PlayerLevel.bankRound(tallies[name], h.pops, team)
+			if present(h, round) then
+				PlayerLevel.bankRound(tallies[name], h.pops, team, here == 1)
 				xp[name] = HeroXp.bank(xp[name], h.pops, team, round)
 			end
+		end
+	end
+	for name, h in hunters do
+		if h.to and h.to < rounds then
+			tallies[name] = nil -- left: not at the end
 		end
 	end
 	return tallies, xp
 end
 
-test("a solo win: 40 rounds at the take-down cap bank 4,000 + 600, then 5,700 on Easy", function()
+test("a solo win: 40 rounds at the take-down cap bank 4,000 + 600 x2, then 5,700 on Easy", function()
 	local tallies = replay({ solo = { pops = 200 } }, ROUNDS)
 	eq(tallies.solo.roundXp, 4000, "round XP")
-	eq(tallies.solo.takedownXp, 600, "take-down XP, at the cap")
+	eq(tallies.solo.takedownXp, 1200, "take-down XP, at the cap, x2 round by round")
 	eq(PlayerLevel.matchAwards(tallies, true, "EASY").solo, 5700, "solo Easy clear")
 end)
 
@@ -197,12 +209,32 @@ test("a loss banks the cleared rounds only, with no clear XP", function()
 	eq(PlayerLevel.matchAwards({ solo = PlayerLevel.newTally() }, false, "HARD").solo, 0, "lost round 1: nothing")
 end)
 
-test("a leaver gets nothing; whoever is left alone at the end counts as solo", function()
-	local tallies = replay({ stays = { pops = 8 }, leaves = { pops = 8 } }, 20)
-	tallies.leaves = nil -- Main passes only the hunters still here
+test("a leaver gets nothing; a partner leaving after round 20 makes only rounds 21+ x2 (#177)", function()
+	local tallies = replay({ stays = { pops = 8 }, leaves = { pops = 8, to = 20 } }, 30)
 	local awards = PlayerLevel.matchAwards(tallies, false, "EASY")
 	eq(awards.leaves, nil, "the leaver")
-	eq(awards.stays, 20 * 100 + tallies.stays.takedownXp * 2, "alone at the end: solo")
+	local coop = HeroXp.popXp(8, 16) -- rounds 1-20: two hunters, x1
+	local solo = HeroXp.popXp(8, 8) * 2 -- rounds 21-30: alone, x2
+	eq(tallies.stays.takedownXp, 20 * coop + 10 * solo, "take-downs: 20 co-op rounds x1, 10 solo rounds x2")
+	eq(awards.stays, 30 * 100 + 20 * coop + 10 * solo, "and nothing doubled again at the end")
+	ok(HeroXp.popXp(8, 8) > 0, "solo rounds bank take-downs, so the x2 is really checked")
+end)
+
+test("a hunter joining a solo run at round 31 leaves rounds 1-30 x2 for the first hunter only (#177)", function()
+	local tallies = replay({ first = { pops = 8 }, joiner = { pops = 8, from = 31 } }, ROUNDS)
+	local alone = HeroXp.popXp(8, 8) * 2
+	local together = HeroXp.popXp(8, 16)
+	eq(tallies.first.takedownXp, 30 * alone + 10 * together, "first: 30 solo rounds x2, then 10 co-op")
+	eq(tallies.joiner.takedownXp, 10 * together, "the joiner: only co-op rounds, x1")
+	local awards = PlayerLevel.matchAwards(tallies, true, "EASY")
+	eq(awards.first, 4000 + 30 * alone + 10 * together + 500, "first's match XP")
+	eq(awards.joiner, 1000 + 10 * together + 500, "joiner's match XP")
+end)
+
+test("matchAwards no longer decides solo: one hunter at the end gets no extra x2", function()
+	local tally = PlayerLevel.newTally()
+	PlayerLevel.bankRound(tally, 8, 16, false) -- a co-op round
+	eq(PlayerLevel.matchAwards({ alone = tally }, false, "EASY").alone, 100 + HeroXp.popXp(8, 16), "x1 as banked")
 end)
 
 test("the tally is before the clamp: a late joiner's floor XP isn't player XP", function()

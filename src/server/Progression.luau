@@ -13,6 +13,13 @@
 	  Player level  total player XP (`playerXp`, Shared/PlayerLevel, DECISIONS #118-#124),
 	                added once per match by Main through addPlayerXp just before
 	                endMatch saves; the level is derived, rewards are cosmetic.
+	                XP for a player whose save is still loading is held here and
+	                added once the load succeeds; a failed load drops it with one
+	                warning and never overwrites (DECISIONS #179).
+	  Cosmetics     what a player wears (`equipped`, Shared/Cosmetics, PLAN T57):
+	                checked against the level on load and on every "equip" request,
+	                published as Equip_<slot> attributes on the Player for everyone
+	                to show. Unlocks come from the level; nothing else is stored.
 	                (Competitive buy-ins and pots come with the battle modes.)
 	  Unlocks       heroes and towers with an Unlock cost are bought with Amber.
 	                Free ones (cost 0) are owned by everyone. You can only pick
@@ -59,6 +66,7 @@ local Payouts = require(Shared:WaitForChild("Payouts"))
 local Bounties = require(Shared:WaitForChild("Bounties"))
 local Profile = require(Shared:WaitForChild("Profile"))
 local PlayerLevel = require(Shared:WaitForChild("PlayerLevel"))
+local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 local Theme = require(Shared:WaitForChild("Theme"))
 
 local Progression = {}
@@ -72,6 +80,8 @@ local RETRY_DELAY = 2 -- seconds between load attempts
 local profiles: { [Player]: Profile } = {}
 local onMasteryChanged: ((Player) -> ())? = nil
 local canSave: { [Player]: boolean } = {} -- false = session-only (store unreachable at load)
+local held: { [Player]: Profile.Held } = {} -- player XP that arrived while the save was loading
+local onLookChanged: ((Player) -> ())? = nil
 local bountyDone: RemoteEvent? = nil -- (bounty id), to the hunter who finished it only
 local store: DataStore? = nil
 local saveHintGiven = false -- the developer's "publish the place" hint: one warn per session
@@ -124,6 +134,9 @@ local function publish(player: Player)
 	player:SetAttribute("Cores", profile.cores)
 	player:SetAttribute("HighestRound", profile.highestRound)
 	player:SetAttribute("PlayerXp", profile.playerXp)
+	for _, slot in Cosmetics.SLOTS do
+		player:SetAttribute(`Equip_{slot}`, profile.equipped[slot]) -- nil clears it
+	end
 	for heroKey in Config.Heroes do
 		player:SetAttribute(`Mastery_{heroKey}`, profile.mastery[heroKey] or 0)
 	end
@@ -139,6 +152,8 @@ local function publish(player: Player)
 end
 
 ------------------------------------------------------------------ load / save
+
+local save: (Player) -> () -- below: a load that settles held XP saves it
 
 local function load(player: Player)
 	local profile: Profile? = nil
@@ -162,6 +177,7 @@ local function load(player: Player)
 		end
 	end
 	if not player.Parent then
+		held[player] = nil
 		return -- left while loading
 	end
 	-- Only a successful load may ever be saved back, so a failed load can't
@@ -178,10 +194,25 @@ local function load(player: Player)
 	end
 	pcall(Profile.refresh, loaded, os.time(), rng) -- a new day or week since they last played
 	profiles[player] = loaded
+	-- Player XP that arrived while loading: added once to a save that loaded; dropped
+	-- (never written over anything) when it didn't (DECISIONS #179).
+	local waiting = held[player]
+	if waiting then
+		local added, dropped = Profile.settleHeld(waiting, profile)
+		if dropped > 0 then
+			warn(`[Progression] {player.Name}'s save didn't load, so the {dropped} player XP held for it is dropped`)
+		elseif added > 0 then
+			player:SetAttribute("LastPlayerXp", added)
+			task.spawn(save, player)
+		end
+	end
 	publish(player)
+	if onLookChanged then
+		onLookChanged(player)
+	end
 end
 
-local function save(player: Player)
+save = function(player: Player)
 	local profile = profiles[player]
 	if not profile or not canSave[player] or not store then
 		return
@@ -436,6 +467,11 @@ end
 function Progression.addPlayerXp(player: Player, amount: number)
 	local profile = profiles[player]
 	if not profile then
+		-- Still loading: hold it until the load ends (DECISIONS #179).
+		local waiting = held[player]
+		if waiting and player.Parent then
+			Profile.hold(waiting, amount)
+		end
 		return
 	end
 	local ok, err = pcall(function()
@@ -452,16 +488,41 @@ function Progression.addPlayerXp(player: Player, amount: number)
 	publish(player)
 end
 
+------------------------------------------------------------------ cosmetics
+
+-- Wear an unlocked item, or take one off (id ""). Any time: it's only a look.
+local function equip(player: Player, slot: unknown, id: unknown): (boolean, string)
+	local profile = profiles[player]
+	if not profile then
+		return false, "Still loading your progress"
+	end
+	local ok, why = Profile.equip(profile, slot, id)
+	if not ok then
+		return false, why
+	end
+	publish(player)
+	task.spawn(save, player)
+	if onLookChanged then
+		onLookChanged(player)
+	end
+	return true, if id == nil or id == "" then "Taken off" else "Equipped"
+end
+
 ------------------------------------------------------------------ public
 
-function Progression.init(remotes: Folder, hooks: { onMasteryChanged: ((Player) -> ())? }?)
+function Progression.init(
+	remotes: Folder,
+	hooks: { onMasteryChanged: ((Player) -> ())?, onLookChanged: ((Player) -> ())? }?
+)
 	onMasteryChanged = hooks and hooks.onMasteryChanged
+	onLookChanged = hooks and hooks.onLookChanged
 	local request = Instance.new("RemoteFunction")
 	request.Name = "ProgressRequest"
 	-- ("mastery", heroKey) or ("unlock", "tower" | "hero", key) -> ok, message
 	-- Hunt Board: ("claimHaul") or ("claimBounty", id) -> ok, message, Amber
 	--             ("swapBounty", id) -> ok, message, the new bounty's id
 	--             ("getRewards", boardIsOpen) -> true, Profile.View | false, message
+	-- Cosmetics:  ("equip", slot, itemId | "") -> ok, message
 	request.OnServerInvoke = function(player: Player, action: unknown, a: unknown, b: unknown)
 		local ok, success, message, detail = pcall(function(): (boolean, any, any)
 			if action == "mastery" then
@@ -476,6 +537,8 @@ function Progression.init(remotes: Folder, hooks: { onMasteryChanged: ((Player) 
 				return swapBounty(player, a)
 			elseif action == "getRewards" then
 				return getRewards(player, a)
+			elseif action == "equip" then
+				return equip(player, a, b)
 			end
 			return false, "Unknown request"
 		end)
@@ -510,15 +573,18 @@ function Progression.init(remotes: Folder, hooks: { onMasteryChanged: ((Player) 
 	end
 
 	Players.PlayerAdded:Connect(function(player)
+		held[player] = Profile.newHeld()
 		task.spawn(load, player)
 	end)
 	for _, player in Players:GetPlayers() do
+		held[player] = Profile.newHeld()
 		task.spawn(load, player)
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		save(player)
 		profiles[player] = nil
 		canSave[player] = nil
+		held[player] = nil
 	end)
 	game:BindToClose(function()
 		for player in profiles do

@@ -486,12 +486,10 @@ test("garbage player XP or equipped never loads, and never costs the rest of the
 	for _, bad in { -5 :: any, "9000", 0 / 0, math.huge, {}, true } do
 		local raw = saved(NOON)
 		raw.playerXp = bad
-		raw.equipped = { title = 7, [5] = "x", hat = string.rep("a", 65), tint = "TINT_RED" }
+		raw.equipped = { title = 7, [5] = "x", hat = string.rep("a", 65), gunTint = "TINT_FERN" }
 		local profile = Profile.sanitize(raw, NOON, first)
 		eq(profile.playerXp, 0, `player XP {bad}`)
-		eq(profile.equipped.title, nil, "a non-string item")
-		eq(profile.equipped.hat, nil, "an over-long item")
-		eq(profile.equipped.tint, "TINT_RED", "a well-formed one is kept")
+		eq(next(profile.equipped), nil, "level 1 wears nothing: every item dropped (#178)")
 		eq(profile.cores, 100, "Amber kept")
 		checkBoard(profile.rewards, "board kept")
 	end
@@ -500,11 +498,13 @@ end)
 
 test("player XP and equipped save and load back the same", function()
 	local profile = loaded(NOON)
-	eq(Profile.addPlayerXp(profile, 5700), 5700, "added")
-	profile.equipped.title = "TRAIL_RUNNER"
+	eq(Profile.addPlayerXp(profile, 6300), 6300, "added: level 10")
+	ok(Profile.equip(profile, "title", "TITLE_10"), "level 10's title")
+	ok(Profile.equip(profile, "hat", "HAT_BUSH"), "level 10's hat")
 	local again = Profile.sanitize(Profile.toSave(profile), NOON, first)
-	eq(again.playerXp, 5700, "player XP")
-	eq(again.equipped.title, "TRAIL_RUNNER", "equipped title")
+	eq(again.playerXp, 6300, "player XP")
+	eq(again.equipped.title, "TITLE_10", "equipped title")
+	eq(again.equipped.hat, "HAT_BUSH", "equipped hat")
 end)
 
 test("player XP only goes up", function()
@@ -531,4 +531,87 @@ test("a broken Hunt Board never costs the player level", function()
 	local out = Profile.toSave(profile)
 	eq(out.playerXp, 83400, "player XP saved")
 	ok(out.rewards == raw.rewards, "the stored board is still written back untouched")
+end)
+
+-- Cosmetics on the profile (PLAN T57, DECISIONS #178) --------------------------------
+
+local PlayerLevel = require(src.shared.PlayerLevel)
+
+test("an old or bad `equipped` loads as {} (#178)", function()
+	local cases = {
+		{ "no equipped (an older save)", nil },
+		{ "not a table", "TITLE_10" },
+		{ "unknown ids", { title = "TITLE_NOPE", gunTint = "TINT_RED" } },
+		{ "wrong kind", { title = "HAT_BUSH", hat = "TITLE_10" } },
+		{ "above the level", { set = "SET_METEOR", title = "TITLE_ELDER_250" } },
+		{ "unknown slot", { cape = "HAT_BUSH" } },
+		{ "the bare repeating row", { title = "TITLE_ELDER" } },
+	}
+	for _, case in cases do
+		local raw = saved(NOON)
+		raw.playerXp = PlayerLevel.xpFor(100) -- level 100: everything to 100 is unlocked
+		raw.equipped = case[2]
+		local profile = Profile.sanitize(raw, NOON, first)
+		eq(next(profile.equipped), nil, case[1])
+		eq(profile.playerXp, PlayerLevel.xpFor(100), `{case[1]}: player XP kept`)
+		eq(profile.cores, 100, `{case[1]}: Amber kept`)
+	end
+end)
+
+test("a good `equipped` loads with the bad slots alone dropped", function()
+	local raw = saved(NOON)
+	raw.playerXp = PlayerLevel.xpFor(50)
+	raw.equipped = { title = "TITLE_50", hat = "HAT_RANGER", trail = "TRAIL_FERN", nameColour = "NAME_FERN" }
+	local profile = Profile.sanitize(raw, NOON, first)
+	eq(profile.equipped.title, "TITLE_50", "title kept")
+	eq(profile.equipped.hat, "HAT_RANGER", "hat kept")
+	eq(profile.equipped.trail, nil, "level 80's trail dropped at level 50")
+	eq(profile.equipped.nameColour, "NAME_FERN", "level 2's common kept")
+end)
+
+test("equip: the server refuses an item above your level, the wrong slot, or junk", function()
+	local profile = loaded(NOON)
+	Profile.addPlayerXp(profile, PlayerLevel.xpFor(29)) -- level 29
+	local okHat = Profile.equip(profile, "hat", "HAT_BUSH")
+	ok(okHat, "level 10's hat at level 29")
+	local refused, why = Profile.equip(profile, "hitMarker", "MARK_TOOTH")
+	eq(refused, false, "level 30's hit-marker at 29")
+	eq(why, "Unlocks at player level 30", "says when")
+	eq(profile.equipped.hitMarker, nil, "nothing worn")
+	eq((Profile.equip(profile, "title", "HAT_BUSH")), false, "a hat isn't a title")
+	eq((Profile.equip(profile, "cape", "HAT_BUSH")), false, "no such slot")
+	eq((Profile.equip(profile, "hat", 42)), false, "not a string")
+	eq((Profile.equip(profile, "hat", "NOPE")), false, "unknown id")
+	eq(profile.equipped.hat, "HAT_BUSH", "the refusals changed nothing")
+	ok(Profile.equip(profile, "hat", ""), "taking it off is always allowed")
+	eq(profile.equipped.hat, nil, "off")
+	Profile.addPlayerXp(profile, PlayerLevel.xpFor(30) - PlayerLevel.xpFor(29))
+	ok(Profile.equip(profile, "hitMarker", "MARK_TOOTH"), "at level 30 it's allowed")
+end)
+
+test("XP that arrives while the save loads is banked once, after it (#179)", function()
+	local held = Profile.newHeld()
+	ok(Profile.hold(held, 5100), "held while loading")
+	ok(Profile.hold(held, 600), "and more")
+	local profile = loaded(NOON)
+	Profile.addPlayerXp(profile, 1000) -- what the save already had
+	local added, dropped = Profile.settleHeld(held, profile)
+	eq(added, 5700, "added when the load succeeds")
+	eq(dropped, 0, "nothing dropped")
+	eq(profile.playerXp, 6700, "on top of the save")
+	local again = Profile.settleHeld(held, profile)
+	eq(again, 0, "a second settle adds nothing")
+	eq(profile.playerXp, 6700, "banked once, not twice")
+	eq(Profile.hold(held, 300), false, "after the load, XP goes straight on (not held)")
+	eq(profile.playerXp, 6700, "and the hold didn't touch the profile")
+end)
+
+test("a failed load drops the held XP and writes nothing (#179)", function()
+	local held = Profile.newHeld()
+	Profile.hold(held, 5700)
+	local added, dropped = Profile.settleHeld(held, nil)
+	eq(added, 0, "nothing added")
+	eq(dropped, 5700, "dropped (Progression warns once)")
+	eq(select(2, Profile.settleHeld(held, nil)), 0, "dropped once")
+	ok(not Profile.hold(held, 10), "nothing held after the load ended")
 end)

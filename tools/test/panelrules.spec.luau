@@ -4,12 +4,12 @@
 ]]
 local PanelRules = require(src.shared.PanelRules)
 
-local MODES = { "list", "placing", "manage", "heroUpgrade", "heroPick", "mastery", "huntBoard" }
+local MODES = { "list", "placing", "manage", "heroUpgrade", "heroPick", "mastery", "huntBoard", "profile" }
 local STATES = { "Lobby", "Building", "Playing", "GameOver", "Victory" }
 
-test("the home screen allows only hero select, mastery and the Hunt Board", function()
+test("the home screen allows only hero select, mastery, the Hunt Board and the Profile screen", function()
 	for _, mode in MODES do
-		local expected = mode == "heroPick" or mode == "mastery" or mode == "huntBoard"
+		local expected = mode == "heroPick" or mode == "mastery" or mode == "huntBoard" or mode == "profile"
 		eq(PanelRules.allowed(mode, "Lobby", true), expected, `{mode} in Lobby`)
 	end
 end)

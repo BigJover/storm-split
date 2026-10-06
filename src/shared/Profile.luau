@@ -14,8 +14,10 @@
 	                    value back untouched (`rewardsRaw`) instead of wiping it.
 	  playerXp          total player XP (Shared/PlayerLevel, DECISIONS #118-#123); the level is
 	                    derived from it, never stored. An older save without it starts at 0.
-	  equipped          what the player wears: "title" and one cosmetic per kind, kind ->
-	                    item id (T57 checks them against the level). Strings only.
+	  equipped          what the player wears: "title" and one cosmetic per kind, slot ->
+	                    item id (Shared/Cosmetics). Checked against the level on load
+	                    (unknown ids, wrong kinds, locked items dropped; DECISIONS #178)
+	                    and on every equip.
 	  lastResetPayout   Amber paid at a reset for bounties done but not claimed, since the
 	                    board was last opened. Session only, never saved.
 	  rewardsVersion    counts Hunt Board changes; the client re-asks when it moves.
@@ -28,6 +30,10 @@
 	               gets a fresh Hunt Board; everything else in it is kept)
 	  toSave       the table to store
 	  addPlayerXp  bank one match's player XP; returns what was added
+	  equip        wear an unlocked item in its slot, or take one off
+	  hold / settleHeld   player XP that arrived while the save was still loading: held,
+	               then added once when the load succeeds, dropped if it fails
+	               (DECISIONS #179)
 	  refresh      roll the bounties over if a reset has passed and pay what was done but
 	               unclaimed; returns that Amber
 	  claimHaul / claimBounty / swapBounty   refresh, then the Bounties rule
@@ -39,8 +45,7 @@
 local Config = require(script.Parent.Config)
 local Bounties = require(script.Parent.Bounties)
 local PlayerLevel = require(script.Parent.PlayerLevel)
-
-local MAX_ID = 64 -- longest equipped kind or item id kept from a save
+local Cosmetics = require(script.Parent.Cosmetics)
 
 export type Profile = {
 	cores: number,
@@ -109,13 +114,8 @@ function Profile.sanitize(raw: any, now: number, rng: Bounties.Rng): Profile
 		profile.highestRound = math.floor(raw.highestRound)
 	end
 	profile.playerXp = PlayerLevel.whole(raw.playerXp) -- missing (an older save) or garbage: 0
-	if type(raw.equipped) == "table" then
-		for kind, item in raw.equipped do
-			if type(kind) == "string" and type(item) == "string" and #kind <= MAX_ID and #item <= MAX_ID then
-				profile.equipped[kind] = item
-			end
-		end
-	end
+	-- Only what this level has unlocked, in the right slot; anything else is dropped.
+	profile.equipped = Cosmetics.clean(raw.equipped, PlayerLevel.level(profile.playerXp))
 	if type(raw.owned) == "table" then
 		for id, value in raw.owned do
 			if value == true and type(id) == "string" then
@@ -169,6 +169,53 @@ function Profile.addPlayerXp(profile: Profile, amount: number): number
 	local add = PlayerLevel.whole(amount)
 	profile.playerXp = PlayerLevel.whole(profile.playerXp) + add
 	return add
+end
+
+-- Wear item `id` in `slot` ("" or nil takes it off). Refused (with the reason) for an
+-- unknown slot or item, an item of another kind, or one above the player's level.
+function Profile.equip(profile: Profile, slot: unknown, id: unknown): (boolean, string)
+	local ok, why = Cosmetics.check(slot, id, PlayerLevel.level(profile.playerXp))
+	if not ok then
+		return false, why
+	end
+	local s = slot :: string
+	if id == nil or id == "" then
+		profile.equipped[s] = nil
+	else
+		profile.equipped[s] = id :: string
+	end
+	return true, ""
+end
+
+-- Player XP that arrives while a save is still loading (DECISIONS #179).
+export type Held = { xp: number, settled: boolean }
+
+function Profile.newHeld(): Held
+	return { xp = 0, settled = false }
+end
+
+-- Keep `amount` until the load ends. False once the load has ended (add it directly).
+function Profile.hold(held: Held, amount: number): boolean
+	if held.settled then
+		return false
+	end
+	held.xp += PlayerLevel.whole(amount)
+	return true
+end
+
+-- The load ended: `profile` is the loaded save, or nil if it failed. Adds what was held
+-- once (a second call adds nothing). Returns (added, dropped).
+function Profile.settleHeld(held: Held, profile: Profile?): (number, number)
+	if held.settled then
+		return 0, 0
+	end
+	held.settled = true
+	local xp = held.xp
+	held.xp = 0
+	if profile then
+		return Profile.addPlayerXp(profile, xp), 0
+	end
+	return 0, xp
 end
 
 -- Hunt Board ----------------------------------------------------------------------

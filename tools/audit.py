@@ -257,6 +257,8 @@ def config_fields(data):
         note("DailyHaul", row, f"day {i}")
     for key, bounty in data["Bounties"].items():
         note("Bounties", bounty, key)
+    for item in data["Cosmetics"]:
+        note("Cosmetics", item, item["id"])
     return fields
 
 

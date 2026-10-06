@@ -536,6 +536,176 @@ def read_bounties(ws):
     return bounties, order
 
 
+# Cosmetics (PLAN round 4 T57, DECISIONS #121): Kind column text -> (Config kind, the
+# rarity it must have). Commons are the six simple colours; rares the hat, gun pattern,
+# hit-marker and trail; legendaries the animated sets; titles their own rarity.
+COSMETIC_KINDS = {
+    "Name colour": ("nameColour", "common"),
+    "Gun tint": ("gunTint", "common"),
+    "Tracer colour": ("tracer", "common"),
+    "Crosshair colour": ("crosshair", "common"),
+    "Tower flag": ("towerFlag", "common"),
+    "Leaderboard banner": ("banner", "common"),
+    "Hunting hat": ("hat", "rare"),
+    "Gun pattern": ("gunFinish", "rare"),
+    "Hit-marker": ("hitMarker", "rare"),
+    "Sprint trail": ("trail", "rare"),
+    "Animated set": ("set", "legendary"),
+    "Title": ("title", "title"),
+}
+# Pattern values a kind may use (blank = none); other kinds leave it blank.
+COSMETIC_PATTERNS = {
+    "hat": {"Brim", "Cap", "Crest"},
+    "hitMarker": {"Cross", "Plus", "Diamond", "Star"},
+    "set": {"Pulse", "Cycle"},
+}
+# Roblox materials a cosmetic may use. No Neon: a glowing gun is mastery 20's gold look.
+COSMETIC_MATERIALS = {
+    "Plastic", "SmoothPlastic", "Wood", "WoodPlanks", "Marble", "Slate", "Granite", "Metal",
+    "DiamondPlate", "Fabric", "Sand", "Pebble", "Brick", "Cobblestone", "Concrete", "Ice",
+    "Foil", "Glass", "Grass",
+}
+MASTERY_GOLD = (250, 200, 60)  # Server/Hero's gold gun; no cosmetic may come near it
+GOLD_DISTANCE = 80  # RGB distance below which a colour counts as gold
+COSMETIC_TOP = 200  # the last level with listed rewards; past it only the repeat title
+COSMETIC_HEADER_ROW = 4
+
+
+def read_cosmetics(ws):
+    """Cosmetics: Id, Level, Kind, Name, Rarity, Colour, Material, Pattern, Repeat every.
+
+    Returns a list in sheet order. `kind` is the Config kind (COSMETIC_KINDS); unknown
+    kind text goes out as "" and fails validation. Colour goes out as {r, g, b} ({} when
+    blank); `every` is 0 except on the past-200 title row."""
+    columns = {}
+    for c in range(1, ws.max_column + 1):
+        head = v(ws, COSMETIC_HEADER_ROW, c)
+        if head is not None:
+            columns[str(head).strip()] = c
+    wanted = ["Id", "Level", "Kind", "Name", "Rarity", "Colour", "Material", "Pattern", "Repeat every"]
+    for head in wanted:
+        if head not in columns:
+            sys.exit(f"Cosmetics row {COSMETIC_HEADER_ROW}: no '{head}' column (columns are found by header)")
+    out = []
+    r = COSMETIC_HEADER_ROW + 1
+    while v(ws, r, columns["Id"]):
+        cell = lambda head: v(ws, r, columns[head])
+        kind_text = str(cell("Kind") or "").strip()
+        colour_text = str(cell("Colour") or "").strip()
+        colour = []
+        m = re.fullmatch(r"#?([0-9A-Fa-f]{6})", colour_text)
+        if m:
+            colour = [int(m.group(1)[i:i + 2], 16) for i in (0, 2, 4)]
+        elif colour_text:
+            sys.exit(f"Cosmetics row {r}: Colour '{colour_text}' must be #RRGGBB")
+        out.append({
+            "id": str(cell("Id")).strip(),
+            "level": num(cell("Level")),
+            "kind": COSMETIC_KINDS.get(kind_text, ("", ""))[0],
+            "name": str(cell("Name") or "").strip(),
+            "rarity": str(cell("Rarity") or "").strip().lower(),
+            "colour": colour,
+            "material": str(cell("Material") or "").strip(),
+            "pattern": str(cell("Pattern") or "").strip(),
+            "every": num(cell("Repeat every")),
+        })
+        r += 1
+    return out
+
+
+def validate_cosmetics(data, problems, notes):
+    """The reward ladder (DECISIONS #121, PLAN T57): one cosmetic per listed level (a title
+    may sit beside it), commons only at non-multiples of 10 below 100, a rare + a title every
+    10 to 100, a legendary + a title at 150 and 200, nothing else up to 200, one repeating
+    title past 200, and no gold anywhere (mastery 20's)."""
+    items = data["Cosmetics"]
+    rarity_of = {key: rarity for key, rarity in COSMETIC_KINDS.values()}
+    ids, names, by_level, repeats = set(), set(), {}, []
+    taken = {d["display"].lower() for block in ("Heroes", "Towers") for d in data[block].values()}
+    for item in items:
+        where = f"Cosmetics {item['id']}"
+        if not re.fullmatch(r"[A-Z0-9_]+", item["id"]):
+            problems.append(f"{where}: Id must be capitals, digits and _")
+        if item["id"] in ids:
+            problems.append(f"{where}: Id is used twice")
+        ids.add(item["id"])
+        if not item["name"]:
+            problems.append(f"{where}: needs a Name")
+        if item["name"].lower() in names:
+            problems.append(f"{where}: Name '{item['name']}' is used twice")
+        names.add(item["name"].lower())
+        if item["name"].lower() in taken:
+            problems.append(f"{where}: Name '{item['name']}' is already a hero's or tower's name")
+        if "gold" in item["name"].lower():
+            problems.append(f"{where}: no gold cosmetics (gold is mastery 20's alone)")
+        kind = item["kind"]
+        if not kind:
+            problems.append(f"{where}: Kind must be one of {', '.join(COSMETIC_KINDS)}")
+            continue
+        if item["rarity"] != rarity_of[kind]:
+            problems.append(f"{where}: a {kind} is {rarity_of[kind]}, not '{item['rarity']}'")
+        level = item["level"]
+        if not isinstance(level, (int, float)) or level != int(level) or level < 2:
+            problems.append(f"{where}: Level must be a whole number, 2 or more")
+            continue
+        colour = item["colour"]
+        if kind == "title":
+            if colour or item["material"] or item["pattern"]:
+                problems.append(f"{where}: a title has no Colour, Material or Pattern")
+        elif len(colour) != 3:
+            problems.append(f"{where}: needs a Colour (#RRGGBB)")
+        elif sum((a - b) ** 2 for a, b in zip(colour, MASTERY_GOLD)) ** 0.5 < GOLD_DISTANCE:
+            problems.append(f"{where}: Colour is too close to mastery 20's gold")
+        if item["material"] and item["material"] not in COSMETIC_MATERIALS:
+            problems.append(f"{where}: Material '{item['material']}' isn't allowed ({', '.join(sorted(COSMETIC_MATERIALS))})")
+        allowed = COSMETIC_PATTERNS.get(kind, set())
+        if item["pattern"] and item["pattern"] not in allowed:
+            problems.append(f"{where}: Pattern '{item['pattern']}' isn't one for a {kind} ({', '.join(sorted(allowed)) or 'leave it blank'})")
+        if kind in ("hat", "set") and not item["pattern"]:
+            problems.append(f"{where}: a {kind} needs a Pattern ({', '.join(sorted(allowed))})")
+        every = item["every"]
+        if every:
+            repeats.append(item)
+            if kind != "title" or level <= COSMETIC_TOP or every <= 0 or every != int(every):
+                problems.append(f"{where}: only a title past level {COSMETIC_TOP} may repeat, every whole number of levels")
+            elif (level - COSMETIC_TOP) % every:
+                problems.append(f"{where}: Level {level:g} must be {COSMETIC_TOP} + a multiple of Repeat every ({every:g})")
+            if "{n}" not in item["name"]:
+                problems.append(f"{where}: a repeating title needs {{n}} (the level) in its Name, so each one differs")
+            continue
+        if level > COSMETIC_TOP:
+            problems.append(f"{where}: only the repeating title goes past level {COSMETIC_TOP}")
+            continue
+        by_level.setdefault(int(level), []).append(item)
+    if len(repeats) != 1:
+        problems.append(f"Cosmetics: exactly one title past level {COSMETIC_TOP} must repeat (Repeat every); found {len(repeats)}")
+    counts = {}
+    for level in range(2, COSMETIC_TOP + 1):
+        here = by_level.get(level, [])
+        titles = [i for i in here if i["kind"] == "title"]
+        cosmetics = [i for i in here if i["kind"] != "title"]
+        if level < 100 and level % 10:
+            want, want_title = "common", False
+        elif level <= 100 and level % 10 == 0:
+            want, want_title = "rare", True
+        elif level in (150, 200):
+            want, want_title = "legendary", True
+        else:
+            want, want_title = None, False
+        got = [i["rarity"] for i in cosmetics]
+        if want is None and here:
+            problems.append(f"Cosmetics level {level}: no rewards between 101-149 and 151-199 (DECISIONS #121)")
+        elif want and got != [want]:
+            problems.append(f"Cosmetics level {level}: needs exactly one {want} cosmetic (has {', '.join(got) or 'none'})")
+        if want_title != (len(titles) == 1) or len(titles) > 1:
+            problems.append(f"Cosmetics level {level}: needs {'one title' if want_title else 'no title'} (has {len(titles)})")
+        for i in here:
+            counts[i["rarity"]] = counts.get(i["rarity"], 0) + 1
+    if repeats:
+        r = repeats[0]
+        notes.append(f"cosmetics: {counts.get('common', 0)} common, {counts.get('rare', 0)} rare, {counts.get('legendary', 0)} legendary, {counts.get('title', 0)} titles to level {COSMETIC_TOP}; then a title every {r['every']:g} from {r['level']:g}")
+
+
 # ---------------------------------------------------------------- validation
 
 def active_slots(count):
@@ -1026,6 +1196,7 @@ def validate(data):
     validate_perks(data, problems, notes)
     validate_small_perks(data, problems)
     validate_xp(data, problems, notes)
+    validate_cosmetics(data, problems, notes)
 
     return problems, notes
 
@@ -1174,6 +1345,8 @@ def read_data(xlsx):
     if "Mastery Perks" not in wb.sheetnames:
         sys.exit("The spreadsheet has no 'Mastery Perks' sheet (PLAN round 3 T32)")
     bounties, bounty_order = read_bounties(wb["Bounties"])
+    if "Cosmetics" not in wb.sheetnames:
+        sys.exit("The spreadsheet has no 'Cosmetics' sheet (PLAN round 4 T57)")
 
     data = {
         "Tuning": read_tuning(wb["Tuning"]),
@@ -1191,6 +1364,7 @@ def read_data(xlsx):
         "DailyHaul": read_daily_haul(wb["Daily Haul"]),
         "Bounties": bounties,
         "BountyOrder": bounty_order,
+        "Cosmetics": read_cosmetics(wb["Cosmetics"]),
     }
     return data
 

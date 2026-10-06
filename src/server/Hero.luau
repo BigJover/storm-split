@@ -69,6 +69,7 @@ local Track = require(Shared:WaitForChild("Track"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 local GunRules = require(Shared:WaitForChild("GunRules"))
+local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 
 local Economy = require(script.Parent.Economy)
 local Progression = require(script.Parent.Progression)
@@ -115,6 +116,15 @@ local HERO_COLORS = {
 }
 local DUAL_GUN_OFFSET = 0.9 -- studs sideways for the second gun's tracer
 local MASTERY_GOLD = Color3.fromRGB(250, 200, 60)
+
+-- What a player wears, from the Equip_<slot> attributes Progression publishes.
+local function worn(player: Player): (string) -> Cosmetics.Item?
+	return function(slot: string): Cosmetics.Item?
+		return Cosmetics.worn(function(name)
+			return player:GetAttribute(name)
+		end, slot)
+	end
+end
 
 local SHOT_GAP_SLACK = 0.8 -- accept pulls up to 20% early, for network jitter
 local RAY_ORIGIN_SLACK = 20 -- studs beyond max camera zoom a ray may start from
@@ -308,9 +318,20 @@ local function syncTool(player: Player)
 	tool.ToolTip = `{hero.display} · {hero.ability} (F)`
 	local handle = tool:FindFirstChild("Handle")
 	if handle and handle:IsA("BasePart") then
-		-- Mastery skin: a gold gun at max mastery.
-		handle.Color = if maxed then MASTERY_GOLD else (HERO_COLORS[s.hero] or Color3.new(1, 1, 1))
-		handle.Material = if maxed then Enum.Material.Neon else Enum.Material.SmoothPlastic
+		-- Mastery skin: a gold gun at max mastery, always; then the player's cosmetics
+		-- (Shared/Cosmetics: an animated set, or tint + pattern). Looks only.
+		local look = Cosmetics.gunLook(worn(player), HERO_COLORS[s.hero] or Color3.new(1, 1, 1), maxed, MASTERY_GOLD)
+		handle.Color = look.colour
+		handle.Material = look.material
+		-- Looks.client animates a set's colour on every screen.
+		handle:SetAttribute("CosmeticSet", if look.set then look.set.id else nil)
+	end
+end
+
+-- An equipped cosmetic changed (Progression's onLookChanged): redraw the gun.
+function Hero.lookChanged(player: Player)
+	if states[player] then
+		syncTool(player)
 	end
 end
 
@@ -672,7 +693,7 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 		s.gunSide = -s.gunSide
 		muzzle += body.CFrame.RightVector * DUAL_GUN_OFFSET * s.gunSide
 	end
-	local color = HERO_COLORS[s.hero or ""] or Color3.new(1, 1, 1)
+	local color = Cosmetics.tracerColour(worn(player), HERO_COLORS[s.hero or ""] or Color3.new(1, 1, 1))
 	local live = Enemies.getLive()
 	local outcome: Outcome = { hit = false, killed = false }
 	local ricochetTakeDowns = 0
@@ -914,13 +935,15 @@ end
 
 -- Round `index` was cleared: bank Round XP and the pending pop XP for every
 -- hunter present, then start the next round's count from nothing. A lost round
--- never gets here, so its pops are dropped by Hero.resetMatch.
-function Hero.roundCleared(index: number)
+-- never gets here, so its pops are dropped by Hero.resetMatch. `solo` = one hunter
+-- in the match as it was cleared (Main counts them): that round's take-down part
+-- counts double toward player XP only (DECISIONS #177).
+function Hero.roundCleared(index: number, solo: boolean?)
 	roundsCleared = index
 	local team = teamPops
 	teamPops = 0
 	for _, s in states do
-		PlayerLevel.bankRound(s.tally, s.pops, team) -- before the clamp
+		PlayerLevel.bankRound(s.tally, s.pops, team, solo == true) -- before the clamp
 		s.xp = HeroXp.bank(s.xp, s.pops, team, index)
 		s.pops = 0
 		s.level = HeroXp.level(s.xp, index)

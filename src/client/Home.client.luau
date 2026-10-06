@@ -4,7 +4,7 @@
 	Game mode, track and difficulty cards, your Amber and hero, buttons
 	for hero select, Unlocks & Mastery (they open Shop.client's panels) and the
 	Hunt Board (HuntBoard.client's screen; an amber dot says something is waiting
-	to be claimed), and Play. The host — the longest-connected player — makes the choices and
+	to be claimed), the Profile screen beside it (Profile.client, PLAN T57), and Play. The host — the longest-connected player — makes the choices and
 	presses Play; everyone else sees them live and waits. Choices are only
 	requests to the server.
 
@@ -19,6 +19,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local HuntBoard = require(Shared:WaitForChild("HuntBoard"))
+local ProfileScreen = require(Shared:WaitForChild("ProfileScreen"))
 local HomeLayout = require(Shared:WaitForChild("HomeLayout"))
 local Modes = require(Shared:WaitForChild("Modes"))
 local Theme = require(Shared:WaitForChild("Theme"))
@@ -219,6 +220,13 @@ huntDot.BorderSizePixel = 0
 huntDot.Visible = false
 huntDot.Parent = huntCard
 corner(huntDot, 6)
+-- Profile (PLAN T57): the player level, rewards and what you wear. Every player has it.
+local profileCard = card(huntRow, 2, HomeLayout.PROFILE_WIDTH, HomeLayout.ROW_HEIGHT)
+profileCard.TextSize = HomeLayout.HUNT_TEXT_SIZE
+profileCard.Text = ProfileScreen.BUTTON
+profileCard.Activated:Connect(function()
+	player:SetAttribute("OpenPanel", ProfileScreen.MODE)
+end)
 
 local actionRow = row(11, HomeLayout.ROW_HEIGHT)
 actionRow.Name = "Actions"

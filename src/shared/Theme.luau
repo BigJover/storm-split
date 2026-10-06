@@ -17,4 +17,8 @@ return table.freeze({
 	DailyBounties = "Daily Bounties",
 	WeeklyBounties = "Weekly Bounties",
 	Swap = "Swap", -- trading a bounty for another
+	-- Player level (PLAN round 4, working names until the Dino review, T59). Never "Lv":
+	-- that's the hunter's in-match level (DECISIONS #118).
+	PlayerLevel = "Player level",
+	Profile = "Profile",
 })

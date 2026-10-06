@@ -62,6 +62,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local Placement = require(Shared:WaitForChild("Placement"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
+local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 local TowerStats = require(Shared:WaitForChild("TowerStats"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
@@ -395,6 +396,15 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 
 	local base = Placement.ground(position)
 	local model = TowerLook.build(key, def.range, base)
+	-- The builder's tower flag, if they wear one (a look only; Shared/Cosmetics).
+	local flag = if owner
+		then Cosmetics.colour(Cosmetics.worn(function(name)
+			return owner:GetAttribute(name)
+		end, "towerFlag"))
+		else nil
+	if flag then
+		TowerLook.addFlag(model, flag)
+	end
 	model.Parent = towerFolder
 
 	nextId += 1

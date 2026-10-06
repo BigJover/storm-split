@@ -9,6 +9,9 @@
 	  huntBoard                            on the home screen only (Lobby); it's
 	                                       HuntBoard.client's screen, but Shop.client
 	                                       still owns which panel is open
+	  profile                              on the home screen only (Lobby); the
+	                                       Profile screen (Profile.client, PLAN T57),
+	                                       owned the same way as the Hunt Board
 
 	When the state changes, a panel only survives the step from Building into
 	Playing, and only if it's still allowed there. Every other change closes
@@ -39,7 +42,7 @@ function PanelRules.allowed(mode: string, state: string?, hasHero: boolean): boo
 		return BEFORE_ROUND[s] == true or (s == "Playing" and not hasHero)
 	elseif mode == "mastery" then
 		return BEFORE_ROUND[s] == true
-	elseif mode == "huntBoard" then
+	elseif mode == "huntBoard" or mode == "profile" then
 		return s == "Lobby"
 	end
 	return false

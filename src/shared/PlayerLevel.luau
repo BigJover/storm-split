@@ -8,14 +8,18 @@
 	  Curve      level n -> n+1 costs PlayerXPBase + PlayerXPStep x (n-1), at most
 	             PlayerXPPerLevelMax; no top level.
 	  Match XP   the hero XP banked on cleared rounds, counted before the hunter-level
-	             clamp: round XP + take-down XP (x SoloTakeDownXPX in solo, player XP
-	             only), + the difficulty's Clear XP if the track was cleared. Banked
-	             once, when the match ends, won or lost, for the hunters still there.
-	  Rewards    cosmetics and titles only (rewardAt), never gameplay power.
+	             clamp: round XP + take-down XP, + the difficulty's Clear XP if the
+	             track was cleared. A round cleared with one hunter present banks its
+	             take-down part x SoloTakeDownXPX (player XP only; DECISIONS #177:
+	             decided per round, not at match end). Banked once, when the match
+	             ends, won or lost, for the hunters still there.
+	  Rewards    cosmetics and titles only (rewardAt, from the Cosmetics sheet through
+	             Shared/Cosmetics), never gameplay power.
 ]]
 
 local Config = require(script.Parent.Config)
 local HeroXp = require(script.Parent.HeroXp)
+local Cosmetics = require(script.Parent.Cosmetics)
 
 local PlayerLevel = {}
 
@@ -125,40 +129,33 @@ function PlayerLevel.newTally(): Tally
 end
 
 -- A cleared round adds the hero XP it banks to the tally, before the hunter-level
--- clamp (HeroXp.bank clamps the hunter's XP; the player level counts it all).
-function PlayerLevel.bankRound(tally: Tally, ownPops: number, teamPops: number)
+-- clamp (HeroXp.bank clamps the hunter's XP; the player level counts it all). `solo` =
+-- one hunter present when the round was cleared: its take-down part counts
+-- x SoloTakeDownXPX (DECISIONS #124, #177).
+function PlayerLevel.bankRound(tally: Tally, ownPops: number, teamPops: number, solo: boolean?)
 	tally.roundXp += HeroXp.roundXp()
-	tally.takedownXp += HeroXp.popXp(ownPops, teamPops)
+	local takedown = HeroXp.popXp(ownPops, teamPops)
+	if solo then
+		takedown *= Config.Tuning.SoloTakeDownXPX
+	end
+	tally.takedownXp += takedown
 end
 
--- Match end: each hunter still in the match -> their player XP. Solo = exactly one
--- hunter there at the end. Leavers aren't passed in, so they get nothing.
+-- Match end: each hunter still in the match -> their player XP. The solo boost is
+-- already in each tally, round by round (bankRound), so the number of hunters at the
+-- end changes nothing. Leavers aren't passed in, so they get nothing.
 function PlayerLevel.matchAwards<K>(tallies: { [K]: Tally }, cleared: boolean, difficulty: string?): { [K]: number }
-	local count = 0
-	for _ in tallies do
-		count += 1
-	end
 	local out = {}
 	for who, tally in tallies do
-		out[who] = PlayerLevel.matchXp(tally.roundXp, tally.takedownXp, count == 1, cleared, difficulty)
+		out[who] = PlayerLevel.matchXp(tally.roundXp, tally.takedownXp, false, cleared, difficulty)
 	end
 	return out
 end
 
--- The reward tier a level unlocks (DECISIONS #121). The T57 Cosmetics sheet will name
--- the items; the ladder itself is this.
+-- The reward tier a level unlocks (DECISIONS #121), read from the Cosmetics sheet: the
+-- level's cosmetic's rarity, "title" when only a title unlocks there, else "none".
 function PlayerLevel.rewardAt(level: number): Reward
-	local l = math.floor(level)
-	if l < 2 then
-		return "none"
-	elseif l == 150 or l == 200 then
-		return "legendary"
-	elseif l <= 100 then
-		return if l % 10 == 0 then "rare" else "common"
-	elseif l > 200 and l % 50 == 0 then
-		return "title"
-	end
-	return "none"
+	return Cosmetics.tierAt(level) :: Reward
 end
 
 return PlayerLevel
