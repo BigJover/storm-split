@@ -657,23 +657,44 @@ Tar Lake upgrade makes pools touch, a dino in two pools gets the strongest one o
 stacking slow, burn or Eruption). Accept: specs (Eruption on a 5-size T-Rex → 3; a sunk dino
 pays like a kill; two touching pools never stack); untouchable.
 
-### T68. Shop, unlocks, balance pass for all four
-Sell them; Unlocks screen lists them under Towers with their Amber price; `value.py` bars:
-untouchables ≤ 0.8× median eDPS-per-cash (#148), no new DEAD/OP findings, hero-vs-tower
-guard passes, `threat.py` 0, #72 pacing floors hold. Adjust the seeds (in-match costs and
-damage), never existing towers. Report the table.
-- **Also (#188–#191):** (a) `value.py` medians and the `--breaks1` T5 median count only
-  **released** towers (a `Towers` row not yet sold is excluded) — do this first, so T68's bars
-  are measured against the old field (r31–40 T5 median back to 289). (b) **Worth it:** each
-  damageable new tower's best T5 (Storm Coil Arc/Charge; Ballista Skewer/Chain Harpoons) has
-  eDPS-per-cash ≥ the damage-path T5 median in r31–40; Storm Coil today 198/191 on 62,207
-  cash vs median 237–289, so raise Storm Coil `Damage` (Towers!D15, seed 4) and/or its T4–T5
-  `Damage x` until it passes; **Jump Spark and High Voltage DEAD cleared** by cost or damage
-  on those tiers. (c) Untouchables (Falcon, Tar Pit) ≤ 0.8× that median (#148). (d) Release
-  all four together: sold, on the Unlocks screen with Amber 300/200/250/300.
-- **Accept (added):** findings ≤ the post-T53 count (4) plus none from the new towers;
-  `--breaks1` exits 0 with the released-only median; table of every new T5's eDPS and
-  eDPS-per-cash vs the median.
+### T68 (final). Release, cost and balance pass for all four (#192–#196) — replaces T68 text
+Director's figures are from `value.py` on 2026-10-06 (T5 cost-per-eDPS, "c/e", r31–40). The
+**released** damage-path T5s give c/e 41/110/115/119/165/185/268/294 → **median M = 142**.
+1. **Medians count released towers only** (`value.py`: a `Towers` row not yet sold is left out
+   of every median and of `--breaks1`'s T5 median). Do this first; re-read M and the T1–T5
+   marginal medians from that run and use them below.
+2. **Bars (T5, r31–40):** damageable new tower — its best T5 c/e **≤ 1.25 × M** (≈ 178;
+   "worth it"). Untouchable — every damage T5 c/e **between 1.25 × M and 2 × M** (≈ 178–284;
+   "somewhat weaker", not useless). Other tiers of new towers: no DEAD flag except the two
+   accepted below. Revises #148 to T5 only.
+3. **Storm Coil:** `Towers!D15` Damage 4 → **6**, `Towers!C15` cost 550 → **400** (all tier
+   costs follow C15). Expected: Power Grid c/e 314 → ~157; Jump Spark / High Voltage marginal
+   ~1.4× the T4 median (from 2.7×).
+4. **Harpoon Ballista:** `Towers!E18` rate 0.4 → **0.5**, `Towers!C18` cost 600 → **500**
+   (exactly ×1.5 eDPS-per-cash). Expected: Skewer c/e 213 → 142, Chain Harpoons 273 → 182;
+   Crusher Bolt 2.6× → 1.7×, Great Harpoon 2.5× → 1.7×, Spread Volley 2.7× → 1.8×, Steam Crank
+   2.3× → 1.5×. Skewer's `Rate x` 1.15 (H159) stays.
+5. **Falcon Roost:** Flock T5 `Damage x` (`Tower Upgrades!G134`) 3.1 → **4.4** (Murmuration
+   c/e 372 → ~262); Talons T5 `Damage x` (G129) 13.03 → **12.0** (Eagle of the Peak c/e 178 →
+   ~185, inside the window).
+6. **Tar Pit:** whatever T67 lands with; its only lever here is `Towers!C17` (cost).
+7. **If a bar still fails after 3–6 (guaranteed exit):** cost is exactly linear (every tier
+   cost follows the row's C), so set C = C × (target c/e ÷ measured c/e), rounded to 25, with
+   target 160 (damageable) or 230 (untouchable). Floors: Storm Coil 350, Ballista 450, Falcon
+   300, Tar Pit 300; ceilings 600. If a floor is reached and a damageable bar still fails,
+   raise that row's base Damage (D) by 1 and repeat (Storm Coil ≤ 8, Ballista ≤ 15). A DEAD
+   flag on Ballista T3–T4 or Volley T3–T4 left after this is treated the same way (cost
+   first); Storm Coil's two must clear.
+8. **Release:** all four sold; Unlocks screen under Towers with Amber 300/200/250/300.
+- **Also bars:** no DOMINANT finding; hero-vs-tower guard passes on every difficulty;
+  `threat.py` 0; #72 pacing floors hold; `--breaks1` exits 0 with the released-only median;
+  Chaos bars (T50) pass; findings = Big Bore T1, Concussive T5, **Ballista Steel Head T1, Saw
+  Tip T2** (accepted, #194) and nothing else new.
+- **Accept:** Config diff = the cells above (and any step-7 cells, listed); never an existing
+  tower's number; commit message: table of every new-tower T5 (eDPS r21–30/31–40, c/e, ×M) and
+  each step-7 adjustment.
+- **T58 follow-up:** `LevelBoard` seeds a hunter's "last written" XP from the value read at
+  join (profile load), so an unchanged hunter's first write of the session is skipped.
 
 ### T69. 🦖 Review of the four built towers (looks, wording, ability texts)
 
