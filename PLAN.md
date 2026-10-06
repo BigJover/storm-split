@@ -162,17 +162,17 @@ tier 5 on the same path. Max build **6/2/0** (6/3/0 at mastery 20). Working name
 | Hero | Path | Tier 6 (working name): effect |
 |---|---|---|
 | Tracker | Gunslinger | *Hot Swap*: the two guns reload one at a time, so firing never stops; reload ×0.8 |
-| Tracker | Marksman | *Heart Shot*: scoped shots have no spread and **break 2 sizes** |
-| Tracker | Trick Shot | *Trick Reload*: each ricochet take-down puts a round back in the cylinder; ricochets prefer dinos not yet hit |
-| Big Game Hunter | Stalker (was Tactical) | *Five-Round Burst*: bursts of 5 with Precision Burst's grouping; recoil resets between bursts |
+| Tracker | Marksman | *Heart Shot*: scoped shots have no spread and **break 2 sizes** (scoped only, #170) |
+| Tracker | Trick Shot | *Bounce Back*: each ricochet take-down puts a round back in the cylinder; ricochets prefer dinos not yet hit |
+| Big Game Hunter | Stalker (was Tactical) | *Big Five*: bursts of 5 with Precision Burst's grouping; recoil resets between bursts |
 | Big Game Hunter | Heavy | *Endless Belt*: no reloading while fully spun up (Belt Fed's rule without Rally Cry) |
-| Big Game Hunter | Special Ammo | *Powder Tips*: Explosive Tips' splash radius ×1.5, and the splash pierces armour |
+| Big Game Hunter | Special Ammo | *Dynamite Rounds*: Explosive Tips' splash radius ×1.5 (armour-pierce already from AP Rounds, #171) |
 | Brush Beater | Slug | *Thunder Slug*: slugs **break 2 sizes**; no spread while standing still |
 | Brush Beater | Buckshot | *Wildfire Drum*: Dragon's Breath's burning ground **4 studs** wide (from 3); the drum holds +50% shells |
 | Brush Beater | Point Blank (was Breacher) | *Quad Barrel*: four blasts per trigger (from two); reload ×1.25 longer |
 | Field Medic | Triage | *Rapid Response*: Triage Kit holds 2 charges |
-| Field Medic | Lever Action | *Tube Feed*: magazine +50%, reload ×0.5 |
-| Field Medic | Muzzle | *Nightcap*: Jaw Lock lasts 4s (from 3) and spreads within 9 studs (from 6); bosses still half |
+| Field Medic | Lever Action | *Bottomless Tube*: magazine +50%, reload ×0.5 |
+| Field Medic | Muzzle | *Lights Out*: Jaw Lock lasts 4s (from 3) and spreads within 9 studs (from 6); bosses still half |
 
 ### Mastery small perks (DECISIONS #135)
 
@@ -526,8 +526,8 @@ pierce-through wording ("breaks 2 sizes"), the Chaos difficulty card text.
 - **Profile screen** (home screen, new button on the Hunt Board row; key 🦖): level, XP bar,
   the next rewards, and equip slots per kind + title. No-trap rules; mouse freed; closes with
   key and X; closes on match-state change.
-- **In play:** equipped cosmetics show on your gun, tracers, crosshair, towers' flags and
-  your leaderboard row; **no gameplay effect** (no size or hitbox change, no extra
+- **In play:** equipped cosmetics show on your gun, tracers, crosshair, hit-markers, hat,
+  sprint trail, towers' flags and your leaderboard row (#181); **no gameplay effect** (no size or hitbox change, no extra
   visibility of anything).
 - **Batch-6 follow-ups (#177–#179):**
   1. **Solo boost per round:** `bankRound` takes `solo` (one hunter present when the round
@@ -554,6 +554,18 @@ pierce-through wording ("breaks 2 sizes"), the Chaos difficulty card text.
   a minute per server.
 
 ## Review, playtest, docs
+
+### T58b. Batch-7 follow-ups (#181–#185)
+- **Equip only in the Lobby:** the server refuses an equip request outside the Lobby state
+  (matches the Lobby-only Profile screen); no client change needed beyond the refusal toast.
+- **Leaderboard writes only on change:** `LevelBoard` writes a hunter's score only when their
+  player XP changed since the last write (match end, leave), still ≤ once a minute per hunter
+  and never in a loop; check `DataStoreService:GetRequestBudgetForRequestType` before each
+  write and skip (retry next tick) when the budget is 0.
+- **Cosmetics carry no gameplay:** hats and trails have `CanCollide`, `CanQuery`, `CanTouch`
+  false and `Massless` true; no hitbox or targeting change.
+- **Accept:** specs: equip in Lobby yes / in Playing no; no write when XP unchanged; a zero
+  budget skips without error; a hat part is non-colliding and non-queryable. All specs green.
 
 ### T59. 🦖 Dino review: player level
 The player-level label (must differ from "Lv N"), the titles, the cosmetic names (all
@@ -601,31 +613,31 @@ logs the final names; the Builders use them from T63.
   combat spec (an untouchable tower takes 0 and is never chosen as a target).
 
 ### T64. Storm Coil (#151)
-Chain arcs (nearest within reach, falloff 80%, breaks 1); Fork Lightning; Jumper; **Power
+Arc path: arcs (nearest within reach, falloff 80%, breaks 1); Fork Lightning; Jump Spark; **Power
 Grid** (n = standing Storm Coils, ≤ 6; range × (1 + 0.15(n−1)), damage × (0.5 + 0.25n);
 one shared strike every 6s); Thunderclap; High Voltage; **Judgement Bolt** (biggest dino,
-×8, breaks 3, boss stun 0.5s); Conductor; Grounding Spike; Storm Warning; **Lightning
+×8, breaks 3, boss stun 0.5s); Tall Mast; Charged Air; Grounding Spike; Storm Warning; **Lightning
 Rodeo** (towers in range: each shot arcs once to one more dino at 50%). Accept: specs per
 tier; Power Grid numbers at n = 1, 2, 6, 8 (= 6); `value.py` reads the new mechanics.
 
 ### T65. Falcon Roost
-Birds fly out (travel time), dive, return; untouchable; Stoop Dive breaks 2, Iron Talons 3;
+Birds fly out (travel time), dive, return; untouchable; Power Dive breaks 2, Iron Talons 3;
 **Eagle of the Peak** (one eagle, ×6, stun 0.5s, breaks 3); **Murmuration** (12 birds,
 continuous pecks in range); Lure; **Hunting Party** (+15% attack speed to towers in range
 while a bird dives). Accept: specs; the 0.8× eDPS-per-cash bar (#148) in `value.py`.
 
 ### T66. Harpoon Ballista
-Heavy bolts (breaks per tier: Bone Splitter 2, Whale Iron 3); **Skewer** (line through every
+Heavy bolts (breaks per tier: Crusher Bolt 2, Great Harpoon 3); **Skewer** (line through every
 dino, each breaks 3); Pin Down; Reel In; **Tow Line** (boss pulled 10 studs every 15s,
 uses `Enemies.knockback`'s rules for bosses as an explicit exception); Spread Volley;
-Auto-Crank; **Chain Harpoons** (bolt pairs hit everything on the segment between them).
+Steam Crank; **Chain Harpoons** (bolt pairs hit everything on the segment between them).
 Accept: specs; knockback of bosses only through Tow Line.
 
 ### T67. Tar Pit (#150, #152)
 On-track pool; slow; last-size sinking (not bosses or Pteranodons); Clinging Tar; **Tar
-Lake** (×3 length); Boiling Pit (burn ticks break 1); Pitch Fire; **Eruption** (every 10s
+Lake** (×3 length); Boiling Pit (burn ticks break 1); Tar Fire; **Eruption** (every 10s
 every dino in the pool drops 2 sizes outright, bosses included, resist ignored, each size
-pays); Bone Yard cash tiers; Sticky Trail; **Tar Totem** (towers in range +15% vs slowed).
+pays); Dig Site cash tiers (Lucky Finds); Tar Tracks; **Tar Totem** (towers in range +15% vs slowed).
 Accept: specs (Eruption on a 5-size T-Rex → 3; a sunk dino pays like a kill); untouchable.
 
 ### T68. Shop, unlocks, balance pass for all four
