@@ -654,6 +654,42 @@ local function describeHeroStep(path, current: number): string
 	if marked then
 		table.insert(parts, `x{marked} vs marked`)
 	end
+	local burst = newly("burstCount", 0)
+	if burst and not mode then
+		table.insert(parts, `{burst}-round burst`)
+	end
+	-- Tier 6 (PLAN T52; Shared/GunRules).
+	local breaks = newly("sizeBreaks", 1)
+	if breaks then
+		table.insert(parts, `breaks {breaks} sizes`)
+	end
+	if newly("staggeredReload", false) then
+		table.insert(parts, "the guns reload one at a time, so firing never stops")
+	end
+	local back = newly("ricochetReload", 0)
+	if back then
+		table.insert(parts, `each ricochet take-down puts {back} round back`)
+	end
+	if newly("burstRecoilReset", false) then
+		table.insert(parts, "recoil resets between bursts")
+	end
+	if newly("spunUpBelt", false) then
+		table.insert(parts, "no reloading while fully spun up")
+	end
+	if nextStep.stillSpreadMult == 0 and before("stillSpreadMult", 1) ~= 0 then
+		table.insert(parts, "no spread standing still")
+	end
+	if nextStep.scopedSpreadMult == 0 and before("scopedSpreadMult", 1) ~= 0 then
+		table.insert(parts, "no spread scoped")
+	end
+	local patch = newly("burnPatchReach", 0)
+	if patch then
+		table.insert(parts, `burning ground {patch} studs wide`)
+	end
+	local charges = newly("abilityCharges", 0)
+	if charges and charges > 1 then
+		table.insert(parts, `the ability holds {charges} charges`)
+	end
 	local spin = newly("spinUp", 1)
 	if spin then
 		table.insert(parts, `spins up to x{spin} fire rate`)
@@ -990,16 +1026,18 @@ render = function()
 				local current = tiers[pathIndex]
 				local name = escape(path.id)
 				local why = Upgrades.check(tiers, pathIndex, #path.tiers, if rewards then rewards.crossoverCap else nil)
+				-- All six tiers on one line per path (PLAN T53), so the panel never grows.
+				local ladder = PanelRules.tierLadder(current, #path.tiers)
 				if why == "maxed" then
-					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(path.tiers[#path.tiers].name)}`, LOCKED_COLOR, false)
+					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(path.tiers[#path.tiers].name)}\n<font size="13">{ladder}</font>`, LOCKED_COLOR, false)
 				elseif why ~= "ok" then
-					addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
+					addRow(pathIndex, `<b>{name}</b>  ·  {ladder}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
 				else
 					local step = path.tiers[current + 1]
 					local cost = if free then 0 else math.floor(step.cost * (1 - discount / 100) + 0.5)
 					local affordable = cash >= cost
 					local price = if free then "FREE" elseif discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
-					local text = `<b>{escape(step.name)}</b>  ·  {price}\n<font size="13">{name} {current + 1}  ·  {escape(describeHeroStep(path, current))}</font>`
+					local text = `<b>{escape(step.name)}</b>  ·  {price}\n<font size="13">{name} {ladder}  ·  {escape(describeHeroStep(path, current))}</font>`
 					addRow(pathIndex, text, if affordable then HERO_COLOR else LOCKED_COLOR, affordable, function()
 						send("upgrade", pathIndex, nil, heroRequest)
 					end)

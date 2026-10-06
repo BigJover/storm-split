@@ -76,3 +76,22 @@ test("the tower level line is hidden at level 1 and says the compounded damage a
 	eq(PanelRules.towerLevelLine(8, perLevel), "Tower level 8 · +95% damage", "level 8, the last round")
 	eq(PanelRules.towerLevelLine(3, 0.25), "Tower level 3 · +56% damage", "the percent follows the lever")
 end)
+
+test("the hero panel's tier ladder shows all six tiers (PLAN T53)", function()
+	eq(PanelRules.tierLadder(0, 6), "○○○○○○ 0/6", "nothing bought")
+	eq(PanelRules.tierLadder(3, 6), "●●●○○○ 3/6", "three of six")
+	eq(PanelRules.tierLadder(6, 6), "●●●●●● 6/6", "maxed")
+	eq(PanelRules.tierLadder(9, 6), "●●●●●● 6/6", "never past the top")
+	eq(PanelRules.tierLadder(2, 5), "●●○○○ 2/5", "a five-tier path keeps five")
+end)
+
+test("every hero path's ladder has six pips, one line each (no-trap: the panel doesn't grow)", function()
+	local Config = require(src.shared.Config)
+	for key, hero in Config.Heroes do
+		for _, path in hero.paths do
+			local ladder = PanelRules.tierLadder(0, #path.tiers)
+			eq(#path.tiers, 6, `{key} {path.id} has six tiers`)
+			ok(not string.find(ladder, "\n"), `{key} {path.id}: one line`)
+		end
+	end
+end)

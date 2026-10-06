@@ -475,6 +475,11 @@ def economy_lines(data):
     return out, findings
 
 
+def top_tier(h, path_index):
+    """A hero path's highest tier: 6 since PLAN T53 (DECISIONS #133)."""
+    return len(h["paths"][path_index]["tiers"])
+
+
 def hero_dps(h, path_index, tier):
     """(peak, sustained) per-trigger-held DPS. Peak is the exporter guard's formula; sustained
     also pays for reloads (belt-fed never reloads). Burn, marks and bounces aren't counted."""
@@ -495,8 +500,14 @@ def hero_dps(h, path_index, tier):
         return peak, peak
     rounds_per_second = rate * guns * burst
     magazine = max(1, math.floor(h["magazine"] * g("magazineMult", 1) * guns + 0.5))
+    reload = h["reload"] * g("reloadMult", 1)
+    if step and step["staggeredReload"] and guns >= 2:
+        # Hot Swap (Shared/GunRules): one gun reloads while the other fires its share,
+        # so firing only stalls if that reload outlasts the share.
+        share = (magazine // guns) / rounds_per_second
+        return peak, peak * share / max(share, reload)
     empty = magazine / rounds_per_second
-    return peak, peak * empty / (empty + h["reload"] * g("reloadMult", 1))
+    return peak, peak * empty / (empty + reload)
 
 
 def hero_lines(data, rows, mixes):
@@ -533,8 +544,9 @@ def hero_lines(data, rows, mixes):
     for key in data["HeroOrder"]:
         h = data["Heroes"][key]
         base, _ = hero_dps(h, 0, 0)
-        best = max(range(len(h["paths"])), key=lambda i: hero_dps(h, i, 5)[0])
-        peak, sustained = hero_dps(h, best, 5)
+        best = max(range(len(h["paths"])), key=lambda i: hero_dps(h, i, top_tier(h, i))[0])
+        top = top_tier(h, best)
+        peak, sustained = hero_dps(h, best, top)
         cash = sum(s["cost"] for s in h["paths"][best]["tiers"])
         cells = []
         for lv, rd, b in checkpoints:
@@ -545,12 +557,12 @@ def hero_lines(data, rows, mixes):
             # The rule (DECISIONS #58, #101): the highest hero level in play against the
             # best tower at the round level.
             if peak * cs > best_tower:
-                findings.append(f"HERO: {h['display']} {h['paths'][best]['id']} T5 at L{lv + lead} (ceiling, {peak * cs:.0f}) out-damages every T5 tower path's eDPS at round level {lv} ({best_tower:.0f})")
+                findings.append(f"HERO: {h['display']} {h['paths'][best]['id']} T{top} at L{lv + lead} (ceiling, {peak * cs:.0f}) out-damages every T5 tower path's eDPS at round level {lv} ({best_tower:.0f})")
             for (tower_key, pi), e in t5.items():
                 if peak * hs <= e[b] * ts < peak * cs:
                     tower = data["Towers"][tower_key]
                     lead_only.append(f"{h['display']} L{lv + lead} {peak * cs:.0f} > {tower['display']} {tower['paths'][pi]['id']} T5 {e[b] * ts:.0f} (round level {lv})")
-        out.append(f"  {h['display'][:15]:<15} base {base:5.1f}  best {h['paths'][best]['id'][:10]:<10} T5 {' '.join(cells)}"
+        out.append(f"  {h['display'][:15]:<15} base {base:5.1f}  best {h['paths'][best]['id'][:10]:<10} T{top} {' '.join(cells)}"
                    f"  cash/DPS {cash / max(1e-9, peak - base):.0f}")
     if lead_only:
         out.append("  only at the ceiling does a hunter's peak pass these T5 tower paths (for the Director; not a finding, the rule is the best tower):")
@@ -603,7 +615,7 @@ def value_report(data, full=False):
     lines, econ = economy_lines(data)
     for line in lines:
         print(line)
-    print("heroes (best path T5, peak/sustained DPS levelled; cash/DPS = that path's upgrade cash per DPS gained):")
+    print("heroes (best path at its top tier (T6), peak/sustained DPS levelled; cash/DPS = that path's upgrade cash per DPS gained):")
     lines, heroes = hero_lines(data, rows, mixes)
     for line in lines:
         print(line)
@@ -943,7 +955,7 @@ CHAOS_REPORT_ROUNDS = range(1, 20)  # average aim before round 20: report only (
 
 def chaos_report(data):
     """Chaos solo: the cash-to-required ratio with towers only (affordability x Tower damage x)
-    and with the hunter's gun added (best hero's T5 peak at the round level x Hero damage x x
+    and with the hunter's gun added (best hero's top-tier peak (T6, PLAN T53) at the round level x Hero damage x x
     aim, over Required DPS). Returns the broken gated bars."""
     with contextlib.redirect_stdout(io.StringIO()):
         wb = export_constants.recalculated(export_constants.DEFAULT_XLSX)
@@ -952,7 +964,7 @@ def chaos_report(data):
     rows = pacing_rounds(data, wb["Towers"]["C13"].value, key, 1)
     tuning = data["Tuning"]
     per, hero_x = int(tuning.get("RoundsPerLevel", 5)), tuning.get("HeroDamagePerLevel", 0)
-    peak = max(hero_dps(h, i, 5)[0] for h in data["Heroes"].values() for i in range(len(h["paths"])))
+    peak = max(hero_dps(h, i, top_tier(h, i))[0] for h in data["Heroes"].values() for i in range(len(h["paths"])))
 
     def ratio(r, aim):
         row = rows[r - 1]
@@ -967,9 +979,9 @@ def chaos_report(data):
         return ratio(at, aim), at
 
     print(f"Chaos skill report ({d['display']} solo; Tower damage x {d['towerDamageMult']:g}, Hero damage x {d['heroDamageMult']:g})")
-    print(f"  ratio = cash-to-required with towers x Tower damage x, plus aim x the best hero's T5 peak ({peak:.1f} DPS at level 1)"
+    print(f"  ratio = cash-to-required with towers x Tower damage x, plus aim x the best hero's top-tier (T6) peak ({peak:.1f} DPS at level 1)"
           f" at the round level x Hero damage x / Required DPS")
-    print("  the hero model is an UPPER BOUND (DECISIONS #168): real hunters reach T5 later, so Chaos is at least this hard")
+    print("  the hero model is an UPPER BOUND (DECISIONS #168): real hunters reach T6 later, so Chaos is at least this hard")
     broken = []
     for label, aim, rounds, test, bar in CHAOS_BARS:
         value, at = lowest(rounds, aim)

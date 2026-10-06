@@ -5,6 +5,10 @@
 	The crossover rule (strict version): a tower may open at most two of its
 	three paths, and only one of them may go past tier 2. `secondaryCap` raises
 	that 2 (hero mastery level 20 makes it 3).
+
+	`maxTier` is the path's tier count: 5 for towers, 6 for hero paths (DECISIONS
+	#133). Tiers go up one at a time, so tier 6 always needs tier 5 on the same
+	path; hero max builds are 6/2/0, or 6/3/0 at mastery level 20.
 ]]
 
 local Upgrades = {}

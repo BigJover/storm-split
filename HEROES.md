@@ -9,8 +9,9 @@ on the spreadsheet plus any new fire mechanic.
 - **Everyone starts as the Tracker.** Other heroes are unlocked with Amber (Big Game Hunter
   75, Brush Beater 75, Field Medic 75; `Heroes` sheet). **Picking a hero you own is free.** Pick in the build phase; switch freely (full refund of any
   upgrades) until Start, then it's locked. A player who joins mid-match picks once.
-- **Only upgrades cost cash** (the team's shared pot). Each hero has three paths of five
-  tiers, with the same crossover rule as towers: two paths at most, only one past tier 2.
+- **Only upgrades cost cash** (the team's shared pot). Each hero has three paths of **six
+  tiers** (DECISIONS #133), with the same crossover rule as towers: two paths at most, only
+  one past tier 2; tier 6 needs tier 5 on the same path. Max build 6/2/0 (6/3/0 at mastery 20).
 - Upgrades are about **how the gun handles and fires** — reload, magazine, recoil, fire
   mode, special rounds — not raw damage.
 - Every hero has its **ability from the start** (F), on a cooldown. One path per hero

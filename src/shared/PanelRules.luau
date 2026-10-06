@@ -15,7 +15,9 @@
 	it: pressing Play on the home screen, the results screen, going home.
 
 	Also the tower panel's level line (DECISIONS #112), so its wording and its
-	percent are tested too.
+	percent are tested too, and the hero upgrade panel's tier ladder (six tiers
+	since PLAN T53): one line per path, so the panel's height doesn't grow with
+	the tier count and the X stays on screen (no-trap rule).
 ]]
 
 local PanelRules = {}
@@ -60,6 +62,13 @@ function PanelRules.towerLevelLine(level: number, perLevel: number): string?
 	end
 	local percent = math.floor((1 + perLevel) ^ (whole - 1) * 100 - 100 + 0.5)
 	return `Tower level {whole} · +{percent}% damage`
+end
+
+-- A path's tier ladder for the hero upgrade panel: one filled pip per bought tier,
+-- one hollow per tier left, then "current/max" (e.g. "●●●○○○ 3/6").
+function PanelRules.tierLadder(current: number, maxTier: number): string
+	local whole = math.clamp(math.floor(current), 0, maxTier)
+	return `{string.rep("●", whole)}{string.rep("○", maxTier - whole)} {whole}/{maxTier}`
 end
 
 return PanelRules

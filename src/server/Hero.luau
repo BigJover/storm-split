@@ -4,7 +4,7 @@
 	Picking a hero (Pistol, Assault Rifle, Shotgun) is free: switch freely in the
 	build phase, with any upgrades refunded; after Start it's locked. A player
 	who joins mid-match picks once. Upgrades cost the team's cash: three paths
-	of five tiers per hero, under the same crossover rule as towers
+	of six tiers per hero (DECISIONS #133), under the same crossover rule as towers
 	(Shared/Upgrades). What the gun does right now comes from Shared/HeroStats,
 	which the client uses too.
 
