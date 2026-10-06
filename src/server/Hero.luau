@@ -88,7 +88,7 @@ type State = {
 	ammo: number,
 	reloadUntil: number, -- os.clock(); 0 when not reloading
 	swapUntil: number, -- Hot Swap: one gun's background reload ends (os.clock()); 0 when none
-	shotsFired: number, -- pulls since the last full magazine (Five-Round Burst counts bursts)
+	shotsFired: number, -- pulls since the last full magazine (Big Five counts bursts)
 	lastShot: number,
 	spinTime: number,
 	bloom: number, -- extra spread in degrees from recoil
@@ -519,7 +519,8 @@ type Outcome = { hit: boolean, killed: boolean }
 -- One enemy taking a round: damage, then what the round does on impact.
 -- `direct` is true for the pellet's own path (pierce included): it gets the
 -- gun's Size breaks unless the round splashes; ricochet bounces break 1 (#127).
-local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Enemy, live, outcome: Outcome, direct: boolean?)
+-- `scoped`: on a scoped gun only a scoped shot gets them (Heart Shot, #170).
+local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Enemy, live, outcome: Outcome, direct: boolean?, scoped: boolean?)
 	if not enemy.alive then
 		return
 	end
@@ -559,8 +560,9 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 			end
 		end
 	end
-	local breaks = if direct and stats.splashRadius <= 0 and stats.sizeBreaks > 1
-		then Enemies.breaksFor(enemy, stats.sizeBreaks, 1, true)
+	local base = GunRules.sizeBreaks(stats, scoped == true)
+	local breaks = if direct and stats.splashRadius <= 0 and base > 1
+		then Enemies.breaksFor(enemy, base, 1, true)
 		else 1
 	local killed, gone, dropped = Enemies.damage(enemy, damage, stats.piercesArmor, breaks)
 	credit(player, killed, gone, dropped)
@@ -581,7 +583,7 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 end
 
 -- Ricochet: hop from `from` to the nearest enemy not hit yet, `bounces` times.
--- Returns how many bounces took a size off (Trick Reload gives rounds back for them).
+-- Returns how many bounces took a size off (Bounce Back gives rounds back for them).
 local function ricochet(player: Player, stats: HeroStats.Stats, from: Enemies.Enemy, live, hit: { [any]: boolean }, color: Color3, outcome: Outcome): number
 	local lastPosition = from.part.Position
 	local takeDowns = 0
@@ -651,7 +653,7 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 	end
 	s.lastShot = now
 
-	-- Recoil settles over time, then this pull adds to it. Five-Round Burst starts
+	-- Recoil settles over time, then this pull adds to it. Big Five starts
 	-- every burst with no recoil.
 	s.bloom = math.max(0, s.bloom - stats.recoilRecovery * (now - s.bloomAt))
 	s.bloomAt = now
@@ -686,7 +688,7 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 				local hit: { [any]: boolean } = {}
 				for _, enemy in struck do
 					hit[enemy] = true
-					impact(player, stats, enemy, live, outcome, true)
+					impact(player, stats, enemy, live, outcome, true, scoped == true)
 				end
 				if stats.bounces > 0 then
 					ricochetTakeDowns += ricochet(player, stats, struck[#struck], live, hit, color, outcome)

@@ -87,8 +87,8 @@ export type Stats = {
 	-- Tier 6 (PLAN T52; the rules are Shared/GunRules).
 	burnPatchReach: number, -- a burning ground patch's reach (0 = Tuning Burn patch min reach)
 	staggeredReload: boolean, -- Hot Swap
-	ricochetReload: number, -- Trick Reload: rounds back per ricochet take-down
-	burstRecoilReset: boolean, -- Five-Round Burst
+	ricochetReload: number, -- Bounce Back: rounds back per ricochet take-down
+	burstRecoilReset: boolean, -- Big Five
 	spunUpBelt: boolean, -- Endless Belt
 	stillSpreadMult: number, -- Thunder Slug: spread x while standing still
 	scopedSpreadMult: number, -- Heart Shot: spread x while scoped

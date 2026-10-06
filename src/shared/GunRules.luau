@@ -3,6 +3,9 @@
 	server (Server/Hero, the only one whose answer counts) and the client's
 	crosshair agree, and so specs can hold them headlessly.
 
+	  sizeBreaks      Heart Shot: the gun's Size breaks only on a scoped shot;
+	                  unscoped shots break 1 (#170). Guns without a scope
+	                  (Thunder Slug) break their Size breaks on every shot
 	  cone            the spread cone: base spread x Still spread x (standing
 	                  still, Thunder Slug) x Scoped spread x (zoomed, Heart Shot),
 	                  plus recoil bloom
@@ -11,8 +14,8 @@
 	  swapDue /       Hot Swap: dual guns reload one at a time. When a gun's
 	  swapRefill      share of the magazine is spent, that gun reloads in the
 	                  background (stats.reload) while the other keeps firing
-	  ricochetRefill  Trick Reload: rounds back for each ricochet take-down
-	  burstStarts     Five-Round Burst: recoil resets when a new burst starts
+	  ricochetRefill  Bounce Back: rounds back for each ricochet take-down
+	  burstStarts     Big Five: recoil resets when a new burst starts
 	  charges /       ability charges (Rapid Response holds 2): `fullAt` is when
 	  useCharge /     every charge is back; charges come back one cooldown apart
 	  readyAt
@@ -48,6 +51,15 @@ function GunRules.cone(stats: GunStats, bloom: number, still: boolean, scoped: b
 	return base + bloom
 end
 
+-- The Size breaks a direct hit gets. On a gun with a scope it counts only when
+-- the shot was fired scoped (the same flag `cone` reads); unscoped shots break 1.
+function GunRules.sizeBreaks(stats: { sizeBreaks: number, scope: boolean }, scoped: boolean): number
+	if stats.scope and not scoped then
+		return 1
+	end
+	return stats.sizeBreaks
+end
+
 -- Does this pull use rounds? `spin` is the Spin-Up progress, 0..1.
 function GunRules.usesRounds(stats: GunStats, overdrive: boolean, spin: number): boolean
 	if stats.beltFed and overdrive then
@@ -78,7 +90,7 @@ function GunRules.swapRefill(stats: GunStats, rounds: number): number
 	return math.min(stats.magazine, rounds + GunRules.gunShare(stats))
 end
 
--- Trick Reload: the rounds after `takeDowns` ricochet take-downs.
+-- Bounce Back: the rounds after `takeDowns` ricochet take-downs.
 function GunRules.ricochetRefill(stats: GunStats, rounds: number, takeDowns: number): number
 	if stats.ricochetReload <= 0 or takeDowns <= 0 then
 		return rounds
@@ -86,7 +98,7 @@ function GunRules.ricochetRefill(stats: GunStats, rounds: number, takeDowns: num
 	return math.min(stats.magazine, rounds + stats.ricochetReload * takeDowns)
 end
 
--- Five-Round Burst: does the shot after `shotsFired` (since the last reload) start a
+-- Big Five: does the shot after `shotsFired` (since the last reload) start a
 -- new burst whose recoil resets?
 function GunRules.burstStarts(stats: GunStats, shotsFired: number): boolean
 	return stats.burstRecoilReset and stats.fireMode == "burst" and shotsFired % math.max(1, stats.burstCount) == 0

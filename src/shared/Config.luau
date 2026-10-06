@@ -7329,7 +7329,7 @@ return table.freeze({
 							abilityCharges = 0,
 						},
 						{
-							name = "Trick Reload",
+							name = "Bounce Back",
 							cost = 6400,
 							rateMult = 1,
 							magazineMult = 1.6,
@@ -7669,7 +7669,7 @@ return table.freeze({
 							abilityCharges = 0,
 						},
 						{
-							name = "Five-Round Burst",
+							name = "Big Five",
 							cost = 6400,
 							rateMult = 1.5,
 							magazineMult = 1,
@@ -8293,7 +8293,7 @@ return table.freeze({
 							abilityCharges = 0,
 						},
 						{
-							name = "Powder Tips",
+							name = "Dynamite Rounds",
 							cost = 6400,
 							rateMult = 1,
 							magazineMult = 1,
@@ -9909,7 +9909,7 @@ return table.freeze({
 							abilityCharges = 0,
 						},
 						{
-							name = "Tube Feed",
+							name = "Bottomless Tube",
 							cost = 6400,
 							rateMult = 1.6,
 							magazineMult = 2.25,
@@ -10221,7 +10221,7 @@ return table.freeze({
 							abilityCharges = 0,
 						},
 						{
-							name = "Nightcap",
+							name = "Lights Out",
 							cost = 6400,
 							rateMult = 1,
 							magazineMult = 1,
@@ -10381,7 +10381,7 @@ return table.freeze({
 		},
 		{
 			coreCost = 67,
-			unlock = "Field Dressing I: heal 5 more HP when a round is cleared",
+			unlock = "First Aid I: heal 5 more HP when a round is cleared",
 			upgradeDiscountPercent = 20,
 			abilityCooldownMult = 0.85,
 			freeFirstUpgrade = false,
@@ -10393,7 +10393,7 @@ return table.freeze({
 		},
 		{
 			coreCost = 80,
-			unlock = "Quick Recovery I: respawn 10% sooner",
+			unlock = "Back in Action I: respawn 10% sooner",
 			upgradeDiscountPercent = 20,
 			abilityCooldownMult = 0.85,
 			freeFirstUpgrade = false,
@@ -10441,7 +10441,7 @@ return table.freeze({
 		},
 		{
 			coreCost = 154,
-			unlock = "Field Dressing II: heal 10 more HP when a round is cleared",
+			unlock = "First Aid II: heal 10 more HP when a round is cleared",
 			upgradeDiscountPercent = 20,
 			abilityCooldownMult = 0.85,
 			freeFirstUpgrade = true,
@@ -10453,7 +10453,7 @@ return table.freeze({
 		},
 		{
 			coreCost = 182,
-			unlock = "Quick Recovery II: respawn 20% sooner",
+			unlock = "Back in Action II: respawn 20% sooner",
 			upgradeDiscountPercent = 20,
 			abilityCooldownMult = 0.85,
 			freeFirstUpgrade = true,
@@ -10501,7 +10501,7 @@ return table.freeze({
 		},
 		{
 			coreCost = 353,
-			unlock = "Field Dressing III: heal 15 more HP when a round is cleared",
+			unlock = "First Aid III: heal 15 more HP when a round is cleared",
 			upgradeDiscountPercent = 20,
 			abilityCooldownMult = 0.7,
 			freeFirstUpgrade = true,
@@ -10513,7 +10513,7 @@ return table.freeze({
 		},
 		{
 			coreCost = 417,
-			unlock = "Quick Recovery III: respawn 30% sooner",
+			unlock = "Back in Action III: respawn 30% sooner",
 			upgradeDiscountPercent = 20,
 			abilityCooldownMult = 0.7,
 			freeFirstUpgrade = true,

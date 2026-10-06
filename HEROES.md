@@ -26,8 +26,8 @@ each match (10), and at 20 a gold gun and a crossover cap of 3 for this hero. Ne
 **Small perks (Jovan, 2026-10-02: "small perks"; DECISIONS #135, PLAN T51).** The levels in
 between give four non-damage lines, three steps each (Mastery sheet; working names until the
 Dino agent's T54): **Long Arms** I–III (6/11/16) picks up chests and med kits from 2/4/6 studs
-away; **Field Dressing** I–III (7/12/17) heals 5/10/15 more HP when a round is cleared;
-**Quick Recovery** I–III (8/13/18) respawns 10/20/30% sooner; **Handyman** I–III (9/14/19)
+away; **First Aid** I–III (7/12/17) heals 5/10/15 more HP when a round is cleared;
+**Back in Action** I–III (8/13/18) respawns 10/20/30% sooner; **Handyman** I–III (9/14/19)
 makes repairs 5/10/15% cheaper. They follow the hero being played.
 
 **Ability perks (Jovan, 2026-10-02; DECISIONS #97–#99, #114–#115).** Mastery 10 and 15 also
@@ -63,8 +63,8 @@ upgrades), so both stay useful. Numbers: `Tuning` → HERO LEVELS and HERO XP.
 driven by XP. XP lasts for one match and is never saved.
 
 - **Clearing a round** banks 100 XP for every hunter (500 XP a level, so a level every 5
-  rounds from this alone), plus a small **take-down bonus**: 0.25 XP per pop (your gun, your
-  towers, your fire) and a quarter of that for each teammate's pop, rounded down, at most
+  rounds from this alone), plus a small **take-down bonus**: 0.25 XP per take-down (your gun, your
+  towers, your fire) and a quarter of that for each teammate's take-down, rounded down, at most
   **15 a round**. A Field Medic who takes down nothing still gets the bonus from the team.
 - The bonus is **pending** during the round and is banked only when the round is cleared. A
   lost round, or leaving mid-round, drops it; a leaver's take-downs also leave the team count.
@@ -103,28 +103,28 @@ Tiers in *italics* change how the gun fires.
 |---|---|---|---|---|---|---|---|
 | **Gunslinger** | handling | Quick Draw | Hair Trigger | *Dual Pistols* | Fan the Hammer | *Akimbo Frenzy* | *Hot Swap* |
 | **Marksman** | accuracy | Match Barrel | Steady Hands | *Scope* | Hollow Tips | *Deadshot* | *Heart Shot* |
-| **Trick Shot** | utility | Speed Loader | Extended Mag | *Ricochet* | Quick Dart | *Chain Shot* | *Trick Reload* |
+| **Trick Shot** | utility | Speed Loader | Extended Mag | *Ricochet* | Quick Dart | *Chain Shot* | *Bounce Back* |
 
 Dual Pistols: a second gun, alternating fire. Akimbo Frenzy: both full-auto. Scope: zoom and
 reach. Hollow Tips: pierces armour. Deadshot: triple damage to marked dinos. Ricochet:
 bounces to a second dino. Quick Dart: shorter Tracking Dart cooldown. Chain Shot: bounces 4 times.
 Tier 6 (working names, DECISIONS #133): Hot Swap: the two guns reload one at a time, so firing
-never stops; reload x0.8. Heart Shot: scoped shots have no spread and break 2 sizes. Trick
-Reload: each ricochet take-down puts a round back in the cylinder.
+never stops; reload x0.8. Heart Shot: scoped shots have no spread and shrink a dino 2 sizes. Bounce
+Back: each ricochet take-down puts a round back in the cylinder.
 
 ### Big Game Hunter (hunting rifle) — Sustained · ability **Rally Cry** (your fire rate up, nearby towers faster)
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 | T6 |
 |---|---|---|---|---|---|---|---|
-| **Stalker** | control | Foregrip | Compensator | *Burst Fire* | Trigger Discipline | *Precision Burst* | *Five-Round Burst* |
+| **Stalker** | control | Foregrip | Compensator | *Burst Fire* | Trigger Discipline | *Precision Burst* | *Big Five* |
 | **Heavy** | sustain | Drum Mag | Fast Hands | *Belt Fed* | Bipod | *Spin-Up* | *Endless Belt* |
-| **Special Ammo** | rounds | Tracer Rounds | *Incendiary* | *AP Rounds* | Hot Load | *Explosive Tips* | *Powder Tips* |
+| **Special Ammo** | rounds | Tracer Rounds | *Incendiary* | *AP Rounds* | Hot Load | *Explosive Tips* | *Dynamite Rounds* |
 
 Burst Fire: 3-round bursts, tight grouping. Belt Fed: no reloading during Rally Cry. Bipod:
 much less recoil while standing still. Spin-Up: fire rate climbs while you hold. Tracer
 Rounds: hits briefly mark. Incendiary: burning ground. AP Rounds: pierce armour. Explosive
-Tips: small splash. Tier 6: Five-Round Burst: bursts of 5 with Precision Burst's grouping;
-recoil resets between bursts. Endless Belt: no reloading while fully spun up. Powder Tips:
+Tips: small splash. Tier 6: Big Five: bursts of 5 with Precision Burst's grouping;
+recoil resets between bursts. Endless Belt: no reloading while fully spun up. Dynamite Rounds:
 Explosive Tips' splash 1.5x wider; the splash pierces armour.
 
 ### Brush Beater (shotgun) — Close range · ability **Flare Strike** (delayed strike on the track: damage + stun)
@@ -141,7 +141,7 @@ pierces armour. Railslug: through 6. Dragon's Breath: pellets set dinos on fire 
 takes the tick, which often finishes off small ones in early rounds. Also leaves burning
 ground behind. Thicket Sweeper:
 full-auto drum. Double Barrel: two blasts per trigger. Kickback: knocks dinos back. Frag
-Shells: explode on impact. Tier 6: Thunder Slug: slugs break 2 sizes; no spread while
+Shells: explode on impact. Tier 6: Thunder Slug: slugs shrink a dino 2 sizes; no spread while
 standing still. Wildfire Drum: Dragon's Breath's burning ground 4 studs wide (from 3); the
 drum holds +50% shells. Quad Barrel: four blasts per trigger (from two); reload 1.25x longer.
 
@@ -153,8 +153,8 @@ Tracker's revolver: the Medic is support. The heal is flat and doesn't grow with
 | Path | Focus | T1 | T2 | T3 | T4 | T5 | T6 |
 |---|---|---|---|---|---|---|---|
 | **Triage** | ability | Clean Bandages | Belt Pouch | *Patch Up* | Triage Tent | *Second Wind* | *Rapid Response* |
-| **Lever Action** | handling | Oiled Lever | Loading Gate | *Rapid Cycle* | Smooth Action | *Runaway Lever* | *Tube Feed* |
-| **Muzzle** | protective rounds | Tranq Tips | Double Dose | *Jaw Lock* | Long Dose | *Lullaby Rounds* | *Nightcap* |
+| **Lever Action** | handling | Oiled Lever | Loading Gate | *Rapid Cycle* | Smooth Action | *Runaway Lever* | *Bottomless Tube* |
+| **Muzzle** | protective rounds | Tranq Tips | Double Dose | *Jaw Lock* | Long Dose | *Lullaby Rounds* | *Lights Out* |
 
 Clean Bandages: heals 25% more. Belt Pouch: shorter Triage Kit cooldown. Patch Up: also
 heals standing towers in the radius by the same amount. Triage Tent: 1.5x radius. Second
@@ -165,7 +165,7 @@ Lever: full auto. Tranq Tips: hits slow dinos 20% for 1s. Double Dose: 30% for 1
 Lock: a hit dino can't bite or shoot for 2s (a dark strap across its snout). Long Dose:
 locked 3s. Lullaby Rounds: the lock spreads to dinos within 6 studs. Bosses ignore the slow
 and are locked for half as long. Tier 6: Rapid Response: the Triage Kit holds 2 charges.
-Tube Feed: magazine +50%, reload x0.5. Nightcap: Jaw Lock lasts 4s and spreads within 9
+Bottomless Tube: magazine +50%, reload x0.5. Lights Out: Jaw Lock lasts 4s and spreads within 9
 studs; bosses still half.
 
 ## Where the numbers live

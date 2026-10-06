@@ -315,7 +315,7 @@ local function fireLoop(tool: Tool)
 	if stats and stats.fireMode == "burst" then
 		local fired = 0
 		if stats.burstRecoilReset then
-			bloom = 0 -- Five-Round Burst: each burst starts steady (the server agrees)
+			bloom = 0 -- Big Five: each burst starts steady (the server agrees)
 		end
 		while fired < stats.burstCount and tool.Parent == player.Character do
 			local result = pull(stats)

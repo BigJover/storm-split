@@ -9,6 +9,7 @@ local Config = require(src.shared.Config)
 local HeroStats = require(src.shared.HeroStats)
 local GunRules = require(src.shared.GunRules)
 local Combat = require(src.shared.Combat)
+local SizeBreaks = require(src.shared.SizeBreaks)
 
 local function stats(key: string, path: number, tier: number): any
 	local tiers = { 0, 0, 0 }
@@ -32,7 +33,7 @@ test("every hero path has six tiers; tier 6 costs 6,400 and keeps tier 5's damag
 	end
 end)
 
-test("Tracker: Hot Swap, Heart Shot, Trick Reload", function()
+test("Tracker: Hot Swap, Heart Shot, Bounce Back", function()
 	-- Hot Swap: the guns reload one at a time; reload x0.8.
 	local s, t5 = six("PISTOL", 1, "Hot Swap")
 	ok(s.staggeredReload and not t5.staggeredReload, "Hot Swap staggers the reload")
@@ -56,8 +57,8 @@ test("Tracker: Hot Swap, Heart Shot, Trick Reload", function()
 	near(GunRules.cone(s, 0, false, false), s.spread, "hip fire: the usual spread")
 	near(GunRules.cone(t5, 0, false, true), t5.spread, "Deadshot scoped keeps its spread")
 
-	-- Trick Reload: each ricochet take-down puts a round back.
-	s, t5 = six("PISTOL", 3, "Trick Reload")
+	-- Bounce Back: each ricochet take-down puts a round back.
+	s, t5 = six("PISTOL", 3, "Bounce Back")
 	eq(s.ricochetReload, 1, "one round per ricochet take-down")
 	eq(s.bounces, t5.bounces, "Chain Shot's bounces")
 	eq(GunRules.ricochetRefill(s, 3, 2), 5, "two take-downs, two rounds")
@@ -65,8 +66,8 @@ test("Tracker: Hot Swap, Heart Shot, Trick Reload", function()
 	eq(GunRules.ricochetRefill(t5, 3, 2), 3, "Chain Shot gives none back")
 end)
 
-test("Big Game Hunter: Five-Round Burst, Endless Belt, Powder Tips", function()
-	local s, t5 = six("RIFLE", 1, "Five-Round Burst")
+test("Big Game Hunter: Big Five, Endless Belt, Dynamite Rounds", function()
+	local s, t5 = six("RIFLE", 1, "Big Five")
 	eq(s.fireMode, "burst", "burst fire")
 	eq(s.burstCount, 5, "bursts of 5")
 	near(s.spread, t5.spread, "Precision Burst's grouping (spread)")
@@ -85,9 +86,31 @@ test("Big Game Hunter: Five-Round Burst, Endless Belt, Powder Tips", function()
 	ok(GunRules.usesRounds(t5, false, 1), "Spin-Up alone still reloads")
 	ok(not GunRules.usesRounds(t5, true, 0), "Belt Fed's rule unchanged")
 
-	s, t5 = six("RIFLE", 3, "Powder Tips")
+	s, t5 = six("RIFLE", 3, "Dynamite Rounds")
 	near(s.splashRadius, t5.splashRadius * 1.5, "splash radius x1.5")
 	ok(s.piercesArmor, "the round, and so its splash, pierces armour")
+end)
+
+-- One direct hero hit of `amount` on a fresh 3-size Pachy (pool 300, share 100),
+-- breaking what Server/Hero gives it: GunRules.sizeBreaks, then the dino's resist.
+local function pachyDrops(gun: any, scoped: boolean, amount: number): number
+	local pachy = Config.Enemies.SHIELD
+	eq(pachy.display, "Pachycephalosaurus", "SHIELD is the Pachy")
+	local b = SizeBreaks.breaks(GunRules.sizeBreaks(gun, scoped), 1, pachy.breakResist, true)
+	local _, dropped = SizeBreaks.apply(300, 100, 3, amount, b)
+	return dropped
+end
+
+test("Heart Shot breaks 2 only scoped; Thunder Slug every slug (#170)", function()
+	local heart = stats("PISTOL", 2, 6)
+	eq(GunRules.sizeBreaks(heart, true), 2, "Heart Shot scoped: the gun's 2")
+	eq(GunRules.sizeBreaks(heart, false), 1, "Heart Shot unscoped: 1")
+	eq(pachyDrops(heart, true, 250), 2, "scoped vs a 3-size Pachy drops 2 sizes")
+	eq(pachyDrops(heart, false, 250), 1, "unscoped drops 1")
+	local slug = stats("SHOTGUN", 1, 6)
+	ok(not slug.scope, "Thunder Slug has no scope")
+	eq(pachyDrops(slug, true, 250), 2, "Thunder Slug drops 2 (scoped flag set)")
+	eq(pachyDrops(slug, false, 250), 2, "Thunder Slug drops 2 (unscoped)")
 end)
 
 test("Brush Beater: Thunder Slug, Wildfire Drum, Quad Barrel", function()
@@ -109,7 +132,7 @@ test("Brush Beater: Thunder Slug, Wildfire Drum, Quad Barrel", function()
 	near(s.reload, t5.reload * 1.25, "reload x1.25 longer")
 end)
 
-test("Field Medic: Rapid Response, Tube Feed, Nightcap", function()
+test("Field Medic: Rapid Response, Bottomless Tube, Lights Out", function()
 	local s, t5 = six("MEDIC", 1, "Rapid Response")
 	eq(s.abilityCharges, 2, "two Triage Kit charges")
 	eq(t5.abilityCharges, 1, "Second Wind holds one")
@@ -127,11 +150,11 @@ test("Field Medic: Rapid Response, Tube Feed, Nightcap", function()
 	eq(GunRules.charges(single, 105, 1, cd), 0, "one charge: the old cooldown")
 	near(GunRules.readyAt(single, 105, 1, cd), 110, "ready after the cooldown")
 
-	s, t5 = six("MEDIC", 2, "Tube Feed")
+	s, t5 = six("MEDIC", 2, "Bottomless Tube")
 	eq(s.magazine, math.floor(Config.Heroes.MEDIC.magazine * Config.Heroes.MEDIC.paths[2].tiers[5].magazineMult * 1.5 + 0.5), "magazine +50%")
 	near(s.reload, t5.reload * 0.5, "reload x0.5")
 
-	s, t5 = six("MEDIC", 3, "Nightcap")
+	s, t5 = six("MEDIC", 3, "Lights Out")
 	eq(s.jawLockSeconds, 4, "Jaw Lock 4s")
 	eq(t5.jawLockSeconds, 3, "from 3")
 	eq(s.jawLockSpread, 9, "spreads within 9 studs")

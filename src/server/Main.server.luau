@@ -271,7 +271,7 @@ local function watchCharacter(player: Player)
 		local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 		humanoid.Died:Connect(function()
 			local base, share = Towers.rescueBeacon()
-			-- Quick Recovery (Shared/SmallPerks) stacks with a Rescue Beacon's share.
+			-- Back in Action (Shared/SmallPerks) stacks with a Rescue Beacon's share.
 			local perk = SmallPerks.ofPlayer(player).respawnMult
 			task.delay(Config.Tuning.RespawnTime * (if base then share else 1) * perk, function()
 				if player.Character == character then
@@ -429,7 +429,7 @@ local function playMatch()
 		onRoundEnd = function(index)
 			Economy.earn((Config.Tuning.RoundBonusBase + Config.Tuning.RoundBonusPerRound * index) * chosen.cashMult)
 			Economy.earn(Towers.roundIncome(Economy.cash()) * chosen.cashMult) -- Quartermasters
-			for _, hunter in Players:GetPlayers() do -- plus each hunter's Field Dressing (Shared/SmallPerks)
+			for _, hunter in Players:GetPlayers() do -- plus each hunter's First Aid (Shared/SmallPerks)
 				Health.heal(hunter, Config.Tuning.HealPerRound + SmallPerks.ofPlayer(hunter).healPerRound)
 			end
 

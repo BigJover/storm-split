@@ -237,8 +237,8 @@ HERO_UPGRADE_COLUMNS = [
     # Hero tier 6 (PLAN T52, DECISIONS #132-#134): handling and fire-mode mechanics.
     ("burnPatchReach", 46, "num", 0),  # blank = Tuning Burn patch min reach (3)
     ("staggeredReload", 47, "bool", False),  # Hot Swap: dual guns reload one at a time
-    ("ricochetReload", 48, "num", 0),  # Trick Reload: rounds back per ricochet take-down
-    ("burstRecoilReset", 49, "bool", False),  # Five-Round Burst
+    ("ricochetReload", 48, "num", 0),  # Bounce Back: rounds back per ricochet take-down
+    ("burstRecoilReset", 49, "bool", False),  # Big Five
     ("spunUpBelt", 50, "bool", False),  # Endless Belt: no rounds used while fully spun up
     ("stillSpreadMult", 51, "mult", 1),  # Thunder Slug: spread while standing still
     ("scopedSpreadMult", 52, "mult", 1),  # Heart Shot: spread while scoped
