@@ -75,7 +75,36 @@ DEAD_ALLOWED = {
 # Config fields whose reader is a later task of the plan in progress. Listed as notes;
 # an entry becomes a finding the moment some src file reads the field, so it can't
 # outlive its task. (block, field): the task that reads it
-DEAD_PENDING = {}
+DEAD_PENDING = {
+    # Phase 7 batch 1 (PLAN T73): the levers whose readers come later in phase 7.
+    ("Tuning", "BattleBuildTime"): "T77 (battle match flow)",
+    ("Tuning", "BattleRoundTime"): "T71 (Shared/BattleRules lockstep)",
+    ("Tuning", "BattleSideDensity"): "T75/T77 (per-side waves)",
+    ("Tuning", "PvPTowerDamage"): "T78 (PvP damage)",
+    ("Tuning", "PvPHunterDamage"): "T78 (PvP damage)",
+    ("Tuning", "SpawnShield"): "T78 (PvP damage)",
+    ("Tuning", "OvertimeHPStep"): "T71 (Shared/BattleRules overtime)",
+    ("Tuning", "SurvivorBonus"): "T71 (Shared/BattleRules Royale result)",
+    ("Tuning", "TeamMinPlayers"): "T71 (Shared/Modes sides)",
+    ("Tuning", "RoyaleMinPlayers"): "T71 (Shared/Modes sides)",
+    ("Tuning", "BattleMaxPlayers"): "T71 (Shared/Modes sides)",
+    ("Tuning", "CompetitiveBuyIn"): "T72 (Shared/Stakes)",
+    ("Tuning", "TeamWinPayout"): "T72 (Shared/Stakes casual payout)",
+    ("Tuning", "TeamLossPayout"): "T72 (Shared/Stakes casual payout)",
+    ("Tuning", "Royale1stPayout"): "T72 (Shared/Stakes casual payout)",
+    ("Tuning", "Royale2ndPayout"): "T72 (Shared/Stakes casual payout)",
+    ("Tuning", "Royale3rdPayout"): "T72 (Shared/Stakes casual payout)",
+    ("Tuning", "RoyaleRestPayout"): "T72 (Shared/Stakes casual payout)",
+    ("Tuning", "RoyalePot1st"): "T72 (Shared/Stakes Royale split)",
+    ("Tuning", "RoyalePot2nd"): "T72 (Shared/Stakes Royale split)",
+    ("Tuning", "RoyalePot3rd"): "T72 (Shared/Stakes Royale split)",
+    ("Tuning", "TeamWinTrophies"): "T72 (Shared/Trophies)",
+    ("Tuning", "TeamLossTrophies"): "T72 (Shared/Trophies)",
+    ("Tuning", "Royale1stTrophies"): "T72 (Shared/Trophies)",
+    ("Tuning", "RoyaleLastTrophies"): "T72 (Shared/Trophies)",
+    ("Tuning", "CompetitiveEdgeMax"): "T84 (value.py/exporter edge bar; then DEAD_ALLOWED as an exporter rule)",
+    ("Tuning", "PerkParityBand"): "T84 (value.py/exporter parity bar; then DEAD_ALLOWED as an exporter rule)",
+}
 
 # Words no tower or tier name may use: "Trophy" is reserved for ranked (DECISIONS #130,
 # #139); "split" and "pop" were retired with balloons (#93, TOWERS_NEXT "Final names").
@@ -283,6 +312,8 @@ def config_fields(data):
         note("Bounties", bounty, key)
     for item in data["Cosmetics"]:
         note("Cosmetics", item, item["id"])
+    for arena in data["Arenas"]:
+        note("Arenas", arena, arena["key"])
     return fields
 
 
@@ -346,6 +377,37 @@ def check_dead(findings, data, notes):
     for (block, field) in DEAD_PENDING:
         if (block, field) not in config_fields(data):
             findings.append(f"DEAD_PENDING lists {block}.{field}, which Config no longer has")
+
+
+# ---------------------------------------------------------------- stakes (phase 7)
+
+def check_stakes(findings, notes, data, vision=None):
+    """VISION.md "Amber economy": the 10-20 buy-in and the 72/23/5 Royale split equal the
+    exporter's range and the Tuning levers (PLAN phase 7 T73)."""
+    text = vision if vision is not None else read("VISION.md")
+    tuning = data["Tuning"]
+    m = re.search(r"(\d+)\s*[\u2013-]\s*(\d+) Core buy-in", text)
+    if not m:
+        findings.append("VISION.md: no 'N-M Core buy-in' line to check the buy-in against")
+    else:
+        low, high = int(m.group(1)), int(m.group(2))
+        if (low, high) != export_constants.BUY_IN_RANGE:
+            findings.append(f"VISION.md buy-in {low}-{high} != exporter range {export_constants.BUY_IN_RANGE}")
+        buy_in = tuning.get("CompetitiveBuyIn")
+        if buy_in is None or not (low <= buy_in <= high):
+            findings.append(f"Tuning CompetitiveBuyIn ({buy_in}) is outside VISION.md's {low}-{high}")
+        else:
+            notes.append(f"buy-in {buy_in:g} within VISION.md {low}-{high}")
+    m = re.search(r"1st gets \*\*(\d+)%\*\*, 2nd \*\*(\d+)%\*\*, 3rd \*\*(\d+)%\*\*", text)
+    if not m:
+        findings.append("VISION.md: no '1st gets **N%**, 2nd **N%**, 3rd **N%**' line to check the Royale split against")
+    else:
+        want = [int(g) for g in m.groups()]
+        have = [tuning.get(k) for k in ("RoyalePot1st", "RoyalePot2nd", "RoyalePot3rd")]
+        if want != have:
+            findings.append(f"Tuning Royale pot {have} != VISION.md {want}")
+        else:
+            notes.append(f"Royale split {'/'.join(map(str, want))} = VISION.md")
 
 
 # ---------------------------------------------------------------- 4. species
@@ -522,6 +584,7 @@ def main():
         ("bounty events", lambda f, n: check_bounty_events(f, n)),
         ("mastery perks", lambda f, n: check_perks(f, n, data)),
         ("mastery columns", lambda f, n: check_mastery_columns(f, n, data)),
+        ("stakes", lambda f, n: check_stakes(f, n, data)),
     ]
     total = 0
     for name, run in checks:

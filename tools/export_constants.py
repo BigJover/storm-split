@@ -979,6 +979,127 @@ def validate_xp(data, problems, notes):
 
 
 
+ARENA_HEADER_ROW = 4
+
+
+def read_arenas(ws):
+    """Arenas (PLAN phase 7 T73, DECISIONS #218): Key, Name, Floor, Reward, found by
+    header. A list in sheet order, lowest arena first; Reward "" = none."""
+    columns = {}
+    for c in range(1, ws.max_column + 1):
+        head = v(ws, ARENA_HEADER_ROW, c)
+        if head is not None:
+            columns[str(head).strip()] = c
+    for head in ("Key", "Name", "Floor", "Reward"):
+        if head not in columns:
+            sys.exit(f"Arenas row {ARENA_HEADER_ROW}: no '{head}' column (columns are found by header)")
+    out, seen = [], set()
+    r = ARENA_HEADER_ROW + 1
+    while v(ws, r, columns["Key"]):
+        key = str(v(ws, r, columns["Key"])).strip()
+        if key in seen:
+            sys.exit(f"Arenas row {r}: Key '{key}' is used twice")
+        seen.add(key)
+        out.append({
+            "key": key,
+            "display": str(v(ws, r, columns["Name"]) or "").strip(),
+            "floor": num(v(ws, r, columns["Floor"])),
+            "reward": str(v(ws, r, columns["Reward"]) or "").strip(),
+        })
+        r += 1
+    return out
+
+
+# BATTLE MODES levers (PLAN phase 7 T73, DECISIONS #208-#226); the game reads each by name.
+BATTLE_LEVERS = [
+    "BattleBuildTime", "BattleRoundTime", "BattleSideDensity", "PvPTowerDamage", "PvPHunterDamage",
+    "SpawnShield", "OvertimeHPStep", "SurvivorBonus", "RaidBones", "TeamMinPlayers", "RoyaleMinPlayers",
+    "BattleMaxPlayers", "CompetitiveBuyIn", "TeamWinPayout", "TeamLossPayout", "Royale1stPayout",
+    "Royale2ndPayout", "Royale3rdPayout", "RoyaleRestPayout", "RoyalePot1st", "RoyalePot2nd", "RoyalePot3rd",
+    "TeamWinTrophies", "TeamLossTrophies", "Royale1stTrophies", "RoyaleLastTrophies",
+    "CompetitiveEdgeMax", "PerkParityBand",
+]
+BUY_IN_RANGE = (10, 20)  # VISION.md "Amber economy": a 10-20 buy-in
+
+
+def validate_battle(data, problems, notes):
+    """Battle modes, stakes and Trophies (PLAN phase 7 T73). Mirrors Shared/Stakes'
+    arithmetic for the competitive-beats-casual check (DECISIONS #215)."""
+    tuning = data["Tuning"]
+    missing = [k for k in BATTLE_LEVERS if k not in tuning]
+    for key in missing:
+        problems.append(f"Tuning is missing '{key}' (BATTLE MODES; the game reads it by name)")
+    if missing:
+        return
+    t = tuning
+    low, high = BUY_IN_RANGE
+    buy_in = t["CompetitiveBuyIn"]
+    if not (low <= buy_in <= high) or buy_in != int(buy_in):
+        problems.append(f"Tuning Competitive buy-in ({buy_in:g}) must be a whole number from {low} to {high} (VISION.md)")
+    splits = [t["RoyalePot1st"], t["RoyalePot2nd"], t["RoyalePot3rd"]]
+    if sum(splits) != 100 or any(s < 0 for s in splits):
+        problems.append(f"Tuning Royale pot 1st/2nd/3rd ({'/'.join(f'{s:g}' for s in splits)}) must be >= 0 and add to 100")
+    if not (splits[0] >= splits[1] >= splits[2]):
+        problems.append("Tuning Royale pot shares must not grow with a worse placement")
+    for key in ("PvPTowerDamage", "PvPHunterDamage"):
+        if not (0 < t[key] <= 1):
+            problems.append(f"Tuning {key} ({t[key]:g}) must be in (0, 1] (DECISIONS #211-#212)")
+    for key in ("BattleBuildTime", "BattleRoundTime", "BattleSideDensity", "OvertimeHPStep"):
+        if t[key] <= 0:
+            problems.append(f"Tuning {key} must be above 0")
+    if t["OvertimeHPStep"] <= 1:
+        problems.append("Tuning Overtime HP step must be above 1, so overtime ends")
+    for key in ("SpawnShield", "SurvivorBonus", "RaidBones", "TeamWinPayout", "TeamLossPayout",
+                "Royale1stPayout", "Royale2ndPayout", "Royale3rdPayout", "RoyaleRestPayout",
+                "CompetitiveEdgeMax", "PerkParityBand"):
+        if t[key] < 0:
+            problems.append(f"Tuning {key} must not be negative")
+    if not (t["Royale1stPayout"] >= t["Royale2ndPayout"] >= t["Royale3rdPayout"] >= t["RoyaleRestPayout"]):
+        problems.append("Tuning casual Royale payouts must not grow with a worse placement")
+    if t["TeamWinPayout"] < t["TeamLossPayout"]:
+        problems.append("Tuning Team win payout must be at least Team loss payout")
+    if not (2 <= t["TeamMinPlayers"] <= t["BattleMaxPlayers"]) or not (3 <= t["RoyaleMinPlayers"] <= t["BattleMaxPlayers"]):
+        problems.append("Tuning Team/Royale min players must be at least 2/3 and at most Battle max players (DECISIONS #217)")
+    if t["TeamWinTrophies"] <= 0 or t["Royale1stTrophies"] <= 0:
+        problems.append("Tuning Team win / Royale 1st trophies must be above 0")
+    if t["TeamLossTrophies"] >= 0 or t["RoyaleLastTrophies"] >= 0:
+        problems.append("Tuning Team loss / Royale last trophies must be below 0 (a loss loses Trophies)")
+    for key in ("TeamWinTrophies", "TeamLossTrophies", "Royale1stTrophies", "RoyaleLastTrophies",
+                "TeamMinPlayers", "RoyaleMinPlayers", "BattleMaxPlayers", "RaidBones"):
+        if t[key] != int(t[key]):
+            problems.append(f"Tuning {key} must be a whole number")
+
+    # Competitive always pays more than casual (VISION.md; DECISIONS #215): the winner at
+    # the minimum lobby gets the casual payout plus a pot share that is above 0.
+    team_pot = int(buy_in) * int(t["TeamMinPlayers"])
+    team_share = team_pot // max(1, (int(t["TeamMinPlayers"]) + 1) // 2)  # the larger of two sides wins
+    royale_pot = int(buy_in) * int(t["RoyaleMinPlayers"])
+    royale_share = royale_pot * int(splits[0]) // 100
+    for mode, casual, share in (("Team", t["TeamWinPayout"], team_share), ("Royale", t["Royale1stPayout"], royale_share)):
+        if casual + share <= casual:
+            problems.append(f"Competitive {mode} winner at the minimum lobby gets {casual + share:g}, not more than casual {casual:g} (DECISIONS #215)")
+    notes.append(f"competitive: buy-in {buy_in:g}; min-lobby winner Team {t['TeamWinPayout'] + team_share:g} vs casual {t['TeamWinPayout']:g},"
+                 f" Royale {t['Royale1stPayout'] + royale_share:g} vs casual {t['Royale1stPayout']:g}")
+
+    arenas = data["Arenas"]
+    floors = [a["floor"] for a in arenas]
+    if not arenas or floors[0] != 0:
+        problems.append("Arenas: the first arena's Floor must be 0 (everyone starts at 0 Trophies)")
+    for prev, cur in zip(arenas, arenas[1:]):
+        if not cur["floor"] > prev["floor"]:
+            problems.append(f"Arenas {cur['key']}: Floor {cur['floor']:g} must be above {prev['key']}'s {prev['floor']:g} (floors ascend)")
+    for a in arenas:
+        if a["floor"] != int(a["floor"]):
+            problems.append(f"Arenas {a['key']}: Floor must be a whole number")
+        if not a["display"]:
+            problems.append(f"Arenas {a['key']}: Name is blank")
+    cosmetic_ids = {c["id"] for c in data["Cosmetics"]}
+    for a in arenas:
+        if a["reward"] and a["reward"] not in cosmetic_ids:
+            problems.append(f"Arenas {a['key']}: Reward '{a['reward']}' is not a Cosmetics Id (an arena unlocks a cosmetic or title only)")
+    notes.append("arenas: " + ", ".join(f"{a['display']} {a['floor']:g}" for a in arenas))
+
+
 def guard_levels(data):
     """(tower level, highest hero level) in play during the last round: what the
     hero-vs-tower guard compares. tools/value.py asserts its last checkpoint matches."""
@@ -1297,6 +1418,7 @@ def validate(data):
     validate_small_perks(data, problems)
     validate_xp(data, problems, notes)
     validate_cosmetics(data, problems, notes)
+    validate_battle(data, problems, notes)
 
     return problems, notes
 
@@ -1447,6 +1569,8 @@ def read_data(xlsx):
     bounties, bounty_order = read_bounties(wb["Bounties"])
     if "Cosmetics" not in wb.sheetnames:
         sys.exit("The spreadsheet has no 'Cosmetics' sheet (PLAN round 4 T57)")
+    if "Arenas" not in wb.sheetnames:
+        sys.exit("The spreadsheet has no 'Arenas' sheet (PLAN phase 7 T73)")
 
     data = {
         "Tuning": read_tuning(wb["Tuning"]),
@@ -1465,6 +1589,7 @@ def read_data(xlsx):
         "Bounties": bounties,
         "BountyOrder": bounty_order,
         "Cosmetics": read_cosmetics(wb["Cosmetics"]),
+        "Arenas": read_arenas(wb["Arenas"]),
     }
     return data
 
