@@ -51,6 +51,9 @@ src/
 │   ├── BattleRules.luau     Battle modes: who may damage whom, lockstep rounds, side out, overtime HP,
 │   │                        Team and Royale results (survivor bonus, tie-breaks); pure
 │   ├── Matchmaking.luau     Side assignment in one server: sizes within 1, snake draft by Trophies; pure
+│   ├── Stakes.luau          Competitive buy-in: who may stake (offline, Practice), escrow/refund, pot,
+│   │                        Team and Royale splits, casual battle payouts, settle; pure, for Progression
+│   ├── Trophies.luau        Ranked Trophies: delta per mode/placement, arena floors, first-reach arenas; pure
 │   ├── PanelRules.luau      Which panel may be open in which match state, and what a state change closes;
 │   │                        the tower panel's "Tower level" line
 │   ├── Bounties.luau        Daily Haul and bounty rules: roll, reset, progress, claim, swap, sanitise a save; pure
