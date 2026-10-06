@@ -9,6 +9,11 @@ Jovan to pick from. Design calls: `DECISIONS.md` #118–#142. **T31 + T38 (the S
 playtest) stay open**; T60 adds round 4's steps. **Stop before phase 7** and append a
 round-4 recap to `RECAP.md` (T61).
 
+**Status (2026-10-06): round 4 done — T40–T59, T62–T69 and T68b built and signed off, T61
+written (`RECAP.md` "Round 4", #206). 406 specs, all checks green; not playtested. OPEN: T31 +
+T38 + T60 + T70 (Tester) — Studio's MCP still reports no Studio; Jovan must restart Studio,
+turn on "Enable Studio as MCP server" and reconnect Rojo. Phase 7 not started.**
+
 Round 1–3 rules hold (one task = one commit, pushed; `tools/check.sh`,
 `export_constants.py`, `tools/test.sh` green; diff `Config.luau` after every sheet change
 and account for every line; openpyxl only, assert a cell is empty or the one you mean before
@@ -40,8 +45,8 @@ For this round:
 | 8 | T63, T64 | shared tower groundwork (can't-be-damaged, on-track placement, sheet rows); Storm Coil |
 | 9 | T65, T66 | Falcon Roost; Harpoon Ballista |
 | 10 | T67, T68 | Tar Pit; unlock screen + balance pass for all four |
-| — | T69 🦖 (done), T68b | review of the towers; Tar Pit fixes + review strings (one Builder run) |
-| — | T61 Director (last) | docs + recap; T60/T70 Tester stay open until Jovan flips Studio's MCP switch |
+| — | T69 🦖 (done), T68b (done) | review of the towers; Tar Pit fixes + review strings (one Builder run) |
+| — | T61 Director (done) | docs + recap; T60/T70 Tester stay open until Jovan flips Studio's MCP switch |
 
 **Batch 1 done (2026-10-02):** T40 befac6a, T41 61b77b4, T42 1b66379 (247 specs, audit 0,
 threat 0). Follow-ups: Hard starting cash → **850** (#143; 810 if Hard ≥ Normal in rounds
@@ -583,7 +588,7 @@ pierce-through wording ("breaks 2 sizes"), the Chaos difficulty card text.
 The player-level label (must differ from "Lv N"), the titles, the cosmetic names (all
 working names from T57), the Profile screen and leaderboard wording.
 
-### T60. Tester: round-4 steps (run with T31 + T38 when Studio's MCP switch is on)
+### T60. Tester: round-4 steps (run with T31 + T38 when Studio's MCP switch is on) — OPEN
 1. Home: PLAY 240 px, Hunt Board on its own row; Hunt Board shows Amber; Profile opens and
    closes with key and X.
 2. Easy, K for cash: Linebreaker on a Pachy line; in round 16+ one shot drops more than one
@@ -709,7 +714,7 @@ Director's figures are from `value.py` on 2026-10-06 (T5 cost-per-eDPS, "c/e", r
 Eagle of the Peak 186, Murmuration 266 vs M = 142, frozen as the round-4 bar, #200). Two Tar
 Pit problems left → T68b.
 
-### T68b. Tar Pit fixes + Dino round 15 strings (#201–#204) — one Builder run, one commit
+### T68b. Tar Pit fixes + Dino round 15 strings (#201–#204) — DONE (5929270; #206)
 Director's figures are from `value.py`'s own `tar_removed` with these cells patched in
 (2026-10-06, r31–40, Easy solo traffic).
 1. **Sinking reachable (#202):** `Tuning!B132` Tar sink seconds 3 → **1.0**; Fast Sink
@@ -756,7 +761,7 @@ Director's figures are from `value.py`'s own `tar_removed` with these cells patc
    pays a kill; a fast one walks through; never a boss or Pteranodon. Dig Site T1: +2 cash per
    sink (console); Lucky Finds drops a chest.
 
-### T61. Docs and round-4 recap (Director) — runs after T68b (T60/T70 may still be open, #205)
+### T61. Docs and round-4 recap (Director) — DONE 2026-10-06 (#206); T60/T70 still open
 Update `CLAUDE.md` status, `ARCHITECTURE.md` phase table, `VISION.md` (player level,
 cosmetics, ranked trophies note for phase 7), and append "Round 4 recap" to `RECAP.md`:
 what changed, what to playtest first, the Ask-Jovan list (including the `TOWERS_NEXT.md`

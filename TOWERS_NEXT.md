@@ -292,3 +292,17 @@ plainer **Sky Swarm** (asked 2026-10-02).
 
 Ability texts: written by the Builders from the effect lines above, with these names; T69 🦖
 reviews them. Banned in any of them: "Trophy", "split", "pop".
+
+## As built (T68 921cab2, T68b 5929270; DECISIONS #193–#204)
+
+The seeds above are history; the spreadsheet holds the built numbers. What moved:
+- **In-match cost:** Storm Coil 550 → 400, Harpoon Ballista 600 → 500; Falcon Roost 400 and
+  Tar Pit 450 unchanged. Amber unlocks 300 / 200 / 250 / 300 as picked.
+- **Storm Coil** Damage 4 → 6. **Ballista** rate 0.4 → 0.5/s. **Falcon** Murmuration Damage x
+  3.1 → 4.4, Eagle of the Peak 13.03 → 12.
+- **Tar Pit:** a smallest-size dino sinks after **1 s** in the tar (seed 3 s, which no pool
+  could reach); Fast Sink **0.5 s** (seed 1.5 s; Clinging Tar and Tar Lake repeat it).
+  **Eruption every 10 s** (not the 8 s first proposed; the bar is one pit ≤ 50% of late ground
+  HP), Bubbling T5 burn 80/s (seed 150, = Tar Fire's). Dig Site cash per sink 2 / 6 / 6 and
+  Lucky Finds chest 10 (seeds 10 / 25 / 25 and 40), about 10 rounds' payback per tier, like
+  Supply Camp.

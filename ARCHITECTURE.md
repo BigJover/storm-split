@@ -54,6 +54,17 @@ src/
 │   ├── Profile.luau         The saved profile as plain data and pure rules (load, save, Hunt Board paths);
 │   │                        only Server/Progression holds profiles and calls it
 │   ├── PlayerLevel.luau     The saved player level: curve, one match's player XP, reward tier; pure
+│   ├── Cosmetics.luau       The player level's rewards: cosmetics and titles by level, equip checks; pure
+│   ├── LevelBoard.luau      Level leaderboard rules: rows, own row, This-server fallback, write budget; pure
+│   ├── ProfileScreen.luau   What the Profile screen (P) and its Leaderboard tab draw; pure
+│   ├── HomeLayout.luau      The home screen's bottom rows (Hunt Board row; hero · Unlocks · PLAY)
+│   ├── HitNotice.luau       The private "what hit you" line beside your HP bar; pure
+│   ├── StormCoil.luau       Storm Coil rules: chain hops, Power Grid scaling, Judgement Bolt, Rodeo; pure
+│   ├── Falcon.luau          Falcon Roost rules: birds with travel time, dives, Eagle, Murmuration; pure
+│   ├── Ballista.luau        Harpoon Ballista rules: volleys, Skewer lines, Tow Line, Chain Harpoons; pure
+│   ├── TarPit.luau          Tar Pit rules: pool on the track, strongest pool, sinking, Eruption; pure
+│   ├── DinoLook.luau        Blocky dino models per species and size (visual)
+│   ├── Theme.luau           Title, currency and display names (Dino Hunters theme)
 │   └── HuntBoard.luau       What the Hunt Board screen draws: tiles, cards, button states, text, fit-to-window
 ├── server/   → ServerScriptService.Server
 │   ├── Main.server.luau     Entry point, wiring, and the match loop: Lobby → Building → Playing
@@ -77,6 +88,8 @@ src/
 │   │                        (Daily Haul + bounties) (DataStore). Answers getRewards / claim / swap requests;
 │   │                        `bountyEvent` is the one way in for match events
 │   ├── Effects.luau         Tracers, blasts, burn discs (visual only)
+│   ├── LevelBoard.luau      The level leaderboard: OrderedDataStore top 50, cache, budgeted writes
+│   ├── Wardrobe.luau        The only adder/remover of worn cosmetics on characters (hat, sprint trail)
 │   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
 ├── starter/StarterCharacterScripts → StarterPlayer.StarterCharacterScripts
 │   └── Health.server.luau   Empty on purpose: replaces Roblox's health regeneration
@@ -85,6 +98,8 @@ src/
     ├── Hud.client.luau      Status bar, Start button, hunter level + XP bar, level-up banner, result screen
     ├── Shop.client.luau     Build, hero select and hero upgrade screens; placement ghost; tower panel
     ├── HuntBoard.client.luau  Hunt Board (G, home screen): Daily Haul and bounties; claim and swap requests
+    ├── Profile.client.luau  Profile screen (P, Lobby): player level, rewards, equip rows, Leaderboard tab
+    ├── Looks.client.luau    Animated cosmetic sets on guns (visual only)
     └── Hero.client.luau     Trigger (semi/auto/burst), reload, ammo, scope, camera, crosshair (requests only)
 ```
 
@@ -209,6 +224,7 @@ second test client.
 | **Step 2** — the dinos fight back | `Combat` (pure rules), `Health` (player HP), `DinoAttacks` (bites and projectiles), tower HP / Trampled / repair / auras in `Towers`, Field Medic (`Hero`), Field Hospital and Armory towers, med kits (`Airdrops`), Rescue Beacon respawn (`Main`). The polish pass adds `tools/test.sh` (Lune specs), `audit.py`, `threat.py` | **Written 2026-10-01, statically checked + 130 headless specs**, not yet playtested (`RECAP.md`) |
 | **Round 2** — balance pass, Daily Haul and Bounties | Balance: `tools/value.py` (value and pacing models), Supply Camp tiers, Rounds counts for rounds 7–12, 17–20 and 31–39 (spreadsheet only). Hunt Board: `Daily Haul` and `Bounties` sheets with exporter checks, `Shared/Bounties`, `Shared/Profile`, rewards in `Progression`, `Shared/HuntBoard` + `HuntBoard.client`, `PanelRules` mode `huntBoard`. `tools/studio/mcp.py` talks to Studio's MCP server for the Tester | **Written 2026-10-01, statically checked + 214 headless specs**, not yet playtested (`RECAP.md`, "Round 2"); Studio playtest T31 open |
 | **Round 3** — mastery ability perks, hero XP | `Mastery Perks` sheet (one row per hero and mastery level) and Tuning HERO XP / MASTERY PERKS levers, with exporter rules (level 15 worth more than level 10, worth cap, no extra stun) and audit checks; perks merged by `HeroStats.compute(…, masteryLevel)`; Spare Dart and Smoulder in `Hero`; `Combat.mergeMark`; `Shared/HeroXp`, per-hunter XP and level in `Hero`, towers on the round level; HUD XP bar and banners; `value.py` and the hero-vs-tower guard use the level in play (`PLAN.md` round 3, `DECISIONS.md` #97–#117) | **Written 2026-10-02, statically checked + headless tests** (245 specs), not yet playtested |
+| **Round 4** — Jovan's answers (`DIRECTION.md` 2026-10-02) | Renames (Bones, Fence, Big Bore); Linebreaker ×2; per-difficulty `Starting cash` (Hard 850); home-screen rows (`HomeLayout`); softer boss throws; one health pool + pierce-through (`SizeBreaks`) and the boss notched bar; Chaos = gun skill (towers ×0.6, hero ×1.5); mastery small perks (`SmallPerks`); hero tier 6 (`GunRules`); saved player level (`PlayerLevel`), cosmetics and titles (`Cosmetics`, `Wardrobe`, `Looks.client`), Profile screen (`ProfileScreen`, `Profile.client`), level leaderboard (`LevelBoard`, This-server fallback); four new towers (`StormCoil`, `Falcon`, `Ballista`, `TarPit`; can't-be-damaged and on-track placement in `Combat`/`Placement`); `value.py` worth bars and Tar Pit control line (`PLAN.md` round 4, `DECISIONS.md` #118–#206) | **Written 2026-10-02 → 10-06, statically checked + 406 headless specs**, not yet playtested (`RECAP.md`, "Round 4"); Studio playtests T31/T38/T60/T70 open |
 | **7** — battle modes | Team battle (sides, tower HP, per-team cash) and battle royale (most pops) — `VISION.md` | |
 
 ---

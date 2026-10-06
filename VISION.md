@@ -24,6 +24,11 @@ Teams attack each other's towers; the focus is surviving longer than the other t
 **Battle royale.** Every player for themselves. Winner is whoever gets the most **Bones**
 (take-downs credited to their towers).
 
+**Competitive and ranked (Jovan, 2026-10-02; phase 7, nothing built, DECISIONS #139).**
+Mastery perks stay on in competitive modes; other perks may be buffed so a money advantage
+isn't too big (maxed players are the audience). Ranked uses a **Clash Royale-style trophy
+system**: the word **Trophies** is reserved for it (take-downs are **Bones**).
+
 ## Theme: Dino Hunters (user, 2026-09-29)
 
 The game is **Dino Hunters**. Enemies are dinosaurs; the player is a dinosaur hunter; towers,
@@ -103,6 +108,17 @@ and `Bounties` sheets and the REWARDS levers on `Tuning`.
   clear and the weeklies together are at most the Chaos clear (DECISIONS #71).
 - A perfect week adds up to 595 Amber (Haul 100 + dailies 315 + weeklies 180), of which
   only the Haul's 100 comes from logging in (DECISIONS #81).
+
+**Overall player level, cosmetics and titles (round 4, 2026-10-02; built, headless-tested,
+not yet playtested; DECISIONS #118–#124, #177–#187).** Separate from the hunter level and
+saved: each match adds the hero XP of the rounds you cleared plus a clear bonus (10× the
+Amber clear reward), won or lost; leavers get nothing. No cap ("infinite for now"); level n
+→ n+1 costs 500 + 50(n−1), at most 10,000. In solo, take-downs count ×2 toward it; co-op is
+unchanged. **Rewards are cosmetics and titles only, never gameplay power:** a common
+cosmetic most levels 2–99, a rare one + a title every 10 levels to 100, legendary animated
+sets + titles at 150 and 200, then a title every 50 levels. Equipped on the Profile screen
+(P, Lobby only). A **level leaderboard** shows the top 50 across servers once the place is
+published; unpublished it falls back to "This server".
 
 ## What the code needs for those modes
 

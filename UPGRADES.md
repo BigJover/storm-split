@@ -111,8 +111,11 @@ Resistance doesn't stack: the strongest source wins, capped at 60% (Tuning).
 
 Unlocks at 2× Amber, normal in-match prices (#147). Falcon Roost and Tar Pit **can't be
 damaged**: no HP, dinos never target them, no repairs, Armory/Hospital don't affect them,
-and they're "somewhat weaker" (≤ 0.8× the median eDPS per cash, #148). Not sold until PLAN
-T68. Tier 4s are the Director's picks (#149), tier 5s Jovan's.
+and they're "somewhat weaker" (#193). All four are sold since T68 (921cab2): in-match cost
+Storm Coil 400, Falcon Roost 400, Tar Pit 450, Harpoon Ballista 500 (#194–#195). "Worth it"
+(#193, #200): a damageable tower's best T5 costs ≤ 1.25 × M per eDPS in rounds 31–40, a
+can't-be-damaged one between 1.25 × and 2 × M (M = 142, frozen); Tar Pit is judged as a
+control tower (#198, #201–#203). Tier 4s are the Director's picks (#149), tier 5s Jovan's.
 
 ## Storm Coil (COIL) — chain lightning: crowds and air ✅ round 4 (PLAN T64; sold from T68) · unlock 300 Amber
 
@@ -153,7 +156,7 @@ ground. No armour until Iron Talons. Rules: `Shared/Falcon`.
 Placed **on the track** (dinos walk through it, #152). Its pool is 12 studs of track centred
 where it stands; a new pit's pool may not overlap another pit's pool at its current length
 (touching is fine, #189). Ground dinos in the tar are slowed 25% (bosses too); a dino at its
-last size that stays in it 3s **sinks** — a take-down that pays like a kill and counts as a
+last size that stays in it 1s **sinks** (#202) — a take-down that pays like a kill and counts as a
 pop for the pit's owner (never bosses, never Pteranodons). No air. A dino in two pools (a
 Tar Lake can make them touch) gets only the strongest pool — the one with the most cash in
 it — so slow, damage, sinking and Eruption never stack (#189). Rules: `Shared/TarPit`.

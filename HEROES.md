@@ -24,8 +24,8 @@ upgrade costs (levels 1-4), ability cooldown -15% (5) and -30% (15), a free firs
 each match (10), and at 20 a gold gun and a crossover cap of 3 for this hero. Never gun damage: perks change abilities only.
 
 **Small perks (Jovan, 2026-10-02: "small perks"; DECISIONS #135, PLAN T51).** The levels in
-between give four non-damage lines, three steps each (Mastery sheet; working names until the
-Dino agent's T54): **Long Arms** I–III (6/11/16) picks up chests and med kits from 2/4/6 studs
+between give four non-damage lines, three steps each (Mastery sheet; final names, Dino
+round 13, DECISIONS #175): **Long Arms** I–III (6/11/16) picks up chests and med kits from 2/4/6 studs
 away; **First Aid** I–III (7/12/17) heals 5/10/15 more HP when a round is cleared;
 **Back in Action** I–III (8/13/18) respawns 10/20/30% sooner; **Handyman** I–III (9/14/19)
 makes repairs 5/10/15% cheaper. They follow the hero being played.
@@ -72,11 +72,19 @@ driven by XP. XP lasts for one match and is never saved.
   never more than **one level above** it. With the bonus capped every round: level 3 after
   round 9, level 5 after 18, level 9 after 35. Late joiners start on the round level.
 - **Towers stay on the round level** for the whole team (a level every 5 rounds cleared).
-- On screen: "Lv N", an XP bar and "+N on round clear" on the HUD; a banner for your own
+- On screen: "Lv N", an XP bar and "+{N} bonus on round clear" on its own line (#157); a banner for your own
   level ("Hunter level N — your shots hit 25% harder") and for the towers' ("Tower level N —
   towers hit 10% harder"); the tower panel shows "Tower level N · +X% damage".
 - Rules: `Shared/HeroXp` (pure). The balance models print heroes at the round level and one
   above it; the exporter's hero-vs-tower guard uses the highest level in play.
+
+**Player level (round 4, DECISIONS #118–#124, #177).** Separate from the hunter level and
+saved: at match end, won or lost, each hunter present banks the hero XP of the rounds they
+cleared plus a clear bonus (Easy 500 / Normal 1,000 / Hard 1,500 / Chaos 2,000) into an
+**overall player level** with no cap (level n → n+1 costs 500 + 50(n−1), at most 10,000).
+In solo, take-downs count ×2 toward it (up to 30 a round); co-op and the in-match hunter
+level are unchanged. Rewards are cosmetics and titles only (`Shared/PlayerLevel`,
+`Shared/Cosmetics`); the Profile screen (P) and the level leaderboard show it off.
 
 ## Gun mechanics
 
@@ -108,7 +116,7 @@ Tiers in *italics* change how the gun fires.
 Dual Pistols: a second gun, alternating fire. Akimbo Frenzy: both full-auto. Scope: zoom and
 reach. Hollow Tips: pierces armour. Deadshot: triple damage to marked dinos. Ricochet:
 bounces to a second dino. Quick Dart: shorter Tracking Dart cooldown. Chain Shot: bounces 4 times.
-Tier 6 (working names, DECISIONS #133): Hot Swap: the two guns reload one at a time, so firing
+Tier 6 (final names, DECISIONS #133, #174–#175): Hot Swap: the two guns reload one at a time, so firing
 never stops; reload x0.8. Heart Shot: scoped shots have no spread and shrink a dino 2 sizes. Bounce
 Back: each ricochet take-down puts a round back in the cylinder.
 

@@ -82,6 +82,14 @@ Plan: `PLAN.md` "Round 4" (T40–T61); design calls `DECISIONS.md` #118–#142. 
 Studio playtest) stay open. Stop before phase 7 again and append a round-4 recap to
 `RECAP.md`.
 
+**Status (2026-10-06):** round 4 built (T40–T68b; T69 Dino review done) and the recap is
+written (`RECAP.md`, "Round 4"; design calls #118–#206). 406 headless specs, `audit.py
+--strict` 0, `threat.py` 0, `value.py` bars met (findings = the four accepted); **not
+playtested**. Jovan picked all four `TOWERS_NEXT.md` towers; they're built and on sale.
+**Still open: T31 + T38 + T60 + T70, the Tester's Studio playtest** — Studio's MCP still
+reports no Studio; Jovan must restart Studio, turn on "Enable Studio as MCP server" and
+reconnect Rojo. Phase 7 is not started.
+
 ## Rules
 
 - **Verify every step:** `tools/check.sh` clean; `python3 tools/export_constants.py` clean;

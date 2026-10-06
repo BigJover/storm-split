@@ -333,3 +333,156 @@ the renames (#27).
    switch is on and Rojo is reconnected. Its bugs get fixed before anything new.
 2. Your answers to the lists above.
 3. **Phase 7** (team battle, battle royale, buy-ins). Not started.
+
+# Round 4 recap for Jovan: your answers, built (2026-10-02 → 10-06)
+
+**Your direction (2026-10-02, full text in `DIRECTION.md` "Round-4 answers"):** XP "count at
+the end" means a new **overall player level** ("the cap should be infinite for now", "i want a
+level leader board", cosmetics and titles, nicer ones spaced out); a solo take-down XP boost
+"but dont change it much or at all in multiplayer"; raw-damage towers should **"pierce
+through" levels** with "one health pool which have thresholds"; "small perks" on the empty
+mastery levels; "more cash for hard; chaos should be nearly impossible relying on player gun
+skill"; renames "apply all but change trophies to bones"; Linebreaker ×2; a bigger PLAY; and
+"we need more towers… 2x the cost but worth it (some that dont take damage)". Later the same
+day you picked all four proposed towers and their tier 5s.
+
+**Honest status:** everything below is statically checked and headless-tested (406 specs,
+`audit.py --strict` 0, `threat.py` 0, `value.py` bars met; its findings are four accepted
+ones: Big Bore T1, Concussive T5, Ballista Steel Head T1, Saw Tip T2). **None of it has been
+playtested in Studio.** The Tester still can't run (Studio's MCP shows no Studio), and Rojo
+has been disconnected in your Studio since 2026-10-01, so **Studio still runs pre-round-2
+code**. Every number is in the spreadsheet; the reasoning is in `DECISIONS.md` #118–#206.
+
+## What was built
+
+**Quick fixes**
+- **Renames applied** (#130): take-downs are **Bones** (leaderboard, "Most bones wins");
+  Lives are the **Fence**; Siege → **Big Bore**, plus the rest of the round-1 list. "Trophies"
+  is kept free for ranked.
+- **Linebreaker** ×2 over Tungsten Core (Damage x 6.41 → 8.84, #131). **Dragon's Breath**
+  patch stays 3 studs; Buckshot's new tier 6 (Wildfire Drum) makes it 4 (#132).
+- **Hard starts with 850 cash** (Easy/Normal/Chaos 450, #143); Hard still stays below Normal
+  every round.
+- **UI:** PLAY 240 px with 28 px text; the Hunt Board on its own row; your Amber in the Hunt
+  Board header; "+{N} bonus on round clear" on its own line (#138, #155, #157).
+- **Softer boss throws on towers:** ×0.3 (hunters unchanged), so a boss's throws alone can't
+  trample a mid-gap tower in rounds 31–39 (#154).
+
+**One health pool + pierce-through** (#125–#129, #160–#166)
+- Each dino has **one HP pool**; its sizes are thresholds on it. A hit can cross up to *b*
+  thresholds: b = tier breaks + a bonus for tower level (only on raw-damage tiers) − the
+  species' resist, from 1 to 4. **b = 1 is the old game**, so only raw-damage tiers change
+  (Deadeye, Big Bore, Talons, the Ballista, Heart Shot and Thunder Slug).
+- **Bosses** (Triceratops, T-Rex) show a thin pool bar with a notch per size.
+- The models now count overkill honestly, and break numbers were set so they give back what
+  that honesty costs and no more.
+
+**Chaos = gun skill** (#137, #167): towers ×0.6, your gun ×1.5. Towers alone carry 28% of
+what Chaos needs; skilled aim 86% to round 30 and 42% in rounds 31–40 ("nearly impossible").
+
+**Heroes**
+- **Small mastery perks** on 6–9, 11–14, 16–19 (#135, #175), none touching damage: **Long
+  Arms** (pick-up reach +2/4/6), **First Aid** (round-clear heal +5/10/15), **Back in Action**
+  (respawn 10/20/30% sooner), **Handyman** (repairs 5/10/15% cheaper).
+- **Tier 6 on all twelve paths** (6,400 each; handling and fire modes, never more damage,
+  #133–#134): Hot Swap, Heart Shot (scoped shots shrink a dino 2 sizes), Bounce Back, Big Five,
+  Endless Belt, Dynamite Rounds, Thunder Slug (2 sizes), Wildfire Drum, Quad Barrel, Rapid
+  Response, Bottomless Tube, Lights Out.
+
+**Overall player level** (#118–#124, #177–#187)
+- Saved and **uncapped**: each match adds the XP of the rounds you cleared plus a clear bonus
+  (Easy 500 / Normal 1,000 / Hard 1,500 / Chaos 2,000), won or lost; leavers get nothing.
+  Level n → n+1 costs 500 + 50(n−1), at most 10,000 (level 10 ≈ 6,300 XP, level 100 ≈ 292k).
+- **Solo:** take-downs count ×2 toward it (up to 30 a round). Co-op and the in-match hunter
+  level are unchanged.
+- **Rewards, cosmetics and titles only:** a common cosmetic most levels 2–99 (name colour,
+  gun tint, tracer, crosshair, tower flag, banner); a rare + a title every 10 levels to 100
+  (hat, gun pattern, hit-marker, trail); legendary animated sets + titles at 150 and 200;
+  then a title every 50 levels.
+- **Profile screen (P, home screen):** level, XP bar, next rewards, equip rows (equipping is
+  Lobby-only). Its **Leaderboard** tab shows the top 50 across servers once published; until
+  then (or if the store fails) it falls back to **"This server"**. Your title and badge show
+  on the player list.
+
+**Four new towers, all on sale** (#146–#152, #188–#206; final names from the Dino agent)
+
+| Tower | In-match / Amber | Tier 5s you picked | Notes |
+|---|---|---|---|
+| **Storm Coil** | 400 / 300 | Power Grid, Judgement Bolt, Lightning Rodeo | chain lightning; Power Grid grows with every Storm Coil you have, one alone is weaker |
+| **Falcon Roost** | 400 / 200 | Eagle of the Peak, Murmuration, Hunting Party | birds fly out and back; can't be damaged |
+| **Tar Pit** | 450 / 250 | Tar Lake, Eruption, Tar Totem | sits on the track; slows, and the smallest dinos sink after 1 s; can't be damaged |
+| **Harpoon Ballista** | 500 / 300 | Skewer, Tow Line, Chain Harpoons | heaviest single hit, pierces through a line |
+
+- **"Worth it", measured** (#193, #200): against M = 142, the median cost per damage of the
+  released tier 5s in rounds 31–40, a tower that can be damaged must be ≤ 1.25 × M and one that
+  can't between 1.25 × and 2 × M ("somewhat weaker"). Result: Power Grid 156, Skewer 142,
+  Eagle of the Peak 186, Murmuration 266. All pass.
+- To get there (#194–#195): Storm Coil Damage 4 → 6 and cost 550 → 400; Ballista rate 0.4 →
+  0.5 and cost 600 → 500; Murmuration Damage x 3.1 → 4.4, Eagle 13.03 → 12.
+- **Tar Pit is judged as a control tower** (#198, #201–#203): Eruption every 10 s, bubbling
+  burn 80/s at tier 5, so one pit removes 49% of late ground HP (bar 50%). Dig Site pays
+  2 / 6 / 6 cash per sunk dino plus a 10-cash chest, about 10 rounds to pay back, like Supply
+  Camp.
+
+## Playtest first
+
+1. **Reconnect Rojo** (below), or you'll test old code.
+2. Home: bigger PLAY, Hunt Board row with your Amber. P → Profile: level, rewards, equip a
+   colour, Leaderboard tab says "This server".
+3. Press **J**, unlock the four new towers. Place each; the Tar Pit goes only on the track.
+   Bites and throws never hit a Falcon Roost or Tar Pit.
+4. K for cash, upgrade each to a tier 5: Power Grid with 1 coil vs 3; Judgement Bolt on a
+   boss; Skewer down a line; Eruption every ~10 s; small dinos sinking in the tar.
+5. Linebreaker / Big Bore in round 16+: one shot should drop more than one size. A boss shows
+   the notched bar.
+6. Hard: 850 starting cash. Chaos: does your aim carry it? Rounds 31–40 should feel nearly
+   impossible, not unfair.
+7. Buy a hero path to tier 6; mastery 6–9 perks.
+8. Finish a match: "+N player XP", your level carries to the next match.
+9. The round 1–3 lists above still stand.
+
+## Ask Jovan
+
+**New in round 4**
+- **Three steps so the Tester can playtest:** restart Studio; Assistant Settings → Manage MCP
+  Servers → "Enable Studio as MCP server"; reconnect Rojo (`rojo serve`, then Connect).
+- **The 4×-Amber batch:** `TOWERS_LATER.md` proposes Meteor Beacon, Amber Resin Cannon,
+  Ranger Station and Spotter Blimp (400–600 Amber). Which ones, and which tier 5s?
+- **"Murmuration" or "Sky Swarm"?** You picked Murmuration; the Dino agent says it's hard for
+  kids to read or say. Kept unless you say otherwise.
+- **Eruption is every 10 s, not the 8 s** in the proposal you picked from. At 8 s one Tar Pit
+  would remove about two thirds of late-game ground HP, and it's a tower that can't be
+  damaged, which you said should be "somewhat weaker". Still 2 sizes, bosses included.
+- **Concussive T5 (Tectonic Slam) is weak** in the models (a known finding). Buff it, and how?
+- **Dynamite Rounds** (Special Ammo tier 6, was Powder Tips): splash ×1.5 radius for 6,400.
+  Does it feel worth it?
+- **Chaos rounds 31–40:** is "skilled aim reaches 42% of what's needed" the right "nearly
+  impossible"?
+- **Tar Pit sinking:** the smallest dinos sink after 1 s (3 s couldn't happen in any pool).
+  Too fast, too slow?
+
+**Still open from rounds 1–3:** publishing the place (saving, the cross-server leaderboard),
+40 starting lives (`CLAUDE.md` open issues), and the remaining items in the lists above.
+
+## Decisions you may want to overturn
+
+- #118 / #119: the player level is new and separate from the hunter level; a clear adds a
+  bonus 10× the Amber clear reward.
+- #121: the reward ladder (commons to 99, rares every 10, legendaries at 150 / 200).
+- #124 / #177: the solo take-down boost is ×2, decided per round, player XP only.
+- #126: pierce-through is capped at 4 sizes a hit; heroes get no level bonus.
+- #133: tier 6 costs 6,400 and never adds damage.
+- #137 / #167: Chaos towers ×0.6, gun ×1.5.
+- #148 / #193 / #200: the "worth it" bars and M = 142 frozen for this batch.
+- #150 / #201: Eruption every 10 s; tier-5 burn cut to 80/s.
+- #195: Storm Coil and Ballista cost less in-match than their seeds (400, 500).
+- #202 / #203: sink time 1 s; Dig Site pays about 10 rounds back.
+
+## What's next
+
+1. **T31 + T38 + T60 + T70, the Studio playtest** by the Tester, once Studio is restarted, the
+   MCP switch is on and Rojo is reconnected. Its bugs get fixed before anything new.
+2. Your answers to the lists above, including the 4×-Amber tower picks.
+3. **Phase 7** (team battle, battle royale, buy-ins, ranked). Not started. Notes for it: mastery
+   perks stay on in competitive modes, other perks may be buffed so money doesn't decide
+   matches, and ranked uses a Clash Royale-style **Trophies** system.

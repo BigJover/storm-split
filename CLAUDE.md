@@ -200,10 +200,23 @@ the level is never below the old every-5-rounds curve and never more than one ab
 towers stay on the old curve; XP is per match and never saved (`Shared/HeroXp`, `HEROES.md`).
 Marks no longer stack: the stronger wins.
 
+Round 4 (gauntlet loop, 2026-10-02 → 10-06, Jovan's answers in `DIRECTION.md`). Statically
+checked and headless-tested (406 specs, `audit.py --strict` 0, `threat.py` 0, `value.py` bars
+met) but **never playtested**. Renames (take-downs are **Bones**; Trophies reserved for
+ranked), Linebreaker ×2, Hard starts with 850, bigger PLAY and Hunt Board row, softer boss
+throws on towers; **one health pool per dino with pierce-through** (`Shared/SizeBreaks`) and
+a notched boss bar; Chaos as a gun-skill mode; **small mastery perks** (6–19) and **hero tier
+6**; a saved **overall player level** (`Shared/PlayerLevel`) with cosmetics and titles,
+the Profile screen (P) and a level leaderboard (This-server fallback unpublished); and **four
+new towers**, all on sale: Storm Coil, Falcon Roost, Tar Pit (on the track) and Harpoon
+Ballista (Amber 300/200/250/300; Falcon Roost and Tar Pit can't be damaged). Summary in
+`RECAP.md` "Round 4"; calls in `DECISIONS.md` #118–#206.
+
 Next: Jovan restarts Studio, turns on "Enable Studio as MCP server" and **reconnects Rojo**
 (disconnected since 2026-10-01 afternoon, so Studio holds pre-round-2 code) so the Tester can
-run T31 + T38; playtests Step 2, round 2 and round 3 himself (see `RECAP.md`); and answers
-the "ask Jovan" lists. Then phase 7 (not started).
+run T31 + T38 + T60 + T70; playtests rounds 1–4 himself (see `RECAP.md`); and answers the
+"ask Jovan" lists, including the 4×-Amber tower picks (`TOWERS_LATER.md`). Then phase 7
+(not started).
 
 ## Open issues
 
