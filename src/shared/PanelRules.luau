@@ -67,6 +67,25 @@ function PanelRules.towerLevelLine(level: number, perLevel: number): string?
 	return `Tower level {whole} · +{percent}% damage`
 end
 
+-- The tower panel's Repair row (PLAYTEST F2): a tower that can be damaged always has
+-- one, greyed out at full HP, so the upgrade rows below it never move under the cursor
+-- as it's bitten and healed. nil = no row (a tower that can't be damaged never has HP
+-- to lose); "full" = the greyed row; "needed" = a repair to buy.
+function PanelRules.repairRow(maxHp: number, hp: number, trampled: boolean): ("needed" | "full")?
+	if trampled or (maxHp > 0 and hp < maxHp) then
+		return "needed"
+	elseif maxHp > 0 then
+		return "full"
+	end
+	return nil
+end
+
+-- The hunter's HP bar (PLAYTEST F1): only with a character, and never on the home
+-- screen, where the match is over and the home screen's cards sit in its corner.
+function PanelRules.hpBarVisible(state: string?, hasCharacter: boolean): boolean
+	return hasCharacter and state ~= "Lobby"
+end
+
 -- A path's tier ladder for the hero upgrade panel: one filled pip per bought tier,
 -- one hollow per tier left, then "current/max" (e.g. "●●●○○○ 3/6").
 function PanelRules.tierLadder(current: number, maxTier: number): string

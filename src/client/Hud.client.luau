@@ -21,6 +21,7 @@ local TowerLook = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild(
 local HitNotice = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HitNotice"))
 local Bounties = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Bounties"))
 local HeroXp = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HeroXp"))
+local PanelRules = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("PanelRules"))
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "StormSplitHud"
@@ -467,11 +468,21 @@ local function showHealth(humanoid: Humanoid)
 	lastHealth = health
 end
 
+-- Shared/PanelRules: shown with a character, never on the home screen (PLAYTEST F1:
+-- the character outlives the match, so CharacterRemoving alone left it showing).
+local watched: Model? = nil
+local function updateHpVisible()
+	local hasCharacter = watched ~= nil and watched.Parent ~= nil
+	hpFrame.Visible = PanelRules.hpBarVisible(ReplicatedStorage:GetAttribute("State"), hasCharacter)
+end
+
 local function watchHumanoid(character: Model)
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 	lastHealth = humanoid.Health
 	showHealth(humanoid)
-	hpFrame.Visible = true
+	watched = character
+	updateHpVisible()
+	character.AncestryChanged:Connect(updateHpVisible)
 	humanoid.HealthChanged:Connect(function()
 		showHealth(humanoid)
 	end)
@@ -558,9 +569,13 @@ task.spawn(function()
 end)
 
 player.CharacterAdded:Connect(watchHumanoid)
-player.CharacterRemoving:Connect(function()
-	hpFrame.Visible = false
+player.CharacterRemoving:Connect(function(character)
+	if watched == character then
+		watched = nil
+	end
+	updateHpVisible()
 end)
+ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(updateHpVisible)
 if player.Character then
 	task.spawn(watchHumanoid, player.Character)
 end

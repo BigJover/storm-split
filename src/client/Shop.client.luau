@@ -850,7 +850,27 @@ local function describeHeroStep(path, current: number): string
 	return if #parts > 0 then table.concat(parts, " · ") else path.focus
 end
 
+-- Rows are reused across renders, keyed by LayoutOrder (PLAYTEST F3). Mid-round the
+-- panel re-renders on every Cash and HP change; destroying the rows then meant a
+-- button pressed before a re-render was gone by the release, so its click never
+-- fired. A reused button keeps its press, and its one Activated connection calls
+-- whatever handler the latest render gave it (nil while disabled).
+local rowHandlers: { [TextButton]: (() -> ())? } = {}
+local staleRows: { [number]: TextButton } = {}
+
 local function addRow(order: number, text: string, color: Color3, enabled: boolean, onClick: (() -> ())?)
+	local reused = staleRows[order]
+	if reused then
+		staleRows[order] = nil
+		reused.BackgroundColor3 = color
+		reused.BackgroundTransparency = if enabled then 0 else 0.5
+		reused.AutoButtonColor = enabled
+		reused.TextColor3 = if enabled then TEXT else TEXT_DIM
+		reused.Text = text
+		rowHandlers[reused] = if enabled then onClick else nil
+		return
+	end
+
 	local button = Instance.new("TextButton")
 	button.Size = UDim2.new(1, 0, 0, 48)
 	button.BackgroundColor3 = color
@@ -874,9 +894,16 @@ local function addRow(order: number, text: string, color: Color3, enabled: boole
 	padding.PaddingBottom = UDim.new(0, 6)
 	padding.Parent = button
 
-	if enabled and onClick then
-		button.Activated:Connect(onClick)
-	end
+	rowHandlers[button] = if enabled then onClick else nil
+	button.Activated:Connect(function()
+		local handler = rowHandlers[button]
+		if handler then
+			handler()
+		end
+	end)
+	button.Destroying:Connect(function()
+		rowHandlers[button] = nil
+	end)
 	button.Parent = list
 end
 
@@ -1023,6 +1050,7 @@ end
 ------------------------------------------------------------------ panel
 
 local render: () -> ()
+local renderRows: () -> () -- the rows of whichever panel is open (render reuses them)
 
 local function setMode(newMode: Mode)
 	if newMode ~= "placing" then
@@ -1102,11 +1130,23 @@ local function tryPlace()
 end
 
 render = function()
+	-- Every row is stale until this render's addRow reuses it; the rest go at the end.
+	table.clear(staleRows)
 	for _, child in list:GetChildren() do
-		if child:IsA("GuiObject") then
+		if child:IsA("TextButton") and staleRows[child.LayoutOrder] == nil then
+			staleRows[child.LayoutOrder] = child
+		elseif child:IsA("GuiObject") then
 			child:Destroy()
 		end
 	end
+	renderRows()
+	for _, row in staleRows do
+		row:Destroy()
+	end
+	table.clear(staleRows)
+end
+
+renderRows = function()
 
 	panel.Visible = mode ~= "closed" and mode ~= HuntBoard.MODE and mode ~= ProfileScreen.MODE
 	title.TextColor3 = TEXT -- the tower panel turns it red for a trampled tower
@@ -1290,7 +1330,7 @@ render = function()
 			title.Text = `{if def then def.display else "Tower"}  ·  {tiers[1]} · {tiers[2]} · {tiers[3]}`
 		end
 
-		-- Health, and a repair row when it's damaged. Mirrors Server/Shop:
+		-- Health, and a repair row that keeps its slot (greyed at full HP, PLAYTEST F2). Mirrors Server/Shop:
 		-- Shared/Combat's price with the Logistics discount.
 		-- The tower level (DECISIONS #112): every tower shares it, so it's the match's
 		-- "Level" attribute, not the tower's. No row at level 1. A row wraps, and the
@@ -1307,7 +1347,10 @@ render = function()
 		elseif def and def.untouchable then
 			addRow(-1, `<font size="13">Can't be damaged: dinos ignore it, no repairs</font>`, PANEL_COLOR, false)
 		end
-		if trampled or (maxHp > 0 and hp < maxHp) then
+		local repairRow = PanelRules.repairRow(maxHp, hp, trampled)
+		if repairRow == "full" then
+			addRow(0, `<b>Repair</b>  ·  full HP`, LOCKED_COLOR, false)
+		elseif repairRow == "needed" then
 			local discount = managed:GetAttribute("Discount") or 0
 			local cost = Combat.repairCost((managed:GetAttribute("Spent") or 0) :: number, hp, maxHp, discount, SmallPerks.ofPlayer(player).repairCostMult)
 			local affordable = cash >= cost

@@ -95,3 +95,20 @@ test("every hero path's ladder has six pips, one line each (no-trap: the panel d
 		end
 	end
 end)
+
+test("a tower that can be damaged keeps its Repair row at full HP (PLAYTEST F2)", function()
+	eq(PanelRules.repairRow(100, 100, false), "full", "full HP: greyed row, same slot")
+	eq(PanelRules.repairRow(100, 40, false), "needed", "bitten")
+	eq(PanelRules.repairRow(100, 0, true), "needed", "trampled")
+	eq(PanelRules.repairRow(0, 0, false), nil, "can't be damaged: never a row")
+	-- Bitten and healed: the row is there either way, so the paths never move.
+	eq(PanelRules.repairRow(100, 99, false) ~= nil, PanelRules.repairRow(100, 100, false) ~= nil, "same rows")
+end)
+
+test("the hunter's HP bar hides on the home screen and without a character (PLAYTEST F1)", function()
+	eq(PanelRules.hpBarVisible("Lobby", true), false, "home screen after a match")
+	eq(PanelRules.hpBarVisible("Playing", false), false, "no character")
+	for _, state in { "Building", "Playing", "GameOver", "Victory" } do
+		eq(PanelRules.hpBarVisible(state, true), true, state)
+	end
+end)
