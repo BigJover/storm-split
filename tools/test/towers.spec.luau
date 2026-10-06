@@ -336,3 +336,16 @@ test("Field Hospital crossover: Miracle Ward + Iron Tonic keeps both", function(
 	eq(s.reviveSpeed, 1, "revive speed")
 	eq(s.auraHpPercent, 20, "aura HP")
 end)
+
+test("PLAN T68: the round-4 towers are released at 2x Amber and their tuned in-match prices", function()
+	local ShopRules = require(src.shared.ShopRules)
+	-- key = { Amber unlock (#147), in-match cost (#194/#195) }
+	local want = { COIL = { 300, 400 }, FALCON = { 200, 400 }, TARPIT = { 250, 450 }, BALLISTA = { 300, 500 } }
+	for key, w in want do
+		local def = Config.Towers[key]
+		eq(ShopRules.Unreleased[key], nil, `{key} is sold and unlockable`)
+		eq(table.find(Config.TowerOrder, key) ~= nil, true, `{key} is listed in the shop order`)
+		eq(def.unlockCost, w[1], `{key} unlock Amber`)
+		eq(def.baseCost, w[2], `{key} in-match cost`)
+	end
+end)

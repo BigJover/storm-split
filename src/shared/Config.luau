@@ -96,7 +96,7 @@ return table.freeze({
 		FalconSpeed = 40,
 		EagleDiveX = 6,
 		FalconBellsMark = 2,
-		EruptionEvery = 10,
+		EruptionEvery = 15,
 		EruptionSizes = 2,
 		TarSinkSeconds = 3,
 		TarTracksLength = 12,
@@ -9013,8 +9013,8 @@ return table.freeze({
 		COIL = {
 			display = "Storm Coil",
 			role = "Chain lightning: crowds and air",
-			baseCost = 550,
-			baseDamage = 4,
+			baseCost = 400,
+			baseDamage = 6,
 			baseRate = 1,
 			baseTargets = 1,
 			range = 14,
@@ -9038,7 +9038,7 @@ return table.freeze({
 					tiers = {
 						{
 							name = "Copper Wire",
-							cost = 1265,
+							cost = 920,
 							damageMult = 1.45,
 							rateMult = 1,
 							targetsMult = 1,
@@ -9120,7 +9120,7 @@ return table.freeze({
 						},
 						{
 							name = "Long Arc",
-							cost = 2909,
+							cost = 2116,
 							damageMult = 2.1,
 							rateMult = 1,
 							targetsMult = 1,
@@ -9202,7 +9202,7 @@ return table.freeze({
 						},
 						{
 							name = "Fork Lightning",
-							cost = 6692,
+							cost = 4867,
 							damageMult = 3.05,
 							rateMult = 1,
 							targetsMult = 1,
@@ -9284,7 +9284,7 @@ return table.freeze({
 						},
 						{
 							name = "Jump Spark",
-							cost = 15391,
+							cost = 11194,
 							damageMult = 4.42,
 							rateMult = 1,
 							targetsMult = 1,
@@ -9366,7 +9366,7 @@ return table.freeze({
 						},
 						{
 							name = "Power Grid",
-							cost = 35400,
+							cost = 25745,
 							damageMult = 6.41,
 							rateMult = 1,
 							targetsMult = 1,
@@ -9454,7 +9454,7 @@ return table.freeze({
 					tiers = {
 						{
 							name = "Battery Pack",
-							cost = 1265,
+							cost = 920,
 							damageMult = 1.3,
 							rateMult = 1,
 							targetsMult = 1,
@@ -9536,7 +9536,7 @@ return table.freeze({
 						},
 						{
 							name = "Static Shock",
-							cost = 2909,
+							cost = 2116,
 							damageMult = 2.47,
 							rateMult = 1,
 							targetsMult = 1,
@@ -9618,7 +9618,7 @@ return table.freeze({
 						},
 						{
 							name = "Thunderclap",
-							cost = 6692,
+							cost = 4867,
 							damageMult = 4.7,
 							rateMult = 1,
 							targetsMult = 1,
@@ -9700,7 +9700,7 @@ return table.freeze({
 						},
 						{
 							name = "High Voltage",
-							cost = 15391,
+							cost = 11194,
 							damageMult = 6.58,
 							rateMult = 1,
 							targetsMult = 1,
@@ -9782,7 +9782,7 @@ return table.freeze({
 						},
 						{
 							name = "Judgement Bolt",
-							cost = 35400,
+							cost = 25745,
 							damageMult = 12.5,
 							rateMult = 1,
 							targetsMult = 1,
@@ -9870,7 +9870,7 @@ return table.freeze({
 					tiers = {
 						{
 							name = "Tall Mast",
-							cost = 1265,
+							cost = 920,
 							damageMult = 1.3,
 							rateMult = 1,
 							targetsMult = 1,
@@ -9952,7 +9952,7 @@ return table.freeze({
 						},
 						{
 							name = "Charged Air",
-							cost = 2909,
+							cost = 2116,
 							damageMult = 1.69,
 							rateMult = 1,
 							targetsMult = 1,
@@ -10034,7 +10034,7 @@ return table.freeze({
 						},
 						{
 							name = "Grounding Spike",
-							cost = 6692,
+							cost = 4867,
 							damageMult = 2.2,
 							rateMult = 1,
 							targetsMult = 1,
@@ -10116,7 +10116,7 @@ return table.freeze({
 						},
 						{
 							name = "Storm Warning",
-							cost = 15391,
+							cost = 11194,
 							damageMult = 2.86,
 							rateMult = 1,
 							targetsMult = 1,
@@ -10198,7 +10198,7 @@ return table.freeze({
 						},
 						{
 							name = "Lightning Rodeo",
-							cost = 35400,
+							cost = 25745,
 							damageMult = 3.71,
 							rateMult = 1,
 							targetsMult = 1,
@@ -10639,7 +10639,7 @@ return table.freeze({
 						{
 							name = "Eagle of the Peak",
 							cost = 25745,
-							damageMult = 13.03,
+							damageMult = 12,
 							rateMult = 1,
 							targetsMult = 1,
 							rangeMult = 1,
@@ -11055,7 +11055,7 @@ return table.freeze({
 						{
 							name = "Murmuration",
 							cost = 25745,
-							damageMult = 3.1,
+							damageMult = 4.4,
 							rateMult = 3.75,
 							targetsMult = 1,
 							rangeMult = 1.5,
@@ -12829,9 +12829,9 @@ return table.freeze({
 		BALLISTA = {
 			display = "Harpoon Ballista",
 			role = "The heaviest single hit: pierce-through",
-			baseCost = 600,
+			baseCost = 500,
 			baseDamage = 12,
-			baseRate = 0.4,
+			baseRate = 0.5,
 			baseTargets = 1,
 			range = 24,
 			hitsAir = true,
@@ -12854,7 +12854,7 @@ return table.freeze({
 					tiers = {
 						{
 							name = "Steel Head",
-							cost = 1380,
+							cost = 1150,
 							damageMult = 1.9,
 							rateMult = 1,
 							targetsMult = 1,
@@ -12936,7 +12936,7 @@ return table.freeze({
 						},
 						{
 							name = "Saw Tip",
-							cost = 3174,
+							cost = 2645,
 							damageMult = 3.61,
 							rateMult = 1,
 							targetsMult = 1,
@@ -13018,7 +13018,7 @@ return table.freeze({
 						},
 						{
 							name = "Crusher Bolt",
-							cost = 7300,
+							cost = 6083,
 							damageMult = 6.86,
 							rateMult = 1,
 							targetsMult = 1,
@@ -13100,7 +13100,7 @@ return table.freeze({
 						},
 						{
 							name = "Great Harpoon",
-							cost = 16790,
+							cost = 13992,
 							damageMult = 13.03,
 							rateMult = 1,
 							targetsMult = 1,
@@ -13182,7 +13182,7 @@ return table.freeze({
 						},
 						{
 							name = "Skewer",
-							cost = 38618,
+							cost = 32182,
 							damageMult = 24.76,
 							rateMult = 1.15,
 							targetsMult = 1,
@@ -13270,7 +13270,7 @@ return table.freeze({
 					tiers = {
 						{
 							name = "Rope Line",
-							cost = 1380,
+							cost = 1150,
 							damageMult = 1.3,
 							rateMult = 1,
 							targetsMult = 1,
@@ -13352,7 +13352,7 @@ return table.freeze({
 						},
 						{
 							name = "Winch",
-							cost = 3174,
+							cost = 2645,
 							damageMult = 1.69,
 							rateMult = 1,
 							targetsMult = 1,
@@ -13434,7 +13434,7 @@ return table.freeze({
 						},
 						{
 							name = "Pin Down",
-							cost = 7300,
+							cost = 6083,
 							damageMult = 2.2,
 							rateMult = 1,
 							targetsMult = 1,
@@ -13516,7 +13516,7 @@ return table.freeze({
 						},
 						{
 							name = "Reel In",
-							cost = 16790,
+							cost = 13992,
 							damageMult = 2.86,
 							rateMult = 1,
 							targetsMult = 1,
@@ -13598,7 +13598,7 @@ return table.freeze({
 						},
 						{
 							name = "Tow Line",
-							cost = 38618,
+							cost = 32182,
 							damageMult = 3.71,
 							rateMult = 1,
 							targetsMult = 1,
@@ -13686,7 +13686,7 @@ return table.freeze({
 					tiers = {
 						{
 							name = "Twin Bolts",
-							cost = 1380,
+							cost = 1150,
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
@@ -13768,7 +13768,7 @@ return table.freeze({
 						},
 						{
 							name = "Fast Crank",
-							cost = 3174,
+							cost = 2645,
 							damageMult = 1,
 							rateMult = 1.9,
 							targetsMult = 1,
@@ -13850,7 +13850,7 @@ return table.freeze({
 						},
 						{
 							name = "Spread Volley",
-							cost = 7300,
+							cost = 6083,
 							damageMult = 1.2,
 							rateMult = 1.9,
 							targetsMult = 1,
@@ -13932,7 +13932,7 @@ return table.freeze({
 						},
 						{
 							name = "Steam Crank",
-							cost = 16790,
+							cost = 13992,
 							damageMult = 1.2,
 							rateMult = 3.8,
 							targetsMult = 1,
@@ -14014,7 +14014,7 @@ return table.freeze({
 						},
 						{
 							name = "Chain Harpoons",
-							cost = 38618,
+							cost = 32182,
 							damageMult = 1.6,
 							rateMult = 3.8,
 							targetsMult = 1,

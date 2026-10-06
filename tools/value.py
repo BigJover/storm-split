@@ -132,9 +132,10 @@ CONTROL_TIERS = {("SNIPER", "Big Bore", 3)}
 # Boss specialists (#164): raw T5s whose job is a boss multiplier. `--breaks1` reports them on
 # their own line and exempts them from bar 3 (the T5 median). Extinction Round = Big Bore T5.
 BOSS_SPECIALIST = {("SNIPER", "Big Bore", 5)}
-SUPPORT_TOWERS = {"QUARTERMASTER", "HOSPITAL", "ARMORY"}
-# Towers on the sheet whose behaviour isn't built yet (the round-4 batch, PLAN T63-T67):
-# left out of every table and median until their task models them. Each task removes its key.
+# Tar Pit is a control tower (#198): judged on its own line (slow, HP removed, Dig Site payback),
+# out of the medians and of the DEAD and "worth it" bars.
+SUPPORT_TOWERS = {"QUARTERMASTER", "HOSPITAL", "ARMORY", "TARPIT"}
+# Towers on the sheet whose behaviour isn't modelled yet: left out of every table and median.
 PENDING_TOWERS = set()
 # Power Grid is credited as if this many Storm Coils stand (x1.0 damage, range x1.15; a
 # stated assumption: the plain co-op case). One coil alone is x0.75, six x2.0 (#151).
@@ -150,6 +151,15 @@ SKEWER_DINOS = 3
 CHAIN_DINOS = 3
 NEIGHBOUR_TOWER, NEIGHBOUR_TIER, NEIGHBOURS = "SCOUT", 2, 3
 DEAD_X, DOMINANT_X = 2.0, 0.5
+# "Worth it" for the 2x-Amber round-4 batch (PLAN T68, DECISIONS #193): a damageable tower's best
+# T5 cost/eDPS in rounds 31-40 is at most WORTH_HI x M; an untouchable tower's damage T5s sit
+# between WORTH_HI x M and UNTOUCHABLE_HI x M. M = the released damage-path T5 median of the
+# towers outside the batch, so the batch can't move its own bar (#190's reason).
+ROUND4_BATCH = {"COIL", "FALCON", "BALLISTA", "TARPIT"}
+WORTH_HI, UNTOUCHABLE_HI = 1.25, 2.0
+# Tar Pit's one gated bar (#199): one Eruption pit removes at most this share of r31-40 ground HP.
+ERUPTION_SHARE_MAX = 0.50
+ERUPTION_EVERY_CAP = 15  # the lever's ceiling (s); at it the bar reports and passes
 
 
 def load():
@@ -168,6 +178,11 @@ def _luau_list(text, name):
 
 _TS = open(os.path.join(ROOT, "src", "shared", "TowerStats.luau"), encoding="utf-8").read()
 MULTIPLIERS, HIGHEST, FLAGS = (_luau_list(_TS, n) for n in ("MULTIPLIERS", "HIGHEST", "FLAGS"))
+# Shared/ShopRules.Unreleased: towers in Config but not sold yet. Medians count released towers
+# only (DECISIONS #190/#196), so an unreleased row can't loosen a bar.
+UNRELEASED = set(re.findall(r"(\w+)\s*=\s*true", re.search(
+    r"Unreleased\s*=\s*table\.freeze\(\{(.*?)\}", open(os.path.join(ROOT, "src", "shared", "ShopRules.luau"),
+                                                         encoding="utf-8").read(), re.S).group(1)))
 # Track.BaseEnemySpeed (studs/s), for the time a dino spends in a Tar Pit's pool.
 BASE_SPEED = float(re.search(r"BaseEnemySpeed\s*=\s*([\d.]+)",
                              open(os.path.join(ROOT, "src", "shared", "Track.luau"), encoding="utf-8").read()).group(1))
@@ -375,13 +390,14 @@ def tar_seconds(s, tuning, speed_mult):
     return s["range"] / speed if speed > 0 else math.inf
 
 
-def tar_edps(s, mix, tuning):
-    """A Tar Pit's eDPS-equivalent in a band: HP its pool removes per second of the band's
+def tar_removed(s, mix, tuning):
+    """(HP the pit's pool removes, ground HP that walks through it, sinks) over a band's
     traffic (the tar paragraph in the module docstring)."""
-    removed = 0.0
+    removed = ground = sinks = 0.0
     for n, kind, sizes, share, speed_mult in mix["dinos"]:
         if kind == "flying":
             continue
+        ground += n * sizes * share
         t = tar_seconds(s, tuning, speed_mult)
         work = 0.0
         if s["burnDps"] > 0 and (kind != "armoured" or s["pierces"]):
@@ -390,8 +406,31 @@ def tar_edps(s, mix, tuning):
             work += min(sizes, tuning["EruptionSizes"] * t / tuning["EruptionEvery"]) * share
         if kind != "boss" and s["sinkSeconds"] > 0 and t >= s["sinkSeconds"]:
             work += share
+            sinks += n
         removed += n * min(work, sizes * share)
-    return removed / mix["seconds"] if mix["seconds"] > 0 else 0.0
+    return removed, ground, sinks
+
+
+def tar_edps(s, mix, tuning):
+    """A Tar Pit's eDPS-equivalent in a band: HP its pool removes per second of the band's
+    traffic (the tar paragraph in the module docstring)."""
+    return tar_removed(s, mix, tuning)[0] / mix["seconds"] if mix["seconds"] > 0 else 0.0
+
+
+def eruption_gate(share, every, cap):
+    """Tar Pit's one gated bar (PLAN T68 step 6, DECISIONS #199): one Eruption pit removes at
+    most ERUPTION_SHARE_MAX of r31-40 ground HP. Over it below the cap: the Eruption interval
+    goes up 1 s ("raise"); over it at the cap: reported and passed ("report").
+    >>> eruption_gate(0.48, 13, 15)
+    'pass'
+    >>> eruption_gate(0.62, 13, 15)
+    'raise'
+    >>> eruption_gate(0.61, 15, 15)
+    'report'
+    """
+    if share <= ERUPTION_SHARE_MAX:
+        return "pass"
+    return "raise" if every < cap else "report"
 
 
 def edps(s, mix, tuning, buff=None, overkill=True, breaks1=False):
@@ -542,6 +581,7 @@ def value_table(data, mixes):
                     "before": [a + b for a, b in zip(zero_waste, aura)],
                     "breaks": s["sizeBreaks"],
                     "support": is_support(key, path),
+                    "released": key not in UNRELEASED,
                 }
     return rows
 
@@ -559,8 +599,9 @@ def judge(data, rows):
             r["marginal"] = [ratio(r["step"], e - p) if e - p > 1e-9 else math.inf for e, p in zip(r["edps"], prev)]
     medians = {}
     for tier in range(1, 6):
-        # #79: control and support paths stay out of the medians (they aren't judged on DPS).
-        damage = [r for (k, p, t), r in rows.items() if t == tier and not r["support"]]
+        # #79: control and support paths stay out of the medians (they aren't judged on DPS);
+        # so do towers not sold yet (#196).
+        damage = [r for (k, p, t), r in rows.items() if t == tier and not r["support"] and r["released"]]
         b = BOUGHT_BAND[tier]
         medians[tier] = {
             "marginal": statistics.median(r["marginal"][b] for r in damage),
@@ -596,6 +637,105 @@ def judge(data, rows):
     return medians, findings
 
 
+def worth_bar(cpd, median, untouchable):
+    """PLAN T68 step 2 (DECISIONS #193): None if a round-4 T5's cost/eDPS (r31-40) meets its
+    "worth it" bar against the median M, else why not. Damageable: <= WORTH_HI x M (checked on
+    the tower's best T5). Untouchable: between WORTH_HI x M and UNTOUCHABLE_HI x M.
+    >>> worth_bar(156, 142, False) is None
+    True
+    >>> worth_bar(200, 142, False)
+    'c/e 200 > 1.25x M (178)'
+    >>> worth_bar(186, 142, True) is None
+    True
+    >>> worth_bar(150, 142, True)
+    'c/e 150 < 1.25x M (178): too strong for a tower that cannot be damaged'
+    >>> worth_bar(300, 142, True)
+    'c/e 300 > 2x M (284)'
+    """
+    hi = WORTH_HI * median
+    if not untouchable:
+        return None if cpd <= hi else f"c/e {fmt(cpd)} > {WORTH_HI:g}x M ({fmt(hi)})"
+    if cpd < hi:
+        return f"c/e {fmt(cpd)} < {WORTH_HI:g}x M ({fmt(hi)}): too strong for a tower that cannot be damaged"
+    top = UNTOUCHABLE_HI * median
+    return None if cpd <= top else f"c/e {fmt(cpd)} > {UNTOUCHABLE_HI:g}x M ({fmt(top)})"
+
+
+def worth_lines(data, rows):
+    """The "worth it" bars on the round-4 batch's damage T5s (r31-40). Returns (lines, findings)."""
+    late = BOUGHT_BAND[5]
+    m = statistics.median(r["cpd"][late] for (k, p, t), r in rows.items()
+                          if t == 5 and not r["support"] and r["released"] and k not in ROUND4_BATCH)
+    lines = [f"  M = {fmt(m)} (released damage-path T5s outside the batch, r31-40); damageable best T5 <= {fmt(WORTH_HI * m)};"
+             f" can't be damaged: every damage T5 {fmt(WORTH_HI * m)}-{fmt(UNTOUCHABLE_HI * m)}"]
+    findings = []
+    for key in modelled(data):
+        t = data["Towers"][key]
+        if key not in ROUND4_BATCH or key in SUPPORT_TOWERS:
+            continue
+        untouchable = t.get("untouchable", False)
+        t5 = [(t["paths"][pi]["tiers"][4]["name"], r["cpd"][late]) for (k, pi, tier), r in rows.items()
+              if k == key and tier == 5 and not r["support"]]
+        judged = t5 if untouchable else [min(t5, key=lambda x: x[1])]
+        bits = []
+        for name, cpd in judged:
+            why = worth_bar(cpd, m, untouchable)
+            bits.append(f"{name} {fmt(cpd)} ({cpd / m:.2f}x M){' FAIL' if why else ''}")
+            if why:
+                findings.append(f"WORTH: {t['display']} {name}: {why} (PLAN T68, #193)")
+        lines.append(f"  {t['display']:<16} {'every damage T5' if untouchable else 'best T5'}: " + ", ".join(bits))
+    return lines, findings
+
+
+def tar_lines(data, mixes):
+    """Tar Pit judged as a control tower (PLAN T68 step 6, #198), r31-40, per path: Deep Tar's
+    slow (ground dinos slowed, time each loses: in the pool plus Clinging Tar's linger), the
+    share of ground HP one pit removes (burn, Eruption, sinking) and the Eruption gate (#199),
+    and Dig Site's cash a round (each sink's cash + its chest, every chest collected) and the
+    payback of each tier, like Supply Camp's Yield line. Returns (lines, findings)."""
+    t, tuning, late = data["Towers"]["TARPIT"], data["Tuning"], mixes[3]
+    rounds = BANDS[3][1] - BANDS[3][0] + 1
+    dinos = sum(n for n, *_ in late["dinos"])
+    ground = sum(n for n, kind, *_ in late["dinos"] if kind != "flying")
+    out, findings = [], []
+    for pi, path in enumerate(t["paths"]):
+        bits, prev_cash = [], 0.0
+        for tier in range(1, len(path["tiers"]) + 1):
+            s = path_stats(t, pi, tier)
+            removed, hp, sinks = tar_removed(s, late, tuning)
+            if pi == 0:
+                lost = sum(n * (tar_seconds(s, tuning, sp) - tar_seconds({**s, "slowPercent": 0}, tuning, sp)
+                                + s["slowLinger"] * s["slowPercent"] / 100)
+                           for n, kind, _, _, sp in late["dinos"] if kind != "flying") / max(1, ground)
+                bits.append(f"T{tier} slow {s['slowPercent']:g}% +{lost:.1f}s/dino, sinks {sinks / rounds:.0f}/round")
+            elif pi == 1:
+                bits.append(f"T{tier} {removed / hp:.0%}")
+            else:
+                cash = sinks / rounds * (s["sinkCash"] + s["sinkChestCash"])
+                gain = cash - prev_cash
+                step = path["tiers"][tier - 1]["cost"]
+                bits.append(f"T{tier} +{cash:.0f}/round" + (f" = {fmt(step / gain)}r" if gain > 0 else ""))
+                prev_cash = cash
+        if pi == 0:
+            head = f"slows every ground dino ({ground / max(1, dinos):.0%} of dinos)"
+        elif pi == 1:
+            head = "ground HP removed by one pit"
+        else:
+            head = "cash a round, payback"
+        out.append(f"  Tar Pit {path['id']:<9} {head}: " + "; ".join(bits))
+        if pi == 1:
+            s = path_stats(t, pi, len(path["tiers"]))
+            removed, hp, _ = tar_removed(s, late, tuning)
+            every = tuning["EruptionEvery"]
+            gate = eruption_gate(removed / hp, every, ERUPTION_EVERY_CAP)
+            out.append(f"  Eruption gate (#199): {removed / hp:.0%} of r31-40 ground HP at every {every:g}s"
+                       f" (bar <= {ERUPTION_SHARE_MAX:.0%}): " + {"pass": "met", "raise": "FAIL: raise Eruption every by 1 s",
+                                                                  "report": f"over, at the {ERUPTION_EVERY_CAP} s cap: reported, passes"}[gate])
+            if gate == "raise":
+                findings.append(f"ERUPTION: one pit removes {removed / hp:.0%} of r31-40 ground HP at {every:g}s (bar {ERUPTION_SHARE_MAX:.0%}; PLAN T68 step 6)")
+    return out, findings
+
+
 def fmt(x):
     if x == math.inf:
         return "inf"
@@ -614,7 +754,7 @@ def support_lines(data, mixes):
     for key in modelled(data):
         t = data["Towers"][key]
         for pi, path in enumerate(t["paths"]):
-            if not is_support(key, path) or key == "QUARTERMASTER":
+            if not is_support(key, path) or key in ("QUARTERMASTER", "TARPIT"):
                 continue
             bits = []
             for tier in range(1, len(path["tiers"]) + 1):
@@ -861,6 +1001,15 @@ def value_report(data, full=False):
     print("support and control (own effect, not DPS; aura credit in rounds 31-40 on 3 T2 Blinds in brackets; Weak Spot's adds its Brittle on them):")
     for line in support_lines(data, mixes):
         print(line)
+    lines, tar = tar_lines(data, mixes)
+    for line in lines:
+        print(line)
+    findings += tar
+    print('"worth it" (PLAN T68, #193; round-4 batch T5 cost/eDPS in rounds 31-40):')
+    lines, worth = worth_lines(data, rows)
+    for line in lines:
+        print(line)
+    findings += worth
     print("economy payback (Easy rounds of extra income; chests all collected; interest at its cap):")
     lines, econ = economy_lines(data)
     for line in lines:
@@ -950,8 +1099,8 @@ def breaks_report(data):
     mixes = band_mix(data)
     rows = value_table(data, mixes)
     tuning = data["Tuning"]
-    medians = [statistics.median(r["edps"][i] for (k, p, t), r in rows.items() if t == 5 and not r["support"])
-               for i in range(len(BANDS))]
+    medians = [statistics.median(r["edps"][i] for (k, p, t), r in rows.items()
+                                 if t == 5 and not r["support"] and r["released"]) for i in range(len(BANDS))]
     print("breaks (PLAN T48 final, DECISIONS #160, #164-#166): Z = zero-waste, B1 = every break 1,"
           f" S = the sheet's breaks; bar 1 S >= {S_OVER_B1}x B1 where Z/B1 >= {S_OVER_B1} [branch B1],"
           f" else S >= {RECOVER_Z}x Z [branch Z]; bar 2 S <= {S_OVER_Z}x Z;"
@@ -965,8 +1114,8 @@ def breaks_report(data):
         s = path_stats(t, pi, tier)
         label = f"{t['display'][:14]} {path['id']} T{tier} {path['tiers'][tier - 1]['name']} b{r['breaks']}"
         specialist = (key, path["id"], tier) in BOSS_SPECIALIST
-        # A tower that can't be damaged is held to at most 0.8x the median (#148, a T68 bar),
-        # so bar 3 (at least the median) doesn't gate it: reported like a boss specialist.
+        # A tower that can't be damaged is held to the "worth it" window instead (#193: its damage
+        # T5s 1.25x-2x the median cost/eDPS), so bar 3 doesn't gate it: reported like a boss specialist.
         untouchable = t.get("untouchable", False)
         for i in (BREAKS_T1_BANDS if tier == 1 else BREAKS_BANDS):
             z, b1, sv = r["before"][i], edps(s, mixes[i], tuning, breaks1=True) + r["aura"][i], r["edps"][i]

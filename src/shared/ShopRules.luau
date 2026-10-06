@@ -5,8 +5,10 @@
 
 return table.freeze({
 	-- In Config but not sold (or unlockable) yet, because their behaviour isn't
-	-- built: the round-4 tower batch (PLAN T63-T68) until T68 sells them.
-	Unreleased = table.freeze({ COIL = true, FALCON = true, TARPIT = true, BALLISTA = true } :: { [string]: boolean }),
+	-- built. Empty since PLAN T68 released the round-4 batch (Storm Coil, Falcon
+	-- Roost, Tar Pit, Harpoon Ballista). tools/value.py reads this list: medians
+	-- count released towers only (DECISIONS #196).
+	Unreleased = table.freeze({} :: { [string]: boolean }),
 
 	-- How far (studs) from your character you can place a tower. Keeps
 	-- placement walk-up: you go to where you want to build.

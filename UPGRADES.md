@@ -165,7 +165,7 @@ it — so slow, damage, sinking and Eruption never stack (#189). Rules: `Shared/
 | **Dig Site** | cash and support | Pick and Shovel | Fossil Hunter | *Lucky Finds* | *Tar Tracks* | *Tar Totem* |
 
 - Thick Tar: slow 35%. Wide Pool: 18 studs of track. Fast Sink: last-size dinos sink in 1.5s. Clinging Tar: dinos walking out stay slowed 3s. Tar Lake: the pool covers three times as much track (54 studs).
-- Warm Tar / Simmer: the tar deals damage per second to every dino in it (8, 22). Boiling Pit: burning tar (80/s); its ticks break 1 (#127). Tar Fire: dinos walk out burning — one tick of 2s of the tar's damage, kept as they shrink. Eruption: every 10s a geyser drops every dino in the pool 2 sizes outright, bosses included, Break resist ignored; each size pays (#150).
+- Warm Tar / Simmer: the tar deals damage per second to every dino in it (8, 22). Boiling Pit: burning tar (80/s); its ticks break 1 (#127). Tar Fire: dinos walk out burning — one tick of 2s of the tar's damage, kept as they shrink. Eruption: every 15s (#199, T68) a geyser drops every dino in the pool 2 sizes outright, bosses included, Break resist ignored; each size pays (#150).
 - Pick and Shovel / Fossil Hunter: +10 / +25 cash per sunk dino. Lucky Finds: each sink also leaves a chest worth 40 where the dino went under (collected like an airdrop). Tar Tracks: after a dino walks out, the next 12 studs of track slow 15% for 3s. Tar Totem: towers in range +15% damage against slowed dinos (tar or tranq).
 
 ## Harpoon Ballista (BALLISTA) — the heaviest single hit, pierce-through ✅ round 4 (PLAN T66; sold from T68) · unlock 300 Amber

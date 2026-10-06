@@ -20,8 +20,8 @@ local function at(pathIndex: number, tier: number)
 	return TowerStats.compute(PIT, tiers)
 end
 
-test("the Tuning levers are the seeds (#150)", function()
-	eq(T.EruptionEvery, 10)
+test("the Tuning levers are the seeds (#150; Eruption every 10 -> 15 s at T68, #199)", function()
+	eq(T.EruptionEvery, 15)
 	eq(T.EruptionSizes, 2)
 	eq(T.TarSinkSeconds, 3)
 	eq(T.TarTracksLength, 12)
@@ -204,16 +204,16 @@ test("Eruption: a 5-size T-Rex drops to 3, whatever its HP; the last sizes take 
 	ok(not string.find(drop, "breakResist", 1, true), "no Break resist")
 end)
 
-test("Eruption every 10s: the timer fires once per fill and carries the rest", function()
+test("Eruption every Tuning interval: the timer fires once per fill and carries the rest", function()
 	local timer, fired = 0, false
 	local count = 0
-	for _ = 1, 600 do -- 30 s at 20 steps a second
+	for _ = 1, 610 do -- 30.5 s at 20 steps a second
 		timer, fired = TarPit.tick(timer, 0.05, T.EruptionEvery)
 		if fired then
 			count += 1
 		end
 	end
-	eq(count, 3)
+	eq(count, math.floor(30.5 / T.EruptionEvery)) -- 2 at 15 s (PLAN T68, #199)
 	timer, fired = TarPit.tick(9.9, 0.25, 10)
 	eq(fired, true)
 	near(timer, 0.15)
