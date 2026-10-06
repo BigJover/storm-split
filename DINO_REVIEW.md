@@ -511,3 +511,27 @@ Rules used: no name already in `Config.luau`, `UPGRADES.md`, `HEROES.md` or the 
 - Twin Bow → **Twin Bolts** (it's a ballista, not a bow). Auto-Crank → **Steam Crank** (Fast Crank / Auto-Crank were near-twins on one path).
 
 **Kept as-is (good enough):** the four tower names; paths Charge, Talons, Flock, Falconer, Deep Tar, Bubbling, Volley; tiers Long Arc, Fork Lightning, Thunderclap, High Voltage, Grounding Spike, Storm Warning, Sharp Talons, Hooked Beak, Iron Talons, Second Pair, Quick Return, Wide Circle, Hooded Scout, Lure, Thick Tar, Wide Pool, Clinging Tar, Warm Tar, Simmer, Boiling Pit, Pick and Shovel, Fossil Hunter, Steel Head, Rope Line, Winch, Pin Down, Reel In, Fast Crank, Spread Volley, and all twelve tier 5s.
+
+## Round 13 — hero tier 6s and small mastery perks (T54)
+
+| Hero | Path | Tier 6 | Player text |
+|---|---|---|---|
+| Tracker | Gunslinger | *Hot Swap* | Your two guns take turns reloading, so you never stop shooting. Reloads faster. |
+| Tracker | Marksman | *Heart Shot* | Scoped shots fly dead straight and shrink a dino 2 sizes. |
+| Tracker | Trick Shot | ***Bounce Back*** (was Trick Reload) | Every dino a bounced shot takes down puts a bullet back in your gun. |
+| Big Game Hunter | Stalker | ***Big Five*** (was Five-Round Burst) | Fires 5 shots per burst, tightly grouped. |
+| Big Game Hunter | Heavy | *Endless Belt* | Once fully spun up, you never need to reload. |
+| Big Game Hunter | Special Ammo | ***Dynamite Rounds*** (was Powder Tips) | Bigger blasts that break through armour. |
+| Brush Beater | Slug | *Thunder Slug* | Slugs shrink a dino 2 sizes; dead straight while you stand still. |
+| Brush Beater | Buckshot | *Wildfire Drum* | Wider fire on the ground and 50% more shells. |
+| Brush Beater | Point Blank | *Quad Barrel* | Four blasts every trigger pull. Slower reload. |
+| Field Medic | Triage | *Rapid Response* | Your Triage Kit holds 2 uses. |
+| Field Medic | Lever Action | ***Bottomless Tube*** (was Tube Feed) | 50% more rounds and reloads twice as fast. |
+| Field Medic | Muzzle | ***Lights Out*** (was Nightcap) | Jaw Lock lasts 4s and spreads to dinos 9 studs away. |
+
+- **Must-fix:** Nightcap → **Lights Out** ("nightcap" is a bedtime drink; wrong for a kids' game). Powder Tips → **Dynamite Rounds** (a capstone can't sound weaker than its T5 Explosive Tips; also the third "Tips").
+- **Nice-to-have:** Trick Reload → **Bounce Back** (says the effect); Five-Round Burst → **Big Five** (the famous hunters' "Big Five" + five shots); Tube Feed → **Bottomless Tube** (Tube Feed sounds like a T1).
+- Thunder Slug kept, though Thunderclap/Thunderhead exist on towers. Apex and Meteor were taken.
+- Small perks: Long Arms, Handyman kept. **Field Dressing → First Aid** (nice-to-have; "dressing" reads as salad). **Quick Recovery → Back in Action** (nice-to-have; fifth "Quick" name).
+- **Must-fix wording:** HEROES.md line 66–67 says "per pop" twice → "per take-down". "Breaks 2 sizes" in player text → "shrinks a dino 2 sizes".
+- All new names grep-clean against UPGRADES, TOWERS_NEXT, HEROES, Config.

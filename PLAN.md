@@ -454,14 +454,33 @@ Checked by the Director against the Builder's 2026-10-02 Chaos run: the seeds pa
   3/3/0; guard passes (hero at the highest level in play with tier 6 < best tower; if a tier 6
   breaks it, lower that tier's number, never a tower's); `value.py` findings don't rise.
 
-### T53b. Heart Shot breaks 2 only when scoped (#170)
-- **Do:** in `Hero` (the `breaks` line in the hit path, ~l.559) a Marksman T6 shot gets the
-  gun's `Size breaks` only when the shot was fired scoped (the same flag Heart Shot's
-  no-spread rule already reads); unscoped shots break 1. Thunder Slug unchanged (every slug).
-  Panel / UPGRADES text: "scoped shots have no spread and break 2 sizes".
+### T53b. Heart Shot scoped-only + Dino round 13 names (#170, #174–#176) — after batch 6
+Small run; touches no `Hud.client` (names reach the panel through Config). Overlap with the
+batch-6 Builder: only `Main.server.luau` comments (l.273, l.428) — do T53b after batch 6 lands.
+- **Heart Shot:** in `Hero` (the `breaks` line in the hit path, ~l.559) a Marksman T6 shot
+  gets the gun's `Size breaks` only when fired scoped (the flag Heart Shot's no-spread rule
+  reads); unscoped shots break 1. Thunder Slug unchanged (every slug).
+- **Sheet `Hero Upgrades` col E (Name):** E67 `Bounce Back`, E68 `Big Five`, E70
+  `Dynamite Rounds`, E75 `Bottomless Tube`, E76 `Lights Out`. E66 Heart Shot, E71 Thunder Slug
+  unchanged.
+- **Sheet `Mastery` col E:** E11/E16/E21 `First Aid I: heal 5 more HP when a round is cleared`
+  / `First Aid II: heal 10 more HP when a round is cleared` / `First Aid III: heal 15 more HP
+  when a round is cleared`; E12/E17/E22 `Back in Action I: respawn 10% sooner` / `Back in
+  Action II: respawn 20% sooner` / `Back in Action III: respawn 30% sooner`. Long Arms and
+  Handyman unchanged. Re-export `Config`.
+- **Rename in comments and docs** (no logic keys use the names): `GunRules` l.14/15/81/89,
+  `HeroStats` l.90/91, `export_constants.py` l.240/241, `Hero.luau` l.90/581/651,
+  `Hero.client.luau` l.318, `Main.server.luau` l.273/428, `tiersix.spec.luau` test titles;
+  `HEROES.md` path tables (l.106, 119, 121, 156, 157) and tier-6 lines (l.112, 126–127, 144),
+  small perks (l.29–30); PLAN tier-6 table.
+- **HEROES.md wording:** l.66–67 "per pop" → "per take-down" (both). Player-facing "break(s) 2
+  sizes" → "shrink(s) a dino 2 sizes" (HEROES l.112 Heart Shot, l.144 Thunder Slug). Model and
+  code text (PLAN, DECISIONS, `Size breaks`) keeps "breaks".
 - **Accept:** spec: Heart Shot scoped vs a 3-size Pachy with enough damage drops 2 sizes,
-  unscoped drops 1; Thunder Slug drops 2 either way; all specs, audit strict 0, guard passes.
-  No sheet change.
+  unscoped drops 1; Thunder Slug drops 2 either way. `grep -rn -E "Nightcap|Powder Tips|Trick
+  Reload|Five-Round Burst|Tube Feed|Field Dressing|Quick Recovery" src tools HEROES.md
+  UPGRADES.md` = 0; `grep -n "per pop" HEROES.md` = 0. Config diff = the 5 + 6 name strings
+  only; all specs, audit strict 0, threat 0, guard passes.
 
 ### T54. 🦖 Dino review: tier-6 names, small-perk names, wording
 The 12 tier-6 names and texts, the four small-perk lines, the boss bar look, any
