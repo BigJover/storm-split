@@ -196,6 +196,13 @@ local function landingSpot(base: Vector3): Vector3
 	return Placement.ground(base + Vector3.new(math.cos(angle) * reach, 0, math.sin(angle) * reach))
 end
 
+-- One chest on the ground at `position` (a Tar Pit's Lucky Finds: a sunk dino's chest).
+function Airdrops.chestAt(position: Vector3, cash: number)
+	if cash > 0 then
+		spawnChest(Placement.ground(position), cash)
+	end
+end
+
 -- Called by Main at the start of every round.
 function Airdrops.drop()
 	for _, drop in Towers.airdrops() do

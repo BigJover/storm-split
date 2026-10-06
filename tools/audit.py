@@ -75,10 +75,7 @@ DEAD_ALLOWED = {
 # Config fields whose reader is a later task of the plan in progress. Listed as notes;
 # an entry becomes a finding the moment some src file reads the field, so it can't
 # outlive its task. (block, field): the task that reads it
-DEAD_PENDING = {
-    ("Tuning", "EruptionEvery"): "PLAN T67 (Eruption)",
-    ("Tuning", "EruptionSizes"): "PLAN T67 (Eruption)",
-}
+DEAD_PENDING = {}
 
 # Words no tower or tier name may use: "Trophy" is reserved for ranked (DECISIONS #130,
 # #139); "split" and "pop" were retired with balloons (#93, TOWERS_NEXT "Final names").

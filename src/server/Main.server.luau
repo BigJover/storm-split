@@ -178,6 +178,14 @@ Towers.init(map.towerFolder, {
 	resistOf = function(tower)
 		return { Hero.towerGuardOf(tower) } -- Field Medic Second Wind
 	end,
+	-- A Tar Pit sank a dino: Dig Site's cash per sink (scaled like kill pay) and Lucky
+	-- Finds' chest where it went under.
+	onSink = function(cash, chestCash, position)
+		if cash > 0 then
+			Economy.earn(cash * difficulty().cashMult)
+		end
+		Airdrops.chestAt(position, chestCash)
+	end,
 })
 Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged, onLookChanged = Hero.lookChanged })
 Wardrobe.init() -- hats and trails on characters (PLAN T57)

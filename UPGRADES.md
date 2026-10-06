@@ -148,11 +148,15 @@ ground. No armour until Iron Talons. Rules: `Shared/Falcon`.
 - Second Pair: 4 birds. Flock of Six: 6 birds. Wide Circle: radius 60. Murmuration (pending Jovan: or Sky Swarm): 12 small birds peck every dino in range (no more dives or flights; breaks 1).
 - Long Leash: +10% range. Falcon Bells: a struck dino takes +10% for 2s. Hooded Scout: bosses in range marked +25%. Lure: struck dinos pulled 2 studs back (not bosses). Hunting Party: towers in range +15% attack speed while a bird dives.
 
-## Tar Pit (TARPIT) — on the track: slows and sinks, can't be damaged 🔜 round 4 · unlock 250 Amber
+## Tar Pit (TARPIT) — on the track: slows and sinks, can't be damaged ✅ round 4 (PLAN T67; sold from T68) · unlock 250 Amber
 
-Placed **on the track** (dinos walk through it; pits can't overlap, #152). Dinos in the tar
-are slowed 25%; a dino at its last size that stays in it sinks (a take-down; not bosses, not
-Pteranodons). No air.
+Placed **on the track** (dinos walk through it, #152). Its pool is 12 studs of track centred
+where it stands; a new pit's pool may not overlap another pit's pool at its current length
+(touching is fine, #189). Ground dinos in the tar are slowed 25% (bosses too); a dino at its
+last size that stays in it 3s **sinks** — a take-down that pays like a kill and counts as a
+pop for the pit's owner (never bosses, never Pteranodons). No air. A dino in two pools (a
+Tar Lake can make them touch) gets only the strongest pool — the one with the most cash in
+it — so slow, damage, sinking and Eruption never stack (#189). Rules: `Shared/TarPit`.
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
@@ -160,9 +164,9 @@ Pteranodons). No air.
 | **Bubbling** | damage | Warm Tar | Simmer | *Boiling Pit* | *Tar Fire* | *Eruption* |
 | **Dig Site** | cash and support | Pick and Shovel | Fossil Hunter | *Lucky Finds* | *Tar Tracks* | *Tar Totem* |
 
-- Thick Tar: slow 35%. Wide Pool: 18 studs of track. Fast Sink: last-size dinos sink in 1.5s. Clinging Tar: dinos leaving stay slowed 3s. Tar Lake: the pool covers three times as much track.
-- Warm Tar / Simmer: damage per second. Boiling Pit: burning tar, burn ticks break 1. Tar Fire: dinos leave burning. Eruption: every 10s every dino in the pool drops 2 sizes outright, bosses included, Break resist ignored; each size pays (#150).
-- Pick and Shovel / Fossil Hunter: cash per sink. Lucky Finds: each sink drops a small chest that pays cash. Tar Tracks: dinos leaving slow the ones behind 15%. Tar Totem: towers in range +15% damage vs slowed dinos.
+- Thick Tar: slow 35%. Wide Pool: 18 studs of track. Fast Sink: last-size dinos sink in 1.5s. Clinging Tar: dinos walking out stay slowed 3s. Tar Lake: the pool covers three times as much track (54 studs).
+- Warm Tar / Simmer: the tar deals damage per second to every dino in it (8, 22). Boiling Pit: burning tar (80/s); its ticks break 1 (#127). Tar Fire: dinos walk out burning — one tick of 2s of the tar's damage, kept as they shrink. Eruption: every 10s a geyser drops every dino in the pool 2 sizes outright, bosses included, Break resist ignored; each size pays (#150).
+- Pick and Shovel / Fossil Hunter: +10 / +25 cash per sunk dino. Lucky Finds: each sink also leaves a chest worth 40 where the dino went under (collected like an airdrop). Tar Tracks: after a dino walks out, the next 12 studs of track slow 15% for 3s. Tar Totem: towers in range +15% damage against slowed dinos (tar or tranq).
 
 ## Harpoon Ballista (BALLISTA) — the heaviest single hit, pierce-through ✅ round 4 (PLAN T66; sold from T68) · unlock 300 Amber
 
@@ -206,6 +210,7 @@ furthest along first. Rules: `Shared/Ballista`.
 | Chain lightning, Power Grid, Judgement Bolt, Grounding Spike, Lightning Rodeo | Storm Coil | ✅ round 4 (PLAN T64) |
 | Birds with travel time, Power Dive, Eagle of the Peak, Murmuration, Hooded Scout, Lure, Hunting Party | Falcon Roost | ✅ round 4 (PLAN T65) |
 | Spread volleys, Skewer, Pin Down, Reel In, Tow Line (boss pull), Chain Harpoons | Harpoon Ballista | ✅ round 4 (PLAN T66) |
+| Tar pool on the track (strongest pool only), sinking, Clinging Tar, tar damage, Tar Fire, Eruption (size drop), Dig Site cash and chests, Tar Tracks, Tar Totem | Tar Pit | ✅ round 4 (PLAN T67) |
 
 When a mechanic lands, its numbers get a column on `Tower Upgrades` and the stat-only
 multipliers get rebalanced around it — expect a tuning pass per mechanic.

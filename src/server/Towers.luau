@@ -82,6 +82,17 @@
 	between them (breaks 1, an area hit). Pin Down and Reel In are the hit's stun and
 	knockback (never bosses). Tow Line: every Tow Line every s the boss furthest along in
 	range is pulled Tow Line pull studs back: the only knockback that moves a boss.
+
+	TAR PIT (PLAN T67, rules in Shared/TarPit): can't be damaged; stands on the track.
+	Its pool is `range` studs of track centred where it stands. Every frame each ground dino
+	in a pool gets the strongest pool only (#189): its slow, its damage per second
+	(Bubbling: Burn DPS, breaks 1), and, at its last size and not a boss, the sink clock:
+	after Sink seconds in the tar it sinks (a take-down; Pick and Shovel's cash and Lucky
+	Finds' chest go through the onSink hook). Walking out: Clinging Tar keeps it slowed,
+	Tar Fire sets it alight (one tick of the pool's damage over Burn seconds), Tar Tracks
+	slows the track past the pool for a while. Eruption: every Eruption every s each dino
+	in that pool drops Eruption sizes outright (Enemies.dropSizes). Tar Totem: an aura;
+	towers in range deal +% to slowed dinos.
 ]]
 
 local Players = game:GetService("Players")
@@ -94,6 +105,7 @@ local Placement = require(Shared:WaitForChild("Placement"))
 local Ballista = require(Shared:WaitForChild("Ballista"))
 local Falcon = require(Shared:WaitForChild("Falcon"))
 local StormCoil = require(Shared:WaitForChild("StormCoil"))
+local TarPit = require(Shared:WaitForChild("TarPit"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 local TowerStats = require(Shared:WaitForChild("TowerStats"))
@@ -118,6 +130,7 @@ type Buff = {
 	resistPercent: number, -- damage resistance (an Armory in range, itself included)
 	hpPercent: number, -- +% max HP (a Field Hospital's Tonic in range)
 	arcPercent: number, -- Lightning Rodeo in range: each shot arcs once at this %
+	slowedPercent: number, -- Tar Totem in range: +% damage against slowed dinos
 }
 
 export type Tower = {
@@ -142,6 +155,9 @@ export type Tower = {
 	sorties: { Sortie }, -- Falcon Roost: birds out of the roost
 	dived: { [any]: boolean }, -- Falcon Roost Power Dive: dinos it has dived on (weak keys)
 	towTimer: number, -- Harpoon Ballista: seconds toward its next Tow Line pull
+	poolAt: number, -- Tar Pit: distance along the track of the pool's centre
+	eruptTimer: number, -- Tar Pit: seconds toward its next Eruption
+	tracksUntil: number, -- Tar Pit: Tar Tracks' footprints last until then (os.clock)
 	model: Model,
 }
 
@@ -162,6 +178,7 @@ local towers: { Tower } = {}
 local towerFolder: Instance
 local nextId = 0
 local onPop: ((Player?, string?) -> ())? = nil
+local onSink: ((cash: number, chestCash: number, position: Vector3) -> ())? = nil -- Dig Site pay
 local levelScale = 1 -- damage multiplier from the team's level
 local towerLevel = 1 -- the team's level itself (pierce-through's level bonus)
 local extraRatePercent: ((Tower) -> number)? = nil -- boosts from outside towers (hero Rally Cry)
@@ -183,7 +200,7 @@ end
 ------------------------------------------------------------------ stats
 
 local NO_BUFF: Buff =
-	table.freeze({ ratePercent = 0, damagePercent = 0, piercesArmor = false, discountPercent = 0, sellRefund = 0, resistPercent = 0, hpPercent = 0, arcPercent = 0 })
+	table.freeze({ ratePercent = 0, damagePercent = 0, piercesArmor = false, discountPercent = 0, sellRefund = 0, resistPercent = 0, hpPercent = 0, arcPercent = 0, slowedPercent = 0 })
 local showHealth: (Tower) -> () -- below, with the rest of health
 
 local function hasAura(s: Stats): boolean
@@ -195,6 +212,7 @@ local function hasAura(s: Stats): boolean
 		or s.resistPercent > 0
 		or s.auraHpPercent > 0
 		or s.auraArcPercent > 0
+		or s.auraSlowedPercent > 0
 end
 
 local function covers(source: Tower, point: Vector3): boolean
@@ -206,7 +224,7 @@ end
 -- reads Discount / RefundRate from the tower's body.
 local function refreshAuras()
 	for _, tower in towers do
-		local rate, damage, pierce, discount, refund, resist, hpBonus, arc = 0, 0, false, 0, 0, 0, 0, 0
+		local rate, damage, pierce, discount, refund, resist, hpBonus, arc, slowed = 0, 0, false, 0, 0, 0, 0, 0, 0
 		for _, source in towers do
 			local s = source.stats
 			if not source.knockedOut and hasAura(s) and covers(source, tower.base) then
@@ -223,10 +241,11 @@ local function refreshAuras()
 					refund = math.max(refund, s.sellRefund)
 					hpBonus = if tower.def.untouchable then 0 else math.max(hpBonus, s.auraHpPercent)
 					arc = math.max(arc, s.auraArcPercent)
+					slowed = math.max(slowed, s.auraSlowedPercent)
 				end
 			end
 		end
-		tower.buff = if rate > 0 or damage > 0 or pierce or discount > 0 or refund > 0 or resist > 0 or hpBonus > 0 or arc > 0
+		tower.buff = if rate > 0 or damage > 0 or pierce or discount > 0 or refund > 0 or resist > 0 or hpBonus > 0 or arc > 0 or slowed > 0
 			then {
 				ratePercent = rate,
 				damagePercent = damage,
@@ -236,6 +255,7 @@ local function refreshAuras()
 				resistPercent = resist,
 				hpPercent = hpBonus,
 				arcPercent = arc,
+				slowedPercent = slowed,
 			}
 			else NO_BUFF
 		-- Tonic: gaining the aura adds the HP it gives; losing it only caps HP.
@@ -431,6 +451,53 @@ local function swapStage(tower: Tower): number
 	return stage
 end
 
+------------------------------------------------------------------ Tar Pit pool
+
+local POOL_STEP = 3 -- visuals only: studs between the pool's drawn points
+
+-- The range ring: a Tar Pit's range is its pool's length of track, drawn as the pool
+-- itself, so it only gets a ring when it has an aura (Tar Totem).
+local function ringRange(def, stats: Stats): number
+	if def.onTrack and stats.auraSlowedPercent <= 0 then
+		return 0
+	end
+	return stats.range
+end
+
+-- Draws a pit's pool along the track and publishes it on the body (the client's placing
+-- ghost checks new pools against PoolAt / PoolLength, Shared/Placement.checkPool).
+local function showPool(tower: Tower)
+	if not tower.def.onTrack then
+		return
+	end
+	local points = {}
+	for _, d in TarPit.samples(tower.poolAt, tower.stats.range, POOL_STEP) do
+		table.insert(points, Enemies.pointAt(d))
+	end
+	TowerLook.setPool(tower.model, points)
+	local body = tower.model.PrimaryPart
+	if body then
+		body:SetAttribute("PoolAt", tower.poolAt)
+		body:SetAttribute("PoolLength", tower.stats.range)
+	end
+end
+
+-- Every pit's pool at its current length (Shop checks a new pit against them, #189).
+function Towers.pools(): { TarPit.Pool }
+	local list = {}
+	for _, tower in towers do
+		if tower.def.onTrack then
+			table.insert(list, { at = tower.poolAt, length = tower.stats.range })
+		end
+	end
+	return list
+end
+
+-- Where along the track a pit placed at `position` would centre its pool.
+function Towers.poolAtFor(position: Vector3): number
+	return Enemies.trackDistanceNear(Placement.ground(position))
+end
+
 ------------------------------------------------------------------ public
 
 export type Hooks = {
@@ -439,6 +506,9 @@ export type Hooks = {
 	onPop: ((Player?, string?) -> ())?,
 	extraRatePercent: ((Tower) -> number)?,
 	resistOf: ((Tower) -> { number })?,
+	-- A Tar Pit sank a dino: its Dig Site cash and Lucky Finds chest (Main pays; Towers never
+	-- touches cash).
+	onSink: ((cash: number, chestCash: number, position: Vector3) -> ())?,
 }
 
 function Towers.init(folder: Instance, hooks: Hooks?)
@@ -446,6 +516,7 @@ function Towers.init(folder: Instance, hooks: Hooks?)
 	onPop = hooks and hooks.onPop
 	extraRatePercent = hooks and hooks.extraRatePercent
 	resistOf = hooks and hooks.resistOf
+	onSink = hooks and hooks.onSink
 end
 
 -- Callers check Placement first (Shop does); this only builds.
@@ -457,7 +528,8 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 	end
 
 	local base = Placement.ground(position)
-	local model = TowerLook.build(key, def.range, base)
+	local stats = TowerStats.compute(def, { 0, 0, 0 })
+	local model = TowerLook.build(key, ringRange(def, stats), base)
 	-- The builder's tower flag, if they wear one (a look only; Shared/Cosmetics).
 	local flag = if owner
 		then Cosmetics.colour(Cosmetics.worn(function(name)
@@ -481,7 +553,7 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 		position = base + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0),
 		muzzle = base + Vector3.new(0, TowerLook.BODY_HEIGHT - 0.5, 0),
 		pathTiers = pathTiers,
-		stats = TowerStats.compute(def, pathTiers),
+		stats = stats,
 		buff = NO_BUFF,
 		cooldown = 0,
 		freezeTimer = 0,
@@ -494,9 +566,13 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 		sorties = {},
 		dived = setmetatable({}, { __mode = "k" }) :: any,
 		towTimer = 0,
+		poolAt = if def.onTrack then Enemies.trackDistanceNear(base) else 0,
+		eruptTimer = 0,
+		tracksUntil = 0,
 		model = model,
 	}
 	table.insert(towers, tower)
+	showPool(tower)
 	showHealth(tower)
 	refreshAuras()
 	return tower
@@ -514,7 +590,8 @@ function Towers.upgrade(tower: Tower, pathIndex: number): boolean
 	local maxHp = Combat.towerMaxHp(tower.def, tower.pathTiers, tower.buff.hpPercent)
 	tower.hp = math.min(maxHp, tower.hp + (maxHp - tower.maxHp))
 	tower.maxHp = maxHp
-	TowerLook.refresh(tower.model, tower.stats.range, tower.pathTiers, swapStage(tower))
+	TowerLook.refresh(tower.model, ringRange(tower.def, tower.stats), tower.pathTiers, swapStage(tower))
+	showPool(tower) -- Wide Pool / Tar Lake lengthen it
 	TowerLook.setLantern(tower.model, tower.stats.rescueRespawnMult > 0) -- Rescue Beacon
 	showHealth(tower)
 	refreshAuras()
@@ -603,6 +680,9 @@ local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: n
 	end
 	if enemy.def.boss then
 		damage *= stats.bossMult
+	end
+	if tower.buff.slowedPercent > 0 and Enemies.isSlowed(enemy) then
+		damage *= 1 + tower.buff.slowedPercent / 100 -- Tar Totem
 	end
 	Enemies.stun(enemy, stats.stunSeconds, stats.stunsBosses)
 	Enemies.knockback(enemy, stats.knockback)
@@ -750,6 +830,9 @@ local function coilHit(tower: Tower, enemy: Enemies.Enemy, damage: number, break
 	end
 	if enemy.def.boss then
 		damage *= stats.bossMult
+	end
+	if tower.buff.slowedPercent > 0 and Enemies.isSlowed(enemy) then
+		damage *= 1 + tower.buff.slowedPercent / 100 -- Tar Totem
 	end
 	local b = if breaks and breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
 	credit(tower.owner, Enemies.damage(enemy, damage, pierce, b))
@@ -1130,6 +1213,128 @@ local function stepChill(tower: Tower, dt: number, live)
 	end
 end
 
+------------------------------------------------------------------ Tar Pit
+
+local TAR_COLOR = Color3.fromRGB(30, 24, 20) -- visuals only
+local ERUPTION_COLOR = Color3.fromRGB(255, 120, 40)
+-- How long tar slow lasts after the last frame a dino spent in a pool (keeps it
+-- continuous between frames), like CHILL_REFRESH.
+local TAR_REFRESH = 0.25
+
+-- Seconds each last-size dino has spent in the tar, and the pool it was last in.
+local soaked: { [any]: number } = setmetatable({}, { __mode = "k" }) :: any
+local lastPool: { [any]: Tower } = setmetatable({}, { __mode = "k" }) :: any
+
+local function isPit(tower: Tower): boolean
+	return tower.def.onTrack == true
+end
+
+-- A dino walked out of `pit`'s pool: Clinging Tar, Tar Fire, Tar Tracks.
+local function leftPool(pit: Tower, enemy: Enemies.Enemy, now: number)
+	local stats = pit.stats
+	if stats.slowLinger > 0 then
+		Enemies.tar(enemy, stats.slowPercent, stats.slowLinger)
+	end
+	if stats.burnSeconds > 0 and stats.burnDps > 0 then
+		local tick = stats.burnDps * stats.burnSeconds * (1 + pit.buff.damagePercent / 100) * levelScale
+		Hazards.ignite(enemy, tick, stats.burnSeconds, piercing(pit), pit.owner)
+	end
+	if stats.tracksSlowPercent > 0 then
+		pit.tracksUntil = now + Config.Tuning.TarTracksSeconds
+	end
+end
+
+local function stepTar(dt: number, live)
+	local pits, strengths = {}, {}
+	for _, tower in towers do
+		if isPit(tower) then
+			table.insert(pits, tower)
+			table.insert(strengths, TarPit.strength(tower.def, tower.pathTiers))
+		end
+	end
+	if #pits == 0 then
+		return
+	end
+	local tuning = Config.Tuning
+	local now = os.clock()
+	local erupting = {}
+	for _, pit in pits do
+		if pit.stats.eruption then
+			local fired
+			pit.eruptTimer, fired = TarPit.tick(pit.eruptTimer, dt, tuning.EruptionEvery)
+			if fired then
+				erupting[pit] = true
+				for _, d in TarPit.samples(pit.poolAt, pit.stats.range, pit.stats.range / 3) do
+					Effects.part(Vector3.new(1.5, 7, 1.5), CFrame.new(Enemies.pointAt(d) + Vector3.new(0, 3.5, 0)), ERUPTION_COLOR, 0.4) -- a geyser
+				end
+			end
+		else
+			pit.eruptTimer = 0
+		end
+	end
+
+	for _, enemy in live do
+		if not enemy.alive or enemy.def.flying then
+			continue
+		end
+		-- The strongest pool this dino stands in (#189: never more than one).
+		local inside, power = {}, {}
+		for i, pit in pits do
+			if TarPit.contains(enemy.distance, pit.poolAt, pit.stats.range) then
+				table.insert(inside, pit)
+				table.insert(power, strengths[i])
+			end
+		end
+		local pick = TarPit.strongest(power)
+		local pit = if pick then inside[pick] else nil
+		if not pit then
+			local was = lastPool[enemy]
+			if was then
+				lastPool[enemy], soaked[enemy] = nil, nil
+				if table.find(towers, was) then
+					leftPool(was, enemy, now)
+				end
+			end
+			for _, other in pits do
+				if now < other.tracksUntil and TarPit.onTracks(enemy.distance, other.poolAt, other.stats.range, tuning.TarTracksLength) then
+					Enemies.tar(enemy, other.stats.tracksSlowPercent, TAR_REFRESH)
+				end
+			end
+			continue
+		end
+		lastPool[enemy] = pit
+		local stats = pit.stats
+		Enemies.tar(enemy, stats.slowPercent, TAR_REFRESH)
+		if stats.burnDps > 0 then
+			local damage = stats.burnDps * dt * (1 + pit.buff.damagePercent / 100) * levelScale
+			credit(pit.owner, Enemies.damage(enemy, damage, piercing(pit)))
+		end
+		if enemy.alive and erupting[pit] then
+			credit(pit.owner, Enemies.dropSizes(enemy, tuning.EruptionSizes))
+		end
+		if not enemy.alive then
+			continue
+		end
+		if enemy.size <= 1 and not enemy.def.boss then
+			soaked[enemy] = (soaked[enemy] or 0) + dt
+			if TarPit.sinks(enemy.size, enemy.def.boss == true, false, soaked[enemy], stats.sinkSeconds) then
+				local position = enemy.part.Position
+				local sunk, gone = Enemies.sink(enemy)
+				if sunk then
+					lastPool[enemy], soaked[enemy] = nil, nil
+					credit(pit.owner, true, gone, 1)
+					Effects.disc(Placement.ground(position) + Vector3.new(0, 0.2, 0), 1.5, TAR_COLOR, 0.6, 0.2) -- it goes under
+					if onSink and (stats.sinkCash > 0 or stats.sinkChestCash > 0) then
+						onSink(stats.sinkCash, stats.sinkChestCash, Placement.ground(position))
+					end
+				end
+			end
+		else
+			soaked[enemy] = 0
+		end
+	end
+end
+
 -- Called every Heartbeat by Main.
 -- NOTE: fires at most once per frame (times `shots`), so fire rates above
 -- ~60/s are capped.
@@ -1234,6 +1439,7 @@ function Towers.step(dt: number)
 		stepTow(tower, dt, live)
 	end
 	stepGrid(dt, live)
+	stepTar(dt, live)
 	local parties = huntingParties()
 
 	for _, tower in towers do

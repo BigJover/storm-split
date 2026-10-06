@@ -58,6 +58,21 @@ Shared/TowerStats.compute, whose field lists are read from the Luau file):
              pair's chain hits CHAIN_DINOS more dinos (assumed) at the bolt's damage,
              breaking 1 (an area hit). Spread Volley's bolts are Shots. Pin Down, Reel In
              and Tow Line are control (the Reel path is judged on its own line): not DPS.
+  tar        (Tar Pit, PLAN T67) a pool can only work on the dinos that walk through it, so
+             its number is an eDPS-equivalent from traffic: the HP it removes from every
+             ground dino of the band (Easy solo counts) divided by the band's seconds (each
+             round enemies x Spawn gap + WALK_SECONDS, the sheet's round length). A dino
+             spends t = pool length / (speed x (1 - slow)) in the tar (speed = Track's base
+             x Global speed x the species' Speed x). The tar's damage: Burn DPS x t, plus
+             Tar Fire's one tick of Burn DPS x Burn seconds (armoured only if it pierces).
+             Eruption: t / Eruption every eruptions (expected), each Eruption sizes sizes
+             outright, at most the dino's sizes. Sinking: a non-boss dino with t >= Sink
+             seconds loses its last size (assumed: it reaches the pit at its last size, the
+             pit placed behind the damage towers: an upper bound). Capped at the dino's HP.
+             The slow, Clinging Tar and Tar Tracks are not DPS: not credited. Tar Totem's
+             aura is credited like any damage aura on the 3 neighbour Blinds (assumed: they
+             shoot dinos the tar has slowed). Deep Tar and Dig Site are control and cash
+             paths (judged on their own line); Bubbling is a damage path.
 Levels scale every tower alike, so they're left out of the tower tables (except inside the
 overkill factor). Heroes break 1 and hit small: their lines are left as they were.
 
@@ -109,7 +124,8 @@ BOUGHT_BAND = {1: 1, 2: 1, 3: 2, 4: 3, 5: 3}  # tier -> index into BANDS
 SUPPORT_PATHS = {("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knockout"), ("CHILLER", "Weak Spot"),
                  ("COIL", "Lightning Rod"),  # PLAN T64: Charged Air, Storm Warning, Lightning Rodeo
                  ("FALCON", "Falconer"),  # PLAN T65: Falcon Bells, Hooded Scout, Lure, Hunting Party
-                 ("BALLISTA", "Reel")}  # PLAN T66: Pin Down, Reel In, Tow Line
+                 ("BALLISTA", "Reel"),  # PLAN T66: Pin Down, Reel In, Tow Line
+                 ("TARPIT", "Deep Tar"), ("TARPIT", "Dig Site")}  # PLAN T67: slow and sink; cash and Tar Totem
 # Single tiers that buy control on a damage path (#74): still in the table and the medians,
 # never flagged dead. Longshot Perch Big Bore T3 = Concussion Round (a stun on hit).
 CONTROL_TIERS = {("SNIPER", "Big Bore", 3)}
@@ -119,7 +135,7 @@ BOSS_SPECIALIST = {("SNIPER", "Big Bore", 5)}
 SUPPORT_TOWERS = {"QUARTERMASTER", "HOSPITAL", "ARMORY"}
 # Towers on the sheet whose behaviour isn't built yet (the round-4 batch, PLAN T63-T67):
 # left out of every table and median until their task models them. Each task removes its key.
-PENDING_TOWERS = {"TARPIT"}
+PENDING_TOWERS = set()
 # Power Grid is credited as if this many Storm Coils stand (x1.0 damage, range x1.15; a
 # stated assumption: the plain co-op case). One coil alone is x0.75, six x2.0 (#151).
 GRID_COILS = 2
@@ -152,6 +168,9 @@ def _luau_list(text, name):
 
 _TS = open(os.path.join(ROOT, "src", "shared", "TowerStats.luau"), encoding="utf-8").read()
 MULTIPLIERS, HIGHEST, FLAGS = (_luau_list(_TS, n) for n in ("MULTIPLIERS", "HIGHEST", "FLAGS"))
+# Track.BaseEnemySpeed (studs/s), for the time a dino spends in a Tar Pit's pool.
+BASE_SPEED = float(re.search(r"BaseEnemySpeed\s*=\s*([\d.]+)",
+                             open(os.path.join(ROOT, "src", "shared", "Track.luau"), encoding="utf-8").read()).group(1))
 
 
 def tower_stats(t, tiers):
@@ -160,6 +179,7 @@ def tower_stats(t, tiers):
     high = {"shots": 1, "lineHits": 1, "sizeBreaks": 1}
     flag = {}
     freeze_every = 0
+    sink_seconds = 0
     for path, tier in zip(t["paths"], tiers):
         if tier > 0:
             step = path["tiers"][tier - 1]
@@ -172,6 +192,9 @@ def tower_stats(t, tiers):
             every = step.get("freezeEvery", 0)
             if every > 0 and (freeze_every == 0 or every < freeze_every):
                 freeze_every = every
+            sink = step.get("sinkSeconds", 0)
+            if sink > 0 and (sink_seconds == 0 or sink < sink_seconds):
+                sink_seconds = sink
     return {
         "damage": t["baseDamage"] * mult["damageMult"],
         "rate": t["baseRate"] * mult["rateMult"],
@@ -222,6 +245,14 @@ def tower_stats(t, tiers):
         "skewer": bool(t.get("harpoons") and flag.get("skewer", False)),
         "towLine": bool(t.get("harpoons") and flag.get("towLine", False)),
         "chainHarpoons": bool(t.get("harpoons") and flag.get("chainHarpoons", False)),
+        # Tar Pit (Shared/TowerStats: only a tower on the track)
+        "onTrack": t.get("onTrack", False),
+        "sinkSeconds": (sink_seconds or TUNING["TarSinkSeconds"]) if t.get("onTrack") else 0,
+        "eruption": bool(t.get("onTrack") and flag.get("eruption", False)),
+        "sinkCash": high.get("sinkCash", 0) if t.get("onTrack") else 0,
+        "sinkChestCash": high.get("sinkChestCash", 0) if t.get("onTrack") else 0,
+        "tracksSlowPercent": high.get("tracksSlowPercent", 0) if t.get("onTrack") else 0,
+        "auraSlowedPercent": high.get("auraSlowedPercent", 0),
     }
 
 
@@ -291,16 +322,20 @@ def band_mix(data):
     for lo, hi in BANDS:
         share = {"plain": 0.0, "armoured": 0.0, "flying": 0.0, "boss": 0.0}
         parts = []
+        dinos, seconds = [], 0.0  # the tar model: (count, kind, sizes, size HP, Speed x); the band's length
         for r, rd in enumerate(data["Rounds"][lo - 1:hi], start=lo):
+            seconds += sum(rd["counts"].values()) * rd["spawnGap"] + WALK_SECONDS
             for key, n in rd["counts"].items():
                 e = enemies[key]
                 ehp = n * e["effectiveHp"] * rd["hpMult"]
                 kind = "boss" if e["boss"] else "flying" if e["flying"] else "armoured" if e["armored"] else "plain"
                 share[kind] += ehp
                 parts.append((ehp, kind, e["hp"] * rd["hpMult"] / max(1, e["sizes"]), e["breakResist"], round_level(tuning, r)))
+                dinos.append((n, kind, max(1, e["sizes"]), e["hp"] * rd["hpMult"] / max(1, e["sizes"]), e["speedMult"]))
         total = sum(share.values())
         out.append({**{k: v / total for k, v in share.items()}, "total": total,
-                    "parts": [(w / total, kind, hp, resist, lv) for w, kind, hp, resist, lv in parts]})
+                    "parts": [(w / total, kind, hp, resist, lv) for w, kind, hp, resist, lv in parts],
+                    "dinos": dinos, "seconds": seconds})
     return out
 
 
@@ -334,10 +369,37 @@ def overkill_factor(damage, breaks, share):
 
 # ---------------------------------------------------------------- effective DPS
 
+def tar_seconds(s, tuning, speed_mult):
+    """Seconds a ground dino of this Speed x spends in the pit's pool (the tar paragraph)."""
+    speed = BASE_SPEED * tuning.get("GlobalSpeedScalar", 1) * speed_mult * (1 - min(95, s["slowPercent"]) / 100)
+    return s["range"] / speed if speed > 0 else math.inf
+
+
+def tar_edps(s, mix, tuning):
+    """A Tar Pit's eDPS-equivalent in a band: HP its pool removes per second of the band's
+    traffic (the tar paragraph in the module docstring)."""
+    removed = 0.0
+    for n, kind, sizes, share, speed_mult in mix["dinos"]:
+        if kind == "flying":
+            continue
+        t = tar_seconds(s, tuning, speed_mult)
+        work = 0.0
+        if s["burnDps"] > 0 and (kind != "armoured" or s["pierces"]):
+            work += s["burnDps"] * (t + s["burnSeconds"])
+        if s["eruption"]:
+            work += min(sizes, tuning["EruptionSizes"] * t / tuning["EruptionEvery"]) * share
+        if kind != "boss" and s["sinkSeconds"] > 0 and t >= s["sinkSeconds"]:
+            work += share
+        removed += n * min(work, sizes * share)
+    return removed / mix["seconds"] if mix["seconds"] > 0 else 0.0
+
+
 def edps(s, mix, tuning, buff=None, overkill=True, breaks1=False):
     """One tower's effective DPS against a band's mix (`buff`: an aura it stands in).
     `overkill` False = the old zero-waste number (every point of damage counted);
     `breaks1` True = overkill counted with every Size breaks forced to 1 (today's game, B1)."""
+    if s.get("onTrack"):
+        return tar_edps(s, mix, tuning)  # PLAN T67: a pool, not a shooter
     buff = buff or {}
     rate = s["rate"] * (1 + buff.get("rate", 0) / 100)
     if s["damage"] <= 0 or rate <= 0:
@@ -434,7 +496,9 @@ def aura_credit(data, s, mix, brittle=False):
 
     `brittle` (support paths only, #74): the neighbours' shots also get the tower's Brittle %,
     assuming the dinos they shoot are the sedated ones in its range."""
-    buff = {"rate": max(s["auraRatePercent"], s.get("diveAuraRatePercent", 0)), "damage": s["auraDamagePercent"], "pierces": s["auraPiercesArmor"],
+    buff = {"rate": max(s["auraRatePercent"], s.get("diveAuraRatePercent", 0)),
+            "damage": s["auraDamagePercent"] + s.get("auraSlowedPercent", 0),  # Tar Totem: every target slowed (assumed)
+            "pierces": s["auraPiercesArmor"],
             "brittle": s["brittlePercent"] if brittle else 0, "arc": s.get("auraArcPercent", 0)}
     if not (buff["rate"] or buff["damage"] or buff["pierces"] or buff["brittle"] or buff["arc"]):
         return 0.0
@@ -606,6 +670,19 @@ def support_lines(data, mixes):
                     if s["towLine"]:
                         bit += f" tows a boss {data['Tuning']['TowLinePull']:g} every {data['Tuning']['TowLineEvery']:g}s"
                     bit += f" (own {edps(s, late, data['Tuning']):.1f})"
+                elif key == "TARPIT":
+                    tuning = data["Tuning"]
+                    bit = f"pool {s['range']:g} slow {s['slowPercent']:g}%"
+                    if s["slowLinger"]:
+                        bit += f" +{s['slowLinger']:g}s"
+                    bit += f" (a Raptor {tar_seconds(s, tuning, data['Enemies']['BRUTE']['speedMult']):.1f}s in it) sinks after {s['sinkSeconds']:g}s"
+                    if s["sinkCash"] or s["sinkChestCash"]:
+                        bit += f" +{s['sinkCash']:g}/sink" + (f" chest {s['sinkChestCash']:g}" if s["sinkChestCash"] else "")
+                    if s["tracksSlowPercent"]:
+                        bit += f" tracks {s['tracksSlowPercent']:g}%"
+                    if s["auraSlowedPercent"]:
+                        bit += f" totem +{s['auraSlowedPercent']:g}% vs slowed (+{aura_credit(data, s, late):.1f})"
+                    bit += f" (own {edps(s, late, tuning):.1f})"
                 elif path["id"] == "Ward":
                     bit = f"heal {s['healPerSecond']:g}/s" + (" revives" if s["revives"] else "")
                 elif path["id"] == "Rescue":

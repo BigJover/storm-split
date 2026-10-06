@@ -105,6 +105,19 @@ local function expected(def, tiers: { number })
 	if not def.harpoons then
 		e.skewer, e.towLine, e.chainHarpoons = false, false, false
 	end
+	-- The tar (PLAN T67): a tower on the track sinks after the shortest Sink seconds any path
+	-- gives, else Tuning's; sinking, Dig Site pay, Eruption and Tar Tracks only on the track.
+	local sink = 0
+	for _, row in rows do
+		if row.sinkSeconds > 0 and (sink == 0 or row.sinkSeconds < sink) then
+			sink = row.sinkSeconds
+		end
+	end
+	if def.onTrack then
+		e.sinkSeconds = if sink > 0 then sink else Config.Tuning.TarSinkSeconds
+	else
+		e.sinkSeconds, e.sinkCash, e.sinkChestCash, e.eruption, e.tracksSlowPercent = 0, 0, 0, false, 0
+	end
 	return e
 end
 

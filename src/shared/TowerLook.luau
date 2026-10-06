@@ -33,6 +33,7 @@ TowerLook.COLORS = table.freeze({
 	COIL = Color3.fromRGB(190, 110, 50), -- Storm Coil: copper
 	FALCON = Color3.fromRGB(150, 105, 60), -- Falcon Roost: falcon brown
 	BALLISTA = Color3.fromRGB(125, 90, 55), -- Harpoon Ballista: oiled oak
+	TARPIT = Color3.fromRGB(35, 28, 24), -- Tar Pit: tar black
 })
 
 TowerLook.BODY_HEIGHT = 5
@@ -216,6 +217,22 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 			block("Winch", Vector3.new(0.9, 0.5, 0.5), at(0, 1.85, 1.15), DARK_WOOD, Enum.Material.Wood),
 		}
 	end,
+	-- Tar Pit: a hole of glossy tar with bubbles, a bone sticking out and a wooden
+	-- warning stake. It lies flat on the track; the pool along the track is setPool's.
+	TARPIT = function(color)
+		local bone = Color3.fromRGB(225, 215, 190)
+		local bubble = Color3.fromRGB(70, 60, 52)
+		return {
+			block("Rim", Vector3.new(0.3, 3, 3), at(0, 0.15, 0) * CFrame.Angles(0, 0, math.rad(90)), DARK_WOOD, Enum.Material.Ground, CYLINDER),
+			block("Tar", Vector3.new(0.32, 2.5, 2.5), at(0, 0.18, 0) * CFrame.Angles(0, 0, math.rad(90)), color, Enum.Material.Glass, CYLINDER),
+			block("BubbleA", Vector3.new(0.5, 0.5, 0.5), at(-0.5, 0.35, 0.3), bubble, Enum.Material.Glass, Enum.PartType.Ball),
+			block("BubbleB", Vector3.new(0.35, 0.35, 0.35), at(0.4, 0.33, -0.5), bubble, Enum.Material.Glass, Enum.PartType.Ball),
+			block("Bone", Vector3.new(0.25, 1.3, 0.25), at(0.6, 0.8, 0.5) * CFrame.Angles(math.rad(25), 0, math.rad(-20)), bone, Enum.Material.Limestone),
+			block("BoneKnob", Vector3.new(0.45, 0.35, 0.35), at(0.85, 1.4, 0.75), bone, Enum.Material.Limestone),
+			block("Stake", Vector3.new(0.2, 2.6, 0.2), at(-1.0, 1.3, -1.2), WOOD, Enum.Material.Wood),
+			block("Sign", Vector3.new(0.9, 0.6, 0.08), at(-1.0, 2.3, -1.12), SAND, Enum.Material.Wood),
+		}
+	end,
 	-- Supply Camp: stacked crates under an orange tarp, a flag on a pole.
 	QUARTERMASTER = function(color)
 		return {
@@ -265,6 +282,9 @@ function TowerLook.build(key: string, range: number, base: Vector3): Model
 	model.PrimaryPart = body
 
 	local silhouette = SILHOUETTES[key]
+	if key == "TARPIT" then
+		body.CanCollide = false -- a hole in the track: hunters walk over it, like the dinos
+	end
 	if silhouette then
 		body.Transparency = 1 -- the silhouette is the look; the body stays the hitbox
 		local blocks = silhouette(color)
@@ -750,6 +770,44 @@ function TowerLook.addFlag(model: Model, color: Color3)
 	end
 	part(TowerLook.FLAG_POLE, Vector3.new(0.12, poleHeight, 0.12), foot * CFrame.new(0, poleHeight / 2, 0), Color3.fromRGB(90, 70, 50), Enum.Material.Wood)
 	part(TowerLook.FLAG_CLOTH, Vector3.new(0.06, 0.55, 0.85), foot * CFrame.new(0, poleHeight - 0.35, -0.45), color, Enum.Material.Fabric)
+end
+
+-- A Tar Pit's pool: flat tar slabs joining `points` (world positions along the track, in
+-- order), the lane's width. Replaces the last pool drawn. Visuals only.
+local POOL_WIDTH = 8
+local POOL_COLOR = Color3.fromRGB(30, 24, 20)
+function TowerLook.setPool(model: Model, points: { Vector3 })
+	local old = model:FindFirstChild("Pool")
+	if old then
+		old:Destroy()
+	end
+	if #points < 2 then
+		return
+	end
+	local pool = Instance.new("Folder")
+	pool.Name = "Pool"
+	for i = 2, #points do
+		local a, b = points[i - 1], points[i]
+		local flatA, flatB = Vector3.new(a.X, 0, a.Z), Vector3.new(b.X, 0, b.Z)
+		local length = (flatB - flatA).Magnitude
+		if length > 1e-3 then
+			local mid = (a + b) / 2
+			local part = Instance.new("Part")
+			part.Name = `Tar{i - 1}`
+			part.Size = Vector3.new(POOL_WIDTH, 0.12, length + POOL_WIDTH * 0.25)
+			part.CFrame = CFrame.lookAt(Vector3.new(mid.X, mid.Y + 0.08, mid.Z), Vector3.new(b.X, mid.Y + 0.08, b.Z))
+			part.Color = POOL_COLOR
+			part.Material = Enum.Material.Glass
+			part.Transparency = 0.15
+			part.Anchored = true
+			part.CanCollide = false
+			part.CanQuery = false
+			part.CanTouch = false
+			part.CastShadow = false
+			part.Parent = pool
+		end
+	end
+	pool.Parent = model
 end
 
 function TowerLook.refresh(model: Model, range: number, tiers: { number }, stage: number)

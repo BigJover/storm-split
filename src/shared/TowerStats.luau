@@ -7,6 +7,7 @@
 	  amounts          the highest wins (HIGHEST)
 	  yes/no flags     OR (FLAGS)
 	  freezeEvery      the shortest pulse interval any path gives
+	  sinkSeconds      the shortest any path gives (Tuning Tar sink seconds when none)
 ]]
 
 local Config = require(script.Parent.Config)
@@ -90,6 +91,13 @@ export type Stats = {
 	skewer: boolean, -- Skewer: each bolt passes through every dino on its line (the tier's breaks each)
 	towLine: boolean, -- Tow Line: every Tuning Tow Line every s, pulls a boss in range back
 	chainHarpoons: boolean, -- Chain Harpoons: bolt pairs hit every dino on the chain between them
+	-- Tar Pit (PLAN T67; rules in Shared/TarPit). 0 / false on a tower that isn't on the track.
+	sinkSeconds: number, -- s a last-size dino stays in the pool before it sinks
+	sinkCash: number, -- Pick and Shovel / Fossil Hunter: cash per sunk dino
+	sinkChestCash: number, -- Lucky Finds: each sink drops a chest worth this
+	eruption: boolean, -- Eruption: every Tuning Eruption every s, every dino in the pool drops sizes
+	tracksSlowPercent: number, -- Tar Tracks: the track past the pool slows this % after a dino leaves
+	auraSlowedPercent: number, -- Tar Totem: towers in range +% damage against slowed dinos
 }
 
 local MULTIPLIERS = {
@@ -149,6 +157,10 @@ local HIGHEST = {
 	"firstDiveX",
 	"bossMarkPercent",
 	"diveAuraRatePercent",
+	"sinkCash",
+	"sinkChestCash",
+	"tracksSlowPercent",
+	"auraSlowedPercent",
 }
 local FLAGS = {
 	"piercesArmor",
@@ -167,6 +179,7 @@ local FLAGS = {
 	"skewer",
 	"towLine",
 	"chainHarpoons",
+	"eruption",
 }
 
 function TowerStats.compute(def, pathTiers: { number }): Stats
@@ -177,6 +190,7 @@ function TowerStats.compute(def, pathTiers: { number }): Stats
 	local high: { [string]: number } = { shots = 1, lineHits = 1 }
 	local flag: { [string]: boolean } = {}
 	local freezeEvery = 0 -- shortest pulse interval any path gives
+	local sinkSeconds = 0 -- shortest sink time any path gives
 
 	for pathIndex, tier in pathTiers do
 		if tier > 0 then
@@ -193,6 +207,10 @@ function TowerStats.compute(def, pathTiers: { number }): Stats
 			local every = step.freezeEvery or 0
 			if every > 0 and (freezeEvery == 0 or every < freezeEvery) then
 				freezeEvery = every
+			end
+			local sink = step.sinkSeconds or 0
+			if sink > 0 and (sinkSeconds == 0 or sink < sinkSeconds) then
+				sinkSeconds = sink
 			end
 		end
 	end
@@ -269,6 +287,12 @@ function TowerStats.compute(def, pathTiers: { number }): Stats
 		skewer = def.harpoons == true and flag.skewer == true,
 		towLine = def.harpoons == true and flag.towLine == true,
 		chainHarpoons = def.harpoons == true and flag.chainHarpoons == true,
+		sinkSeconds = if def.onTrack then (if sinkSeconds > 0 then sinkSeconds else Config.Tuning.TarSinkSeconds) else 0,
+		sinkCash = if def.onTrack then high.sinkCash or 0 else 0,
+		sinkChestCash = if def.onTrack then high.sinkChestCash or 0 else 0,
+		eruption = def.onTrack == true and flag.eruption == true,
+		tracksSlowPercent = if def.onTrack then high.tracksSlowPercent or 0 else 0,
+		auraSlowedPercent = high.auraSlowedPercent or 0,
 	}
 end
 

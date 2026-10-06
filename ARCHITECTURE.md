@@ -115,7 +115,7 @@ This dissolves most of the problems the UEFN plan was built around:
 
 | State | Sole owner | Everyone else |
 |---|---|---|
-| Enemies (create / move / damage / remove; stun, disarm, chill) | `Enemies` | Read `getLive()` and `isStunned` / `isDisarmed` / `slowFraction`, call `damage()` |
+| Enemies (create / move / damage / remove; stun, disarm, chill, tar) | `Enemies` | Read `getLive()` and `isStunned` / `isDisarmed` / `slowFraction` / `isSlowed`, call `damage()`; a Tar Pit tars (`tar()`), sinks (`sink()`) and erupts (`dropSizes()`) through it, never by touching a dino |
 | Dino attack timers and projectiles in flight (and the Storm Coil's Grounding Spike timers, which strike throws down) | `DinoAttacks` | — (it hurts towers and players only through `Towers.damage` / `Health.damage`; towers that can't be damaged are never in `Towers.targets()`) |
 | A tower's tiers and stats | `Towers` | Call `upgrade()` after paying |
 | A tower's HP and trampled state | `Towers` | Call `damage()` / `heal()` / `repair()` (after paying); dinos pick from `targets()`; clients read the body's `HP` / `MaxHP` / `KO` attributes |

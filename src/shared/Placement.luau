@@ -8,10 +8,12 @@
 
 	A tower flagged On track (the Tar Pit, DECISIONS #152) is the exception: its
 	centre must be ON a lane (not off it, not on the spawn or exit square), and it
-	still never overlaps another tower or pit (2 x TowerRadius).
+	still never overlaps another tower or pit (2 x TowerRadius), and its pool must not
+	overlap another pit's pool at that pool's current length (checkPool, DECISIONS #189).
 ]]
 
 local Track = require(script.Parent.Track)
+local TarPit = require(script.Parent.TarPit)
 
 local Placement = {}
 
@@ -108,6 +110,16 @@ function Placement.check(position: Vector3, others: { Vector3 }, onTrack: boolea
 		end
 	end
 
+	return true, nil
+end
+
+-- A new pit's pool (centred `at` studs along the track, `length` long) against the pools
+-- already on the track. Touching ends are fine; a later Tar Lake may make pools touch or
+-- overlap, and then a dino gets only the strongest (Shared/TarPit.strongest).
+function Placement.checkPool(at: number, length: number, pools: { TarPit.Pool }): (boolean, string?)
+	if TarPit.overlaps(at, length, pools) then
+		return false, "Overlaps another tar pool"
+	end
 	return true, nil
 end
 

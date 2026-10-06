@@ -121,6 +121,10 @@ local function build(player: Player, towerKey: unknown, position: unknown): (boo
 
 	local spot = Placement.ground(position)
 	local fits, reason = Placement.check(spot, Towers.positions(), def.onTrack)
+	if fits and def.onTrack then
+		-- The pool, not just the footprint, must not overlap another pit's (#189).
+		fits, reason = Placement.checkPool(Towers.poolAtFor(spot), def.range, Towers.pools())
+	end
 	if not fits then
 		return false, reason or "Can't build there"
 	end

@@ -30,6 +30,11 @@
 	THE CAP (ARCHITECTURE.md §5): nothing spawns directly — everything goes
 	through a queue that only drains while live enemies are under
 	MaxConcurrentEnemies.
+
+	TAR (Tar Pit, PLAN T67, rules in Shared/TarPit): a tarred dino walks slower (the
+	stronger of its tar and its sedation slow; tar slows bosses too and doesn't touch
+	attack cooldowns). sink() takes a last-size dino down (never a boss or a flyer), paying
+	like a kill; dropSizes() is Eruption's size drop, Break resist ignored, each size paying.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -42,6 +47,7 @@ local DinoLook = require(Shared:WaitForChild("DinoLook"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local SizeBreaks = require(Shared:WaitForChild("SizeBreaks"))
 local Ballista = require(Shared:WaitForChild("Ballista"))
+local TarPit = require(Shared:WaitForChild("TarPit"))
 
 local Enemies = {}
 
@@ -74,6 +80,8 @@ export type Enemy = {
 	muzzledShown: boolean,
 	muzzleFlash: boolean, -- flash the strap once it's on (Lullaby Rounds spread)
 	fire: Fire?, -- burning: one damage tick when it runs out (Server/Hazards)
+	tarSlow: number, -- Tar Pit: % slower while tarred (until tarUntil)
+	tarUntil: number,
 }
 
 -- A burn on an enemy. `owner` is whoever lit it (for pops); Enemies only
@@ -208,6 +216,8 @@ local function spawnNow(item: Pending)
 		muzzledShown = false,
 		muzzleFlash = false,
 		fire = nil,
+		tarSlow = 0,
+		tarUntil = 0,
 	}
 	dress(enemy)
 
@@ -362,6 +372,72 @@ function Enemies.slowFraction(enemy: Enemy): number
 	return math.clamp(enemy.slowPercent, 0, 95) / 100
 end
 
+-- Tar (PLAN T67): `percent` slower for `seconds`. While tarred the strongest tar slow
+-- wins; a weaker one only extends it. Flying dinos never touch the tar.
+function Enemies.tar(enemy: Enemy, percent: number, seconds: number)
+	if not enemy.alive or enemy.def.flying or percent <= 0 or seconds <= 0 then
+		return
+	end
+	local now = os.clock()
+	if now >= enemy.tarUntil then
+		enemy.tarSlow = 0
+	end
+	enemy.tarUntil = math.max(enemy.tarUntil, now + seconds)
+	enemy.tarSlow = math.max(enemy.tarSlow, percent)
+end
+
+-- How much tar holds this dino back right now (0..0.95). Walking only.
+local function tarFraction(enemy: Enemy): number
+	if os.clock() >= enemy.tarUntil then
+		return 0
+	end
+	return math.clamp(enemy.tarSlow, 0, 95) / 100
+end
+
+-- Slowed by anything (tar or a sedation chill): Tar Totem's bonus applies.
+function Enemies.isSlowed(enemy: Enemy): boolean
+	return tarFraction(enemy) > 0 or Enemies.slowFraction(enemy) > 0
+end
+
+-- Sinks a last-size dino in the tar (a take-down: it pays like a kill). Never a boss or
+-- a flyer. Returns true and the species key if it went under.
+function Enemies.sink(enemy: Enemy): (boolean, string?)
+	if not enemy.alive or enemy.size > 1 or enemy.def.boss or enemy.def.flying then
+		return false, nil
+	end
+	enemy.hp = 0
+	if callbacks.onKilled then
+		callbacks.onKilled(enemy)
+	end
+	remove(enemy)
+	return true, enemy.key
+end
+
+-- Eruption (DECISIONS #150): drops `sizes` sizes outright, whatever the HP, bosses
+-- included, Break resist ignored. Each size pays. Same returns as damage().
+function Enemies.dropSizes(enemy: Enemy, sizes: number): (boolean, string?, number)
+	if not enemy.alive then
+		return false, nil, 0
+	end
+	local hp, dropped, dead = TarPit.drop(enemy.hp, enemy.share, enemy.size, sizes)
+	if dropped == 0 then
+		return false, nil, 0
+	end
+	enemy.hp = hp
+	for _ = 1, dropped do
+		if callbacks.onKilled then
+			callbacks.onKilled(enemy)
+		end
+	end
+	if not dead then
+		enemy.size -= dropped
+		dress(enemy)
+		return true, nil, dropped
+	end
+	remove(enemy)
+	return true, enemy.key, dropped
+end
+
 -- A Tranq Station knockout pulse: a stun that also shows "zzz" while it holds.
 function Enemies.knockOut(enemy: Enemy, seconds: number, affectsBosses: boolean?)
 	local before = enemy.stunnedUntil
@@ -455,7 +531,7 @@ function Enemies.step(dt: number)
 	for _, enemy in live do
 		local isChilled = now < enemy.chilledUntil
 		if now >= enemy.stunnedUntil then
-			local slow = Enemies.slowFraction(enemy)
+			local slow = math.max(Enemies.slowFraction(enemy), tarFraction(enemy))
 			enemy.distance += enemy.speed * (1 - slow) * dt
 		end
 		-- Visuals only.

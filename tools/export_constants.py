@@ -133,6 +133,13 @@ ABILITY_COLUMNS = [
     ("skewer", 78, "bool", False),  # Skewer: each bolt passes through every dino on its line
     ("towLine", 79, "bool", False),  # Tow Line: pulls a boss back every Tuning Tow Line every s
     ("chainHarpoons", 80, "bool", False),  # Chain Harpoons: bolt pairs hit everything between them
+    # Tar Pit (PLAN T67): sinking, the Dig Site's pay, Eruption, Tar Tracks and Tar Totem
+    ("sinkSeconds", 81, "num", 0),  # Fast Sink: s a last-size dino stays before it sinks; blank = Tuning
+    ("sinkCash", 82, "num", 0),  # Pick and Shovel / Fossil Hunter: cash per sunk dino
+    ("sinkChestCash", 83, "num", 0),  # Lucky Finds: each sink drops a chest worth this
+    ("eruption", 84, "bool", False),  # Eruption: Tuning Eruption every / Eruption sizes
+    ("tracksSlowPercent", 85, "num", 0),  # Tar Tracks: footprints past the pool slow this %
+    ("auraSlowedPercent", 86, "num", 0),  # Tar Totem: towers in range +% damage vs slowed dinos
 ]
 
 # Columns only a tower that chains (Towers column Chains) can use.
@@ -141,6 +148,8 @@ CHAIN_ONLY = ("arcs", "arcReach", "arcForks", "arcJumps", "powerGrid", "staticPe
 BIRD_ONLY = ("birds", "eagle", "murmuration", "diveAuraRatePercent")
 # Columns only a tower with harpoons (Towers column Harpoons) can use.
 HARPOON_ONLY = ("skewer", "towLine", "chainHarpoons")
+# Columns only a tower placed on the track (Towers column On track: the Tar Pit) can use.
+TAR_ONLY = ("sinkSeconds", "sinkCash", "sinkChestCash", "eruption", "tracksSlowPercent", "auraSlowedPercent")
 
 # Paths allowed a Size breaks above 1 (DECISIONS #127, #134). A new one is a
 # Director call: add it here and to PLAN's design table together.
@@ -1069,6 +1078,11 @@ def validate(data):
                 for field in HARPOON_ONLY:
                     if step[field] and not t["harpoons"]:
                         problems.append(f"{key} {p['id']} tier {i}: {field} needs a tower with harpoons (Towers column X)")
+                for field in TAR_ONLY:
+                    if step[field] and not t["onTrack"]:
+                        problems.append(f"{key} {p['id']} tier {i}: {field} needs a tower placed on the track (Towers column U)")
+                if step["tracksSlowPercent"] > 100 or (t["onTrack"] and step["slowPercent"] > 100):
+                    problems.append(f"{key} {p['id']} tier {i}: Slow % and Tracks slow % must be 0-100")
                 if step["birds"] != int(step["birds"]):
                     problems.append(f"{key} {p['id']} tier {i}: Birds must be a whole number")
                 if step["firstDiveX"] != 1 and not t["birds"]:
@@ -1140,6 +1154,7 @@ def validate(data):
         "PowerGridDamagePerCoil", "PowerGridCoilCap", "PowerGridEvery", "JudgementBoltEvery",
         "JudgementBoltX", "JudgementBoltBreaks", "JudgementBoltStun",
         "FalconSpeed", "EagleDiveX", "FalconBellsMark", "TowLineEvery", "TowLinePull", "BoltWidth",
+        "EruptionEvery", "EruptionSizes", "TarSinkSeconds", "TarTracksLength", "TarTracksSeconds",
         "PlayerXPBase", "PlayerXPStep", "PlayerXPPerLevelMax", "SoloTakeDownXPX",
     ]
     for key in needed:
@@ -1156,6 +1171,10 @@ def validate(data):
         problems.append("Tuning Falcon speed, Eagle dive x and Falcon Bells mark must be above 0")
     if min(tuning.get("TowLineEvery", 1), tuning.get("TowLinePull", 1), tuning.get("BoltWidth", 1)) <= 0:
         problems.append("Tuning Tow Line every, Tow Line pull and Bolt width must be above 0")
+    if min(tuning.get("EruptionEvery", 1), tuning.get("TarSinkSeconds", 1), tuning.get("TarTracksLength", 1), tuning.get("TarTracksSeconds", 1)) <= 0:
+        problems.append("Tuning Eruption every, Tar sink seconds, Tar Tracks length and Tar Tracks seconds must be above 0")
+    if tuning.get("EruptionSizes", 1) < 1 or tuning.get("EruptionSizes", 1) != int(tuning.get("EruptionSizes", 1)):
+        problems.append("Tuning Eruption sizes must be a whole number >= 1")
     if tuning.get("PowerGridCoilCap", 1) < 1:
         problems.append("Tuning Power Grid coil cap must be 1 or more")
     if tuning.get("MaxSizeBreaks", 1) < 1:

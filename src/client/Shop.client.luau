@@ -54,6 +54,9 @@ local PanelRules = require(Shared:WaitForChild("PanelRules"))
 local HuntBoard = require(Shared:WaitForChild("HuntBoard"))
 local ProfileScreen = require(Shared:WaitForChild("ProfileScreen"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
+local TarPit = require(Shared:WaitForChild("TarPit"))
+local Track = require(Shared:WaitForChild("Track"))
+local Path = require(Shared:WaitForChild("Path"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -367,7 +370,18 @@ local LOCK_REASONS = {
 
 -- Ability text for what a tier newly grants (UPGRADES.md). Only fields that
 -- change from the previous tier are mentioned.
-local function describeAbilities(now, nextStep, parts: { string })
+-- Upgrade paths of towers placed on the track (the Tar Pit), whose damage, slow and range
+-- read as the pool's.
+local TAR_PATHS: { [any]: boolean } = {}
+for _, def in Config.Towers do
+	if def.onTrack then
+		for _, path in def.paths do
+			TAR_PATHS[path] = true
+		end
+	end
+end
+
+local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?)
 	local function changed(field: string, default: any): any?
 		local before = if now then now[field] else nil
 		local after = nextStep[field]
@@ -415,8 +429,14 @@ local function describeAbilities(now, nextStep, parts: { string })
 		table.insert(parts, `knockback {fmt(knock)}`)
 	end
 	local burn = changed("burnDps", 0)
-	if burn then
+	if burn and tar then
+		table.insert(parts, `the tar deals {fmt(burn)}/s to dinos in it`)
+	elseif burn then
 		table.insert(parts, `burning patch {fmt(burn)}/s for {fmt(nextStep.burnSeconds or 0)}s`)
+	end
+	local tarFire = if tar then changed("burnSeconds", 0) else nil
+	if tarFire then
+		table.insert(parts, `dinos walk out burning: {fmt(tarFire)}s of the tar's damage`)
 	end
 	local bomb = changed("bomblets", 0)
 	if bomb then
@@ -507,13 +527,42 @@ local function describeAbilities(now, nextStep, parts: { string })
 		table.insert(parts, "bolts fly in chained pairs: the chain hits every dino between them")
 	end
 
+	-- Tar Pit (PLAN T67)
+	local sink = changed("sinkSeconds", 0)
+	if sink then
+		table.insert(parts, `last-size dinos sink in {fmt(sink)}s`)
+	end
+	local sinkCash = changed("sinkCash", 0)
+	if sinkCash then
+		table.insert(parts, `+{fmt(sinkCash)} cash for each dino that sinks`)
+	end
+	local sinkChest = changed("sinkChestCash", 0)
+	if sinkChest then
+		table.insert(parts, `each dino that sinks leaves a chest worth {fmt(sinkChest)}`)
+	end
+	if changed("eruption", false) then
+		table.insert(parts, `every {fmt(Config.Tuning.EruptionEvery)}s a geyser drops every dino in the tar {fmt(Config.Tuning.EruptionSizes)} sizes, bosses too`)
+	end
+	local tracks = changed("tracksSlowPercent", 0)
+	if tracks then
+		table.insert(parts, `dinos walking out leave tar tracks that slow the ones behind {tracks}%`)
+	end
+	local totem = changed("auraSlowedPercent", 0)
+	if totem then
+		table.insert(parts, `towers in range +{totem}% damage against slowed dinos`)
+	end
+
 	-- Tranq Station (CHILLER)
 	local slow = changed("slowPercent", 0)
-	if slow then
+	if slow and tar then
+		table.insert(parts, `the tar slows {slow}%`)
+	elseif slow then
 		table.insert(parts, `slows {slow}%`)
 	end
 	local linger = changed("slowLinger", 0)
-	if linger then
+	if linger and tar then
+		table.insert(parts, `dinos walking out stay slowed {fmt(linger)}s`)
+	elseif linger then
 		table.insert(parts, `slow lingers {fmt(linger)}s`)
 	end
 	if changed("slowsBosses", false) then
@@ -630,8 +679,9 @@ local function describeStep(path, current: number): string
 	local now = if current > 0 then path.tiers[current] else nil
 	local nextStep = path.tiers[current + 1]
 	local parts = {}
-	describeAbilities(now, nextStep, parts)
-	for _, stat in { { "damageMult", "damage" }, { "rateMult", "rate" }, { "targetsMult", "targets" }, { "rangeMult", "range" }, { "splashMult", "blast radius" } } do
+	local tar = TAR_PATHS[path] == true
+	describeAbilities(now, nextStep, parts, tar)
+	for _, stat in { { "damageMult", "damage" }, { "rateMult", "rate" }, { "targetsMult", "targets" }, { "rangeMult", if tar then "pool length" else "range" }, { "splashMult", "blast radius" } } do
 		local before = if now then (now[stat[1]] or 1) else 1
 		local after = nextStep[stat[1]] or 1
 		local change = after / before - 1
@@ -854,6 +904,25 @@ local function builtPositions(): { Vector3 }
 	return positions
 end
 
+-- The track as the server builds it (MapBuilder), for a Tar Pit ghost's pool.
+local trackPath = Path.new(table.clone(Track.Waypoints))
+
+-- Pools of the pits already built, from their bodies (Server/Towers publishes them).
+local function builtPools(): { TarPit.Pool }
+	local pools = {}
+	local folder = towerFolder()
+	if folder then
+		for _, model in folder:GetChildren() do
+			local body = model:IsA("Model") and model.PrimaryPart
+			local at, length = body and body:GetAttribute("PoolAt"), body and body:GetAttribute("PoolLength")
+			if typeof(at) == "number" and typeof(length) == "number" then
+				table.insert(pools, { at = at, length = length })
+			end
+		end
+	end
+	return pools
+end
+
 local function characterRoot(): BasePart?
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
@@ -870,7 +939,7 @@ end
 local function makeGhost(key: string)
 	destroyGhost()
 	local def = Config.Towers[key]
-	local model = TowerLook.build(key, def.range, Vector3.zero)
+	local model = TowerLook.build(key, if def.onTrack then 0 else def.range, Vector3.zero) -- a pit shows its pool instead
 	for _, part in model:GetDescendants() do
 		if part:IsA("BasePart") then
 			part.CanCollide = false
@@ -919,6 +988,10 @@ local function moveGhost(spot: Vector3?)
 
 	local placingDef = if placingKey then Config.Towers[placingKey] else nil
 	local fits, reason = Placement.check(spot, builtPositions(), placingDef ~= nil and placingDef.onTrack)
+	local poolAt = if placingDef and placingDef.onTrack then trackPath:closest(spot) else nil
+	if fits and poolAt and placingDef then
+		fits, reason = Placement.checkPool(poolAt, placingDef.range, builtPools())
+	end
 	local root = characterRoot()
 	if fits and root then
 		local offset = root.Position - spot
@@ -929,6 +1002,13 @@ local function moveGhost(spot: Vector3?)
 	ghostFits = fits
 
 	ghost:PivotTo(CFrame.new(spot + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0)))
+	if poolAt and placingDef then
+		local points = {}
+		for _, d in TarPit.samples(poolAt, placingDef.range, 3) do
+			table.insert(points, (trackPath:sample(math.clamp(d, 0, trackPath.length))))
+		end
+		TowerLook.setPool(ghost, points)
+	end
 	local color = if fits then GHOST_OK else GHOST_BAD
 	for _, part in ghost:GetDescendants() do
 		if part:IsA("BasePart") then
