@@ -454,6 +454,15 @@ Checked by the Director against the Builder's 2026-10-02 Chaos run: the seeds pa
   3/3/0; guard passes (hero at the highest level in play with tier 6 < best tower; if a tier 6
   breaks it, lower that tier's number, never a tower's); `value.py` findings don't rise.
 
+### T53b. Heart Shot breaks 2 only when scoped (#170)
+- **Do:** in `Hero` (the `breaks` line in the hit path, ~l.559) a Marksman T6 shot gets the
+  gun's `Size breaks` only when the shot was fired scoped (the same flag Heart Shot's
+  no-spread rule already reads); unscoped shots break 1. Thunder Slug unchanged (every slug).
+  Panel / UPGRADES text: "scoped shots have no spread and break 2 sizes".
+- **Accept:** spec: Heart Shot scoped vs a 3-size Pachy with enough damage drops 2 sizes,
+  unscoped drops 1; Thunder Slug drops 2 either way; all specs, audit strict 0, guard passes.
+  No sheet change.
+
 ### T54. 🦖 Dino review: tier-6 names, small-perk names, wording
 The 12 tier-6 names and texts, the four small-perk lines, the boss bar look, any
 pierce-through wording ("breaks 2 sizes"), the Chaos difficulty card text.
