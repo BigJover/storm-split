@@ -151,6 +151,16 @@ function LevelBoard.queue(cache: Cache, userId: number, xp: number)
 	end
 end
 
+-- A hunter's XP as loaded at join (profile load) counts as already written (PLAN T68,
+-- DECISIONS #192): the store holds it from an earlier session, so an unchanged hunter's
+-- first write of this session is skipped. Only the first seed counts: a later value
+-- is a change, not a join.
+function LevelBoard.seed(cache: Cache, userId: number, xp: number)
+	if cache.written[userId] == nil and xp > 0 then
+		cache.written[userId] = PlayerLevel.whole(xp)
+	end
+end
+
 -- May the store write now? False when its request budget is 0 (or the check fails).
 function LevelBoard.canWrite(store: Store): boolean
 	if not store.budget then

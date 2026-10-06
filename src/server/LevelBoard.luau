@@ -48,6 +48,9 @@ end
 local function queue(player: Player)
 	local xp = player:GetAttribute("PlayerXp")
 	if store and player:GetAttribute("SaveStatus") == "saved" and type(xp) == "number" then
+		-- The first time the save is live, its XP is the value read at join: seed it as
+		-- written so an unchanged hunter costs no write (PLAN T68, #192).
+		Rules.seed(cache, player.UserId, xp)
 		Rules.queue(cache, player.UserId, xp)
 	end
 end

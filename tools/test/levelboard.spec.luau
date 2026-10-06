@@ -151,6 +151,24 @@ test("writes only on change (#183): no write when XP is unchanged, one when it m
 	eq(#logs, 0, "no warnings")
 end)
 
+test("PLAN T68: the XP read at join is seeded as written, so an unchanged hunter costs no write", function()
+	local fake = fakeStore()
+	local cache = LevelBoard.newCache()
+	local function log(_: string) end
+	LevelBoard.seed(cache, 7, 900) -- the profile loads with 900
+	LevelBoard.queue(cache, 7, 900)
+	LevelBoard.step(cache, fake.store, 0, log)
+	eq(fake.writes, 0, "unchanged since join: no write")
+	LevelBoard.seed(cache, 7, 1200) -- a later value is a change, not a join: ignored
+	LevelBoard.queue(cache, 7, 1200)
+	LevelBoard.step(cache, fake.store, 60, log)
+	eq(fake.writes, 1, "changed after join: written")
+	local fresh = LevelBoard.newCache() -- without a seed the first queue writes (the old cost)
+	LevelBoard.queue(fresh, 8, 900)
+	LevelBoard.step(fresh, fake.store, 0, log)
+	eq(fake.writes, 2, "no seed: written")
+end)
+
 test("a zero request budget skips the write without error and retries next tick (#183)", function()
 	local fake = fakeStore()
 	local left = 0
