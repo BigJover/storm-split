@@ -129,18 +129,25 @@ ABILITY_COLUMNS = [
     ("murmuration", 75, "bool", False),  # Murmuration: pecks every dino in range, no dives
     ("bossMarkPercent", 76, "num", 0),  # Hooded Scout: bosses in range marked +%
     ("diveAuraRatePercent", 77, "num", 0),  # Hunting Party: towers in range +% rate while a bird dives
+    # Harpoon Ballista (PLAN T66): the bolt's line, the boss pull and the linked pairs
+    ("skewer", 78, "bool", False),  # Skewer: each bolt passes through every dino on its line
+    ("towLine", 79, "bool", False),  # Tow Line: pulls a boss back every Tuning Tow Line every s
+    ("chainHarpoons", 80, "bool", False),  # Chain Harpoons: bolt pairs hit everything between them
 ]
 
 # Columns only a tower that chains (Towers column Chains) can use.
 CHAIN_ONLY = ("arcs", "arcReach", "arcForks", "arcJumps", "powerGrid", "staticPercent", "judgementBolt")
 # Columns only a tower with birds (Towers column Birds) can use.
 BIRD_ONLY = ("birds", "eagle", "murmuration", "diveAuraRatePercent")
+# Columns only a tower with harpoons (Towers column Harpoons) can use.
+HARPOON_ONLY = ("skewer", "towLine", "chainHarpoons")
 
 # Paths allowed a Size breaks above 1 (DECISIONS #127, #134). A new one is a
 # Director call: add it here and to PLAN's design table together.
 BREAK_PATHS = {
     ("Longshot Perch", "Deadeye"), ("Longshot Perch", "Big Bore"), ("Hunting Blind", "Hardliner"),
     ("Falcon Roost", "Talons"),  # PLAN T65: Power Dive 2, Iron Talons 3, Eagle of the Peak 3
+    ("Harpoon Ballista", "Spearhead"),  # PLAN T66: Crusher Bolt 2, Great Harpoon 3, Skewer 3
 }
 HERO_BREAK_PATHS = {("Tracker", "Marksman"), ("Brush Beater", "Slug")}
 
@@ -191,6 +198,8 @@ def read_towers(ws):
             "chains": yes(v(ws, r, 22)),
             # Birds: the flock a roost flies out (Falcon Roost, PLAN T65); 0 = no birds.
             "birds": num(v(ws, r, 23)),
+            # Harpoons: heavy bolts with Skewer / Tow Line / Chain Harpoons (Ballista, PLAN T66).
+            "harpoons": yes(v(ws, r, 24)),
             "paths": [],
         }
         order.append(key)
@@ -1025,6 +1034,8 @@ def validate(data):
     for key, t in data["Towers"].items():
         if t["birds"] and (t["birds"] != int(t["birds"]) or t["birds"] < 1 or t["chains"]):
             problems.append(f"{key}: Birds must be a whole number >= 1, on a tower that doesn't chain")
+        if t["harpoons"] and (t["chains"] or t["birds"]):
+            problems.append(f"{key}: Harpoons can't go on a tower that chains or has birds")
         if t["untouchable"]:
             if t["maxHp"] != 0:
                 problems.append(f"{key} can't be damaged (Towers column T), so its Max HP must be blank or 0")
@@ -1055,6 +1066,9 @@ def validate(data):
                 for field in BIRD_ONLY:
                     if step[field] and not t["birds"]:
                         problems.append(f"{key} {p['id']} tier {i}: {field} needs a tower with birds (Towers column W)")
+                for field in HARPOON_ONLY:
+                    if step[field] and not t["harpoons"]:
+                        problems.append(f"{key} {p['id']} tier {i}: {field} needs a tower with harpoons (Towers column X)")
                 if step["birds"] != int(step["birds"]):
                     problems.append(f"{key} {p['id']} tier {i}: Birds must be a whole number")
                 if step["firstDiveX"] != 1 and not t["birds"]:
@@ -1125,7 +1139,7 @@ def validate(data):
         "CoilArcs", "CoilArcReach", "CoilArcFalloff", "PowerGridRangePerCoil", "PowerGridDamageBase",
         "PowerGridDamagePerCoil", "PowerGridCoilCap", "PowerGridEvery", "JudgementBoltEvery",
         "JudgementBoltX", "JudgementBoltBreaks", "JudgementBoltStun",
-        "FalconSpeed", "EagleDiveX", "FalconBellsMark",
+        "FalconSpeed", "EagleDiveX", "FalconBellsMark", "TowLineEvery", "TowLinePull", "BoltWidth",
         "PlayerXPBase", "PlayerXPStep", "PlayerXPPerLevelMax", "SoloTakeDownXPX",
     ]
     for key in needed:
@@ -1140,6 +1154,8 @@ def validate(data):
         problems.append("Tuning Power Grid every and Judgement Bolt every must be above 0")
     if min(tuning.get("FalconSpeed", 1), tuning.get("EagleDiveX", 1), tuning.get("FalconBellsMark", 1)) <= 0:
         problems.append("Tuning Falcon speed, Eagle dive x and Falcon Bells mark must be above 0")
+    if min(tuning.get("TowLineEvery", 1), tuning.get("TowLinePull", 1), tuning.get("BoltWidth", 1)) <= 0:
+        problems.append("Tuning Tow Line every, Tow Line pull and Bolt width must be above 0")
     if tuning.get("PowerGridCoilCap", 1) < 1:
         problems.append("Tuning Power Grid coil cap must be 1 or more")
     if tuning.get("MaxSizeBreaks", 1) < 1:

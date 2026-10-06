@@ -78,8 +78,6 @@ DEAD_ALLOWED = {
 DEAD_PENDING = {
     ("Tuning", "EruptionEvery"): "PLAN T67 (Eruption)",
     ("Tuning", "EruptionSizes"): "PLAN T67 (Eruption)",
-    ("Tuning", "TowLineEvery"): "PLAN T66 (Tow Line)",
-    ("Tuning", "TowLinePull"): "PLAN T66 (Tow Line)",
 }
 
 # Words no tower or tier name may use: "Trophy" is reserved for ranked (DECISIONS #130,

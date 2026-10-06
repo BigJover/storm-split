@@ -53,6 +53,11 @@ Shared/TowerStats.compute, whose field lists are read from the Luau file):
              Hunting Party's aura is credited as a rate aura that is always on (assumed: a
              bird is always out while dinos are in range). Hooded Scout and Lure are not
              DPS: not credited.
+  ballista   (Harpoon Ballista, PLAN T66) Skewer: each bolt hits SKEWER_DINOS dinos on its
+             line (assumed), each with the tier's Size breaks. Chain Harpoons: each linked
+             pair's chain hits CHAIN_DINOS more dinos (assumed) at the bolt's damage,
+             breaking 1 (an area hit). Spread Volley's bolts are Shots. Pin Down, Reel In
+             and Tow Line are control (the Reel path is judged on its own line): not DPS.
 Levels scale every tower alike, so they're left out of the tower tables (except inside the
 overkill factor). Heroes break 1 and hit small: their lines are left as they were.
 
@@ -103,7 +108,8 @@ BOUGHT_BAND = {1: 1, 2: 1, 3: 2, 4: 3, 5: 3}  # tier -> index into BANDS
 # Tranq Station's Knockout (hard stops) and Weak Spot (damage amp for every tower in range).
 SUPPORT_PATHS = {("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knockout"), ("CHILLER", "Weak Spot"),
                  ("COIL", "Lightning Rod"),  # PLAN T64: Charged Air, Storm Warning, Lightning Rodeo
-                 ("FALCON", "Falconer")}  # PLAN T65: Falcon Bells, Hooded Scout, Lure, Hunting Party
+                 ("FALCON", "Falconer"),  # PLAN T65: Falcon Bells, Hooded Scout, Lure, Hunting Party
+                 ("BALLISTA", "Reel")}  # PLAN T66: Pin Down, Reel In, Tow Line
 # Single tiers that buy control on a damage path (#74): still in the table and the medians,
 # never flagged dead. Longshot Perch Big Bore T3 = Concussion Round (a stun on hit).
 CONTROL_TIERS = {("SNIPER", "Big Bore", 3)}
@@ -113,7 +119,7 @@ BOSS_SPECIALIST = {("SNIPER", "Big Bore", 5)}
 SUPPORT_TOWERS = {"QUARTERMASTER", "HOSPITAL", "ARMORY"}
 # Towers on the sheet whose behaviour isn't built yet (the round-4 batch, PLAN T63-T67):
 # left out of every table and median until their task models them. Each task removes its key.
-PENDING_TOWERS = {"TARPIT", "BALLISTA"}
+PENDING_TOWERS = {"TARPIT"}
 # Power Grid is credited as if this many Storm Coils stand (x1.0 damage, range x1.15; a
 # stated assumption: the plain co-op case). One coil alone is x0.75, six x2.0 (#151).
 GRID_COILS = 2
@@ -122,6 +128,10 @@ GRID_COILS = 2
 # Pit's Targets, the splash stand-in).
 FIRST_DIVES = 4
 MURMURATION_DINOS = 3
+# Harpoon Ballista (PLAN T66), stated assumptions, the same Mortar Pit stand-in: a Skewer bolt's
+# line and a Chain Harpoons chain each catch this many dinos.
+SKEWER_DINOS = 3
+CHAIN_DINOS = 3
 NEIGHBOUR_TOWER, NEIGHBOUR_TIER, NEIGHBOURS = "SCOUT", 2, 3
 DEAD_X, DOMINANT_X = 2.0, 0.5
 
@@ -208,6 +218,10 @@ def tower_stats(t, tiers):
         "murmuration": bool(t.get("birds", 0) > 0 and flag.get("murmuration", False)),
         "bossMarkPercent": high.get("bossMarkPercent", 0), "knockback": high.get("knockback", 0),
         "diveAuraRatePercent": high.get("diveAuraRatePercent", 0) if t.get("birds", 0) > 0 else 0,
+        # Harpoon Ballista (Shared/TowerStats: only a tower with harpoons)
+        "skewer": bool(t.get("harpoons") and flag.get("skewer", False)),
+        "towLine": bool(t.get("harpoons") and flag.get("towLine", False)),
+        "chainHarpoons": bool(t.get("harpoons") and flag.get("chainHarpoons", False)),
     }
 
 
@@ -239,6 +253,14 @@ def falcon_terms(s, tuning, rate):
     cap = s["birds"] * tuning["FalconSpeed"] / s["range"] if s["range"] > 0 else rate
     x = (tuning["EagleDiveX"] if s["eagle"] else 1) * (1 + (s["firstDiveX"] - 1) / FIRST_DIVES)
     return min(rate, cap), x
+
+
+def harpoon_pieces(s):
+    """Chain Harpoons' chains per bolt as (dinos, share of the hit): Shots // 2 linked pairs
+    in a volley, each chain catching CHAIN_DINOS (the ballista paragraph in the docstring)."""
+    if not s.get("chainHarpoons") or s["shots"] < 2:
+        return []
+    return [((s["shots"] // 2) * CHAIN_DINOS / s["shots"], 1.0)]
 
 
 def path_stats(t, path_index, tier):
@@ -325,10 +347,12 @@ def edps(s, mix, tuning, buff=None, overkill=True, breaks1=False):
         hits = s["lineHits"] if s["lineHits"] > 1 else s["targets"]
         if s.get("murmuration"):
             hits = MURMURATION_DINOS
+        if s.get("skewer"):
+            hits = SKEWER_DINOS  # PLAN T66
         rate, dive_x = falcon_terms(s, tuning, rate)  # PLAN T65
         share = tuning.get("BombletDamage", 0)
         bomb = sum((s["bomblets"] * share) ** g for g in range(1, s["bombletGenerations"] + 1)) if s["bomblets"] else 0
-        bomb += sum(n * x for n, x in chain_pieces(s, tuning)) + buff.get("arc", 0) / 100  # PLAN T64
+        bomb += sum(n * x for n, x in chain_pieces(s, tuning) + harpoon_pieces(s)) + buff.get("arc", 0) / 100  # T64, T66
         damage = s["damage"] * (1 + buff.get("damage", 0) / 100) * (1 + buff.get("brittle", 0) / 100)
         damage *= (1 + s.get("staticPercent", 0) / 100) * dive_x
         per_shot = damage * (1 + s["markPercent"] / 100) * (1 + s["brittlePercent"] / 100) * (hits + bomb)
@@ -389,6 +413,7 @@ def honest_hits(s, mix, tuning, damage, hits, pierces, breaks1=False, arc=0):
     bomb_share = tuning.get("BombletDamage", 0)
     blasts = [(s["bomblets"] ** g, bomb_share ** g) for g in range(1, s["bombletGenerations"] + 1)] if s["bomblets"] else []
     blasts += chain_pieces(s, tuning) + ([(1, arc / 100)] if arc else [])  # Storm Coil arcs, Lightning Rodeo (T64)
+    blasts += harpoon_pieces(s)  # Chain Harpoons (T66), breaking 1
     total = 0.0
     for w, kind, size_hp, resist, level in mix["parts"]:
         m = {"plain": 1, "armoured": s["armoredMult"] if pierces else 0,
@@ -571,6 +596,15 @@ def support_lines(data, mixes):
                         bit += f" lure {s['knockback']:g}"
                     if s["diveAuraRatePercent"]:
                         bit += f" party +{s['diveAuraRatePercent']:g}%r (+{aura_credit(data, s, late):.1f})"
+                    bit += f" (own {edps(s, late, data['Tuning']):.1f})"
+                elif key == "BALLISTA":
+                    bit = f"range x{s['rangeMult']:.1f}"
+                    if s["stunSeconds"]:
+                        bit += f" pin {s['stunSeconds']:g}s"
+                    if s["knockback"]:
+                        bit += f" reel {s['knockback']:g}"
+                    if s["towLine"]:
+                        bit += f" tows a boss {data['Tuning']['TowLinePull']:g} every {data['Tuning']['TowLineEvery']:g}s"
                     bit += f" (own {edps(s, late, data['Tuning']):.1f})"
                 elif path["id"] == "Ward":
                     bit = f"heal {s['healPerSecond']:g}/s" + (" revives" if s["revives"] else "")

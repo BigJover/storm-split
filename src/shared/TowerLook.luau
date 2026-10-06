@@ -32,6 +32,7 @@ TowerLook.COLORS = table.freeze({
 	HOSPITAL = Color3.fromRGB(235, 232, 220), -- Field Hospital: canvas white
 	COIL = Color3.fromRGB(190, 110, 50), -- Storm Coil: copper
 	FALCON = Color3.fromRGB(150, 105, 60), -- Falcon Roost: falcon brown
+	BALLISTA = Color3.fromRGB(125, 90, 55), -- Harpoon Ballista: oiled oak
 })
 
 TowerLook.BODY_HEIGHT = 5
@@ -199,6 +200,20 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 			block("Breast", Vector3.new(0.35, 0.45, 0.1), at(0.9, 4.55, -0.87), cream, Enum.Material.Fabric),
 			block("WingL", Vector3.new(0.12, 0.55, 0.45), at(0.62, 4.5, -0.6), color, Enum.Material.Fabric),
 			block("WingR", Vector3.new(0.12, 0.55, 0.45), at(1.18, 4.5, -0.6), color, Enum.Material.Fabric),
+		}
+	end,
+	-- Harpoon Ballista: a heavy crossbow on a turntable, a barbed harpoon loaded.
+	BALLISTA = function(color)
+		return {
+			block("Turntable", Vector3.new(2.6, 0.4, 2.6), at(0, 0.2, 0), STEEL, Enum.Material.Metal),
+			block("Post", Vector3.new(0.6, 1.4, 0.6), at(0, 1.1, 0), DARK_WOOD, Enum.Material.Wood),
+			block("Stock", Vector3.new(0.5, 0.45, 2.6), at(0, 2.0, 0) * CFrame.Angles(math.rad(-8), 0, 0), color, Enum.Material.Wood),
+			block("ArmL", Vector3.new(1.5, 0.25, 0.3), at(-0.7, 2.15, -0.9) * CFrame.Angles(0, math.rad(-20), 0), color, Enum.Material.Wood),
+			block("ArmR", Vector3.new(1.5, 0.25, 0.3), at(0.7, 2.15, -0.9) * CFrame.Angles(0, math.rad(20), 0), color, Enum.Material.Wood),
+			block("String", Vector3.new(2.4, 0.06, 0.06), at(0, 2.2, -0.5), SAND, Enum.Material.Fabric),
+			block("Harpoon", Vector3.new(0.14, 0.14, 2.6), at(0, 2.35, -0.1) * CFrame.Angles(math.rad(-8), 0, 0), STEEL, Enum.Material.Metal),
+			block("Barb", Vector3.new(0.4, 0.3, 0.3), at(0, 2.5, -1.25) * CFrame.Angles(0, 0, math.rad(45)), STEEL, Enum.Material.Metal),
+			block("Winch", Vector3.new(0.9, 0.5, 0.5), at(0, 1.85, 1.15), DARK_WOOD, Enum.Material.Wood),
 		}
 	end,
 	-- Supply Camp: stacked crates under an orange tarp, a flag on a pole.

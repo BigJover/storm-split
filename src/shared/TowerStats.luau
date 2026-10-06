@@ -86,6 +86,10 @@ export type Stats = {
 	murmuration: boolean, -- Murmuration: pecks every dino in range instead of diving
 	bossMarkPercent: number, -- Hooded Scout: bosses in range are marked +%
 	diveAuraRatePercent: number, -- Hunting Party: towers in range +% attack speed while a bird dives
+	-- Harpoon Ballista (PLAN T66; rules in Shared/Ballista). false on a tower without harpoons.
+	skewer: boolean, -- Skewer: each bolt passes through every dino on its line (the tier's breaks each)
+	towLine: boolean, -- Tow Line: every Tuning Tow Line every s, pulls a boss in range back
+	chainHarpoons: boolean, -- Chain Harpoons: bolt pairs hit every dino on the chain between them
 }
 
 local MULTIPLIERS = {
@@ -160,6 +164,9 @@ local FLAGS = {
 	"judgementBolt",
 	"eagle",
 	"murmuration",
+	"skewer",
+	"towLine",
+	"chainHarpoons",
 }
 
 function TowerStats.compute(def, pathTiers: { number }): Stats
@@ -259,6 +266,9 @@ function TowerStats.compute(def, pathTiers: { number }): Stats
 		murmuration = (def.birds or 0) > 0 and flag.murmuration == true,
 		bossMarkPercent = high.bossMarkPercent or 0,
 		diveAuraRatePercent = if (def.birds or 0) > 0 then high.diveAuraRatePercent or 0 else 0,
+		skewer = def.harpoons == true and flag.skewer == true,
+		towLine = def.harpoons == true and flag.towLine == true,
+		chainHarpoons = def.harpoons == true and flag.chainHarpoons == true,
 	}
 end
 

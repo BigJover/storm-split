@@ -164,9 +164,11 @@ Pteranodons). No air.
 - Warm Tar / Simmer: damage per second. Boiling Pit: burning tar, burn ticks break 1. Tar Fire: dinos leave burning. Eruption: every 10s every dino in the pool drops 2 sizes outright, bosses included, Break resist ignored; each size pays (#150).
 - Pick and Shovel / Fossil Hunter: cash per sink. Lucky Finds: each sink drops a small chest that pays cash. Tar Tracks: dinos leaving slow the ones behind 15%. Tar Totem: towers in range +15% damage vs slowed dinos.
 
-## Harpoon Ballista (BALLISTA) — the heaviest single hit, pierce-through 🔜 round 4 · unlock 300 Amber
+## Harpoon Ballista (BALLISTA) — the heaviest single hit, pierce-through ✅ round 4 (PLAN T66; sold from T68) · unlock 300 Amber
 
-A heavy crossbow on a turntable: slow, very heavy bolts. Ground and air.
+A heavy crossbow on a turntable: slow (one bolt every 2.5s), very heavy bolts (12, the
+heaviest single hit). Ground and air. A volley's bolts spread over the dinos in range,
+furthest along first. Rules: `Shared/Ballista`.
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
@@ -174,9 +176,9 @@ A heavy crossbow on a turntable: slow, very heavy bolts. Ground and air.
 | **Reel** | control | Rope Line | Winch | *Pin Down* | *Reel In* | *Tow Line* |
 | **Volley** | more bolts | Twin Bolts | Fast Crank | *Spread Volley* | *Steam Crank* | *Chain Harpoons* |
 
-- Crusher Bolt: breaks 2. Great Harpoon: pierces armour, breaks 3. Skewer: the bolt passes through every dino in a line, each breaks 3.
-- Pin Down: the hit dino is held 1s (not bosses). Reel In: drags the hit dino 6 studs back. Tow Line: every 15s pulls a boss 10 studs back.
-- Spread Volley: 3 bolts. Steam Crank: fires twice as fast. Chain Harpoons: linked bolt pairs hit everything between them.
+- Crusher Bolt: breaks 2. Great Harpoon: pierces armour, breaks 3. Skewer: the bolt flies on through every dino in its line out to the tower's range (within Bolt width 3 studs), each breaks 3.
+- Pin Down: the hit dino is held 1s (not bosses). Reel In: drags the hit dino 6 studs back (not bosses). Tow Line: every 15s pulls the boss furthest along in range 10 studs back (the only knockback that moves a boss; waits while no boss is in range).
+- Twin Bolts: 2 bolts. Spread Volley: 3 bolts. Steam Crank: fires twice as fast. Chain Harpoons: 4 bolts in 2 linked pairs; each pair lands on the k-th dino from the front and from the back of the crowd in range, and its chain hits every other dino within Bolt width of the line between them (breaks 1).
 
 ---
 
@@ -203,6 +205,7 @@ A heavy crossbow on a turntable: slow, very heavy bolts. Ground and air.
 | On-track placement (pits never overlap) | Tar Pit | ✅ round 4 (PLAN T63) |
 | Chain lightning, Power Grid, Judgement Bolt, Grounding Spike, Lightning Rodeo | Storm Coil | ✅ round 4 (PLAN T64) |
 | Birds with travel time, Power Dive, Eagle of the Peak, Murmuration, Hooded Scout, Lure, Hunting Party | Falcon Roost | ✅ round 4 (PLAN T65) |
+| Spread volleys, Skewer, Pin Down, Reel In, Tow Line (boss pull), Chain Harpoons | Harpoon Ballista | ✅ round 4 (PLAN T66) |
 
 When a mechanic lands, its numbers get a column on `Tower Upgrades` and the stat-only
 multipliers get rebalanced around it — expect a tuning pass per mechanic.

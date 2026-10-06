@@ -72,6 +72,16 @@
 	1). Falcon Bells marks the struck dino; Hooded Scout keeps bosses in range marked;
 	Lure pulls a struck dino back (Enemies: not bosses). Hunting Party: towers in range
 	shoot faster while one of its birds is out (the strongest rate aura wins).
+
+	HARPOON BALLISTA (PLAN T66, rules in Shared/Ballista): heavy bolts. A volley's bolts
+	(Shots) spread over the dinos in range, furthest along first. Each bolt is a direct
+	hit with the tier's Size breaks (Crusher Bolt 2, Great Harpoon 3). Skewer: each bolt
+	flies on through every dino on its line out to the tower's range, each taking the full
+	hit and breaks. Chain Harpoons: bolts fly in linked pairs spanning the crowd (the k-th
+	dino from the front and from the back); the chain hits every other dino on the segment
+	between them (breaks 1, an area hit). Pin Down and Reel In are the hit's stun and
+	knockback (never bosses). Tow Line: every Tow Line every s the boss furthest along in
+	range is pulled Tow Line pull studs back: the only knockback that moves a boss.
 ]]
 
 local Players = game:GetService("Players")
@@ -81,6 +91,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local Placement = require(Shared:WaitForChild("Placement"))
+local Ballista = require(Shared:WaitForChild("Ballista"))
 local Falcon = require(Shared:WaitForChild("Falcon"))
 local StormCoil = require(Shared:WaitForChild("StormCoil"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
@@ -130,6 +141,7 @@ export type Tower = {
 	static: { [any]: boolean }, -- Storm Coil Static Shock: dinos its last strike charged (weak keys)
 	sorties: { Sortie }, -- Falcon Roost: birds out of the roost
 	dived: { [any]: boolean }, -- Falcon Roost Power Dive: dinos it has dived on (weak keys)
+	towTimer: number, -- Harpoon Ballista: seconds toward its next Tow Line pull
 	model: Model,
 }
 
@@ -143,6 +155,8 @@ local ARC_COLOR = Color3.fromRGB(170, 210, 255)
 local BOLT_COLOR = Color3.fromRGB(255, 250, 200)
 local BIRD_COLOR = Color3.fromRGB(120, 85, 55)
 local PECK_COLOR = Color3.fromRGB(200, 170, 130)
+local HARPOON_COLOR = Color3.fromRGB(90, 70, 50)
+local CHAIN_COLOR = Color3.fromRGB(110, 110, 120)
 
 local towers: { Tower } = {}
 local towerFolder: Instance
@@ -479,6 +493,7 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 		static = setmetatable({}, { __mode = "k" }) :: any,
 		sorties = {},
 		dived = setmetatable({}, { __mode = "k" }) :: any,
+		towTimer = 0,
 		model = model,
 	}
 	table.insert(towers, tower)
@@ -985,6 +1000,90 @@ local function huntingParties(): { Falcon.Party }
 	return parties
 end
 
+------------------------------------------------------------------ Harpoon Ballista
+
+-- One volley: each bolt at its dino (Ballista.volley), Skewer's line through every dino
+-- on it, Chain Harpoons' chain between each linked pair. Returns true if it fired.
+local function fireBallista(tower: Tower, live): boolean
+	local stats = tower.stats
+	local list, distances, points = {}, {}, {}
+	for _, enemy in live do
+		if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= stats.range then
+			table.insert(list, enemy)
+			table.insert(distances, enemy.distance)
+			table.insert(points, enemy.part.Position)
+		end
+	end
+	local picks = Ballista.volley(distances, stats.shots, stats.chainHarpoons)
+	if #picks == 0 then
+		return false
+	end
+	local damage = stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
+	local landed = {} -- each bolt's impact point
+	for i, pick in picks do
+		local target = list[pick]
+		landed[i] = points[pick]
+		local struck = { target }
+		if stats.skewer then
+			local stop = Ballista.lineEnd(tower.muzzle, points[pick], stats.range)
+			for _, index in Ballista.onLine(points, tower.muzzle, stop) do
+				if index ~= pick then
+					table.insert(struck, list[index])
+				end
+			end
+			Effects.tracer(tower.muzzle, stop, HARPOON_COLOR)
+		else
+			Effects.tracer(tower.muzzle, points[pick], HARPOON_COLOR)
+		end
+		for _, enemy in struck do
+			hit(tower, enemy, damage, stats.sizeBreaks)
+		end
+		rodeoArc(tower, target, struck, damage, live)
+	end
+	if stats.chainHarpoons then
+		for _, pair in Ballista.pairs(#picks) do
+			local a, b = picks[pair[1]], picks[pair[2]]
+			Effects.tracer(landed[pair[1]], landed[pair[2]], CHAIN_COLOR)
+			for _, index in Ballista.onLine(points, landed[pair[1]], landed[pair[2]]) do
+				if index ~= a and index ~= b then
+					hit(tower, list[index], damage, 1)
+				end
+			end
+		end
+	end
+	return true
+end
+
+-- Tow Line: every Tow Line every s, the boss furthest along in range is pulled back; stays
+-- ready while no boss is in range.
+local function stepTow(tower: Tower, dt: number, live)
+	if not tower.stats.towLine or tower.knockedOut then
+		tower.towTimer = 0
+		return
+	end
+	local tuning = Config.Tuning
+	tower.towTimer = math.min(tuning.TowLineEvery, tower.towTimer + dt)
+	if tower.towTimer < tuning.TowLineEvery then
+		return
+	end
+	local list, distances, bosses = {}, {}, {}
+	for _, enemy in live do
+		if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= tower.stats.range then
+			table.insert(list, enemy)
+			table.insert(distances, enemy.distance)
+			bosses[#list] = enemy.def.boss == true
+		end
+	end
+	local pick = Ballista.towPick(distances, bosses)
+	if not pick then
+		return
+	end
+	tower.towTimer = 0
+	local boss = list[pick]
+	Effects.tracer(tower.muzzle, boss.part.Position, HARPOON_COLOR)
+	Enemies.knockback(boss, tuning.TowLinePull, true) -- the one boss knockback (PLAN T66)
+end
+
 -- Visuals only.
 local FREEZE_COLOR = Color3.fromRGB(150, 220, 255)
 -- How long a chill lasts after the last frame an enemy spent in range (plus
@@ -1132,6 +1231,7 @@ function Towers.step(dt: number)
 		stepBolt(tower, dt, live)
 		stepSorties(tower, dt)
 		stepHood(tower, live)
+		stepTow(tower, dt, live)
 	end
 	stepGrid(dt, live)
 	local parties = huntingParties()
@@ -1150,6 +1250,7 @@ function Towers.step(dt: number)
 		local fired = if tower.def.chains
 			then fireChain(tower, live)
 			elseif hasBirds(tower) then fireFalcon(tower, live)
+			elseif tower.def.harpoons then fireBallista(tower, live)
 			else fire(tower, live)
 		if fired then
 			-- Auras don't stack: Hunting Party only counts if it beats the standing ones.

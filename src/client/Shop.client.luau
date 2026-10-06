@@ -496,6 +496,17 @@ local function describeAbilities(now, nextStep, parts: { string })
 		table.insert(parts, `towers in range +{diveAura}% attack speed while a bird dives`)
 	end
 
+	-- Harpoon Ballista (PLAN T66)
+	if changed("skewer", false) then
+		table.insert(parts, "each bolt passes through every dino in its line")
+	end
+	if changed("towLine", false) then
+		table.insert(parts, `every {fmt(Config.Tuning.TowLineEvery)}s pulls a boss {fmt(Config.Tuning.TowLinePull)} studs back`)
+	end
+	if changed("chainHarpoons", false) then
+		table.insert(parts, "bolts fly in chained pairs: the chain hits every dino between them")
+	end
+
 	-- Tranq Station (CHILLER)
 	local slow = changed("slowPercent", 0)
 	if slow then

@@ -101,6 +101,10 @@ local function expected(def, tiers: { number })
 	else
 		e.birds, e.firstDiveX, e.eagle, e.murmuration, e.diveAuraRatePercent = 0, 1, false, false, 0
 	end
+	-- Harpoons (PLAN T66): Skewer, Tow Line and Chain Harpoons only on a tower with harpoons.
+	if not def.harpoons then
+		e.skewer, e.towLine, e.chainHarpoons = false, false, false
+	end
 	return e
 end
 

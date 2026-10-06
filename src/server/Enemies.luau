@@ -41,6 +41,7 @@ local Path = require(Shared:WaitForChild("Path"))
 local DinoLook = require(Shared:WaitForChild("DinoLook"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local SizeBreaks = require(Shared:WaitForChild("SizeBreaks"))
+local Ballista = require(Shared:WaitForChild("Ballista"))
 
 local Enemies = {}
 
@@ -370,9 +371,10 @@ function Enemies.knockOut(enemy: Enemy, seconds: number, affectsBosses: boolean?
 	end
 end
 
--- Pushes an enemy back along the track. Bosses are too heavy to move.
-function Enemies.knockback(enemy: Enemy, studs: number)
-	if not enemy.alive or studs <= 0 or enemy.def.boss then
+-- Pushes an enemy back along the track. Bosses are too heavy to move, except by a
+-- Harpoon Ballista's Tow Line (`towLine`, the one caller that passes it; PLAN T66).
+function Enemies.knockback(enemy: Enemy, studs: number, towLine: boolean?)
+	if not enemy.alive or studs <= 0 or not Ballista.movesBoss(enemy.def.boss == true, towLine) then
 		return
 	end
 	enemy.distance = math.max(0, enemy.distance - studs)
