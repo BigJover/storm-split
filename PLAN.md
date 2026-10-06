@@ -8,7 +8,7 @@ PLAYTEST.md re-run; blocked right now on Jovan reconnecting Rojo). It does not b
 phase-7 Builder batches. Each phase-7 batch still ends with its own Tester step, and phase 7
 is not "fully done" until those steps and Jovan's multi-player steps (T86) have run.
 
-**Status (2026-10-06): planned, nothing built.**
+**Status (2026-10-06): batch 1 signed off (T73 62608e6, T71 86c94bf, T72 4b2a3bc; 467 specs; #227–#228). T75–T76 final as written. Queued: T78 amendments below.**
 
 Round 1–4 rules hold (one task = one commit, pushed; `tools/check.sh`, `export_constants.py`,
 `tools/test.sh` green; diff `Config.luau` after every sheet change; openpyxl only, assert a
@@ -239,6 +239,7 @@ Mode-card blurbs, two/three side names and colours, 8 arena names (dino/hunting 
   shows the peak enemies under the cap and the script cost (record it).
 
 ### T78 — PvP damage
+- **From batch-1 review (#228), first commits of T78:** `BattleRules.canDamage` refuses a hunter hitting **another side's dinos** (dinos are only hurt by their own side's hunters/towers, so no Bone-stealing); every enemy carries its `side` from T75's `Enemies.enqueue(side, …)`. Exporter: `PvP hunter damage` allowed in **[0, 1]** (0 = hunter-vs-hunter off), `PvP tower damage` stays (0, 1]; spec both.
 - Shots (server-validated, as today) can hit an enemy side's towers and enemy hunters per
   `BattleRules.canDamage` × the PvP levers. Spawn shield; respawn on own side; abilities
   dinos/own team only; a kill-feed line "<a> knocked out <b>'s <tower>".
