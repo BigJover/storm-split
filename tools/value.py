@@ -90,6 +90,9 @@ CONTROL_TIERS = {("SNIPER", "Big Bore", 3)}
 # their own line and exempts them from bar 3 (the T5 median). Extinction Round = Big Bore T5.
 BOSS_SPECIALIST = {("SNIPER", "Big Bore", 5)}
 SUPPORT_TOWERS = {"QUARTERMASTER", "HOSPITAL", "ARMORY"}
+# Towers on the sheet whose behaviour isn't built yet (the round-4 batch, PLAN T63-T67):
+# left out of every table and median until their task models them. Each task removes its key.
+PENDING_TOWERS = {"COIL", "FALCON", "TARPIT", "BALLISTA"}
 NEIGHBOUR_TOWER, NEIGHBOUR_TIER, NEIGHBOURS = "SCOUT", 2, 3
 DEAD_X, DOMINANT_X = 2.0, 0.5
 
@@ -306,6 +309,11 @@ def aura_credit(data, s, mix, brittle=False):
     return gain
 
 
+def modelled(data):
+    """TowerOrder less the towers whose behaviour isn't built yet (PENDING_TOWERS)."""
+    return [key for key in data["TowerOrder"] if key not in PENDING_TOWERS]
+
+
 def is_support(key, path):
     return key in SUPPORT_TOWERS or (key, path["id"]) in SUPPORT_PATHS
 
@@ -314,7 +322,7 @@ def value_table(data, mixes):
     """rows[(key, path index, tier)] = {cost, edps[band], ...} for every damage tower path."""
     rows = {}
     tuning = data["Tuning"]
-    for key in data["TowerOrder"]:
+    for key in modelled(data):
         t = data["Towers"][key]
         if key in SUPPORT_TOWERS:
             continue
@@ -364,7 +372,7 @@ def judge(data, rows):
         r["vsMedian"] = r["marginal"][b] / medians[tier]["marginal"]
         r["control"] = (key, data["Towers"][key]["paths"][pi]["id"], tier) in CONTROL_TIERS
         r["dead"] = r["vsMedian"] > DEAD_X and not r["control"]
-    for key in data["TowerOrder"]:
+    for key in modelled(data):
         t = data["Towers"][key]
         if key in SUPPORT_TOWERS:
             continue
@@ -401,7 +409,7 @@ def fmt(x):
 def support_lines(data, mixes):
     out = []
     late = mixes[3]
-    for key in data["TowerOrder"]:
+    for key in modelled(data):
         t = data["Towers"][key]
         for pi, path in enumerate(t["paths"]):
             if not is_support(key, path) or key == "QUARTERMASTER":
@@ -583,7 +591,7 @@ def value_report(data, full=False):
         f"r{lo}-{hi} armour {m['armoured']:.0%} air {m['flying']:.0%} boss {m['boss']:.0%}" for (lo, hi), m in zip(BANDS, mixes)))
     print("  eDPS per band r1-10/11-20/21-30/31-40 | cost/eDPS and marginal cash/eDPS in the band the tier is bought"
           " (T1-2: 11-20, T3: 21-30, T4-5: 31-40) | x med = marginal vs the tier's median")
-    for key in data["TowerOrder"]:
+    for key in modelled(data):
         if key in SUPPORT_TOWERS:
             continue
         t = data["Towers"][key]
@@ -632,7 +640,7 @@ def overkill_report(data):
     print("overkill (PLAN T47, DECISIONS #128): eDPS before (zero-waste) -> after (overkill counted), Easy solo,"
           " levels left out of the numbers; breaks = the tier's Size breaks")
     print("  " + " " * 38 + "  ".join(f"r{lo}-{hi}".center(19) for lo, hi in BANDS))
-    for key in data["TowerOrder"]:
+    for key in modelled(data):
         if key in SUPPORT_TOWERS:
             continue
         t = data["Towers"][key]
@@ -655,7 +663,7 @@ def raw_tiers(data):
     """The raw-damage tiers (DECISIONS #127, #165): every tier on a break path whose own
     Size breaks cell is above 1, as (key, path index, tier)."""
     out = []
-    for key in data["TowerOrder"]:
+    for key in modelled(data):
         t = data["Towers"][key]
         for pi, path in enumerate(t["paths"]):
             if (t["display"], path["id"]) in export_constants.BREAK_PATHS:
@@ -908,6 +916,8 @@ def pacing_report(data):
         cells = []
         for key in data["TowerOrder"]:
             t = data["Towers"][key]
+            if t.get("untouchable"):
+                continue  # no HP, never repaired (DECISIONS #148)
             price = xround(tuning["RepairCost"] * cumulative_cost(t, 0, tier))
             cells.append(f"{t['display'].split()[0]} {fmt(price)} ({price / income:.2f})")
         print(f"    r{r} T{tier}, income {fmt(income)}: " + ", ".join(cells))

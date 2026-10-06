@@ -161,14 +161,17 @@ local function refreshAuras()
 			local s = source.stats
 			if not source.knockedOut and hasAura(s) and covers(source, tower.base) then
 				-- An Armory's resistance covers itself too; the other auras are for others.
-				resist = math.max(resist, s.resistPercent)
+				-- Armory and Field Hospital auras skip a tower that can't be damaged (#148).
+				if not tower.def.untouchable then
+					resist = math.max(resist, s.resistPercent)
+				end
 				if source ~= tower then
 					rate = math.max(rate, s.auraRatePercent)
 					damage = math.max(damage, s.auraDamagePercent)
 					pierce = pierce or s.auraPiercesArmor
 					discount = math.max(discount, s.discountPercent)
 					refund = math.max(refund, s.sellRefund)
-					hpBonus = math.max(hpBonus, s.auraHpPercent)
+					hpBonus = if tower.def.untouchable then 0 else math.max(hpBonus, s.auraHpPercent)
 				end
 			end
 		end
@@ -247,14 +250,15 @@ end
 
 -- Hurts a standing tower, less its resistance. At 0 HP it's trampled.
 -- `source` is who or what did it (kept for PvP later). Returns the damage dealt.
+-- A tower that can't be damaged (DECISIONS #148) takes nothing and shows nothing.
 function Towers.damage(tower: Tower, amount: number, source: any?): number
-	if tower.knockedOut or amount <= 0 or not table.find(towers, tower) then
+	if not Combat.canBeHit(tower.def, tower.knockedOut) or amount <= 0 or not table.find(towers, tower) then
 		return 0
 	end
 	local sources = if resistOf then table.clone(resistOf(tower)) else {}
 	table.insert(sources, tower.buff.resistPercent) -- an Armory in range
 	local resist = Combat.combineResist(sources)
-	local dealt = math.min(tower.hp, Combat.afterResist(amount, resist))
+	local dealt = Combat.towerDealt(tower.def, tower.hp, amount, resist)
 	tower.hp -= dealt
 	local saver = if tower.hp <= 0 then lastStand(tower) else nil
 	local outcome = Combat.hitOutcome(tower.hp, dealt, saver ~= nil)
@@ -271,9 +275,10 @@ function Towers.damage(tower: Tower, amount: number, source: any?): number
 	return dealt
 end
 
--- Heals a standing tower, never past max. Trampled towers need a repair.
+-- Heals a standing tower, never past max. Trampled towers need a repair; one
+-- that can't be damaged has no HP to heal.
 function Towers.heal(tower: Tower, amount: number)
-	if tower.knockedOut or amount <= 0 or tower.hp >= tower.maxHp then
+	if tower.knockedOut or tower.def.untouchable or amount <= 0 or tower.hp >= tower.maxHp then
 		return
 	end
 	tower.hp = math.min(tower.maxHp, tower.hp + amount)
@@ -281,8 +286,12 @@ function Towers.heal(tower: Tower, amount: number)
 end
 
 -- Back to full HP, and standing again if it was trampled. Doesn't charge
--- cash: the caller (Shop) pays first.
+-- cash: the caller (Shop) pays first. A tower that can't be damaged is never
+-- repaired (Shop refuses; this is a no-op for it).
 function Towers.repair(tower: Tower)
+	if tower.def.untouchable then
+		return
+	end
 	tower.hp = tower.maxHp
 	setKnockedOut(tower, false)
 	showHealth(tower)
@@ -342,11 +351,12 @@ function Towers.hunterGearAt(position: Vector3): HunterGear
 	return gear
 end
 
--- Standing towers, for dinos to pick targets from.
+-- Standing towers dinos can hurt, for them to pick targets from (bites, throws,
+-- landing splash). Never one that can't be damaged (DECISIONS #148).
 function Towers.targets(): { Tower }
 	local standing = {}
 	for _, tower in towers do
-		if not tower.knockedOut then
+		if Combat.canBeHit(tower.def, tower.knockedOut) then
 			table.insert(standing, tower)
 		end
 	end
@@ -687,7 +697,9 @@ local function stepHealing(dt: number)
 	end
 	for _, tower in towers do
 		local heal, revive = healRates(tower.base)
-		if not tower.knockedOut and heal > 0 and tower.hp < tower.maxHp then
+		if tower.def.untouchable then
+			continue -- no HP: a Field Hospital skips it (#148)
+		elseif not tower.knockedOut and heal > 0 and tower.hp < tower.maxHp then
 			Towers.heal(tower, heal * dt)
 		elseif tower.knockedOut and revive > 0 then
 			-- Revive: HP climbs while it stays trampled; it stands at full.

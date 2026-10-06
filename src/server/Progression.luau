@@ -68,6 +68,7 @@ local Profile = require(Shared:WaitForChild("Profile"))
 local PlayerLevel = require(Shared:WaitForChild("PlayerLevel"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 local Theme = require(Shared:WaitForChild("Theme"))
+local ShopRules = require(Shared:WaitForChild("ShopRules"))
 
 local Progression = {}
 
@@ -290,6 +291,9 @@ local function buyUnlock(player: Player, kind: unknown, itemKey: unknown): (bool
 	local cost = costOf(kind, itemKey)
 	if cost == nil then
 		return false, "Unknown unlock"
+	end
+	if kind == "tower" and ShopRules.Unreleased[itemKey] then
+		return false, "That tower isn't out yet"
 	end
 	local profile = profiles[player]
 	if not profile then

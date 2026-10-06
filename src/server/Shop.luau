@@ -120,7 +120,7 @@ local function build(player: Player, towerKey: unknown, position: unknown): (boo
 	end
 
 	local spot = Placement.ground(position)
-	local fits, reason = Placement.check(spot, Towers.positions())
+	local fits, reason = Placement.check(spot, Towers.positions(), def.onTrack)
 	if not fits then
 		return false, reason or "Can't build there"
 	end
@@ -206,6 +206,9 @@ local function repair(player: Player, towerId: unknown): (boolean, string)
 	end
 	if not isWithin(player, tower.base, ShopRules.PromptDistance) then
 		return false, "Too far from the tower"
+	end
+	if tower.def.untouchable then
+		return false, "It can't be damaged" -- no HP, never repaired (DECISIONS #148)
 	end
 	if tower.hp >= tower.maxHp and not tower.knockedOut then
 		return false, "It doesn't need repairs"

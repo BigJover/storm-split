@@ -173,6 +173,12 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 	end,
 }
 
+-- Does this tower have its own silhouette yet? (The round-4 batch gets theirs in
+-- its behaviour tasks, PLAN T64-T67; until then the plain body shows.)
+function TowerLook.hasSilhouette(key: string): boolean
+	return SILHOUETTES[key] ~= nil
+end
+
 -- How high the silhouette reaches above the base (the crown sits there).
 local function silhouetteTop(blocks: { Block }): number
 	local top = 0

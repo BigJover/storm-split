@@ -182,3 +182,35 @@ test("Chaos softens towers and hardens the gun", function()
 	near(HeroStats.damageScale(5, chaos), hero5 * 1.5, "level 5 hunter on Chaos")
 	near(HeroStats.damageScale(5), hero5, "no difficulty = the level curve")
 end)
+
+test("can't be damaged (DECISIONS #148): only Falcon Roost and Tar Pit; no HP", function()
+	for _, key in Config.TowerOrder do
+		local def = Config.Towers[key]
+		eq(def.untouchable, key == "FALCON" or key == "TARPIT", `{key} untouchable`)
+		if def.untouchable then
+			eq(def.maxHp, 0, `{key} has no Max HP`)
+			eq(Combat.towerMaxHp(def, { 5, 2, 0 }, 50), 0, `{key} no HP from tiers or a Tonic aura`)
+			eq(Combat.repairCost(1000, 0, Combat.towerMaxHp(def, { 0, 0, 0 })), 0, `{key} never costs a repair`)
+		end
+	end
+end)
+
+test("an untouchable tower takes 0 and is never chosen as a target", function()
+	local roost = Config.Towers.FALCON
+	local blind = Config.Towers.SCOUT
+	eq(Combat.towerDealt(roost, 0, 50, 0), 0, "a bite on a roost")
+	eq(Combat.towerDealt(roost, 100, 1e6, 0), 0, "however big")
+	near(Combat.towerDealt(blind, 100, 50, 20), 40, "a damageable tower: after resistance")
+	near(Combat.towerDealt(blind, 30, 50, 0), 30, "never more than its HP")
+	eq(Combat.canBeHit(roost, false), false, "roost standing")
+	eq(Combat.canBeHit(Config.Towers.TARPIT, false), false, "pit")
+	eq(Combat.canBeHit(blind, false), true, "blind standing")
+	eq(Combat.canBeHit(blind, true), false, "blind trampled")
+	-- The roost is nearest, the blind further: the dino picks the blind; alone, nothing.
+	local point = Vector3.new(0, 0, 0)
+	local roostTarget = { position = Vector3.new(1, 0, 0), standing = Combat.canBeHit(roost, false), ref = "roost" }
+	local blindTarget = { position = Vector3.new(5, 0, 0), standing = Combat.canBeHit(blind, false), ref = "blind" }
+	eq(Combat.pickTarget(point, { roostTarget, blindTarget }, 10).ref, "blind", "the roost is never picked")
+	eq(Combat.pickTarget(point, { roostTarget }, 10), nil, "a roost alone: no target")
+	eq(#Combat.landingHits(Vector3.new(1, 0, 0), 3, { roostTarget }), 0, "a throw landing on it hurts nothing")
+end)

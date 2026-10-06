@@ -140,10 +140,13 @@ def main():
             per_dino[key][name] = out
 
     towers = data["Towers"]
-    t0 = {t["display"]: t["maxHp"] for t in towers.values()}
-    mid_gap = {t["display"]: t["maxHp"] for key, t in towers.items() if key != BACK_LINE_TOWER}
+    # Towers that can't be damaged (DECISIONS #148: no HP, never a target) are left out.
+    t0 = {t["display"]: t["maxHp"] for t in towers.values() if not t.get("untouchable")}
+    mid_gap = {t["display"]: t["maxHp"] for key, t in towers.items() if key != BACK_LINE_TOWER and not t.get("untouchable")}
+    untouchable = [t["display"] for t in towers.values() if t.get("untouchable")]
     print(f"threat (Easy, solo, every dino walks the whole track, worst case); hug = {hug} studs from the lane centre")
-    print(f"  T0 max HP: " + ", ".join(f"{k} {v:g}" for k, v in t0.items()))
+    print(f"  T0 max HP: " + ", ".join(f"{k} {v:g}" for k, v in t0.items())
+          + (f"; can't be damaged (left out): {', '.join(untouchable)}" if untouchable else ""))
     print(f"  defended = worst case x {DEFENDED} (DECISIONS #42); boss throws vs towers x {boss_vs_towers:g} (DECISIONS #154)")
     print(f"  {'round':>5} | {'bites hug':>9} {'mid':>6} {'corner':>7} | {'ranged hug':>10} {'mid':>6} {'corner':>7} {'mid def':>8} {'back':>5}")
     findings = []

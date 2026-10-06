@@ -25,6 +25,11 @@
 	  throwDamage   what a landing throw deals to one target: a Boss species'
 	                throw on a tower x Tuning Boss ranged vs towers x; hunters
 	                take it in full (they can dodge; DECISIONS #138, #154)
+	  canBeHit      can dinos target or hurt this tower at all: never one that
+	                can't be damaged (Towers column Untouchable, DECISIONS #148), nor
+	                a trampled one
+	  towerDealt    the HP a hit takes off a tower: 0 if it can't be damaged, else
+	                the damage after resistance, never more than the HP it has
 ]]
 
 local Config = require(script.Parent.Config)
@@ -74,8 +79,26 @@ function Combat.takesMedKit(health: number, maxHealth: number): boolean
 	return health > 0 and health < maxHealth
 end
 
--- A tower's max HP with these tiers bought and this aura bonus (percent).
+-- Can a dino pick this tower as a target, or hurt it? A tower that can't be damaged
+-- (Falcon Roost, Tar Pit; DECISIONS #148) never; a trampled one not until repaired.
+function Combat.canBeHit(def, knockedOut: boolean): boolean
+	return not def.untouchable and not knockedOut
+end
+
+-- The HP a hit takes off a standing tower with `hp` left.
+function Combat.towerDealt(def, hp: number, amount: number, resistPercent: number): number
+	if def.untouchable or amount <= 0 then
+		return 0
+	end
+	return math.min(hp, Combat.afterResist(amount, resistPercent))
+end
+
+-- A tower's max HP with these tiers bought and this aura bonus (percent). A tower
+-- that can't be damaged has none (no HP bar, no repair, no Hospital Tonic).
 function Combat.towerMaxHp(def, pathTiers: { number }, auraHpPercent: number?): number
+	if def.untouchable then
+		return 0
+	end
 	local tiers = 0
 	for _, tier in pathTiers do
 		tiers += tier

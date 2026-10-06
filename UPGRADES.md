@@ -107,6 +107,76 @@ Resistance doesn't stack: the strongest source wins, capped at 60% (Tuning).
 
 ---
 
+# The round-4 batch (TOWERS_NEXT.md, Jovan's picks 2026-10-02; DECISIONS #146–#152, #159)
+
+Unlocks at 2× Amber, normal in-match prices (#147). Falcon Roost and Tar Pit **can't be
+damaged**: no HP, dinos never target them, no repairs, Armory/Hospital don't affect them,
+and they're "somewhat weaker" (≤ 0.8× the median eDPS per cash, #148). Not sold until PLAN
+T68. Tier 4s are the Director's picks (#149), tier 5s Jovan's.
+
+## Storm Coil (COIL) — chain lightning: crowds and air 🔜 round 4 · unlock 300 Amber
+
+A copper coil on a tripod. Each strike hits one dino and **arcs** to the nearest other dino
+within reach, each arc 80% of the last. Hits air; can't hurt armour until High Voltage;
+breaks 1 size per hit. Short own range.
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Arc** | more arcs, reach | Copper Wire | Long Arc | *Fork Lightning* | *Jump Spark* | *Power Grid* |
+| **Charge** | power, armour, stun | Battery Pack | Static Shock | *Thunderclap* | *High Voltage* | *Judgement Bolt* |
+| **Lightning Rod** | support, defence | Tall Mast | Charged Air | *Grounding Spike* | *Storm Warning* | *Lightning Rodeo* |
+
+- Copper Wire: +2 arcs. Long Arc: arc reach 15. Fork Lightning: each arc may fork in two. Jump Spark: arcs jump between Storm Coils' ranges. Power Grid: every 6s one grid strike through every dino in every Storm Coil's range; n = standing Storm Coils (up to 6): range × (1 + 0.15(n−1)), damage × (0.5 + 0.25n) — one coil ×0.75, two ×1, six ×2 (#151).
+- Battery Pack: +30% damage. Static Shock: a struck dino takes +10% from the next strike. Thunderclap: the first target is stunned 0.4s. High Voltage: pierces armour, +40% damage. Judgement Bolt: every 10s one bolt on the biggest dino in range, ×8, breaks 3 sizes, stuns bosses 0.5s.
+- Tall Mast: range ×1.2. Charged Air: towers in range +10% attack speed. Grounding Spike: every 4s strikes down one dino throw aimed at a tower in range. Storm Warning: towers in range +15% damage. Lightning Rodeo: towers in range chain their own shots once (one more dino at 50%).
+
+## Falcon Roost (FALCON) — birds of prey, can't be damaged 🔜 round 4 · unlock 200 Amber
+
+A tall perch with a falconer's hut. Falcons fly to any dino in a huge radius, dive, strike
+and come back. Hits air and ground. No armour until Iron Talons.
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Talons** | raw damage, pierce-through | Sharp Talons | Hooked Beak | *Power Dive* | *Iron Talons* | *Eagle of the Peak* |
+| **Flock** | more birds | Second Pair | Quick Return | *Flock of Six* | *Wide Circle* | *Murmuration* |
+| **Falconer** | support | Long Leash | Falcon Bells | *Hooded Scout* | *Lure* | *Hunting Party* |
+
+- Power Dive: the first dive on a dino ×3, breaks 2. Iron Talons: pierces armour, breaks 3. Eagle of the Peak: one giant eagle, ×6 dives, stuns 0.5s, breaks 3.
+- Second Pair: 4 birds. Flock of Six: 6 birds. Wide Circle: radius 60. Murmuration (pending Jovan: or Sky Swarm): 12 small birds peck every dino in range.
+- Long Leash: +10% range. Falcon Bells: a struck dino takes +10% for 2s. Hooded Scout: bosses in range marked +25%. Lure: struck dinos pulled 2 studs back (not bosses). Hunting Party: towers in range +15% attack speed while a bird dives.
+
+## Tar Pit (TARPIT) — on the track: slows and sinks, can't be damaged 🔜 round 4 · unlock 250 Amber
+
+Placed **on the track** (dinos walk through it; pits can't overlap, #152). Dinos in the tar
+are slowed 25%; a dino at its last size that stays in it sinks (a take-down; not bosses, not
+Pteranodons). No air.
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Deep Tar** | slow and sink | Thick Tar | Wide Pool | *Fast Sink* | *Clinging Tar* | *Tar Lake* |
+| **Bubbling** | damage | Warm Tar | Simmer | *Boiling Pit* | *Tar Fire* | *Eruption* |
+| **Dig Site** | cash and support | Pick and Shovel | Fossil Hunter | *Lucky Finds* | *Tar Tracks* | *Tar Totem* |
+
+- Thick Tar: slow 35%. Wide Pool: 18 studs of track. Fast Sink: last-size dinos sink in 1.5s. Clinging Tar: dinos leaving stay slowed 3s. Tar Lake: the pool covers three times as much track.
+- Warm Tar / Simmer: damage per second. Boiling Pit: burning tar, burn ticks break 1. Tar Fire: dinos leave burning. Eruption: every 10s every dino in the pool drops 2 sizes outright, bosses included, Break resist ignored; each size pays (#150).
+- Pick and Shovel / Fossil Hunter: cash per sink. Lucky Finds: each sink drops a small chest that pays cash. Tar Tracks: dinos leaving slow the ones behind 15%. Tar Totem: towers in range +15% damage vs slowed dinos.
+
+## Harpoon Ballista (BALLISTA) — the heaviest single hit, pierce-through 🔜 round 4 · unlock 300 Amber
+
+A heavy crossbow on a turntable: slow, very heavy bolts. Ground and air.
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Spearhead** | raw damage, breaks | Steel Head | Saw Tip | *Crusher Bolt* | *Great Harpoon* | *Skewer* |
+| **Reel** | control | Rope Line | Winch | *Pin Down* | *Reel In* | *Tow Line* |
+| **Volley** | more bolts | Twin Bolts | Fast Crank | *Spread Volley* | *Steam Crank* | *Chain Harpoons* |
+
+- Crusher Bolt: breaks 2. Great Harpoon: pierces armour, breaks 3. Skewer: the bolt passes through every dino in a line, each breaks 3.
+- Pin Down: the hit dino is held 1s (not bosses). Reel In: drags the hit dino 6 studs back. Tow Line: every 15s pulls a boss 10 studs back.
+- Spread Volley: 3 bolts. Steam Crank: fires twice as fast. Chain Harpoons: linked bolt pairs hit everything between them.
+
+---
+
 ## Mechanics and when they're built
 
 | Mechanic | Used by | Status |
@@ -126,6 +196,9 @@ Resistance doesn't stack: the strongest source wins, capped at 60% (Tuning).
 | Round income, interest, airdrop chests, upgrade discounts, better refunds | Supply Camp | ✅ phase 5 |
 | Damage resistance aura, thorns, biter stun, hunter handling buffs | Armory | ✅ Step 2 |
 | Healing aura, tower revive, med kits, rescue respawn, max-HP aura, Last Stand | Field Hospital | ✅ Step 2 |
+| Can't be damaged (no HP, never a target, no repair, no Armory/Hospital aura) | Falcon Roost, Tar Pit | ✅ round 4 (PLAN T63) |
+| On-track placement (pits never overlap) | Tar Pit | ✅ round 4 (PLAN T63) |
+| Chain lightning, Power Grid, Judgement Bolt, Grounding Spike, Lightning Rodeo | Storm Coil | 🔜 round 4 (PLAN T64) |
 
 When a mechanic lands, its numbers get a column on `Tower Upgrades` and the stat-only
 multipliers get rebalanced around it — expect a tuning pass per mechanic.

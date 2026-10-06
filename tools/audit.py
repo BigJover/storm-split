@@ -53,6 +53,11 @@ LADDER_EXTENSIONS = {
     ("hero", "MEDIC"): ("Field Medic", 75, "DECISIONS #13"),
     ("tower", "HOSPITAL"): ("Field Hospital", 100, "DECISIONS #15"),
     ("tower", "ARMORY"): ("Armory", 150, "DECISIONS #16"),
+    # The round-4 batch: only the Amber price is 2x (DECISIONS #147, TOWERS_NEXT.md picks).
+    ("tower", "COIL"): ("Storm Coil", 300, "DECISIONS #147"),
+    ("tower", "FALCON"): ("Falcon Roost", 200, "DECISIONS #147"),
+    ("tower", "TARPIT"): ("Tar Pit", 250, "DECISIONS #147"),
+    ("tower", "BALLISTA"): ("Harpoon Ballista", 300, "DECISIONS #147"),
 }
 
 
@@ -70,7 +75,28 @@ DEAD_ALLOWED = {
 # Config fields whose reader is a later task of the plan in progress. Listed as notes;
 # an entry becomes a finding the moment some src file reads the field, so it can't
 # outlive its task. (block, field): the task that reads it
-DEAD_PENDING = {}
+DEAD_PENDING = {
+    ("Tuning", "CoilArcs"): "PLAN T64 (Storm Coil)",
+    ("Tuning", "CoilArcReach"): "PLAN T64 (Storm Coil)",
+    ("Tuning", "CoilArcFalloff"): "PLAN T64 (Storm Coil)",
+    ("Tuning", "PowerGridRangePerCoil"): "PLAN T64 (Power Grid)",
+    ("Tuning", "PowerGridDamageBase"): "PLAN T64 (Power Grid)",
+    ("Tuning", "PowerGridDamagePerCoil"): "PLAN T64 (Power Grid)",
+    ("Tuning", "PowerGridCoilCap"): "PLAN T64 (Power Grid)",
+    ("Tuning", "PowerGridEvery"): "PLAN T64 (Power Grid)",
+    ("Tuning", "JudgementBoltEvery"): "PLAN T64 (Judgement Bolt)",
+    ("Tuning", "JudgementBoltX"): "PLAN T64 (Judgement Bolt)",
+    ("Tuning", "JudgementBoltBreaks"): "PLAN T64 (Judgement Bolt)",
+    ("Tuning", "JudgementBoltStun"): "PLAN T64 (Judgement Bolt)",
+    ("Tuning", "EruptionEvery"): "PLAN T67 (Eruption)",
+    ("Tuning", "EruptionSizes"): "PLAN T67 (Eruption)",
+    ("Tuning", "TowLineEvery"): "PLAN T66 (Tow Line)",
+    ("Tuning", "TowLinePull"): "PLAN T66 (Tow Line)",
+}
+
+# Words no tower or tier name may use: "Trophy" is reserved for ranked (DECISIONS #130,
+# #139); "split" and "pop" were retired with balloons (#93, TOWERS_NEXT "Final names").
+BANNED_NAME_WORDS = ("trophy", "split", "pop")
 
 
 def read(name):
@@ -140,6 +166,21 @@ def check_names(findings, block, items, doc_name, heading_level, compared):
     for key, item in items.items():
         if item["display"] not in documented:
             findings.append(f"{block}.{key} ({item['display']}) has no path table in {doc_name}")
+    # Tower tier names: unique across every tower, none with a banned word (PLAN T62/T63).
+    if block == "Towers":
+        seen = {}
+        for key, item in items.items():
+            names = [(item["display"], "name")] + [(tier.get("name") or "", f"{path['id']} T{t}")
+                                                   for path in item["paths"] for t, tier in enumerate(path["tiers"], start=1)]
+            for name, where in names:
+                words = re.findall(r"[a-z]+", name.lower())
+                for bad in BANNED_NAME_WORDS:
+                    if bad in words:
+                        findings.append(f"{block}.{key} {where} '{name}' uses the banned word '{bad}'")
+                if where != "name":
+                    if name.lower() in seen:
+                        findings.append(f"{block}.{key} {where} '{name}' repeats {seen[name.lower()]}")
+                    seen.setdefault(name.lower(), f"{key} {where}")
 
 
 # ---------------------------------------------------------------- 2. unlocks

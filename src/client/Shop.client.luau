@@ -847,7 +847,8 @@ local function moveGhost(spot: Vector3?)
 	end
 	ghost.Parent = camera
 
-	local fits, reason = Placement.check(spot, builtPositions())
+	local placingDef = if placingKey then Config.Towers[placingKey] else nil
+	local fits, reason = Placement.check(spot, builtPositions(), placingDef ~= nil and placingDef.onTrack)
 	local root = characterRoot()
 	if fits and root then
 		local offset = root.Position - spot
@@ -1102,8 +1103,8 @@ render = function()
 		section("Towers")
 		for _, key in Config.TowerOrder do
 			local def = Config.Towers[key]
-			if (def.unlockCost or 0) <= 0 then
-				continue -- free for everyone
+			if (def.unlockCost or 0) <= 0 or ShopRules.Unreleased[key] then
+				continue -- free for everyone, or not out yet (the server refuses it too)
 			end
 			order += 1
 			local name = escape(def.display)
@@ -1153,6 +1154,8 @@ render = function()
 		end
 		if maxHp > 0 then
 			addRow(-1, `<font size="13">HP {math.ceil(hp)} / {math.floor(maxHp + 0.5)}</font>`, PANEL_COLOR, false)
+		elseif def and def.untouchable then
+			addRow(-1, `<font size="13">Can't be damaged: dinos ignore it, no repairs</font>`, PANEL_COLOR, false)
 		end
 		if trampled or (maxHp > 0 and hp < maxHp) then
 			local discount = managed:GetAttribute("Discount") or 0

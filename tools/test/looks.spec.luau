@@ -10,6 +10,7 @@ local Config = require(src.shared.Config)
 local Track = require(src.shared.Track)
 local TowerLook = require(src.shared.TowerLook)
 local DinoLook = require(src.shared.DinoLook)
+local ShopRules = require(src.shared.ShopRules)
 
 local BASE = Vector3.new(40, 2, -30)
 local EPS = 1e-3 -- instance properties are 32-bit floats
@@ -28,12 +29,30 @@ local function corners(part): { Vector3 }
 	return out
 end
 
+-- Every tower with a look: all of them, except an unreleased tower whose silhouette
+-- comes with its behaviour task (PLAN T64-T67).
+local function looked(): { string }
+	local keys = {}
+	for _, key in Config.TowerOrder do
+		if TowerLook.hasSilhouette(key) or not ShopRules.Unreleased[key] then
+			table.insert(keys, key)
+		end
+	end
+	return keys
+end
+
+test("every sold tower has a silhouette", function()
+	for _, key in Config.TowerOrder do
+		ok(TowerLook.hasSilhouette(key) or ShopRules.Unreleased[key], `{key}`)
+	end
+end)
+
 test("the body's half-diagonal fits Track.TowerRadius", function()
 	ok(math.sqrt(2) * 1.5 <= Track.TowerRadius, "TowerRadius")
 end)
 
 test("every tower's silhouette stays inside the 3x3x5 body box", function()
-	for _, key in Config.TowerOrder do
+	for _, key in looked() do
 		local model = TowerLook.build(key, Config.Towers[key].range, BASE)
 		local body = model.PrimaryPart
 		eq(body and body.Name, "Body", `{key} PrimaryPart`)
@@ -65,7 +84,7 @@ test("every tower's silhouette stays inside the 3x3x5 body box", function()
 end)
 
 test("crown on top at stage 1, glow at stage 2, tier label on the body", function()
-	for _, key in Config.TowerOrder do
+	for _, key in looked() do
 		local model = TowerLook.build(key, Config.Towers[key].range, BASE)
 		local body = model.PrimaryPart
 		TowerLook.refresh(model, 20, { 3, 1, 0 }, 1)
@@ -142,7 +161,7 @@ test("DinoLook fixes: Gallimimus head on its neck, Raptor stripe and crest, T-Re
 end)
 
 test("trampled look: tilt, Slate, dust, debris, no ring, TRAMPLED label; all undone on repair", function()
-	for _, key in Config.TowerOrder do
+	for _, key in looked() do
 		local model = TowerLook.build(key, 15, BASE)
 		TowerLook.refresh(model, 15, { 5, 2, 0 }, 2)
 		local body = model.PrimaryPart
@@ -324,7 +343,7 @@ test("Armory rack guns read as rifles: a Wood stock under a 1.5-long steel barre
 end)
 
 test("trampled tint is (45,45,48) on every tower (R6-2)", function()
-	for _, key in Config.TowerOrder do
+	for _, key in looked() do
 		local model = TowerLook.build(key, Config.Towers[key].range, BASE)
 		TowerLook.setKnockedOut(model, true)
 		for _, part in model:GetChildren() do

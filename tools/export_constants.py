@@ -133,12 +133,13 @@ def read_tuning(ws):
 
 def read_towers(ws):
     towers, order = {}, []
-    # Tower rows run from 5 down to the "Cost per DPS" line; a blank row in
-    # between is a slot kept free (the Field Hospital's row 10 until T15).
+    # Tower rows run from 5 down; a blank row in between is a slot kept free (the
+    # Field Hospital's row 10 until T15). The "Cost per DPS" line (row 13, which
+    # value.py reads) is skipped: towers added after it (PLAN T63) are appended below.
     for r in range(5, 40):
         name = v(ws, r, 1)
         if name and str(name).startswith("Cost per DPS"):
-            break
+            continue
         if not name:
             continue
         # Internal key (Key column) stays fixed while the display name can change.
@@ -159,6 +160,10 @@ def read_towers(ws):
             "maxHp": num(v(ws, r, 16)),
             "healPerSecond": num(v(ws, r, 17)),
             "resistPercent": num(v(ws, r, 18)),
+            # Can't be damaged (DECISIONS #148): no HP, never a dino's target, no repair,
+            # no Armory/Hospital aura. On track: placed on the track, not off it (#152).
+            "untouchable": yes(v(ws, r, 20)),
+            "onTrack": yes(v(ws, r, 21)),
             "paths": [],
         }
         order.append(key)
@@ -991,7 +996,10 @@ def validate(data):
             problems.append(f"Difficulty {key} needs a Dino damage x above 0")
 
     for key, t in data["Towers"].items():
-        if not isinstance(t["maxHp"], (int, float)) or t["maxHp"] <= 0:
+        if t["untouchable"]:
+            if t["maxHp"] != 0:
+                problems.append(f"{key} can't be damaged (Towers column T), so its Max HP must be blank or 0")
+        elif not isinstance(t["maxHp"], (int, float)) or t["maxHp"] <= 0:
             problems.append(f"{key} needs a Max HP above 0 (Towers column P)")
         for p in t["paths"]:
             for i, step in enumerate(p["tiers"], start=1):
