@@ -40,7 +40,8 @@ For this round:
 | 8 | T63, T64 | shared tower groundwork (can't-be-damaged, on-track placement, sheet rows); Storm Coil |
 | 9 | T65, T66 | Falcon Roost; Harpoon Ballista |
 | 10 | T67, T68 | Tar Pit; unlock screen + balance pass for all four |
-| — | T69 🦖, T70 Tester, T61 Director (last) | review of the towers; Studio steps; docs + recap |
+| — | T69 🦖 (done), T68b | review of the towers; Tar Pit fixes + review strings (one Builder run) |
+| — | T61 Director (last) | docs + recap; T60/T70 Tester stay open until Jovan flips Studio's MCP switch |
 
 **Batch 1 done (2026-10-02):** T40 befac6a, T41 61b77b4, T42 1b66379 (247 specs, audit 0,
 threat 0). Follow-ups: Hard starting cash → **850** (#143; 810 if Hard ≥ Normal in rounds
@@ -589,7 +590,7 @@ working names from T57), the Profile screen and leaderboard wording.
    size (console: sizes dropped per hit); a Mortar never drops more than one.
 3. Round 31 (start-round constant): a boss throw on a tower deals half; on the hunter, full.
    Triceratops shows the notched bar.
-4. Hard: starts at 650. Chaos: towers hit softer, gun harder (console values).
+4. Hard: starts at 850 (#143). Chaos: towers hit softer, gun harder (console values).
 5. Buy a hero path to tier 6 (J then K); Wildfire Drum's patch is 4 studs; the panel fits.
 6. Mastery 6/7/8/9 (J): pick-up reach, heal on clear, respawn, repair price change.
 7. Finish or lose a short match: "+N player XP" on the result screen; the level persists to
@@ -704,9 +705,46 @@ Director's figures are from `value.py` on 2026-10-06 (T5 cost-per-eDPS, "c/e", r
 - **T58 follow-up:** `LevelBoard` seeds a hunter's "last written" XP from the value read at
   join (profile load), so an unchanged hunter's first write of the session is skipped.
 
-### T69. 🦖 Review of the four built towers (looks, wording, ability texts)
+**T68 done (2026-10-06): b3f04d7 + 921cab2** (405 specs green; Power Grid 156, Skewer 142,
+Eagle of the Peak 186, Murmuration 266 vs M = 142, frozen as the round-4 bar, #200). Two Tar
+Pit problems left → T68b.
 
-### T70. Tester: new-tower steps (with T31/T38/T60)
+### T68b. Tar Pit fixes + Dino round 15 strings (#201–#204) — one Builder run, one commit
+Director's figures are from `value.py`'s own `tar_removed` with these cells patched in
+(2026-10-06, r31–40, Easy solo traffic).
+1. **Sinking reachable (#202):** `Tuning!B132` Tar sink seconds 3 → **1.0**; Fast Sink
+   `Tower Upgrades!CC142` 1.5 → **0.5**. Expected: base pit holds a speed-1 dino 1.14 s
+   (speed-1 and armoured smallest dinos sink; the 1.2/1.4 ones don't); Dig Site path **56
+   sinks/round**; Deep Tar T1 72, T2–T5 98.
+2. **Eruption gate (#201):** `Tuning!B130` Eruption every 15 → **10** s (back to #150);
+   Bubbling T5 `Burn DPS` `Tower Upgrades!X149` 150 → **80** (= Tar Fire's X148). Expected:
+   Bubbling T3 21%, T4 40%, **T5 49% ≤ 50%: met**. If the line prints > 50%, raise B130 by
+   1 s at a time up to 13 s (47% at 13, checked); `value.py`'s gate cap stays 15.
+3. **Dig Site pay (#203):** `Sink cash` CD150 10 → **2**, CD151 25 → **6**, CD152 25 → **6**;
+   `Sink chest cash` CE152 40 → **10**. Expected line: T1 +112/round = 9.3r; T2 +335 = 10.6r;
+   T3 +894 = 9.8r. **Bar: each of T1–T3 pays back in 8–15 rounds** — make `value.py` print a
+   finding if not (like the Eruption gate), and if a figure misses, move only that tier's CD/CE
+   by whole cash until it passes.
+4. **Strings (Dino round 15, #204):** `Tower Upgrades!C125:C129` "raw damage, pierce-through"
+   → **"raw damage, pierces armour"**; `Towers!B16` → **"Birds of prey: huge range, can't be
+   damaged"**; `Shop.client.luau` (hand-written): line ~533 "last-size dinos sink in {n}s" →
+   **"the smallest dinos sink in {n}s"**; ~484 Judgement Bolt "shrinks it up to" → **"drops it
+   up to"**; ~477 "the more Storm Coils stand" → **"the more Storm Coils you have"**; ~446
+   "bomblets split again" → **"bomblets burst again"**. Any shop/ability text that states the
+   old Tar Pit numbers (3 s, 150/s, every 15 s) reads from Config, not a literal — check.
+5. **Docs:** `TOWERS_NEXT.md` Tar Pit seeds (3 s / 1.5 s / Eruption every 8–10 s) get a
+   one-line "as built (T68b)" note with the new numbers; `UPGRADES.md` if it states them.
+- **Also bars:** everything T68 listed stays green (405+ specs, audit 0, `threat.py` 0, #72
+  pacing floors, `--breaks1` 0, Chaos bars, findings = the four accepted ones and nothing
+  new); M still 142; Bubbling T5 > T4 in HP removed.
+- **Accept:** Config diff = exactly the cells above (B130, B132, CC142, X149, CD150–152,
+  CE152, C125–C129, Towers B16, plus any step-2/3 fallback cells, listed) + the four
+  Shop.client strings; a spec that a speed-1 smallest dino sinks in a base pit and a
+  speed-1.4 one doesn't; commit message prints the Tar Pit value lines before → after.
+
+### T69. 🦖 Review of the four built towers — DONE (DINO_REVIEW round 15; #204; fixes in T68b)
+
+### T70. Tester: new-tower steps (with T31/T38/T60) — OPEN, waits on Jovan's Studio MCP switch
 1. J unlocks all; place each tower; Tar Pit only places on the track.
 2. Bites and throws never hit a Falcon Roost or Tar Pit; no repair button on them.
 3. Storm Coil: arcs visible; Power Grid with 1 coil vs 3 coils (console damage/range).
@@ -714,13 +752,21 @@ Director's figures are from `value.py` on 2026-10-06 (T5 cost-per-eDPS, "c/e", r
 5. Eruption: dinos in the pool drop 2 sizes every ~10s; a T-Rex too.
 6. Tow Line drags a boss back; Murmuration and Eagle of the Peak animate; Hunting Party and
    Tar Totem buffs show on towers in range.
+7. Tar Pit (no upgrades): a smallest-size normal-speed dino sinks after ~1s in the pool and
+   pays a kill; a fast one walks through; never a boss or Pteranodon. Dig Site T1: +2 cash per
+   sink (console); Lucky Finds drops a chest.
 
-### T61. Docs and round-4 recap (Director) — runs last, after T70
+### T61. Docs and round-4 recap (Director) — runs after T68b (T60/T70 may still be open, #205)
 Update `CLAUDE.md` status, `ARCHITECTURE.md` phase table, `VISION.md` (player level,
 cosmetics, ranked trophies note for phase 7), and append "Round 4 recap" to `RECAP.md`:
 what changed, what to playtest first, the Ask-Jovan list (including the `TOWERS_NEXT.md`
 picks), decisions he may want to overturn. Honest status: "statically checked + headless,
 not playtested" unless T60 ran. Stop before phase 7.
+Round-4 recap must also carry: the four towers' final in-match cost/Amber and the T68/T68b
+balance table (M = 142 frozen, #200; Tar Pit sink 1 s, Eruption 10 s, burn 80, Dig Site
+cash, #201–#203); T60 + T70 + T31 + T38 as **Jovan's first playtest script, still open**
+(Studio's MCP switch); overturnable calls #195, #200–#203 (e.g. a sink time of 1 s,
+Dig Site paying ~10 rounds back). Also `CLAUDE.md`'s "Next" line names the switch + Rojo reconnect.
 
 **Phase 7 notes (not this round, #139):** mastery perks stay on in competitive modes; other
 perks may be buffed so money doesn't decide matches; ranked uses a **Clash Royale-style

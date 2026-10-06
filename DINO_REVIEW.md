@@ -563,3 +563,26 @@ Rules used: no name already in `Config.luau`, `UPGRADES.md`, `HEROES.md` or the 
 - **Kept:** Meteor Set and Meteor Hunter. They share a word with the Meteor Shower perk, but the meteor is *the* dino-ending legend, so it's worth having.
 - **Strings:** all fine and kid-readable: "Player level" (not "Lv N"), "Profile (P)", "PROFILE", "Leaderboard", "Next rewards", "Wear", "None", "N / M XP to level L", "Level 10 · Bush Hat (Hunting hat) · title Greenhorn", "Unlocks at player level N", "Equipped", "Taken off", "That doesn't go there", "World top 50", "This server", "Checking the board…", fallback "Hunter". The slot labels (Title, Name colour, Leaderboard banner, Gun tint, Gun pattern, Tracers, Crosshair, Tower flag, Hunting hat, Sprint trail, Animated set) are fine. "Unknown slot"/"Unknown item" are only OK if they never reach players. If they can, use "That doesn't go there" for both.
 - I grepped every proposed name against UPGRADES, TOWERS_NEXT, HEROES and src. No hits apart from an internal "Footprint" instance in HuntBoard.client.luau, which players never see ("Big Game Hunter" was avoided because it's a hero name; "Stalker" because it's a hero path).
+
+## Round 15 — the four new towers as built and released (T69)
+
+Commits checked: 7f367b6 Storm Coil, de24b02 Falcon Roost, ed355b0 Harpoon Ballista, e066929 Tar Pit, 921cab2 release.
+
+**Verdict: approved, with 2 must-fix strings.** All 60 tier names in Config.luau match Round 12's final names exactly. None of them clash with names in src (the only other "Winch" is a part name inside TowerLook). There's no "pop", "balloon", "split" or "Trophy" in the new tower strings. **Murmuration** is still pending Jovan's choice (or Sky Swarm). The ability text "a swarm pecks every dino in range" works with either name.
+
+**Looks (TowerLook.luau):** all four read as what they are. Storm Coil is copper rings on a steel tripod with a glowing ball on top. Falcon Roost is a falconer's hut, a tall perch and a brown falcon with a cream breast. Harpoon Ballista is a crossbow on a turntable with a barbed harpoon and a winch. Tar Pit is a glossy black pool with bubbles, a bone and a warning stake. No changes needed.
+
+**Must-fix**
+| File | Current | Proposed | Why |
+|---|---|---|---|
+| Config.luau (Falcon Roost, Talons `focus`) | "raw damage, pierce-through" | "raw damage, pierces armour" | Talons doesn't pierce through dinos. Iron Talons and Eagle of the Peak pierce *armour*, and "pierce-through" is the Harpoon Ballista's job. |
+| Shop.client.luau (Tar Pit sink line) | "last-size dinos sink in {n}s" | "the smallest dinos sink in {n}s" | "last-size" is our jargon, and a kid won't read it. |
+
+**Nice-to-have**
+| File | Current | Proposed |
+|---|---|---|
+| Config.luau (Falcon Roost `role`) | "Birds of prey: huge radius, can't be damaged" | "Birds of prey: huge range, can't be hurt" |
+| Shop.client.luau (Judgement Bolt line) | "...shrinks it up to {n} sizes..." | "...drops it up to {n} sizes..." (Eruption says "drops", the generic line says "breaks", so settle on one verb) |
+| Shop.client.luau (Power Grid line) | "...the more Storm Coils stand (one alone is weaker)" | "...the more Storm Coils you have (one alone is weaker)" |
+
+**Old string spotted outside the four towers:** "bomblets split again" in Shop.client.luau uses the banned word "split". Proposed: "bomblets burst again".
