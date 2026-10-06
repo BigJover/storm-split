@@ -78,16 +78,10 @@ DEAD_ALLOWED = {
 DEAD_PENDING = {
     # Phase 7 batch 1 (PLAN T73): the levers whose readers come later in phase 7.
     ("Tuning", "BattleBuildTime"): "T77 (battle match flow)",
-    ("Tuning", "BattleRoundTime"): "T71 (Shared/BattleRules lockstep)",
     ("Tuning", "BattleSideDensity"): "T75/T77 (per-side waves)",
     ("Tuning", "PvPTowerDamage"): "T78 (PvP damage)",
     ("Tuning", "PvPHunterDamage"): "T78 (PvP damage)",
     ("Tuning", "SpawnShield"): "T78 (PvP damage)",
-    ("Tuning", "OvertimeHPStep"): "T71 (Shared/BattleRules overtime)",
-    ("Tuning", "SurvivorBonus"): "T71 (Shared/BattleRules Royale result)",
-    ("Tuning", "TeamMinPlayers"): "T71 (Shared/Modes sides)",
-    ("Tuning", "RoyaleMinPlayers"): "T71 (Shared/Modes sides)",
-    ("Tuning", "BattleMaxPlayers"): "T71 (Shared/Modes sides)",
     ("Tuning", "CompetitiveBuyIn"): "T72 (Shared/Stakes)",
     ("Tuning", "TeamWinPayout"): "T72 (Shared/Stakes casual payout)",
     ("Tuning", "TeamLossPayout"): "T72 (Shared/Stakes casual payout)",

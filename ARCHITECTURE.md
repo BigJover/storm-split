@@ -47,7 +47,10 @@ src/
 │   │                        (tier base + level bonus − species resist, capped); pure, used by Enemies
 │   ├── SmallPerks.luau      Mastery small perks (levels 6-19): pick-up reach, round heal, respawn x, repair x
 │   ├── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
-│   ├── Modes.luau           Game modes and tracks the home screen offers (availability, display)
+│   ├── Modes.luau           Game modes and tracks the home screen offers (availability, display); sides per mode
+│   ├── BattleRules.luau     Battle modes: who may damage whom, lockstep rounds, side out, overtime HP,
+│   │                        Team and Royale results (survivor bonus, tie-breaks); pure
+│   ├── Matchmaking.luau     Side assignment in one server: sizes within 1, snake draft by Trophies; pure
 │   ├── PanelRules.luau      Which panel may be open in which match state, and what a state change closes;
 │   │                        the tower panel's "Tower level" line
 │   ├── Bounties.luau        Daily Haul and bounty rules: roll, reset, progress, claim, swap, sanitise a save; pure
