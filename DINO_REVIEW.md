@@ -535,3 +535,31 @@ Rules used: no name already in `Config.luau`, `UPGRADES.md`, `HEROES.md` or the 
 - Small perks: Long Arms, Handyman kept. **Field Dressing → First Aid** (nice-to-have; "dressing" reads as salad). **Quick Recovery → Back in Action** (nice-to-have; fifth "Quick" name).
 - **Must-fix wording:** HEROES.md line 66–67 says "per pop" twice → "per take-down". "Breaks 2 sizes" in player text → "shrinks a dino 2 sizes".
 - All new names grep-clean against UPGRADES, TOWERS_NEXT, HEROES, Config.
+
+## Round 14 — player-level rewards, titles, Profile and leaderboard (T59)
+
+**Verdict:** the theme holds. The 89 commons use plain earthy colour words (Fern/Ochre/Ash/Moss/Bone…) across six kinds, which is right for levels 1–99. The rares are noticeably better (Bush Hat, Ironwood Stock, Crest Helm, Raptor Scale), and the sets at 150/200 sound legendary. No old-theme words were found. One reserved word and one tower-name clash have to change. Numbers are unchanged.
+
+**Title ladder as I'd have it** (only the names move; the levels stay):
+
+| Lv | Current | Proposed |
+|---|---|---|
+| 10 | Greenhorn | Greenhorn |
+| 20 | Trailblazer | ***Trapper*** (swap with 30: trapping comes before blazing trails) |
+| 30 | Trapper | ***Trailblazer*** |
+| 40 | Ranger | Ranger |
+| 50 | Trophy Hunter | ***Veteran Hunter*** |
+| 60 | Warden | ***Game Warden*** |
+| 70 | Pathfinder | Pathfinder |
+| 80 | Raptor Bane | Raptor Bane |
+| 90 | Rex Wrangler | Rex Wrangler |
+| 100 | Apex Hunter | ***Master Hunter*** |
+| 150 | Fossil Legend | Fossil Legend |
+| 200 | Meteor Hunter | Meteor Hunter |
+| 250+ | Elder Hunter {n} | Elder Hunter {n} |
+
+- **Must-fix:** Trophy Hunter → **Veteran Hunter** ("Trophy" is reserved for ranked, DIRECTION.md). Tar Pit Set → **Volcano Set**, because Tar Pit is an approved tower (DECISIONS #152, T67). Volcano at 150 and Meteor at 200 also read as a rising "end of the dinosaurs" pair.
+- **Nice-to-have:** Apex Hunter → **Master Hunter** (Apex Predator is already a Weak Spot T6 name; Round 13 avoided "Apex"). Warden → **Game Warden** (on its own, "Warden" reads as prison). Swap Trailblazer/Trapper. Star Marker → **Claw Marker** (stars aren't on theme). Fern Trail → **Footprint Trail** (a level-80 rare shouldn't share a word with ten commons).
+- **Kept:** Meteor Set and Meteor Hunter. They share a word with the Meteor Shower perk, but the meteor is *the* dino-ending legend, so it's worth having.
+- **Strings:** all fine and kid-readable: "Player level" (not "Lv N"), "Profile (P)", "PROFILE", "Leaderboard", "Next rewards", "Wear", "None", "N / M XP to level L", "Level 10 · Bush Hat (Hunting hat) · title Greenhorn", "Unlocks at player level N", "Equipped", "Taken off", "That doesn't go there", "World top 50", "This server", "Checking the board…", fallback "Hunter". The slot labels (Title, Name colour, Leaderboard banner, Gun tint, Gun pattern, Tracers, Crosshair, Tower flag, Hunting hat, Sprint trail, Animated set) are fine. "Unknown slot"/"Unknown item" are only OK if they never reach players. If they can, use "That doesn't go there" for both.
+- I grepped every proposed name against UPGRADES, TOWERS_NEXT, HEROES and src. No hits apart from an internal "Footprint" instance in HuntBoard.client.luau, which players never see ("Big Game Hunter" was avoided because it's a hero name; "Stalker" because it's a hero path).

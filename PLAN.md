@@ -555,7 +555,7 @@ pierce-through wording ("breaks 2 sizes"), the Chaos difficulty card text.
 
 ## Review, playtest, docs
 
-### T58b. Batch-7 follow-ups (#181–#185)
+### T58b. Batch-7 follow-ups (#181–#187) — after the Storm Coil Builder
 - **Equip only in the Lobby:** the server refuses an equip request outside the Lobby state
   (matches the Lobby-only Profile screen); no client change needed beyond the refusal toast.
 - **Leaderboard writes only on change:** `LevelBoard` writes a hunter's score only when their
@@ -564,8 +564,19 @@ pierce-through wording ("breaks 2 sizes"), the Chaos difficulty card text.
   write and skip (retry next tick) when the budget is 0.
 - **Cosmetics carry no gameplay:** hats and trails have `CanCollide`, `CanQuery`, `CanTouch`
   false and `Massless` true; no hitbox or targeting change.
+- **Dino round 14 names (#186–#187), sheet `Cosmetics` col D:** D25 `Trapper` (lv 20), D36
+  `Trailblazer` (lv 30), D58 `Veteran Hunter`, D69 `Game Warden`, D79 `Claw Marker`, D90
+  `Footprint Trail`, D113 `Master Hunter`, D114 `Volcano Set`. Re-export Config. Title ladder
+  after the change: Greenhorn 10, Trapper 20, Trailblazer 30, Ranger 40, Veteran Hunter 50,
+  Game Warden 60, Pathfinder 70, Raptor Bane 80, Rex Wrangler 90, Master Hunter 100, Fossil
+  Legend 150, Meteor Hunter 200, Elder Hunter {n} 250+.
+- **Refusal text:** `Cosmetics.luau` reasons "Unknown slot"/"Unknown item" stay internal (logs,
+  specs); the player only ever sees "You can't equip that." (and "Equip in the lobby." for the
+  Lobby-only refusal).
 - **Accept:** specs: equip in Lobby yes / in Playing no; no write when XP unchanged; a zero
-  budget skips without error; a hat part is non-colliding and non-queryable. All specs green.
+  budget skips without error; a hat part is non-colliding and non-queryable; the toast never
+  shows an "Unknown" string. `grep -rn -E "Trophy Hunter|Tar Pit Set|Apex Hunter|Star
+  Marker|Fern Trail" src tools` = 0; Config diff = the 8 names. All specs green.
 
 ### T59. 🦖 Dino review: player level
 The player-level label (must differ from "Lv N"), the titles, the cosmetic names (all
