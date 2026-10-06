@@ -160,6 +160,9 @@ WORTH_HI, UNTOUCHABLE_HI = 1.25, 2.0
 # Tar Pit's one gated bar (#199): one Eruption pit removes at most this share of r31-40 ground HP.
 ERUPTION_SHARE_MAX = 0.50
 ERUPTION_EVERY_CAP = 15  # the lever's ceiling (s); at it the bar reports and passes
+# Dig Site's bar (#203): each cash tier (T1-T3) pays back in this many rounds, r31-40.
+DIG_PAYBACK = (8, 15)
+DIG_TIERS = 3
 
 
 def load():
@@ -431,6 +434,18 @@ def eruption_gate(share, every, cap):
     if share <= ERUPTION_SHARE_MAX:
         return "pass"
     return "raise" if every < cap else "report"
+
+
+
+def dig_payback_ok(rounds_to_pay):
+    """Dig Site's bar (PLAN T68b step 3, DECISIONS #203): a cash tier pays back in
+    DIG_PAYBACK rounds, ends included; a tier that adds no cash fails.
+    >>> dig_payback_ok(9.3), dig_payback_ok(8), dig_payback_ok(15)
+    (True, True, True)
+    >>> dig_payback_ok(2.1), dig_payback_ok(15.5), dig_payback_ok(math.inf)
+    (False, False, False)
+    """
+    return DIG_PAYBACK[0] <= rounds_to_pay <= DIG_PAYBACK[1]
 
 
 def edps(s, mix, tuning, buff=None, overkill=True, breaks1=False):
@@ -715,13 +730,16 @@ def tar_lines(data, mixes):
                 gain = cash - prev_cash
                 step = path["tiers"][tier - 1]["cost"]
                 bits.append(f"T{tier} +{cash:.0f}/round" + (f" = {fmt(step / gain)}r" if gain > 0 else ""))
+                payback = step / gain if gain > 0 else math.inf
+                if tier <= DIG_TIERS and not dig_payback_ok(payback):
+                    findings.append(f"DIG SITE: T{tier} pays back in {fmt(payback)} rounds (bar {DIG_PAYBACK[0]}-{DIG_PAYBACK[1]}; PLAN T68b step 3, #203)")
                 prev_cash = cash
         if pi == 0:
             head = f"slows every ground dino ({ground / max(1, dinos):.0%} of dinos)"
         elif pi == 1:
             head = "ground HP removed by one pit"
         else:
-            head = "cash a round, payback"
+            head = f"cash a round, payback (T1-T{DIG_TIERS} bar {DIG_PAYBACK[0]}-{DIG_PAYBACK[1]}r)"
         out.append(f"  Tar Pit {path['id']:<9} {head}: " + "; ".join(bits))
         if pi == 1:
             s = path_stats(t, pi, len(path["tiers"]))

@@ -443,7 +443,7 @@ local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?
 		table.insert(parts, `{bomb} bomblets`)
 	end
 	if changed("bombletGenerations", 0) and (nextStep.bombletGenerations or 0) > 1 then
-		table.insert(parts, "bomblets split again")
+		table.insert(parts, "bomblets burst again")
 	end
 	local auraRate = changed("auraRatePercent", 0)
 	if auraRate then
@@ -474,14 +474,14 @@ local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?
 		table.insert(parts, "arcs jump into other Storm Coils' range")
 	end
 	if changed("powerGrid", false) then
-		table.insert(parts, `grid strike every {fmt(Config.Tuning.PowerGridEvery)}s: stronger and wider the more Storm Coils stand (one alone is weaker)`)
+		table.insert(parts, `grid strike every {fmt(Config.Tuning.PowerGridEvery)}s: stronger and wider the more Storm Coils you have (one alone is weaker)`)
 	end
 	local static = changed("staticPercent", 0)
 	if static then
 		table.insert(parts, `struck dinos take +{static}% from its next strike`)
 	end
 	if changed("judgementBolt", false) then
-		table.insert(parts, `every {fmt(Config.Tuning.JudgementBoltEvery)}s a x{fmt(Config.Tuning.JudgementBoltX)} bolt on the biggest dino: shrinks it up to {Config.Tuning.JudgementBoltBreaks} sizes, stuns bosses too`)
+		table.insert(parts, `every {fmt(Config.Tuning.JudgementBoltEvery)}s a x{fmt(Config.Tuning.JudgementBoltX)} bolt on the biggest dino: drops it up to {Config.Tuning.JudgementBoltBreaks} sizes, stuns bosses too`)
 	end
 	local grounding = changed("groundingEvery", 0)
 	if grounding then
@@ -530,7 +530,7 @@ local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?
 	-- Tar Pit (PLAN T67)
 	local sink = changed("sinkSeconds", 0)
 	if sink then
-		table.insert(parts, `last-size dinos sink in {fmt(sink)}s`)
+		table.insert(parts, `the smallest dinos sink in {fmt(sink)}s`)
 	end
 	local sinkCash = changed("sinkCash", 0)
 	if sinkCash then

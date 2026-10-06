@@ -46,7 +46,7 @@ built). Change a name there, not in code.
 | **Concussive** | control / anti-armour | *Shockwave* | *Armor Crack* | *Stun Grenade* | Earthshaker | *Tectonic Slam* |
 
 - Napalm: leaves a burning patch on the track. Scorched Earth: long burning stretch.
-- Cluster Shell: each shell splits into 3 blasts. Chain Reaction: the bomblets split again.
+- Cluster Shell: each shell splits into 3 blasts. Chain Reaction: the bomblets burst again.
 - Shockwave: knocks dinos back along the track. Armor Crack: damages armour, ×2 vs armoured. Stun Grenade: brief stun. Tectonic Slam: everything hit is stunned 1s.
 
 ## Tranq Station (Chiller) — tranquilizer darts: slow and knockout ✅ phase 5 · unlock 100 Amber
@@ -140,7 +140,7 @@ ground. No armour until Iron Talons. Rules: `Shared/Falcon`.
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
-| **Talons** | raw damage, pierce-through | Sharp Talons | Hooked Beak | *Power Dive* | *Iron Talons* | *Eagle of the Peak* |
+| **Talons** | raw damage, pierces armour | Sharp Talons | Hooked Beak | *Power Dive* | *Iron Talons* | *Eagle of the Peak* |
 | **Flock** | more birds | Second Pair | Quick Return | *Flock of Six* | *Wide Circle* | *Murmuration* |
 | **Falconer** | support | Long Leash | Falcon Bells | *Hooded Scout* | *Lure* | *Hunting Party* |
 
@@ -164,9 +164,9 @@ it — so slow, damage, sinking and Eruption never stack (#189). Rules: `Shared/
 | **Bubbling** | damage | Warm Tar | Simmer | *Boiling Pit* | *Tar Fire* | *Eruption* |
 | **Dig Site** | cash and support | Pick and Shovel | Fossil Hunter | *Lucky Finds* | *Tar Tracks* | *Tar Totem* |
 
-- Thick Tar: slow 35%. Wide Pool: 18 studs of track. Fast Sink: last-size dinos sink in 1.5s. Clinging Tar: dinos walking out stay slowed 3s. Tar Lake: the pool covers three times as much track (54 studs).
-- Warm Tar / Simmer: the tar deals damage per second to every dino in it (8, 22). Boiling Pit: burning tar (80/s); its ticks break 1 (#127). Tar Fire: dinos walk out burning — one tick of 2s of the tar's damage, kept as they shrink. Eruption: every 15s (#199, T68) a geyser drops every dino in the pool 2 sizes outright, bosses included, Break resist ignored; each size pays (#150).
-- Pick and Shovel / Fossil Hunter: +10 / +25 cash per sunk dino. Lucky Finds: each sink also leaves a chest worth 40 where the dino went under (collected like an airdrop). Tar Tracks: after a dino walks out, the next 12 studs of track slow 15% for 3s. Tar Totem: towers in range +15% damage against slowed dinos (tar or tranq).
+- Thick Tar: slow 35%. Wide Pool: 18 studs of track. Fast Sink: the smallest dinos sink in 0.5s (base pit 1s; #202, T68b). Clinging Tar: dinos walking out stay slowed 3s. Tar Lake: the pool covers three times as much track (54 studs).
+- Warm Tar / Simmer: the tar deals damage per second to every dino in it (8, 22). Boiling Pit: burning tar (80/s); its ticks break 1 (#127). Tar Fire: dinos walk out burning — one tick of 2s of the tar's damage, kept as they shrink. Eruption: every 10s (#201, T68b; its tar burns 80/s, like Tar Fire) a geyser drops every dino in the pool 2 sizes outright, bosses included, Break resist ignored; each size pays (#150).
+- Pick and Shovel / Fossil Hunter: +2 / +6 cash per sunk dino (#203, T68b). Lucky Finds: each sink also leaves a chest worth 10 where the dino went under (collected like an airdrop). Tar Tracks: after a dino walks out, the next 12 studs of track slow 15% for 3s. Tar Totem: towers in range +15% damage against slowed dinos (tar or tranq).
 
 ## Harpoon Ballista (BALLISTA) — the heaviest single hit, pierce-through ✅ round 4 (PLAN T66; sold from T68) · unlock 300 Amber
 

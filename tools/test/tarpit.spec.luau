@@ -20,10 +20,10 @@ local function at(pathIndex: number, tier: number)
 	return TowerStats.compute(PIT, tiers)
 end
 
-test("the Tuning levers are the seeds (#150; Eruption every 10 -> 15 s at T68, #199)", function()
-	eq(T.EruptionEvery, 15)
+test("the Tuning levers (#150; Eruption every back to 10 s and sink 3 -> 1 s at T68b, #201, #202)", function()
+	eq(T.EruptionEvery, 10)
 	eq(T.EruptionSizes, 2)
-	eq(T.TarSinkSeconds, 3)
+	eq(T.TarSinkSeconds, 1)
 	eq(T.TarTracksLength, 12)
 	eq(T.TarTracksSeconds, 3)
 end)
@@ -40,7 +40,7 @@ test("the tower: 450 cash, 250 Amber, on the track, can't be damaged, no air, a 
 	local base = at(1, 0)
 	eq(base.range, 12, "pool length")
 	eq(base.slowPercent, 25)
-	eq(base.sinkSeconds, 3, "sinks after Tar sink seconds")
+	eq(base.sinkSeconds, 1, "sinks after Tar sink seconds")
 	eq(base.burnDps, 0)
 	eq(base.eruption, false)
 end)
@@ -59,15 +59,15 @@ test("the paths and names are TOWERS_NEXT's Final names", function()
 	end
 end)
 
-test("Deep Tar: slow 35%, Wide Pool 18 studs, Fast Sink 1.5s, Clinging Tar 3s, Tar Lake x3 the pool", function()
+test("Deep Tar: slow 35%, Wide Pool 18 studs, Fast Sink 0.5s, Clinging Tar 3s, Tar Lake x3 the pool", function()
 	eq(at(1, 1).slowPercent, 35)
 	near(at(1, 2).range, 18, "Wide Pool")
-	eq(at(1, 2).sinkSeconds, 3)
-	eq(at(1, 3).sinkSeconds, 1.5, "Fast Sink")
+	eq(at(1, 2).sinkSeconds, 1)
+	eq(at(1, 3).sinkSeconds, 0.5, "Fast Sink")
 	eq(at(1, 3).slowLinger, 0)
 	eq(at(1, 4).slowLinger, 3, "Clinging Tar")
 	near(at(1, 5).range, 3 * at(1, 4).range, "Tar Lake: three times as much track")
-	eq(at(1, 5).sinkSeconds, 1.5)
+	eq(at(1, 5).sinkSeconds, 0.5)
 end)
 
 test("Bubbling: damage per second rising, Tar Fire burns on the way out, Eruption at tier 5 only", function()
@@ -87,6 +87,11 @@ test("Dig Site: cash per sink, Lucky Finds' chest, Tar Tracks 15%, Tar Totem +15
 	ok(at(3, 2).sinkCash > at(3, 1).sinkCash, "Fossil Hunter pays more")
 	eq(at(3, 2).sinkChestCash, 0)
 	ok(at(3, 3).sinkChestCash > 0, "Lucky Finds")
+	-- #203: paid like Supply Camp (~10 rounds payback; value.py's Dig Site bar is 8-15)
+	eq(at(3, 1).sinkCash, 2)
+	eq(at(3, 2).sinkCash, 6)
+	eq(at(3, 3).sinkCash, 6)
+	eq(at(3, 3).sinkChestCash, 10)
 	eq(at(3, 4).tracksSlowPercent, 15, "Tar Tracks")
 	eq(at(3, 4).auraSlowedPercent, 0)
 	eq(at(3, 5).auraSlowedPercent, 15, "Tar Totem")
@@ -158,7 +163,19 @@ test("sinking: a last-size, non-boss, ground dino after Sink seconds", function(
 	eq(TarPit.sinks(2, false, false, 10, 3), false, "not its last size")
 	eq(TarPit.sinks(1, true, false, 10, 3), false, "never a boss")
 	eq(TarPit.sinks(1, false, true, 10, 3), false, "never a Pteranodon")
-	eq(TarPit.sinks(1, false, false, 1.5, 1.5), true, "Fast Sink")
+	eq(TarPit.sinks(1, false, false, 0.5, 0.5), true, "Fast Sink")
+end)
+
+test("a base pit sinks a speed-1 smallest dino and not a speed-1.4 one (#202)", function()
+	local Track = require(src.shared.Track)
+	local base = at(1, 0)
+	local function inPool(speedMult: number): number
+		local speed = Track.BaseEnemySpeed * T.GlobalSpeedScalar * speedMult * (1 - base.slowPercent / 100)
+		return base.range / speed
+	end
+	near(inPool(1), 1.14, "12 studs at 14 studs/s, 25% slow", 0.01)
+	eq(TarPit.sinks(1, false, false, inPool(1), base.sinkSeconds), true, "speed 1 sinks")
+	eq(TarPit.sinks(1, false, false, inPool(1.4), base.sinkSeconds), false, "speed 1.4 runs through")
 end)
 
 test("a sunk dino pays like a kill and counts as a take-down", function()
@@ -213,7 +230,7 @@ test("Eruption every Tuning interval: the timer fires once per fill and carries 
 			count += 1
 		end
 	end
-	eq(count, math.floor(30.5 / T.EruptionEvery)) -- 2 at 15 s (PLAN T68, #199)
+	eq(count, math.floor(30.5 / T.EruptionEvery)) -- 3 at 10 s (PLAN T68b, #201)
 	timer, fired = TarPit.tick(9.9, 0.25, 10)
 	eq(fired, true)
 	near(timer, 0.15)
