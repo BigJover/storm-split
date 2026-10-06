@@ -636,6 +636,7 @@ Birds fly out (travel time), dive, return; untouchable; Power Dive breaks 2, Iro
 **Eagle of the Peak** (one eagle, ×6, stun 0.5s, breaks 3); **Murmuration** (12 birds,
 continuous pecks in range); Lure; **Hunting Party** (+15% attack speed to towers in range
 while a bird dives). Accept: specs; the 0.8× eDPS-per-cash bar (#148) in `value.py`.
+Seeds confirmed (#191): Falcon Roost Damage 3, rate 1.33/s, 400 cash, 40 m range; T68 tunes.
 
 ### T66. Harpoon Ballista
 Heavy bolts (breaks per tier: Crusher Bolt 2, Great Harpoon 3); **Skewer** (line through every
@@ -643,19 +644,36 @@ dino, each breaks 3); Pin Down; Reel In; **Tow Line** (boss pulled 10 studs ever
 uses `Enemies.knockback`'s rules for bosses as an explicit exception); Spread Volley;
 Steam Crank; **Chain Harpoons** (bolt pairs hit everything on the segment between them).
 Accept: specs; knockback of bosses only through Tow Line.
+Seeds confirmed (#191): Ballista Damage 12 (the heaviest single hit; Longshot 9), rate
+0.4/s, 600 cash, 24 m; T68 tunes.
 
 ### T67. Tar Pit (#150, #152)
 On-track pool; slow; last-size sinking (not bosses or Pteranodons); Clinging Tar; **Tar
 Lake** (×3 length); Boiling Pit (burn ticks break 1); Tar Fire; **Eruption** (every 10s
 every dino in the pool drops 2 sizes outright, bosses included, resist ignored, each size
 pays); Dig Site cash tiers (Lucky Finds); Tar Tracks; **Tar Totem** (towers in range +15% vs slowed).
-Accept: specs (Eruption on a 5-size T-Rex → 3; a sunk dino pays like a kill); untouchable.
+Overlap is checked on the **pool** (its current length), not the footprint; if a later
+Tar Lake upgrade makes pools touch, a dino in two pools gets the strongest one only (no
+stacking slow, burn or Eruption). Accept: specs (Eruption on a 5-size T-Rex → 3; a sunk dino
+pays like a kill; two touching pools never stack); untouchable.
 
 ### T68. Shop, unlocks, balance pass for all four
 Sell them; Unlocks screen lists them under Towers with their Amber price; `value.py` bars:
 untouchables ≤ 0.8× median eDPS-per-cash (#148), no new DEAD/OP findings, hero-vs-tower
 guard passes, `threat.py` 0, #72 pacing floors hold. Adjust the seeds (in-match costs and
 damage), never existing towers. Report the table.
+- **Also (#188–#191):** (a) `value.py` medians and the `--breaks1` T5 median count only
+  **released** towers (a `Towers` row not yet sold is excluded) — do this first, so T68's bars
+  are measured against the old field (r31–40 T5 median back to 289). (b) **Worth it:** each
+  damageable new tower's best T5 (Storm Coil Arc/Charge; Ballista Skewer/Chain Harpoons) has
+  eDPS-per-cash ≥ the damage-path T5 median in r31–40; Storm Coil today 198/191 on 62,207
+  cash vs median 237–289, so raise Storm Coil `Damage` (Towers!D15, seed 4) and/or its T4–T5
+  `Damage x` until it passes; **Jump Spark and High Voltage DEAD cleared** by cost or damage
+  on those tiers. (c) Untouchables (Falcon, Tar Pit) ≤ 0.8× that median (#148). (d) Release
+  all four together: sold, on the Unlocks screen with Amber 300/200/250/300.
+- **Accept (added):** findings ≤ the post-T53 count (4) plus none from the new towers;
+  `--breaks1` exits 0 with the released-only median; table of every new T5's eDPS and
+  eDPS-per-cash vs the median.
 
 ### T69. 🦖 Review of the four built towers (looks, wording, ability texts)
 
