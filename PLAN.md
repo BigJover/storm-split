@@ -529,8 +529,20 @@ pierce-through wording ("breaks 2 sizes"), the Chaos difficulty card text.
 - **In play:** equipped cosmetics show on your gun, tracers, crosshair, towers' flags and
   your leaderboard row; **no gameplay effect** (no size or hitbox change, no extra
   visibility of anything).
+- **Batch-6 follow-ups (#177–#179):**
+  1. **Solo boost per round:** `bankRound` takes `solo` (one hunter present when the round
+     is cleared) and applies `Solo take-down XP x` to that round's take-down part only;
+     `matchAwards` no longer decides solo at match end.
+  2. **`equipped` validated on load and on equip:** unknown ids, wrong kind, or level above the
+     player's → dropped to default (no error); the server refuses such an equip.
+  3. **Late save load:** XP awarded while the profile is still loading is held in server
+     memory and added once the load succeeds (same session); a failed load drops it with one
+     warning and never overwrites.
 - **Accept:** specs for unlock-by-level and equip validation (server refuses equipping an
-  item above your level); `panelrules.spec` green.
+  item above your level); `panelrules.spec` green. Plus: a partner leaving after round 20 →
+  only rounds 21+ get ×2; a hunter joining a solo run at round 30 → rounds 1–30 keep ×2 for
+  the first hunter only; an old/bad `equipped` loads as {}; XP arriving before the load
+  completes is banked once (not twice) after it; heroxp/playerlevel specs green.
 
 ### T58. Level leaderboard + showing off (#122)
 - **Do:** `LevelBoard` service: OrderedDataStore (published) top 50 by Player XP, cached,
