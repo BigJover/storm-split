@@ -234,7 +234,20 @@ HERO_UPGRADE_COLUMNS = [
     ("jawLockSeconds", 43, "num", 0), ("jawLockSpread", 44, "num", 0),
     # Pierce-through (DECISIONS #134): blank = 1
     ("sizeBreaks", 45, "num", 1),
+    # Hero tier 6 (PLAN T52, DECISIONS #132-#134): handling and fire-mode mechanics.
+    ("burnPatchReach", 46, "num", 0),  # blank = Tuning Burn patch min reach (3)
+    ("staggeredReload", 47, "bool", False),  # Hot Swap: dual guns reload one at a time
+    ("ricochetReload", 48, "num", 0),  # Trick Reload: rounds back per ricochet take-down
+    ("burstRecoilReset", 49, "bool", False),  # Five-Round Burst
+    ("spunUpBelt", 50, "bool", False),  # Endless Belt: no rounds used while fully spun up
+    ("stillSpreadMult", 51, "mult", 1),  # Thunder Slug: spread while standing still
+    ("scopedSpreadMult", 52, "mult", 1),  # Heart Shot: spread while scoped
+    ("abilityCharges", 53, "num", 0),  # Rapid Response; blank = 1 charge
 ]
+
+# Every hero path has this many tiers (DECISIONS #133: "the same amount of upgrades on
+# each path").
+HERO_TIERS = 6
 
 ABILITY_KINDS = ("MARK", "OVERDRIVE", "AIRBURST", "HEAL")
 
@@ -270,6 +283,9 @@ def attach_hero_paths(ws, heroes):
             path = {"id": pid, "focus": v(ws, r, 3) or "", "tiers": []}
             index[(hero["display"], pid)] = path
             hero["paths"].append(path)
+        tier = num(v(ws, r, 4))
+        if tier != len(index[(hero["display"], pid)]["tiers"]) + 1:
+            sys.exit(f"Hero Upgrades row {r}: {hero['display']} {pid} Tier {tier} is out of order (a path's rows run 1, 2, 3... top to bottom)")
         step = {"name": str(v(ws, r, 5) or ""), "cost": num(v(ws, r, 6))}
         for field, col, kind, default in HERO_UPGRADE_COLUMNS:
             raw = v(ws, r, col)
@@ -837,8 +853,14 @@ def validate(data):
         if len(h["paths"]) != 3:
             problems.append(f"Hero {name}: needs exactly 3 upgrade paths on Hero Upgrades (has {len(h['paths'])})")
         for p in h["paths"]:
+            if len(p["tiers"]) != HERO_TIERS:
+                problems.append(f"Hero {name} {p['id']}: needs {HERO_TIERS} tiers on Hero Upgrades (has {len(p['tiers'])}; DECISIONS #133)")
             for i, step in enumerate(p["tiers"], start=1):
                 where = f"Hero {name} {p['id']} tier {i}"
+                if step["abilityCharges"] != int(step["abilityCharges"]):
+                    problems.append(f"{where}: Ability charges must be a whole number")
+                if (step["stillSpreadMult"] > 1) or (step["scopedSpreadMult"] > 1):
+                    problems.append(f"{where}: Still spread x and Scoped spread x may only tighten (0-1)")
                 if not step["name"].strip():
                     problems.append(f"{where}: needs a Name")
                 if not isinstance(step["cost"], (int, float)) or step["cost"] <= 0:

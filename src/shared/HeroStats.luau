@@ -84,6 +84,15 @@ export type Stats = {
 	markExtraReach: number, -- ... within this many studs of the target
 	strikeBurnPercent: number, -- AIRBURST: burning ground, % of the strike's damage per second
 	strikeBurnSeconds: number,
+	-- Tier 6 (PLAN T52; the rules are Shared/GunRules).
+	burnPatchReach: number, -- a burning ground patch's reach (0 = Tuning Burn patch min reach)
+	staggeredReload: boolean, -- Hot Swap
+	ricochetReload: number, -- Trick Reload: rounds back per ricochet take-down
+	burstRecoilReset: boolean, -- Five-Round Burst
+	spunUpBelt: boolean, -- Endless Belt
+	stillSpreadMult: number, -- Thunder Slug: spread x while standing still
+	scopedSpreadMult: number, -- Heart Shot: spread x while scoped
+	abilityCharges: number, -- Rapid Response
 }
 
 export type Perk = {
@@ -114,6 +123,8 @@ local MULTIPLY = {
 	"spinUp",
 	"healMult",
 	"healRadiusMult",
+	"stillSpreadMult",
+	"scopedSpreadMult",
 }
 local HIGHEST = {
 	"guns",
@@ -134,8 +145,11 @@ local HIGHEST = {
 	"jawLockSeconds",
 	"jawLockSpread",
 	"sizeBreaks",
+	"burnPatchReach",
+	"ricochetReload",
+	"abilityCharges",
 }
-local FLAGS = { "piercesArmor", "hitsAir", "beltFed", "scope", "healRepairsTowers" }
+local FLAGS = { "piercesArmor", "hitsAir", "beltFed", "scope", "healRepairsTowers", "staggeredReload", "burstRecoilReset", "spunUpBelt" }
 
 export type Gear = { recoilMult: number, reloadMult: number, spreadMult: number, ratePercent: number }
 
@@ -295,6 +309,14 @@ function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?, mast
 		markExtraReach = markExtraReach,
 		strikeBurnPercent = strikeBurnPercent,
 		strikeBurnSeconds = strikeBurnSeconds,
+		burnPatchReach = high.burnPatchReach or 0,
+		staggeredReload = flag.staggeredReload == true,
+		ricochetReload = math.floor(high.ricochetReload or 0),
+		burstRecoilReset = flag.burstRecoilReset == true,
+		spunUpBelt = flag.spunUpBelt == true,
+		stillSpreadMult = mult.stillSpreadMult,
+		scopedSpreadMult = mult.scopedSpreadMult,
+		abilityCharges = math.max(1, math.floor(high.abilityCharges or 1)),
 	}
 end
 

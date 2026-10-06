@@ -67,6 +67,7 @@ local Combat = require(Shared:WaitForChild("Combat"))
 local Track = require(Shared:WaitForChild("Track"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
+local GunRules = require(Shared:WaitForChild("GunRules"))
 
 local Economy = require(script.Parent.Economy)
 local Progression = require(script.Parent.Progression)
@@ -85,6 +86,8 @@ type State = {
 	stats: HeroStats.Stats?,
 	ammo: number,
 	reloadUntil: number, -- os.clock(); 0 when not reloading
+	swapUntil: number, -- Hot Swap: one gun's background reload ends (os.clock()); 0 when none
+	shotsFired: number, -- pulls since the last full magazine (Five-Round Burst counts bursts)
 	lastShot: number,
 	spinTime: number,
 	bloom: number, -- extra spread in degrees from recoil
@@ -94,7 +97,7 @@ type State = {
 	pops: number, -- this round's pops, pending until the round is cleared
 	level: number, -- HeroXp.level(xp, roundsCleared)
 	freeUpgrade: boolean, -- mastery 10: the first upgrade of the match costs nothing
-	abilityReadyAt: number,
+	abilityFullAt: number, -- os.clock() when every ability charge is back (GunRules.charges)
 	overdriveUntil: number,
 	overdrivePercent: number,
 	overdriveRadius: number,
@@ -145,6 +148,8 @@ local function stateOf(player: Player): State
 			stats = nil,
 			ammo = 0,
 			reloadUntil = 0,
+			swapUntil = 0,
+			shotsFired = 0,
 			lastShot = 0,
 			spinTime = 0,
 			bloom = 0,
@@ -154,7 +159,7 @@ local function stateOf(player: Player): State
 			pops = 0,
 			level = HeroXp.roundLevel(roundsCleared),
 			freeUpgrade = false,
-			abilityReadyAt = 0,
+			abilityFullAt = 0,
 			overdriveUntil = 0,
 			overdrivePercent = 0,
 			overdriveRadius = 0,
@@ -222,6 +227,12 @@ local function gameOver(): boolean
 	return state == "GameOver" or state == "Victory"
 end
 
+-- The ability's cooldown per charge, with the mastery cooldown cut.
+local function abilityCooldown(player: Player, s: State): number
+	local rewards = mastery(player, s)
+	return if s.stats then s.stats.abilityCooldown * (if rewards then rewards.abilityCooldownMult else 1) else 0
+end
+
 -- Everything the client HUD needs, as player attributes. Times are server time.
 local function publish(player: Player)
 	local s = stateOf(player)
@@ -237,7 +248,11 @@ local function publish(player: Player)
 	player:SetAttribute("Ammo", s.ammo)
 	player:SetAttribute("Magazine", if s.stats then s.stats.magazine else 0)
 	player:SetAttribute("ReloadUntil", if s.reloadUntil > 0 then s.reloadUntil + clockToServer else 0)
-	player:SetAttribute("AbilityReadyAt", s.abilityReadyAt + clockToServer)
+	local now, charges = os.clock(), if s.stats then s.stats.abilityCharges else 1
+	local cooldown = abilityCooldown(player, s)
+	player:SetAttribute("AbilityReadyAt", GunRules.readyAt(s.abilityFullAt, now, charges, cooldown) + clockToServer)
+	player:SetAttribute("AbilityCharges", GunRules.charges(s.abilityFullAt, now, charges, cooldown))
+	player:SetAttribute("AbilityMaxCharges", charges)
 end
 
 ------------------------------------------------------------------ the tool
@@ -304,6 +319,8 @@ local function refresh(player: Player, refill: boolean)
 	if s.stats and refill then
 		s.ammo = s.stats.magazine
 		s.reloadUntil = 0
+		s.swapUntil = 0
+		s.shotsFired = 0
 	end
 	syncTool(player)
 	publish(player)
@@ -335,7 +352,7 @@ local function pick(player: Player, key: unknown): (boolean, string)
 	local rewards = Progression.masteryRewards(Progression.masteryLevel(player, key))
 	s.freeUpgrade = rewards ~= nil and rewards.freeFirstUpgrade == true
 	s.bloom = 0
-	s.abilityReadyAt = 0
+	s.abilityFullAt = 0
 	refresh(player, true)
 	return true, `{Config.Heroes[key].display} it is`
 end
@@ -389,6 +406,8 @@ end
 local function finishReloadIfDue(player: Player, s: State)
 	if s.reloadUntil > 0 and os.clock() >= s.reloadUntil and s.stats then
 		s.reloadUntil = 0
+		s.swapUntil = 0 -- a full reload refills both guns
+		s.shotsFired = 0
 		s.ammo = s.stats.magazine
 		publish(player)
 	end
@@ -404,6 +423,25 @@ local function startReload(player: Player, s: State)
 	task.delay(stats.reload, function()
 		if states[player] == s then
 			finishReloadIfDue(player, s)
+		end
+	end)
+end
+
+-- Hot Swap (GunRules.swapDue): one gun reloads in the background while the other fires.
+local function startSwap(player: Player, s: State)
+	local stats = s.stats
+	if not stats or s.reloadUntil > 0 or not GunRules.swapDue(stats, s.ammo, s.swapUntil > 0) then
+		return
+	end
+	local untilTime = os.clock() + stats.reload
+	s.swapUntil = untilTime
+	task.delay(stats.reload, function()
+		local current = s.stats
+		if states[player] == s and s.swapUntil == untilTime and current then
+			s.swapUntil = 0
+			s.ammo = GunRules.swapRefill(current, s.ammo)
+			publish(player)
+			startSwap(player, s) -- the other gun may be spent by now
 		end
 	end)
 end
@@ -535,13 +573,15 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 		end
 	end
 	if not flying then
-		Hazards.burn(distance, stats.splashRadius, stats.burnDps * scale, stats.burnSeconds, stats.piercesArmor, player)
+		Hazards.burn(distance, Combat.burnPatchReach(stats.splashRadius, stats.burnPatchReach), stats.burnDps * scale, stats.burnSeconds, stats.piercesArmor, player)
 	end
 end
 
 -- Ricochet: hop from `from` to the nearest enemy not hit yet, `bounces` times.
-local function ricochet(player: Player, stats: HeroStats.Stats, from: Enemies.Enemy, live, hit: { [any]: boolean }, color: Color3, outcome: Outcome)
+-- Returns how many bounces took a size off (Trick Reload gives rounds back for them).
+local function ricochet(player: Player, stats: HeroStats.Stats, from: Enemies.Enemy, live, hit: { [any]: boolean }, color: Color3, outcome: Outcome): number
 	local lastPosition = from.part.Position
+	local takeDowns = 0
 	for _ = 1, stats.bounces do
 		local best, bestGap = nil, Config.Tuning.RicochetReach
 		for _, enemy in live do
@@ -553,16 +593,23 @@ local function ricochet(player: Player, stats: HeroStats.Stats, from: Enemies.En
 			end
 		end
 		if not best then
-			return
+			return takeDowns
 		end
 		hit[best] = true
 		Effects.tracer(lastPosition, best.part.Position, color)
 		lastPosition = best.part.Position
-		impact(player, stats, best, live, outcome)
+		local bounce: Outcome = { hit = false, killed = false }
+		impact(player, stats, best, live, bounce)
+		outcome.hit = outcome.hit or bounce.hit
+		outcome.killed = outcome.killed or bounce.killed
+		if bounce.killed then
+			takeDowns += 1
+		end
 	end
+	return takeDowns
 end
 
-local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown)
+local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown, scoped: unknown)
 	if gameOver() then
 		return
 	end
@@ -592,7 +639,8 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 	local now = os.clock()
 	local sinceLast = now - s.lastShot
 	s.spinTime = if sinceLast <= SPIN_KEEP then s.spinTime + sinceLast else 0
-	local spin = 1 + (stats.spinUp - 1) * math.min(1, s.spinTime / Config.Tuning.SpinUpTime)
+	local spinProgress = math.min(1, s.spinTime / Config.Tuning.SpinUpTime)
+	local spin = 1 + (stats.spinUp - 1) * spinProgress
 	local overdrive = now < s.overdriveUntil
 	local rate = stats.rate * stats.guns * spin * (if overdrive then Config.Tuning.OverdriveFireRateX else 1)
 	if sinceLast < SHOT_GAP_SLACK / rate then
@@ -600,10 +648,18 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 	end
 	s.lastShot = now
 
-	-- Recoil settles over time, then this pull adds to it.
+	-- Recoil settles over time, then this pull adds to it. Five-Round Burst starts
+	-- every burst with no recoil.
 	s.bloom = math.max(0, s.bloom - stats.recoilRecovery * (now - s.bloomAt))
 	s.bloomAt = now
-	local cone = stats.spread + s.bloom
+	if GunRules.burstStarts(stats, s.shotsFired) then
+		s.bloom = 0
+	end
+	s.shotsFired += 1
+	local speed = body.AssemblyLinearVelocity.Magnitude
+	local still = speed < Config.Tuning.StillSpeed
+	-- The client says whether it's zoomed; GunRules.cone only honours it on a scoped gun.
+	local cone = GunRules.cone(stats, s.bloom, still, scoped == true)
 
 	local handle = tool:FindFirstChild("Handle")
 	local muzzle = if handle and handle:IsA("BasePart") then handle.Position else body.Position
@@ -614,6 +670,7 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 	local color = HERO_COLORS[s.hero or ""] or Color3.new(1, 1, 1)
 	local live = Enemies.getLive()
 	local outcome: Outcome = { hit = false, killed = false }
+	local ricochetTakeDowns = 0
 
 	for _ = 1, stats.shotsPerTrigger do
 		for _ = 1, stats.pellets do
@@ -629,22 +686,24 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 					impact(player, stats, enemy, live, outcome, true)
 				end
 				if stats.bounces > 0 then
-					ricochet(player, stats, struck[#struck], live, hit, color, outcome)
+					ricochetTakeDowns += ricochet(player, stats, struck[#struck], live, hit, color, outcome)
 				end
 			end
 		end
 	end
 
-	local speed = body.AssemblyLinearVelocity.Magnitude
-	local recoil = stats.recoilPerShot * stats.shotsPerTrigger * (if speed < Config.Tuning.StillSpeed then stats.stillRecoilMult else 1)
+	local recoil = stats.recoilPerShot * stats.shotsPerTrigger * (if still then stats.stillRecoilMult else 1)
 	s.bloom = math.min(stats.recoilMax, s.bloom + recoil)
 
-	if not (stats.beltFed and overdrive) then
+	if GunRules.usesRounds(stats, overdrive, spinProgress) then
 		s.ammo = math.max(0, s.ammo - stats.shotsPerTrigger)
 	end
+	s.ammo = GunRules.ricochetRefill(stats, s.ammo, ricochetTakeDowns)
 	publish(player)
 	if s.ammo <= 0 then
 		startReload(player, s)
+	else
+		startSwap(player, s)
 	end
 	if outcome.hit then
 		fireEvent:FireClient(player, outcome.killed)
@@ -666,8 +725,10 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 	end
 	local hero = Config.Heroes[s.hero]
 	local now = os.clock()
-	if now < s.abilityReadyAt then
-		return false, `{hero.ability} ready in {math.ceil(s.abilityReadyAt - now)}s`
+	local cooldown = abilityCooldown(player, s)
+	if GunRules.charges(s.abilityFullAt, now, stats.abilityCharges, cooldown) < 1 then
+		local readyAt = GunRules.readyAt(s.abilityFullAt, now, stats.abilityCharges, cooldown)
+		return false, `{hero.ability} ready in {math.ceil(readyAt - now)}s`
 	end
 	local color = HERO_COLORS[s.hero] or Color3.new(1, 1, 1)
 
@@ -755,9 +816,21 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 		return false, "No ability"
 	end
 
-	local rewards = mastery(player, s)
-	s.abilityReadyAt = now + stats.abilityCooldown * (if rewards then rewards.abilityCooldownMult else 1)
+	s.abilityFullAt = GunRules.useCharge(s.abilityFullAt, now, cooldown)
 	publish(player)
+	-- Rapid Response: the HUD's charge count changes again when a charge comes back.
+	if stats.abilityCharges > 1 then
+		for i = 0, stats.abilityCharges - 1 do
+			local back = s.abilityFullAt - i * cooldown - now
+			if back > 0 then
+				task.delay(back, function()
+					if states[player] == s then
+						publish(player)
+					end
+				end)
+			end
+		end
+	end
 	if onBounty then
 		onBounty(player, "ability")
 	end
@@ -779,7 +852,7 @@ function Hero.resetMatch()
 		s.xp = 0
 		s.pops = 0
 		s.level = 1
-		s.abilityReadyAt = 0
+		s.abilityFullAt = 0
 		s.overdriveUntil = 0
 		local rewards = mastery(player, s)
 		s.freeUpgrade = rewards ~= nil and rewards.freeFirstUpgrade == true
@@ -942,12 +1015,12 @@ function Hero.init(remotes: Folder, hooks: Hooks?)
 	end
 	request.Parent = remotes
 
-	-- Client -> server: (rayOrigin, rayDirection) per trigger pull.
+	-- Client -> server: (rayOrigin, rayDirection, scoped) per trigger pull.
 	-- Server -> shooter: (killed) when a pull hit something.
 	fireEvent = Instance.new("RemoteEvent")
 	fireEvent.Name = "HeroFire"
-	fireEvent.OnServerEvent:Connect(function(player, origin, direction)
-		local ok, err = pcall(trigger, player, origin, direction)
+	fireEvent.OnServerEvent:Connect(function(player, origin, direction, scoped)
+		local ok, err = pcall(trigger, player, origin, direction, scoped)
 		if not ok then
 			warn(`[Hero] fire from {player.Name} failed: {err}`)
 		end

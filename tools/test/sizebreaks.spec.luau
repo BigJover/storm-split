@@ -250,17 +250,30 @@ test("Size breaks per tier are PLAN's seeds and reach the tower and hero stats",
 	local tiers = { 0, 0, 0 }
 	tiers[deadeye], tiers[bigBore] = 5, 2
 	eq(TowerStats.compute(perch, tiers).sizeBreaks, 3, "crossover: the highest path wins")
-	for _, hero in Config.Heroes do
-		for _, path in hero.paths do
+	-- DECISIONS #134: only Heart Shot (Marksman T6) and Thunder Slug (Slug T6) break 2.
+	local twos = { ["Tracker Marksman 6"] = true, ["Brush Beater Slug 6"] = true }
+	local heroTiers = {}
+	for key, hero in Config.Heroes do
+		for pathIndex, path in hero.paths do
 			for tier, step in path.tiers do
-				eq(step.sizeBreaks, 1, `{hero.display} {path.id} T{tier}: no tier 6 yet, every gun breaks 1`)
+				local name = `{hero.display} {path.id} {tier}`
+				eq(step.sizeBreaks, if twos[name] then 2 else 1, `{name}: Size breaks`)
+				if twos[name] then
+					heroTiers[name] = { key, pathIndex }
+				end
 			end
 		end
 	end
-	for key in Config.Heroes do
-		local stats = HeroStats.compute(key, { 5, 0, 0 })
-		eq(stats and stats.sizeBreaks, 1, `{key} stats`)
+	for name, at in heroTiers do
+		local tiers = { 0, 0, 0 }
+		tiers[at[2]] = 6
+		local stats = HeroStats.compute(at[1], tiers)
+		eq(stats and stats.sizeBreaks, 2, `{name} reaches HeroStats`)
+		tiers[at[2]] = 5
+		local before = HeroStats.compute(at[1], tiers)
+		eq(before and before.sizeBreaks, 1, `{name}: tier 5 still breaks 1`)
 	end
+	eq(SizeBreaks.breaks(2, 40, 0, true), 2, "a hero's 2 has no level term")
 end)
 
 test("boss pool bar (PLAN T49): fill = hp / pool, notches at k / sizes", function()

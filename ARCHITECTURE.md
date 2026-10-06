@@ -34,6 +34,8 @@ src/
 │   ├── Upgrades.luau        The crossover rule, shared so the client greys out what the server refuses
 │   ├── HeroStats.luau       A hero's gun and ability right now (base + mastery perks + upgrades), shared by
 │   │                        server and client; which mastery perks a mastery level has (`Config.MasteryPerks`)
+│   ├── GunRules.luau        Hero tier-6 gun rules: spread cone (still/scoped), Hot Swap reloads, Trick Reload,
+│   │                        Five-Round Burst recoil reset, Endless Belt, ability charges; pure, server + client
 │   ├── HeroXp.luau          Hero XP and levels in a match: round XP, take-down bonus and its cap, floor and
 │   │                        ceiling, leavers, the HUD bar's numbers; pure
 │   ├── TowerStats.luau      A tower's stats right now (base + upgrades); pure, used by Towers

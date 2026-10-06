@@ -169,9 +169,11 @@ function Combat.nearestWithin(point: Vector3, positions: { Vector3 }, reach: num
 	return nearest
 end
 
--- How far a burning ground patch reaches either side of where it lands.
-function Combat.burnPatchReach(splashRadius: number): number
-	return math.max(splashRadius, Config.Tuning.BurnPatchMinReach)
+-- How far a burning ground patch reaches either side of where it lands: the splash,
+-- or a tier's own Burn patch reach (Wildfire Drum, DECISIONS #132), never below the
+-- Tuning floor.
+function Combat.burnPatchReach(splashRadius: number, patchReach: number?): number
+	return math.max(splashRadius, patchReach or 0, Config.Tuning.BurnPatchMinReach)
 end
 
 return Combat

@@ -27,6 +27,7 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local HeroStats = require(Shared:WaitForChild("HeroStats"))
+local GunRules = require(Shared:WaitForChild("GunRules"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local heroRequest = remotes:WaitForChild("HeroRequest") :: RemoteFunction
@@ -203,10 +204,14 @@ local function currentBloom(stats: HeroStats.Stats): number
 	return math.max(0, bloom - stats.recoilRecovery * (os.clock() - bloomAt))
 end
 
-local function addRecoil(stats: HeroStats.Stats)
+local function standingStill(): boolean
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	local speed = if root and root:IsA("BasePart") then root.AssemblyLinearVelocity.Magnitude else 0
-	local recoil = stats.recoilPerShot * stats.shotsPerTrigger * (if speed < Config.Tuning.StillSpeed then stats.stillRecoilMult else 1)
+	return speed < Config.Tuning.StillSpeed
+end
+
+local function addRecoil(stats: HeroStats.Stats)
+	local recoil = stats.recoilPerShot * stats.shotsPerTrigger * (if standingStill() then stats.stillRecoilMult else 1)
 	bloom = math.min(stats.recoilMax, currentBloom(stats) + recoil)
 	bloomAt = os.clock()
 end
@@ -295,7 +300,8 @@ local function pull(stats: HeroStats.Stats): string
 	end
 	spinTime = if now - lastPull <= SPIN_KEEP then spinTime + (now - lastPull) else 0
 	lastPull = now
-	heroFire:FireServer(aimRay())
+	local origin, direction = aimRay()
+	heroFire:FireServer(origin, direction, scoped)
 	addRecoil(stats)
 	return "fired"
 end
@@ -308,6 +314,9 @@ local function fireLoop(tool: Tool)
 	local stats = currentStats()
 	if stats and stats.fireMode == "burst" then
 		local fired = 0
+		if stats.burstRecoilReset then
+			bloom = 0 -- Five-Round Burst: each burst starts steady (the server agrees)
+		end
 		while fired < stats.burstCount and tool.Parent == player.Character do
 			local result = pull(stats)
 			if result == "empty" then
@@ -432,7 +441,7 @@ RunService.RenderStepped:Connect(function()
 	end
 
 	-- Crosshair gap from the real cone: spread + recoil, degrees -> pixels.
-	local degrees = stats.spread + currentBloom(stats)
+	local degrees = GunRules.cone(stats, currentBloom(stats), standingStill(), scoped)
 	local gap = CROSSHAIR_MIN_GAP + degrees * camera.ViewportSize.Y / camera.FieldOfView
 	bars[1].Position = UDim2.fromOffset(0, -gap - 4)
 	bars[2].Position = UDim2.fromOffset(0, gap + 4)
@@ -448,7 +457,9 @@ RunService.RenderStepped:Connect(function()
 	abilityButton.Visible = gun ~= nil and hero ~= nil
 	if hero then
 		local remaining = (player:GetAttribute("AbilityReadyAt") or 0) - workspace:GetServerTimeNow()
-		abilityButton.Text = if remaining > 0 then `{hero.ability}  {math.ceil(remaining)}s` else `{hero.ability}  (F)`
+		local charges, maxCharges = player:GetAttribute("AbilityCharges") or 1, player:GetAttribute("AbilityMaxCharges") or 1
+		local stock = if maxCharges > 1 then `  x{charges}` else ""
+		abilityButton.Text = if remaining > 0 then `{hero.ability}  {math.ceil(remaining)}s` else `{hero.ability}{stock}  (F)`
 		abilityButton.BackgroundColor3 = if remaining > 0 then WAITING else READY
 	end
 end)

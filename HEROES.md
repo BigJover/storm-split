@@ -98,36 +98,41 @@ Tiers in *italics* change how the gun fires.
 
 ### Tracker (revolver) — Precision · ability **Tracking Dart** (target takes +% damage from everything)
 
-| Path | Focus | T1 | T2 | T3 | T4 | T5 |
-|---|---|---|---|---|---|---|
-| **Gunslinger** | handling | Quick Draw | Hair Trigger | *Dual Pistols* | Fan the Hammer | *Akimbo Frenzy* |
-| **Marksman** | accuracy | Match Barrel | Steady Hands | *Scope* | Hollow Tips | *Deadshot* |
-| **Trick Shot** | utility | Speed Loader | Extended Mag | *Ricochet* | Quick Dart | *Chain Shot* |
+| Path | Focus | T1 | T2 | T3 | T4 | T5 | T6 |
+|---|---|---|---|---|---|---|---|
+| **Gunslinger** | handling | Quick Draw | Hair Trigger | *Dual Pistols* | Fan the Hammer | *Akimbo Frenzy* | *Hot Swap* |
+| **Marksman** | accuracy | Match Barrel | Steady Hands | *Scope* | Hollow Tips | *Deadshot* | *Heart Shot* |
+| **Trick Shot** | utility | Speed Loader | Extended Mag | *Ricochet* | Quick Dart | *Chain Shot* | *Trick Reload* |
 
 Dual Pistols: a second gun, alternating fire. Akimbo Frenzy: both full-auto. Scope: zoom and
 reach. Hollow Tips: pierces armour. Deadshot: triple damage to marked dinos. Ricochet:
 bounces to a second dino. Quick Dart: shorter Tracking Dart cooldown. Chain Shot: bounces 4 times.
+Tier 6 (working names, DECISIONS #133): Hot Swap: the two guns reload one at a time, so firing
+never stops; reload x0.8. Heart Shot: scoped shots have no spread and break 2 sizes. Trick
+Reload: each ricochet take-down puts a round back in the cylinder.
 
 ### Big Game Hunter (hunting rifle) — Sustained · ability **Rally Cry** (your fire rate up, nearby towers faster)
 
-| Path | Focus | T1 | T2 | T3 | T4 | T5 |
-|---|---|---|---|---|---|---|
-| **Stalker** | control | Foregrip | Compensator | *Burst Fire* | Trigger Discipline | *Precision Burst* |
-| **Heavy** | sustain | Drum Mag | Fast Hands | *Belt Fed* | Bipod | *Spin-Up* |
-| **Special Ammo** | rounds | Tracer Rounds | *Incendiary* | *AP Rounds* | Hot Load | *Explosive Tips* |
+| Path | Focus | T1 | T2 | T3 | T4 | T5 | T6 |
+|---|---|---|---|---|---|---|---|
+| **Stalker** | control | Foregrip | Compensator | *Burst Fire* | Trigger Discipline | *Precision Burst* | *Five-Round Burst* |
+| **Heavy** | sustain | Drum Mag | Fast Hands | *Belt Fed* | Bipod | *Spin-Up* | *Endless Belt* |
+| **Special Ammo** | rounds | Tracer Rounds | *Incendiary* | *AP Rounds* | Hot Load | *Explosive Tips* | *Powder Tips* |
 
 Burst Fire: 3-round bursts, tight grouping. Belt Fed: no reloading during Rally Cry. Bipod:
 much less recoil while standing still. Spin-Up: fire rate climbs while you hold. Tracer
 Rounds: hits briefly mark. Incendiary: burning ground. AP Rounds: pierce armour. Explosive
-Tips: small splash.
+Tips: small splash. Tier 6: Five-Round Burst: bursts of 5 with Precision Burst's grouping;
+recoil resets between bursts. Endless Belt: no reloading while fully spun up. Powder Tips:
+Explosive Tips' splash 1.5x wider; the splash pierces armour.
 
 ### Brush Beater (shotgun) — Close range · ability **Flare Strike** (delayed strike on the track: damage + stun)
 
-| Path | Focus | T1 | T2 | T3 | T4 | T5 |
-|---|---|---|---|---|---|---|
-| **Slug** | reach | *Slug Rounds* | Rifled Barrel | *Sabot* | Long Barrel | *Railslug* |
-| **Buckshot** | crowds | Tight Choke | Extra Pellets | *Dragon's Breath* | Auto-Loader | *Thicket Sweeper* |
-| **Point Blank** | burst | Speed Shells | Extended Tube | *Double Barrel* | Kickback | *Frag Shells* |
+| Path | Focus | T1 | T2 | T3 | T4 | T5 | T6 |
+|---|---|---|---|---|---|---|---|
+| **Slug** | reach | *Slug Rounds* | Rifled Barrel | *Sabot* | Long Barrel | *Railslug* | *Thunder Slug* |
+| **Buckshot** | crowds | Tight Choke | Extra Pellets | *Dragon's Breath* | Auto-Loader | *Thicket Sweeper* | *Wildfire Drum* |
+| **Point Blank** | burst | Speed Shells | Extended Tube | *Double Barrel* | Kickback | *Frag Shells* | *Quad Barrel* |
 
 Slug Rounds: one accurate shot through 2 dinos. Rifled Barrel: slugs reach air. Sabot:
 pierces armour. Railslug: through 6. Dragon's Breath: pellets set dinos on fire — after a moment they take one burn tick worth
@@ -135,18 +140,20 @@ pierces armour. Railslug: through 6. Dragon's Breath: pellets set dinos on fire 
 takes the tick, which often finishes off small ones in early rounds. Also leaves burning
 ground behind. Thicket Sweeper:
 full-auto drum. Double Barrel: two blasts per trigger. Kickback: knocks dinos back. Frag
-Shells: explode on impact.
+Shells: explode on impact. Tier 6: Thunder Slug: slugs break 2 sizes; no spread while
+standing still. Wildfire Drum: Dragon's Breath's burning ground 4 studs wide (from 3); the
+drum holds +50% shells. Quad Barrel: four blasts per trigger (from two); reload 1.25x longer.
 
 ### Field Medic (lever-action carbine) — Support · ability **Triage Kit** (heals you and every hunter within 20 studs by 40 HP)
 
 DECISIONS #13, #14 (names per #25). The carbine deals less damage per second than the
 Tracker's revolver: the Medic is support. The heal is flat and doesn't grow with hero levels.
 
-| Path | Focus | T1 | T2 | T3 | T4 | T5 |
-|---|---|---|---|---|---|---|
-| **Triage** | ability | Clean Bandages | Belt Pouch | *Patch Up* | Triage Tent | *Second Wind* |
-| **Lever Action** | handling | Oiled Lever | Loading Gate | *Rapid Cycle* | Smooth Action | *Runaway Lever* |
-| **Muzzle** | protective rounds | Tranq Tips | Double Dose | *Jaw Lock* | Long Dose | *Lullaby Rounds* |
+| Path | Focus | T1 | T2 | T3 | T4 | T5 | T6 |
+|---|---|---|---|---|---|---|---|
+| **Triage** | ability | Clean Bandages | Belt Pouch | *Patch Up* | Triage Tent | *Second Wind* | *Rapid Response* |
+| **Lever Action** | handling | Oiled Lever | Loading Gate | *Rapid Cycle* | Smooth Action | *Runaway Lever* | *Tube Feed* |
+| **Muzzle** | protective rounds | Tranq Tips | Double Dose | *Jaw Lock* | Long Dose | *Lullaby Rounds* | *Nightcap* |
 
 Clean Bandages: heals 25% more. Belt Pouch: shorter Triage Kit cooldown. Patch Up: also
 heals standing towers in the radius by the same amount. Triage Tent: 1.5x radius. Second
@@ -156,7 +163,9 @@ magazine, faster reload. Rapid Cycle: 2-round bursts. Smooth Action: half the re
 Lever: full auto. Tranq Tips: hits slow dinos 20% for 1s. Double Dose: 30% for 1.5s. Jaw
 Lock: a hit dino can't bite or shoot for 2s (a dark strap across its snout). Long Dose:
 locked 3s. Lullaby Rounds: the lock spreads to dinos within 6 studs. Bosses ignore the slow
-and are locked for half as long.
+and are locked for half as long. Tier 6: Rapid Response: the Triage Kit holds 2 charges.
+Tube Feed: magazine +50%, reload x0.5. Nightcap: Jaw Lock lasts 4s and spreads within 9
+studs; bosses still half.
 
 ## Where the numbers live
 
