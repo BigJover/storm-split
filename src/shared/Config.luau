@@ -77,6 +77,10 @@ return table.freeze({
 		BossRangedVsTowersX = 0.3,
 		BreakLevelStep = 3,
 		MaxSizeBreaks = 4,
+		PlayerXPBase = 500,
+		PlayerXPStep = 50,
+		PlayerXPPerLevelMax = 10000,
+		SoloTakeDownXPX = 2,
 	},
 	Towers = {
 		SCOUT = {
@@ -11360,6 +11364,7 @@ return table.freeze({
 			startingCash = 450,
 			towerDamageMult = 1,
 			heroDamageMult = 1,
+			clearXp = 500,
 		},
 		NORMAL = {
 			display = "Normal",
@@ -11374,6 +11379,7 @@ return table.freeze({
 			startingCash = 450,
 			towerDamageMult = 1,
 			heroDamageMult = 1,
+			clearXp = 1000,
 		},
 		HARD = {
 			display = "Hard",
@@ -11388,6 +11394,7 @@ return table.freeze({
 			startingCash = 850,
 			towerDamageMult = 1,
 			heroDamageMult = 1,
+			clearXp = 1500,
 		},
 		CHAOS = {
 			display = "Chaos",
@@ -11402,6 +11409,7 @@ return table.freeze({
 			startingCash = 450,
 			towerDamageMult = 0.6,
 			heroDamageMult = 1.5,
+			clearXp = 2000,
 		},
 	},
 	DifficultyOrder = {

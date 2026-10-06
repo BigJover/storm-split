@@ -899,6 +899,7 @@ def validate(data):
         "PlayerMaxHealth", "HealPerRound", "SpawnProtection", "MaxResist", "MaxProjectiles",
         "TowerHPPerTier", "RepairCost", "BurnPatchMinReach", "BossJawLockX",
         "BreakLevelStep", "MaxSizeBreaks",
+        "PlayerXPBase", "PlayerXPStep", "PlayerXPPerLevelMax", "SoloTakeDownXPX",
     ]
     for key in needed:
         if key not in data["Tuning"]:
@@ -908,6 +909,16 @@ def validate(data):
         problems.append("Tuning Break level step must be above 0")
     if tuning.get("MaxSizeBreaks", 1) < 1:
         problems.append("Tuning Max size breaks must be 1 or more (1 turns pierce-through off)")
+    # Player level (PLAN T55, DECISIONS #120, #124): every level costs something, costs
+    # never fall, and the per-level cap is reachable from the base.
+    if tuning.get("PlayerXPBase", 1) <= 0:
+        problems.append("Tuning Player XP base must be above 0")
+    if tuning.get("PlayerXPStep", 0) < 0:
+        problems.append("Tuning Player XP step can't be negative (levels never get cheaper)")
+    if tuning.get("PlayerXPPerLevelMax", 1) < tuning.get("PlayerXPBase", 1):
+        problems.append("Tuning Player XP per level max must be at least Player XP base")
+    if tuning.get("SoloTakeDownXPX", 1) < 0:
+        problems.append("Tuning Solo take-down XP x can't be negative (1 = off)")
 
     for i, lvl in enumerate(data["Mastery"], start=1):
         if not isinstance(lvl["coreCost"], (int, float)) or lvl["coreCost"] <= 0:
@@ -936,6 +947,18 @@ def validate(data):
             f"Difficulty Easy Starting cash ({easy['startingCash']}) must equal Tuning Starting cash "
             f"({data['Tuning']['StartingCash']}), the documented default (DECISIONS #136)"
         )
+    # Clear XP rises with difficulty (PLAN T55): a harder clear never earns less.
+    previous = None
+    for key in data.get("DifficultyOrder", []):
+        d = data["Difficulties"][key]
+        xp = d["clearXp"]
+        if not isinstance(xp, (int, float)) or xp < 0:
+            problems.append(f"Difficulty {d['display']}: Clear XP must be a number, 0 or more")
+        elif previous is not None and xp <= previous[1]:
+            problems.append(f"Difficulty {d['display']}: Clear XP ({xp}) must be above {previous[0]}'s ({previous[1]})")
+        else:
+            previous = (d["display"], xp)
+    notes.append("clear XP: " + ", ".join(f"{d['display']} {d['clearXp']}" for d in data["Difficulties"].values()))
     notes.append("difficulties: " + ", ".join(d["display"] for d in data["Difficulties"].values()))
     notes.append("starting cash: " + ", ".join(f"{d['display']} {d['startingCash']}" for d in data["Difficulties"].values()))
 
@@ -1089,6 +1112,9 @@ def read_difficulty(ws):
             # every hunter's damage scale by these on top of the level curve.
             "towerDamageMult": num(v(ws, r, 12), 1),
             "heroDamageMult": num(v(ws, r, 13), 1),
+            # Player XP for clearing the track (PLAN T55, DECISIONS #119): added at match
+            # end on a clear only, toward the saved player level (Shared/PlayerLevel).
+            "clearXp": num(v(ws, r, 14), 0),
         }
         order.append(key)
         r += 1

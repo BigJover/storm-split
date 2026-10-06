@@ -53,6 +53,7 @@ src/
 │   ├── Bounties.luau        Daily Haul and bounty rules: roll, reset, progress, claim, swap, sanitise a save; pure
 │   ├── Profile.luau         The saved profile as plain data and pure rules (load, save, Hunt Board paths);
 │   │                        only Server/Progression holds profiles and calls it
+│   ├── PlayerLevel.luau     The saved player level: curve, one match's player XP, reward tier; pure
 │   └── HuntBoard.luau       What the Hunt Board screen draws: tiles, cards, button states, text, fit-to-window
 ├── server/   → ServerScriptService.Server
 │   ├── Main.server.luau     Entry point, wiring, and the match loop: Lobby → Building → Playing
