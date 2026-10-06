@@ -586,3 +586,36 @@ Commits checked: 7f367b6 Storm Coil, de24b02 Falcon Roost, ed355b0 Harpoon Balli
 | Shop.client.luau (Power Grid line) | "...the more Storm Coils stand (one alone is weaker)" | "...the more Storm Coils you have (one alone is weaker)" |
 
 **Old string spotted outside the four towers:** "bomblets split again" in Shop.client.luau uses the banned word "split". Proposed: "bomblets burst again".
+
+## Round 16 — Phase 7 names (T74)
+
+Read: VISION "Future battle modes" + stakes, DIRECTION #8 (Trophies = ranked only), PLAN T71–T79, DECISIONS #208–#228, Config `Arenas` (8 rows, "Arena 1"…"Arena 8", floors 0/300/600/1000/1500/2000/3000/4000), Modes.luau titles, Theme.luau. Every proposed name below was grepped against UPGRADES, HEROES, TOWERS_NEXT and src: no hits (rejected on the way: "Thunder Valley" — Thunderclap/Thunder Slug; "Geyser" — Eruption's tar geyser; "Bounty Pot" — Daily Bounties; anything with "Bones"/"Tar"/"Amber" as a place name).
+
+**Must-fix**
+| Current / working | Proposed | Why |
+|---|---|---|
+| Team Battle (Modes TEAM) | **Camp Clash** — blurb "Two or three hunting camps. Guard your Fence, raid theirs. Last camp standing wins." | "Team Battle" is generic; camps are the hunter's base. |
+| Battle Royale (Modes ROYALE) | **Bone Rush** — blurb "Every hunter for themselves. Most Bones wins." | Winner is most Bones, not last alive, so a "last standing" name would mislead (#214). |
+| Casual / Competitive / Ranked | **Casual** and **Ranked** only; never show "Competitive" | #217: competitive = ranked, one queue. Two words for one queue confuses kids. |
+| Practice (unpublished) | **Practice Hunt** — "No Amber in, no Amber out, no Trophies." | Says plainly nothing is at stake. |
+| buy-in / stake | **Entry fee** ("Pay 15 Amber to enter?") | "Stake" reads as gambling to parents; entry fee is kid-plain. |
+| pot | **Amber Hoard** ("Winners share the Hoard") | Ties to the currency; no clash. |
+| Arena 1–8 | ladder below | Placeholders. |
+| Team sides | **Red Camp / Blue Camp / Green Camp** | Colour first = instantly readable on the map and scoreboard. |
+| Royale sides | **"<Name>'s Camp"**, colours Red, Blue, Green, Yellow, Orange, Purple, Pink, Teal, White, Black (same order) | 10 sides need names nobody must learn; the player's name does it. |
+| side out (Fence 0) | "**<Camp>'s Fence is down! They're out.**" / own: "Your Fence is down — you're watching now." | Uses the existing Fence word (#130, #213). |
+| knocked out by <name> | "**Tranqed by <name>!**" (hunter hit to 0) | Hunters don't die; tranq darts are already our slow (Tranq Station). |
+| Spawn shield | **Camo Cover** (3 s) — "Camo Cover: can't be hit" | Hunter flavour, says what it does. |
+
+**Nice-to-have**
+| Current | Proposed | Why |
+|---|---|---|
+| Overtime | **Final Stampede** — "Final Stampede! Dinos get tougher every round." | Dino flavour; only W_STAMPEDE (internal key) uses the word. |
+| win (Team / Royale) | "**Your camp wins the hunt!**" / "**Top Hunter!**" (1st), "2nd Hunter", "3rd Hunter" | Short, clear placements. |
+| raid (shooting enemy towers to Trampled) | "Raid" ("Tower trampled by <name>") | Reuses Trampled; no new word. |
+| Trophies | keep "Trophies" (ranked only) | DIRECTION #8. |
+
+**Arena ladder (in order, floor → name)**
+1. 0 Fern Gully · 2. 300 Raptor Ridge · 3. 600 Muddy Springs · 4. 1000 Horn Canyon · 5. 1500 Volcano Rim · 6. 2000 Sky Cliffs · 7. 3000 Misty Jungle · 8. 4000 Rex Kingdom
+
+Banned-word check: none of the above use pop / split / balloon / Storm. The VISION line "the pot is split among the winning team" stays out of the UI; the UI says "Winners share the Hoard".
