@@ -657,7 +657,7 @@ Tar Lake upgrade makes pools touch, a dino in two pools gets the strongest one o
 stacking slow, burn or Eruption). Accept: specs (Eruption on a 5-size T-Rex → 3; a sunk dino
 pays like a kill; two touching pools never stack); untouchable.
 
-### T68 (final). Release, cost and balance pass for all four (#192–#196) — replaces T68 text
+### T68 (final). Release, cost and balance pass for all four (#192–#199) — replaces T68 text
 Director's figures are from `value.py` on 2026-10-06 (T5 cost-per-eDPS, "c/e", r31–40). The
 **released** damage-path T5s give c/e 41/110/115/119/165/185/268/294 → **median M = 142**.
 1. **Medians count released towers only** (`value.py`: a `Towers` row not yet sold is left out
@@ -677,11 +677,19 @@ Director's figures are from `value.py` on 2026-10-06 (T5 cost-per-eDPS, "c/e", r
 5. **Falcon Roost:** Flock T5 `Damage x` (`Tower Upgrades!G134`) 3.1 → **4.4** (Murmuration
    c/e 372 → ~262); Talons T5 `Damage x` (G129) 13.03 → **12.0** (Eagle of the Peak c/e 178 →
    ~185, inside the window).
-6. **Tar Pit:** whatever T67 lands with; its only lever here is `Towers!C17` (cost).
+6. **Tar Pit is judged as a control tower, not by eDPS (#198):** add `TARPIT` to
+   `SUPPORT_TOWERS` in `value.py` (out of the medians, no DEAD/untouchable bars; Simmer and
+   Boiling Pit DEAD flags go away with it). Its value line prints, per path in r31–40: Deep
+   Tar share of ground dinos slowed and time added; Bubbling share of ground HP removed
+   (burn + Eruption) per pit; Dig Site cash per round and payback rounds (like Supply Camp's
+   Yield line). **One gated bar:** one Eruption pit removes **≤ 50%** of r31–40 ground HP
+   (today ~63%). Lever: Tuning `Eruption interval` 10 → **13 s**; if still over, +1 s at a
+   time up to 15 s; at 15 s report and pass (no stop). Sizes stay 2 (#150). No other Tar Pit
+   number changes; `Towers!C17` stays 450.
 7. **If a bar still fails after 3–6 (guaranteed exit):** cost is exactly linear (every tier
    cost follows the row's C), so set C = C × (target c/e ÷ measured c/e), rounded to 25, with
    target 160 (damageable) or 230 (untouchable). Floors: Storm Coil 350, Ballista 450, Falcon
-   300, Tar Pit 300; ceilings 600. If a floor is reached and a damageable bar still fails,
+   300; ceilings 600 (Tar Pit is not in step 7). If a floor is reached and a damageable bar still fails,
    raise that row's base Damage (D) by 1 and repeat (Storm Coil ≤ 8, Ballista ≤ 15). A DEAD
    flag on Ballista T3–T4 or Volley T3–T4 left after this is treated the same way (cost
    first); Storm Coil's two must clear.
@@ -689,7 +697,7 @@ Director's figures are from `value.py` on 2026-10-06 (T5 cost-per-eDPS, "c/e", r
 - **Also bars:** no DOMINANT finding; hero-vs-tower guard passes on every difficulty;
   `threat.py` 0; #72 pacing floors hold; `--breaks1` exits 0 with the released-only median;
   Chaos bars (T50) pass; findings = Big Bore T1, Concussive T5, **Ballista Steel Head T1, Saw
-  Tip T2** (accepted, #194) and nothing else new.
+  Tip T2** (accepted, #194) and nothing else new (Tar Pit is out of the DEAD rule, #198).
 - **Accept:** Config diff = the cells above (and any step-7 cells, listed); never an existing
   tower's number; commit message: table of every new-tower T5 (eDPS r21–30/31–40, c/e, ×M) and
   each step-7 adjustment.
