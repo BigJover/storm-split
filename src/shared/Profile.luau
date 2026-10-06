@@ -12,6 +12,10 @@
 	                    Hunt Board couldn't be read: the player plays on without it, every
 	                    Hunt Board call below answers "no", and a save writes the stored
 	                    value back untouched (`rewardsRaw`) instead of wiping it.
+	  playerXp          total player XP (Shared/PlayerLevel, DECISIONS #118-#123); the level is
+	                    derived from it, never stored. An older save without it starts at 0.
+	  equipped          what the player wears: "title" and one cosmetic per kind, kind ->
+	                    item id (T57 checks them against the level). Strings only.
 	  lastResetPayout   Amber paid at a reset for bounties done but not claimed, since the
 	                    board was last opened. Session only, never saved.
 	  rewardsVersion    counts Hunt Board changes; the client re-asks when it moves.
@@ -23,6 +27,7 @@
 	  sanitize     any stored value -> a valid profile (an older save without `rewards`
 	               gets a fresh Hunt Board; everything else in it is kept)
 	  toSave       the table to store
+	  addPlayerXp  bank one match's player XP; returns what was added
 	  refresh      roll the bounties over if a reset has passed and pay what was done but
 	               unclaimed; returns that Amber
 	  claimHaul / claimBounty / swapBounty   refresh, then the Bounties rule
@@ -33,6 +38,9 @@
 
 local Config = require(script.Parent.Config)
 local Bounties = require(script.Parent.Bounties)
+local PlayerLevel = require(script.Parent.PlayerLevel)
+
+local MAX_ID = 64 -- longest equipped kind or item id kept from a save
 
 export type Profile = {
 	cores: number,
@@ -41,6 +49,8 @@ export type Profile = {
 	highestRound: number,
 	rewards: Bounties.State?,
 	rewardsRaw: any,
+	playerXp: number,
+	equipped: { [string]: string },
 	lastResetPayout: number,
 	rewardsVersion: number,
 }
@@ -78,6 +88,8 @@ function Profile.blank(now: number, rng: Bounties.Rng): Profile
 		highestRound = 0,
 		rewards = freshRewards(now, rng),
 		rewardsRaw = nil,
+		playerXp = 0,
+		equipped = {},
 		lastResetPayout = 0,
 		rewardsVersion = 0,
 	}
@@ -95,6 +107,14 @@ function Profile.sanitize(raw: any, now: number, rng: Bounties.Rng): Profile
 	end
 	if type(raw.highestRound) == "number" and raw.highestRound >= 0 then
 		profile.highestRound = math.floor(raw.highestRound)
+	end
+	profile.playerXp = PlayerLevel.whole(raw.playerXp) -- missing (an older save) or garbage: 0
+	if type(raw.equipped) == "table" then
+		for kind, item in raw.equipped do
+			if type(kind) == "string" and type(item) == "string" and #kind <= MAX_ID and #item <= MAX_ID then
+				profile.equipped[kind] = item
+			end
+		end
 	end
 	if type(raw.owned) == "table" then
 		for id, value in raw.owned do
@@ -135,8 +155,20 @@ function Profile.toSave(profile: Profile): { [string]: any }
 		owned = profile.owned,
 		mastery = profile.mastery,
 		highestRound = profile.highestRound,
+		playerXp = profile.playerXp,
+		equipped = profile.equipped,
 		rewards = if profile.rewards then profile.rewards else profile.rewardsRaw,
 	}
+end
+
+-- Player level (Shared/PlayerLevel) --------------------------------------------------
+
+-- Bank one match's player XP. Only whole, finite, positive amounts count: XP never
+-- goes down. Returns what was added.
+function Profile.addPlayerXp(profile: Profile, amount: number): number
+	local add = PlayerLevel.whole(amount)
+	profile.playerXp = PlayerLevel.whole(profile.playerXp) + add
+	return add
 end
 
 -- Hunt Board ----------------------------------------------------------------------

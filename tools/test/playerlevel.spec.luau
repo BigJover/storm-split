@@ -144,3 +144,81 @@ test("the reward ladder: commons to 99, rares every 10 to 100, legendaries at 15
 	eq(commons, 89, "89 commons (DECISIONS #121)")
 	eq(rares, 10, "10 rares")
 end)
+
+-- Match end (PLAN T56) ----------------------------------------------------------------
+
+local HeroXp = require(src.shared.HeroXp)
+
+-- Replays a match the way Server/Hero does: each cleared round banks into the tally
+-- (before the clamp) and into the hunter's own XP (HeroXp.bank, clamped). `pops` is
+-- each hunter's take-downs a round; `from` the first round they're in for.
+local function replay(hunters: { [string]: { pops: number, from: number? } }, rounds: number)
+	local tallies, xp = {}, {}
+	for name, h in hunters do
+		tallies[name] = PlayerLevel.newTally()
+		xp[name] = HeroXp.floorXp((h.from or 1) - 1) -- joiners start on the floor
+	end
+	for round = 1, rounds do
+		local team = 0
+		for _, h in hunters do
+			if round >= (h.from or 1) then
+				team += h.pops
+			end
+		end
+		for name, h in hunters do
+			if round >= (h.from or 1) then
+				PlayerLevel.bankRound(tallies[name], h.pops, team)
+				xp[name] = HeroXp.bank(xp[name], h.pops, team, round)
+			end
+		end
+	end
+	return tallies, xp
+end
+
+test("a solo win: 40 rounds at the take-down cap bank 4,000 + 600, then 5,700 on Easy", function()
+	local tallies = replay({ solo = { pops = 200 } }, ROUNDS)
+	eq(tallies.solo.roundXp, 4000, "round XP")
+	eq(tallies.solo.takedownXp, 600, "take-down XP, at the cap")
+	eq(PlayerLevel.matchAwards(tallies, true, "EASY").solo, 5700, "solo Easy clear")
+end)
+
+test("co-op is unchanged: take-downs x1, everyone gets the clear", function()
+	local tallies = replay({ a = { pops = 200 }, b = { pops = 30 } }, ROUNDS)
+	local awards = PlayerLevel.matchAwards(tallies, true, "NORMAL")
+	eq(awards.a, 4000 + 600 + 1000, "a: capped take-downs, x1")
+	eq(awards.b, 4000 + tallies.b.takedownXp + 1000, "b: own take-downs, x1")
+	eq(tallies.b.takedownXp, ROUNDS * math.min(math.floor(0.25 * (30 + 0.25 * 200)), 15), "b's take-down XP is the hero rule's")
+end)
+
+test("a loss banks the cleared rounds only, with no clear XP", function()
+	local tallies = replay({ solo = { pops = 4 } }, 12) -- lost on round 13
+	local awards = PlayerLevel.matchAwards(tallies, false, "HARD")
+	eq(awards.solo, 12 * 100 + 12 * 1 * 2, "12 rounds + take-downs x2, no Clear XP")
+	eq(PlayerLevel.matchAwards({ solo = PlayerLevel.newTally() }, false, "HARD").solo, 0, "lost round 1: nothing")
+end)
+
+test("a leaver gets nothing; whoever is left alone at the end counts as solo", function()
+	local tallies = replay({ stays = { pops = 8 }, leaves = { pops = 8 } }, 20)
+	tallies.leaves = nil -- Main passes only the hunters still here
+	local awards = PlayerLevel.matchAwards(tallies, false, "EASY")
+	eq(awards.leaves, nil, "the leaver")
+	eq(awards.stays, 20 * 100 + tallies.stays.takedownXp * 2, "alone at the end: solo")
+end)
+
+test("the tally is before the clamp: a late joiner's floor XP isn't player XP", function()
+	local tallies, xp = replay({ host = { pops = 0 }, late = { pops = 0, from = 21 } }, ROUNDS)
+	eq(xp.late, xp.host, "the hunter level puts the joiner on the floor")
+	eq(tallies.late.roundXp, 20 * 100, "player XP: only the 20 rounds they cleared")
+	eq(tallies.host.roundXp, 40 * 100, "the host: all 40")
+end)
+
+test("banking player XP leaves the hunter's own XP and level as HeroXp makes them", function()
+	local tallies, xp = replay({ solo = { pops = 200 } }, ROUNDS)
+	local plain = 0
+	for round = 1, ROUNDS do
+		plain = HeroXp.bank(plain, 200, 200, round)
+	end
+	eq(xp.solo, plain, "hero XP unchanged")
+	eq(HeroXp.level(xp.solo, ROUNDS), HeroXp.level(plain, ROUNDS), "hunter level unchanged")
+	ok(tallies.solo.roundXp + tallies.solo.takedownXp >= xp.solo, "the tally is never below what HeroXp kept")
+end)

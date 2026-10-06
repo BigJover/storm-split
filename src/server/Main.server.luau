@@ -26,6 +26,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Modes = require(Shared:WaitForChild("Modes"))
 local HeroXp = require(Shared:WaitForChild("HeroXp"))
+local PlayerLevel = require(Shared:WaitForChild("PlayerLevel"))
 local Pricing = require(Shared:WaitForChild("Pricing"))
 local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
 
@@ -355,6 +356,9 @@ local function resetBoard()
 			player.Character:Destroy()
 		end
 		player:SetAttribute("LastPayout", nil)
+		player:SetAttribute("LastPlayerXp", nil)
+		player:SetAttribute("LastPlayerLevelFrom", nil)
+		player:SetAttribute("LastPlayerLevel", nil)
 	end
 end
 
@@ -467,6 +471,20 @@ local function playMatch()
 		if Players:GetPlayerByUserId(userId) then
 			players += 1
 		end
+	end
+	-- Player XP (PLAN T56, DECISIONS #119, #124): every hunter still here banks the hero
+	-- XP of their cleared rounds (+ Clear XP on a win); solo = one hunter at the end.
+	-- Leavers aren't in hunters(), so they get nothing. Before endMatch, which saves.
+	local tallies: { [Player]: PlayerLevel.Tally } = {}
+	for _, hunter in hunters() do
+		local tally = Hero.matchTally(hunter)
+		if tally then
+			tallies[hunter] = tally
+		end
+	end
+	local difficultyKey = ReplicatedStorage:GetAttribute("Difficulty")
+	for hunter, xp in PlayerLevel.matchAwards(tallies, won, difficultyKey) do
+		Progression.addPlayerXp(hunter, xp)
 	end
 	Progression.endMatch({
 		cleared = won,

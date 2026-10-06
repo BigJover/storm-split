@@ -130,7 +130,7 @@ This dissolves most of the problems the UEFN plan was built around:
 | A player's hero, upgrades, ammo, recoil, cooldown, Overdrive | `Hero` | Clients read `Hero`, `HeroPath1-3`, `Ammo`, `Magazine`, `ReloadUntil`, `AbilityReadyAt` player attributes; Towers ask `Hero.towerRateBoost` |
 | Burning patches | `Hazards` | Towers and Hero call `Hazards.burn()` |
 | Current round | `Waves` | Read the `Round` attribute |
-| Saved progression: Cores, owned heroes/towers, mastery, highest round | `Progression` | Hero asks `ownsHero` and reads mastery; Shop asks `ownsTower` (placing only); buying only outside a match |
+| Saved progression: Cores, owned heroes/towers, mastery, highest round, player XP and equipped cosmetics (`Shared/PlayerLevel`; Main reports each hunter's match XP through `addPlayerXp` at match end) | `Progression` | Hero asks `ownsHero` and reads mastery; Shop asks `ownsTower` (placing only); buying only outside a match |
 | Hunt Board state: Daily Haul day, active bounties, progress, swaps (the profile's `rewards` field) | `Progression` (rules in the pure `Shared/Bounties` and `Shared/Profile`) | Main, Shop and Hero report match events through `Progression.bountyEvent()`; the client asks with `getRewards` / claim / swap on `ProgressRequest` and reads `RewardsClaimable` / `RewardsVersion`; claims and swaps only in the Lobby |
 | Which client panel is open | `Shop.client` (allowed states in `Shared/PanelRules`) | `Home.client` and `HuntBoard.client` ask through the `OpenPanel` attribute; `HuntBoard.client` shows its board while `HuntBoardOpen` is set |
 

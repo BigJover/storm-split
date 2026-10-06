@@ -155,7 +155,7 @@ test("only the saved fields are stored", function()
 		table.insert(keys, k)
 	end
 	table.sort(keys)
-	eq(table.concat(keys, ","), "cores,highestRound,mastery,owned,rewards", "stored keys")
+	eq(table.concat(keys, ","), "cores,equipped,highestRound,mastery,owned,playerXp,rewards", "stored keys")
 	ok(out.rewards == profile.rewards, "the Hunt Board state itself")
 end)
 
@@ -469,4 +469,66 @@ test("the toast names the bounty by its title and Amber", function()
 	for _, id in Config.BountyOrder do
 		ok(Bounties.doneText(id) ~= nil, `{id} has a toast`)
 	end
+end)
+
+-- Player level (PLAN T56) -------------------------------------------------------------
+
+test("an old save (no playerXp, no equipped) loads at 0 XP, nothing equipped, everything else kept", function()
+	local profile = Profile.sanitize(saved(NOON), NOON, first)
+	eq(profile.playerXp, 0, "player XP")
+	eq(next(profile.equipped), nil, "nothing equipped")
+	eq(profile.cores, 100, "Amber kept")
+	eq(profile.mastery.RIFLE, 2, "mastery kept")
+	eq(Profile.blank(NOON, first).playerXp, 0, "a new player")
+end)
+
+test("garbage player XP or equipped never loads, and never costs the rest of the save", function()
+	for _, bad in { -5 :: any, "9000", 0 / 0, math.huge, {}, true } do
+		local raw = saved(NOON)
+		raw.playerXp = bad
+		raw.equipped = { title = 7, [5] = "x", hat = string.rep("a", 65), tint = "TINT_RED" }
+		local profile = Profile.sanitize(raw, NOON, first)
+		eq(profile.playerXp, 0, `player XP {bad}`)
+		eq(profile.equipped.title, nil, "a non-string item")
+		eq(profile.equipped.hat, nil, "an over-long item")
+		eq(profile.equipped.tint, "TINT_RED", "a well-formed one is kept")
+		eq(profile.cores, 100, "Amber kept")
+		checkBoard(profile.rewards, "board kept")
+	end
+	eq(Profile.sanitize({ playerXp = 1082750.9 }, NOON, first).playerXp, 1082750, "floored")
+end)
+
+test("player XP and equipped save and load back the same", function()
+	local profile = loaded(NOON)
+	eq(Profile.addPlayerXp(profile, 5700), 5700, "added")
+	profile.equipped.title = "TRAIL_RUNNER"
+	local again = Profile.sanitize(Profile.toSave(profile), NOON, first)
+	eq(again.playerXp, 5700, "player XP")
+	eq(again.equipped.title, "TRAIL_RUNNER", "equipped title")
+end)
+
+test("player XP only goes up", function()
+	local profile = loaded(NOON)
+	Profile.addPlayerXp(profile, 1000)
+	for _, bad in { -300 :: any, 0 / 0, math.huge, "50", nil } do
+		eq(Profile.addPlayerXp(profile, bad), 0, `adding {bad}`)
+	end
+	eq(profile.playerXp, 1000, "untouched")
+	eq(Profile.addPlayerXp(profile, 12.7), 12, "whole XP")
+	eq(profile.playerXp, 1012, "added")
+end)
+
+test("a broken Hunt Board never costs the player level", function()
+	local raw = saved(NOON)
+	raw.playerXp = 83300
+	local profile
+	withBrokenRules(function()
+		profile = Profile.sanitize(raw, NOON, first)
+	end)
+	eq(profile.rewards, nil, "no Hunt Board this session")
+	eq(profile.playerXp, 83300, "player XP loaded")
+	Profile.addPlayerXp(profile, 100)
+	local out = Profile.toSave(profile)
+	eq(out.playerXp, 83400, "player XP saved")
+	ok(out.rewards == raw.rewards, "the stored board is still written back untouched")
 end)

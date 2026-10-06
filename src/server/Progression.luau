@@ -10,6 +10,9 @@
 	                clearing the track pays the difficulty's Clear reward to
 	                everyone; a multiplayer match that ends without a clear pays
 	                MultiplayerLossPayout each; a solo loss pays nothing.
+	  Player level  total player XP (`playerXp`, Shared/PlayerLevel, DECISIONS #118-#124),
+	                added once per match by Main through addPlayerXp just before
+	                endMatch saves; the level is derived, rewards are cosmetic.
 	                (Competitive buy-ins and pots come with the battle modes.)
 	  Unlocks       heroes and towers with an Unlock cost are bought with Amber.
 	                Free ones (cost 0) are owned by everyone. You can only pick
@@ -55,6 +58,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local Payouts = require(Shared:WaitForChild("Payouts"))
 local Bounties = require(Shared:WaitForChild("Bounties"))
 local Profile = require(Shared:WaitForChild("Profile"))
+local PlayerLevel = require(Shared:WaitForChild("PlayerLevel"))
 local Theme = require(Shared:WaitForChild("Theme"))
 
 local Progression = {}
@@ -119,6 +123,7 @@ local function publish(player: Player)
 	end
 	player:SetAttribute("Cores", profile.cores)
 	player:SetAttribute("HighestRound", profile.highestRound)
+	player:SetAttribute("PlayerXp", profile.playerXp)
 	for heroKey in Config.Heroes do
 		player:SetAttribute(`Mastery_{heroKey}`, profile.mastery[heroKey] or 0)
 	end
@@ -420,6 +425,31 @@ function Progression.endMatch(result: MatchResult)
 		task.spawn(save, player)
 	end
 	print(`[DinoHunters] Match over (round {result.roundReached}, {if result.cleared then "cleared" else "lost"}): +{payout} {Theme.Currency} each`)
+end
+
+------------------------------------------------------------------ player level
+
+-- One match's player XP for a hunter (Main, at match end, before endMatch, which
+-- saves it). The result screen reads LastPlayerXp, and LastPlayerLevelFrom /
+-- LastPlayerLevel when it raised the level. A player whose save didn't load keeps it
+-- for the session only, like Amber.
+function Progression.addPlayerXp(player: Player, amount: number)
+	local profile = profiles[player]
+	if not profile then
+		return
+	end
+	local ok, err = pcall(function()
+		local before = PlayerLevel.level(profile.playerXp)
+		local added = Profile.addPlayerXp(profile, amount)
+		local after = PlayerLevel.level(profile.playerXp)
+		player:SetAttribute("LastPlayerXp", added)
+		player:SetAttribute("LastPlayerLevelFrom", if after > before then before else nil)
+		player:SetAttribute("LastPlayerLevel", if after > before then after else nil)
+	end)
+	if not ok then
+		warn(`[Progression] Player XP for {player.Name} failed: {err}`)
+	end
+	publish(player)
 end
 
 ------------------------------------------------------------------ public

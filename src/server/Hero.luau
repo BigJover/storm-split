@@ -63,6 +63,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local HeroStats = require(Shared:WaitForChild("HeroStats"))
 local HeroXp = require(Shared:WaitForChild("HeroXp"))
+local PlayerLevel = require(Shared:WaitForChild("PlayerLevel"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local Track = require(Shared:WaitForChild("Track"))
 local Theme = require(Shared:WaitForChild("Theme"))
@@ -96,6 +97,7 @@ type State = {
 	xp: number, -- banked this match (Shared/HeroXp)
 	pops: number, -- this round's pops, pending until the round is cleared
 	level: number, -- HeroXp.level(xp, roundsCleared)
+	tally: PlayerLevel.Tally, -- hero XP banked this match before the clamp: Main adds it to the player level at match end
 	freeUpgrade: boolean, -- mastery 10: the first upgrade of the match costs nothing
 	abilityFullAt: number, -- os.clock() when every ability charge is back (GunRules.charges)
 	overdriveUntil: number,
@@ -158,6 +160,7 @@ local function stateOf(player: Player): State
 			xp = HeroXp.floorXp(roundsCleared), -- joiners and re-joiners start on the floor
 			pops = 0,
 			level = HeroXp.roundLevel(roundsCleared),
+			tally = PlayerLevel.newTally(), -- joiners and re-joiners bank from here on
 			freeUpgrade = false,
 			abilityFullAt = 0,
 			overdriveUntil = 0,
@@ -852,6 +855,7 @@ function Hero.resetMatch()
 		s.xp = 0
 		s.pops = 0
 		s.level = 1
+		s.tally = PlayerLevel.newTally()
 		s.abilityFullAt = 0
 		s.overdriveUntil = 0
 		local rewards = mastery(player, s)
@@ -886,6 +890,7 @@ function Hero.startMatch(cleared: number)
 		s.xp = math.max(s.xp, HeroXp.floorXp(cleared))
 		s.pops = 0
 		s.level = HeroXp.level(s.xp, cleared)
+		s.tally = PlayerLevel.newTally()
 		publish(player)
 	end
 end
@@ -913,6 +918,7 @@ function Hero.roundCleared(index: number)
 	local team = teamPops
 	teamPops = 0
 	for _, s in states do
+		PlayerLevel.bankRound(s.tally, s.pops, team) -- before the clamp
 		s.xp = HeroXp.bank(s.xp, s.pops, team, index)
 		s.pops = 0
 		s.level = HeroXp.level(s.xp, index)
@@ -920,6 +926,13 @@ function Hero.roundCleared(index: number)
 	for player in states do
 		publish(player)
 	end
+end
+
+-- The hero XP this hunter banked on cleared rounds this match, before the clamp
+-- (PLAN T56): what their player XP is made of. nil if they aren't here.
+function Hero.matchTally(player: Player): PlayerLevel.Tally?
+	local s = states[player]
+	return if s then table.clone(s.tally) else nil
 end
 
 -- Overdrive: the strongest active boost from a player standing near this point.

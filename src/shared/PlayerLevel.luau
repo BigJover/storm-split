@@ -2,7 +2,8 @@
 	Player level: the overall level saved between matches (PLAN round 4 T55, DECISIONS
 	#118-#121, #124). Not the hunter's in-match level (Shared/HeroXp, untouched), so its
 	label is never "Lv N". Pure: Config in, numbers out. Server/Progression is the only
-	mutator of a player's saved XP.
+	mutator of a player's saved XP; Server/Hero keeps the match tallies; Main adds them up
+	at match end with `matchAwards`.
 
 	  Curve      level n -> n+1 costs PlayerXPBase + PlayerXPStep x (n-1), at most
 	             PlayerXPPerLevelMax; no top level.
@@ -14,9 +15,11 @@
 ]]
 
 local Config = require(script.Parent.Config)
+local HeroXp = require(script.Parent.HeroXp)
 
 local PlayerLevel = {}
 
+export type Tally = { roundXp: number, takedownXp: number }
 export type Reward = "common" | "rare" | "legendary" | "title" | "none"
 
 -- Whole, finite and not negative: anything else counts as 0.
@@ -114,6 +117,32 @@ function PlayerLevel.matchXp(
 	local row = if difficulty then (Config.Difficulties :: any)[difficulty] else nil
 	local clear = if cleared and row then whole(row.clearXp) else 0
 	return whole(whole(bankedRoundXp) + takedown + clear)
+end
+
+-- A fresh match tally (Server/Hero keeps one per hunter).
+function PlayerLevel.newTally(): Tally
+	return { roundXp = 0, takedownXp = 0 }
+end
+
+-- A cleared round adds the hero XP it banks to the tally, before the hunter-level
+-- clamp (HeroXp.bank clamps the hunter's XP; the player level counts it all).
+function PlayerLevel.bankRound(tally: Tally, ownPops: number, teamPops: number)
+	tally.roundXp += HeroXp.roundXp()
+	tally.takedownXp += HeroXp.popXp(ownPops, teamPops)
+end
+
+-- Match end: each hunter still in the match -> their player XP. Solo = exactly one
+-- hunter there at the end. Leavers aren't passed in, so they get nothing.
+function PlayerLevel.matchAwards<K>(tallies: { [K]: Tally }, cleared: boolean, difficulty: string?): { [K]: number }
+	local count = 0
+	for _ in tallies do
+		count += 1
+	end
+	local out = {}
+	for who, tally in tallies do
+		out[who] = PlayerLevel.matchXp(tally.roundXp, tally.takedownXp, count == 1, cleared, difficulty)
+	end
+	return out
 end
 
 -- The reward tier a level unlocks (DECISIONS #121). The T57 Cosmetics sheet will name

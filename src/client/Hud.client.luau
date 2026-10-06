@@ -77,7 +77,7 @@ local results = Instance.new("TextLabel")
 results.Name = "Results"
 results.AnchorPoint = Vector2.new(0.5, 0.5)
 results.Position = UDim2.fromScale(0.5, 0.4)
-results.Size = UDim2.fromOffset(460, 150)
+results.Size = UDim2.new(1, -32, 0, 190) -- never wider than the window (16 px each side)
 results.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
 results.BackgroundTransparency = 0.1
 results.TextColor3 = Color3.fromRGB(240, 236, 250)
@@ -91,6 +91,9 @@ do
 	local c = Instance.new("UICorner")
 	c.CornerRadius = UDim.new(0, 12)
 	c.Parent = results
+	local limit = Instance.new("UISizeConstraint")
+	limit.MaxSize = Vector2.new(460, 190)
+	limit.Parent = results
 end
 
 -- Hunter level and XP, under the status line while a round is on. A label only:
@@ -235,7 +238,15 @@ local function refresh()
 		local won = state == "Victory"
 		local payout = player:GetAttribute("LastPayout")
 		local cores = if payout == nil then "" elseif payout > 0 then `+{payout} {Theme.Currency}` else `No {Theme.Currency} (solo pays on a clear)`
-		results.Text = `<font color="{if won then "#8cf0aa" else "#ff788c"}">{if won then "VICTORY" else "GAME OVER"}</font>\n<font size="18">{if won then `{difficultyName} cleared` else `The fence fell on round {round} ({difficultyName})`}\n{cores}</font>`
+		-- Player XP (PLAN T56): what this match added, and the level-up if it made one.
+		-- Never "Lv N": that's the hunter's in-match level (DECISIONS #118).
+		local playerXp = player:GetAttribute("LastPlayerXp")
+		local levelFrom, levelTo = player:GetAttribute("LastPlayerLevelFrom"), player:GetAttribute("LastPlayerLevel")
+		local xpLine = if playerXp == nil then "" else `\n+{playerXp} player XP`
+		if playerXp ~= nil and levelFrom ~= nil and levelTo ~= nil then
+			xpLine ..= `\n<font color="#facd50">Player level up! {levelFrom} → {levelTo}</font>`
+		end
+		results.Text = `<font color="{if won then "#8cf0aa" else "#ff788c"}">{if won then "VICTORY" else "GAME OVER"}</font>\n<font size="18">{if won then `{difficultyName} cleared` else `The fence fell on round {round} ({difficultyName})`}\n{cores}{xpLine}</font>`
 		label.Text = if won then "VICTORY" else `GAME OVER  ·  round {round}`
 		label.TextColor3 = if won then Color3.fromRGB(140, 240, 170) else Color3.fromRGB(255, 120, 140)
 	elseif state == "Lobby" then
@@ -386,6 +397,9 @@ if studioCash and studioCash:IsA("RemoteEvent") then
 end
 
 player:GetAttributeChangedSignal("LastPayout"):Connect(function()
+	refresh()
+end)
+player:GetAttributeChangedSignal("LastPlayerXp"):Connect(function()
 	refresh()
 end)
 
