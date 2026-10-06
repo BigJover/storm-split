@@ -99,3 +99,19 @@
 - The hunter-level banner says "+25%" at every level (e.g. "Hunter level 8 — your shots hit 25% harder"). This is per level (`Tuning.HeroDamagePerLevel`), so it's correct, but players may read it as the total.
 - The status line "+1000 cash (K)" slightly overlaps the Co-op card on the home screen at 707 px wide (`boot.png`). It's a Studio-only button.
 - Feel items for Jovan: whether rounds 11/21/31 are walls on Easy, the size of PLAY at small windows, how readable the XP row is (14–16 px tall at UIScale 0.83), Chaos aim, and whether a level-3 hunter at round 9 feels like a reward.
+
+# Run 2 — 2026-10-06 (Tester, agent) — BLOCKED: Studio holds stale code
+
+- **Target:** main at `1cf3d2a` (includes `e9b0d00`, the F1–F3 fixes).
+- **Sync check (read-only, Edit mode):** the fixed code isn't in Studio, so none of the Run 2 tests were run.
+  - No script in the Studio DataModel contains `hpBarVisible` or `repairRow`. I scanned every `LuaSourceContainer.Source` with `execute_luau`, and `script_grep` found nothing either.
+  - In the repo, `src/client/Hud.client.luau:476` uses `PanelRules.hpBarVisible`, and `src/client/Shop.client.luau:1350` uses `PanelRules.repairRow`.
+  - The sizes don't match. `StarterPlayerScripts.Client.Hud` is 21547 bytes in Studio and 22237 in the repo. `ReplicatedStorage.Shared.PanelRules` is 3362 bytes in Studio and 4207 in the repo.
+  - `rojo serve` (7.7.0, pid 14590) is running on this Mac, so Studio's Rojo plugin is probably disconnected or was never reconnected after the restart.
+- **Action for Jovan / Director:** in Studio, open the Rojo plugin and press **Connect**, and check that the `PanelRules` size matches the repo. Then re-run Run 2: F1–F3 re-test, bounty claim, Field Medic, Supply Camp, Chaos, hero tier 6, mastery 6–9, Profile colour, and the probes.
+- **Studio state:** I never entered Play. Studio was in **Edit** mode before and after, and nothing was changed.
+
+| # | Area | Result | Evidence |
+|---|---|---|---|
+| R2-0 | Studio has e9b0d00 | **FAIL (blocker, environment)** | `hpBarVisible`/`repairRow` are absent, and the Hud and PanelRules byte sizes differ from the repo |
+| R2-1…R2-n | All Run 2 items | NOT RUN | Blocked by R2-0 |

@@ -90,6 +90,20 @@ playtested**. Jovan picked all four `TOWERS_NEXT.md` towers; they're built and o
 reports no Studio; Jovan must restart Studio, turn on "Enable Studio as MCP server" and
 reconnect Rojo. Phase 7 is not started.
 
+## Phase 7 scope (Jovan, 2026-10-06)
+
+"Make sure everything is play tested and phase 7 is fully done." Phase 7 is the battle
+modes: Team Battle (2–3 sides, raiding with guns), Battle Royale (most Bones), competitive
+buy-ins and pots (escrow, Practice when unpublished), and ranked Trophies with arenas. Plan:
+`PLAN.md` "Phase 7" (T71–T86, six Builder batches); design calls `DECISIONS.md` #208–#226
+(ask-Jovan list #226, with defaults applied). The rounds 1–4 Studio playtest runs separately
+and is blocked on Jovan reconnecting Rojo. Every phase-7 batch ends with a Tester step: solo
+through the MCP with Studio-only stand-in sides (#221). Hunter-vs-hunter and non-host steps
+go to Jovan's Clients and Servers script (T86). Saved stakes and Trophies, the cross-server
+board, and 10-player load need a published place.
+
+**Status (2026-10-06):** planned, nothing built.
+
 ## Rules
 
 - **Verify every step:** `tools/check.sh` clean; `python3 tools/export_constants.py` clean;

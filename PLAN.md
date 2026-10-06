@@ -1,3 +1,299 @@
+# Plan — Phase 7: the battle modes (Director, 2026-10-06)
+
+Scope (Jovan, 2026-10-06): **"make sure everything is play tested and phase 7 is fully
+done"**. Phase 7 = Team Battle, Battle Royale, competitive buy-ins/pots and ranked
+Trophies (`VISION.md` "Future battle modes", "Amber economy"; `DIRECTION.md`). Design calls:
+`DECISIONS.md` #208–#226. **Playtesting rounds 1–4 runs separately** (T31/T38/T60/T70 +
+PLAYTEST.md re-run; blocked right now on Jovan reconnecting Rojo). It does not block the
+phase-7 Builder batches. Each phase-7 batch still ends with its own Tester step, and phase 7
+is not "fully done" until those steps and Jovan's multi-player steps (T86) have run.
+
+**Status (2026-10-06): planned, nothing built.**
+
+Round 1–4 rules hold (one task = one commit, pushed; `tools/check.sh`, `export_constants.py`,
+`tools/test.sh` green; diff `Config.luau` after every sheet change; openpyxl only, assert a
+cell is empty first; append, never insert; internal keys never change; "statically checked +
+headless, not playtested" until the Tester runs it; player text says **Bones**/take-downs).
+For phase 7:
+- **New Tuning levers go below row 140** (row 140 blank, row 141 the header `BATTLE MODES`;
+  the last used row today is 139). Assert each cell is empty. New sheets are appended at the
+  end of the workbook.
+- **Co-op must not change.** Co-op is "one side, every player on it". Every batch re-runs the
+  co-op specs and a co-op Studio smoke run (rounds 1–3).
+- **Pure rules first.** Every rule a server module applies (sides, damage permission,
+  elimination, placement, payouts, trophies) lives in a `Shared/` module with a headless
+  spec. The server only calls it.
+- **Fresh Builder per batch.**
+
+## The design (decided; the reasons are in DECISIONS #208–#226)
+
+**Common to both battle modes**
+- **Sides.** A side is a build plot with its own track, Fence (lives), cash pot and dinos.
+  Co-op = 1 side. Team Battle = 2 or 3 sides (host picks; 3 needs at least 3 players).
+  Battle Royale = one side per player (2–10).
+- **Map.** Each side gets a copy of the Serpentine track. The copies sit in a row (2 or 3
+  sides) or a 2-row grid (Royale), joined by a 40-stud open **crossing strip** with no
+  track. Hunters walk anywhere. They build only inside their own side's build zone:
+  `Shared/Placement` adds a zone check, used by the ghost (red outside your zone) and
+  enforced by the server.
+- **Dinos.** Every side runs the same seeded rounds, so every side faces the same dinos.
+  Each side is scaled by its own player count (the CO-OP levers). Royale and 3-side Team use
+  a per-side density lever (`Battle side density`), so 10 tracks stay under the live enemy
+  cap. Leaks hurt only that side's Fence. **No dino-sending in v1** (ask-Jovan #1).
+- **Rounds move in lockstep.** Round N+1 starts for every living side when they have all
+  cleared round N, or `Battle round time` seconds after round N started, whichever comes
+  first. Dinos left over stay on the track. There is no Start button per side: one 30 s build
+  phase (`Battle build time`), then the rounds run.
+- **"Destroy enemy towers" = hunters' guns.** A hunter's shots damage an enemy side's towers
+  (× `PvP tower damage`, seed 0.35). At 0 HP the tower is Trampled (knocked out) exactly as
+  with dinos, and only its own side can repair it. Falcon Roost and Tar Pit stay undamageable
+  ("somewhat weaker" is their price). **Towers never shoot hunters.** Dinos bite anyone in
+  reach, invaders included.
+- **Hunter vs hunter.** Enemy hunters can shoot each other (× `PvP hunter damage`, seed 0.5;
+  100 HP; respawn on your own side after Respawn time, with `Spawn shield` 3 s of no damage).
+  Abilities (Tracking Dart, Rally Cry, Flare Strike, the Medic's heal) and all mastery perks
+  affect dinos and your own team only, so there is **no crowd control on hunters**.
+- **No friendly fire.** A shot never damages your own side's towers or hunters. You can't
+  sell, upgrade or repair an enemy tower. You can still upgrade a teammate's tower.
+- **A side is out** when its Fence hits 0: its towers are removed, its dinos despawn, and
+  its hunters become spectators (they can walk but deal no damage and can't build). The
+  results order is the elimination order.
+- **First person always** (existing camera rule). Difficulty: the host picks it in casual.
+  In competitive it is fixed to **Normal**.
+
+**Team Battle.** The last side standing wins. Teams are balanced by count (sizes differ by at
+most 1), then snake-drafted by Trophies in competitive. After round 40, **Overtime**: the
+final round repeats, each time with dino HP × `Overtime HP step` (seed 1.25), until one side
+falls. If the last sides fall in the same step, the side with more Bones wins (then it's a
+tie: the pot is split across the tied sides).
+
+**Battle Royale.** Every player for themselves on their own plot, crossing and raiding
+allowed. **Most Bones wins** (take-downs, as today). An eliminated player's Bones freeze. The
+match ends when at most one player is left alive, or at round 40. The last one alive gets
+`Survivor bonus` (seed +10%) Bones. Placement is by Bones; ties go to whoever survived longer,
+then to whoever has more Fence. Knocking out a tower gives no Bones (`Raid bones` = 0): raiding
+pays off by making rivals leak.
+
+**Queues, buy-in and pot** (one server; the host picks mode + Casual/Competitive)
+- **Casual battle payouts** (levers): Team win 50 each, loss 5; Royale 1st 60 / 2nd 30 /
+  3rd 10 / the rest 5. No buy-in.
+- **Competitive = ranked.** One queue; Trophies change only in competitive. Everyone who
+  wants in presses **Ready** on the home screen and confirms the stake. Minimum: Team 2
+  players (1v1 allowed), Royale 3. Buy-in is `Competitive buy-in`, seed **15** (the exporter
+  holds it to 10–20).
+- **Pot flow (`Shared/Stakes` pure, `Progression` applies):** the stake is taken when
+  Building starts. It is written to the profile as an **escrow** `{matchId, amount}` and saved
+  at once. At the end the result is settled and the escrow cleared in the same save. Team:
+  the pot is split equally among the winning side's hunters still present, each share rounded
+  down. Royale: 72% / 23% / 5% of the pot, each rounded down. If fewer than 3 finished, the
+  unused shares go to 1st. Leftover coins are a sink. **Winners also get the casual payout**,
+  so competitive always pays more than casual (exporter check). A leaver forfeits their stake
+  to the pot and gets nothing. If the server shuts down (BindToClose), or a later load finds an
+  escrow that was never settled, the stake is refunded.
+- **Failed load / offline:** a player whose profile didn't load (`SaveStatus` offline)
+  **can't stake** and is told why. They may still play casual. **Unpublished** (Studio:
+  everyone offline) competitive runs as **Practice**: session-only Amber is staked and paid
+  by the same rules, Trophies don't change, and the results say "Practice".
+
+**Ranked Trophies** (`Shared/Trophies` pure; the new `Arenas` sheet)
+- Everyone starts at 0. Team win +30, loss −30 (levers). Royale: by placement, scaled to the
+  lobby size: the top third gains (1st +30 … ), the middle gets 0, the bottom third loses
+  (last −20). Trophies never drop below the floor of the arena you've reached
+  (Clash Royale-style gates), and never below 0.
+- **Arenas:** 8 tiers on the `Arenas` sheet (floor trophies 0 / 300 / 600 / 1000 / 1500 /
+  2000 / 3000 / 4000; names by the Dino agent, T74). Reaching an arena for the first time
+  unlocks one cosmetic or title (cosmetic only, never power). No seasons in v1.
+- **Display:** the Trophies count + arena badge on the leaderboard, the Profile screen
+  (Trophies tab) and the home screen. The results screen shows ±Trophies and any arena
+  change. A **Trophy leaderboard** (top 50) works the same way as the level board:
+  cross-server when published, "This server" unpublished.
+
+**Matchmaking.** It happens inside one server: whoever is in the server and presses Ready.
+**A separate lobby place with Teleport/MemoryStore queues is out of scope.** TeleportService
+doesn't work unpublished, so it can't be built or tested honestly now; it's logged for
+publishing. `Shared/Matchmaking` (pure) assigns sides and snake-drafts by Trophies, so a lobby
+place can reuse it later.
+
+**PvP parity (mastery perks stay on).** "Other perks buffed so money advantage isn't too big"
+becomes two exporter/`value.py` bars. (1) **Edge bar:** a mastery-20 hunter with every small
+perk is worth at most `Competitive edge max` (seed 10%) more than a mastery-0 hunter on the
+same hero. (2) **Parity bar:** at mastery 10, 15 and 20, every hero's perks are worth within
+±`Perk parity band` (seed 15%) of each other. When a bar fails, the weaker perks are
+**buffed, never nerfed** (Director picks the cells, as in T51). Unlocks are not loaned in
+competitive: you play what you own (the audience is maxed players, and Trophies match like
+with like).
+
+**No-trap rule for every new screen** (DIRECTION): the Ready/stake confirm, the battle
+options on the home screen, the Tab scoreboard, the spectate banner, the results screen and
+the Profile Trophies tab. Each one fits any window (scroll/scale), keeps its X visible, frees
+the mouse, closes with its key and its X, and closes on state change unless `PanelRules`
+allows it. **Ready is each player's own button**, reachable by every player, not just the
+host.
+
+## Batches
+
+| Batch | Tasks | What |
+|---|---|---|
+| 1 | T71, T72, T73 | pure rules: battle rules + matchmaking; stakes + trophies; sheet levers + `Arenas` + exporter/audit checks |
+| — | T74 🦖 | names: mode cards, side names/colours, arenas, Trophies wording, spectate/raid/overtime text |
+| 2 | T75, T76 | map sides + build zones + per-side tracks and waves; per-side Economy + Shop ownership rules |
+| 3 | T77, T78 | match flow (teams, lockstep, elimination, overtime, Royale end, Studio stand-in sides); PvP damage |
+| — | T79 🦖 + Director | review batches 2–3 (in-match text, raid feel vs DIRECTION) |
+| 4 | T80, T81 | Progression: escrow, pot, offline/Practice, trophies saved; Trophy board + arena rewards |
+| 5 | T82, T83 | home screen battle options + Ready/stake; HUD, scoreboard, spectate, results, Profile Trophies |
+| 6 | T84, T85 | PvP parity bars (`value.py` + exporter) and any buffs; docs + recap |
+| — | T86 | Tester sweep of phase 7 + Jovan's multi-player script |
+
+### Testing in Studio: what one MCP client can and can't do
+
+The Tester drives **one** Studio client through `tools/studio/mcp.py`. Before batch 3, the
+Tester runs `tools` once and records whether the MCP can start a **Clients and Servers**
+session (several players). Assume it can't. T77 therefore adds **Studio-only stand-in sides**:
+with `RunService:IsStudio()` and the host's lobby toggle "Fill with stand-ins", each empty
+side or Royale seat is a stand-in. It has no player, but it has a track, a Fence, dinos and a
+fixed set of pre-placed towers (owner id negative, never saved, never paid, never given
+Trophies). With stand-ins, one client can test placement zones, raiding (shooting enemy
+towers to a knock-out), leaks → elimination → win, lockstep rounds, overtime, Royale ranking,
+pot math in Practice, the results screen, and the 10-side enemy-cap load.
+**Not testable solo:** hunter-vs-hunter hits, spawn shield, teammate upgrades, the Ready
+button for non-hosts, team balance. These go to **Jovan's local Clients and Servers test**
+(2–3 windows on his Mac, no real players needed; script in T86). **Needs real players or a
+published place:** DataStore stakes/escrow/refunds and saved Trophies, the cross-server
+Trophy board, 10-player network load and hit fairness under real latency, and PvP feel and
+balance.
+
+### T71 — `Shared/BattleRules` + `Shared/Matchmaking` (pure)
+- `Modes` gets `sides` rules: COOP 1; TEAM 2|3 (3 needs ≥3 players); ROYALE = player count
+  (2–10). TEAM and ROYALE stay `available = false` until T82.
+- `BattleRules`: `canDamage(attackerSide, targetSide, targetKind)` (no friendly fire; towers
+  never target hunters; undamageable towers immune); `nextRoundDue(sidesCleared, elapsed)`
+  (lockstep); `sideOut(fence)`; `teamResult(eliminationOrder, bones)`
+  (last standing, overtime tie → Bones → tie); `royaleResult(players)` (Bones; tie → survived
+  longer → Fence; survivor bonus; ends at ≤1 alive or round 40); `overtimeHpMult(n)`.
+- `Matchmaking.assign(players, sides, trophies?)`: sizes differ ≤1; snake draft by Trophies
+  when given; deterministic.
+- **Accept:** specs cover every rule above, including the 1-alive Royale end, the
+  simultaneous-fall tie, and 7 players → 3 sides of 3/2/2. Co-op specs unchanged. No numbers
+  in code (levers come from T73's Config keys; seeds go in the sheet).
+
+### T72 — `Shared/Stakes` + `Shared/Trophies` (pure)
+- `Stakes`: `canStake(profileLoaded, published, amber, buyIn)` → ok / reason
+  (offline, can't afford, Practice); `pot(stakes)`; `teamSplit(pot, winners)`;
+  `royaleSplit(pot, placements)` (72/23/5 floor; fewer than 3 → unused to 1st);
+  `casualBattle(mode, placement, n)`; `settle(...)` = casual + share; leaver forfeits;
+  `refund(escrow)`.
+- `Trophies`: `delta(mode, placement, n)`; `apply(trophies, delta, arenas)` (arena floor,
+  never < 0); `arenaOf(trophies)`; `newArenas(old, new)`.
+- **Accept:** specs: pot 4×15 → team 2 winners 30 each; Royale 3×15 = 45 → 32/10/2
+  (floors); 2 finishers; leaver; refund; offline refused; Practice flag; arena floor holds a
+  loss; no negative trophies; competitive winner > casual winner at minimum lobby.
+
+### T73 — Sheet + exporter/audit
+- `Tuning` rows 141+ (`BATTLE MODES`): Battle build time 30, Battle round time 60, Battle
+  side density 0.6, PvP tower damage 0.35, PvP hunter damage 0.5, Spawn shield 3, Overtime HP
+  step 1.25, Survivor bonus 0.10, Raid bones 0, Competitive buy-in 15, casual battle payouts
+  (team win 50/loss 5, royale 60/30/10/5), Royale split 72/23/5, Trophies team ±30, Royale
+  trophy table, Competitive edge max 0.10, Perk parity band 0.15, Team/Royale min players 2/3.
+- New sheet `Arenas` (appended): Key, Name (placeholder until T74), Floor, Reward (cosmetic id
+  or blank).
+- Exporter refuses: buy-in outside 10–20; splits ≠ 100; arena floors not ascending from 0;
+  PvP mults outside (0, 1]; competitive winner ≤ casual winner at min players; arena reward
+  that isn't a cosmetic/title. `audit.py` checks the VISION numbers (72/23/5, 10–20).
+- **Accept:** Config diff = only the new keys; `audit.py --strict` 0; each refusal has a spec
+  or a negative test run.
+
+### T74 🦖 — names
+Mode-card blurbs, two/three side names and colours, 8 arena names (dino/hunting theme;
+"Trophy" only for ranked), the Ready/stake/Practice wording, the spectate, overtime and
+"knocked out by <name>" lines. **Accept:** `DINO_REVIEW.md` entry; the Director logs the picks.
+
+### T75 — Map sides
+- `Track` gains a side layout: offsets per side for 1 / 2 / 3 / up to 10 sides, a crossing
+  strip, a build-zone rect per side, a spawn per side. `MapBuilder` builds N copies.
+  `Enemies` and `Waves` run one path and one queue per side through `Enemies.enqueue(side, …)`
+  (still the only spawner; the live cap is shared and split by `Battle side density`).
+  `Placement.check` gains the zone check (on-track rule unchanged; Tar Pit only on its own
+  side's track).
+- **Accept:** specs: zones never overlap and never touch another side's track; a ghost
+  outside your zone is refused by the same rule on client and server. Co-op builds exactly
+  today's map (same waypoints, same specs). Tester: co-op smoke (rounds 1–3, place every
+  owned tower, Tar Pit on track).
+
+### T76 — Per-side Economy + Shop rules
+- `Economy` keyed by side (cash + Fence); co-op = side 1 with today's API kept as wrappers.
+  `Shop`: build only in own zone with own side's cash; upgrade own side's towers (teammates'
+  too); never sell/upgrade/repair an enemy's. The HUD reads your side's cash/Fence attributes.
+- **Accept:** specs for each Shop refusal; `Economy` is still the only cash mutator
+  (ARCHITECTURE §4 updated); co-op smoke unchanged.
+
+### T77 — Battle match flow (server)
+- `Main` runs TEAM/ROYALE: assign sides (`Matchmaking`), spawn per side, one build phase,
+  lockstep rounds (`BattleRules.nextRoundDue`), per-side round income and heals, elimination
+  (towers removed, dinos despawned, players spectate), overtime, Royale end + survivor bonus,
+  results attributes (placement, Bones, side). Leavers mid-match: their towers stay with the
+  side; a Royale leaver's side is out.
+- **Studio-only stand-in sides** (lobby toggle, host, `IsStudio()` only), as described above.
+- **Accept:** specs for the flow helpers; Tester (solo, stand-ins): TEAM 2 sides → refused
+  build across the strip; shoot a stand-in tower to a knock-out; the stand-in leaks out →
+  Victory; ROYALE with 3 stand-ins → placements by Bones; the 10-side Royale console line
+  shows the peak enemies under the cap and the script cost (record it).
+
+### T78 — PvP damage
+- Shots (server-validated, as today) can hit an enemy side's towers and enemy hunters per
+  `BattleRules.canDamage` × the PvP levers. Spawn shield; respawn on own side; abilities
+  dinos/own team only; a kill-feed line "<a> knocked out <b>'s <tower>".
+- **Accept:** specs: own tower/teammate never damaged; immune towers immune; damage =
+  shot × lever; shielded hunter takes 0. Tester solo: own towers take no damage from own
+  shots; stand-in towers do. Hunter-vs-hunter → T86 (Jovan).
+
+### T79 🦖 + Director review of batches 2–3
+
+### T80 — Progression: stakes, Practice, Trophies saved
+- Profile gains `trophies`, `bestArena`, `escrow` (sanitized; old saves load as 0/nil).
+  Stakes taken at Building, escrow saved at once; settle + clear in one save; BindToClose and
+  load-time refunds; offline can't stake; unpublished → Practice. Bounties count battle
+  matches as matches; player XP as in co-op (cleared rounds; the win counts as a Normal clear).
+- **Accept:** specs on `Profile.sanitize` for the new fields and the refund-on-load; a
+  failed load still never overwrites. Tester (offline): Practice stake leaves session Amber
+  and comes back by the split; Trophies unchanged; turn saving off with J first.
+
+### T81 — Trophy board + arena rewards
+- `Server/TrophyBoard` on the `LevelBoard` pattern (OrderedDataStore when published, "This
+  server" otherwise); arena rewards join `Cosmetics` (unlock on first reach).
+- **Accept:** spec for the fallback; Tester: Profile shows the This-server board.
+
+### T82 — Home screen battle options + Ready
+- TEAM/ROYALE cards available; host: Casual/Competitive, 2/3 sides, stand-ins (Studio).
+  Every player: Ready + stake confirm (shows buy-in, balance, Practice/offline reason), who's
+  ready, min-players line; PLAY is enabled when the minimum is met.
+- **Accept:** no-trap checks (two window sizes, X + key, mouse free, closes on state change);
+  Tester solo as host. Non-host Ready → T86.
+
+### T83 — In-match + results UI
+- Side banner/colour, own cash/Fence, sides alive, Tab scoreboard by side (Bones), spectate
+  banner, overtime banner; results: placement, pot shares, ±Trophies, arena change, Practice
+  tag; Profile Trophies tab (arena ladder, current arena, board).
+- **Accept:** `PanelRules` updated with spec; no-trap sweep for each screen; Tester solo
+  with stand-ins (TEAM win, TEAM loss, ROYALE).
+
+### T84 — PvP parity bars
+- `value.py` "competitive edge" and "perk parity" reports; exporter bars from T73's levers.
+  If a bar fails, the Director names buff cells (buff, never nerf), the Builder applies them.
+- **Accept:** both bars met; Config diff accounted for; findings listed in the recap.
+
+### T85 — Docs + recap
+`VISION.md` (modes built), `ARCHITECTURE.md` (phase 7 row, ownership: per-side Economy,
+Stakes/Trophies, stand-ins), `CLAUDE.md` status, `GAUNTLET.md` status, `RECAP.md` "Phase 7":
+what changed, what was tested where, and Jovan's script (T86). Update `SETUP.md` multi-client.
+
+### T86 — Tester sweep + Jovan's multi-player script
+- Tester: re-run every batch's solo steps on the final build plus co-op rounds 1–3; report in
+  `PLAYTEST.md`.
+- Jovan (Studio → Test → Clients and Servers, 2 then 3 players): hunter-vs-hunter damage and
+  spawn shield; teammate upgrade; enemy-tower sell/repair refused; non-host Ready + stake;
+  3-side Team; Royale with 3; leaver forfeits. Published-place items (DataStore stakes,
+  refunds, cross-server Trophy board, 10 real players) are listed for after publishing.
+
 # Plan — Round 4: Jovan's answers (Director, 2026-10-02)
 
 Scope (Jovan, 2026-10-02; his words in `DIRECTION.md` "Round-4 answers", `GAUNTLET.md`

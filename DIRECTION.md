@@ -133,5 +133,8 @@ What this adds to his taste:
 - He wants every verified step committed and pushed.
 - He wants builds **tested in Roblox Studio whenever that's possible** (2026-10-01), by a
   Tester agent through Studio's MCP server (`GAUNTLET.md`). Headless specs don't replace it.
+- **"Make sure everything is play tested and phase 7 is fully done"** (2026-10-06). Done
+  means built, plus a Studio playtest of every step that can be tested, plus a clear list of
+  what only he (multi-client) or real players (published) can test.
 - Be honest about what was and wasn't verified. Never claim something works in Studio
   unless it was run there.
