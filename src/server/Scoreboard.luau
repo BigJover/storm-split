@@ -6,13 +6,18 @@
 
 	Also shows each player's mastery with their current hero next to their
 	name — the design doc's visible badge. Read from the Hero and Mastery_*
-	player attributes that Hero and Progression publish.
+	player attributes that Hero and Progression publish. And each hunter's player
+	level badge and title (PLAN T58), on the home screen and in a match alike, from
+	the PlayerXp and Equip_title attributes Progression publishes.
 ]]
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Theme = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Theme"))
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Theme = require(Shared:WaitForChild("Theme"))
+local PlayerLevel = require(Shared:WaitForChild("PlayerLevel"))
+local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 
 local Scoreboard = {}
 
@@ -27,8 +32,27 @@ local function setUp(player: Player)
 	local badge = Instance.new("IntValue")
 	badge.Name = "Mastery"
 	badge.Parent = stats
+	local level = Instance.new("IntValue")
+	level.Name = Theme.PlayerLevel -- never "Lv": that's the hunter's in-match level (DECISIONS #118)
+	level.Parent = stats
+	local title = Instance.new("StringValue")
+	title.Name = "Title"
+	title.Parent = stats
 	stats.Parent = player
 	pops[player] = value
+	local function refreshLevel()
+		local xp = player:GetAttribute("PlayerXp")
+		level.Value = PlayerLevel.level(if type(xp) == "number" then xp else 0)
+		title.Value = Cosmetics.titleOf(function(name)
+			return player:GetAttribute(name)
+		end) or ""
+	end
+	player.AttributeChanged:Connect(function(name)
+		if name == "PlayerXp" or name == "Equip_title" then
+			refreshLevel()
+		end
+	end)
+	refreshLevel()
 
 	local function refreshBadge()
 		local hero = player:GetAttribute("Hero")

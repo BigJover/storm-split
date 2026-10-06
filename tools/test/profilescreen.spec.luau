@@ -50,7 +50,7 @@ test("slot rows: None + every unlocked item, the worn one selected; locked slots
 end)
 
 test("the screen fits every window with the X on screen (no-trap rule)", function()
-	local content = ProfileScreen.listContent(3, #Cosmetics.SLOTS)
+	for _, content in { ProfileScreen.listContent(3, #Cosmetics.SLOTS), ProfileScreen.boardContent(51, true), ProfileScreen.boardContent(1, true) } do
 	local smallest = (ProfileScreen.fixedHeight() + ProfileScreen.MIN_LIST) * ProfileScreen.MIN_SCALE
 	for _, size in { { 1920, 1080 }, { 1280, 720 }, { 800, 600 }, { 480, 320 }, { 320, 240 }, { 360, 800 }, { 1024, 300 } } do
 		local x, y = size[1], size[2]
@@ -61,6 +61,10 @@ test("the screen fits every window with the X on screen (no-trap rule)", functio
 		ok(layout.height * layout.scale <= math.max(bottom - top, smallest) + 0.5, `{x}x{y}: fits down`)
 		ok(layout.listHeight <= content, `{x}x{y}: the list never outgrows its content`)
 	end
+	end
+	local content = ProfileScreen.listContent(3, #Cosmetics.SLOTS)
+	local S = ProfileScreen
+	ok(S.fixedHeight() >= S.PAD * 2 + S.HEADER + S.TABS + S.LEVEL + S.MESSAGE, "every fixed part is counted, so the X can't be pushed off")
 	local big = ProfileScreen.layout(1920, 44, 980, content)
 	eq(big.scale, 1, "full size on a big window")
 	ok(big.listHeight < content, "the list scrolls rather than overflow")

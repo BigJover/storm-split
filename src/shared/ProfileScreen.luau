@@ -1,6 +1,7 @@
 --[[
 	What the Profile screen shows (Profile.client, PLAN round 4 T57): the player level, the
-	XP bar, the next rewards and an equip row per slot. Pure — no services — so
+	XP bar, the next rewards and an equip row per slot; and its Leaderboard tab (T58,
+	the rows from Shared/LevelBoard). Pure — no services — so
 	tools/test/profilescreen.spec.luau runs it headlessly. What may be worn is
 	Shared/Cosmetics' rule and the server's call; this only decides what to draw.
 
@@ -16,6 +17,7 @@ local PanelRules = require(script.Parent.PanelRules)
 local PlayerLevel = require(script.Parent.PlayerLevel)
 local Cosmetics = require(script.Parent.Cosmetics)
 local Theme = require(script.Parent.Theme)
+local LevelBoard = require(script.Parent.LevelBoard)
 
 local ProfileScreen = {}
 
@@ -27,6 +29,8 @@ ProfileScreen.NONE = "None" -- the chip that takes a slot's item off
 ProfileScreen.NEXT = "Next rewards"
 ProfileScreen.WEAR = "Wear"
 ProfileScreen.UPCOMING = 3 -- reward levels listed under "Next rewards"
+ProfileScreen.TAB_PROFILE = Theme.Profile -- the two tabs (T58)
+ProfileScreen.TAB_BOARD = LevelBoard.TAB
 
 ProfileScreen.WIDTH = 560
 ProfileScreen.MIN_WIDTH = 300
@@ -34,11 +38,14 @@ ProfileScreen.EDGE = 16
 ProfileScreen.PAD = 12
 ProfileScreen.GAP = 6
 ProfileScreen.HEADER = 36
+ProfileScreen.TABS = 30 -- the tab row under the header
 ProfileScreen.LEVEL = 54 -- the level line, the bar and its XP line
 ProfileScreen.MESSAGE = 20
 ProfileScreen.SECTION = 20
 ProfileScreen.REWARD = 20 -- one "Next rewards" line
 ProfileScreen.SLOT = 58 -- a slot's label and its row of chips
+ProfileScreen.BOARD_ROW = 30 -- one leaderboard row
+ProfileScreen.NOTE = 36 -- the board's one-line note (two lines on a narrow screen)
 ProfileScreen.MIN_LIST = 100
 ProfileScreen.MIN_SCALE = 0.4
 
@@ -115,9 +122,39 @@ function ProfileScreen.slotRows(xp: number?, equipped: { [string]: string? }): {
 	return rows
 end
 
--- Everything but the scrolling list: header, level block, message, gaps and padding.
+-- Everything but the scrolling list: header, tabs, level block, message, gaps, padding.
 function ProfileScreen.fixedHeight(): number
-	return ProfileScreen.PAD * 2 + ProfileScreen.HEADER + ProfileScreen.LEVEL + ProfileScreen.MESSAGE + ProfileScreen.GAP * 3
+	return ProfileScreen.PAD * 2
+		+ ProfileScreen.HEADER
+		+ ProfileScreen.TABS
+		+ ProfileScreen.LEVEL
+		+ ProfileScreen.MESSAGE
+		+ ProfileScreen.GAP * 4
+end
+
+-- The Leaderboard tab's list height: its title, the note if there is one, the rows.
+function ProfileScreen.boardContent(rows: number, hasNote: boolean): number
+	local count = 1 + rows + (if hasNote then 1 else 0)
+	return ProfileScreen.SECTION
+		+ (if hasNote then ProfileScreen.NOTE else 0)
+		+ ProfileScreen.BOARD_ROW * rows
+		+ ProfileScreen.GAP * math.max(count - 1, 0)
+end
+
+-- A leaderboard row's text: rank, name and title ("#3", "Ava", "Trapper"), and the level
+-- badge ("Player level 30" is too long for a row, so the badge is the number and its
+-- band, Shared/LevelBoard.band).
+export type BoardLine = { rank: string, name: string, title: string, level: number, band: number, self: boolean }
+function ProfileScreen.boardLine(row: LevelBoard.Row, title: string?): BoardLine
+	local level = PlayerLevel.level(row.xp)
+	return {
+		rank = LevelBoard.rankText(row),
+		name = row.name,
+		title = title or "",
+		level = level,
+		band = LevelBoard.band(level),
+		self = row.self == true,
+	}
 end
 
 -- The list's full height for `rewardLines` next-reward lines and `slots` slot rows

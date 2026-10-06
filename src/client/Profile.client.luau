@@ -1,7 +1,11 @@
 --[[
 	The Profile screen (PLAN round 4 T57, DECISIONS #118-#121): your player level, the XP
 	bar, the next rewards, and what you wear — a row per slot (the title and one cosmetic
-	per kind) with every unlocked item to pick from.
+	per kind) with every unlocked item to pick from. Its Leaderboard tab (T58, DECISIONS
+	#122) shows the level board from Server/LevelBoard: the world top 50 when published,
+	else "This server" with its note; your own row always. If the server can't be asked,
+	the tab builds the "This server" board itself from the players here, so it never
+	errors or hangs.
 
 	Open and close: P, the home screen's Profile button, or the X. Shop.client owns which
 	panel is open (its mode "profile", so it never overlaps the Hunt Board or the shop
@@ -28,10 +32,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 local HomeLayout = require(Shared:WaitForChild("HomeLayout"))
+local LevelBoard = require(Shared:WaitForChild("LevelBoard"))
 local ProfileScreen = require(Shared:WaitForChild("ProfileScreen"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local progressRequest = remotes:WaitForChild("ProgressRequest") :: RemoteFunction
+local boardRequest = remotes:WaitForChild("LevelBoard") :: RemoteFunction
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -51,6 +57,16 @@ local BAD = Color3.fromRGB(240, 130, 110)
 local TOP_GAP = 8
 local BOTTOM_GAP = 8
 local CHIP_HEIGHT = 30
+local BOARD_ASK_SECONDS = 15 -- an open Leaderboard tab asks the server's cache again
+-- The level badge's frame by band (DECISIONS #121: the free badge frame): under 100,
+-- 100-149, 150-199, 200 and up. Never gold: that's mastery 20's.
+local BAND_COLOURS = {
+	Color3.fromRGB(120, 112, 140),
+	Color3.fromRGB(90, 160, 200),
+	Color3.fromRGB(170, 110, 220),
+	Color3.fromRGB(230, 110, 90),
+}
+local SELF_ROW = Color3.fromRGB(70, 60, 92)
 
 ------------------------------------------------------------------ layout
 
@@ -145,8 +161,33 @@ closeButton.Modal = true -- the mouse is free while the screen is showing
 closeButton.Parent = header
 corner(closeButton, 6)
 
+-- The tabs: Profile and Leaderboard.
+local tabRow = section(2, ProfileScreen.TABS)
+tabRow.Name = "Tabs"
+do
+	local layout = Instance.new("UIListLayout")
+	layout.FillDirection = Enum.FillDirection.Horizontal
+	layout.Padding = UDim.new(0, 6)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Parent = tabRow
+end
+local function tabButton(order: number, text: string): TextButton
+	local button = Instance.new("TextButton")
+	button.LayoutOrder = order
+	button.Size = UDim2.new(0.5, -3, 1, 0)
+	button.Font = Enum.Font.GothamBold
+	button.TextSize = 14
+	button.TextColor3 = TEXT
+	button.Text = text
+	button.Parent = tabRow
+	corner(button, 6)
+	return button
+end
+local profileTab = tabButton(1, ProfileScreen.TAB_PROFILE)
+local boardTab = tabButton(2, ProfileScreen.TAB_BOARD)
+
 -- The level block: "Player level 12", the bar, "340 / 1,050 XP to level 13".
-local levelBlock = section(2, ProfileScreen.LEVEL)
+local levelBlock = section(3, ProfileScreen.LEVEL)
 levelBlock.Name = "Level"
 local levelLabel = label(levelBlock, "", 20, Enum.Font.GothamBold, TEXT)
 levelLabel.Size = UDim2.new(1, 0, 0, 24)
@@ -170,7 +211,7 @@ xpLabel.Size = UDim2.new(1, 0, 0, 16)
 -- The only part that scrolls: next rewards and the slots.
 local list = Instance.new("ScrollingFrame")
 list.Name = "List"
-list.LayoutOrder = 3
+list.LayoutOrder = 4
 list.Size = UDim2.new(1, 0, 0, 0)
 list.BackgroundTransparency = 1
 list.BorderSizePixel = 0
@@ -186,13 +227,17 @@ do
 	layout.Parent = list
 end
 
-local message = label(section(4, ProfileScreen.MESSAGE), "", 14, Enum.Font.Gotham, TEXT_DIM)
+local message = label(section(5, ProfileScreen.MESSAGE), "", 14, Enum.Font.Gotham, TEXT_DIM)
 message.Size = UDim2.fromScale(1, 1)
 
 ------------------------------------------------------------------ state
 
 local listContent = 0
 local busy = false
+local tab: "profile" | "board" = "profile"
+local boardView: LevelBoard.View? = nil -- the last answer from Server/LevelBoard
+local boardAskedAt = -math.huge
+local boardAsking = false
 
 local function shown(): boolean
 	return ProfileScreen.shown(player:GetAttribute("ProfileOpen") == true, ReplicatedStorage:GetAttribute("State"))
@@ -249,6 +294,31 @@ local function clear(frame: Instance)
 end
 
 local render: () -> ()
+
+-- The players here with their live XP: the "This server" board when the server can't
+-- be asked (Shared/LevelBoard.view with no world board).
+local function localBoard(): LevelBoard.View
+	local here = {}
+	for _, other in Players:GetPlayers() do
+		local xp = other:GetAttribute("PlayerXp")
+		table.insert(here, { userId = other.UserId, name = other.DisplayName, xp = if type(xp) == "number" then xp else 0 })
+	end
+	return LevelBoard.view(nil, here, player.UserId)
+end
+
+local function askBoard()
+	if boardAsking then
+		return
+	end
+	boardAsking = true
+	boardAskedAt = os.clock()
+	local ok, answer = pcall(function()
+		return boardRequest:InvokeServer()
+	end)
+	boardAsking = false
+	boardView = if ok and type(answer) == "table" and type(answer.rows) == "table" then answer :: LevelBoard.View else localBoard()
+	render()
+end
 
 local function pick(slot: string, id: string)
 	if busy then
@@ -341,10 +411,90 @@ local function addSlot(order: number, row: ProfileScreen.SlotRow)
 	end
 end
 
+local function addBoardRow(order: number, row: LevelBoard.Row)
+	local other = Players:GetPlayerByUserId(row.userId) -- cosmetics are known for players here only
+	local function worn(slot: string): Cosmetics.Item?
+		return if other
+			then Cosmetics.worn(function(name)
+				return other:GetAttribute(name)
+			end, slot)
+			else nil
+	end
+	local titleItem = worn("title")
+	local line = ProfileScreen.boardLine(row, if titleItem then titleItem.name else nil)
+	local frame = Instance.new("Frame")
+	frame.LayoutOrder = order
+	frame.Size = UDim2.new(1, -8, 0, ProfileScreen.BOARD_ROW)
+	frame.BackgroundColor3 = Cosmetics.colour(worn("banner")) or (if line.self then SELF_ROW else BG_LIGHT)
+	frame.BorderSizePixel = 0
+	frame.Parent = list
+	corner(frame, 6)
+	if line.self then
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = AMBER
+		stroke.Thickness = 1.5
+		stroke.Parent = frame
+	end
+	local rank = label(frame, line.rank, 14, Enum.Font.GothamBold, TEXT)
+	rank.Position = UDim2.fromOffset(8, 0)
+	rank.Size = UDim2.new(0, 40, 1, 0)
+	local badge = Instance.new("TextLabel")
+	badge.AnchorPoint = Vector2.new(0, 0.5)
+	badge.Position = UDim2.new(0, 50, 0.5, 0)
+	badge.Size = UDim2.fromOffset(46, 22)
+	badge.BackgroundColor3 = BAR_BACK
+	badge.Font = Enum.Font.GothamBold
+	badge.TextSize = 13
+	badge.TextColor3 = TEXT
+	badge.Text = tostring(line.level)
+	badge.Parent = frame
+	corner(badge, 11)
+	local frameStroke = Instance.new("UIStroke")
+	frameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	frameStroke.Color = BAND_COLOURS[line.band] or BAND_COLOURS[1]
+	frameStroke.Thickness = 2
+	frameStroke.Parent = badge
+	local name = label(frame, line.name, 14, Enum.Font.GothamBold, Cosmetics.colour(worn("nameColour")) or TEXT)
+	name.Position = UDim2.fromOffset(104, 0)
+	name.Size = UDim2.new(0.55, -104, 1, 0)
+	local title = label(frame, line.title, 12, Enum.Font.Gotham, TEXT_DIM)
+	title.AnchorPoint = Vector2.new(1, 0)
+	title.Position = UDim2.new(1, -8, 0, 0)
+	title.Size = UDim2.new(0.45, -8, 1, 0)
+	title.TextXAlignment = Enum.TextXAlignment.Right
+end
+
+local function renderBoard(): number
+	local current = boardView
+	local order = 0
+	local function next(): number
+		order += 1
+		return order
+	end
+	if not current then
+		addLine(next(), LevelBoard.LOADING, 14, Enum.Font.Gotham, TEXT_DIM, ProfileScreen.SECTION)
+		return ProfileScreen.boardContent(0, false)
+	end
+	addLine(next(), current.title, 16, Enum.Font.GothamBold, TEXT, ProfileScreen.SECTION)
+	if current.note then
+		local note = label(list, current.note, 13, Enum.Font.Gotham, TEXT_DIM)
+		note.LayoutOrder = next()
+		note.Size = UDim2.new(1, -8, 0, ProfileScreen.NOTE)
+		note.TextWrapped = true
+		note.TextTruncate = Enum.TextTruncate.None
+	end
+	for _, row in current.rows do
+		addBoardRow(next(), row)
+	end
+	return ProfileScreen.boardContent(#current.rows, current.note ~= nil)
+end
+
 render = function()
 	if not gui.Enabled then
 		return
 	end
+	profileTab.BackgroundColor3 = if tab == "profile" then CHIP_ON else CHIP
+	boardTab.BackgroundColor3 = if tab == "board" then CHIP_ON else CHIP
 	local xp = player:GetAttribute("PlayerXp")
 	xp = if type(xp) == "number" then xp else 0
 	levelLabel.Text = ProfileScreen.levelLine(xp)
@@ -354,6 +504,13 @@ render = function()
 
 	local position = list.CanvasPosition
 	clear(list)
+	if tab == "board" then
+		listContent = renderBoard()
+		list.CanvasSize = UDim2.fromOffset(0, listContent)
+		list.CanvasPosition = position
+		fit()
+		return
+	end
 	local order = 0
 	local function next(): number
 		order += 1
@@ -386,11 +543,30 @@ local function setShown(show: boolean)
 	end
 	gui.Enabled = show
 	if show then
+		tab = "profile" -- opens on the profile, every time
 		list.CanvasPosition = Vector2.zero
 		say("")
 		render()
 	end
 end
+
+local function showTab(which: "profile" | "board")
+	if tab == which then
+		return
+	end
+	tab = which
+	list.CanvasPosition = Vector2.zero
+	render()
+	if which == "board" then
+		task.spawn(askBoard)
+	end
+end
+profileTab.Activated:Connect(function()
+	showTab("profile")
+end)
+boardTab.Activated:Connect(function()
+	showTab("board")
+end)
 
 local function apply()
 	setShown(shown())
@@ -417,6 +593,16 @@ task.spawn(function()
 	if row and row:IsA("GuiObject") then
 		row:GetPropertyChangedSignal("AbsolutePosition"):Connect(fit)
 		fit()
+	end
+end)
+
+-- An open Leaderboard tab asks again now and then (the server answers from its cache).
+task.spawn(function()
+	while true do
+		task.wait(1)
+		if gui.Enabled and tab == "board" and os.clock() - boardAskedAt >= BOARD_ASK_SECONDS then
+			task.spawn(askBoard)
+		end
 	end
 end)
 
