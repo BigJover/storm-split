@@ -224,7 +224,7 @@ end
 -- Equipping --------------------------------------------------------------------------
 
 -- May a player at `level` wear item `id` in `slot`? `id` "" or nil = take it off (always
--- allowed). The reason is for the player, from the server's refusal.
+-- allowed). The reason is internal (logs, specs); players see `request`'s text.
 function Cosmetics.check(slot: unknown, id: unknown, level: number): (boolean, string)
 	if not Cosmetics.isSlot(slot) then
 		return false, "Unknown slot"
@@ -243,6 +243,24 @@ function Cosmetics.check(slot: unknown, id: unknown, level: number): (boolean, s
 		return false, `Unlocks at player level {item.level}`
 	end
 	return true, ""
+end
+
+-- What a player is told when an equip is refused (DECISIONS #184, #187). `check`'s
+-- reasons ("Unknown slot", "Unknown item", ...) are internal: logs and specs only.
+Cosmetics.REFUSED = "You can't equip that."
+Cosmetics.NOT_LOBBY = "Equip in the lobby."
+
+-- The server's answer to an equip request in match state `state` (the "State" attribute):
+-- (allowed, the text the player sees, the internal reason). Lobby only (#184).
+function Cosmetics.request(state: unknown, slot: unknown, id: unknown, level: number): (boolean, string, string)
+	if state ~= "Lobby" then
+		return false, Cosmetics.NOT_LOBBY, `Not in the Lobby ({tostring(state)})`
+	end
+	local allowed, why = Cosmetics.check(slot, id, level)
+	if not allowed then
+		return false, Cosmetics.REFUSED, why
+	end
+	return true, "", ""
 end
 
 -- `equipped` with every unknown slot, unknown id, wrong kind or locked item dropped (an

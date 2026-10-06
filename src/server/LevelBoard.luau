@@ -5,7 +5,8 @@
 	Shared/LevelBoard, spec-tested with a fake store.
 
 	Published: at most one tick every REFRESH_SECONDS (60) writes the player XP of hunters
-	whose XP changed and whose save is live (SaveStatus "saved": never a session-only or
+	whose XP changed since their last write (and only while the write budget is above
+	0, DECISIONS #183) and whose save is live (SaveStatus "saved": never a session-only or
 	J test profile), then reads the top 50 once and caches it. A failed read shows "This
 	server" until the store answers again. Unpublished or in Studio the store is never
 	touched: one warning at start, and the "This server" board with its note.
@@ -73,6 +74,9 @@ function LevelBoard.init(remotes: Folder)
 			store = {
 				write = function(key: string, xp: number)
 					ordered:SetAsync(key, xp)
+				end,
+				budget = function(): number
+					return DataStoreService:GetRequestBudgetForRequestType(Enum.DataStoreRequestType.SetIncrementSortedAsync)
 				end,
 				read = function(count: number): any
 					return ordered:GetSortedAsync(false, count):GetCurrentPage()

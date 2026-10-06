@@ -177,6 +177,50 @@ local function inert(model: Instance, what: string)
 	ok(parts > 0, `{what} has parts`)
 end
 
+test("equipping is Lobby only, and players never see an internal reason (#184, #187)", function()
+	local allowed, text = Cosmetics.request("Lobby", "hat", "HAT_BUSH", 10)
+	eq(allowed, true, "in the Lobby: yes")
+	eq(text, "", "no message")
+	for _, state in { "Playing", "Building", "Result", nil, 5 } do
+		local yes, said, why = Cosmetics.request(state, "hat", "HAT_BUSH", 10)
+		eq(yes, false, `in {tostring(state)}: no`)
+		eq(said, "Equip in the lobby.", `in {tostring(state)}: the lobby toast`)
+		ok(why ~= said, "the internal reason is separate")
+	end
+	eq((Cosmetics.request("Playing", "hat", "", 10)), false, "not even taking off mid-match")
+	local cases = {
+		{ "cape", "HAT_BUSH", 100, "Unknown slot" },
+		{ nil, "HAT_BUSH", 100, "Unknown slot" },
+		{ "hat", "NOPE", 100, "Unknown item" },
+		{ "title", "HAT_BUSH", 100, nil },
+		{ "hat", "HAT_RANGER", 49, nil },
+	}
+	for _, case in cases do
+		local yes, said, why = Cosmetics.request("Lobby", case[1], case[2], case[3])
+		eq(yes, false, `{tostring(case[1])}/{case[2]} refused`)
+		eq(said, "You can't equip that.", `{tostring(case[1])}/{case[2]}: the one player text`)
+		ok(not string.find(said, "Unknown", 1, true), "the toast never says Unknown")
+		if case[4] then
+			eq(why, case[4], "the internal reason stays for logs")
+		end
+	end
+end)
+
+test("a sprint trail adds no part (nothing to collide with or hit)", function()
+	local root = Instance.new("Part")
+	local a0, a1 = Instance.new("Attachment"), Instance.new("Attachment")
+	a0.Parent, a1.Parent = root, root
+	local trails = Cosmetics.itemsFor("trail", 1000)
+	ok(#trails > 0, "there are trails")
+	for _, item in trails do
+		do
+			local trail = Cosmetics.buildTrail(item, a0, a1)
+			ok(trail:IsA("Trail") and not trail:IsA("BasePart"), `{item.id} is a Trail, not a part`)
+			eq(#trail:GetDescendants(), 0, `{item.id} carries no parts`)
+		end
+	end
+end)
+
 test("hats and tower flags change nothing in play (no hitbox, no collision, no weight)", function()
 	for _, id in { "HAT_BUSH", "HAT_RANGER", "HAT_CREST" } do
 		local hat = Cosmetics.buildHat(Cosmetics.item(id) :: Cosmetics.Item, Vector3.new(2, 1, 1))

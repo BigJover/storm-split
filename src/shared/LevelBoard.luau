@@ -124,9 +124,11 @@ end
 
 -- The server's side, with the store passed in so a spec can fake it --------------------
 
--- What a store must do. Either may throw; `step` catches everything.
+-- What a store must do. Any may throw; `step` catches everything. `budget` = the
+-- requests the store may still make for a write now (DECISIONS #183); nil = no limit.
 export type Store = {
 	write: (key: string, xp: number) -> (),
+	budget: (() -> number)?,
 	read: (count: number) -> any, -- a page of { key, value }
 	nameOf: (userId: number) -> string,
 }
@@ -149,8 +151,18 @@ function LevelBoard.queue(cache: Cache, userId: number, xp: number)
 	end
 end
 
+-- May the store write now? False when its request budget is 0 (or the check fails).
+function LevelBoard.canWrite(store: Store): boolean
+	if not store.budget then
+		return true
+	end
+	local ok, left = pcall(store.budget)
+	return ok and type(left) == "number" and left > 0
+end
+
 -- One tick, if one is due: write the XP that changed, read the top TOP once. Never
--- throws. A failure warns once (through `log`) until a tick works again; a failed read
+-- throws. Writes only XP that changed since its last write, each after a budget check
+-- (none left: skip, retry next tick, no warning). A failure warns once (through `log`) until a tick works again; a failed read
 -- drops the world board, so players see "This server". Returns whether it ran.
 function LevelBoard.step(cache: Cache, store: Store?, now: number, log: (string) -> ()): boolean
 	if not store or not LevelBoard.due(cache.lastTick, now) then
@@ -164,8 +176,12 @@ function LevelBoard.step(cache: Cache, store: Store?, now: number, log: (string)
 		end
 	end
 	for userId, xp in cache.pending do
-		cache.pending[userId] = nil
-		if cache.written[userId] ~= xp then
+		if cache.written[userId] == xp then
+			cache.pending[userId] = nil -- unchanged since the last write: no request
+		elseif not LevelBoard.canWrite(store) then
+			break -- no budget left: everything pending waits for the next tick
+		else
+			cache.pending[userId] = nil
 			local ok, err = pcall(store.write, LevelBoard.key(userId), xp)
 			if ok then
 				cache.written[userId] = xp

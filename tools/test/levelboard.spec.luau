@@ -129,6 +129,69 @@ test("at most one request round a minute, however often the server ticks", funct
 	eq(LevelBoard.step(cache, nil, 1000, log), false, "no store (unpublished): no requests at all")
 end)
 
+test("writes only on change (#183): no write when XP is unchanged, one when it moves", function()
+	local fake = fakeStore()
+	local cache = LevelBoard.newCache()
+	local logs = {}
+	local function log(text: string)
+		table.insert(logs, text)
+	end
+	LevelBoard.queue(cache, 7, 900)
+	LevelBoard.step(cache, fake.store, 0, log)
+	eq(fake.writes, 1, "the first XP is written")
+	for minute = 1, 5 do -- match ends / leaves with the same XP
+		LevelBoard.queue(cache, 7, 900)
+		LevelBoard.step(cache, fake.store, minute * 60, log)
+	end
+	eq(fake.writes, 1, "unchanged XP: no further write")
+	eq(next(cache.pending), nil, "and nothing left pending")
+	LevelBoard.queue(cache, 7, 1200)
+	LevelBoard.step(cache, fake.store, 400, log)
+	eq(fake.writes, 2, "changed XP: written")
+	eq(#logs, 0, "no warnings")
+end)
+
+test("a zero request budget skips the write without error and retries next tick (#183)", function()
+	local fake = fakeStore()
+	local left = 0
+	local asked = 0
+	fake.store.budget = function()
+		asked += 1
+		return left
+	end
+	local cache = LevelBoard.newCache()
+	local logs = {}
+	local function log(text: string)
+		table.insert(logs, text)
+	end
+	LevelBoard.queue(cache, 42, 5000)
+	LevelBoard.queue(cache, 43, 6000)
+	eq(LevelBoard.step(cache, fake.store, 0, log), true, "the tick runs")
+	ok(asked > 0, "the budget is checked before writing")
+	eq(fake.writes, 0, "no budget: no write")
+	eq(fake.reads, 1, "the read still happens")
+	eq(cache.pending[42], 5000, "held for the next tick")
+	eq(cache.pending[43], 6000, "both held")
+	eq(#logs, 0, "skipping isn't a failure: no warning")
+	fake.store.budget = function()
+		error("budget check broke")
+	end
+	LevelBoard.step(cache, fake.store, 60, log) -- never throws
+	eq(fake.writes, 0, "a failed budget check writes nothing either")
+	fake.store.budget = function()
+		return 10
+	end
+	LevelBoard.step(cache, fake.store, 120, log)
+	eq(fake.writes, 2, "budget back: both written")
+	eq(fake.data["42"], 5000, "the held XP")
+	eq(next(cache.pending), nil, "nothing left pending")
+	eq(LevelBoard.canWrite(fake.store), true, "budget above 0")
+	fake.store.budget = function()
+		return 0
+	end
+	eq(LevelBoard.canWrite(fake.store), false, "budget 0")
+end)
+
 test("a failing store: one warning, no error, This server, and it recovers", function()
 	local fake = fakeStore()
 	fake.failing = true
@@ -162,10 +225,10 @@ test("the level badge: the level and its band; the row text", function()
 	eq(LevelBoard.band(150), 3, "150")
 	eq(LevelBoard.band(200), 4, "200")
 	eq(LevelBoard.band(5000), 4, "5000")
-	local line = ProfileScreen.boardLine({ userId = 1, name = "Ava", xp = PlayerLevel.xpFor(30), rank = 3, self = true }, "Trapper")
+	local line = ProfileScreen.boardLine({ userId = 1, name = "Ava", xp = PlayerLevel.xpFor(30), rank = 3, self = true }, "Trailblazer")
 	eq(line.rank, "#3", "rank")
 	eq(line.level, 30, "badge level")
-	eq(line.title, "Trapper", "title")
+	eq(line.title, "Trailblazer", "title")
 	eq(line.self, true, "self")
 	eq(ProfileScreen.boardLine({ userId = 2, name = "B", xp = 0 }, nil).title, "", "no title")
 end)
@@ -177,7 +240,8 @@ test("the player list's title comes from Equip_title, and only a real title show
 			return map[name]
 		end
 	end
-	eq(Cosmetics.titleOf(attrs({ Equip_title = "TITLE_30" })), "Trapper", "a title")
+	eq(Cosmetics.titleOf(attrs({ Equip_title = "TITLE_30" })), "Trailblazer", "a title")
+	eq(Cosmetics.titleOf(attrs({ Equip_title = "TITLE_20" })), "Trapper", "trapper before trailblazer (#187)")
 	eq(Cosmetics.titleOf(attrs({ Equip_title = "HAT_BUSH" })), nil, "a hat isn't a title")
 	eq(Cosmetics.titleOf(attrs({ Equip_title = 5 })), nil, "junk")
 	eq(Cosmetics.titleOf(attrs({})), nil, "none worn")

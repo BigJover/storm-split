@@ -500,9 +500,17 @@ local function equip(player: Player, slot: unknown, id: unknown): (boolean, stri
 	if not profile then
 		return false, "Still loading your progress"
 	end
-	local ok, why = Profile.equip(profile, slot, id)
+	-- Lobby only, and the player sees only REFUSED / NOT_LOBBY (DECISIONS #184, #187).
+	local state = ReplicatedStorage:GetAttribute("State")
+	local allowed, text, why = Cosmetics.request(state, slot, id, PlayerLevel.level(profile.playerXp))
+	if not allowed then
+		warn(`[Progression] equip refused for {player.Name}: {why}`)
+		return false, text
+	end
+	local ok, internal = Profile.equip(profile, slot, id)
 	if not ok then
-		return false, why
+		warn(`[Progression] equip refused for {player.Name}: {internal}`)
+		return false, Cosmetics.REFUSED
 	end
 	publish(player)
 	task.spawn(save, player)
