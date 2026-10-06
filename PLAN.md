@@ -203,9 +203,11 @@ balance.
   or a negative test run.
 
 ### T74 🦖 — names
-Mode-card blurbs, two/three side names and colours, 8 arena names (dino/hunting theme;
-"Trophy" only for ranked), the Ready/stake/Practice wording, the spectate, overtime and
-"knocked out by <name>" lines. **Accept:** `DINO_REVIEW.md` entry; the Director logs the picks.
+**Done (DINO_REVIEW Round 16; Director picks #229). Strings by batch:**
+- **Mode names stay Jovan's: "Team Battle", "Battle Royale"** (renames to Camp Clash / Bone Rush are ask-Jovan #1). Queue toggle labels **Casual / Ranked** (internal key stays competitive). Practice → **"Practice Hunt"**; buy-in → **"Entry fee"**; pot → **"Amber Hoard"**; spawn shield → **"Camo Cover"**; overtime → **"Final Stampede"**.
+- **T77/T78 (batch 3):** Team sides **Red Camp / Blue Camp / Green Camp**; Royale sides **"<Name>'s Camp"** (10 colours, visual-only in code); side out: **"<Camp>'s Fence is down! They're out."**; hunter down: **"Tranqed by <name>!"**; tower raid kill feed reuses **Trampled**: "<name> trampled <Camp>'s <tower>".
+- **T81 (batch 4):** `Arenas!B2:B9` (assert each cell still holds T73's placeholder): Fern Gully 0, Raptor Ridge 300, Muddy Springs 600, Horn Canyon 1000, Volcano Rim 1500, Sky Cliffs 2000, Misty Jungle 3000, Rex Kingdom 4000.
+- **T82/T83 (batch 5):** the labels above, plus results lines **"Your camp wins the hunt!"** (Team) / **"Top Hunter!"** (Royale 1st). Mode blurbs unchanged (Modes.luau).
 
 ### T75 — Map sides
 - `Track` gains a side layout: offsets per side for 1 / 2 / 3 / up to 10 sides, a crossing
