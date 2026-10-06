@@ -76,18 +76,6 @@ DEAD_ALLOWED = {
 # an entry becomes a finding the moment some src file reads the field, so it can't
 # outlive its task. (block, field): the task that reads it
 DEAD_PENDING = {
-    ("Tuning", "CoilArcs"): "PLAN T64 (Storm Coil)",
-    ("Tuning", "CoilArcReach"): "PLAN T64 (Storm Coil)",
-    ("Tuning", "CoilArcFalloff"): "PLAN T64 (Storm Coil)",
-    ("Tuning", "PowerGridRangePerCoil"): "PLAN T64 (Power Grid)",
-    ("Tuning", "PowerGridDamageBase"): "PLAN T64 (Power Grid)",
-    ("Tuning", "PowerGridDamagePerCoil"): "PLAN T64 (Power Grid)",
-    ("Tuning", "PowerGridCoilCap"): "PLAN T64 (Power Grid)",
-    ("Tuning", "PowerGridEvery"): "PLAN T64 (Power Grid)",
-    ("Tuning", "JudgementBoltEvery"): "PLAN T64 (Judgement Bolt)",
-    ("Tuning", "JudgementBoltX"): "PLAN T64 (Judgement Bolt)",
-    ("Tuning", "JudgementBoltBreaks"): "PLAN T64 (Judgement Bolt)",
-    ("Tuning", "JudgementBoltStun"): "PLAN T64 (Judgement Bolt)",
     ("Tuning", "EruptionEvery"): "PLAN T67 (Eruption)",
     ("Tuning", "EruptionSizes"): "PLAN T67 (Eruption)",
     ("Tuning", "TowLineEvery"): "PLAN T66 (Tow Line)",

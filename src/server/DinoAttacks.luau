@@ -25,6 +25,10 @@
 
 	This module only reads enemies (Enemies.getLive and its state queries) and
 	keeps its own timers keyed by enemy id; Enemies stays their only mutator.
+	GROUNDING SPIKE (Storm Coil, PLAN T64): every Grounding every seconds a standing
+	coil with it strikes down one throw in flight aimed at a tower in its range (the
+	one landing soonest; Shared/StormCoil.groundingPick). A ready spike with nothing
+	to catch waits.
 ]]
 
 local Players = game:GetService("Players")
@@ -33,6 +37,7 @@ local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Combat = require(Shared:WaitForChild("Combat"))
+local StormCoil = require(Shared:WaitForChild("StormCoil"))
 local Config = require(Shared:WaitForChild("Config"))
 local DinoLook = require(Shared:WaitForChild("DinoLook"))
 local Track = require(Shared:WaitForChild("Track"))
@@ -64,6 +69,7 @@ type Projectile = {
 	species: string, -- for the hit notice
 	attack: string,
 	boss: boolean, -- a Boss species: x Tuning Boss ranged vs towers x on a tower (#154)
+	atTower: boolean, -- thrown at a tower (a Grounding Spike can strike it down)
 	model: Model,
 	ring: BasePart,
 }
@@ -71,6 +77,7 @@ type Projectile = {
 local biteIn: { [number]: number } = {} -- enemy id -> seconds until its next bite
 local shootIn: { [number]: number } = {} -- enemy id -> seconds until its next throw
 local projectiles: { Projectile } = {} -- oldest first
+local groundingIn: { [any]: number } = setmetatable({}, { __mode = "k" }) :: any -- tower -> seconds charged
 local peakInFlight = 0 -- most in the air at once this round (round summary)
 local folder: Instance? = nil
 local damageMult: () -> number = function()
@@ -189,6 +196,7 @@ local function throw(enemy: Enemies.Enemy, target: Combat.Target)
 		species = def.display,
 		attack = def.rangedName,
 		boss = def.boss == true,
+		atTower = not (typeof(target.ref) == "Instance" and target.ref:IsA("Player")),
 		model = model,
 		ring = ring,
 	}
@@ -252,6 +260,38 @@ local function stepProjectiles(dt: number)
 	end
 end
 
+-- Grounding Spike: each standing coil with one charges up to its interval, then
+-- strikes down the soonest-landing throw at a tower in its range (visual: a bolt
+-- from the coil to the throw).
+local GROUNDING_COLOR = Color3.fromRGB(170, 210, 255)
+local function stepGrounding(dt: number)
+	for _, tower in Towers.all() do
+		local every = tower.stats.groundingEvery
+		if every <= 0 or tower.knockedOut then
+			groundingIn[tower] = nil
+			continue
+		end
+		local charged = math.min(every, (groundingIn[tower] or 0) + dt)
+		groundingIn[tower] = charged
+		if charged < every or #projectiles == 0 then
+			continue
+		end
+		local throws = {}
+		for i, p in projectiles do
+			throws[i] = { to = p.to, left = p.duration - p.age, atTower = p.atTower }
+		end
+		local pick = StormCoil.groundingPick(throws, tower.base, tower.stats.range)
+		if pick then
+			local p = table.remove(projectiles, pick) :: Projectile
+			local at = p.model:GetPivot().Position
+			Effects.tracer(tower.muzzle, at, GROUNDING_COLOR)
+			Effects.part(Vector3.one * 1.5, CFrame.new(at), GROUNDING_COLOR, 0.2, Enum.PartType.Ball)
+			destroy(p)
+			groundingIn[tower] = 0
+		end
+	end
+end
+
 ------------------------------------------------------------------ timers
 
 -- Counts an attack timer down; returns the new value and whether it's ready.
@@ -269,6 +309,7 @@ function DinoAttacks.step(dt: number)
 		return
 	end
 	stepProjectiles(dt)
+	stepGrounding(dt)
 
 	local live = Enemies.getLive()
 	local targets: { Combat.Target }? = nil -- built once, only if some dino is ready
@@ -349,6 +390,7 @@ end
 function DinoAttacks.clear()
 	table.clear(biteIn)
 	table.clear(shootIn)
+	table.clear(groundingIn)
 	for _, p in projectiles do
 		destroy(p)
 	end

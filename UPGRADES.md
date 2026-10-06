@@ -114,11 +114,12 @@ damaged**: no HP, dinos never target them, no repairs, Armory/Hospital don't aff
 and they're "somewhat weaker" (≤ 0.8× the median eDPS per cash, #148). Not sold until PLAN
 T68. Tier 4s are the Director's picks (#149), tier 5s Jovan's.
 
-## Storm Coil (COIL) — chain lightning: crowds and air 🔜 round 4 · unlock 300 Amber
+## Storm Coil (COIL) — chain lightning: crowds and air ✅ round 4 (PLAN T64; sold from T68) · unlock 300 Amber
 
-A copper coil on a tripod. Each strike hits one dino and **arcs** to the nearest other dino
-within reach, each arc 80% of the last. Hits air; can't hurt armour until High Voltage;
-breaks 1 size per hit. Short own range.
+A copper coil on a tripod. Each strike hits the first dino in range and **arcs** to the
+nearest other dino within arc reach (10 studs), 4 arcs, each 80% of the last. Arcs stay in
+the coil's own range (Jump Spark lifts that). Hits air; can't hurt armour until High
+Voltage; breaks 1 size per hit. Short own range (14). Rules: `Shared/StormCoil`.
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
@@ -126,8 +127,8 @@ breaks 1 size per hit. Short own range.
 | **Charge** | power, armour, stun | Battery Pack | Static Shock | *Thunderclap* | *High Voltage* | *Judgement Bolt* |
 | **Lightning Rod** | support, defence | Tall Mast | Charged Air | *Grounding Spike* | *Storm Warning* | *Lightning Rodeo* |
 
-- Copper Wire: +2 arcs. Long Arc: arc reach 15. Fork Lightning: each arc may fork in two. Jump Spark: arcs jump between Storm Coils' ranges. Power Grid: every 6s one grid strike through every dino in every Storm Coil's range; n = standing Storm Coils (up to 6): range × (1 + 0.15(n−1)), damage × (0.5 + 0.25n) — one coil ×0.75, two ×1, six ×2 (#151).
-- Battery Pack: +30% damage. Static Shock: a struck dino takes +10% from the next strike. Thunderclap: the first target is stunned 0.4s. High Voltage: pierces armour, +40% damage. Judgement Bolt: every 10s one bolt on the biggest dino in range, ×8, breaks 3 sizes, stuns bosses 0.5s.
+- Copper Wire: +2 arcs. Long Arc: arc reach 15. Fork Lightning: each arc may fork in two (each hop reaches the two nearest new dinos, so the chain runs two wide). Jump Spark: arcs jump between Storm Coils' ranges. Power Grid: every 6s one grid strike through every dino in every Storm Coil's range; n = standing Storm Coils (up to 6): range × (1 + 0.15(n−1)), damage × (0.5 + 0.25n) — one coil ×0.75, two ×1, six ×2 (#151).
+- Battery Pack: +30% damage. Static Shock: a struck dino takes +10% from the next strike. Thunderclap: the first target is stunned 0.4s (not bosses). High Voltage: pierces armour, +40% damage. Judgement Bolt: every 10s one bolt on the biggest dino in range, ×8, breaks 3 sizes, stuns bosses 0.5s.
 - Tall Mast: range ×1.2. Charged Air: towers in range +10% attack speed. Grounding Spike: every 4s strikes down one dino throw aimed at a tower in range. Storm Warning: towers in range +15% damage. Lightning Rodeo: towers in range chain their own shots once (one more dino at 50%).
 
 ## Falcon Roost (FALCON) — birds of prey, can't be damaged 🔜 round 4 · unlock 200 Amber
@@ -198,7 +199,7 @@ A heavy crossbow on a turntable: slow, very heavy bolts. Ground and air.
 | Healing aura, tower revive, med kits, rescue respawn, max-HP aura, Last Stand | Field Hospital | ✅ Step 2 |
 | Can't be damaged (no HP, never a target, no repair, no Armory/Hospital aura) | Falcon Roost, Tar Pit | ✅ round 4 (PLAN T63) |
 | On-track placement (pits never overlap) | Tar Pit | ✅ round 4 (PLAN T63) |
-| Chain lightning, Power Grid, Judgement Bolt, Grounding Spike, Lightning Rodeo | Storm Coil | 🔜 round 4 (PLAN T64) |
+| Chain lightning, Power Grid, Judgement Bolt, Grounding Spike, Lightning Rodeo | Storm Coil | ✅ round 4 (PLAN T64) |
 
 When a mechanic lands, its numbers get a column on `Tower Upgrades` and the stat-only
 multipliers get rebalanced around it — expect a tuning pass per mechanic.

@@ -52,6 +52,16 @@
 	range (Shared/Combat.towerMaxHp), and Last Stand keeps one tower in range
 	per round at 1 HP instead of trampled. Med kits ride Airdrops; the Rescue
 	Beacon is Main's (respawn here, sooner).
+
+	STORM COIL (PLAN T64, rules in Shared/StormCoil): a strike hits the first dino
+	in range, then arcs from dino to dino (falloff per hop, breaks 1, never past the
+	coil's range unless Jump Spark lets it use any Storm Coil's). Static Shock: a
+	dino it struck takes +% from its next strike. Thunderclap stuns the first dino
+	only. Judgement Bolt: every few seconds one bolt on the dino with the most HP in
+	range (x, breaks, stun, bosses too). Power Grid: one shared strike every few
+	seconds through every dino in every Storm Coil's range (scaled by how many stand),
+	from the strongest Power Grid coil. Lightning Rodeo: an aura; other towers' shots
+	in its range arc once to one more dino. Grounding Spike is DinoAttacks' (throws).
 ]]
 
 local Players = game:GetService("Players")
@@ -61,6 +71,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local Placement = require(Shared:WaitForChild("Placement"))
+local StormCoil = require(Shared:WaitForChild("StormCoil"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 local TowerStats = require(Shared:WaitForChild("TowerStats"))
@@ -84,6 +95,7 @@ type Buff = {
 	sellRefund: number, -- 0 = the normal SellRefund
 	resistPercent: number, -- damage resistance (an Armory in range, itself included)
 	hpPercent: number, -- +% max HP (a Field Hospital's Tonic in range)
+	arcPercent: number, -- Lightning Rodeo in range: each shot arcs once at this %
 }
 
 export type Tower = {
@@ -103,11 +115,15 @@ export type Tower = {
 	maxHp: number,
 	knockedOut: boolean, -- trampled at 0 HP until repaired
 	lastStandUsed: boolean, -- a Field Hospital's Last Stand has saved a tower this round
+	boltTimer: number, -- Storm Coil: seconds toward its next Judgement Bolt
+	static: { [any]: boolean }, -- Storm Coil Static Shock: dinos its last strike charged (weak keys)
 	model: Model,
 }
 
 -- Visuals only.
 local BOMBLET_COLOR = Color3.fromRGB(255, 190, 90)
+local ARC_COLOR = Color3.fromRGB(170, 210, 255)
+local BOLT_COLOR = Color3.fromRGB(255, 250, 200)
 
 local towers: { Tower } = {}
 local towerFolder: Instance
@@ -134,7 +150,7 @@ end
 ------------------------------------------------------------------ stats
 
 local NO_BUFF: Buff =
-	table.freeze({ ratePercent = 0, damagePercent = 0, piercesArmor = false, discountPercent = 0, sellRefund = 0, resistPercent = 0, hpPercent = 0 })
+	table.freeze({ ratePercent = 0, damagePercent = 0, piercesArmor = false, discountPercent = 0, sellRefund = 0, resistPercent = 0, hpPercent = 0, arcPercent = 0 })
 local showHealth: (Tower) -> () -- below, with the rest of health
 
 local function hasAura(s: Stats): boolean
@@ -145,6 +161,7 @@ local function hasAura(s: Stats): boolean
 		or s.sellRefund > 0
 		or s.resistPercent > 0
 		or s.auraHpPercent > 0
+		or s.auraArcPercent > 0
 end
 
 local function covers(source: Tower, point: Vector3): boolean
@@ -156,7 +173,7 @@ end
 -- reads Discount / RefundRate from the tower's body.
 local function refreshAuras()
 	for _, tower in towers do
-		local rate, damage, pierce, discount, refund, resist, hpBonus = 0, 0, false, 0, 0, 0, 0
+		local rate, damage, pierce, discount, refund, resist, hpBonus, arc = 0, 0, false, 0, 0, 0, 0, 0
 		for _, source in towers do
 			local s = source.stats
 			if not source.knockedOut and hasAura(s) and covers(source, tower.base) then
@@ -172,10 +189,11 @@ local function refreshAuras()
 					discount = math.max(discount, s.discountPercent)
 					refund = math.max(refund, s.sellRefund)
 					hpBonus = if tower.def.untouchable then 0 else math.max(hpBonus, s.auraHpPercent)
+					arc = math.max(arc, s.auraArcPercent)
 				end
 			end
 		end
-		tower.buff = if rate > 0 or damage > 0 or pierce or discount > 0 or refund > 0 or resist > 0 or hpBonus > 0
+		tower.buff = if rate > 0 or damage > 0 or pierce or discount > 0 or refund > 0 or resist > 0 or hpBonus > 0 or arc > 0
 			then {
 				ratePercent = rate,
 				damagePercent = damage,
@@ -184,6 +202,7 @@ local function refreshAuras()
 				sellRefund = refund,
 				resistPercent = resist,
 				hpPercent = hpBonus,
+				arcPercent = arc,
 			}
 			else NO_BUFF
 		-- Tonic: gaining the aura adds the HP it gives; losing it only caps HP.
@@ -437,6 +456,8 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 		maxHp = maxHp,
 		knockedOut = false,
 		lastStandUsed = false,
+		boltTimer = 0,
+		static = setmetatable({}, { __mode = "k" }) :: any,
 		model = model,
 	}
 	table.insert(towers, tower)
@@ -584,6 +605,37 @@ local function addBurn(tower: Tower, primary: Enemies.Enemy)
 	Hazards.burn(primary.distance, stats.splashRadius, stats.burnDps * levelScale, stats.burnSeconds, piercing(tower), tower.owner)
 end
 
+-- Lightning Rodeo (a Storm Coil's aura): the shot arcs once from its target to the
+-- nearest other dino within Coil arc reach that it didn't already hit, at the aura's %.
+-- Breaks 1, like every arc.
+local function rodeoArc(tower: Tower, target: Enemies.Enemy, hits: { Enemies.Enemy }, damage: number, live)
+	local percent = tower.buff.arcPercent
+	if percent <= 0 then
+		return
+	end
+	local list, points, skip, first = {}, {}, {}, nil
+	for _, enemy in live do
+		if enemy.alive and canTarget(tower, enemy) then
+			table.insert(list, enemy)
+			table.insert(points, enemy.part.Position)
+			if enemy == target then
+				first = #list
+			elseif table.find(hits, enemy) then
+				skip[#list] = true
+			end
+		end
+	end
+	if not first then
+		return
+	end
+	local links = StormCoil.chain(points, first, 1, Config.Tuning.CoilArcReach, 1, percent / 100, skip)
+	for i = 2, #links do
+		local enemy = list[links[i].index]
+		Effects.tracer(target.part.Position, enemy.part.Position, ARC_COLOR)
+		hit(tower, enemy, damage * links[i].x, 1)
+	end
+end
+
 local function fire(tower: Tower, live): boolean
 	local stats = tower.stats
 	local damage = stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
@@ -611,11 +663,173 @@ local function fire(tower: Tower, live): boolean
 		for _, enemy in hits do
 			hit(tower, enemy, damage, breaks)
 		end
+		rodeoArc(tower, target, hits, damage, live)
 		bomblets(tower, targetDistance, damage, 1, live)
 
 		Effects.tracer(tower.muzzle, targetPosition, TowerLook.COLORS[tower.key] or Color3.new(1, 1, 1))
 	end
 	return fired
+end
+
+------------------------------------------------------------------ Storm Coil
+
+local function isCoil(tower: Tower): boolean
+	return tower.def.chains == true and not tower.knockedOut
+end
+
+-- The circles a coil's arcs may use: its own range, or every standing Storm Coil's
+-- with Jump Spark.
+local function coilAreas(tower: Tower): { StormCoil.Area }
+	local areas = { { center = tower.base, radius = tower.stats.range } }
+	if tower.stats.arcJumps then
+		for _, other in towers do
+			if other ~= tower and isCoil(other) then
+				table.insert(areas, { center = other.base, radius = other.stats.range })
+			end
+		end
+	end
+	return areas
+end
+
+local function coilDamage(tower: Tower): number
+	return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
+end
+
+-- One coil hit: Static Shock's bonus if its last strike charged this dino, breaks 1
+-- unless `breaks` says more (Judgement Bolt).
+local function coilHit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number?)
+	local stats = tower.stats
+	local pierce = piercing(tower)
+	if not Enemies.canHurt(enemy, pierce) then
+		return
+	end
+	if stats.staticPercent > 0 then
+		if tower.static[enemy] then
+			damage *= 1 + stats.staticPercent / 100
+		end
+		tower.static[enemy] = true
+	end
+	if enemy.def.armored then
+		damage *= stats.armoredMult
+	end
+	if enemy.def.boss then
+		damage *= stats.bossMult
+	end
+	local b = if breaks and breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
+	credit(tower.owner, Enemies.damage(enemy, damage, pierce, b))
+end
+
+-- A chain strike from the first dino in range. Returns true if it fired.
+local function fireChain(tower: Tower, live): boolean
+	local stats = tower.stats
+	local target = pickFirst(tower, live)
+	if not target then
+		return false
+	end
+	local areas = coilAreas(tower)
+	local list, points, first = {}, {}, nil
+	for _, enemy in live do
+		if enemy.alive and canTarget(tower, enemy) and (enemy == target or StormCoil.covered(enemy.part.Position, areas)) then
+			table.insert(list, enemy)
+			table.insert(points, enemy.part.Position)
+			if enemy == target then
+				first = #list
+			end
+		end
+	end
+	if not first then
+		return false
+	end
+	local links = StormCoil.chain(points, first, stats.arcs, stats.arcReach, stats.arcForks, Config.Tuning.CoilArcFalloff)
+	-- Static Shock: only dinos this strike reaches stay charged for the next one.
+	local charged = {}
+	for _, link in links do
+		charged[list[link.index]] = tower.static[list[link.index]]
+	end
+	table.clear(tower.static)
+	for enemy, was in charged do
+		tower.static[enemy] = was
+	end
+	local damage = coilDamage(tower)
+	Enemies.stun(target, stats.stunSeconds, false) -- Thunderclap: the first dino only
+	for _, link in links do
+		local enemy = list[link.index]
+		local from = if link.from then list[link.from].part.Position else tower.muzzle
+		Effects.tracer(from, enemy.part.Position, ARC_COLOR)
+		coilHit(tower, enemy, damage * link.x)
+	end
+	return true
+end
+
+-- Judgement Bolt: the dino with the most HP in the coil's range.
+local function stepBolt(tower: Tower, dt: number, live)
+	if not tower.stats.judgementBolt or tower.knockedOut then
+		tower.boltTimer = 0
+		return
+	end
+	local every = Config.Tuning.JudgementBoltEvery
+	tower.boltTimer = math.min(every, tower.boltTimer + dt)
+	if tower.boltTimer < every then
+		return
+	end
+	local list, hps = {}, {}
+	local range = tower.stats.range
+	for _, enemy in live do
+		if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= range then
+			table.insert(list, enemy)
+			table.insert(hps, enemy.hp)
+		end
+	end
+	local pick = StormCoil.biggest(hps)
+	if not pick then
+		return -- stays ready
+	end
+	tower.boltTimer = 0
+	local enemy = list[pick]
+	local tuning = Config.Tuning
+	Effects.tracer(enemy.part.Position + Vector3.new(0, 30, 0), enemy.part.Position, BOLT_COLOR)
+	Enemies.stun(enemy, tuning.JudgementBoltStun, true)
+	coilHit(tower, enemy, coilDamage(tower) * tuning.JudgementBoltX, tuning.JudgementBoltBreaks)
+end
+
+-- Power Grid: one shared strike every Power Grid every seconds, however many Power
+-- Grid coils stand, from the one that hits hardest (DECISIONS #151).
+local gridTimer = 0
+local function stepGrid(dt: number, live)
+	local striker, coils = nil, 0
+	for _, tower in towers do
+		if isCoil(tower) then
+			coils += 1
+			if tower.stats.powerGrid and (striker == nil or coilDamage(tower) > coilDamage(striker)) then
+				striker = tower
+			end
+		end
+	end
+	if not striker then
+		gridTimer = 0
+		return
+	end
+	local every = Config.Tuning.PowerGridEvery
+	gridTimer += dt
+	if gridTimer < every then
+		return
+	end
+	gridTimer -= every
+	local rangeMult, damageMult = StormCoil.grid(coils)
+	local areas = {}
+	for _, tower in towers do
+		if isCoil(tower) then
+			table.insert(areas, { center = tower.base, radius = tower.stats.range * rangeMult })
+			Effects.disc(tower.base + Vector3.new(0, 0.3, 0), tower.stats.range * rangeMult, ARC_COLOR, 0.3, 0.4)
+		end
+	end
+	local damage = coilDamage(striker) * damageMult
+	for _, enemy in live do
+		if enemy.alive and canTarget(striker, enemy) and StormCoil.covered(enemy.part.Position, areas) then
+			Effects.tracer(enemy.part.Position + Vector3.new(0, 12, 0), enemy.part.Position, ARC_COLOR)
+			coilHit(striker, enemy, damage)
+		end
+	end
 end
 
 -- Visuals only.
@@ -762,7 +976,9 @@ function Towers.step(dt: number)
 	local live = Enemies.getLive()
 	for _, tower in towers do
 		stepChill(tower, dt, live)
+		stepBolt(tower, dt, live)
 	end
+	stepGrid(dt, live)
 
 	for _, tower in towers do
 		local stats = tower.stats
@@ -775,7 +991,7 @@ function Towers.step(dt: number)
 			continue
 		end
 
-		if fire(tower, live) then
+		if (if tower.def.chains then fireChain(tower, live) else fire(tower, live)) then
 			local boost = tower.buff.ratePercent + (if extraRatePercent then extraRatePercent(tower) else 0)
 			tower.cooldown += 1 / (stats.rate * (1 + boost / 100))
 		else
@@ -857,6 +1073,7 @@ function Towers.clearAll()
 	end
 	levelScale = 1
 	towerLevel = 1
+	gridTimer = 0
 end
 
 function Towers.all(): { Tower }

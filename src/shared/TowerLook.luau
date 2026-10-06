@@ -30,6 +30,7 @@ TowerLook.COLORS = table.freeze({
 	QUARTERMASTER = Color3.fromRGB(230, 150, 50), -- Supply Camp: supply-crate orange
 	ARMORY = Color3.fromRGB(115, 125, 140), -- Armory: plate-steel grey
 	HOSPITAL = Color3.fromRGB(235, 232, 220), -- Field Hospital: canvas white
+	COIL = Color3.fromRGB(190, 110, 50), -- Storm Coil: copper
 })
 
 TowerLook.BODY_HEIGHT = 5
@@ -157,6 +158,30 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 		for i, x in { -0.9, -0.3, 0.3, 0.9 } do
 			table.insert(parts, block(`Stock{i}`, Vector3.new(0.25, 0.6, 0.25), at(x, 1.25, 0.85), WOOD, Enum.Material.Wood))
 			table.insert(parts, block(`Gun{i}`, Vector3.new(0.15, 1.5, 0.15), at(x, 2.3, 0.85), STEEL, Enum.Material.Metal))
+		end
+		return parts
+	end,
+	-- Storm Coil: a copper coil (stacked rings) on a steel tripod, a glowing ball on
+	-- top where the lightning leaves.
+	COIL = function(color)
+		local spark = Color3.fromRGB(170, 210, 255)
+		local parts = {
+			block("Hub", Vector3.new(1, 0.4, 1), at(0, 1.6, 0), STEEL, Enum.Material.Metal),
+			block("Core", Vector3.new(2.4, 0.5, 0.5), at(0, 2.9, 0) * CFrame.Angles(0, 0, math.rad(90)), STEEL, Enum.Material.Metal, CYLINDER),
+			block("Ball", Vector3.new(0.9, 0.9, 0.9), at(0, 4.5, 0), spark, Enum.Material.Neon, Enum.PartType.Ball),
+		}
+		-- three tripod legs splayed out from the hub to the ground
+		for i = 1, 3 do
+			local angle = (i - 1) * 2 * math.pi / 3
+			local hub = Vector3.new(0, 1.6, 0)
+			local foot = Vector3.new(math.cos(angle) * 1.1, 0.15, math.sin(angle) * 1.1)
+			local mid = (foot + hub) / 2
+			table.insert(parts, block(`Leg{i}`, Vector3.new(0.2, 0.2, (hub - foot).Magnitude - 0.2), CFrame.lookAt(mid, hub), STEEL, Enum.Material.Metal))
+		end
+		-- copper rings wound up the core, a little smaller toward the top
+		for i = 1, 4 do
+			local width = 1.7 - i * 0.15
+			table.insert(parts, block(`Ring{i}`, Vector3.new(0.25, width, width), at(0, 1.95 + i * 0.45, 0) * CFrame.Angles(0, 0, math.rad(90)), color, Enum.Material.Metal, CYLINDER))
 		end
 		return parts
 	end,

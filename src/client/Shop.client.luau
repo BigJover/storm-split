@@ -437,6 +437,41 @@ local function describeAbilities(now, nextStep, parts: { string })
 		table.insert(parts, "towers in range pierce armour")
 	end
 
+	-- Storm Coil (PLAN T64): tier columns (Config), so a blank one means "unchanged"
+	local arcs = changed("arcs", 0)
+	if arcs then
+		table.insert(parts, `chains {arcs} arcs`)
+	end
+	local reach = changed("arcReach", 0)
+	if reach then
+		table.insert(parts, `arcs reach {fmt(reach)} studs`)
+	end
+	local forks = changed("arcForks", 0)
+	if forks and forks > 1 then
+		table.insert(parts, `each arc forks in {forks}`)
+	end
+	if changed("arcJumps", false) then
+		table.insert(parts, "arcs jump into other Storm Coils' range")
+	end
+	if changed("powerGrid", false) then
+		table.insert(parts, `grid strike every {fmt(Config.Tuning.PowerGridEvery)}s: stronger and wider the more Storm Coils stand (one alone is weaker)`)
+	end
+	local static = changed("staticPercent", 0)
+	if static then
+		table.insert(parts, `struck dinos take +{static}% from its next strike`)
+	end
+	if changed("judgementBolt", false) then
+		table.insert(parts, `every {fmt(Config.Tuning.JudgementBoltEvery)}s a x{fmt(Config.Tuning.JudgementBoltX)} bolt on the biggest dino: shrinks it up to {Config.Tuning.JudgementBoltBreaks} sizes, stuns bosses too`)
+	end
+	local grounding = changed("groundingEvery", 0)
+	if grounding then
+		table.insert(parts, `every {fmt(grounding)}s strikes down a throw aimed at a tower in range`)
+	end
+	local auraArc = changed("auraArcPercent", 0)
+	if auraArc then
+		table.insert(parts, `towers in range: each shot arcs to one more dino at {auraArc}%`)
+	end
+
 	-- Tranq Station (CHILLER)
 	local slow = changed("slowPercent", 0)
 	if slow then

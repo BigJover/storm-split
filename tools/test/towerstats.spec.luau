@@ -8,7 +8,7 @@ local Config = require(src.shared.Config)
 local TowerStats = require(src.shared.TowerStats)
 local Upgrades = require(src.shared.Upgrades)
 
-local ROUNDED_DOWN = { bomblets = true, bombletGenerations = true, chests = true, medKits = true }
+local ROUNDED_DOWN = { bomblets = true, bombletGenerations = true, chests = true, medKits = true, arcs = true, arcForks = true }
 local AT_LEAST_ONE = { shots = true, lineHits = true, sizeBreaks = true }
 
 local function where(key: string, tiers: { number }): string
@@ -80,6 +80,18 @@ local function expected(def, tiers: { number })
 		end
 	end
 	e.freezeEvery = every
+	-- The chain (PLAN T64): a tower that chains gets Tuning's arcs and reach unless a tier
+	-- sets them, and at least 1 dino per hop; on any other tower the chain fields are off.
+	local chain = { "arcs", "arcReach", "arcForks", "staticPercent", "arcJumps", "powerGrid", "judgementBolt" }
+	if def.chains then
+		e.arcs = if e.arcs > 0 then e.arcs else Config.Tuning.CoilArcs
+		e.arcReach = if e.arcReach > 0 then e.arcReach else Config.Tuning.CoilArcReach
+		e.arcForks = math.max(1, e.arcForks)
+	else
+		for _, field in chain do
+			e[field] = if type(e[field]) == "boolean" then false else 0
+		end
+	end
 	return e
 end
 

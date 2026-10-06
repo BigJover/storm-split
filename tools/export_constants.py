@@ -112,7 +112,20 @@ ABILITY_COLUMNS = [
     ("lastStand", 61, "bool", False),
     # Pierce-through (DECISIONS #126, #127): sizes one hit may drop; blank = 1
     ("sizeBreaks", 62, "num", 1),
+    # Storm Coil (PLAN T64, DECISIONS #151): the chain, its tier 5s and the Lightning Rod
+    ("arcs", 63, "num", 0),  # arcs after the first hit; blank = Tuning Coil arcs
+    ("arcReach", 64, "num", 0),  # studs between chained dinos; blank = Tuning Coil arc reach
+    ("arcForks", 65, "num", 0),  # Fork Lightning: dinos each hop reaches; blank = 1
+    ("arcJumps", 66, "bool", False),  # Jump Spark: arcs may use any Storm Coil's range
+    ("powerGrid", 67, "bool", False),  # Power Grid: the shared grid strike
+    ("staticPercent", 68, "num", 0),  # Static Shock: a struck dino takes +% from the next strike
+    ("judgementBolt", 69, "bool", False),  # Judgement Bolt (Tuning JUDGEMENT levers)
+    ("groundingEvery", 70, "num", 0),  # Grounding Spike: strikes down a throw every N s
+    ("auraArcPercent", 71, "num", 0),  # Lightning Rodeo: towers in range arc each shot once at %
 ]
+
+# Columns only a tower that chains (Towers column Chains) can use.
+CHAIN_ONLY = ("arcs", "arcReach", "arcForks", "arcJumps", "powerGrid", "staticPercent", "judgementBolt")
 
 # Paths allowed a Size breaks above 1 (DECISIONS #127, #134). A new one is a
 # Director call: add it here and to PLAN's design table together.
@@ -164,6 +177,8 @@ def read_towers(ws):
             # no Armory/Hospital aura. On track: placed on the track, not off it (#152).
             "untouchable": yes(v(ws, r, 20)),
             "onTrack": yes(v(ws, r, 21)),
+            # Chain lightning: each strike arcs from dino to dino (Storm Coil, PLAN T64).
+            "chains": yes(v(ws, r, 22)),
             "paths": [],
         }
         order.append(key)
@@ -1018,6 +1033,13 @@ def validate(data):
                 for field in ("shots", "lineHits", "sizeBreaks"):
                     if step[field] < 1 or step[field] != int(step[field]):
                         problems.append(f"{key} {p['id']} tier {i}: {field} must be a whole number >= 1")
+                for field in CHAIN_ONLY:
+                    if step[field] and not t["chains"]:
+                        problems.append(f"{key} {p['id']} tier {i}: {field} needs a tower that chains (Towers column V)")
+                if step["arcForks"] and step["arcForks"] != int(step["arcForks"]) or step["arcs"] != int(step["arcs"]):
+                    problems.append(f"{key} {p['id']} tier {i}: Arcs and Arc forks must be whole numbers")
+                if step["auraArcPercent"] > 100:
+                    problems.append(f"{key} {p['id']} tier {i}: Aura arc % must be 0-100")
                 if step["sizeBreaks"] > 1 and (t["display"], p["id"]) not in BREAK_PATHS:
                     problems.append(f"{key} {p['id']} tier {i}: Size breaks above 1 on a path not in the design table (DECISIONS #127; a Director call)")
 
@@ -1077,6 +1099,9 @@ def validate(data):
         "PlayerMaxHealth", "HealPerRound", "SpawnProtection", "MaxResist", "MaxProjectiles",
         "TowerHPPerTier", "RepairCost", "BurnPatchMinReach", "BossJawLockX",
         "BreakLevelStep", "MaxSizeBreaks",
+        "CoilArcs", "CoilArcReach", "CoilArcFalloff", "PowerGridRangePerCoil", "PowerGridDamageBase",
+        "PowerGridDamagePerCoil", "PowerGridCoilCap", "PowerGridEvery", "JudgementBoltEvery",
+        "JudgementBoltX", "JudgementBoltBreaks", "JudgementBoltStun",
         "PlayerXPBase", "PlayerXPStep", "PlayerXPPerLevelMax", "SoloTakeDownXPX",
     ]
     for key in needed:
@@ -1085,6 +1110,12 @@ def validate(data):
     tuning = data["Tuning"]
     if tuning.get("BreakLevelStep", 1) <= 0:
         problems.append("Tuning Break level step must be above 0")
+    if not 0 < tuning.get("CoilArcFalloff", 0.8) <= 1:
+        problems.append("Tuning Coil arc falloff must be above 0 and at most 1")
+    if tuning.get("PowerGridEvery", 1) <= 0 or tuning.get("JudgementBoltEvery", 1) <= 0:
+        problems.append("Tuning Power Grid every and Judgement Bolt every must be above 0")
+    if tuning.get("PowerGridCoilCap", 1) < 1:
+        problems.append("Tuning Power Grid coil cap must be 1 or more")
     if tuning.get("MaxSizeBreaks", 1) < 1:
         problems.append("Tuning Max size breaks must be 1 or more (1 turns pierce-through off)")
     # Player level (PLAN T55, DECISIONS #120, #124): every level costs something, costs

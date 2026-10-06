@@ -69,6 +69,16 @@ export type Stats = {
 	auraHpPercent: number, -- towers in range get +% max HP
 	lastStand: boolean, -- once a round, a tower in range that would be trampled stays at 1 HP
 	sizeBreaks: number, -- pierce-through base: sizes one direct hit may drop (Shared/SizeBreaks)
+	-- Storm Coil (PLAN T64; rules in Shared/StormCoil). 0 / false on a tower that doesn't chain.
+	arcs: number, -- arcs after the first hit (Tuning Coil arcs unless a tier raises it)
+	arcReach: number, -- studs from one chained dino to the next
+	arcForks: number, -- dinos each hop of the chain reaches (Fork Lightning: 2)
+	arcJumps: boolean, -- Jump Spark: arcs may reach into any Storm Coil's range
+	powerGrid: boolean, -- Power Grid: takes part in the shared grid strike
+	staticPercent: number, -- Static Shock: a struck dino takes +% from this coil's next strike
+	judgementBolt: boolean, -- Judgement Bolt
+	groundingEvery: number, -- Grounding Spike: strikes down a throw at a tower in range every N s
+	auraArcPercent: number, -- Lightning Rodeo: towers in range arc each shot once at this %
 }
 
 local MULTIPLIERS = {
@@ -118,8 +128,26 @@ local HIGHEST = {
 	"rescueRespawnMult",
 	"auraHpPercent",
 	"sizeBreaks",
+	"arcs",
+	"arcReach",
+	"arcForks",
+	"staticPercent",
+	"groundingEvery",
+	"auraArcPercent",
 }
-local FLAGS = { "piercesArmor", "stunsBosses", "auraPiercesArmor", "slowsBosses", "freezeHoldsBosses", "stripsArmor", "revives", "lastStand" }
+local FLAGS = {
+	"piercesArmor",
+	"stunsBosses",
+	"auraPiercesArmor",
+	"slowsBosses",
+	"freezeHoldsBosses",
+	"stripsArmor",
+	"revives",
+	"lastStand",
+	"arcJumps",
+	"powerGrid",
+	"judgementBolt",
+}
 
 function TowerStats.compute(def, pathTiers: { number }): Stats
 	local mult: { [string]: number } = {}
@@ -203,6 +231,15 @@ function TowerStats.compute(def, pathTiers: { number }): Stats
 		auraHpPercent = high.auraHpPercent or 0,
 		lastStand = flag.lastStand == true,
 		sizeBreaks = math.max(1, math.floor(high.sizeBreaks or 1)),
+		arcs = if def.chains then math.floor(if (high.arcs or 0) > 0 then high.arcs else Config.Tuning.CoilArcs) else 0,
+		arcReach = if def.chains then (if (high.arcReach or 0) > 0 then high.arcReach else Config.Tuning.CoilArcReach) else 0,
+		arcForks = if def.chains then math.max(1, math.floor(high.arcForks or 0)) else 0,
+		arcJumps = def.chains == true and flag.arcJumps == true,
+		powerGrid = def.chains == true and flag.powerGrid == true,
+		staticPercent = if def.chains then high.staticPercent or 0 else 0,
+		judgementBolt = def.chains == true and flag.judgementBolt == true,
+		groundingEvery = high.groundingEvery or 0,
+		auraArcPercent = high.auraArcPercent or 0,
 	}
 end
 

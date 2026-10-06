@@ -32,8 +32,18 @@ Shared/TowerStats.compute, whose field lists are read from the Luau file):
              for overkill, so only the factor uses them). Each species-round is weighted by
              its share of the band's EHP. "before" = the old zero-waste number.
   aura       aura towers are credited with what their aura (rate %, damage %, pierces
-             armour) adds to 3 neighbour T2 Hunting Blinds, one on each Blind path
-             (a stated assumption). Stun, knockback and slow are not DPS: not credited.
+             armour, Lightning Rodeo's arc) adds to 3 neighbour T2 Hunting Blinds, one on
+             each Blind path (a stated assumption). Stun, knockback and slow are not DPS:
+             not credited.
+  chain      (Storm Coil, PLAN T64) a strike = the first hit plus, for hop k = 1..Arcs,
+             Arc forks dinos at Coil arc falloff^k, each breaking 1 (assumed: the dinos
+             are close enough for every arc). Static Shock: x (1 + Static %) on every hit
+             (assumed: a strike reaches the dinos the last one did). Judgement Bolt: + a
+             x Judgement Bolt x hit every Judgement Bolt every s, breaking Judgement Bolt
+             breaks (pierce-through, the tower level bonus too). Power Grid: + one grid
+             strike every Power Grid every s at x Shared/StormCoil.grid(GRID_COILS)
+             damage on as many dinos as a full strike reaches (assumed). Jump Spark and
+             Grounding Spike are not DPS: not credited.
 Levels scale every tower alike, so they're left out of the tower tables (except inside the
 overkill factor). Heroes break 1 and hit small: their lines are left as they were.
 
@@ -82,7 +92,8 @@ BANDS = [(1, 10), (11, 20), (21, 30), (31, 40)]
 BOUGHT_BAND = {1: 1, 2: 1, 3: 2, 4: 3, 5: 3}  # tier -> index into BANDS
 # Support and control paths: judged on their own effect, not DPS (DECISIONS #59). #74 added the
 # Tranq Station's Knockout (hard stops) and Weak Spot (damage amp for every tower in range).
-SUPPORT_PATHS = {("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knockout"), ("CHILLER", "Weak Spot")}
+SUPPORT_PATHS = {("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knockout"), ("CHILLER", "Weak Spot"),
+                 ("COIL", "Lightning Rod")}  # PLAN T64: Charged Air, Storm Warning, Lightning Rodeo
 # Single tiers that buy control on a damage path (#74): still in the table and the medians,
 # never flagged dead. Longshot Perch Big Bore T3 = Concussion Round (a stun on hit).
 CONTROL_TIERS = {("SNIPER", "Big Bore", 3)}
@@ -92,14 +103,19 @@ BOSS_SPECIALIST = {("SNIPER", "Big Bore", 5)}
 SUPPORT_TOWERS = {"QUARTERMASTER", "HOSPITAL", "ARMORY"}
 # Towers on the sheet whose behaviour isn't built yet (the round-4 batch, PLAN T63-T67):
 # left out of every table and median until their task models them. Each task removes its key.
-PENDING_TOWERS = {"COIL", "FALCON", "TARPIT", "BALLISTA"}
+PENDING_TOWERS = {"FALCON", "TARPIT", "BALLISTA"}
+# Power Grid is credited as if this many Storm Coils stand (x1.0 damage, range x1.15; a
+# stated assumption: the plain co-op case). One coil alone is x0.75, six x2.0 (#151).
+GRID_COILS = 2
 NEIGHBOUR_TOWER, NEIGHBOUR_TIER, NEIGHBOURS = "SCOUT", 2, 3
 DEAD_X, DOMINANT_X = 2.0, 0.5
 
 
 def load():
     with contextlib.redirect_stdout(io.StringIO()):
-        return export_constants.read_data(export_constants.DEFAULT_XLSX)
+        data = export_constants.read_data(export_constants.DEFAULT_XLSX)
+    TUNING.update(data["Tuning"])
+    return data
 
 
 # ---------------------------------------------------------------- tower stats
@@ -160,7 +176,34 @@ def tower_stats(t, tiers):
         "medKitHeal": high.get("medKitHeal", 0), "auraHpPercent": high.get("auraHpPercent", 0),
         "rangeMult": mult["rangeMult"], "hunterRatePercent": high.get("hunterRatePercent", 0),
         "hunterReloadMult": mult["hunterReloadMult"],
+        # Storm Coil (Shared/TowerStats: Tuning's arcs and reach unless a tier sets them)
+        "chains": t.get("chains", False),
+        "arcs": (math.floor(high.get("arcs", 0)) or int(TUNING["CoilArcs"])) if t.get("chains") else 0,
+        "arcForks": max(1, math.floor(high.get("arcForks", 0))) if t.get("chains") else 0,
+        "staticPercent": high.get("staticPercent", 0) if t.get("chains") else 0,
+        "judgementBolt": bool(t.get("chains") and flag.get("judgementBolt", False)),
+        "powerGrid": bool(t.get("chains") and flag.get("powerGrid", False)),
+        "groundingEvery": high.get("groundingEvery", 0), "auraArcPercent": high.get("auraArcPercent", 0),
     }
+
+
+TUNING = {}  # set by load(): Tuning levers tower_stats needs (the chain's defaults)
+
+
+def grid_mult(tuning, n):
+    """Shared/StormCoil.grid: Power Grid's (range x, damage x) for n standing Storm Coils."""
+    coils = min(max(1, math.floor(n)), max(1, int(tuning["PowerGridCoilCap"])))
+    return (1 + tuning["PowerGridRangePerCoil"] * (coils - 1),
+            tuning["PowerGridDamageBase"] + tuning["PowerGridDamagePerCoil"] * coils)
+
+
+def chain_pieces(s, tuning):
+    """A chain strike's arcs as (dinos, share of the hit): hop k = Arc forks dinos at
+    falloff^k (the first hit is the shot's own)."""
+    if not s.get("chains"):
+        return []
+    f = tuning["CoilArcFalloff"]
+    return [(s["arcForks"], f ** k) for k in range(1, s["arcs"] + 1)]
 
 
 def path_stats(t, path_index, tier):
@@ -247,14 +290,17 @@ def edps(s, mix, tuning, buff=None, overkill=True, breaks1=False):
         hits = s["lineHits"] if s["lineHits"] > 1 else s["targets"]
         share = tuning.get("BombletDamage", 0)
         bomb = sum((s["bomblets"] * share) ** g for g in range(1, s["bombletGenerations"] + 1)) if s["bomblets"] else 0
+        bomb += sum(n * x for n, x in chain_pieces(s, tuning)) + buff.get("arc", 0) / 100  # PLAN T64
         damage = s["damage"] * (1 + buff.get("damage", 0) / 100) * (1 + buff.get("brittle", 0) / 100)
+        damage *= 1 + s.get("staticPercent", 0) / 100
         per_shot = damage * (1 + s["markPercent"] / 100) * (1 + s["brittlePercent"] / 100) * (hits + bomb)
         pierces = s["pierces"] or buff.get("pierces", False)
         weight = (mix["plain"] + mix["armoured"] * (s["armoredMult"] if pierces else 0)
                   + mix["flying"] * (1 if s["hitsAir"] else 0) + mix["boss"] * s["bossMult"])
         direct = rate * s["shots"] * per_shot * weight
         if overkill and direct > 0:
-            direct = rate * s["shots"] * honest_hits(s, mix, tuning, damage, hits, pierces, breaks1)
+            direct = rate * s["shots"] * honest_hits(s, mix, tuning, damage, hits, pierces, breaks1, buff.get("arc", 0))
+        direct += coil_extras(s, mix, tuning, damage, pierces, overkill, breaks1)
     burn = 0.0
     if s["burnDps"] > 0 and rate > 0:
         uptime = min(1.0, rate * s["shots"] * s["burnSeconds"])
@@ -267,7 +313,35 @@ def edps(s, mix, tuning, buff=None, overkill=True, breaks1=False):
     return direct + burn + freeze
 
 
-def honest_hits(s, mix, tuning, damage, hits, pierces, breaks1=False):
+def coil_extras(s, mix, tuning, damage, pierces, overkill=True, breaks1=False):
+    """Judgement Bolt and Power Grid per second (the chain paragraph in the docstring)."""
+    if not s.get("chains") or not (s["judgementBolt"] or s["powerGrid"]):
+        return 0.0
+    hit = damage * (1 + s["markPercent"] / 100) * (1 + s["brittlePercent"] / 100)
+    level_x = 1 + tuning.get("TowerDamagePerLevel", 0)
+    reached = 1 + sum(n for n, _ in chain_pieces(s, tuning))
+    pieces = []  # (per second, x of the hit, base breaks)
+    if s["judgementBolt"]:
+        pieces.append((1 / tuning["JudgementBoltEvery"], tuning["JudgementBoltX"], 1 if breaks1 else tuning["JudgementBoltBreaks"]))
+    if s["powerGrid"]:
+        pieces.append((reached / tuning["PowerGridEvery"], grid_mult(tuning, GRID_COILS)[1], 1))
+    total = 0.0
+    if not overkill:
+        weight = (mix["plain"] + mix["armoured"] * (s["armoredMult"] if pierces else 0)
+                  + mix["flying"] * (1 if s["hitsAir"] else 0) + mix["boss"] * s["bossMult"])
+        return sum(per * hit * x for per, x, _ in pieces) * weight
+    for w, kind, size_hp, resist, level in mix["parts"]:
+        m = {"plain": 1, "armoured": s["armoredMult"] if pierces else 0,
+             "flying": 1 if s["hitsAir"] else 0, "boss": s["bossMult"]}[kind]
+        if m <= 0:
+            continue
+        for per, x, base in pieces:
+            landed = hit * x * m * level_x ** (level - 1)
+            total += w * m * per * hit * x * overkill_factor(landed, size_breaks(tuning, base, level, resist), size_hp)
+    return total
+
+
+def honest_hits(s, mix, tuning, damage, hits, pierces, breaks1=False, arc=0):
     """Damage one shot does with overkill counted, summed over the band's species-rounds
     (the overkill paragraph in the module docstring). `breaks1`: every break forced to 1."""
     hit = damage * (1 + s["markPercent"] / 100) * (1 + s["brittlePercent"] / 100)
@@ -276,6 +350,7 @@ def honest_hits(s, mix, tuning, damage, hits, pierces, breaks1=False):
     level_x = 1 + tuning.get("TowerDamagePerLevel", 0)
     bomb_share = tuning.get("BombletDamage", 0)
     blasts = [(s["bomblets"] ** g, bomb_share ** g) for g in range(1, s["bombletGenerations"] + 1)] if s["bomblets"] else []
+    blasts += chain_pieces(s, tuning) + ([(1, arc / 100)] if arc else [])  # Storm Coil arcs, Lightning Rodeo (T64)
     total = 0.0
     for w, kind, size_hp, resist, level in mix["parts"]:
         m = {"plain": 1, "armoured": s["armoredMult"] if pierces else 0,
@@ -297,8 +372,8 @@ def aura_credit(data, s, mix, brittle=False):
     `brittle` (support paths only, #74): the neighbours' shots also get the tower's Brittle %,
     assuming the dinos they shoot are the sedated ones in its range."""
     buff = {"rate": s["auraRatePercent"], "damage": s["auraDamagePercent"], "pierces": s["auraPiercesArmor"],
-            "brittle": s["brittlePercent"] if brittle else 0}
-    if not (buff["rate"] or buff["damage"] or buff["pierces"] or buff["brittle"]):
+            "brittle": s["brittlePercent"] if brittle else 0, "arc": s.get("auraArcPercent", 0)}
+    if not (buff["rate"] or buff["damage"] or buff["pierces"] or buff["brittle"] or buff["arc"]):
         return 0.0
     blind = data["Towers"][NEIGHBOUR_TOWER]
     tuning = data["Tuning"]
@@ -441,6 +516,13 @@ def support_lines(data, mixes):
                     bit = f"resist {s['resistPercent']:g}%" + (f" thorns {s['thornsDamage']:g}" if s["thornsDamage"] else "")
                 elif key == "ARMORY":
                     bit = f"range x{s['rangeMult']:.1f} reload x{s['hunterReloadMult']:.2f}" + (f" +{s['hunterRatePercent']:g}%rate" if s["hunterRatePercent"] else "")
+                elif key == "COIL":
+                    bit = f"range x{s['rangeMult']:.1f}"
+                    if s["auraRatePercent"] or s["auraDamagePercent"] or s["auraArcPercent"]:
+                        bit += f" aura +{s['auraRatePercent']:g}%r/+{s['auraDamagePercent']:g}%d" + (f"/arc {s['auraArcPercent']:g}%" if s["auraArcPercent"] else "")
+                        bit += f" (+{aura_credit(data, s, late):.1f}, own {edps(s, late, data['Tuning']):.1f})"
+                    if s["groundingEvery"]:
+                        bit += f" grounds a throw every {s['groundingEvery']:g}s"
                 elif path["id"] == "Ward":
                     bit = f"heal {s['healPerSecond']:g}/s" + (" revives" if s["revives"] else "")
                 elif path["id"] == "Rescue":
