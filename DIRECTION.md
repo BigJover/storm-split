@@ -114,6 +114,13 @@ What this adds to his taste:
 - **Bigger, pricier content must be "worth it"**, and he wants options to choose from for
   the top tiers.
 
+## Phase-7 answers (Jovan, 2026-10-06)
+
+- **Mode names:** "go with the name changes" — Team Battle is **Camp Clash**, Battle Royale
+  is **Bone Rush** (DECISIONS #230). He accepts theme renames of his own words when they're
+  proposed with reasons.
+- **Next:** "begin phase 8 when all loose ends on phase 7 are done" (PLAN T87).
+
 ## Economy (his numbers)
 
 - Casual: solo pays only on a track clear (Easy 50 / Normal 100 / Hard 150 / Chaos 200

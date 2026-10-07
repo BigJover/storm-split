@@ -204,7 +204,7 @@ balance.
 
 ### T74 🦖 — names
 **Done (DINO_REVIEW Round 16; Director picks #229). Strings by batch:**
-- **Mode names stay Jovan's: "Team Battle", "Battle Royale"** (renames to Camp Clash / Bone Rush are ask-Jovan #1). Queue toggle labels **Casual / Ranked** (internal key stays competitive). Practice → **"Practice Hunt"**; buy-in → **"Entry fee"**; pot → **"Amber Hoard"**; spawn shield → **"Camo Cover"**; overtime → **"Final Stampede"**.
+- **Mode names (Jovan, 2026-10-06, #230): Team Battle → "Camp Clash", Battle Royale → "Bone Rush".** Internal keys stay `TEAM` / `ROYALE`. Exact strings: `Modes.luau` `TEAM.display = "Camp Clash"`, `ROYALE.display = "Bone Rush"` (blurbs: "Two or three camps, each defending its own side." / `Every hunter for themselves. Most {Theme.Bones} wins.`); the home cards, the HUD side banner and the results title read `Modes[...].display`, never a literal (T82/T83). Results titles: **"Camp Clash — Your camp wins the hunt!"** / **"Bone Rush — Top Hunter!"**. Docs (T85): VISION/ARCHITECTURE/CLAUDE say "Camp Clash (team battle)" / "Bone Rush (battle royale)". Queue toggle labels **Casual / Ranked** (internal key stays competitive). Practice → **"Practice Hunt"**; buy-in → **"Entry fee"**; pot → **"Amber Hoard"**; spawn shield → **"Camo Cover"**; overtime → **"Final Stampede"**.
 - **T77/T78 (batch 3):** Team sides **Red Camp / Blue Camp / Green Camp**; Royale sides **"<Name>'s Camp"** (10 colours, visual-only in code); side out: **"<Camp>'s Fence is down! They're out."**; hunter down: **"Tranqed by <name>!"**; tower raid kill feed reuses **Trampled**: "<name> trampled <Camp>'s <tower>".
 - **T81 (batch 4):** `Arenas!B2:B9` (assert each cell still holds T73's placeholder): Fern Gully 0, Raptor Ridge 300, Muddy Springs 600, Horn Canyon 1000, Volcano Rim 1500, Sky Cliffs 2000, Misty Jungle 3000, Rex Kingdom 4000.
 - **T82/T83 (batch 5):** the labels above, plus results lines **"Your camp wins the hunt!"** (Team) / **"Top Hunter!"** (Royale 1st). Mode blurbs unchanged (Modes.luau).
@@ -296,6 +296,9 @@ what changed, what was tested where, and Jovan's script (T86). Update `SETUP.md`
   spawn shield; teammate upgrade; enemy-tower sell/repair refused; non-host Ready + stake;
   3-side Team; Royale with 3; leaver forfeits. Published-place items (DataStore stakes,
   refunds, cross-server Trophy board, 10 real players) are listed for after publishing.
+
+### T87 — Phase 8: to define (Director, when phase 7's loose ends are done)
+Jovan (2026-10-06): "begin phase 8 when all loose ends on phase 7 are done". Loose ends = T86 run, the rounds 1–4 playtest (T31/T38/T60/T70 + PLAYTEST re-run), every Tester failure fixed. Then the Director proposes a Phase 8 scope with a recommendation, for Jovan to pick from. Candidates: (a) the 4×-Amber tower batch (`TOWERS_LATER.md`, awaiting his picks); (b) **publishing readiness**: DataStore saves live, stakes/escrow and Trophies on real servers, cross-server boards, 10-player network load (ARCHITECTURE §7); (c) a lobby place + Teleport/MemoryStore matchmaking by Trophies (#219, needs (b)); (d) balance follow-ups from the playtests (e.g. Concussive T5 buff, the open issues in CLAUDE.md); (e) more tracks (VISION "each track is its own level"). Director's leaning, to confirm then: (b) → (c) first, since phase 7's ranked mode only becomes real once published, with (a) as the content batch alongside. Add phase 8 to the ARCHITECTURE phase table in that step.
 
 # Plan — Round 4: Jovan's answers (Director, 2026-10-02)
 
