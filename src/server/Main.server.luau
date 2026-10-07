@@ -14,6 +14,11 @@
 	            Amber is paid out (Server/Progression); the result shows
 	            for ResultsTime, then the board resets and everyone goes home.
 
+	Camp Clash and Bone Rush (PLAN phase 7 T77) run through Server/Battle instead of the
+	co-op rounds: sides, one timed build phase, lockstep rounds, elimination, results.
+	Studio only: the host can pick a battle mode before T82 makes it available, set the
+	side / seat count ("sides", n) and fill empty sides with stand-ins ("standins", on).
+
 	Every round prints peak live enemies and how many milliseconds our own code
 	costs per frame (ARCHITECTURE.md §7). Watch the Output window.
 ]]
@@ -47,6 +52,7 @@ local Airdrops = require(script.Parent.Airdrops)
 local Progression = require(script.Parent.Progression)
 local Health = require(script.Parent.Health)
 local DinoAttacks = require(script.Parent.DinoAttacks)
+local Battle = require(script.Parent.Battle)
 
 -- Testing only: set above 1 to jump straight to a later round.
 local START_ROUND = 1
@@ -78,7 +84,8 @@ remotes.Name = "Remotes"
 local startGame = Instance.new("RemoteEvent")
 startGame.Name = "StartGame"
 startGame.Parent = remotes
--- Home screen, host only: ("mode" | "track" | "difficulty", key) or ("play")
+-- Home screen, host only: ("mode" | "track" | "difficulty", key), ("sides", n), ("standins",
+-- on) or ("play")
 local lobby = Instance.new("RemoteEvent")
 lobby.Name = "Lobby"
 lobby.Parent = remotes
@@ -181,11 +188,11 @@ Towers.init(map.towerFolder, {
 	end,
 	-- A Tar Pit sank a dino: Dig Site's cash per sink (scaled like kill pay) and Lucky
 	-- Finds' chest where it went under.
-	onSink = function(cash, chestCash, position)
+	onSink = function(cash, chestCash, position, side)
 		if cash > 0 then
-			Economy.earn(cash * difficulty().cashMult)
+			Economy.earnFor(side, cash * difficulty().cashMult) -- the pit's side (T77)
 		end
-		Airdrops.chestAt(position, chestCash)
+		Airdrops.chestAt(position, chestCash, side)
 	end,
 })
 Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged, onLookChanged = Hero.lookChanged })
@@ -209,6 +216,7 @@ DinoAttacks.init({
 })
 Shop.init(remotes, { onBounty = Progression.bountyEvent }) -- build, upgrade, repair
 Hero.init(remotes, { onPop = popped, onBounty = Progression.bountyEvent, gearAt = Towers.hunterGearAt, difficulty = difficulty }) -- ability
+Battle.init(remotes) -- the kill feed
 
 ------------------------------------------------------------------ host
 
@@ -232,8 +240,12 @@ lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
 	if ReplicatedStorage:GetAttribute("State") ~= "Lobby" or not isHost(player) then
 		return
 	end
-	if action == "mode" and typeof(key) == "string" and Modes.Modes[key] and Modes.Modes[key].available then
-		ReplicatedStorage:SetAttribute("Mode", key)
+	if action == "mode" and typeof(key) == "string" and Modes.Modes[key] and (Modes.Modes[key].available or RunService:IsStudio()) then
+		ReplicatedStorage:SetAttribute("Mode", key) -- battle modes: Studio only until T82
+	elseif action == "sides" and typeof(key) == "number" and key == math.floor(key) and key >= 2 and key <= Config.Tuning.BattleMaxPlayers then
+		ReplicatedStorage:SetAttribute("BattleSides", key) -- Camp Clash 2 or 3; Bone Rush seats with stand-ins
+	elseif action == "standins" and typeof(key) == "boolean" and RunService:IsStudio() then
+		ReplicatedStorage:SetAttribute("StandIns", key) -- "Fill with stand-ins" (DECISIONS #221)
 	elseif action == "track" and typeof(key) == "string" and Modes.Tracks[key] then
 		ReplicatedStorage:SetAttribute("Track", key)
 	elseif action == "difficulty" and typeof(key) == "string" and Config.Difficulties[key] then
@@ -269,26 +281,35 @@ end
 local RESCUE_OFFSET = Vector3.new(0, 3, 4) -- visual placement beside the hospital
 local rescueAt: { [Player]: Vector3 } = {}
 
+local SPAWN_LIFT = Vector3.new(0, 3, 0) -- visual placement: stand on the ground, not in it
+
+local function sideOfPlayer(player: Player): number
+	return Sides.playerSide(player:GetAttribute("Side"), ReplicatedStorage:GetAttribute("Sides"))
+end
+
 local function watchCharacter(player: Player)
 	player.CharacterAdded:Connect(function(character)
 		Health.setUp(character)
 		local beacon = rescueAt[player]
 		rescueAt[player] = nil
-		if beacon then
+		-- A battle hunter (re)spawns on their own side (T77); co-op is unchanged.
+		local battleHome = Battle.spawnPoint(player)
+		local at = if beacon then beacon + RESCUE_OFFSET elseif battleHome then battleHome + SPAWN_LIFT else nil
+		if at then
 			task.defer(function()
 				if character.Parent then
-					character:PivotTo(CFrame.new(beacon + RESCUE_OFFSET))
+					character:PivotTo(CFrame.new(at))
 				end
 			end)
 		end
 		local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 		humanoid.Died:Connect(function()
-			local base, share = Towers.rescueBeacon()
+			local base, share = Towers.rescueBeacon(sideOfPlayer(player)) -- your own side's (T77)
 			-- Back in Action (Shared/SmallPerks) stacks with a Rescue Beacon's share.
 			local perk = SmallPerks.ofPlayer(player).respawnMult
 			task.delay(Config.Tuning.RespawnTime * (if base then share else 1) * perk, function()
 				if player.Character == character then
-					local stillThere = Towers.rescueBeacon() -- still standing?
+					local stillThere = Towers.rescueBeacon(sideOfPlayer(player)) -- still standing?
 					if stillThere then
 						rescueAt[player] = stillThere
 					end
@@ -313,8 +334,8 @@ end
 
 Players.PlayerAdded:Connect(function(player)
 	watchCharacter(player)
-	if inMatch() then
-		joinMatch(player) -- dropped in mid-match: straight onto the track
+	if inMatch() and not Battle.active() then
+		joinMatch(player) -- dropped in mid-match: straight onto the track (co-op; a battle's sides are set)
 	end
 end)
 for _, player in Players:GetPlayers() do
@@ -351,6 +372,7 @@ end)
 
 -- Back to a clean board. Unlocks, mastery and hero picks are kept.
 local function resetBoard()
+	Battle.reset()
 	Enemies.clearAll()
 	Towers.clearAll()
 	Shop.reset()
@@ -375,7 +397,39 @@ local function resetBoard()
 	end
 end
 
+local function playBattle()
+	local started = Battle.play({
+		map = map,
+		difficulty = difficulty,
+		spawn = function(player)
+			joinedThisMatch[player.UserId] = true
+			spawn(player)
+		end,
+		resetCost = function()
+			frames, costSum, costWorst = 0, 0, 0
+		end,
+		costLine = function()
+			local average = if frames > 0 then costSum / frames else 0
+			return string.format("script cost avg %.2f ms, worst %.2f ms", average * 1000, costWorst * 1000)
+		end,
+	})
+	if not started then
+		return -- couldn't seat the sides: back to the lobby
+	end
+	ReplicatedStorage:SetAttribute("HomeAt", workspace:GetServerTimeNow() + Config.Tuning.ResultsTime)
+	task.wait(Config.Tuning.ResultsTime)
+end
+
 local function playMatch()
+	local mode = Modes.Modes[ReplicatedStorage:GetAttribute("Mode")]
+	if mode and mode.sides ~= "one" then
+		playBattle()
+		return
+	end
+	-- Co-op: back to the one-side map if a battle changed it.
+	if MapBuilder.relayout(map, Sides.new(1)) then
+		Enemies.setPaths(map.paths)
+	end
 	local chosen = difficulty()
 
 	-- Building: fresh economy, everyone on the track.

@@ -611,6 +611,16 @@ function Enemies.resetPeak()
 	peakLive = liveCount
 end
 
+-- A battle side is out (PLAN T77): its dinos despawn and its queue empties. No leak, no pay.
+function Enemies.clearSide(side: number)
+	for _, enemy in live do
+		if enemy.side == side then
+			remove(enemy)
+		end
+	end
+	SpawnQueue.clear(spawnQueue, side)
+end
+
 function Enemies.clearAll()
 	for _, enemy in live do
 		remove(enemy)

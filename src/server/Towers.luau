@@ -179,7 +179,7 @@ local towers: { Tower } = {}
 local towerFolder: Instance
 local nextId = 0
 local onPop: ((Player?, string?) -> ())? = nil
-local onSink: ((cash: number, chestCash: number, position: Vector3) -> ())? = nil -- Dig Site pay
+local onSink: ((cash: number, chestCash: number, position: Vector3, side: number) -> ())? = nil -- Dig Site pay
 local levelScale = 1 -- damage multiplier from the team's level
 local towerLevel = 1 -- the team's level itself (pierce-through's level bonus)
 local extraRatePercent: ((Tower) -> number)? = nil -- boosts from outside towers (hero Rally Cry)
@@ -511,7 +511,7 @@ export type Hooks = {
 	resistOf: ((Tower) -> { number })?,
 	-- A Tar Pit sank a dino: its Dig Site cash and Lucky Finds chest (Main pays; Towers never
 	-- touches cash).
-	onSink: ((cash: number, chestCash: number, position: Vector3) -> ())?,
+	onSink: ((cash: number, chestCash: number, position: Vector3, side: number) -> ())?,
 }
 
 function Towers.init(folder: Instance, hooks: Hooks?)
@@ -1330,7 +1330,7 @@ local function stepTar(dt: number, live)
 					credit(pit.owner, true, gone, 1)
 					Effects.disc(Placement.ground(position) + Vector3.new(0, 0.2, 0), 1.5, TAR_COLOR, 0.6, 0.2) -- it goes under
 					if onSink and (stats.sinkCash > 0 or stats.sinkChestCash > 0) then
-						onSink(stats.sinkCash, stats.sinkChestCash, Placement.ground(position))
+						onSink(stats.sinkCash, stats.sinkChestCash, Placement.ground(position), pit.side)
 					end
 				end
 			end
@@ -1399,7 +1399,7 @@ local function stepHealing(dt: number)
 	end
 end
 
-export type MedKitDrop = { base: Vector3, count: number, heal: number }
+export type MedKitDrop = { base: Vector3, count: number, heal: number, side: number }
 
 -- Med kits each standing hospital drops this round.
 function Towers.medKits(): { MedKitDrop }
@@ -1407,19 +1407,20 @@ function Towers.medKits(): { MedKitDrop }
 	for _, tower in towers do
 		local s = tower.stats
 		if s.medKits > 0 and s.medKitHeal > 0 and not tower.knockedOut then
-			table.insert(drops, { base = tower.base, count = s.medKits, heal = s.medKitHeal })
+			table.insert(drops, { base = tower.base, count = s.medKits, heal = s.medKitHeal, side = tower.side })
 		end
 	end
 	return drops
 end
 
 -- A standing Rescue Beacon: where downed hunters come back, and the share of
--- the respawn time they wait. nil if there's none.
-function Towers.rescueBeacon(): (Vector3?, number)
+-- the respawn time they wait. nil if there's none. `side`: the hunter's (default 1, co-op;
+-- a battle hunter only comes back at their own side's beacon, T77).
+function Towers.rescueBeacon(side: number?): (Vector3?, number)
 	local best, mult = nil, 1
 	for _, tower in towers do
 		local m = tower.stats.rescueRespawnMult
-		if m > 0 and not tower.knockedOut and (best == nil or m < mult) then
+		if m > 0 and not tower.knockedOut and tower.side == (side or 1) and (best == nil or m < mult) then
 			best, mult = tower.base, m
 		end
 	end
@@ -1513,12 +1514,13 @@ function Towers.setLevel(level: number, difficulty: { towerDamageMult: number }?
 end
 
 -- Quartermaster income for the round that just ended. Interest is on the
--- team's banked cash; the best Amber Vault applies, they don't stack.
-function Towers.roundIncome(bankedCash: number): number
+-- team's banked cash; the best Amber Vault applies, they don't stack. `side`: whose
+-- Supply Camps (default 1, co-op; a battle pays each side its own, T77).
+function Towers.roundIncome(bankedCash: number, side: number?): number
 	local income, interest = 0, 0
 	for _, tower in towers do
 		local perRound = tower.def.incomePerRound or 0
-		if perRound > 0 and not tower.knockedOut then
+		if perRound > 0 and not tower.knockedOut and tower.side == (side or 1) then
 			local stats = tower.stats
 			income += perRound * stats.incomeMult
 			if stats.interestPercent > 0 then
@@ -1529,14 +1531,14 @@ function Towers.roundIncome(bankedCash: number): number
 	return income + interest
 end
 
-export type Airdrop = { base: Vector3, count: number, cash: number, owner: Player? }
+export type Airdrop = { base: Vector3, count: number, cash: number, owner: Player?, side: number }
 
 -- Chests each Quartermaster drops this round.
 function Towers.airdrops(): { Airdrop }
 	local drops = {}
 	for _, tower in towers do
 		if tower.stats.chests > 0 and tower.stats.chestCash > 0 and not tower.knockedOut then
-			table.insert(drops, { base = tower.base, count = tower.stats.chests, cash = tower.stats.chestCash, owner = tower.owner })
+			table.insert(drops, { base = tower.base, count = tower.stats.chests, cash = tower.stats.chestCash, owner = tower.owner, side = tower.side })
 		end
 	end
 	return drops
@@ -1554,6 +1556,15 @@ function Towers.clearAll()
 	levelScale = 1
 	towerLevel = 1
 	gridTimer = 0
+end
+
+-- A battle side is out (PLAN T77, DECISIONS #213): its towers come off the map.
+function Towers.removeSide(side: number)
+	for i = #towers, 1, -1 do
+		if towers[i].side == side then
+			Towers.remove(towers[i])
+		end
+	end
 end
 
 function Towers.all(): { Tower }

@@ -108,6 +108,22 @@ local function buildSide(layout: Sides.Layout, side: number, root: Instance): Pa
 	return path
 end
 
+-- Every side's floor, lanes and markers, and the crossing strips, under `root`.
+local function buildGround(sides: Sides.Layout, root: Instance): { Path.Path }
+	local paths = {}
+	for side = 1, sides.sides do
+		paths[side] = buildSide(sides, side, root)
+	end
+	-- The open ground between sides (battle modes only): walkable, no track.
+	for i, strip in sides.crossings do
+		floorPart(`Crossing{i}`, strip.min, strip.max, Track.Colors.BuildGround, root)
+	end
+	-- Clients and Shop read the layout back with Shared/Sides.fromAttributes.
+	ReplicatedStorage:SetAttribute("Sides", sides.sides)
+	ReplicatedStorage:SetAttribute("SideGrid", sides.grid)
+	return paths
+end
+
 -- `layout`: the match's sides (Shared/Sides); none = co-op, today's one-side map.
 function MapBuilder.build(layout: Sides.Layout?): Map
 	local existing = workspace:FindFirstChild(MAP_NAME)
@@ -119,23 +135,13 @@ function MapBuilder.build(layout: Sides.Layout?): Map
 	root.Name = MAP_NAME
 
 	local sides = layout or Sides.new(1)
-	local paths = {}
-	for side = 1, sides.sides do
-		paths[side] = buildSide(sides, side, root)
-	end
-	-- The open ground between sides (battle modes only): walkable, no track.
-	for i, strip in sides.crossings do
-		floorPart(`Crossing{i}`, strip.min, strip.max, Track.Colors.BuildGround, root)
-	end
+	local paths = buildGround(sides, root)
 
 	local enemyFolder = folder("Enemies", root)
 	local towerFolder = folder("Towers", root)
 	local effectFolder = folder("Effects", root)
 
 	root.Parent = workspace
-	-- Clients and Shop read the layout back with Shared/Sides.fromAttributes.
-	ReplicatedStorage:SetAttribute("Sides", sides.sides)
-	ReplicatedStorage:SetAttribute("SideGrid", sides.grid)
 
 	return {
 		root = root,
@@ -146,6 +152,27 @@ function MapBuilder.build(layout: Sides.Layout?): Map
 		towerFolder = towerFolder,
 		effectFolder = effectFolder,
 	}
+end
+
+-- Between matches (PLAN T77): the next match has a different number of sides. Rebuilds
+-- the ground only; the Enemies / Towers / Effects folders stay (the modules hold them).
+-- The caller then gives Enemies the new paths. Returns false (nothing done) when the
+-- layout is the same.
+function MapBuilder.relayout(map: Map, layout: Sides.Layout): boolean
+	if map.layout.sides == layout.sides and map.layout.grid == layout.grid then
+		return false
+	end
+	local keep = { [map.enemyFolder] = true, [map.towerFolder] = true, [map.effectFolder] = true }
+	for _, child in map.root:GetChildren() do
+		if not keep[child] then
+			child:Destroy()
+		end
+	end
+	local paths = buildGround(layout, map.root)
+	map.paths = paths
+	map.path = paths[1]
+	map.layout = layout
+	return true
 end
 
 return MapBuilder

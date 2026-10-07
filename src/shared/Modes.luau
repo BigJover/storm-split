@@ -23,7 +23,7 @@ export type SideRule = "one" | "choice" | "perPlayer"
 export type Mode = { display: string, blurb: string, available: boolean, sides: SideRule }
 export type TrackInfo = { display: string, blurb: string }
 
--- Structure, not tuning: Team Battle is two or three teams (VISION.md), and a battle
+-- Structure, not tuning: Camp Clash (team battle) is two or three teams (VISION.md), and a battle
 -- needs at least two sides.
 local TEAM_SIDES = table.freeze({ 2, 3 })
 local BATTLE_SIDES_MIN = 2
@@ -32,8 +32,8 @@ local Modes = {
 	ModeOrder = { "COOP", "TEAM", "ROYALE" },
 	Modes = table.freeze({
 		COOP = { display = "Co-op", blurb = "Defend the track together. Casual: no buy-in.", available = true, sides = "one" },
-		TEAM = { display = "Team Battle", blurb = "Two or three teams, each defending its own side.", available = false, sides = "choice" },
-		ROYALE = { display = "Battle Royale", blurb = `Every player for themselves. Most {Theme.Bones} wins.`, available = false, sides = "perPlayer" },
+		TEAM = { display = "Camp Clash", blurb = "Two or three camps, each defending its own side.", available = false, sides = "choice" },
+		ROYALE = { display = "Bone Rush", blurb = `Every hunter for themselves. Most {Theme.Bones} wins.`, available = false, sides = "perPlayer" },
 	} :: { [string]: Mode }),
 	TeamSides = TEAM_SIDES,
 

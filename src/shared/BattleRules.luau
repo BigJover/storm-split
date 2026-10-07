@@ -13,7 +13,10 @@
 	      whose side is out (a spectator) deals no damage. opts = { attacker: Kind?
 	      (default "hunter"), tower: def? (the target tower's Config def), attackerOut:
 	      boolean? }. How much a hit does (PvP multipliers) is T78's.
-	  nextRoundDue(sidesCleared, elapsed)
+	  canSupport(sourceSide, targetSide)
+      whether a helpful effect reaches a target: only its own side's (a chest or med kit
+      picked up, a heal, an aura, Rally Cry). Co-op: always (one side). (T77, #212, #231)
+  nextRoundDue(sidesCleared, elapsed)
 	      lockstep: round N+1 starts for every live side once each has cleared round N
 	      (`sidesCleared`: live side -> cleared?) or Tuning BattleRoundTime seconds after
 	      round N started, whichever comes first
@@ -67,6 +70,10 @@ function BattleRules.canDamage(attackerSide: Side, targetSide: Side, targetKind:
 		return true
 	end
 	return attackerSide ~= targetSide
+end
+
+function BattleRules.canSupport(sourceSide: Side, targetSide: Side): boolean
+	return sourceSide == targetSide
 end
 
 function BattleRules.nextRoundDue(sidesCleared: { [Side]: boolean }, elapsed: number): boolean

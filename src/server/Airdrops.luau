@@ -9,6 +9,10 @@
 	player's character), so a client can't claim a chest it isn't touching.
 	A hunter with the Long Arms mastery perk also grabs drops within its reach
 	(Shared/SmallPerks), checked here on the server every frame.
+
+	SIDES (PLAN T77, DECISIONS #231): every drop belongs to the side whose tower dropped it
+	and lands by that tower, on that side's plot. Only that side's hunters can pick it up
+	(an enemy walks straight over it), and a chest pays that side's cash. Co-op: side 1.
 ]]
 
 local Players = game:GetService("Players")
@@ -20,6 +24,8 @@ local Config = require(Shared:WaitForChild("Config"))
 local Placement = require(Shared:WaitForChild("Placement"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
+local BattleRules = require(Shared:WaitForChild("BattleRules"))
+local Sides = require(Shared:WaitForChild("Sides"))
 
 local Economy = require(script.Parent.Economy)
 local Health = require(script.Parent.Health)
@@ -66,7 +72,13 @@ function Airdrops.init(effectFolder: Instance)
 	RunService.Heartbeat:Connect(reachPass)
 end
 
-local function spawnChest(position: Vector3, cash: number)
+-- Whether this hunter may take the drop: its own side only (Shared/BattleRules.canSupport;
+-- co-op: everyone is side 1).
+local function onSide(player: Player, side: number): boolean
+	return BattleRules.canSupport(side, Sides.playerSide(player:GetAttribute("Side"), ReplicatedStorage:GetAttribute("Sides")))
+end
+
+local function spawnChest(position: Vector3, cash: number, side: number)
 	local chest = Instance.new("Part")
 	chest.Name = "AirdropChest"
 	chest.Size = CHEST_SIZE
@@ -94,13 +106,13 @@ local function spawnChest(position: Vector3, cash: number)
 	label.Parent = chest
 
 	local taken = false
-	local function claim(_player: Player): boolean
-		if taken then
+	local function claim(player: Player): boolean
+		if taken or not onSide(player, side) then
 			return false
 		end
 		taken = true
 		live[chest] = nil
-		Economy.earn(cash)
+		Economy.earnFor(side, cash)
 		chest:Destroy()
 		return true
 	end
@@ -122,7 +134,7 @@ local function spawnChest(position: Vector3, cash: number)
 end
 
 -- A white med kit with a green "+". The hunter who touches it heals.
-local function spawnKit(position: Vector3, heal: number)
+local function spawnKit(position: Vector3, heal: number, side: number)
 	local kit = Instance.new("Part")
 	kit.Name = "MedKit"
 	kit.Size = KIT_SIZE
@@ -164,7 +176,7 @@ local function spawnKit(position: Vector3, heal: number)
 	local taken = false
 	local function claim(player: Player): boolean
 		local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-		if taken or not humanoid or not Combat.takesMedKit(humanoid.Health, humanoid.MaxHealth) then
+		if taken or not onSide(player, side) or not humanoid or not Combat.takesMedKit(humanoid.Health, humanoid.MaxHealth) then
 			return false
 		end
 		taken = true
@@ -196,23 +208,29 @@ local function landingSpot(base: Vector3): Vector3
 	return Placement.ground(base + Vector3.new(math.cos(angle) * reach, 0, math.sin(angle) * reach))
 end
 
--- One chest on the ground at `position` (a Tar Pit's Lucky Finds: a sunk dino's chest).
-function Airdrops.chestAt(position: Vector3, cash: number)
+-- One chest on the ground at `position` (a Tar Pit's Lucky Finds: a sunk dino's chest),
+-- for `side` (default 1, co-op).
+function Airdrops.chestAt(position: Vector3, cash: number, side: number?)
 	if cash > 0 then
-		spawnChest(Placement.ground(position), cash)
+		spawnChest(Placement.ground(position), cash, side or 1)
 	end
 end
 
--- Called by Main at the start of every round.
-function Airdrops.drop()
+-- Called at the start of every round: co-op with no side (every drop), a battle once per
+-- living side (that side's towers' drops only).
+function Airdrops.drop(side: number?)
 	for _, drop in Towers.airdrops() do
-		for _ = 1, drop.count do
-			spawnChest(landingSpot(drop.base), drop.cash)
+		if side == nil or drop.side == side then
+			for _ = 1, drop.count do
+				spawnChest(landingSpot(drop.base), drop.cash, drop.side)
+			end
 		end
 	end
 	for _, drop in Towers.medKits() do
-		for _ = 1, drop.count do
-			spawnKit(landingSpot(drop.base), drop.heal)
+		if side == nil or drop.side == side then
+			for _ = 1, drop.count do
+				spawnKit(landingSpot(drop.base), drop.heal, drop.side)
+			end
 		end
 	end
 end

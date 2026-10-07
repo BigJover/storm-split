@@ -23,6 +23,7 @@ local Bounties = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("
 local HeroXp = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HeroXp"))
 local PanelRules = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("PanelRules"))
 local Sides = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Sides"))
+local BattleFlow = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("BattleFlow"))
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "StormSplitHud"
@@ -218,7 +219,10 @@ local function refresh()
 	local alive = math.floor(attr("Alive", 0))
 	local cash = math.floor(attr(Sides.attr("Cash", side), 0)) -- your side's cash
 
-	startButton.Visible = state == "Building"
+	-- A battle (Server/Battle, T77) has a timed build phase and no Start button.
+	local battle = attr("BattleMode", nil)
+	local camp = if battle then attr(Sides.attr("Camp", side), "") else ""
+	startButton.Visible = state == "Building" and battle == nil
 	label.Visible = state ~= "Lobby" -- the home screen has its own layout
 	results.Visible = state == "GameOver" or state == "Victory"
 	label.TextColor3 = Color3.fromRGB(240, 236, 250)
@@ -237,7 +241,16 @@ local function refresh()
 	local difficultyKey = attr("Difficulty", Config.DifficultyOrder[1])
 	local difficultyName = Config.Difficulties[difficultyKey] and Config.Difficulties[difficultyKey].display or ""
 
-	if state == "GameOver" or state == "Victory" then
+	if battle and (state == "GameOver" or state == "Victory") then
+		-- Battle results (the full screen is T83): the winner's title, else the place.
+		local place = player:GetAttribute("BattlePlace")
+		local title = BattleFlow.resultTitle(battle, place)
+		local bones = player:GetAttribute("BattleBones") or 0
+		local placeLine = if typeof(place) == "number" then `Place {place}  ·  {bones} {Theme.Bones}` else ""
+		results.Text = `<font color="{if title then "#8cf0aa" else "#ff788c"}">{title or "GAME OVER"}</font>\n<font size="18">{camp}\n{placeLine}</font>`
+		label.Text = title or `GAME OVER  ·  {placeLine}`
+		label.TextColor3 = if title then Color3.fromRGB(140, 240, 170) else Color3.fromRGB(255, 120, 140)
+	elseif state == "GameOver" or state == "Victory" then
 		local won = state == "Victory"
 		local payout = player:GetAttribute("LastPayout")
 		local cores = if payout == nil then "" elseif payout > 0 then `+{payout} {Theme.Currency}` else `No {Theme.Currency} (solo pays on a clear)`
@@ -254,8 +267,12 @@ local function refresh()
 		label.TextColor3 = if won then Color3.fromRGB(140, 240, 170) else Color3.fromRGB(255, 120, 140)
 	elseif state == "Lobby" then
 		label.Text = ""
+	elseif state == "Building" and battle then
+		label.Text = `{camp}  ·  Build (B), choose a hero (H)  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}`
 	elseif state == "Building" then
 		label.Text = `Build (B), choose a hero (H), then Start  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}`
+	elseif battle then
+		label.Text = `{camp}  ·  Round {round}  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}  ·  Dinos {alive}`
 	else
 		label.Text = `Round {round}  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}  ·  Dinos {alive}`
 	end
@@ -589,23 +606,84 @@ task.spawn(function()
 		local state = attr("State", "")
 		if state == "GameOver" or state == "Victory" then
 			local left = math.max(0, math.ceil(attr("HomeAt", 0) - workspace:GetServerTimeNow()))
-			label.Text = `{if state == "Victory" then "VICTORY" else "GAME OVER"}  ·  home in {left}s`
+			local battle = attr("BattleMode", nil)
+			local won = if battle then BattleFlow.resultTitle(battle, player:GetAttribute("BattlePlace")) ~= nil else state == "Victory"
+			label.Text = `{if won then "VICTORY" else "GAME OVER"}  ·  home in {left}s`
 		end
 	end
 end)
 
-for _, name in { "State", "Round", "Lives", "Alive", "Cash", "Difficulty", "RoundsCleared", "Sides" } do
+for _, name in { "State", "Round", "Lives", "Alive", "Cash", "Difficulty", "RoundsCleared", "Sides", "BattleMode" } do
 	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refresh)
 end
-for _, name in { "HeroXp", "HeroXpPending", "HeroLevel", "Side" } do
+for _, name in { "HeroXp", "HeroXpPending", "HeroLevel", "Side", "BattlePlace", "BattleBones" } do
 	player:GetAttributeChangedSignal(name):Connect(refresh)
 end
 -- Another battle side's cash or Fence ("Cash2", "Lives3"...; Shared/Sides.attr).
 ReplicatedStorage.AttributeChanged:Connect(function(name: string)
-	if string.match(name, "^Cash%d+$") or string.match(name, "^Lives%d+$") then
+	if string.match(name, "^Cash%d+$") or string.match(name, "^Lives%d+$") or string.match(name, "^Camp%d*$") then
 		refresh()
 	end
 end)
 refresh()
+
+-- Battle feed (Server/Battle, T77/T78): "<Camp>'s Fence is down! They're out.", raid
+-- knock-outs, and this hunter's own "Tranqed by <name>!". Top right, nothing to click:
+-- each line shows for a moment and goes (the DIRECTION no-trap rule has nothing to trap).
+local FEED_SECONDS = 6 -- UI timing, not a gameplay number
+local FEED_LINES = 4
+local feedList = Instance.new("Frame")
+feedList.Name = "BattleFeed"
+feedList.AnchorPoint = Vector2.new(1, 0)
+feedList.Position = UDim2.new(1, -16, 0, 64)
+feedList.Size = UDim2.new(0.4, 0, 0, 0)
+feedList.AutomaticSize = Enum.AutomaticSize.Y
+feedList.BackgroundTransparency = 1
+feedList.Active = false
+feedList.Parent = gui
+local feedLayout = Instance.new("UIListLayout")
+feedLayout.SortOrder = Enum.SortOrder.LayoutOrder
+feedLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+feedLayout.Padding = UDim.new(0, 4)
+feedLayout.Parent = feedList
+local feedCount = 0
+task.spawn(function()
+	local event = remotes:WaitForChild("Feed") :: RemoteEvent
+	event.OnClientEvent:Connect(function(text: unknown)
+		if typeof(text) ~= "string" then
+			return
+		end
+		feedCount += 1
+		local line = Instance.new("TextLabel")
+		line.LayoutOrder = feedCount
+		line.Size = UDim2.new(1, 0, 0, 0)
+		line.AutomaticSize = Enum.AutomaticSize.Y
+		line.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
+		line.BackgroundTransparency = 0.3
+		line.TextColor3 = Color3.fromRGB(250, 205, 80)
+		line.TextStrokeTransparency = 0.5
+		line.Font = Enum.Font.GothamBold
+		line.TextSize = 16
+		line.TextWrapped = true
+		line.TextXAlignment = Enum.TextXAlignment.Right
+		line.Text = text
+		line.Parent = feedList
+		local lines = {}
+		for _, child in feedList:GetChildren() do
+			if child:IsA("TextLabel") then
+				table.insert(lines, child)
+			end
+		end
+		table.sort(lines, function(a, b)
+			return a.LayoutOrder < b.LayoutOrder
+		end)
+		for i = 1, #lines - FEED_LINES do
+			lines[i]:Destroy() -- only the newest few stay
+		end
+		task.delay(FEED_SECONDS, function()
+			line:Destroy()
+		end)
+	end)
+end)
 
 gui.Parent = player:WaitForChild("PlayerGui")

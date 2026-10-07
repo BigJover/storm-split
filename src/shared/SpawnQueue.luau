@@ -14,6 +14,7 @@
 	  push(q, side, item)
 	  size(q, side?)                     -> queued for that side, or for every side
 	  take(q, liveTotal, liveBySide, cap) -> the next item and its side, or nil
+  clear(q, side)                     -> drops that side's queue (a battle side is out, T77)
 ]]
 
 local Sides = require(script.Parent.Sides)
@@ -87,6 +88,12 @@ function SpawnQueue.take(q: Queue, liveTotal: number, liveBySide: { [number]: nu
 		end
 	end
 	return nil, nil
+end
+
+function SpawnQueue.clear(q: Queue, side: number)
+	if q.lists[side] then
+		q.lists[side] = fifo()
+	end
 end
 
 return SpawnQueue

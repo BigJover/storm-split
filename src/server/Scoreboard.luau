@@ -85,6 +85,12 @@ function Scoreboard.resetPops()
 	end
 end
 
+-- This hunter's Bones this match (0 if they have no board entry).
+function Scoreboard.bones(player: Player): number
+	local value = pops[player]
+	return if value then value.Value else 0
+end
+
 function Scoreboard.addPop(player: Player)
 	local value = pops[player]
 	if value then

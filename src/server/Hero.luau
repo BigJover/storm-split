@@ -246,6 +246,11 @@ local function gameOver(): boolean
 	return state == "GameOver" or state == "Victory"
 end
 
+-- A spectator: their battle side is out (Server/Battle, PLAN T77). They deal no damage.
+local function isOut(player: Player): boolean
+	return player:GetAttribute("Out") == true
+end
+
 -- The ability's cooldown per charge, with the mastery cooldown cut.
 local function abilityCooldown(player: Player, s: State): number
 	local rewards = mastery(player, s)
@@ -643,7 +648,7 @@ local function ricochet(player: Player, stats: HeroStats.Stats, from: Enemies.En
 end
 
 local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown, scoped: unknown)
-	if gameOver() then
+	if gameOver() or isOut(player) then
 		return
 	end
 	local s = stateOf(player)
@@ -751,6 +756,9 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 	local body = root(player)
 	if not s.hero or not stats or not body then
 		return false, "Pick a hero first"
+	end
+	if isOut(player) then
+		return false, "The game is over" -- spectating (T77)
 	end
 	local origin, direction = validRay(player, body, rayOrigin, rayDirection)
 	if not origin or not direction then

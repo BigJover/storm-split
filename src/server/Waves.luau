@@ -14,6 +14,8 @@
 	SIDES (PLAN T75): a run belongs to one side (`side`, default 1 = co-op) and waits only
 	for that side's dinos. `density` (Shared/Sides.density: Royale and 3-side Team)
 	multiplies the counts on top of the scale, so many tracks fit under the shared cap.
+	Battles (PLAN T77) don't use run(): Server/Battle starts every living side's round
+	together with spawnRound() (lockstep, Shared/BattleRules.nextRoundDue).
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -56,6 +58,47 @@ end
 
 local random = Random.new()
 
+local NO_SCALE: Scale = table.freeze({ countMult = 1, hpMult = 1, promoteChance = 0 })
+
+export type RoundOptions = {
+	side: number, -- whose track
+	index: number, -- the row of Config.Rounds
+	scale: Scale,
+	density: number?, -- count multiplier per side (default 1)
+	hpMult: number?, -- extra HP multiplier (battle overtime, Shared/BattleFlow; default 1)
+	random: Random?, -- promotion rolls (battles: one seed per round, so every side gets the same dinos)
+	isOver: () -> boolean,
+}
+
+-- Spawns one round's dinos on one side's track, weakest tier first at the round's spawn
+-- gap (yields). Returns false if `isOver` stopped it part-way.
+function Waves.spawnRound(options: RoundOptions): boolean
+	local round = Config.Rounds[options.index]
+	local scale = options.scale
+	local countMult = scale.countMult * (options.density or 1)
+	local gap = round.spawnGap / math.max(countMult, 0.01)
+	local hpMult = round.hpMult * scale.hpMult * (options.hpMult or 1)
+	local roll = options.random or random
+
+	for _, key in Config.EnemyOrder do
+		local count = round.counts[key]
+		if count and count > 0 then
+			for _ = 1, math.max(1, math.floor(count * countMult + 0.5)) do
+				if options.isOver() then
+					return false
+				end
+				local spawnKey = key
+				if promotion[key] and roll:NextNumber() < scale.promoteChance then
+					spawnKey = promotion[key]
+				end
+				Enemies.enqueue(options.side, spawnKey, hpMult)
+				task.wait(gap)
+			end
+		end
+	end
+	return true
+end
+
 -- Returns true if every round was cleared.
 function Waves.run(options: RunOptions): boolean
 	local first = options.startRound or 1
@@ -67,32 +110,14 @@ function Waves.run(options: RunOptions): boolean
 			return false
 		end
 
-		local round = Config.Rounds[index]
 		ReplicatedStorage:SetAttribute("Round", index)
 		if options.onRoundStart then
 			options.onRoundStart(index)
 		end
 
-		local scale = if options.scale then options.scale() else { countMult = 1, hpMult = 1, promoteChance = 0 }
-		local countMult = scale.countMult * density
-		local gap = round.spawnGap / math.max(countMult, 0.01)
-		local hpMult = round.hpMult * scale.hpMult
-
-		for _, key in Config.EnemyOrder do
-			local count = round.counts[key]
-			if count and count > 0 then
-				for _ = 1, math.max(1, math.floor(count * countMult + 0.5)) do
-					if options.isOver() then
-						return false
-					end
-					local spawnKey = key
-					if promotion[key] and random:NextNumber() < scale.promoteChance then
-						spawnKey = promotion[key]
-					end
-					Enemies.enqueue(side, spawnKey, hpMult)
-					task.wait(gap)
-				end
-			end
+		local scale = if options.scale then options.scale() else NO_SCALE
+		if not Waves.spawnRound({ side = side, index = index, scale = scale, density = density, isOver = options.isOver }) then
+			return false
 		end
 
 		while Enemies.remaining(side) > 0 do

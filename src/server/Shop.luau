@@ -46,6 +46,8 @@ local MIN_REQUEST_GAP = 0.15 -- seconds; drops spammed requests from one player
 local DISTANCE_SLACK = 6 -- studs of lag allowance on top of client-side distances
 
 local spent: { [Towers.Tower]: number } = {} -- cash put into each tower
+-- Studio stand-in sides' towers (PLAN T77, DECISIONS #221): the owner id and name to show.
+local standIns: { [Towers.Tower]: { id: number, name: string } } = {}
 -- (hunter, a Bounties event): "build", "upgrade" or "repair", once the purchase went through
 local onBounty: ((Player, string) -> ())? = nil
 local lastRequest: { [Player]: number } = {}
@@ -62,8 +64,10 @@ local function decorate(tower: Towers.Tower)
 	body:SetAttribute("TowerId", tower.id)
 	body:SetAttribute("Tower", tower.key)
 	body:SetAttribute("Spent", spent[tower] or 0)
-	body:SetAttribute("OwnerId", if tower.owner then tower.owner.UserId else 0)
-	body:SetAttribute("OwnerName", if tower.owner then tower.owner.DisplayName else "")
+	local standIn = standIns[tower]
+	body:SetAttribute("OwnerId", if standIn then standIn.id elseif tower.owner then tower.owner.UserId else 0)
+	body:SetAttribute("OwnerName", if standIn then standIn.name elseif tower.owner then tower.owner.DisplayName else "")
+	body:SetAttribute("Side", tower.side) -- whose camp (the panel is read-only on another camp's, T78)
 	for pathIndex, tier in tower.pathTiers do
 		body:SetAttribute(`Path{pathIndex}`, tier)
 	end
@@ -293,6 +297,10 @@ local function handle(player: Player, action: unknown, a: unknown, b: unknown): 
 	if state == "GameOver" or state == "Victory" then
 		return false, "The game is over"
 	end
+	-- A spectator (their battle side is out, PLAN T77) can't build, upgrade, repair or sell.
+	if ReplicatedStorage:GetAttribute(Sides.attr("Out", (sideOf(player)))) == true then
+		return false, "The game is over"
+	end
 
 	if action == "build" then
 		return build(player, a, b)
@@ -311,6 +319,19 @@ end
 -- Between matches (after Towers.clearAll): forget what every tower cost.
 function Shop.reset()
 	table.clear(spent)
+	table.clear(standIns)
+end
+
+-- A Studio stand-in side's pre-placed tower (PLAN T77, DECISIONS #221): free, no player
+-- owner (`ownerId` is negative), never paid back; managed like any tower of its side.
+function Shop.placeStandIn(key: string, spot: Vector3, side: number, ownerId: number, ownerName: string): Towers.Tower?
+	local tower = Towers.place(key, spot, nil, side)
+	if tower then
+		spent[tower] = 0
+		standIns[tower] = { id = ownerId, name = ownerName }
+		decorate(tower)
+	end
+	return tower
 end
 
 function Shop.init(remotes: Folder, hooks: { onBounty: ((Player, string) -> ())? }?)

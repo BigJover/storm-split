@@ -77,7 +77,6 @@ DEAD_ALLOWED = {
 # outlive its task. (block, field): the task that reads it
 DEAD_PENDING = {
     # Phase 7 batch 1 (PLAN T73): the levers whose readers come later in phase 7.
-    ("Tuning", "BattleBuildTime"): "T77 (battle match flow)",
     ("Tuning", "PvPTowerDamage"): "T78 (PvP damage)",
     ("Tuning", "PvPHunterDamage"): "T78 (PvP damage)",
     ("Tuning", "SpawnShield"): "T78 (PvP damage)",
