@@ -18,9 +18,14 @@
 	  waypoints(layout, side)      -> that side's track
 	  spawn(layout, side)          -> where that side's hunters spawn (on the ground)
 	  sideOf(value, sides)         -> a side number from an attribute (bad/missing = 1)
+	  playerSide(side, sides)      -> sideOf with the "Sides" attribute's count
 	  density(modeKey, sides)      -> dino count multiplier per side: Tuning BattleSideDensity
 	                                  for Royale and 3-side Team, else 1
 	  sideCap(cap, sides)          -> each side's share of the shared live-enemy cap
+	  manageRefusal(action, mySide, towerSide) -> why "upgrade"/"repair"/"sell" is refused on
+	                                  another side's tower, or nil on your own side's
+	  attr(name, side)           -> a per-side attribute's name: side 1 keeps today's name
+	                                  ("Cash"), side n adds n ("Cash2"); Server/Economy publishes
 ]]
 
 local Config = require(script.Parent.Config)
@@ -137,6 +142,12 @@ function Sides.sideOf(value: unknown, sides: number): number
 	return 1
 end
 
+-- A hunter's side from their "Side" attribute and ReplicatedStorage's "Sides" (bad or
+-- missing = 1, co-op).
+function Sides.playerSide(sideValue: unknown, sidesValue: unknown): number
+	return Sides.sideOf(sideValue, Sides.fromAttributes(sidesValue, nil).sides)
+end
+
 function Sides.density(modeKey: string, sides: number): number
 	if sides <= 1 then
 		return 1
@@ -148,6 +159,26 @@ end
 
 function Sides.sideCap(cap: number, sides: number): number
 	return math.max(1, math.floor(cap / math.max(1, sides)))
+end
+
+-- Why a hunter on `mySide` may not upgrade / repair / sell a tower on `towerSide`, or nil
+-- when they may: only their own side's towers (a teammate's too), never an enemy's
+-- (PLAN T76, DECISIONS #211, #212). Selling stays the builder's on top of this (Server/Shop).
+local MANAGE_REFUSALS = table.freeze({
+	upgrade = "You can't upgrade another camp's tower",
+	repair = "Only its own camp can repair it",
+	sell = "You can't sell another camp's tower",
+})
+
+function Sides.manageRefusal(action: string, mySide: number, towerSide: number): string?
+	if mySide == towerSide then
+		return nil
+	end
+	return MANAGE_REFUSALS[action] or "That's another camp's tower"
+end
+
+function Sides.attr(name: string, side: number): string
+	return if side == 1 then name else `{name}{side}`
 end
 
 return Sides

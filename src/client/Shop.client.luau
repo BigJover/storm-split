@@ -1181,7 +1181,7 @@ renderRows = function()
 	upgradesButton.Text = if mode == "heroUpgrade" then "Close  (U)" else "Upgrades  (U)"
 	masteryButton.Visible = state == "Building"
 	masteryButton.Text = if mode == "mastery" then "Close  (M)" else "Unlocks & Mastery  (M)"
-	local cash = math.floor(ReplicatedStorage:GetAttribute("Cash") or 0)
+	local cash = math.floor(ReplicatedStorage:GetAttribute(Sides.attr("Cash", (mySide()))) or 0) -- your side's cash (T76)
 
 	if mode == "list" then
 		title.Text = `Build  ·  Cash {cash}`
@@ -1566,8 +1566,9 @@ ReplicatedStorage:GetAttributeChangedSignal("Level"):Connect(function()
 	end
 end)
 
-ReplicatedStorage:GetAttributeChangedSignal("Cash"):Connect(function()
-	if mode == "list" or mode == "manage" or mode == "heroUpgrade" then
+-- Your side's cash: "Cash" (co-op, side 1) or "Cash2"... (Shared/Sides.attr).
+ReplicatedStorage.AttributeChanged:Connect(function(name: string)
+	if name == Sides.attr("Cash", (mySide())) and (mode == "list" or mode == "manage" or mode == "heroUpgrade") then
 		render()
 	end
 end)

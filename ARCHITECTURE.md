@@ -53,6 +53,7 @@ src/
 │   ├── Matchmaking.luau     Side assignment in one server: sizes within 1, snake draft by Trophies; pure
 │   ├── Sides.luau           Map sides: per-side track copy, build zone, crossing strips, hunter spawn, per-side
 │   │                        density and cap share; co-op = side 1 = today's map; pure, server + client
+│   ├── Ledger.luau          Each side's cash and Fence as plain data (earn, trySpend, lose); pure, only Economy holds one
 │   ├── SpawnQueue.luau      The capped spawn queue, one FIFO per side, sides take turns under the shared cap; pure,
 │   │                        Enemies holds the only one
 │   ├── Stakes.luau          Competitive buy-in: who may stake (offline, Practice), escrow/refund, pot,
@@ -85,7 +86,7 @@ src/
 │   ├── Towers.luau          Placement, stats, abilities (multi-shot, pierce, bomblets,
 │   │                        burn, auras), targeting, firing
 │   ├── Waves.luau           Runs the 40-round table
-│   ├── Economy.luau         The team's shared cash and lives
+│   ├── Economy.luau         Each side's shared cash and lives (co-op: one side)
 │   ├── Scoreboard.luau      Per-player pops on the Roblox leaderboard (leaderstats)
 │   ├── Hero.luau            The player as hero: free pick, upgrade paths, magazine/reload, recoil,
 │   │                        fire modes, pellets/pierce/ricochet, abilities — all validated here
@@ -144,10 +145,10 @@ This dissolves most of the problems the UEFN plan was built around:
 | Dino attack timers and projectiles in flight (and the Storm Coil's Grounding Spike timers, which strike throws down) | `DinoAttacks` | — (it hurts towers and players only through `Towers.damage` / `Health.damage`; towers that can't be damaged are never in `Towers.targets()`) |
 | A tower's tiers and stats | `Towers` | Call `upgrade()` after paying |
 | A tower's HP and trampled state | `Towers` | Call `damage()` / `heal()` / `repair()` (after paying); dinos pick from `targets()`; clients read the body's `HP` / `MaxHP` / `KO` attributes |
-| Cash and lives | `Economy` | Call `trySpend()` / `earn()` / `lose()` |
+| Cash and lives (the Fence), one pot per side (co-op = side 1; arithmetic in the pure `Shared/Ledger`) | `Economy` | Call `trySpendFor(side)` / `earnFor(side)` / `loseFor(side)` (the side-less `trySpend()` / `earn()` / `lose()` are side 1); clients read their side's `Cash` / `Lives` attributes (`Shared/Sides.attr`: side 1 `Cash`, side n `Cash<n>`) |
 | Player HP (the Humanoid's Health / MaxHealth) | `Health` | Call `damage()` / `heal()` / `healAll()`; clients read the Humanoid |
 | What a tower cost (for refunds) | `Shop` | — |
-| Who built a tower | `Towers` (`tower.owner`) | Shop reads it: only the builder sells |
+| Who built a tower, and its side | `Towers` (`tower.owner`, `tower.side`) | Shop reads them: only the builder sells; upgrades, repairs and sells only on your own side (`Sides.manageRefusal`); builds only in your zone with your side's cash |
 | Pops per player | `Scoreboard` | Towers report kills through the `onPop` hook |
 | A hunter's XP, pending pops and hero level (per match, never saved) | `Hero` (rules in the pure `Shared/HeroXp`) | Main calls `Hero.addPop()` on every credited pop, `Hero.roundCleared(index, solo)` when a round is cleared (solo = one hunter present then: that round's take-downs count ×2 toward player XP, DECISIONS #177) and `Hero.startMatch()` at Start; clients read the `HeroLevel`, `HeroXp`, `HeroXpPending` player attributes |
 | Tower level (the round level) and rounds cleared | `Main` | Main calls `Towers.setLevel(HeroXp.roundLevel(...))`; clients read the `Level` and `RoundsCleared` attributes on ReplicatedStorage |

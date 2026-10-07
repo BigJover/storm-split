@@ -7,7 +7,7 @@
 	come only from Config. A client sends a tower key and a position, or a tower
 	id; never a price or a result.
 
-	Money flow: Economy.trySpend() first, then Towers.place(). Towers never touch
+	Money flow: Economy.trySpendFor(your side) first, then Towers.place(). Towers never touch
 	cash (§5.4); upgrades likewise pay first, then call Towers.upgrade(). The
 	shop remembers what each tower cost, upgrades included, so selling refunds
 	SellRefund of all of it. Repairs (anyone's tower, like upgrades) cost
@@ -140,13 +140,13 @@ local function build(player: Player, towerKey: unknown, position: unknown): (boo
 	if not isWithin(player, spot, ShopRules.PlaceRange) then
 		return false, "Too far from you"
 	end
-	if not Economy.trySpend(def.baseCost) then
+	if not Economy.trySpendFor(side, def.baseCost) then -- your own side's cash (T76)
 		return false, "Not enough cash"
 	end
 
 	local tower = Towers.place(towerKey, spot, player, side)
 	if not tower then
-		Economy.earn(def.baseCost) -- give it back; place() refused
+		Economy.earnFor(side, def.baseCost) -- give it back; place() refused
 		return false, "Couldn't build there"
 	end
 	spent[tower] = def.baseCost
@@ -171,6 +171,11 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 	if not tower then
 		return false, "That tower is gone"
 	end
+	local side = sideOf(player)
+	local refusal = Sides.manageRefusal("upgrade", side, tower.side) -- never an enemy's tower (T76)
+	if refusal then
+		return false, refusal
+	end
 	local path = tower.def.paths[pathIndex]
 	if not path then
 		return false, "Unknown upgrade"
@@ -192,12 +197,12 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 	end
 	-- A Quartermaster's Logistics aura discounts upgrades on towers in its range.
 	local cost = Pricing.upgradeCost(step, tower.buff.discountPercent)
-	if not Economy.trySpend(cost) then
+	if not Economy.trySpendFor(side, cost) then
 		return false, "Not enough cash"
 	end
 
 	if not Towers.upgrade(tower, pathIndex) then
-		Economy.earn(cost) -- give it back; upgrade() refused
+		Economy.earnFor(side, cost) -- give it back; upgrade() refused
 		return false, "Can't upgrade that"
 	end
 	spent[tower] = (spent[tower] or 0) + cost
@@ -208,7 +213,8 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 	return true, `{step.name or path.id}!`
 end
 
--- Anyone can repair any tower, in the build phase or mid-round (DECISIONS #10).
+-- Anyone on the tower's side can repair it, in the build phase or mid-round (DECISIONS #10;
+-- battle sides: only its own side, T76).
 local function repair(player: Player, towerId: unknown): (boolean, string)
 	if typeof(towerId) ~= "number" then
 		return false, "Unknown tower"
@@ -216,6 +222,11 @@ local function repair(player: Player, towerId: unknown): (boolean, string)
 	local tower = Towers.byId(towerId)
 	if not tower then
 		return false, "That tower is gone"
+	end
+	local side = sideOf(player)
+	local refusal = Sides.manageRefusal("repair", side, tower.side) -- never an enemy's tower (T76)
+	if refusal then
+		return false, refusal
 	end
 	if not isWithin(player, tower.base, ShopRules.PromptDistance) then
 		return false, "Too far from the tower"
@@ -229,7 +240,7 @@ local function repair(player: Player, towerId: unknown): (boolean, string)
 	-- A Supply Camp's Logistics discount applies, as it does to upgrades, and the
 	-- repairing hunter's Handyman mastery perk (Shared/SmallPerks).
 	local cost = Combat.repairCost(spent[tower] or 0, tower.hp, tower.maxHp, tower.buff.discountPercent, SmallPerks.ofPlayer(player).repairCostMult)
-	if cost > 0 and not Economy.trySpend(cost) then
+	if cost > 0 and not Economy.trySpendFor(side, cost) then
 		return false, "Not enough cash"
 	end
 	local trampled = tower.knockedOut
@@ -248,6 +259,10 @@ local function sell(player: Player, towerId: unknown): (boolean, string)
 	if not tower then
 		return false, "Nothing to sell"
 	end
+	local refusal = Sides.manageRefusal("sell", sideOf(player), tower.side) -- never an enemy's tower (T76)
+	if refusal then
+		return false, refusal
+	end
 	if not isWithin(player, tower.base, ShopRules.PromptDistance) then
 		return false, "Too far from the tower"
 	end
@@ -263,7 +278,7 @@ local function sell(player: Player, towerId: unknown): (boolean, string)
 	local refund = Pricing.sellRefund(spent[tower] or 0, tower.buff.sellRefund, repairPrice)
 	spent[tower] = nil
 	Towers.remove(tower)
-	Economy.earn(refund)
+	Economy.earnFor(tower.side, refund) -- back to the tower's side (yours: checked above)
 	return true, `Sold for {refund}`
 end
 

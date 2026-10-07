@@ -29,6 +29,7 @@ local HeroXp = require(Shared:WaitForChild("HeroXp"))
 local PlayerLevel = require(Shared:WaitForChild("PlayerLevel"))
 local Pricing = require(Shared:WaitForChild("Pricing"))
 local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
+local Sides = require(Shared:WaitForChild("Sides"))
 
 local MapBuilder = require(script.Parent.MapBuilder)
 local Enemies = require(script.Parent.Enemies)
@@ -84,8 +85,8 @@ lobby.Parent = remotes
 if RunService:IsStudio() then
 	local studioCash = Instance.new("RemoteEvent")
 	studioCash.Name = "StudioCash"
-	studioCash.OnServerEvent:Connect(function()
-		Economy.earn(STUDIO_CASH_GRANT)
+	studioCash.OnServerEvent:Connect(function(player: Player)
+		Economy.earnFor(Sides.playerSide(player:GetAttribute("Side"), ReplicatedStorage:GetAttribute("Sides")), STUDIO_CASH_GRANT)
 	end)
 	studioCash.Parent = remotes
 
@@ -123,12 +124,12 @@ local over = false -- this match has been lost
 
 Enemies.init(map.paths, map.enemyFolder, {
 	onLeak = function(enemy)
-		Economy.lose(Enemies.leakCost(enemy))
+		Economy.loseFor(enemy.side, Enemies.leakCost(enemy)) -- only that side's Fence (T76)
 	end,
 	-- Each split layer pays for its own HP, so a full cascade pays the round's
 	-- effective HP x CashPerEffectiveHP — the spreadsheet's "Kill income".
 	onKilled = function(enemy)
-		Economy.earn(enemy.share * Config.Tuning.CashPerEffectiveHP * difficulty().cashMult)
+		Economy.earnFor(enemy.side, enemy.share * Config.Tuning.CashPerEffectiveHP * difficulty().cashMult)
 	end,
 })
 

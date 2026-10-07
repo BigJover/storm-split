@@ -70,6 +70,7 @@ local Theme = require(Shared:WaitForChild("Theme"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 local GunRules = require(Shared:WaitForChild("GunRules"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
+local Sides = require(Shared:WaitForChild("Sides"))
 
 local Economy = require(script.Parent.Economy)
 local Progression = require(script.Parent.Progression)
@@ -149,6 +150,11 @@ local playerGuards: { [Player]: Guard } = {}
 local towerGuards: { [any]: Guard } = setmetatable({}, { __mode = "k" }) :: any
 
 ------------------------------------------------------------------ state
+
+-- The hunter's side (Shared/Sides; co-op 1): whose cash pays for their upgrades.
+local function sideOf(player: Player): number
+	return Sides.playerSide(player:GetAttribute("Side"), ReplicatedStorage:GetAttribute("Sides"))
+end
 
 local function stateOf(player: Player): State
 	local state = states[player]
@@ -368,7 +374,7 @@ local function pick(player: Player, key: unknown): (boolean, string)
 		return true, `{Config.Heroes[key].display} it is`
 	end
 	if s.spent > 0 then
-		Economy.earn(s.spent) -- switching in the build phase refunds every upgrade
+		Economy.earnFor(sideOf(player), s.spent) -- switching in the build phase refunds every upgrade (to your side, T76)
 	end
 	s.hero = key
 	s.tiers = { 0, 0, 0 }
@@ -415,7 +421,7 @@ local function upgrade(player: Player, pathIndex: unknown): (boolean, string)
 	-- Mastery: a discount on every upgrade, and possibly the first one free.
 	local discount = if rewards then rewards.upgradeDiscountPercent else 0
 	local cost = if s.freeUpgrade then 0 else math.floor(step.cost * (1 - discount / 100) + 0.5)
-	if not Economy.trySpend(cost) then
+	if not Economy.trySpendFor(sideOf(player), cost) then -- your own side's cash (T76)
 		return false, "Not enough cash"
 	end
 	s.freeUpgrade = false

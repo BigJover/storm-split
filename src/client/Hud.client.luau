@@ -22,6 +22,7 @@ local HitNotice = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild(
 local Bounties = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Bounties"))
 local HeroXp = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HeroXp"))
 local PanelRules = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("PanelRules"))
+local Sides = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Sides"))
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "StormSplitHud"
@@ -212,9 +213,10 @@ end
 local function refresh()
 	local state = attr("State", "Waiting")
 	local round = math.floor(attr("Round", 0))
-	local lives = math.floor(attr("Lives", 0))
+	local side = Sides.playerSide(player:GetAttribute("Side"), ReplicatedStorage:GetAttribute("Sides"))
+	local lives = math.floor(attr(Sides.attr("Lives", side), 0)) -- your side's Fence (T76)
 	local alive = math.floor(attr("Alive", 0))
-	local cash = math.floor(attr("Cash", 0))
+	local cash = math.floor(attr(Sides.attr("Cash", side), 0)) -- your side's cash
 
 	startButton.Visible = state == "Building"
 	label.Visible = state ~= "Lobby" -- the home screen has its own layout
@@ -592,12 +594,18 @@ task.spawn(function()
 	end
 end)
 
-for _, name in { "State", "Round", "Lives", "Alive", "Cash", "Difficulty", "RoundsCleared" } do
+for _, name in { "State", "Round", "Lives", "Alive", "Cash", "Difficulty", "RoundsCleared", "Sides" } do
 	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refresh)
 end
-for _, name in { "HeroXp", "HeroXpPending", "HeroLevel" } do
+for _, name in { "HeroXp", "HeroXpPending", "HeroLevel", "Side" } do
 	player:GetAttributeChangedSignal(name):Connect(refresh)
 end
+-- Another battle side's cash or Fence ("Cash2", "Lives3"...; Shared/Sides.attr).
+ReplicatedStorage.AttributeChanged:Connect(function(name: string)
+	if string.match(name, "^Cash%d+$") or string.match(name, "^Lives%d+$") then
+		refresh()
+	end
+end)
 refresh()
 
 gui.Parent = player:WaitForChild("PlayerGui")
