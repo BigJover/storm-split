@@ -8,7 +8,7 @@ PLAYTEST.md re-run; blocked right now on Jovan reconnecting Rojo). It does not b
 phase-7 Builder batches. Each phase-7 batch still ends with its own Tester step, and phase 7
 is not "fully done" until those steps and Jovan's multi-player steps (T86) have run.
 
-**Status (2026-10-06): batch 2 signed off (T75 0ab8f14, T76 9b356fa; 491 specs; #231). T77–T78 final with #231's additions. Earlier: batch 1 signed off (T73 62608e6, T71 86c94bf, T72 4b2a3bc; 467 specs; #227–#228). T75–T76 final as written. Queued: T78 amendments below.**
+**Status (2026-10-06): batch 3 signed off (45f5cb2, 8d4673e, bcdfe9f; 520 specs; T79 review = #232). No Builder while the Tester's Run 2 is live. Next: batch 4 = T79b, T80, T81. Earlier: batch 2 signed off (T75 0ab8f14, T76 9b356fa; 491 specs; #231). T77–T78 final with #231's additions. Earlier: batch 1 signed off (T73 62608e6, T71 86c94bf, T72 4b2a3bc; 467 specs; #227–#228). T75–T76 final as written. Queued: T78 amendments below.**
 
 Round 1–4 rules hold (one task = one commit, pushed; `tools/check.sh`, `export_constants.py`,
 `tools/test.sh` green; diff `Config.luau` after every sheet change; openpyxl only, assert a
@@ -252,8 +252,18 @@ balance.
   shots; stand-in towers do. Hunter-vs-hunter → T86 (Jovan).
 
 ### T79 🦖 + Director review of batches 2–3
+**Done (#232).** Accepted as built: battle flow, PvP damage, per-side payouts, the names.
+
+### T79b — Review fixes (first commit of batch 4)
+- **Strip refusal:** off every camp's zone (the crossing strip) say **"You can only build inside your own camp."**; keep "That's another camp's zone…" for a rival's zone. Spec both.
+- **Round break:** new lever `Battle round break` = **5** s (Tuning, next empty row after T73's block; assert empty). Lockstep waits that long after the last living side clears. Spec in `BattleFlow`.
+- **Stand-ins score Bones** from their own towers' take-downs, credited to the seat (never saved, paid or ranked), so Bone Rush ranking is testable solo.
+- **Enemy towers show no "Upgrade" prompt** (client hides the prompt when the tower's side ≠ yours; the server refusal stays).
+- **Mid-battle joiners** stay on the home screen with a banner "A hunt is on — you'll join the next one." (no-trap: fits, mouse free, closes on state change); they're never seated, staked, paid or ranked. Co-op drop-in unchanged.
+- **Accept:** specs; co-op specs unchanged; Config diff = one key.
 
 ### T80 — Progression: stakes, Practice, Trophies saved
+- **Final (#232):** `Server/Battle` calls Progression at the end: casual battles pay `Stakes.casualBattle`; Ranked settles with `Stakes.settle` (escrow cleared in the same save); player XP (cleared rounds; a win counts as a Normal clear) and bounties (#222); stand-ins and mid-battle joiners never touch Progression. The Ready/stake *server* path lands here (remote `Lobby:FireServer("ready", bool)`, validated by `Stakes.canStake`); its UI is T82.
 - Profile gains `trophies`, `bestArena`, `escrow` (sanitized; old saves load as 0/nil).
   Stakes taken at Building, escrow saved at once; settle + clear in one save; BindToClose and
   load-time refunds; offline can't stake; unpublished → Practice. Bounties count battle
@@ -263,6 +273,7 @@ balance.
   and comes back by the split; Trophies unchanged; turn saving off with J first.
 
 ### T81 — Trophy board + arena rewards
+- **Final (#232):** also writes the arena names into `Arenas!B2:B9` (PLAN T74) and the Trophies + arena badge on the in-game leaderboard; reward cells stay blank unless a cosmetic id exists (exporter checks).
 - `Server/TrophyBoard` on the `LevelBoard` pattern (OrderedDataStore when published, "This
   server" otherwise); arena rewards join `Cosmetics` (unlock on first reach).
 - **Accept:** spec for the fallback; Tester: Profile shows the This-server board.
