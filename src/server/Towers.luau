@@ -93,6 +93,12 @@
 	slows the track past the pool for a while. Eruption: every Eruption every s each dino
 	in that pool drops Eruption sizes outright (Enemies.dropSizes). Tar Totem: an aura;
 	towers in range deal +% to slowed dinos.
+
+	SIDES (PLAN T78, DECISIONS #228, #231; rules in Shared/BattleRules): a tower only ever
+	aims at, hurts, slows, stuns or marks its own side's dinos (step() hands each tower its
+	own side's dinos; canTarget checks again), and its pool, Power Grid, Thorn Plating,
+	auras, healing, Armory cover and Outfitter gear reach only its own side. Co-op is one
+	side, so nothing changes there.
 ]]
 
 local Players = game:GetService("Players")
@@ -110,6 +116,8 @@ local TowerLook = require(Shared:WaitForChild("TowerLook"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 local TowerStats = require(Shared:WaitForChild("TowerStats"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
+local Sides = require(Shared:WaitForChild("Sides"))
+local BattleRules = require(Shared:WaitForChild("BattleRules"))
 
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
@@ -198,6 +206,14 @@ local function credit(owner: Player?, killed: boolean, gone: string?, dropped: n
 	end
 end
 
+local TOWER: BattleRules.DamageOpts = table.freeze({ attacker = "tower" })
+local HAZARD: BattleRules.DamageOpts = table.freeze({ attacker = "hazard" })
+
+-- Its own side's dino? (Shared/BattleRules: a tower never touches another side's.)
+local function ownSide(tower: Tower, enemy: Enemies.Enemy): boolean
+	return BattleRules.canDamage(tower.side, enemy.side, "dino", TOWER)
+end
+
 ------------------------------------------------------------------ stats
 
 local NO_BUFF: Buff =
@@ -228,7 +244,7 @@ local function refreshAuras()
 		local rate, damage, pierce, discount, refund, resist, hpBonus, arc, slowed = 0, 0, false, 0, 0, 0, 0, 0, 0
 		for _, source in towers do
 			local s = source.stats
-			if not source.knockedOut and hasAura(s) and covers(source, tower.base) then
+			if not source.knockedOut and hasAura(s) and covers(source, tower.base) and BattleRules.canSupport(source.side, tower.side) then
 				-- An Armory's resistance covers itself too; the other auras are for others.
 				-- Armory and Field Hospital auras skip a tower that can't be damaged (#148).
 				if not tower.def.untouchable then
@@ -313,7 +329,7 @@ end
 -- saved one yet this round spends its save. Returns that hospital, or nil.
 local function lastStand(tower: Tower): Tower?
 	for _, source in towers do
-		if source.stats.lastStand and not source.lastStandUsed and not source.knockedOut and covers(source, tower.base) then
+		if source.stats.lastStand and not source.lastStandUsed and not source.knockedOut and covers(source, tower.base) and BattleRules.canSupport(source.side, tower.side) then
 			source.lastStandUsed = true
 			return source
 		end
@@ -372,11 +388,12 @@ end
 
 ------------------------------------------------------------------ Armory
 
--- The strongest Armory resistance covering a point (a hunter standing there).
-function Towers.resistAt(position: Vector3): number
+-- The strongest Armory resistance covering a point (a hunter standing there), from the
+-- hunter's own side's Armories only (`side`, default 1, co-op).
+function Towers.resistAt(position: Vector3, side: number?): number
 	local best = 0
 	for _, source in towers do
-		if not source.knockedOut and source.stats.resistPercent > 0 and covers(source, position) then
+		if not source.knockedOut and source.stats.resistPercent > 0 and covers(source, position) and BattleRules.canSupport(source.side, side or 1) then
 			best = math.max(best, source.stats.resistPercent)
 		end
 	end
@@ -391,7 +408,7 @@ function Towers.bitten(enemy: Enemies.Enemy, position: Vector3)
 	local thorns, thornsOwner, stun = 0, nil, 0
 	for _, source in towers do
 		local s = source.stats
-		if not source.knockedOut and (s.thornsDamage > 0 or s.stunBitersSeconds > 0) and covers(source, position) then
+		if not source.knockedOut and (s.thornsDamage > 0 or s.stunBitersSeconds > 0) and covers(source, position) and ownSide(source, enemy) then
 			if s.thornsDamage > thorns then
 				thorns, thornsOwner = s.thornsDamage, source.owner
 			end
@@ -409,12 +426,12 @@ end
 export type HunterGear = { recoilMult: number, reloadMult: number, spreadMult: number, ratePercent: number }
 
 -- What an Outfitter Armory covering this point does for a hunter's gun: the
--- strongest of each buff (auras don't stack).
-function Towers.hunterGearAt(position: Vector3): HunterGear
+-- strongest of each buff (auras don't stack). Own side's Armories only (`side`, default 1).
+function Towers.hunterGearAt(position: Vector3, side: number?): HunterGear
 	local gear = { recoilMult = 1, reloadMult = 1, spreadMult = 1, ratePercent = 0 }
 	for _, source in towers do
 		local s = source.stats
-		if not source.knockedOut and covers(source, position) then
+		if not source.knockedOut and covers(source, position) and BattleRules.canSupport(source.side, side or 1) then
 			gear.recoilMult = math.min(gear.recoilMult, s.hunterRecoilMult)
 			gear.reloadMult = math.min(gear.reloadMult, s.hunterReloadMult)
 			gear.spreadMult = math.min(gear.spreadMult, s.hunterSpreadMult)
@@ -611,6 +628,9 @@ end
 
 -- Can this tower both reach and hurt this enemy?
 local function canTarget(tower: Tower, enemy: Enemies.Enemy): boolean
+	if not ownSide(tower, enemy) then
+		return false
+	end
 	if enemy.def.flying and not tower.def.hitsAir then
 		return false
 	end
@@ -677,7 +697,7 @@ end
 local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number?)
 	local stats = tower.stats
 	local pierce = piercing(tower)
-	if not Enemies.canHurt(enemy, pierce) then
+	if not ownSide(tower, enemy) or not Enemies.canHurt(enemy, pierce) then
 		return
 	end
 	if enemy.def.armored then
@@ -918,11 +938,12 @@ end
 
 -- Power Grid: one shared strike every Power Grid every seconds, however many Power
 -- Grid coils stand, from the one that hits hardest (DECISIONS #151).
-local gridTimer = 0
-local function stepGrid(dt: number, live)
+-- One Power Grid per side (its own coils, its own dinos, #231); co-op is side 1 alone.
+local gridTimers: { [number]: number } = {}
+local function stepGridSide(side: number, dt: number, live)
 	local striker, coils = nil, 0
 	for _, tower in towers do
-		if isCoil(tower) then
+		if isCoil(tower) and tower.side == side then
 			coils += 1
 			if tower.stats.powerGrid and (striker == nil or coilDamage(tower) > coilDamage(striker)) then
 				striker = tower
@@ -930,19 +951,20 @@ local function stepGrid(dt: number, live)
 		end
 	end
 	if not striker then
-		gridTimer = 0
+		gridTimers[side] = 0
 		return
 	end
 	local every = Config.Tuning.PowerGridEvery
-	gridTimer += dt
-	if gridTimer < every then
+	local timer = (gridTimers[side] or 0) + dt
+	gridTimers[side] = timer
+	if timer < every then
 		return
 	end
-	gridTimer -= every
+	gridTimers[side] = timer - every
 	local rangeMult, damageMult = StormCoil.grid(coils)
 	local areas = {}
 	for _, tower in towers do
-		if isCoil(tower) then
+		if isCoil(tower) and tower.side == side then
 			table.insert(areas, { center = tower.base, radius = tower.stats.range * rangeMult })
 			Effects.disc(tower.base + Vector3.new(0, 0.3, 0), tower.stats.range * rangeMult, ARC_COLOR, 0.3, 0.4)
 		end
@@ -952,6 +974,21 @@ local function stepGrid(dt: number, live)
 		if enemy.alive and canTarget(striker, enemy) and StormCoil.covered(enemy.part.Position, areas) then
 			Effects.tracer(enemy.part.Position + Vector3.new(0, 12, 0), enemy.part.Position, ARC_COLOR)
 			coilHit(striker, enemy, damage)
+		end
+	end
+end
+
+local function stepGrid(dt: number, live)
+	local seen: { [number]: boolean } = {}
+	for _, tower in towers do
+		if isCoil(tower) and not seen[tower.side] then
+			seen[tower.side] = true
+			stepGridSide(tower.side, dt, live)
+		end
+	end
+	for side in gridTimers do
+		if not seen[side] then
+			gridTimers[side] = 0 -- no coils left on that side
 		end
 	end
 end
@@ -1071,7 +1108,7 @@ local function stepHood(tower: Tower, live)
 		return
 	end
 	for _, enemy in live do
-		if enemy.alive and enemy.def.boss and (enemy.part.Position - tower.position).Magnitude <= tower.stats.range then
+		if enemy.alive and enemy.def.boss and ownSide(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= tower.stats.range then
 			Enemies.mark(enemy, percent, HOOD_REFRESH)
 		end
 	end
@@ -1201,7 +1238,7 @@ local function stepChill(tower: Tower, dt: number, live)
 		end
 	end
 	for _, enemy in live do
-		if (enemy.part.Position - tower.position).Magnitude <= range then
+		if ownSide(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= range then
 			if stats.slowPercent > 0 then
 				Enemies.chill(enemy, chill)
 			end
@@ -1285,7 +1322,7 @@ local function stepTar(dt: number, live)
 		-- The strongest pool this dino stands in (#189: never more than one).
 		local inside, power = {}, {}
 		for i, pit in pits do
-			if pit.side == enemy.side and TarPit.contains(enemy.distance, pit.poolAt, pit.stats.range) then
+			if BattleRules.canDamage(pit.side, enemy.side, "dino", HAZARD) and TarPit.contains(enemy.distance, pit.poolAt, pit.stats.range) then
 				table.insert(inside, pit)
 				table.insert(power, strengths[i])
 			end
@@ -1301,7 +1338,7 @@ local function stepTar(dt: number, live)
 				end
 			end
 			for _, other in pits do
-				if other.side == enemy.side and now < other.tracksUntil and TarPit.onTracks(enemy.distance, other.poolAt, other.stats.range, tuning.TarTracksLength) then
+				if BattleRules.canDamage(other.side, enemy.side, "dino", HAZARD) and now < other.tracksUntil and TarPit.onTracks(enemy.distance, other.poolAt, other.stats.range, tuning.TarTracksLength) then
 					Enemies.tar(enemy, other.stats.tracksSlowPercent, TAR_REFRESH)
 				end
 			end
@@ -1345,12 +1382,13 @@ end
 -- ~60/s are capped.
 ------------------------------------------------------------------ Field Hospital
 
--- The strongest standing hospital's heal (and revive) rate covering a point.
-local function healRates(point: Vector3): (number, number)
+-- The strongest standing hospital's heal (and revive) rate covering a point, from
+-- `side`'s hospitals only.
+local function healRates(point: Vector3, side: number): (number, number)
 	local heal, revive = 0, 0
 	for _, source in towers do
 		local s = source.stats
-		if s.healPerSecond > 0 and not source.knockedOut and covers(source, point) then
+		if s.healPerSecond > 0 and not source.knockedOut and covers(source, point) and BattleRules.canSupport(source.side, side) then
 			heal = math.max(heal, s.healPerSecond)
 			if s.revives then
 				revive = math.max(revive, s.healPerSecond * s.reviveSpeed)
@@ -1372,7 +1410,7 @@ local function stepHealing(dt: number)
 		return
 	end
 	for _, tower in towers do
-		local heal, revive = healRates(tower.base)
+		local heal, revive = healRates(tower.base, tower.side)
 		if tower.def.untouchable then
 			continue -- no HP: a Field Hospital skips it (#148)
 		elseif not tower.knockedOut and heal > 0 and tower.hp < tower.maxHp then
@@ -1391,7 +1429,7 @@ local function stepHealing(dt: number)
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
 		if root and root:IsA("BasePart") then
-			local heal = healRates(root.Position)
+			local heal = healRates(root.Position, Sides.playerSide(player:GetAttribute("Side"), ReplicatedStorage:GetAttribute("Sides")))
 			if heal > 0 then
 				Health.heal(player, heal * dt)
 			end
@@ -1434,15 +1472,25 @@ function Towers.newRound()
 	end
 end
 
+local NO_DINOS = table.freeze({})
+
 function Towers.step(dt: number)
 	stepHealing(dt)
 	local live = Enemies.getLive()
+	-- Each tower only ever sees its own side's dinos (a targeting filter, #231).
+	local bySide: { [number]: { Enemies.Enemy } } = {}
 	for _, tower in towers do
-		stepChill(tower, dt, live)
-		stepBolt(tower, dt, live)
+		if not bySide[tower.side] then
+			bySide[tower.side] = BattleRules.ownDinos(live, tower.side, "tower")
+		end
+	end
+	for _, tower in towers do
+		local own = bySide[tower.side] or NO_DINOS
+		stepChill(tower, dt, own)
+		stepBolt(tower, dt, own)
 		stepSorties(tower, dt)
-		stepHood(tower, live)
-		stepTow(tower, dt, live)
+		stepHood(tower, own)
+		stepTow(tower, dt, own)
 	end
 	stepGrid(dt, live)
 	stepTar(dt, live)
@@ -1459,11 +1507,12 @@ function Towers.step(dt: number)
 			continue
 		end
 
+		local own = bySide[tower.side] or NO_DINOS
 		local fired = if tower.def.chains
-			then fireChain(tower, live)
-			elseif hasBirds(tower) then fireFalcon(tower, live)
-			elseif tower.def.harpoons then fireBallista(tower, live)
-			else fire(tower, live)
+			then fireChain(tower, own)
+			elseif hasBirds(tower) then fireFalcon(tower, own)
+			elseif tower.def.harpoons then fireBallista(tower, own)
+			else fire(tower, own)
 		if fired then
 			-- Auras don't stack: Hunting Party only counts if it beats the standing ones.
 			local aura = math.max(tower.buff.ratePercent, Falcon.huntingParty(tower.base, parties, tower))
@@ -1555,7 +1604,7 @@ function Towers.clearAll()
 	end
 	levelScale = 1
 	towerLevel = 1
-	gridTimer = 0
+	table.clear(gridTimers)
 end
 
 -- A battle side is out (PLAN T77, DECISIONS #213): its towers come off the map.

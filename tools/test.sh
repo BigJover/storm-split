@@ -23,6 +23,7 @@ if [ $# -eq 0 ]; then
 	"$PYTHON" tools/threat.py || status=1
 	echo
 	"$PYTHON" -m doctest tools/value.py || status=1 # the overkill factor (PLAN T47)
+	"$PYTHON" -m doctest tools/export_constants.py || status=1 # exporter rules with doctests (PvP levers, PLAN T78)
 	"$PYTHON" tools/value.py || status=1
 	echo
 	"$PYTHON" tools/value.py --breaks1 || status=1 # the break bars gate (PLAN T48 final)

@@ -3,17 +3,39 @@
 	answers out, so the server (T77/T78) only calls them and specs run headlessly.
 	Co-op is one side, so none of this changes it.
 
-	A side is a number (1, 2, ...). Kinds: "hunter", "tower", "dino".
+	A side is a number (1, 2, ...). Target kinds: "hunter", "tower", "dino". Attacker
+	kinds (every damage or effect source, PLAN T78, DECISIONS #228, #231):
+	  "hunter"   a hero shot (pellets, pierce, ricochet, splash, muzzle rounds)
+	  "tower"    every tower effect: shots, splash, bomblets, Storm Coil chains and bolts,
+	             Power Grid, Falcon dives and pecks, Ballista bolts and chains, Chiller slow
+	             and Freeze, marks, Thorn Plating and Bulwark
+	  "hazard"   burning ground, fires on a dino, Tar Pit pools (slow, burn, sink, Eruption)
+	  "ability"  hunter abilities: Flare Strike (strike, stun, burn), Tracking Dart
+	  "dino"     bites and throws
 
 	  canDamage(attackerSide, targetSide, targetKind, opts?)
-	      whether a hit may land. No friendly fire, ever: a hunter never hurts their own
-	      side's hunters or towers. Towers shoot dinos only (never hunters, never towers).
-	      A tower that can't be damaged (def.untouchable: Falcon Roost, Tar Pit) is immune
-	      to everyone. Dinos bite any hunter or tower in reach, invaders included. A hunter
-	      whose side is out (a spectator) deals no damage. opts = { attacker: Kind?
-	      (default "hunter"), tower: def? (the target tower's Config def), attackerOut:
-	      boolean? }. How much a hit does (PvP multipliers) is T78's.
-	  canSupport(sourceSide, targetSide)
+	      whether a hit or effect may land. No friendly fire, ever: a hunter never hurts
+	      their own side's hunters or towers. Dinos are only ever touched by their own
+	      side: a hunter, tower, hazard or ability never reaches another side's dinos (no
+	      Bone-stealing, no propping up a rival, no crowd control by the back door).
+	      Towers, hazards and abilities touch dinos only (never hunters, never towers). A
+	      hunter's shot reaches enemy hunters and enemy towers. A tower that can't be
+	      damaged (def.untouchable: Falcon Roost, Tar Pit) is immune to everyone. Dinos
+	      bite any hunter or tower in reach, invaders included. A spectator (side out)
+	      deals no damage. opts = { attacker: Kind? (default "hunter"), tower: def? (the
+	      target tower's Config def), attackerOut: boolean? }.
+	  ownDinos(live, side, attacker)
+	      the dinos in `live` this attacker kind on `side` may touch (a targeting filter:
+	      towers never even aim across the strip)
+	  pvpDamage(amount, attackerSide, targetSide, targetKind, opts?)
+	      what a hit does: 0 where canDamage says no or the target hunter is shielded
+	      (opts.shielded: Camo Cover, Tuning SpawnShield); else, for a hunter's shot (the
+	      PvP levers are for shots only; other allowed sources pass through) an enemy tower takes
+	      amount x PvPTowerDamage, an enemy hunter amount x PvPHunterDamage (0 = hunter
+	      vs hunter off, #228), a dino the full amount
+	  shielded(sinceSpawn)        Camo Cover: a hunter takes no PvP damage for Tuning SpawnShield
+                              seconds after (re)spawning (#212)
+  canSupport(sourceSide, targetSide)
       whether a helpful effect reaches a target: only its own side's (a chest or med kit
       picked up, a heal, an aura, Rally Cry). Co-op: always (one side). (T77, #212, #231)
   nextRoundDue(sidesCleared, elapsed)
@@ -45,7 +67,8 @@ local Config = require(script.Parent.Config)
 
 export type Side = number
 export type Kind = "hunter" | "tower" | "dino"
-export type DamageOpts = { attacker: Kind?, tower: { untouchable: boolean? }?, attackerOut: boolean? }
+export type Attacker = "hunter" | "tower" | "hazard" | "ability" | "dino"
+export type DamageOpts = { attacker: Attacker?, tower: { untouchable: boolean? }?, attackerOut: boolean?, shielded: boolean? }
 export type TeamResult = { over: boolean, winners: { Side }, losers: { Side }, tie: boolean }
 export type RoyalePlayer<Id> = { id: Id, bones: number, fence: number, outAt: number? }
 export type RoyaleResult<Id> = { over: boolean, ranking: { Id }, bones: { [Id]: number }, survivor: Id? }
@@ -53,7 +76,7 @@ export type RoyaleResult<Id> = { over: boolean, ranking: { Id }, bones: { [Id]: 
 local BattleRules = {}
 
 function BattleRules.canDamage(attackerSide: Side, targetSide: Side, targetKind: Kind, opts: DamageOpts?): boolean
-	local attacker: Kind = if opts and opts.attacker then opts.attacker else "hunter"
+	local attacker: Attacker = if opts and opts.attacker then opts.attacker else "hunter"
 	if opts and opts.attackerOut then
 		return false
 	end
@@ -62,14 +85,49 @@ function BattleRules.canDamage(attackerSide: Side, targetSide: Side, targetKind:
 	end
 	if attacker == "dino" then
 		return targetKind ~= "dino"
-	elseif attacker == "tower" then
-		return targetKind == "dino"
 	end
-	-- A hunter: dinos anywhere; enemy hunters and enemy towers only.
+	-- Every other source: its own side's dinos only (#228, #231).
 	if targetKind == "dino" then
-		return true
+		return attackerSide == targetSide
 	end
+	if attacker ~= "hunter" then
+		return false -- towers, hazards and abilities never touch hunters or towers
+	end
+	-- A hero shot: enemy hunters and enemy towers only.
 	return attackerSide ~= targetSide
+end
+
+function BattleRules.ownDinos<T>(live: { [any]: T }, side: Side, attacker: Attacker): { T }
+	local opts: DamageOpts = { attacker = attacker }
+	local list = {}
+	for _, enemy in live do
+		if BattleRules.canDamage(side, (enemy :: any).side, "dino", opts) then
+			table.insert(list, enemy)
+		end
+	end
+	return list
+end
+
+function BattleRules.pvpDamage(amount: number, attackerSide: Side, targetSide: Side, targetKind: Kind, opts: DamageOpts?): number
+	if amount <= 0 or not BattleRules.canDamage(attackerSide, targetSide, targetKind, opts) then
+		return 0
+	end
+	if opts and opts.attacker and opts.attacker ~= "hunter" then
+		return amount -- the PvP levers are for hunters' shots
+	end
+	if targetKind == "tower" then
+		return amount * Config.Tuning.PvPTowerDamage
+	elseif targetKind == "hunter" then
+		if opts and opts.shielded then
+			return 0 -- Camo Cover
+		end
+		return amount * Config.Tuning.PvPHunterDamage
+	end
+	return amount
+end
+
+function BattleRules.shielded(sinceSpawn: number): boolean
+	return sinceSpawn >= 0 and sinceSpawn < Config.Tuning.SpawnShield
 end
 
 function BattleRules.canSupport(sourceSide: Side, targetSide: Side): boolean

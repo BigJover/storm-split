@@ -11,11 +11,18 @@
 	a size still takes the tick when it lands.
 
 	Kills are credited to whoever lit the fire.
+
+	SIDES (PLAN T78, DECISIONS #231): a patch burns only the dinos of the side whose track
+	it lies on, which is always its maker's side (Shared/BattleRules: a hazard touches only
+	its own side's dinos); a fire is only lit on a dino its maker may hit.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Combat = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Combat"))
+local BattleRules = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("BattleRules"))
+
+local HAZARD: BattleRules.DamageOpts = table.freeze({ attacker = "hazard" })
 
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
@@ -106,7 +113,7 @@ function Hazards.step(dt: number)
 			continue
 		end
 		for _, enemy in live do
-			if not enemy.def.flying and enemy.side == burn.side and math.abs(enemy.distance - burn.distance) <= burn.reach then
+			if not enemy.def.flying and BattleRules.canDamage(burn.side, enemy.side, "dino", HAZARD) and math.abs(enemy.distance - burn.distance) <= burn.reach then
 				credit(burn.owner, Enemies.damage(enemy, burn.dps * dt, burn.piercesArmor))
 			end
 		end

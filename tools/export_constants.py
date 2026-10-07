@@ -1022,6 +1022,37 @@ BATTLE_LEVERS = [
 BUY_IN_RANGE = (10, 20)  # VISION.md "Amber economy": a 10-20 buy-in
 
 
+def pvp_lever_problem(key, value):
+    """Why a PvP damage lever is out of range, or None (DECISIONS #211, #212, #228).
+    PvP tower damage stays in (0, 1]: raiding towers is the battle modes' point, so it
+    can't be switched off. PvP hunter damage may be 0 (hunter vs hunter off, #228).
+
+    >>> pvp_lever_problem("PvPHunterDamage", 0) is None
+    True
+    >>> pvp_lever_problem("PvPHunterDamage", 0.5) is None
+    True
+    >>> pvp_lever_problem("PvPHunterDamage", 1) is None
+    True
+    >>> pvp_lever_problem("PvPHunterDamage", -0.1)
+    'Tuning PvPHunterDamage (-0.1) must be in [0, 1] (0 = hunter vs hunter off; DECISIONS #212, #228)'
+    >>> pvp_lever_problem("PvPHunterDamage", 1.5) is None
+    False
+    >>> pvp_lever_problem("PvPTowerDamage", 0)
+    'Tuning PvPTowerDamage (0) must be in (0, 1] (DECISIONS #211, #228)'
+    >>> pvp_lever_problem("PvPTowerDamage", 0.35) is None
+    True
+    >>> pvp_lever_problem("PvPTowerDamage", 1.2) is None
+    False
+    """
+    if key == "PvPHunterDamage":
+        if not (0 <= value <= 1):
+            return f"Tuning {key} ({value:g}) must be in [0, 1] (0 = hunter vs hunter off; DECISIONS #212, #228)"
+        return None
+    if not (0 < value <= 1):
+        return f"Tuning {key} ({value:g}) must be in (0, 1] (DECISIONS #211, #228)"
+    return None
+
+
 def validate_battle(data, problems, notes):
     """Battle modes, stakes and Trophies (PLAN phase 7 T73). Mirrors Shared/Stakes'
     arithmetic for the competitive-beats-casual check (DECISIONS #215)."""
@@ -1042,8 +1073,9 @@ def validate_battle(data, problems, notes):
     if not (splits[0] >= splits[1] >= splits[2]):
         problems.append("Tuning Royale pot shares must not grow with a worse placement")
     for key in ("PvPTowerDamage", "PvPHunterDamage"):
-        if not (0 < t[key] <= 1):
-            problems.append(f"Tuning {key} ({t[key]:g}) must be in (0, 1] (DECISIONS #211-#212)")
+        problem = pvp_lever_problem(key, t[key])
+        if problem:
+            problems.append(problem)
     for key in ("BattleBuildTime", "BattleRoundTime", "BattleSideDensity", "OvertimeHPStep"):
         if t[key] <= 0:
             problems.append(f"Tuning {key} must be above 0")

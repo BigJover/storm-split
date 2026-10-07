@@ -71,6 +71,7 @@ local Upgrades = require(Shared:WaitForChild("Upgrades"))
 local GunRules = require(Shared:WaitForChild("GunRules"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 local Sides = require(Shared:WaitForChild("Sides"))
+local BattleRules = require(Shared:WaitForChild("BattleRules"))
 
 local Economy = require(script.Parent.Economy)
 local Progression = require(script.Parent.Progression)
@@ -138,7 +139,7 @@ local teamPops = 0 -- this round's pending pops over every hunter present
 -- for a shrink)
 local onPop: ((Player?, string?) -> ())? = nil
 local onBounty: ((Player, string) -> ())? = nil -- (hunter, a Bounties event): "ability"
-local gearAt: ((Vector3) -> HeroStats.Gear)? = nil -- Towers.hunterGearAt
+local gearAt: ((Vector3, number?) -> HeroStats.Gear)? = nil -- Towers.hunterGearAt (own side's Armories)
 local difficultyOf: (() -> { heroDamageMult: number })? = nil -- the chosen Difficulty row (Main)
 local GEAR_CHECK = 0.2 -- seconds between checks of where each hunter stands
 local fireEvent: RemoteEvent
@@ -503,6 +504,8 @@ end
 
 ------------------------------------------------------------------ shooting
 
+local ABILITY: BattleRules.DamageOpts = table.freeze({ attacker = "ability" })
+
 local function canHit(enemy: Enemies.Enemy, stats: HeroStats.Stats): boolean
 	if enemy.def.flying and not stats.hitsAir then
 		return false
@@ -706,7 +709,9 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 		muzzle += body.CFrame.RightVector * DUAL_GUN_OFFSET * s.gunSide
 	end
 	local color = Cosmetics.tracerColour(worn(player), HERO_COLORS[s.hero or ""] or Color3.new(1, 1, 1))
-	local live = Enemies.getLive()
+	-- Your own side's dinos only (Shared/BattleRules, #228): pierce, ricochet, splash, muzzle
+	-- rounds and burns all pick from this list. Co-op: every dino.
+	local live = BattleRules.ownDinos(Enemies.getLive(), sideOf(player), "hunter")
 	local outcome: Outcome = { hit = false, killed = false }
 	local ricochetTakeDowns = 0
 
@@ -778,7 +783,8 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 		local markStats = table.clone(stats)
 		markStats.hitsAir = true
 		markStats.piercesArmor = true
-		local target = alongRay(origin, direction, body.Position, markStats, Enemies.getLive(), 1)[1]
+		local own = BattleRules.ownDinos(Enemies.getLive(), sideOf(player), "ability") -- your side's dinos only (#231)
+		local target = alongRay(origin, direction, body.Position, markStats, own, 1)[1]
 		if not target then
 			return false, "No dino there to dart"
 		end
@@ -788,7 +794,7 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 			-- Mastery perk: the dart also marks the nearest other dinos, at a share of
 			-- its strength, for the same time. Enemies.mark never weakens a stronger mark.
 			local others, positions = {}, {}
-			for _, other in Enemies.getLive() do
+			for _, other in own do
 				if other ~= target and other.alive then
 					table.insert(others, other)
 					table.insert(positions, other.part.Position)
@@ -815,6 +821,10 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 			return false, "Too far away"
 		end
 		local trackSide, centre = Enemies.trackNear(aim) -- the nearest track (co-op: the only one)
+		local mySide = sideOf(player)
+		-- On another camp's track the strike lands but touches nothing (#231: no crowd control
+		-- on a rival's dinos, no burn there either).
+		local ownTrack = BattleRules.canDamage(mySide, trackSide, "dino", ABILITY)
 		local ground = Enemies.pointAt(centre, trackSide) + Vector3.new(0, 0.5, 0)
 		local delay = Config.Tuning.AirburstDelay
 		local power, stun, radius = stats.abilityPower * levelScale(s), stats.abilitySeconds, stats.abilityRadius
@@ -823,12 +833,12 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 		task.delay(delay, function()
 			Effects.part(Vector3.one * radius * 2, CFrame.new(ground), color, 0.25, Enum.PartType.Ball).Transparency = 0.4
 			for _, enemy in Enemies.getLive() do
-				if enemy.side == trackSide and math.abs(enemy.distance - centre) <= radius then
+				if enemy.side == trackSide and BattleRules.canDamage(mySide, enemy.side, "dino", ABILITY) and math.abs(enemy.distance - centre) <= radius then
 					Enemies.stun(enemy, stun)
 					credit(player, Enemies.damage(enemy, power, true))
 				end
 			end
-			if burnPercent > 0 then
+			if burnPercent > 0 and ownTrack then
 				-- Mastery perk: the strike leaves burning ground, each second a share of
 				-- the strike's damage; armour-piercing like the strike, credited to the hunter.
 				Hazards.burn(centre, radius, power * burnPercent / 100, burnSeconds, true, player, trackSide)
@@ -837,16 +847,18 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 	elseif hero.abilityKind == "HEAL" then
 		-- Flat heal, no level scaling (DECISIONS #13).
 		local radius = stats.healRadius
+		local mySide = sideOf(player)
 		for _, other in Players:GetPlayers() do
 			local otherBody = root(other)
-			if otherBody and (otherBody.Position - body.Position).Magnitude <= radius then
+			-- Your own team only (#212): never an enemy hunter.
+			if otherBody and BattleRules.canSupport(mySide, sideOf(other)) and (otherBody.Position - body.Position).Magnitude <= radius then
 				Health.heal(other, stats.heal)
 				guard(playerGuards, other, stats.guardPercent, stats.guardSeconds)
 			end
 		end
 		if stats.healRepairsTowers then
 			for _, tower in Towers.targets() do
-				if (tower.position - body.Position).Magnitude <= radius then
+				if BattleRules.canSupport(mySide, tower.side) and (tower.position - body.Position).Magnitude <= radius then
 					Towers.heal(tower, stats.heal)
 					guard(towerGuards, tower, stats.guardPercent, stats.guardSeconds)
 				end
@@ -975,12 +987,13 @@ function Hero.matchTally(player: Player): PlayerLevel.Tally?
 	return if s then table.clone(s.tally) else nil
 end
 
--- Overdrive: the strongest active boost from a player standing near this point.
-function Hero.towerRateBoost(position: Vector3): number
+-- Overdrive (Rally Cry): the strongest active boost from a player standing near this
+-- point, for a tower on `side` (default 1, co-op): own team's hunters only (#212).
+function Hero.towerRateBoost(position: Vector3, side: number?): number
 	local now = os.clock()
 	local best = 0
 	for player, s in states do
-		if now < s.overdriveUntil and s.overdrivePercent > best then
+		if now < s.overdriveUntil and s.overdrivePercent > best and BattleRules.canSupport(sideOf(player), side or 1) then
 			local body = root(player)
 			if body and (body.Position - position).Magnitude <= s.overdriveRadius then
 				best = s.overdrivePercent
@@ -1003,7 +1016,7 @@ end
 export type Hooks = {
 	onPop: ((Player?, string?) -> ())?,
 	onBounty: ((Player, string) -> ())?,
-	gearAt: ((Vector3) -> HeroStats.Gear)?,
+	gearAt: ((Vector3, number?) -> HeroStats.Gear)?,
 	difficulty: (() -> { heroDamageMult: number })?,
 }
 
@@ -1026,7 +1039,7 @@ function Hero.init(remotes: Folder, hooks: Hooks?)
 			since = 0
 			for player, s in states do
 				local body = root(player)
-				local gear = if body and gearAt then gearAt(body.Position) else HeroStats.NO_GEAR
+				local gear = if body and gearAt then gearAt(body.Position, sideOf(player)) else HeroStats.NO_GEAR
 				local old = s.gear
 				if gear.recoilMult ~= old.recoilMult or gear.reloadMult ~= old.reloadMult or gear.spreadMult ~= old.spreadMult or gear.ratePercent ~= old.ratePercent then
 					s.gear = gear

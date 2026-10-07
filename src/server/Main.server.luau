@@ -181,7 +181,7 @@ Airdrops.init(map.effectFolder)
 Towers.init(map.towerFolder, {
 	onPop = popped,
 	extraRatePercent = function(tower)
-		return Hero.towerRateBoost(tower.position) -- Overdrive
+		return Hero.towerRateBoost(tower.position, tower.side) -- Overdrive (own side's hunters, T78)
 	end,
 	resistOf = function(tower)
 		return { Hero.towerGuardOf(tower) } -- Field Medic Second Wind
@@ -204,7 +204,9 @@ Health.init(remotes, {
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
 		local guard = Hero.guardOf(player)
-		return if root and root:IsA("BasePart") then { Towers.resistAt(root.Position), guard } else { guard }
+		-- your own side's Armories only (T78)
+		local side = Sides.playerSide(player:GetAttribute("Side"), ReplicatedStorage:GetAttribute("Sides"))
+		return if root and root:IsA("BasePart") then { Towers.resistAt(root.Position, side), guard } else { guard }
 	end,
 })
 DinoAttacks.init({
