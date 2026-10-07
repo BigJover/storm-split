@@ -8,7 +8,7 @@ PLAYTEST.md re-run; blocked right now on Jovan reconnecting Rojo). It does not b
 phase-7 Builder batches. Each phase-7 batch still ends with its own Tester step, and phase 7
 is not "fully done" until those steps and Jovan's multi-player steps (T86) have run.
 
-**Status (2026-10-06): batch 1 signed off (T73 62608e6, T71 86c94bf, T72 4b2a3bc; 467 specs; #227–#228). T75–T76 final as written. Queued: T78 amendments below.**
+**Status (2026-10-06): batch 2 signed off (T75 0ab8f14, T76 9b356fa; 491 specs; #231). T77–T78 final with #231's additions. Earlier: batch 1 signed off (T73 62608e6, T71 86c94bf, T72 4b2a3bc; 467 specs; #227–#228). T75–T76 final as written. Queued: T78 amendments below.**
 
 Round 1–4 rules hold (one task = one commit, pushed; `tools/check.sh`, `export_constants.py`,
 `tools/test.sh` green; diff `Config.luau` after every sheet change; openpyxl only, assert a
@@ -229,6 +229,7 @@ balance.
   (ARCHITECTURE §4 updated); co-op smoke unchanged.
 
 ### T77 — Battle match flow (server)
+- **#231 additions:** round income (base + Supply Camps) and heals are paid per living side to that side's pot. **Airdrop chests drop on every living side's own plot, one each; only that side's hunters can pick one up, and it pays that side.** Enemy hunters can't see a pickup prompt on it.
 - `Main` runs TEAM/ROYALE: assign sides (`Matchmaking`), spawn per side, one build phase,
   lockstep rounds (`BattleRules.nextRoundDue`), per-side round income and heals, elimination
   (towers removed, dinos despawned, players spectate), overtime, Royale end + survivor bonus,
@@ -241,6 +242,7 @@ balance.
   shows the peak enemies under the cap and the script cost (record it).
 
 ### T78 — PvP damage
+- **#231 additions:** (1) `canDamage` covers **every source**: tower shots, splash, bomblets, burning ground, Tar Pit, Storm Coil chains, Falcon, Ballista, abilities (Flare Strike stun, Tracking Dart, Rally Cry) and hero shots. Each one affects **only its own side's dinos**. Towers *target* only their own side's dinos (a targeting filter, not just damage), so they never waste shots across the strip. Specs per source family. (2) Refusal strings (exact): "That's another camp's zone. Build inside your own camp." / "You can't upgrade another camp's tower." / "You can't repair another camp's tower." / "You can't sell another camp's tower." / "Not enough cash in your camp." (3) **Tower panel on an enemy tower is read-only**: name, tier, "<Camp>'s tower", HP bar; no upgrade/repair/sell buttons (the server refusal stays). Passes the no-trap rule.
 - **From batch-1 review (#228), first commits of T78:** `BattleRules.canDamage` refuses a hunter hitting **another side's dinos** (dinos are only hurt by their own side's hunters/towers, so no Bone-stealing); every enemy carries its `side` from T75's `Enemies.enqueue(side, …)`. Exporter: `PvP hunter damage` allowed in **[0, 1]** (0 = hunter-vs-hunter off), `PvP tower damage` stays (0, 1]; spec both.
 - Shots (server-validated, as today) can hit an enemy side's towers and enemy hunters per
   `BattleRules.canDamage` × the PvP levers. Spawn shield; respawn on own side; abilities
