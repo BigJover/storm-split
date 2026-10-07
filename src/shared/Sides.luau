@@ -26,6 +26,9 @@
 	                                  another side's tower, or nil on your own side's
 	  attr(name, side)           -> a per-side attribute's name: side 1 keeps today's name
 	                                  ("Cash"), side n adds n ("Cash2"); Server/Economy publishes
+	  ZONE_REFUSAL               -> a battle build outside your own zone (Shared/Placement, T78)
+	  cashRefusal(sides)         -> "Not enough cash" (co-op) / "Not enough cash in your camp."
+	  isEnemyTower(mySide, towerSide) -> another camp's tower: its panel is read-only (T78)
 ]]
 
 local Config = require(script.Parent.Config)
@@ -164,17 +167,30 @@ end
 -- Why a hunter on `mySide` may not upgrade / repair / sell a tower on `towerSide`, or nil
 -- when they may: only their own side's towers (a teammate's too), never an enemy's
 -- (PLAN T76, DECISIONS #211, #212). Selling stays the builder's on top of this (Server/Shop).
+-- The exact refusal strings (PLAN T78, DECISIONS #231).
 local MANAGE_REFUSALS = table.freeze({
-	upgrade = "You can't upgrade another camp's tower",
-	repair = "Only its own camp can repair it",
-	sell = "You can't sell another camp's tower",
+	upgrade = "You can't upgrade another camp's tower.",
+	repair = "You can't repair another camp's tower.",
+	sell = "You can't sell another camp's tower.",
 })
+-- A battle build outside your own zone (Shared/Placement; PLAN T78).
+Sides.ZONE_REFUSAL = "That's another camp's zone. Build inside your own camp."
 
 function Sides.manageRefusal(action: string, mySide: number, towerSide: number): string?
 	if mySide == towerSide then
 		return nil
 	end
 	return MANAGE_REFUSALS[action] or "That's another camp's tower"
+end
+
+-- Another camp's tower: the tower panel is read-only on it (PLAN T78).
+function Sides.isEnemyTower(mySide: number, towerSide: number): boolean
+	return mySide ~= towerSide
+end
+
+-- Not enough of your side's cash: co-op keeps its words; a battle says whose cash (T78).
+function Sides.cashRefusal(sides: number): string
+	return if sides > 1 then "Not enough cash in your camp." else "Not enough cash"
 end
 
 function Sides.attr(name: string, side: number): string

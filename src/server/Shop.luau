@@ -145,7 +145,7 @@ local function build(player: Player, towerKey: unknown, position: unknown): (boo
 		return false, "Too far from you"
 	end
 	if not Economy.trySpendFor(side, def.baseCost) then -- your own side's cash (T76)
-		return false, "Not enough cash"
+		return false, Sides.cashRefusal(layout.sides)
 	end
 
 	local tower = Towers.place(towerKey, spot, player, side)
@@ -175,7 +175,7 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 	if not tower then
 		return false, "That tower is gone"
 	end
-	local side = sideOf(player)
+	local side, layout = sideOf(player)
 	local refusal = Sides.manageRefusal("upgrade", side, tower.side) -- never an enemy's tower (T76)
 	if refusal then
 		return false, refusal
@@ -202,7 +202,7 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 	-- A Quartermaster's Logistics aura discounts upgrades on towers in its range.
 	local cost = Pricing.upgradeCost(step, tower.buff.discountPercent)
 	if not Economy.trySpendFor(side, cost) then
-		return false, "Not enough cash"
+		return false, Sides.cashRefusal(layout.sides)
 	end
 
 	if not Towers.upgrade(tower, pathIndex) then
@@ -227,7 +227,7 @@ local function repair(player: Player, towerId: unknown): (boolean, string)
 	if not tower then
 		return false, "That tower is gone"
 	end
-	local side = sideOf(player)
+	local side, layout = sideOf(player)
 	local refusal = Sides.manageRefusal("repair", side, tower.side) -- never an enemy's tower (T76)
 	if refusal then
 		return false, refusal
@@ -245,7 +245,7 @@ local function repair(player: Player, towerId: unknown): (boolean, string)
 	-- repairing hunter's Handyman mastery perk (Shared/SmallPerks).
 	local cost = Combat.repairCost(spent[tower] or 0, tower.hp, tower.maxHp, tower.buff.discountPercent, SmallPerks.ofPlayer(player).repairCostMult)
 	if cost > 0 and not Economy.trySpendFor(side, cost) then
-		return false, "Not enough cash"
+		return false, Sides.cashRefusal(layout.sides)
 	end
 	local trampled = tower.knockedOut
 	Towers.repair(tower) -- not added to spent: a repair doesn't raise the refund

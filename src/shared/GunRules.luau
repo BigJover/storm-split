@@ -19,6 +19,11 @@
 	  charges /       ability charges (Rapid Response holds 2): `fullAt` is when
 	  useCharge /     every charge is back; charges come back one cooldown apart
 	  readyAt
+	  nearestOnRay    PvP (PLAN T78): of `points` (enemy towers, enemy hunters), the one a
+	                  pellet hits: in `range` of the shooter, in front of the camera,
+	                  within `assist` studs of the ray, nearest along it. Returns its
+	                  index and distance along the ray, or nil. A dino nearer along the
+	                  same ray takes the pellet instead (Server/Hero compares).
 ]]
 
 local GunRules = {}
@@ -126,6 +131,19 @@ function GunRules.readyAt(fullAt: number, now: number, max: number, cooldown: nu
 		return now
 	end
 	return fullAt - (max - 1) * cooldown
+end
+
+function GunRules.nearestOnRay(origin: Vector3, direction: Vector3, from: Vector3, range: number, assist: number, points: { Vector3 }): (number?, number?)
+	local best, bestAlong = nil, math.huge
+	for i, point in points do
+		if (point - from).Magnitude <= range then
+			local along = (point - origin):Dot(direction)
+			if along > 0 and along < bestAlong and (origin + direction * along - point).Magnitude <= assist then
+				best, bestAlong = i, along
+			end
+		end
+	end
+	return best, if best then bestAlong else nil
 end
 
 return GunRules

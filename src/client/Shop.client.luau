@@ -74,6 +74,7 @@ local SELL_COLOR = Color3.fromRGB(190, 80, 90)
 local LOCKED_COLOR = Color3.fromRGB(70, 66, 82)
 local REPAIR_COLOR = Color3.fromRGB(200, 140, 60)
 local TRAMPLED_COLOR = Color3.fromRGB(255, 110, 100)
+local HP_BAR_CELLS = 10 -- visual only: the read-only panel's HP bar on another camp's tower (T78)
 local BUILD_COLOR = Color3.fromRGB(70, 180, 110)
 local TEXT = Color3.fromRGB(240, 236, 250)
 local TEXT_DIM = Color3.fromRGB(150, 145, 165)
@@ -1343,6 +1344,26 @@ renderRows = function()
 		local hp = (managed:GetAttribute("HP") or 0) :: number
 		local maxHp = (managed:GetAttribute("MaxHP") or 0) :: number
 		local trampled = managed:GetAttribute("KO") == true
+		-- Another camp's tower (PLAN T78, DECISIONS #231): read-only. Name, tier, whose
+		-- camp, HP bar; no upgrade, repair or sell (the server refuses them anyway).
+		local towerSide = managed:GetAttribute("Side")
+		if typeof(towerSide) == "number" and Sides.isEnemyTower((mySide()), towerSide) then
+			local camp = ReplicatedStorage:GetAttribute(Sides.attr("Camp", towerSide))
+			title.Text = `{if def then def.display else "Tower"}  ·  {tiers[1]} · {tiers[2]} · {tiers[3]}`
+			if trampled then
+				title.TextColor3 = TRAMPLED_COLOR
+			end
+			addRow(1, `<b>{escape(if typeof(camp) == "string" then camp else "Another camp")}'s tower</b>`, PANEL_COLOR, false)
+			if maxHp > 0 then
+				local share = math.clamp(hp / maxHp, 0, 1)
+				local filled = math.floor(share * HP_BAR_CELLS + 0.5)
+				local bar = string.rep("█", filled) .. string.rep("░", HP_BAR_CELLS - filled)
+				addRow(2, `<font size="13">HP {bar}  {math.ceil(hp)} / {math.floor(maxHp + 0.5)}</font>`, PANEL_COLOR, false)
+			elseif def and def.untouchable then
+				addRow(2, `<font size="13">Can't be damaged: dinos ignore it, no repairs</font>`, PANEL_COLOR, false)
+			end
+			return
+		end
 		if trampled then
 			title.Text = `Trampled — repair it  ·  {if def then def.display else "Tower"}`
 			title.TextColor3 = TRAMPLED_COLOR

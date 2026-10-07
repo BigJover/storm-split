@@ -121,9 +121,17 @@ test("shop rules: your own side's towers only, never an enemy's", function()
 		ok(type(why) == "string" and #why > 0, `{action}: enemy refused`)
 		ok(Sides.manageRefusal(action, 3, 1) ~= nil, `{action}: the other way too`)
 	end
-	eq(Sides.manageRefusal("upgrade", 1, 2), "You can't upgrade another camp's tower")
-	eq(Sides.manageRefusal("repair", 2, 1), "Only its own camp can repair it")
-	eq(Sides.manageRefusal("sell", 1, 3), "You can't sell another camp's tower")
+	eq(Sides.manageRefusal("upgrade", 1, 2), "You can't upgrade another camp's tower.")
+	eq(Sides.manageRefusal("repair", 2, 1), "You can't repair another camp's tower.")
+	eq(Sides.manageRefusal("sell", 1, 3), "You can't sell another camp's tower.")
+	-- The exact T78 strings (PLAN T78, #231): the zone and cash refusals.
+	eq(Sides.ZONE_REFUSAL, "That's another camp's zone. Build inside your own camp.")
+	eq(Sides.cashRefusal(2), "Not enough cash in your camp.")
+	eq(Sides.cashRefusal(10), "Not enough cash in your camp.")
+	eq(Sides.cashRefusal(1), "Not enough cash", "co-op keeps its words")
+	-- The tower panel is read-only on another camp's tower, never on your own side's.
+	eq(Sides.isEnemyTower(1, 2), true)
+	eq(Sides.isEnemyTower(2, 2), false, "a teammate's tower")
 	ok(Sides.manageRefusal("anything", 1, 2) ~= nil, "an unknown action is still refused")
 end)
 

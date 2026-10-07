@@ -155,3 +155,25 @@ test("Camo Cover lasts Spawn shield seconds from the (re)spawn", function()
 	eq(BattleRules.shielded(T.SpawnShield + 10), false)
 	eq(BattleRules.shielded(-1), false, "no spawn time recorded")
 end)
+
+-- Which enemy a pellet hits (GunRules.nearestOnRay) -------------------------------------
+
+local GunRules = require(src.shared.GunRules)
+
+test("nearestOnRay: the nearest enemy along the ray, in range, in front, within assist", function()
+	local origin, dir, from = Vector3.new(0, 5, 0), Vector3.new(1, 0, 0), Vector3.new(0, 3, 0)
+	local points = {
+		Vector3.new(10, 5, 2), -- on the ray (2 off), near: this one
+		Vector3.new(30, 5, 1), -- on the ray, far
+		Vector3.new(-5, 5, 0), -- behind the camera
+		Vector3.new(5, 5, 9), -- beside the ray, outside assist
+	}
+	local index, along = GunRules.nearestOnRay(origin, dir, from, 50, 3, points)
+	eq(index, 1)
+	near(along :: number, 10)
+	eq((GunRules.nearestOnRay(origin, dir, from, 50, 3, { points[2], points[1] })), 2, "order doesn't matter")
+	eq((GunRules.nearestOnRay(origin, dir, from, 20, 3, { points[2] })), nil, "out of the gun's range")
+	eq((GunRules.nearestOnRay(origin, dir, from, 50, 3, { points[3] })), nil, "behind")
+	eq((GunRules.nearestOnRay(origin, dir, from, 50, 3, { points[4] })), nil, "outside aim assist")
+	eq((GunRules.nearestOnRay(origin, dir, from, 50, 3, {})), nil, "co-op: no foes")
+end)

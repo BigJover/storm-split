@@ -48,7 +48,9 @@ src/
 │   ├── SmallPerks.luau      Mastery small perks (levels 6-19): pick-up reach, round heal, respawn x, repair x
 │   ├── ShopRules.luau       Which towers are for sale yet; placement and prompt distances
 │   ├── Modes.luau           Game modes and tracks the home screen offers (availability, display); sides per mode
-│   ├── BattleRules.luau     Battle modes: who may damage whom, lockstep rounds, side out, overtime HP,
+│   ├── BattleRules.luau     Battle modes: who may damage whom (every source family: hunter shots, towers,
+│   │                        hazards, abilities, dinos; own side's dinos only), PvP damage x levers, Camo Cover,
+│   │                        own-side support; lockstep rounds, side out, overtime HP,
 │   │                        Team and Royale results (survivor bonus, tie-breaks); pure
 │   ├── Matchmaking.luau     Side assignment in one server: sizes within 1, snake draft by Trophies; pure
 │   ├── BattleFlow.luau      Battle match flow: seating (+ Studio stand-ins), camp names and feed lines,
@@ -150,7 +152,7 @@ This dissolves most of the problems the UEFN plan was built around:
 | A tower's tiers and stats | `Towers` | Call `upgrade()` after paying |
 | A tower's HP and trampled state | `Towers` | Call `damage()` / `heal()` / `repair()` (after paying); dinos pick from `targets()`; clients read the body's `HP` / `MaxHP` / `KO` attributes |
 | Cash and lives (the Fence), one pot per side (co-op = side 1; arithmetic in the pure `Shared/Ledger`) | `Economy` | Call `trySpendFor(side)` / `earnFor(side)` / `loseFor(side)` (the side-less `trySpend()` / `earn()` / `lose()` are side 1); clients read their side's `Cash` / `Lives` attributes (`Shared/Sides.attr`: side 1 `Cash`, side n `Cash<n>`) |
-| Player HP (the Humanoid's Health / MaxHealth) | `Health` | Call `damage()` / `heal()` / `healAll()`; clients read the Humanoid |
+| Player HP (the Humanoid's Health / MaxHealth) | `Health` | Call `damage()` / `heal()` / `healAll()`; an enemy hunter's shot goes through `pvpHit()` (Hero, after `Shared/BattleRules.pvpDamage`, which is 0 under Camo Cover: `camoCover()`); clients read the Humanoid |
 | What a tower cost (for refunds) | `Shop` | — |
 | Who built a tower, and its side | `Towers` (`tower.owner`, `tower.side`) | Shop reads them: only the builder sells; upgrades, repairs and sells only on your own side (`Sides.manageRefusal`); builds only in your zone with your side's cash |
 | Pops per player | `Scoreboard` | Towers report kills through the `onPop` hook |

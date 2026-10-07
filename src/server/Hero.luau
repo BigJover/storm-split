@@ -141,6 +141,9 @@ local onPop: ((Player?, string?) -> ())? = nil
 local onBounty: ((Player, string) -> ())? = nil -- (hunter, a Bounties event): "ability"
 local gearAt: ((Vector3, number?) -> HeroStats.Gear)? = nil -- Towers.hunterGearAt (own side's Armories)
 local difficultyOf: (() -> { heroDamageMult: number })? = nil -- the chosen Difficulty row (Main)
+-- PvP (T78): a hunter's shot trampled an enemy tower / downed an enemy hunter (Main: the feed).
+local onRaid: ((Player, any) -> ())? = nil
+local onTranq: ((Player, Player) -> ())? = nil
 local GEAR_CHECK = 0.2 -- seconds between checks of where each hunter stands
 local fireEvent: RemoteEvent
 
@@ -428,7 +431,7 @@ local function upgrade(player: Player, pathIndex: unknown): (boolean, string)
 	local discount = if rewards then rewards.upgradeDiscountPercent else 0
 	local cost = if s.freeUpgrade then 0 else math.floor(step.cost * (1 - discount / 100) + 0.5)
 	if not Economy.trySpendFor(sideOf(player), cost) then -- your own side's cash (T76)
-		return false, "Not enough cash"
+		return false, Sides.cashRefusal(Sides.fromAttributes(ReplicatedStorage:GetAttribute("Sides"), nil).sides)
 	end
 	s.freeUpgrade = false
 	s.tiers[pathIndex] += 1
@@ -650,6 +653,63 @@ local function ricochet(player: Player, stats: HeroStats.Stats, from: Enemies.En
 	return takeDowns
 end
 
+------------------------------------------------------------------ PvP (PLAN T78)
+
+-- What an enemy pellet can hit besides dinos: enemy towers and enemy hunters
+-- (Shared/BattleRules.canDamage; spectators are out of the game and aren't targets).
+-- Empty in co-op (one side), so co-op shots are exactly what they were.
+type Foe = { position: Vector3, tower: any?, hunter: Player? }
+
+local function foesOf(player: Player, mySide: number): { Foe }
+	local foes: { Foe } = {}
+	if Sides.fromAttributes(ReplicatedStorage:GetAttribute("Sides"), nil).sides <= 1 then
+		return foes
+	end
+	for _, tower in Towers.all() do
+		if not tower.knockedOut and BattleRules.canDamage(mySide, tower.side, "tower", { tower = tower.def }) then
+			table.insert(foes, { position = tower.position, tower = tower })
+		end
+	end
+	for _, other in Players:GetPlayers() do
+		local otherBody = root(other)
+		local humanoid = other.Character and other.Character:FindFirstChildOfClass("Humanoid")
+		if other ~= player and otherBody and humanoid and humanoid.Health > 0 and not isOut(other) and BattleRules.canDamage(mySide, sideOf(other), "hunter") then
+			table.insert(foes, { position = otherBody.Position, hunter = other })
+		end
+	end
+	return foes
+end
+
+-- One pellet into an enemy tower or hunter: the shot's damage x the PvP lever (0 for an
+-- immune tower or a hunter under Camo Cover). No Bones (Raid bones 0, #214).
+local function hitFoe(player: Player, mySide: number, foe: Foe, amount: number, outcome: Outcome)
+	outcome.hit = true
+	local tower = foe.tower
+	if tower then
+		local damage = BattleRules.pvpDamage(amount, mySide, tower.side, "tower", { tower = tower.def })
+		local standing = not tower.knockedOut
+		Towers.damage(tower, damage, player)
+		if standing and tower.knockedOut then
+			outcome.killed = true
+			if onRaid then
+				onRaid(player, tower) -- "<name> trampled <Camp>'s <tower>"
+			end
+		end
+		return
+	end
+	local victim = foe.hunter
+	if victim then
+		local damage = BattleRules.pvpDamage(amount, mySide, sideOf(victim), "hunter", { shielded = Health.camoCover(victim) })
+		local _, downed = Health.pvpHit(victim, damage)
+		if downed then
+			outcome.killed = true
+			if onTranq then
+				onTranq(victim, player) -- "Tranqed by <name>!"
+			end
+		end
+	end
+end
+
 local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown, scoped: unknown)
 	if gameOver() or isOut(player) then
 		return
@@ -711,15 +771,30 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 	local color = Cosmetics.tracerColour(worn(player), HERO_COLORS[s.hero or ""] or Color3.new(1, 1, 1))
 	-- Your own side's dinos only (Shared/BattleRules, #228): pierce, ricochet, splash, muzzle
 	-- rounds and burns all pick from this list. Co-op: every dino.
-	local live = BattleRules.ownDinos(Enemies.getLive(), sideOf(player), "hunter")
+	local mySide = sideOf(player)
+	local live = BattleRules.ownDinos(Enemies.getLive(), mySide, "hunter")
 	local outcome: Outcome = { hit = false, killed = false }
 	local ricochetTakeDowns = 0
+	local foes = foesOf(player, mySide)
+	local foePoints = {}
+	for i, foe in foes do
+		foePoints[i] = foe.position
+	end
+	local pelletDamage = stats.damage * levelScale(s)
 
 	for _ = 1, stats.shotsPerTrigger do
 		for _ = 1, stats.pellets do
 			local pelletDirection = scatter(direction, cone)
 			local struck = alongRay(origin, pelletDirection, body.Position, stats, live, stats.pierce)
-			if #struck == 0 then
+			-- PvP: an enemy tower or hunter nearer along the ray than the first dino takes
+			-- the pellet (direct hits only: no pierce, ricochet or splash onto them).
+			local foeIndex, foeAlong = GunRules.nearestOnRay(origin, pelletDirection, body.Position, stats.range, Config.Tuning.WeaponAimAssist, foePoints)
+			local dinoAlong = if #struck > 0 then (struck[1].part.Position - origin):Dot(pelletDirection) else math.huge
+			if foeIndex and foeAlong and foeAlong < dinoAlong then
+				local foe = foes[foeIndex]
+				Effects.tracer(muzzle, foe.position, color)
+				hitFoe(player, mySide, foe, pelletDamage, outcome)
+			elseif #struck == 0 then
 				Effects.tracer(muzzle, origin + pelletDirection * ((muzzle - origin).Magnitude + stats.range), color)
 			else
 				Effects.tracer(muzzle, struck[#struck].part.Position, color)
@@ -1018,6 +1093,8 @@ export type Hooks = {
 	onBounty: ((Player, string) -> ())?,
 	gearAt: ((Vector3, number?) -> HeroStats.Gear)?,
 	difficulty: (() -> { heroDamageMult: number })?,
+	onRaid: ((Player, any) -> ())?,
+	onTranq: ((Player, Player) -> ())?,
 }
 
 function Hero.init(remotes: Folder, hooks: Hooks?)
@@ -1025,6 +1102,8 @@ function Hero.init(remotes: Folder, hooks: Hooks?)
 	onBounty = hooks and hooks.onBounty
 	gearAt = hooks and hooks.gearAt
 	difficultyOf = hooks and hooks.difficulty
+	onRaid = hooks and hooks.onRaid
+	onTranq = hooks and hooks.onTranq
 
 	-- Outfitter Armory buffs follow the hunter around: a few times a second,
 	-- re-read what covers where they stand; publish it (Gear* attributes, so

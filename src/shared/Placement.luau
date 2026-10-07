@@ -85,7 +85,7 @@ function Placement.check(position: Vector3, others: { Vector3 }, onTrack: boolea
 
 	local z = zone or COOP_ZONE
 	if world.X < z.min.X or world.X > z.max.X or world.Y < z.min.Y or world.Y > z.max.Y then
-		return false, if z.battle then "Outside your build zone" else "Outside the build area"
+		return false, if z.battle then Sides.ZONE_REFUSAL else "Outside the build area"
 	end
 	-- The track rules below run on the co-op track: move the spot back by the side's offset.
 	local p = world - flat(z.offset)

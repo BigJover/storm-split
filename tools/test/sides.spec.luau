@@ -245,7 +245,7 @@ test("every side's copy places exactly like co-op's map", function()
 				local wantOk, wantWhy = Placement.check(p, {}, onTrack)
 				local gotOk, gotWhy = Placement.check(p + zone.offset, {}, onTrack, zone)
 				if wantWhy == "Outside the build area" then
-					wantWhy = "Outside your build zone"
+					wantWhy = "That's another camp's zone. Build inside your own camp."
 				end
 				if gotOk ~= wantOk or gotWhy ~= wantWhy then
 					error(`side {side} at {p}: co-op {wantOk}/{wantWhy}, side {gotOk}/{gotWhy}`)
@@ -261,7 +261,7 @@ test("a ghost outside your zone is refused, the same rule client and server", fu
 	local spot = Vector3.new(0, Track.GroundTop, 0) + theirs.offset -- open ground on side 2
 	local fits, why = Placement.check(spot, {}, false, mine)
 	eq(fits, false, "side 1 builds on side 2")
-	eq(why, "Outside your build zone")
+	eq(why, "That's another camp's zone. Build inside your own camp.")
 	eq((Placement.check(spot, {}, false, theirs)), true, "side 2 builds there")
 	-- The crossing strip is nobody's.
 	local strip = layout.crossings[1]

@@ -35,6 +35,7 @@ local PlayerLevel = require(Shared:WaitForChild("PlayerLevel"))
 local Pricing = require(Shared:WaitForChild("Pricing"))
 local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
 local Sides = require(Shared:WaitForChild("Sides"))
+local BattleFlow = require(Shared:WaitForChild("BattleFlow"))
 
 local MapBuilder = require(script.Parent.MapBuilder)
 local Enemies = require(script.Parent.Enemies)
@@ -217,7 +218,19 @@ DinoAttacks.init({
 	onBite = Towers.bitten,
 })
 Shop.init(remotes, { onBounty = Progression.bountyEvent }) -- build, upgrade, repair
-Hero.init(remotes, { onPop = popped, onBounty = Progression.bountyEvent, gearAt = Towers.hunterGearAt, difficulty = difficulty }) -- ability
+Hero.init(remotes, {
+	onPop = popped,
+	onBounty = Progression.bountyEvent,
+	gearAt = Towers.hunterGearAt,
+	difficulty = difficulty,
+	-- PvP feed (T78): a raid knock-out for everyone; a hunter down told to them alone.
+	onRaid = function(player, tower)
+		Battle.announce(BattleFlow.raidLine(player.DisplayName, Battle.campOf(tower.side), tower.def.display))
+	end,
+	onTranq = function(victim, attacker)
+		Battle.tell(victim, BattleFlow.tranqLine(attacker.DisplayName))
+	end,
+}) -- ability
 Battle.init(remotes) -- the kill feed
 
 ------------------------------------------------------------------ host

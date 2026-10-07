@@ -13,6 +13,11 @@
 	plug in through the `resistOf` hook (Main). A hit from a dino
 	tells that hunter alone what it was (the "Hurt" remote, Shared/HitNotice;
 	DECISIONS #39).
+
+	PvP (PLAN T78, DECISIONS #212): an enemy hunter's shot lands through pvpHit() (the
+	damage already x PvP hunter damage, Shared/BattleRules.pvpDamage). Camo Cover: for
+	Tuning Spawn shield seconds after each (re)spawn a hunter takes no PvP damage
+	(camoCover(); the character's "CamoUntil" attribute, server time, in a battle).
 ]]
 
 local Players = game:GetService("Players")
@@ -21,12 +26,14 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Combat = require(Shared:WaitForChild("Combat"))
+local BattleRules = require(Shared:WaitForChild("BattleRules"))
 
 local Health = {}
 
 -- Every resistance source that applies to this player right now (percents).
 local resistOf: ((Player) -> { number })? = nil
 local hurtEvent: RemoteEvent? = nil
+local spawnedAt: { [Player]: number } = {} -- os.clock() of each hunter's latest spawn (Camo Cover)
 
 -- What hurt a hunter, for their private hit notice.
 export type Source = { species: string, attack: string }
@@ -50,6 +57,9 @@ function Health.init(remotes: Folder, hooks: Hooks?)
 	hurt.Name = "Hurt" -- (species, attack, damage), to the hunter who was hit only
 	hurt.Parent = remotes
 	hurtEvent = hurt
+	Players.PlayerRemoving:Connect(function(player)
+		spawnedAt[player] = nil
+	end)
 end
 
 -- A fresh character: full health at the Tuning max, and a short force field.
@@ -57,6 +67,13 @@ function Health.setUp(character: Model)
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 	humanoid.MaxHealth = Config.Tuning.PlayerMaxHealth
 	humanoid.Health = humanoid.MaxHealth
+	local player = Players:GetPlayerFromCharacter(character)
+	if player then
+		spawnedAt[player] = os.clock()
+		if ReplicatedStorage:GetAttribute("BattleMode") ~= nil then
+			character:SetAttribute("CamoUntil", workspace:GetServerTimeNow() + Config.Tuning.SpawnShield) -- for the HUD
+		end
+	end
 	local seconds = Config.Tuning.SpawnProtection
 	if seconds > 0 then
 		local shield = Instance.new("ForceField")
@@ -82,6 +99,23 @@ function Health.damage(player: Player, amount: number, source: Source?): number
 		hurtEvent:FireClient(player, source.species, source.attack, dealt)
 	end
 	return dealt
+end
+
+-- Camo Cover: is this hunter still inside Spawn shield seconds of (re)spawning?
+function Health.camoCover(player: Player): boolean
+	local at = spawnedAt[player]
+	return at ~= nil and BattleRules.shielded(os.clock() - at)
+end
+
+-- An enemy hunter's shot (already x PvP hunter damage; 0 under Camo Cover is the caller's,
+-- through BattleRules.pvpDamage). Returns the damage dealt and whether it downed them.
+function Health.pvpHit(player: Player, amount: number): (number, boolean)
+	local humanoid = humanoidOf(player)
+	if not humanoid or amount <= 0 then
+		return 0, false
+	end
+	local dealt = Health.damage(player, amount, nil)
+	return dealt, humanoid.Health <= 0
 end
 
 -- Heals a living player, never past max.
