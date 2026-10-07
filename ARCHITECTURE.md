@@ -51,6 +51,10 @@ src/
 │   ├── BattleRules.luau     Battle modes: who may damage whom, lockstep rounds, side out, overtime HP,
 │   │                        Team and Royale results (survivor bonus, tie-breaks); pure
 │   ├── Matchmaking.luau     Side assignment in one server: sizes within 1, snake draft by Trophies; pure
+│   ├── Sides.luau           Map sides: per-side track copy, build zone, crossing strips, hunter spawn, per-side
+│   │                        density and cap share; co-op = side 1 = today's map; pure, server + client
+│   ├── SpawnQueue.luau      The capped spawn queue, one FIFO per side, sides take turns under the shared cap; pure,
+│   │                        Enemies holds the only one
 │   ├── Stakes.luau          Competitive buy-in: who may stake (offline, Practice), escrow/refund, pot,
 │   │                        Team and Royale splits, casual battle payouts, settle; pure, for Progression
 │   ├── Trophies.luau        Ranked Trophies: delta per mode/placement, arena floors, first-reach arenas; pure
@@ -171,6 +175,9 @@ queue that only drains while live enemies are under `MaxConcurrentEnemies`. (Bef
 dinosaur reskin, enemies split into children and one Barge cascaded into 244; dinos now
 **shrink in place** instead — same species, smaller size, HP shared across sizes — so a
 round's live count is just its spawns.)
+Phase 7 (T75): `Enemies.enqueue(side, key, hpMult)` queues per side (`Shared/SpawnQueue`); the
+cap stays shared, each side up to its even share, and every dino carries its `side`. Co-op is
+one side, so the queue behaves exactly as before.
 
 **5.2 Leaks cost effective HP, not one life.** The design doc said one life per leak. That makes
 leaking a boss *cheaper* than killing it, since its children never spawn. `Enemies.leakCost()`

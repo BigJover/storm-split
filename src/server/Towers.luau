@@ -138,6 +138,7 @@ export type Tower = {
 	key: string,
 	def: any,
 	owner: Player?, -- who built it; nil if they've left
+	side: number, -- the side it was built on (Shared/Sides; co-op = 1); its pool and track effects use that track
 	base: Vector3, -- on the build floor; what Placement checks against
 	position: Vector3,
 	muzzle: Vector3,
@@ -472,30 +473,32 @@ local function showPool(tower: Tower)
 	end
 	local points = {}
 	for _, d in TarPit.samples(tower.poolAt, tower.stats.range, POOL_STEP) do
-		table.insert(points, Enemies.pointAt(d))
+		table.insert(points, Enemies.pointAt(d, tower.side))
 	end
 	TowerLook.setPool(tower.model, points)
 	local body = tower.model.PrimaryPart
 	if body then
 		body:SetAttribute("PoolAt", tower.poolAt)
+		body:SetAttribute("PoolSide", tower.side)
 		body:SetAttribute("PoolLength", tower.stats.range)
 	end
 end
 
--- Every pit's pool at its current length (Shop checks a new pit against them, #189).
-function Towers.pools(): { TarPit.Pool }
+-- Every pit's pool at its current length on one side's track (default 1, co-op) (Shop checks
+-- a new pit against them, #189).
+function Towers.pools(side: number?): { TarPit.Pool }
 	local list = {}
 	for _, tower in towers do
-		if tower.def.onTrack then
+		if tower.def.onTrack and tower.side == (side or 1) then
 			table.insert(list, { at = tower.poolAt, length = tower.stats.range })
 		end
 	end
 	return list
 end
 
--- Where along the track a pit placed at `position` would centre its pool.
-function Towers.poolAtFor(position: Vector3): number
-	return Enemies.trackDistanceNear(Placement.ground(position))
+-- Where along a side's track (default 1) a pit placed at `position` would centre its pool.
+function Towers.poolAtFor(position: Vector3, side: number?): number
+	return Enemies.trackDistanceNear(Placement.ground(position), side)
 end
 
 ------------------------------------------------------------------ public
@@ -519,8 +522,9 @@ function Towers.init(folder: Instance, hooks: Hooks?)
 	onSink = hooks and hooks.onSink
 end
 
--- Callers check Placement first (Shop does); this only builds.
-function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
+-- Callers check Placement first (Shop does); this only builds. `side`: the builder's side
+-- (default 1, co-op).
+function Towers.place(key: string, position: Vector3, owner: Player?, side: number?): Tower?
 	local def = Config.Towers[key]
 	if not def then
 		warn(`[Towers] Unknown tower '{key}'`)
@@ -549,6 +553,7 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 		key = key,
 		def = def,
 		owner = owner,
+		side = side or 1,
 		base = base,
 		position = base + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0),
 		muzzle = base + Vector3.new(0, TowerLook.BODY_HEIGHT - 0.5, 0),
@@ -566,7 +571,7 @@ function Towers.place(key: string, position: Vector3, owner: Player?): Tower?
 		sorties = {},
 		dived = setmetatable({}, { __mode = "k" }) :: any,
 		towTimer = 0,
-		poolAt = if def.onTrack then Enemies.trackDistanceNear(base) else 0,
+		poolAt = if def.onTrack then Enemies.trackDistanceNear(base, side) else 0,
 		eruptTimer = 0,
 		tracksUntil = 0,
 		model = model,
@@ -648,7 +653,7 @@ local function lineTargets(tower: Tower, primary: Enemies.Enemy, live): { Enemie
 	local reach = Config.Tuning.LinePierceReach or 0
 	local behind = {}
 	for _, enemy in live do
-		if enemy ~= primary and canTarget(tower, enemy) then
+		if enemy ~= primary and canTarget(tower, enemy) and enemy.side == primary.side then
 			local gap = primary.distance - enemy.distance
 			if gap >= 0 and gap <= reach then
 				table.insert(behind, enemy)
@@ -690,9 +695,9 @@ local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: n
 	credit(tower.owner, Enemies.damage(enemy, damage, pierce, b))
 end
 
--- Bomblets land along the track around `distance`, alternating behind and
--- ahead of it. Each generation throws the same number again, weaker.
-local function bomblets(tower: Tower, distance: number, damage: number, generation: number, live)
+-- Bomblets land along the track (side `trackSide`'s) around `distance`, alternating behind
+-- and ahead of it. Each generation throws the same number again, weaker.
+local function bomblets(tower: Tower, trackSide: number, distance: number, damage: number, generation: number, live)
 	local stats = tower.stats
 	if generation > stats.bombletGenerations or stats.bomblets <= 0 then
 		return
@@ -704,12 +709,12 @@ local function bomblets(tower: Tower, distance: number, damage: number, generati
 		local side = if i % 2 == 1 then -1 else 1
 		local centre = distance + side * spread * math.ceil(i / 2)
 		for _, enemy in live do
-			if canTarget(tower, enemy) and math.abs(enemy.distance - centre) <= spread / 2 then
+			if enemy.side == trackSide and canTarget(tower, enemy) and math.abs(enemy.distance - centre) <= spread / 2 then
 				hit(tower, enemy, blastDamage)
 			end
 		end
-		Effects.part(Vector3.one * 2, CFrame.new(Enemies.pointAt(centre) + Vector3.new(0, 1, 0)), BOMBLET_COLOR, 0.15, Enum.PartType.Ball)
-		bomblets(tower, centre, blastDamage, generation + 1, live)
+		Effects.part(Vector3.one * 2, CFrame.new(Enemies.pointAt(centre, trackSide) + Vector3.new(0, 1, 0)), BOMBLET_COLOR, 0.15, Enum.PartType.Ball)
+		bomblets(tower, trackSide, centre, blastDamage, generation + 1, live)
 	end
 end
 
@@ -718,7 +723,7 @@ local function addBurn(tower: Tower, primary: Enemies.Enemy)
 	if primary.def.flying then
 		return
 	end
-	Hazards.burn(primary.distance, stats.splashRadius, stats.burnDps * levelScale, stats.burnSeconds, piercing(tower), tower.owner)
+	Hazards.burn(primary.distance, stats.splashRadius, stats.burnDps * levelScale, stats.burnSeconds, piercing(tower), tower.owner, primary.side)
 end
 
 -- Lightning Rodeo (a Storm Coil's aura): the shot arcs once from its target to the
@@ -780,7 +785,7 @@ local function fire(tower: Tower, live): boolean
 			hit(tower, enemy, damage, breaks)
 		end
 		rodeoArc(tower, target, hits, damage, live)
-		bomblets(tower, targetDistance, damage, 1, live)
+		bomblets(tower, target.side, targetDistance, damage, 1, live)
 
 		Effects.tracer(tower.muzzle, targetPosition, TowerLook.COLORS[tower.key] or Color3.new(1, 1, 1))
 	end
@@ -1265,7 +1270,7 @@ local function stepTar(dt: number, live)
 			if fired then
 				erupting[pit] = true
 				for _, d in TarPit.samples(pit.poolAt, pit.stats.range, pit.stats.range / 3) do
-					Effects.part(Vector3.new(1.5, 7, 1.5), CFrame.new(Enemies.pointAt(d) + Vector3.new(0, 3.5, 0)), ERUPTION_COLOR, 0.4) -- a geyser
+					Effects.part(Vector3.new(1.5, 7, 1.5), CFrame.new(Enemies.pointAt(d, pit.side) + Vector3.new(0, 3.5, 0)), ERUPTION_COLOR, 0.4) -- a geyser
 				end
 			end
 		else
@@ -1280,7 +1285,7 @@ local function stepTar(dt: number, live)
 		-- The strongest pool this dino stands in (#189: never more than one).
 		local inside, power = {}, {}
 		for i, pit in pits do
-			if TarPit.contains(enemy.distance, pit.poolAt, pit.stats.range) then
+			if pit.side == enemy.side and TarPit.contains(enemy.distance, pit.poolAt, pit.stats.range) then
 				table.insert(inside, pit)
 				table.insert(power, strengths[i])
 			end
@@ -1296,7 +1301,7 @@ local function stepTar(dt: number, live)
 				end
 			end
 			for _, other in pits do
-				if now < other.tracksUntil and TarPit.onTracks(enemy.distance, other.poolAt, other.stats.range, tuning.TarTracksLength) then
+				if other.side == enemy.side and now < other.tracksUntil and TarPit.onTracks(enemy.distance, other.poolAt, other.stats.range, tuning.TarTracksLength) then
 					Enemies.tar(enemy, other.stats.tracksSlowPercent, TAR_REFRESH)
 				end
 			end

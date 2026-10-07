@@ -5,6 +5,10 @@
 	level in git and means a fresh Baseplate place works immediately. Swap in
 	a hand-built map later by giving MapBuilder a Workspace model to read
 	waypoints from instead.
+
+	SIDES (PLAN T75): one copy of the track, build floor and markers per side of the
+	match (Shared/Sides), plus the crossing strips between them. Co-op is one side and
+	builds exactly the one map it always has.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -12,6 +16,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Track = require(Shared:WaitForChild("Track"))
 local Path = require(Shared:WaitForChild("Path"))
+local Sides = require(Shared:WaitForChild("Sides"))
 
 local MapBuilder = {}
 
@@ -41,40 +46,42 @@ end
 
 export type Map = {
 	root: Folder,
-	path: Path.Path,
+	path: Path.Path, -- side 1's track (co-op's only track)
+	paths: { Path.Path }, -- one per side (Shared/Sides)
+	layout: Sides.Layout,
 	enemyFolder: Folder,
 	towerFolder: Folder,
 	effectFolder: Folder,
 }
 
-function MapBuilder.build(): Map
-	local existing = workspace:FindFirstChild(MAP_NAME)
-	if existing then
-		existing:Destroy()
-	end
+local function floorPart(name: string, min: Vector2, max: Vector2, color: Color3, parent: Instance): Part
+	local size = max - min
+	local centre = (min + max) / 2
+	local floorThickness = 0.2
+	local floor = makePart(
+		name,
+		Vector3.new(size.X, floorThickness, size.Y),
+		CFrame.new(centre.X, Track.GroundTop - floorThickness / 2, centre.Y),
+		color,
+		parent
+	)
+	floor.Material = Enum.Material.Grass
+	return floor
+end
 
-	local root = Instance.new("Folder")
-	root.Name = MAP_NAME
-
-	local points = table.clone(Track.Waypoints)
+-- One side's build floor, lanes and markers. Side 1 keeps co-op's part names exactly;
+-- side n > 1 adds n ("BuildArea2", "Lanes2", "Spawn2", "Exit2").
+local function buildSide(layout: Sides.Layout, side: number, root: Instance): Path.Path
+	local suffix = if side == 1 then "" else tostring(side)
+	local zone = Sides.zone(layout, side)
+	local points = Sides.waypoints(layout, side)
 	local path = Path.new(points)
 
 	-- Build-area floor: everything on it that isn't track can hold a tower.
-	local area = Track.BuildArea
-	local areaSize = area.Max - area.Min
-	local areaCentre = (area.Min + area.Max) / 2
-	local floorThickness = 0.2
-	local floor = makePart(
-		"BuildArea",
-		Vector3.new(areaSize.X, floorThickness, areaSize.Y),
-		CFrame.new(areaCentre.X, Track.GroundTop - floorThickness / 2, areaCentre.Y),
-		Track.Colors.BuildGround,
-		root
-	)
-	floor.Material = Enum.Material.Grass
+	floorPart(`BuildArea{suffix}`, zone.min, zone.max, Track.Colors.BuildGround, root)
 
 	-- Lanes. Each segment is lengthened by one lane width so corners overlap cleanly.
-	local lanes = folder("Lanes", root)
+	local lanes = folder(`Lanes{suffix}`, root)
 	for i = 2, #points do
 		local a, b = points[i - 1] + GROUND_LIFT, points[i] + GROUND_LIFT
 		local length = (b - a).Magnitude
@@ -91,22 +98,50 @@ function MapBuilder.build(): Map
 	-- Spawn and exit markers.
 	local first, last = points[1], points[#points]
 	local markerSize = Vector3.new(Track.MarkerSize, 1, Track.MarkerSize)
-	local spawnMarker = makePart("Spawn", markerSize, CFrame.new(first + Vector3.new(0, 0.5, 0)), Track.Colors.Spawn, root)
+	local spawnMarker = makePart(`Spawn{suffix}`, markerSize, CFrame.new(first + Vector3.new(0, 0.5, 0)), Track.Colors.Spawn, root)
 	spawnMarker.Material = Enum.Material.Neon
 	spawnMarker.CanCollide = false
-	local exitMarker = makePart("Exit", markerSize, CFrame.new(last + Vector3.new(0, 0.5, 0)), Track.Colors.Exit, root)
+	local exitMarker = makePart(`Exit{suffix}`, markerSize, CFrame.new(last + Vector3.new(0, 0.5, 0)), Track.Colors.Exit, root)
 	exitMarker.Material = Enum.Material.Neon
 	exitMarker.CanCollide = false
+
+	return path
+end
+
+-- `layout`: the match's sides (Shared/Sides); none = co-op, today's one-side map.
+function MapBuilder.build(layout: Sides.Layout?): Map
+	local existing = workspace:FindFirstChild(MAP_NAME)
+	if existing then
+		existing:Destroy()
+	end
+
+	local root = Instance.new("Folder")
+	root.Name = MAP_NAME
+
+	local sides = layout or Sides.new(1)
+	local paths = {}
+	for side = 1, sides.sides do
+		paths[side] = buildSide(sides, side, root)
+	end
+	-- The open ground between sides (battle modes only): walkable, no track.
+	for i, strip in sides.crossings do
+		floorPart(`Crossing{i}`, strip.min, strip.max, Track.Colors.BuildGround, root)
+	end
 
 	local enemyFolder = folder("Enemies", root)
 	local towerFolder = folder("Towers", root)
 	local effectFolder = folder("Effects", root)
 
 	root.Parent = workspace
+	-- Clients and Shop read the layout back with Shared/Sides.fromAttributes.
+	ReplicatedStorage:SetAttribute("Sides", sides.sides)
+	ReplicatedStorage:SetAttribute("SideGrid", sides.grid)
 
 	return {
 		root = root,
-		path = path,
+		path = paths[1],
+		paths = paths,
+		layout = sides,
 		enemyFolder = enemyFolder,
 		towerFolder = towerFolder,
 		effectFolder = effectFolder,

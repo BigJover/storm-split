@@ -30,6 +30,15 @@ return table.freeze({
 	},
 	GroundTop = 0.1, -- top of the build-area floor; towers stand on it
 
+	-- Battle modes (PLAN T75, DECISIONS #209; the layout rules are Shared/Sides). Each side
+	-- is a copy of this track and its BuildArea, side 1 exactly where co-op's is. Copies sit
+	-- in a row (Team) or a grid of GridRows rows (Royale), CrossingStrip studs of open ground
+	-- (no track) between two build areas. A side's hunters spawn at SideSpawn, given
+	-- relative to its copy (inside the build area, off the track).
+	CrossingStrip = 40,
+	GridRows = 2,
+	SideSpawn = Vector3.new(-100, 0, 0),
+
 	-- Keep-out radius around a tower's centre, from lanes and from other towers.
 	-- Must cover the tower body (3x3, half-diagonal 2.12 — Shared/TowerLook).
 	TowerRadius = 2.25,

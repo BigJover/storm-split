@@ -31,6 +31,10 @@
 	through a queue that only drains while live enemies are under
 	MaxConcurrentEnemies.
 
+	SIDES (PLAN T75): every side of a battle has its own track and its own queue; a dino
+	knows its side (`enemy.side`, co-op = 1) and walks that side's track. The cap is shared and
+	split evenly between sides (Shared/SpawnQueue). Co-op is one side: the old single queue.
+
 	TAR (Tar Pit, PLAN T67, rules in Shared/TarPit): a tarred dino walks slower (the
 	stronger of its tar and its sedation slow; tar slows bosses too and doesn't touch
 	attack cooldowns). sink() takes a last-size dino down (never a boss or a flyer), paying
@@ -48,12 +52,14 @@ local Combat = require(Shared:WaitForChild("Combat"))
 local SizeBreaks = require(Shared:WaitForChild("SizeBreaks"))
 local Ballista = require(Shared:WaitForChild("Ballista"))
 local TarPit = require(Shared:WaitForChild("TarPit"))
+local SpawnQueue = require(Shared:WaitForChild("SpawnQueue"))
 
 local Enemies = {}
 
 export type Enemy = {
 	id: number,
 	key: string,
+	side: number, -- whose track it walks (Shared/Sides; co-op = 1)
 	def: any,
 	hp: number, -- what's left of the one pool (all sizes)
 	share: number, -- HP per size: the pool's thresholds are multiples of it
@@ -90,44 +96,17 @@ export type Fire = { tick: number, untilTime: number, piercesArmor: boolean, own
 
 type Pending = { key: string, distance: number, hpMult: number }
 
------------------------------------------------------------------- queue
-
-local function newQueue()
-	return { items = {}, head = 1, tail = 0 }
-end
-
-local function push(q, item: Pending)
-	q.tail += 1
-	q.items[q.tail] = item
-end
-
-local function pop(q): Pending?
-	if q.head > q.tail then
-		return nil
-	end
-	local item = q.items[q.head]
-	q.items[q.head] = nil
-	q.head += 1
-	if q.head > q.tail then
-		q.head, q.tail = 1, 0
-	end
-	return item
-end
-
-local function size(q): number
-	return q.tail - q.head + 1
-end
-
 ------------------------------------------------------------------ state
 
 local live: { [number]: Enemy } = {}
 local liveCount = 0
+local liveBySide: { [number]: number } = {}
 local peakLive = 0
 local nextId = 0
 
-local spawnQueue = newQueue()
+local spawnQueue = SpawnQueue.new(1) -- Shared/SpawnQueue: one FIFO per side, the shared cap
 
-local path: Path.Path
+local paths: { Path.Path } = {} -- one track per side
 local enemyFolder: Instance
 local callbacks: {
 	onLeak: ((Enemy) -> ())?,
@@ -140,7 +119,7 @@ local speedMult = 1 -- difficulty
 
 ------------------------------------------------------------------ internals
 
-local function cframeAt(distance: number, height: number): CFrame
+local function cframeAt(path: Path.Path, distance: number, height: number): CFrame
 	local position, direction = path:sample(distance)
 	position += Vector3.new(0, height, 0)
 	return CFrame.lookAt(position, position + direction)
@@ -163,7 +142,7 @@ local function dress(enemy: Enemy)
 	enemy.height = if enemy.def.flying then Track.FlyingHeight else rootHeight + ground
 	enemy.model = model
 	enemy.part = model.PrimaryPart :: BasePart
-	enemy.part.CFrame = cframeAt(enemy.distance, enemy.height)
+	enemy.part.CFrame = cframeAt(paths[enemy.side], enemy.distance, enemy.height)
 	model.Parent = enemyFolder
 	if old then
 		old:Destroy()
@@ -175,7 +154,7 @@ local function dress(enemy: Enemy)
 	end
 end
 
-local function spawnNow(item: Pending)
+local function spawnNow(item: Pending, side: number)
 	local def = Config.Enemies[item.key]
 	if not def then
 		warn(`[Enemies] Unknown enemy tier '{item.key}' — check the spreadsheet`)
@@ -190,6 +169,7 @@ local function spawnNow(item: Pending)
 	local enemy: Enemy = {
 		id = nextId,
 		key = item.key,
+		side = side,
 		def = def,
 		hp = hpPerSize * sizes,
 		share = hpPerSize,
@@ -223,6 +203,7 @@ local function spawnNow(item: Pending)
 
 	live[enemy.id] = enemy
 	liveCount += 1
+	liveBySide[side] = (liveBySide[side] or 0) + 1
 	if liveCount > peakLive then
 		peakLive = liveCount
 	end
@@ -235,13 +216,15 @@ local function remove(enemy: Enemy)
 	enemy.alive = false
 	live[enemy.id] = nil
 	liveCount -= 1
+	liveBySide[enemy.side] -= 1
 	enemy.model:Destroy()
 end
 
 ------------------------------------------------------------------ public
 
-function Enemies.init(mapPath: Path.Path, folder: Instance, hooks: { onLeak: ((Enemy) -> ())?, onKilled: ((Enemy) -> ())? })
-	path = mapPath
+-- `mapPaths`: one track per side (MapBuilder; co-op has one).
+function Enemies.init(mapPaths: { Path.Path }, folder: Instance, hooks: { onLeak: ((Enemy) -> ())?, onKilled: ((Enemy) -> ())? })
+	Enemies.setPaths(mapPaths)
 	enemyFolder = folder
 	callbacks = hooks
 end
@@ -251,9 +234,21 @@ function Enemies.setSpeedMult(mult: number)
 	speedMult = mult
 end
 
--- Queue a fresh enemy at the start of the track.
-function Enemies.enqueue(key: string, hpMult: number)
-	push(spawnQueue, { key = key, distance = 0, hpMult = hpMult })
+-- A new map (a match with a different number of sides). Only between matches: it drops
+-- every enemy and the queue.
+function Enemies.setPaths(mapPaths: { Path.Path })
+	Enemies.clearAll()
+	paths = mapPaths
+	spawnQueue = SpawnQueue.new(#mapPaths)
+	table.clear(liveBySide)
+end
+
+-- Queue a fresh enemy at the start of a side's track (co-op: side 1). The ONLY way a
+-- dino comes into the game (ARCHITECTURE §5.1).
+function Enemies.enqueue(side: number, key: string, hpMult: number)
+	if not SpawnQueue.push(spawnQueue, side, { key = key, distance = 0, hpMult = hpMult }) then
+		warn(`[Enemies] No side {side} on this map`)
+	end
 end
 
 local function chilled(enemy: Enemy): boolean
@@ -519,12 +514,12 @@ end
 
 -- Called every Heartbeat by Main.
 function Enemies.step(dt: number)
-	while liveCount < cap do
-		local item = pop(spawnQueue)
-		if not item then
+	while true do
+		local item, side = SpawnQueue.take(spawnQueue, liveCount, liveBySide, cap)
+		if not item or not side then
 			break
 		end
-		spawnNow(item)
+		spawnNow(item, side)
 	end
 
 	local now = os.clock()
@@ -553,24 +548,39 @@ function Enemies.step(dt: number)
 			enemy.muzzleFlash = false
 			DinoLook.flashMuzzle(enemy.model)
 		end
-		if enemy.distance >= path.length then
+		if enemy.distance >= paths[enemy.side].length then
 			remove(enemy)
 			if callbacks.onLeak then
 				callbacks.onLeak(enemy)
 			end
 		else
-			enemy.part.CFrame = cframeAt(enemy.distance, enemy.height)
+			enemy.part.CFrame = cframeAt(paths[enemy.side], enemy.distance, enemy.height)
 		end
 	end
 end
 
--- Distance along the track of the point nearest to a world position.
-function Enemies.trackDistanceNear(point: Vector3): number
-	return path:closest(point)
+-- Distance along a side's track (co-op: side 1) of the point nearest to a world position.
+function Enemies.trackDistanceNear(point: Vector3, side: number?): number
+	return paths[side or 1]:closest(point)
 end
 
--- World position of a point `distance` studs along the track (for visuals).
-function Enemies.pointAt(distance: number): Vector3
+-- The side whose track passes nearest a world position, and the distance along it. Co-op:
+-- side 1 and trackDistanceNear(point).
+function Enemies.trackNear(point: Vector3): (number, number)
+	local bestSide, bestDistance, bestGap = 1, 0, math.huge
+	for side, path in paths do
+		local distance = path:closest(point)
+		local gap = (path:sample(distance) - point) * Vector3.new(1, 0, 1)
+		if gap.Magnitude < bestGap then
+			bestSide, bestDistance, bestGap = side, distance, gap.Magnitude
+		end
+	end
+	return bestSide, bestDistance
+end
+
+-- World position of a point `distance` studs along a side's track (for visuals).
+function Enemies.pointAt(distance: number, side: number?): Vector3
+	local path = paths[side or 1]
 	local position = path:sample(math.clamp(distance, 0, path.length))
 	return position
 end
@@ -584,9 +594,13 @@ function Enemies.aliveCount(): number
 	return liveCount
 end
 
--- Everything still to deal with this round: on the field plus queued.
-function Enemies.remaining(): number
-	return liveCount + size(spawnQueue)
+-- Everything still to deal with this round: on the field plus queued; for one side, or
+-- every side when none is given.
+function Enemies.remaining(side: number?): number
+	if side then
+		return (liveBySide[side] or 0) + SpawnQueue.size(spawnQueue, side)
+	end
+	return liveCount + SpawnQueue.size(spawnQueue)
 end
 
 function Enemies.peak(): number
@@ -601,7 +615,7 @@ function Enemies.clearAll()
 	for _, enemy in live do
 		remove(enemy)
 	end
-	spawnQueue = newQueue()
+	spawnQueue = SpawnQueue.new(spawnQueue.sides)
 end
 
 return Enemies

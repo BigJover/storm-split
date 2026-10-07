@@ -23,6 +23,7 @@ local Enemies = require(script.Parent.Enemies)
 local Hazards = {}
 
 type Burn = {
+	side: number, -- whose track (Shared/Sides)
 	distance: number,
 	reach: number,
 	dps: number,
@@ -43,13 +44,15 @@ function Hazards.init(hooks: { onPop: ((Player?, string?) -> ())? }?)
 	onPop = hooks and hooks.onPop
 end
 
--- A burning stretch of track `reach` studs either side of `distance`.
-function Hazards.burn(distance: number, reach: number, dps: number, seconds: number, piercesArmor: boolean, owner: Player?)
+-- A burning stretch of track `reach` studs either side of `distance`, on one side's track
+-- (default 1, co-op; Shared/Sides): it burns only that track's dinos.
+function Hazards.burn(distance: number, reach: number, dps: number, seconds: number, piercesArmor: boolean, owner: Player?, side: number?)
 	if dps <= 0 or seconds <= 0 then
 		return
 	end
 	reach = Combat.burnPatchReach(reach) -- readable even with no splash
 	table.insert(burns, {
+		side = side or 1,
 		distance = distance,
 		reach = reach,
 		dps = dps,
@@ -57,7 +60,7 @@ function Hazards.burn(distance: number, reach: number, dps: number, seconds: num
 		piercesArmor = piercesArmor,
 		owner = owner,
 	})
-	Effects.disc(Enemies.pointAt(distance) + Vector3.new(0, 0.45, 0), reach, BURN_COLOR, seconds, 0.5)
+	Effects.disc(Enemies.pointAt(distance, side) + Vector3.new(0, 0.45, 0), reach, BURN_COLOR, seconds, 0.5)
 end
 
 -- Burns always break 1 size (DECISIONS #127), so `dropped` is at most 1 here.
@@ -103,7 +106,7 @@ function Hazards.step(dt: number)
 			continue
 		end
 		for _, enemy in live do
-			if not enemy.def.flying and math.abs(enemy.distance - burn.distance) <= burn.reach then
+			if not enemy.def.flying and enemy.side == burn.side and math.abs(enemy.distance - burn.distance) <= burn.reach then
 				credit(burn.owner, Enemies.damage(enemy, burn.dps * dt, burn.piercesArmor))
 			end
 		end

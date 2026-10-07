@@ -549,6 +549,7 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 	local scale = levelScale(stateOf(player))
 	local damage = stats.damage * scale * (if Enemies.isMarked(enemy) then stats.markedDamageMult else 1)
 	local distance, position, flying = enemy.distance, enemy.part.Position, enemy.def.flying
+	local trackSide = enemy.side
 
 	if stats.markPercent > 0 then
 		Enemies.mark(enemy, stats.markPercent, Config.Tuning.MarkDuration)
@@ -599,7 +600,7 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 		end
 	end
 	if not flying then
-		Hazards.burn(distance, Combat.burnPatchReach(stats.splashRadius, stats.burnPatchReach), stats.burnDps * scale, stats.burnSeconds, stats.piercesArmor, player)
+		Hazards.burn(distance, Combat.burnPatchReach(stats.splashRadius, stats.burnPatchReach), stats.burnDps * scale, stats.burnSeconds, stats.piercesArmor, player, trackSide)
 	end
 end
 
@@ -799,8 +800,8 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 		if (aim - body.Position).Magnitude > Config.Tuning.AirburstReach then
 			return false, "Too far away"
 		end
-		local centre = Enemies.trackDistanceNear(aim)
-		local ground = Enemies.pointAt(centre) + Vector3.new(0, 0.5, 0)
+		local trackSide, centre = Enemies.trackNear(aim) -- the nearest track (co-op: the only one)
+		local ground = Enemies.pointAt(centre, trackSide) + Vector3.new(0, 0.5, 0)
 		local delay = Config.Tuning.AirburstDelay
 		local power, stun, radius = stats.abilityPower * levelScale(s), stats.abilitySeconds, stats.abilityRadius
 		local burnPercent, burnSeconds = stats.strikeBurnPercent, stats.strikeBurnSeconds
@@ -808,7 +809,7 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 		task.delay(delay, function()
 			Effects.part(Vector3.one * radius * 2, CFrame.new(ground), color, 0.25, Enum.PartType.Ball).Transparency = 0.4
 			for _, enemy in Enemies.getLive() do
-				if math.abs(enemy.distance - centre) <= radius then
+				if enemy.side == trackSide and math.abs(enemy.distance - centre) <= radius then
 					Enemies.stun(enemy, stun)
 					credit(player, Enemies.damage(enemy, power, true))
 				end
@@ -816,7 +817,7 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 			if burnPercent > 0 then
 				-- Mastery perk: the strike leaves burning ground, each second a share of
 				-- the strike's damage; armour-piercing like the strike, credited to the hunter.
-				Hazards.burn(centre, radius, power * burnPercent / 100, burnSeconds, true, player)
+				Hazards.burn(centre, radius, power * burnPercent / 100, burnSeconds, true, player, trackSide)
 			end
 		end)
 	elseif hero.abilityKind == "HEAL" then

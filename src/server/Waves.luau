@@ -10,6 +10,10 @@
 	count combined. Counts go up and the spawn gap shrinks by the same factor,
 	so rounds get busier rather than longer. A promoted enemy spawns one ground
 	tier up (Husk > Brute > Shielded > Armored > Storm); air and bosses never are.
+
+	SIDES (PLAN T75): a run belongs to one side (`side`, default 1 = co-op) and waits only
+	for that side's dinos. `density` (Shared/Sides.density: Royale and 3-side Team)
+	multiplies the counts on top of the scale, so many tracks fit under the shared cap.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -27,6 +31,8 @@ export type Scale = { countMult: number, hpMult: number, promoteChance: number }
 
 export type RunOptions = {
 	startRound: number?,
+	side: number?, -- whose track (default 1, co-op)
+	density: number?, -- count multiplier per side (default 1)
 	isOver: () -> boolean,
 	scale: (() -> Scale)?,
 	onRoundStart: ((number) -> ())?,
@@ -53,6 +59,8 @@ local random = Random.new()
 -- Returns true if every round was cleared.
 function Waves.run(options: RunOptions): boolean
 	local first = options.startRound or 1
+	local side = options.side or 1
+	local density = options.density or 1
 
 	for index = first, #Config.Rounds do
 		if options.isOver() then
@@ -66,13 +74,14 @@ function Waves.run(options: RunOptions): boolean
 		end
 
 		local scale = if options.scale then options.scale() else { countMult = 1, hpMult = 1, promoteChance = 0 }
-		local gap = round.spawnGap / math.max(scale.countMult, 0.01)
+		local countMult = scale.countMult * density
+		local gap = round.spawnGap / math.max(countMult, 0.01)
 		local hpMult = round.hpMult * scale.hpMult
 
 		for _, key in Config.EnemyOrder do
 			local count = round.counts[key]
 			if count and count > 0 then
-				for _ = 1, math.max(1, math.floor(count * scale.countMult + 0.5)) do
+				for _ = 1, math.max(1, math.floor(count * countMult + 0.5)) do
 					if options.isOver() then
 						return false
 					end
@@ -80,13 +89,13 @@ function Waves.run(options: RunOptions): boolean
 					if promotion[key] and random:NextNumber() < scale.promoteChance then
 						spawnKey = promotion[key]
 					end
-					Enemies.enqueue(spawnKey, hpMult)
+					Enemies.enqueue(side, spawnKey, hpMult)
 					task.wait(gap)
 				end
 			end
 		end
 
-		while Enemies.remaining() > 0 do
+		while Enemies.remaining(side) > 0 do
 			if options.isOver() then
 				return false
 			end

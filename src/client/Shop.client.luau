@@ -55,8 +55,8 @@ local HuntBoard = require(Shared:WaitForChild("HuntBoard"))
 local ProfileScreen = require(Shared:WaitForChild("ProfileScreen"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
 local TarPit = require(Shared:WaitForChild("TarPit"))
-local Track = require(Shared:WaitForChild("Track"))
 local Path = require(Shared:WaitForChild("Path"))
+local Sides = require(Shared:WaitForChild("Sides"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -931,18 +931,36 @@ local function builtPositions(): { Vector3 }
 	return positions
 end
 
--- The track as the server builds it (MapBuilder), for a Tar Pit ghost's pool.
-local trackPath = Path.new(table.clone(Track.Waypoints))
+-- My side and the layout (Shared/Sides; co-op: side 1, the whole build area). The same rule
+-- the server's Shop uses, from the attributes MapBuilder and Main publish.
+local function mySide(): (number, Sides.Layout)
+	local layout = Sides.fromAttributes(ReplicatedStorage:GetAttribute("Sides"), ReplicatedStorage:GetAttribute("SideGrid"))
+	return Sides.sideOf(player:GetAttribute("Side"), layout.sides), layout
+end
 
--- Pools of the pits already built, from their bodies (Server/Towers publishes them).
-local function builtPools(): { TarPit.Pool }
+-- My side's track as the server builds it (MapBuilder), for a Tar Pit ghost's pool.
+local trackPaths: { [string]: Path.Path } = {}
+local function myTrack(): Path.Path
+	local side, layout = mySide()
+	local key = `{layout.sides}/{layout.grid}/{side}`
+	local path = trackPaths[key]
+	if not path then
+		path = Path.new(Sides.waypoints(layout, side))
+		trackPaths[key] = path
+	end
+	return path
+end
+
+-- Pools of the pits already built on one side's track, from their bodies (Server/Towers
+-- publishes them).
+local function builtPools(side: number): { TarPit.Pool }
 	local pools = {}
 	local folder = towerFolder()
 	if folder then
 		for _, model in folder:GetChildren() do
 			local body = model:IsA("Model") and model.PrimaryPart
 			local at, length = body and body:GetAttribute("PoolAt"), body and body:GetAttribute("PoolLength")
-			if typeof(at) == "number" and typeof(length) == "number" then
+			if typeof(at) == "number" and typeof(length) == "number" and (body :: BasePart):GetAttribute("PoolSide") == side then
 				table.insert(pools, { at = at, length = length })
 			end
 		end
@@ -1014,10 +1032,12 @@ local function moveGhost(spot: Vector3?)
 	ghost.Parent = camera
 
 	local placingDef = if placingKey then Config.Towers[placingKey] else nil
-	local fits, reason = Placement.check(spot, builtPositions(), placingDef ~= nil and placingDef.onTrack)
+	local side, layout = mySide()
+	local trackPath = myTrack()
+	local fits, reason = Placement.check(spot, builtPositions(), placingDef ~= nil and placingDef.onTrack, Sides.zone(layout, side))
 	local poolAt = if placingDef and placingDef.onTrack then trackPath:closest(spot) else nil
 	if fits and poolAt and placingDef then
-		fits, reason = Placement.checkPool(poolAt, placingDef.range, builtPools())
+		fits, reason = Placement.checkPool(poolAt, placingDef.range, builtPools(side))
 	end
 	local root = characterRoot()
 	if fits and root then

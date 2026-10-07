@@ -10,10 +10,18 @@
 	centre must be ON a lane (not off it, not on the spawn or exit square), and it
 	still never overlaps another tower or pit (2 x TowerRadius), and its pool must not
 	overlap another pit's pool at that pool's current length (checkPool, DECISIONS #189).
+
+	SIDES (PLAN T75, DECISIONS #209): `zone` is the builder's side (Shared/Sides). The spot
+	must be inside that side's build zone, and the track rules use that side's copy of the
+	track, so a Tar Pit only ever goes on its own side's track. No zone = side 1 of co-op,
+	which is exactly Track.BuildArea and Track.Waypoints.
 ]]
 
+local Sides = require(script.Parent.Sides)
 local Track = require(script.Parent.Track)
 local TarPit = require(script.Parent.TarPit)
+
+local COOP_ZONE = Sides.zone(Sides.new(1), 1)
 
 local Placement = {}
 
@@ -68,17 +76,19 @@ function Placement.ground(position: Vector3): Vector3
 end
 
 -- `others` are the positions of towers already built (pits included). `onTrack`:
--- the tower's On track flag (Config.Towers[key].onTrack).
-function Placement.check(position: Vector3, others: { Vector3 }, onTrack: boolean?): (boolean, string?)
-	local p = flat(position)
-	if p.X ~= p.X or p.Y ~= p.Y then
+-- the tower's On track flag (Config.Towers[key].onTrack). `zone`: the builder's side.
+function Placement.check(position: Vector3, others: { Vector3 }, onTrack: boolean?, zone: Sides.Zone?): (boolean, string?)
+	local world = flat(position)
+	if world.X ~= world.X or world.Y ~= world.Y then
 		return false, "Invalid spot" -- NaN
 	end
 
-	local area = Track.BuildArea
-	if p.X < area.Min.X or p.X > area.Max.X or p.Y < area.Min.Y or p.Y > area.Max.Y then
-		return false, "Outside the build area"
+	local z = zone or COOP_ZONE
+	if world.X < z.min.X or world.X > z.max.X or world.Y < z.min.Y or world.Y > z.max.Y then
+		return false, if z.battle then "Outside your build zone" else "Outside the build area"
 	end
+	-- The track rules below run on the co-op track: move the spot back by the side's offset.
+	local p = world - flat(z.offset)
 
 	if onTrack then
 		local onLane = false
@@ -105,7 +115,7 @@ function Placement.check(position: Vector3, others: { Vector3 }, onTrack: boolea
 	end
 
 	for _, other in others do
-		if (flat(other) - p).Magnitude < Track.TowerRadius * 2 then
+		if (flat(other) - world).Magnitude < Track.TowerRadius * 2 then
 			return false, "Overlaps another tower"
 		end
 	end

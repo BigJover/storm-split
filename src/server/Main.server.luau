@@ -121,7 +121,7 @@ end
 
 local over = false -- this match has been lost
 
-Enemies.init(map.path, map.enemyFolder, {
+Enemies.init(map.paths, map.enemyFolder, {
 	onLeak = function(enemy)
 		Economy.lose(Enemies.leakCost(enemy))
 	end,

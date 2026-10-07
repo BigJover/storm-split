@@ -31,6 +31,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local ShopRules = require(Shared:WaitForChild("ShopRules"))
 local Placement = require(Shared:WaitForChild("Placement"))
 local Pricing = require(Shared:WaitForChild("Pricing"))
+local Sides = require(Shared:WaitForChild("Sides"))
 local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
@@ -103,6 +104,13 @@ end
 
 ------------------------------------------------------------------ requests
 
+-- The hunter's side and its build zone (Shared/Sides; co-op: side 1, the whole build area).
+-- MapBuilder publishes the layout; Main sets each hunter's "Side".
+local function sideOf(player: Player): (number, Sides.Layout)
+	local layout = Sides.fromAttributes(ReplicatedStorage:GetAttribute("Sides"), ReplicatedStorage:GetAttribute("SideGrid"))
+	return Sides.sideOf(player:GetAttribute("Side"), layout.sides), layout
+end
+
 local function build(player: Player, towerKey: unknown, position: unknown): (boolean, string)
 	if typeof(towerKey) ~= "string" then
 		return false, "Pick a tower"
@@ -120,10 +128,11 @@ local function build(player: Player, towerKey: unknown, position: unknown): (boo
 	end
 
 	local spot = Placement.ground(position)
-	local fits, reason = Placement.check(spot, Towers.positions(), def.onTrack)
+	local side, layout = sideOf(player)
+	local fits, reason = Placement.check(spot, Towers.positions(), def.onTrack, Sides.zone(layout, side))
 	if fits and def.onTrack then
 		-- The pool, not just the footprint, must not overlap another pit's (#189).
-		fits, reason = Placement.checkPool(Towers.poolAtFor(spot), def.range, Towers.pools())
+		fits, reason = Placement.checkPool(Towers.poolAtFor(spot, side), def.range, Towers.pools(side))
 	end
 	if not fits then
 		return false, reason or "Can't build there"
@@ -135,7 +144,7 @@ local function build(player: Player, towerKey: unknown, position: unknown): (boo
 		return false, "Not enough cash"
 	end
 
-	local tower = Towers.place(towerKey, spot, player)
+	local tower = Towers.place(towerKey, spot, player, side)
 	if not tower then
 		Economy.earn(def.baseCost) -- give it back; place() refused
 		return false, "Couldn't build there"
