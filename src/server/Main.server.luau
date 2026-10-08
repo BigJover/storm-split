@@ -23,6 +23,7 @@
 	costs per frame (ARCHITECTURE.md §7). Watch the Output window.
 ]]
 
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -86,7 +87,8 @@ local startGame = Instance.new("RemoteEvent")
 startGame.Name = "StartGame"
 startGame.Parent = remotes
 -- Home screen, host only: ("mode" | "track" | "difficulty", key), ("sides", n), ("standins",
--- on) or ("play")
+-- on), ("ranked", on) or ("play"). Every player: ("ready", on) for Ranked (PLAN T80; its
+-- buttons are T82's)
 local lobby = Instance.new("RemoteEvent")
 lobby.Name = "Lobby"
 lobby.Parent = remotes
@@ -253,10 +255,31 @@ end
 
 local playPressed = false
 lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
-	if ReplicatedStorage:GetAttribute("State") ~= "Lobby" or not isHost(player) then
+	if ReplicatedStorage:GetAttribute("State") ~= "Lobby" then
 		return
 	end
-	if action == "mode" and typeof(key) == "string" and Modes.Modes[key] and (Modes.Modes[key].available or RunService:IsStudio()) then
+	-- Ready is each player's own (DECISIONS #223), checked by Stakes.canStake: a save that
+	-- didn't load can't stake (told why: "ReadyRefused" = the reason key, T82 words it).
+	if action == "ready" and typeof(key) == "boolean" then
+		local ok, why = true, nil
+		if key then
+			ok, why = Progression.canStake(player)
+		end
+		player:SetAttribute("Ready", key and ok)
+		player:SetAttribute("ReadyRefused", if key and not ok then why else nil)
+		return
+	end
+	if not isHost(player) then
+		return
+	end
+	if action == "ranked" and typeof(key) == "boolean" then
+		ReplicatedStorage:SetAttribute("Ranked", key) -- Casual / Ranked (battle modes only)
+		if key then
+			ReplicatedStorage:SetAttribute("Difficulty", PlayerLevel.BATTLE_CLEAR) -- Ranked is always Normal (#217)
+		end
+	elseif action == "difficulty" and ReplicatedStorage:GetAttribute("Ranked") == true then
+		return -- fixed to Normal while Ranked
+	elseif action == "mode" and typeof(key) == "string" and Modes.Modes[key] and (Modes.Modes[key].available or RunService:IsStudio()) then
 		ReplicatedStorage:SetAttribute("Mode", key) -- battle modes: Studio only until T82
 	elseif action == "sides" and typeof(key) == "number" and key == math.floor(key) and key >= 2 and key <= Config.Tuning.BattleMaxPlayers then
 		ReplicatedStorage:SetAttribute("BattleSides", key) -- Camp Clash 2 or 3; Bone Rush seats with stand-ins
@@ -410,11 +433,42 @@ local function resetBoard()
 		player:SetAttribute("LastPlayerXp", nil)
 		player:SetAttribute("LastPlayerLevelFrom", nil)
 		player:SetAttribute("LastPlayerLevel", nil)
+		for _, name in { "LastPotShare", "LastTrophies", "LastArena", "Ready", "ReadyRefused" } do
+			player:SetAttribute(name, nil) -- Ranked: a new Ready for every match (T80)
+		end
 	end
+	ReplicatedStorage:SetAttribute("BattleRanked", nil)
+	ReplicatedStorage:SetAttribute("BattlePractice", nil)
 end
 
 local function playBattle()
-	local started = Battle.play({
+	-- Ranked (PLAN T80, DECISIONS #216): the Ready hunters who can still stake are seated,
+	-- their buy-in taken into escrow now (saved at once); anyone else waits for the next
+	-- hunt. Casual seats everyone and stakes nothing.
+	local ranked = ReplicatedStorage:GetAttribute("Ranked") == true
+	local roster: { Player }? = nil
+	local matchId: string? = nil
+	local staked: { [Player]: boolean } = {}
+	if ranked then
+		matchId = HttpService:GenerateGUID(false)
+		local list = {}
+		for _, player in Players:GetPlayers() do
+			if player:GetAttribute("Ready") == true and Progression.stake(player, matchId :: string) then
+				staked[player] = true
+				table.insert(list, player)
+			end
+		end
+		roster = list
+	end
+	ReplicatedStorage:SetAttribute("BattleRanked", if ranked then true else nil)
+	local started, outcome = Battle.play({
+		roster = roster,
+		competitive = ranked,
+		onRoundStart = function(round, still)
+			for _, hunter in still do
+				Progression.bountyEvent(hunter, "reachRound", nil, round) -- battles count as matches (#222)
+			end
+		end,
 		map = map,
 		difficulty = difficulty,
 		spawn = function(player)
@@ -430,7 +484,31 @@ local function playBattle()
 		end,
 	})
 	if not started then
+		for player in staked do
+			Progression.refundStake(player) -- the match never began: every stake back
+		end
 		return -- couldn't seat the sides: back to the lobby
+	end
+	if outcome then
+		-- Player XP (#222): cleared rounds, a win counts as a Normal clear. Before
+		-- endBattle, which saves. Leavers get nothing.
+		local tallies: { [Player]: PlayerLevel.Tally } = {}
+		local places: { [Player]: number } = {}
+		for _, hunter in outcome.hunters do
+			local tally = if hunter.present then Hero.matchTally(hunter.player) else nil
+			if tally then
+				tallies[hunter.player] = tally
+				places[hunter.player] = hunter.place
+			end
+		end
+		for hunter, xp in PlayerLevel.battleAwards(tallies, places) do
+			Progression.addPlayerXp(hunter, xp)
+		end
+		local hunters = {}
+		for _, hunter in outcome.hunters do
+			table.insert(hunters, { player = hunter.player, place = hunter.place, present = hunter.present, staked = staked[hunter.player] == true })
+		end
+		Progression.endBattle({ mode = outcome.mode, n = outcome.n, ranked = ranked, matchId = matchId, hunters = hunters })
 	end
 	ReplicatedStorage:SetAttribute("HomeAt", workspace:GetServerTimeNow() + Config.Tuning.ResultsTime)
 	task.wait(Config.Tuning.ResultsTime)

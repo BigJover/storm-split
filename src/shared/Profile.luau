@@ -18,6 +18,13 @@
 	                    item id (Shared/Cosmetics). Checked against the level on load
 	                    (unknown ids, wrong kinds, locked items dropped; DECISIONS #178)
 	                    and on every equip.
+	  trophies          ranked Trophies (Shared/Trophies, PLAN T80); an older save starts at 0
+	  bestArena         the key of the best arena reached (Config.Arenas; nil = the first).
+	                    Never below the arena the Trophies are in
+	  escrow            a ranked stake taken but not yet settled: { matchId, amount }
+	                    (Shared/Stakes, DECISIONS #216). Saved the moment it's taken; the
+	                    match end settles it and clears it in the same save; a leaver
+	                    forfeits it; a shutdown or a later load finds it and refunds it
 	  lastResetPayout   Amber paid at a reset for bounties done but not claimed, since the
 	                    board was last opened. Session only, never saved.
 	  rewardsVersion    counts Hunt Board changes; the client re-asks when it moves.
@@ -30,6 +37,10 @@
 	               gets a fresh Hunt Board; everything else in it is kept)
 	  toSave       the table to store
 	  addPlayerXp  bank one match's player XP; returns what was added
+	  stake        take a ranked stake into escrow (refused while one is open or unaffordable)
+	  refundEscrow give back an escrow that was never settled (load, shutdown); returns it
+	  forfeitEscrow  a leaver's stake stays in the pot: the escrow just closes
+	  settleBattle the match end: pay, apply Trophies, clear that match's escrow (one save)
 	  equip        wear an unlocked item in its slot, or take one off
 	  hold / settleHeld   player XP that arrived while the save was still loading: held,
 	               then added once when the load succeeds, dropped if it fails
@@ -46,6 +57,8 @@ local Config = require(script.Parent.Config)
 local Bounties = require(script.Parent.Bounties)
 local PlayerLevel = require(script.Parent.PlayerLevel)
 local Cosmetics = require(script.Parent.Cosmetics)
+local Stakes = require(script.Parent.Stakes)
+local Trophies = require(script.Parent.Trophies)
 
 export type Profile = {
 	cores: number,
@@ -56,6 +69,9 @@ export type Profile = {
 	rewardsRaw: any,
 	playerXp: number,
 	equipped: { [string]: string },
+	trophies: number,
+	bestArena: string?,
+	escrow: Stakes.Escrow?,
 	lastResetPayout: number,
 	rewardsVersion: number,
 }
@@ -95,6 +111,9 @@ function Profile.blank(now: number, rng: Bounties.Rng): Profile
 		rewardsRaw = nil,
 		playerXp = 0,
 		equipped = {},
+		trophies = 0,
+		bestArena = nil,
+		escrow = nil,
 		lastResetPayout = 0,
 		rewardsVersion = 0,
 	}
@@ -116,6 +135,19 @@ function Profile.sanitize(raw: any, now: number, rng: Bounties.Rng): Profile
 	profile.playerXp = PlayerLevel.whole(raw.playerXp) -- missing (an older save) or garbage: 0
 	-- Only what this level has unlocked, in the right slot; anything else is dropped.
 	profile.equipped = Cosmetics.clean(raw.equipped, PlayerLevel.level(profile.playerXp))
+	-- Ranked (PLAN T80): older saves have none of these and load as 0 / nil.
+	profile.trophies = PlayerLevel.whole(raw.trophies)
+	profile.bestArena = Profile.bestArenaKey(raw.bestArena, profile.trophies)
+	if
+		type(raw.escrow) == "table"
+		and type(raw.escrow.matchId) == "string"
+		and type(raw.escrow.amount) == "number"
+		and raw.escrow.amount == raw.escrow.amount
+		and raw.escrow.amount > 0
+		and raw.escrow.amount < math.huge
+	then
+		profile.escrow = Stakes.escrow(raw.escrow.matchId, math.floor(raw.escrow.amount))
+	end
 	if type(raw.owned) == "table" then
 		for id, value in raw.owned do
 			if value == true and type(id) == "string" then
@@ -157,6 +189,9 @@ function Profile.toSave(profile: Profile): { [string]: any }
 		highestRound = profile.highestRound,
 		playerXp = profile.playerXp,
 		equipped = profile.equipped,
+		trophies = profile.trophies,
+		bestArena = profile.bestArena,
+		escrow = profile.escrow,
 		rewards = if profile.rewards then profile.rewards else profile.rewardsRaw,
 	}
 end
@@ -185,6 +220,80 @@ function Profile.equip(profile: Profile, slot: unknown, id: unknown): (boolean, 
 		profile.equipped[s] = id :: string
 	end
 	return true, ""
+end
+
+-- Ranked: stakes and Trophies (PLAN T80, DECISIONS #216, #218) ----------------------
+
+local function arenaIndex(key: unknown): number?
+	for i, arena in Config.Arenas do
+		if arena.key == key then
+			return i
+		end
+	end
+	return nil
+end
+
+-- The best arena reached, as a saved key: the stored one (if it's a real arena) or the
+-- one the Trophies are in, whichever is higher. nil = the first arena.
+function Profile.bestArenaKey(stored: unknown, trophies: number): string?
+	local best = math.max(arenaIndex(stored) or 1, Trophies.arenaOf(trophies))
+	return if best > 1 then Config.Arenas[best].key else nil
+end
+
+-- Take `amount` into escrow for `matchId`. Refused (false) while another escrow is open,
+-- for a bad amount, or when the Amber doesn't cover it.
+function Profile.stake(profile: Profile, matchId: string, amount: number): boolean
+	if profile.escrow ~= nil or type(amount) ~= "number" or amount ~= amount or amount <= 0 or amount ~= math.floor(amount) then
+		return false
+	end
+	if profile.cores < amount then
+		return false
+	end
+	profile.cores -= amount
+	profile.escrow = Stakes.escrow(matchId, amount)
+	return true
+end
+
+-- An escrow that was never settled comes back (Stakes.refund). Returns the Amber.
+function Profile.refundEscrow(profile: Profile): number
+	local escrow = profile.escrow
+	if escrow == nil then
+		return 0
+	end
+	local amount = Stakes.refund(escrow)
+	profile.cores += amount
+	profile.escrow = nil
+	return amount
+end
+
+-- A leaver's stake stays in the pot: the escrow closes with nothing back.
+function Profile.forfeitEscrow(profile: Profile, matchId: string): boolean
+	if profile.escrow == nil or profile.escrow.matchId ~= matchId then
+		return false
+	end
+	profile.escrow = nil
+	return true
+end
+
+-- The match end for one hunter: `payout` Amber (casual payout + pot share), `delta`
+-- Trophies (Trophies.apply: arena floor, never below 0), and that match's escrow cleared,
+-- all at once so one save stores it. Returns (Trophies change, arenas reached for the first
+-- time). An escrow for another match is left alone (it's refunded on the next load).
+function Profile.settleBattle(profile: Profile, matchId: string?, payout: number, delta: number): (number, { number })
+	if matchId and profile.escrow and profile.escrow.matchId == matchId then
+		profile.escrow = nil
+	end
+	profile.cores += math.max(0, PlayerLevel.whole(payout))
+	local before = profile.trophies
+	local bestBefore = arenaIndex(profile.bestArena) or 1
+	profile.trophies = Trophies.apply(before, delta)
+	profile.bestArena = Profile.bestArenaKey(profile.bestArena, profile.trophies)
+	local bestAfter = arenaIndex(profile.bestArena) or 1
+	local reached = {}
+	for i = bestBefore + 1, bestAfter do
+		table.insert(reached, i)
+	end
+	return profile.trophies - before, reached
 end
 
 -- Player XP that arrives while a save is still loading (DECISIONS #179).

@@ -20,7 +20,9 @@
 	                checked against the level on load and on every "equip" request,
 	                published as Equip_<slot> attributes on the Player for everyone
 	                to show. Unlocks come from the level; nothing else is stored.
-	                (Competitive buy-ins and pots come with the battle modes.)
+	  Ranked        Trophies, the best arena and an open stake's escrow (PLAN T80,
+	                DECISIONS #215-#218): canStake / stake / refundStake / endBattle.
+	                Unpublished (Studio) = Practice: session Amber, no Trophies.
 	  Unlocks       heroes and towers with an Unlock cost are bought with Amber.
 	                Free ones (cost 0) are owned by everyone. You can only pick
 	                heroes and place towers you own; upgrading a teammate's
@@ -69,6 +71,8 @@ local PlayerLevel = require(Shared:WaitForChild("PlayerLevel"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local ShopRules = require(Shared:WaitForChild("ShopRules"))
+local Stakes = require(Shared:WaitForChild("Stakes"))
+local Trophies = require(Shared:WaitForChild("Trophies"))
 
 local Progression = {}
 
@@ -86,6 +90,7 @@ local onLookChanged: ((Player) -> ())? = nil
 local bountyDone: RemoteEvent? = nil -- (bounty id), to the hunter who finished it only
 local store: DataStore? = nil
 local saveHintGiven = false -- the developer's "publish the place" hint: one warn per session
+local closing = false -- the server is shutting down (BindToClose): open stakes are refunded
 do
 	local ok, result = pcall(function()
 		return DataStoreService:GetDataStore(STORE_NAME)
@@ -148,6 +153,8 @@ local function publish(player: Player)
 		player:SetAttribute(`OwnsHero_{heroKey}`, owns(player, "hero", heroKey))
 	end
 	player:SetAttribute("SaveStatus", if canSave[player] then "saved" else "offline")
+	player:SetAttribute("Trophies", profile.trophies) -- ranked (PLAN T80); the leaderboard and Profile read it
+	player:SetAttribute("Arena", Trophies.arenaOf(profile.trophies))
 	player:SetAttribute("RewardsClaimable", Profile.claimable(profile, os.time()))
 	player:SetAttribute("RewardsVersion", profile.rewardsVersion)
 end
@@ -194,7 +201,14 @@ local function load(player: Player)
 		warn(`[Progression] No Hunt Board for {player.Name} this session; their stored one is kept`)
 	end
 	pcall(Profile.refresh, loaded, os.time(), rng) -- a new day or week since they last played
+	-- A ranked stake that was never settled (a crash): back to the player, saved now
+	-- (DECISIONS #216). Only a save that loaded has one, so only a loaded save is written.
+	local refunded = Profile.refundEscrow(loaded)
 	profiles[player] = loaded
+	if refunded > 0 then
+		print(`[Progression] Refunded {player.Name}'s unsettled stake of {refunded} {Theme.Currency}`)
+		task.spawn(save, player)
+	end
 	-- Player XP that arrived while loading: added once to a save that loaded; dropped
 	-- (never written over anything) when it didn't (DECISIONS #179).
 	local waiting = held[player]
@@ -462,6 +476,95 @@ function Progression.endMatch(result: MatchResult)
 	print(`[DinoHunters] Match over (round {result.roundReached}, {if result.cleared then "cleared" else "lost"}): +{payout} {Theme.Currency} each`)
 end
 
+------------------------------------------------------------------ ranked battles
+
+-- Published = a live server, where saves are real. Studio (or an unpublished place) is
+-- Practice: session Amber is staked and paid by the same rules, Trophies don't change
+-- (DECISIONS #216).
+function Progression.practice(): boolean
+	return RunService:IsStudio() or game.PlaceId == 0
+end
+
+-- May this player press Ready for Ranked? (Stakes.canStake.) The reason is a key the
+-- home screen words (T82): "offline" (their save didn't load), "cantAfford", "loading"
+-- (still loading), or "practice" when allowed in Practice.
+function Progression.canStake(player: Player): (boolean, string?)
+	local profile = profiles[player]
+	if not profile then
+		return false, "loading"
+	end
+	return Stakes.canStake(canSave[player] == true, not Progression.practice(), profile.cores, Config.Tuning.CompetitiveBuyIn)
+end
+
+-- Take the buy-in into escrow when the match starts (Building), and save at once.
+-- False when the player can't stake now (nothing is taken).
+function Progression.stake(player: Player, matchId: string): boolean
+	local ok = Progression.canStake(player)
+	local profile = profiles[player]
+	if not ok or not profile or not Profile.stake(profile, matchId, Config.Tuning.CompetitiveBuyIn) then
+		return false
+	end
+	publish(player)
+	task.spawn(save, player)
+	return true
+end
+
+-- A match that never started after stakes were taken (couldn't seat): every stake back.
+function Progression.refundStake(player: Player)
+	local profile = profiles[player]
+	if profile and Profile.refundEscrow(profile) > 0 then
+		publish(player)
+		task.spawn(save, player)
+	end
+end
+
+export type BattleHunter = { player: Player, place: number, present: boolean, staked: boolean }
+export type BattleResult = {
+	mode: string, -- "TEAM" / "ROYALE"
+	n: number, -- sides (Camp Clash) or seats (Bone Rush), stand-ins included
+	ranked: boolean,
+	matchId: string?,
+	hunters: { BattleHunter }, -- every real hunter seated at the start; never stand-ins or joiners
+}
+
+-- A battle's end (PLAN T80, DECISIONS #215-#218, #222): each hunter still here is paid
+-- (casual payout + pot share), their Trophies move (Ranked, not Practice) and their
+-- escrow is cleared, in one save. A winner's match counts as a Normal clear for bounties.
+-- Leavers forfeited at leaving and get nothing here.
+function Progression.endBattle(result: BattleResult)
+	local practice = Progression.practice()
+	local seats = {}
+	for _, h in result.hunters do
+		table.insert(seats, { id = h.player, place = h.place, present = h.present and h.player.Parent ~= nil, stake = if h.staked then Config.Tuning.CompetitiveBuyIn else 0 })
+	end
+	local settled, pot, leftover = Stakes.settleBattle(result.mode, result.n, seats, result.ranked, practice)
+	ReplicatedStorage:SetAttribute("BattlePractice", if result.ranked and practice then true else nil)
+	for _, seat in seats do
+		local player: Player = seat.id
+		local profile = profiles[player]
+		local got = settled[player]
+		if seat.present and profile and got then
+			local ok, err = pcall(function()
+				local change, reached = Profile.settleBattle(profile, if result.ranked then result.matchId else nil, got.payout, got.trophies)
+				if seat.place == 1 then
+					bountyProgress(player, "clear", PlayerLevel.BATTLE_CLEAR) -- a win counts as a Normal clear (#222)
+				end
+				pcall(Profile.refresh, profile, os.time(), rng)
+				player:SetAttribute("LastPayout", got.payout)
+				player:SetAttribute("LastPotShare", if result.ranked then got.share else nil)
+				player:SetAttribute("LastTrophies", if result.ranked and not practice then change else nil)
+				player:SetAttribute("LastArena", if #reached > 0 then Config.Arenas[reached[#reached]].key else nil)
+			end)
+			if not ok then
+				warn(`[Progression] Battle settle failed for {player.Name}: {err}`)
+			end
+			publish(player)
+			task.spawn(save, player)
+		end
+	end
+	print(`[DinoHunters] Battle settled ({if result.ranked then (if practice then "Practice Hunt" else "Ranked") else "Casual"}): pot {pot}, sink {leftover}`)
+end
+
 ------------------------------------------------------------------ player level
 
 -- One match's player XP for a hunter (Main, at match end, before endMatch, which
@@ -593,13 +696,25 @@ function Progression.init(
 		task.spawn(load, player)
 	end
 	Players.PlayerRemoving:Connect(function(player)
+		-- An open ranked stake: a leaver forfeits it to the pot; a shutdown gives it back
+		-- (DECISIONS #216). Either way the escrow is closed before the last save.
+		local profile = profiles[player]
+		if profile and profile.escrow then
+			if closing then
+				Profile.refundEscrow(profile)
+			else
+				Profile.forfeitEscrow(profile, profile.escrow.matchId)
+			end
+		end
 		save(player)
 		profiles[player] = nil
 		canSave[player] = nil
 		held[player] = nil
 	end)
 	game:BindToClose(function()
-		for player in profiles do
+		closing = true
+		for player, profile in profiles do
+			Profile.refundEscrow(profile) -- an open stake comes back on a shutdown (#216)
 			save(player)
 		end
 	end)

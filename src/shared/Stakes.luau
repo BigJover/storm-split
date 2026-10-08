@@ -27,10 +27,13 @@
 	  settle(mode, placement, n, share, present) what a hunter is paid at the end: the
 	                             casual payout plus their pot share (0 in casual); a leaver
 	                             (not present) gets nothing and forfeits the stake
+	  settleBattle(mode, n, hunters, ranked, practice) every seated hunter's payout, pot share
+	                             and Trophies at a battle's end (T80; below)
 	Leftover coins from rounding are a sink (DECISIONS #215).
 ]]
 
 local Config = require(script.Parent.Config)
+local Trophies = require(script.Parent.Trophies)
 
 export type Escrow = { matchId: string, amount: number }
 
@@ -124,6 +127,69 @@ function Stakes.settle(modeKey: string, placement: number, n: number, share: num
 		return 0
 	end
 	return Stakes.casualBattle(modeKey, placement, n) + math.max(0, share)
+end
+
+-- One battle's settlement for every seated hunter (PLAN T80, DECISIONS #215-#217, #222).
+--   hunters: { id, place, present, stake } — every real hunter seated at the start (stand-ins
+--            and mid-battle joiners are never in it); `stake` = what they put in (0 casual);
+--            `place` = their side's / seat's placement (1 = a winning or tied side)
+--   n:       the match's sides (Camp Clash) or seats (Bone Rush), stand-ins included
+--   ranked:  Ranked (competitive): pot shares and Trophies; casual: the casual payout only
+--   practice: unpublished Ranked ("Practice Hunt"): stakes and pot as Ranked, Trophies 0
+-- Returns (id -> { payout, share, trophies }, pot, leftover). The pot is every stake taken,
+-- a leaver's included (forfeit). Camp Clash: split equally among the hunters present on a
+-- 1st-place side. Bone Rush: the present hunters in placement order are the finishers
+-- for royaleSplit. A leaver (not present) gets nothing and no Trophy change here.
+export type Seat<Id> = { id: Id, place: number, present: boolean, stake: number }
+export type Settlement = { payout: number, share: number, trophies: number }
+
+function Stakes.settleBattle<Id>(modeKey: string, n: number, hunters: { Seat<Id> }, ranked: boolean, practice: boolean): ({ [Id]: Settlement }, number, number)
+	local stakes = {}
+	local present: { Seat<Id> } = {}
+	for _, h in hunters do
+		table.insert(stakes, if ranked then math.max(0, h.stake) else 0)
+		if h.present then
+			table.insert(present, h)
+		end
+	end
+	local pot = Stakes.pot(stakes)
+	local shares: { [Id]: number } = {}
+	local leftover = pot
+	if ranked and pot > 0 then
+		if modeKey == "TEAM" then
+			local winners = {}
+			for _, h in present do
+				if h.place == 1 then
+					table.insert(winners, h.id)
+				end
+			end
+			local each
+			each, leftover = Stakes.teamSplit(pot, winners)
+			for _, id in winners do
+				shares[id] = each
+			end
+		else
+			local order = table.clone(present)
+			table.sort(order, function(a, b)
+				return a.place < b.place
+			end)
+			local ids = {}
+			for _, h in order do
+				table.insert(ids, h.id)
+			end
+			shares, leftover = Stakes.royaleSplit(pot, ids)
+		end
+	end
+	local out: { [Id]: Settlement } = {}
+	for _, h in hunters do
+		local share = shares[h.id] or 0
+		local trophies = 0
+		if ranked and h.present then
+			trophies = Trophies.delta(modeKey, h.place, n, practice)
+		end
+		out[h.id] = { payout = Stakes.settle(modeKey, h.place, n, share, h.present), share = if h.present then share else 0, trophies = trophies }
+	end
+	return out, pot, leftover
 end
 
 return table.freeze(Stakes)

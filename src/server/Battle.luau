@@ -29,8 +29,10 @@
 
 	Stand-ins (Studio only, #221): a side with no player has a track, Fence and dinos, and
 	the fixed towers of BattleFlow.standInTowers (owner id negative), and scores the Bones
-	those towers take (BattleFlow.creditStandIn, T79b). Never saved, paid or ranked:
-	battles don't call Progression at all yet (stakes, payouts, Trophies and XP are T80).
+	those towers take (BattleFlow.creditStandIn, T79b). Never saved, paid or ranked: play()
+	returns an Outcome of the real seated hunters only, and Main settles that through
+	Progression.endBattle (payouts, stakes, Trophies, XP; T80). Battle itself never calls
+	Progression.
 
 	Every round prints the peak live enemies and the script cost, as co-op does.
 ]]
@@ -150,17 +152,29 @@ export type Context = {
 	spawn: (Player) -> (), -- Main: load the character if the match is on
 	resetCost: () -> (), -- Main's per-round script cost counters
 	costLine: () -> string,
+	roster: { Player }?, -- who is seated (Ranked: the Ready hunters who staked); nil = everyone
+	competitive: boolean?, -- Ranked: the competitive minimum players (Modes.minPlayers)
+	onRoundStart: ((number, { Player }) -> ())?, -- a round began: the hunters still in it (bounties)
+}
+
+-- What Main settles at the end (Progression.endBattle, PLAN T80): every real hunter seated
+-- at the start, their placement, and whether they're still here. Stand-ins are never in it.
+export type Outcome = {
+	mode: string,
+	n: number,
+	hunters: { { player: Player, place: number, present: boolean } },
 }
 
 -- Runs a whole battle. Returns false if it couldn't start (the lobby stays), true when it
--- ended (results are up; Main waits ResultsTime and resets).
-function Battle.play(ctx: Context): boolean
+-- ended (results are up; Main waits ResultsTime and resets), with the Outcome to settle
+-- (nil when everyone left before the end).
+function Battle.play(ctx: Context): (boolean, Outcome?)
 	local modeKey = ReplicatedStorage:GetAttribute("Mode")
 	local chosen = ctx.difficulty()
-	local roster = Players:GetPlayers()
+	local roster = ctx.roster or Players:GetPlayers()
 	local standIns = RunService:IsStudio() and ReplicatedStorage:GetAttribute("StandIns") == true
 	local picked = ReplicatedStorage:GetAttribute("BattleSides")
-	local seating, why = BattleFlow.seat(modeKey, roster, if typeof(picked) == "number" then picked else nil, standIns)
+	local seating, why = BattleFlow.seat(modeKey, roster, if typeof(picked) == "number" then picked else nil, standIns, ctx.competitive)
 	if not seating then
 		warn(`[DinoHunters] Can't start {modeKey}: {why}`)
 		return false
@@ -290,6 +304,15 @@ function Battle.play(ctx: Context): boolean
 		Enemies.resetPeak()
 		Towers.newRound()
 		startedAt = os.clock()
+		if ctx.onRoundStart then
+			local still = {}
+			for _, side in living() do
+				for _, hunter in huntersOf(side) do
+					table.insert(still, hunter)
+				end
+			end
+			ctx.onRoundStart(r, still) -- bounties' reachRound (T80): the seated hunters still in
+		end
 		for _, side in living() do
 			Airdrops.drop(side) -- each side's chests on its own plot (#231)
 			local scale = BattleFlow.sideScale(chosen, #huntersOf(side))
@@ -469,7 +492,15 @@ function Battle.play(ctx: Context): boolean
 	end
 	ReplicatedStorage:SetAttribute("State", "Victory")
 	print(`[DinoHunters] {display} over on round {round}: {table.concat(lines, " | ")}`)
-	return true
+	-- Every real hunter seated at the start, leavers included (they forfeit); never a
+	-- stand-in (no player) or a mid-battle joiner (never seated).
+	local outcome: Outcome = { mode = modeKey, n = sides, hunters = {} }
+	for side = 1, sides do
+		for _, player in seating.teams[side] do
+			table.insert(outcome.hunters, { player = player, place = places[side], present = player.Parent ~= nil })
+		end
+	end
+	return true, outcome
 end
 
 return Battle

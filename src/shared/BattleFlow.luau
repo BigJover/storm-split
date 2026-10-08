@@ -16,7 +16,7 @@
 	  standInOwnerId(side)             a stand-in's owner id: negative, never a real UserId
 	  creditStandIn(bones, standIn, side) a pop on a stand-in's track = a Bone for that seat
 	                                   (T79b; battle-local, never saved, paid or ranked)
-	  seat(mode, ids, picked?, standIns?)
+	  seat(mode, ids, picked?, standIns?, competitive?)
 	      the match's sides. Without stand-ins: Shared/Modes.sideCount decides (nil + reason
 	      when the lobby can't start). With stand-ins (Studio only, #221): one real player is
 	      enough; Camp Clash plays `picked` sides (2 or 3), Bone Rush max(players, picked)
@@ -114,7 +114,7 @@ export type Seating<Id> = {
 	standIn: { [number]: boolean },
 }
 
-function BattleFlow.seat<Id>(modeKey: string, ids: { Id }, picked: number?, standIns: boolean?): (Seating<Id>?, string?)
+function BattleFlow.seat<Id>(modeKey: string, ids: { Id }, picked: number?, standIns: boolean?, competitive: boolean?): (Seating<Id>?, string?)
 	local mode = Modes.Modes[modeKey]
 	if not mode or mode.sides == "one" then
 		return nil, "notBattle"
@@ -136,7 +136,7 @@ function BattleFlow.seat<Id>(modeKey: string, ids: { Id }, picked: number?, stan
 			end
 		end
 	else
-		local count, why = Modes.sideCount(modeKey, players, picked)
+		local count, why = Modes.sideCount(modeKey, players, picked, competitive) -- Ranked minimums (T80)
 		if not count then
 			return nil, why
 		end

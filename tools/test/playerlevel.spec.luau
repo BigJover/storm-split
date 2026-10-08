@@ -254,3 +254,13 @@ test("banking player XP leaves the hunter's own XP and level as HeroXp makes the
 	eq(HeroXp.level(xp.solo, ROUNDS), HeroXp.level(plain, ROUNDS), "hunter level unchanged")
 	ok(tallies.solo.roundXp + tallies.solo.takedownXp >= xp.solo, "the tally is never below what HeroXp kept")
 end)
+
+test("T80 battle XP: cleared rounds, a win adds the Normal clear bonus, a loss doesn't", function()
+	local PL = require(src.shared.PlayerLevel)
+	local C = require(src.shared.Config)
+	local tallies = { win = { roundXp = 300, takedownXp = 20 }, lose = { roundXp = 300, takedownXp = 20 } }
+	local out = PL.battleAwards(tallies, { win = 1, lose = 2 })
+	eq(out.lose, 320)
+	eq(out.win, 320 + C.Difficulties.NORMAL.clearXp)
+	eq(PL.BATTLE_CLEAR, "NORMAL")
+end)

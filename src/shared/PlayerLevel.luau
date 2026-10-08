@@ -152,6 +152,18 @@ function PlayerLevel.matchAwards<K>(tallies: { [K]: Tally }, cleared: boolean, d
 	return out
 end
 
+-- A battle's player XP (PLAN T80, DECISIONS #222): each hunter's cleared rounds, and a
+-- win (`places[who]` == 1) counts as a Normal clear for the clear bonus. Never solo.
+PlayerLevel.BATTLE_CLEAR = "NORMAL"
+
+function PlayerLevel.battleAwards<K>(tallies: { [K]: Tally }, places: { [K]: number }): { [K]: number }
+	local out = {}
+	for who, tally in tallies do
+		out[who] = PlayerLevel.matchXp(tally.roundXp, tally.takedownXp, false, places[who] == 1, PlayerLevel.BATTLE_CLEAR)
+	end
+	return out
+end
+
 -- The reward tier a level unlocks (DECISIONS #121), read from the Cosmetics sheet: the
 -- level's cosmetic's rarity, "title" when only a title unlocks there, else "none".
 function PlayerLevel.rewardAt(level: number): Reward

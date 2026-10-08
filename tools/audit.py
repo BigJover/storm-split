@@ -77,7 +77,6 @@ DEAD_ALLOWED = {
 # outlive its task. (block, field): the task that reads it
 DEAD_PENDING = {
     # Phase 7 batch 1 (PLAN T73): the levers whose readers come later in phase 7.
-    ("Tuning", "CompetitiveBuyIn"): "T80 (Progression passes it to Stakes.canStake and escrows it)",
     ("Tuning", "CompetitiveEdgeMax"): "T84 (value.py/exporter edge bar; then DEAD_ALLOWED as an exporter rule)",
     ("Tuning", "PerkParityBand"): "T84 (value.py/exporter parity bar; then DEAD_ALLOWED as an exporter rule)",
 }
