@@ -195,7 +195,15 @@ local function myHero()
 end
 
 -- Picking is open until the game starts, and always for someone without a hero.
+-- A spectator: this hunter's battle camp is out (Server/Battle, PLAN T77/T83).
+local function spectating(): boolean
+	return player:GetAttribute("Out") == true
+end
+
 local function canPickHero(): boolean
+	if spectating() then
+		return false
+	end
 	local state = ReplicatedStorage:GetAttribute("State")
 	if state == "GameOver" or state == "Victory" then
 		return false
@@ -1175,12 +1183,14 @@ renderRows = function()
 	local state = ReplicatedStorage:GetAttribute("State")
 	local inMatch = state == "Building" or state == "Playing"
 	-- The home screen (Home.client) has its own buttons for heroes and unlocks.
-	buildButton.Visible = inMatch
+	-- A spectator's camp is out: no build or hero buttons (PanelRules.allowed refuses them).
+	local watching = spectating()
+	buildButton.Visible = inMatch and not watching
 	heroButton.Visible = canPickHero() and inMatch
 	heroButton.Text = if mode == "heroPick" then "Close  (H)" else "Choose hero  (H)"
-	upgradesButton.Visible = myHero() ~= nil and inMatch
+	upgradesButton.Visible = myHero() ~= nil and inMatch and not watching
 	upgradesButton.Text = if mode == "heroUpgrade" then "Close  (U)" else "Upgrades  (U)"
-	masteryButton.Visible = state == "Building"
+	masteryButton.Visible = state == "Building" and not watching
 	masteryButton.Text = if mode == "mastery" then "Close  (M)" else "Unlocks & Mastery  (M)"
 	local cash = math.floor(ReplicatedStorage:GetAttribute(Sides.attr("Cash", (mySide()))) or 0) -- your side's cash (T76)
 
@@ -1471,7 +1481,7 @@ end
 
 -- Open `wanted` if Shared/PanelRules allows it in the current state.
 local function openIfAllowed(wanted: Mode)
-	if PanelRules.allowed(wanted, ReplicatedStorage:GetAttribute("State"), myHero() ~= nil) then
+	if PanelRules.allowed(wanted, ReplicatedStorage:GetAttribute("State"), myHero() ~= nil, spectating()) then
 		setMode(wanted)
 	end
 end
@@ -1652,7 +1662,7 @@ end)
 -- going home close everything.
 ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(function()
 	local state = ReplicatedStorage:GetAttribute("State")
-	if not PanelRules.keepOnStateChange(mode, state, myHero() ~= nil) then
+	if not PanelRules.keepOnStateChange(mode, state, myHero() ~= nil, spectating()) then
 		setMode("closed")
 	else
 		render() -- button visibility
@@ -1660,6 +1670,15 @@ ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(function()
 end)
 
 player.AttributeChanged:Connect(function(name)
+	if name == "Out" then
+		-- Your camp just went out: build, hero and mastery panels close (PanelRules).
+		if not PanelRules.allowed(mode, ReplicatedStorage:GetAttribute("State"), myHero() ~= nil, spectating()) then
+			setMode("closed")
+		else
+			render()
+		end
+		return
+	end
 	if
 		name == "Hero"
 		or name == "Cores"

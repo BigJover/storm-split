@@ -300,3 +300,17 @@ test("T80: Ranked seating uses the competitive minimum (Bone Rush 3); casual all
 	ok(BattleFlow.seat("ROYALE", { "a", "b" }, nil, false, false) ~= nil, "casual Bone Rush with 2")
 	ok(BattleFlow.seat("ROYALE", { "a", "b", "c" }, nil, false, true) ~= nil, "Ranked with 3")
 end)
+
+test("T83 camp colours: ten distinct, Red/Blue/Green first, side order wraps", function()
+	local seen = {}
+	for _, name in BattleFlow.CampColors do
+		ok(not seen[name], `{name} once`)
+		seen[name] = true
+	end
+	eq(#BattleFlow.CampColors, 10)
+	eq(BattleFlow.campColor(1), "Bright red")
+	eq(BattleFlow.campColor(2), "Bright blue")
+	eq(BattleFlow.campColor(3), "Bright green")
+	eq(BattleFlow.campColor(10), "Black")
+	eq(BattleFlow.campColor(11), "Bright red", "wraps")
+end)

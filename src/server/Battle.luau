@@ -23,6 +23,9 @@
 	            repeats it with more HP until one side falls (BattleRules.teamResult).
 	            Bone Rush: at most one alive or the last round done; most Bones wins
 	            (BattleRules.royaleResult, survivor bonus included).
+	  Board     each side's Bones as "CampBones"/"CampBones2"... (the HUD's camps board),
+	            and a Roblox Team per camp (its name and colour, BattleFlow.campColor), so
+	            the player list (Tab) groups hunters by camp with each camp's Bones total.
 	  Results   each hunter: "BattleSide", "BattlePlace", "BattleBones"; each side
 	            "Place"/"Place2"...; ReplicatedStorage "BattleMode". State "Victory" ends
 	            the match for everyone (the HUD reads BattlePlace for who won).
@@ -40,6 +43,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local Teams = game:GetService("Teams")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
@@ -73,6 +77,7 @@ local layout: Sides.Layout = Sides.new(1)
 -- Studio stand-in seats and the Bones their own towers take (PLAN T79b): battle-local only.
 local standInSeats: { [number]: boolean } = {}
 local standInBones: { [number]: number } = {}
+local campTeams: { Team } = {} -- one per camp this match (the player list's groups)
 
 ------------------------------------------------------------------ public helpers
 
@@ -127,13 +132,23 @@ end
 function Battle.reset()
 	active = false
 	for side = 1, math.max(MAX_SIDES, seatedSides) do
-		for _, name in { "Camp", "Out", "Place" } do
+		for _, name in { "Camp", "Out", "Place", "CampBones" } do
 			ReplicatedStorage:SetAttribute(Sides.attr(name, side), nil)
 		end
 	end
 	seatedSides = 0
 	table.clear(standInSeats)
 	table.clear(standInBones)
+	for _, player in Players:GetPlayers() do
+		if player.Team and table.find(campTeams, player.Team) then
+			player.Team = nil
+			player.Neutral = true
+		end
+	end
+	for _, team in campTeams do
+		team:Destroy()
+	end
+	table.clear(campTeams)
 	ReplicatedStorage:SetAttribute("BattleMode", nil)
 	ReplicatedStorage:SetAttribute("Overtime", nil)
 	ReplicatedStorage:SetAttribute("BuildEndsAt", nil)
@@ -199,6 +214,17 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		local first = seating.teams[side][1]
 		local camp = BattleFlow.campName(modeKey, side, if first then first.DisplayName else nil)
 		ReplicatedStorage:SetAttribute(Sides.attr("Camp", side), camp)
+		ReplicatedStorage:SetAttribute(Sides.attr("CampBones", side), 0)
+		local team = Instance.new("Team")
+		team.Name = camp
+		team.TeamColor = BrickColor.new(BattleFlow.campColor(side) :: any)
+		team.AutoAssignable = false
+		team.Parent = Teams
+		campTeams[side] = team
+		for _, player in seating.teams[side] do
+			player.Neutral = false
+			player.Team = team
+		end
 	end
 
 	-- Economy: each side its own pot (scaled by its hunters) and Fence.
@@ -432,6 +458,9 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 				end
 			end
 		end
+		for side = 1, sides do -- the camps board (only a change replicates)
+			ReplicatedStorage:SetAttribute(Sides.attr("CampBones", side), sideBones(side))
+		end
 		if #pendingOut > 0 then
 			local fallen = pendingOut
 			pendingOut = {}
@@ -481,6 +510,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 	end)
 	for side = 1, sides do
 		ReplicatedStorage:SetAttribute(Sides.attr("Place", side), places[side])
+		ReplicatedStorage:SetAttribute(Sides.attr("CampBones", side), finalBones[side]) -- the results' placements
 		for _, player in huntersOf(side) do
 			player:SetAttribute("BattlePlace", places[side])
 			-- Camp Clash: the hunter's own Bones; Bone Rush: the seat's final (survivor bonus in).

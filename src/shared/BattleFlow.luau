@@ -6,6 +6,7 @@
 
 	  campName(mode, side, ownerName?) Camp Clash: "Red Camp" / "Blue Camp" / "Green Camp";
 	                                   Bone Rush: "<Name>'s Camp" (T74, #229)
+	  campColor(side)                  the camp's BrickColor name (CampColors, side order)
 	  outLine(camp)                    "<Camp>'s Fence is down! They're out."
 	  tranqLine(name)                  "Tranqed by <name>!" (a hunter down, T78)
 	  raidLine(name, camp, tower)      "<name> trampled <Camp>'s <tower>" (a raid knock-out)
@@ -64,6 +65,27 @@ function BattleFlow.campName(modeKey: string, side: number, ownerName: string?):
 		return BattleFlow.TeamCamps[side] or `Camp {side}`
 	end
 	return `{ownerName or BattleFlow.standInName(side)}'s Camp`
+end
+
+-- Camp colours (DINO_REVIEW Round 16: Red, Blue, Green, Yellow, Orange, Purple, Pink,
+-- Teal, White, Black, in side order), as BrickColor names: a Team's colour on the player
+-- list and the HUD's camp swatch. Visual only. Camp Clash's Red/Blue/Green Camp are 1-3.
+BattleFlow.CampColors = table.freeze({
+	"Bright red",
+	"Bright blue",
+	"Bright green",
+	"Bright yellow",
+	"Bright orange",
+	"Bright violet",
+	"Hot pink",
+	"Teal",
+	"Institutional white",
+	"Black",
+})
+
+function BattleFlow.campColor(side: number): string
+	local colors = BattleFlow.CampColors
+	return colors[((math.max(1, math.floor(side)) - 1) % #colors) + 1]
 end
 
 function BattleFlow.outLine(camp: string): string

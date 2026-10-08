@@ -686,4 +686,187 @@ task.spawn(function()
 	end)
 end)
 
+-- Battle screens (PLAN T83, DECISIONS #223; Shared/PanelRules.battleHud). All labels:
+-- nothing to click, no mouse, nothing to close (the no-trap rule has nothing to trap).
+-- Camps board, top left: every camp's colour, Fence and Bones, the camps still in first;
+-- your camp in bold (the scoreboard by side; the player list groups hunters by camp).
+-- Under the status line: the spectate banner once your camp is out, and the Final
+-- Stampede banner in overtime. Bottom centre: Camo Cover while your spawn shield lasts.
+-- The status line takes your camp's colour as an outline. Co-op shows none of these.
+local function richEscape(text: string): string
+	return (string.gsub(string.gsub(string.gsub(text, "&", "&amp;"), "<", "&lt;"), ">", "&gt;"))
+end
+
+local campStroke = Instance.new("UIStroke")
+campStroke.Thickness = 3
+campStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+campStroke.Enabled = false
+campStroke.Parent = label
+
+local campsBoard = Instance.new("TextLabel")
+campsBoard.Name = "CampsBoard"
+campsBoard.Position = UDim2.new(0, 12, 0, 104) -- under Studio's +1000 cash button
+campsBoard.Size = UDim2.new(0.3, 0, 0.42, 0) -- shrinks with the window, never off screen
+campsBoard.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
+campsBoard.BackgroundTransparency = 0.3
+campsBoard.TextColor3 = Color3.fromRGB(240, 236, 250)
+campsBoard.Font = Enum.Font.GothamBold
+campsBoard.RichText = true
+campsBoard.TextScaled = true -- ten camps still fit: the text shrinks, never clips
+campsBoard.TextXAlignment = Enum.TextXAlignment.Left
+campsBoard.TextYAlignment = Enum.TextYAlignment.Top
+campsBoard.Active = false
+campsBoard.Visible = false
+campsBoard.Parent = gui
+do
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 8)
+	c.Parent = campsBoard
+	local pad = Instance.new("UIPadding")
+	pad.PaddingLeft = UDim.new(0, 8)
+	pad.PaddingRight = UDim.new(0, 8)
+	pad.PaddingTop = UDim.new(0, 6)
+	pad.PaddingBottom = UDim.new(0, 6)
+	pad.Parent = campsBoard
+	local limit = Instance.new("UISizeConstraint")
+	limit.MaxSize = Vector2.new(300, 250)
+	limit.Parent = campsBoard
+	local text = Instance.new("UITextSizeConstraint")
+	text.MaxTextSize = 15
+	text.MinTextSize = 6
+	text.Parent = campsBoard
+end
+
+local battleBanners = Instance.new("Frame")
+battleBanners.Name = "BattleBanners"
+battleBanners.AnchorPoint = Vector2.new(0.5, 0)
+battleBanners.Position = UDim2.new(0.5, 0, 0, 116) -- under the XP rows
+battleBanners.Size = UDim2.new(1, -32, 0, 0)
+battleBanners.AutomaticSize = Enum.AutomaticSize.Y
+battleBanners.BackgroundTransparency = 1
+battleBanners.Active = false
+battleBanners.Parent = gui
+do
+	local limit = Instance.new("UISizeConstraint")
+	limit.MaxSize = Vector2.new(520, math.huge)
+	limit.Parent = battleBanners
+	local list = Instance.new("UIListLayout")
+	list.SortOrder = Enum.SortOrder.LayoutOrder
+	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	list.Padding = UDim.new(0, 4)
+	list.Parent = battleBanners
+end
+
+local function battleLabel(name: string, order: number, color: Color3, parent: Instance): TextLabel
+	local line = Instance.new("TextLabel")
+	line.Name = name
+	line.LayoutOrder = order
+	line.Size = UDim2.new(1, 0, 0, 30)
+	line.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
+	line.BackgroundTransparency = 0.2
+	line.TextColor3 = color
+	line.Font = Enum.Font.GothamBlack
+	line.TextScaled = true
+	line.Active = false
+	line.Visible = false
+	line.Parent = parent
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 8)
+	c.Parent = line
+	local limit = Instance.new("UITextSizeConstraint")
+	limit.MaxTextSize = 20
+	limit.MinTextSize = 8
+	limit.Parent = line
+	return line
+end
+
+local spectateBanner = battleLabel("Spectate", 1, Color3.fromRGB(255, 120, 140), battleBanners)
+spectateBanner.Text = PanelRules.SPECTATE_LINE
+local stampedeBanner = battleLabel("FinalStampede", 2, Color3.fromRGB(250, 205, 80), battleBanners)
+stampedeBanner.Text = PanelRules.STAMPEDE_LINE
+local camoTag = battleLabel("CamoCover", 1, Color3.fromRGB(140, 240, 170), gui)
+camoTag.AnchorPoint = Vector2.new(0.5, 1)
+camoTag.Position = UDim2.new(0.5, 0, 1, -96)
+camoTag.Size = UDim2.new(0.5, 0, 0, 28)
+do
+	local limit = Instance.new("UISizeConstraint")
+	limit.MaxSize = Vector2.new(320, 28)
+	limit.Parent = camoTag
+end
+
+local function camoLeft(): number
+	local character = player.Character
+	local untilAt = if character then character:GetAttribute("CamoUntil") else nil
+	if typeof(untilAt) ~= "number" then
+		return 0
+	end
+	return math.max(0, untilAt - workspace:GetServerTimeNow())
+end
+
+local function refreshBattle()
+	local state = attr("State", "Waiting")
+	local battle = attr("BattleMode", nil)
+	local out = player:GetAttribute("Out") == true
+	local left = camoLeft()
+	local show = PanelRules.battleHud(state, battle, out, attr("Overtime", nil), left)
+	spectateBanner.Visible = show.spectate
+	stampedeBanner.Visible = show.stampede
+	camoTag.Visible = show.camo
+	if show.camo then
+		camoTag.Text = `{PanelRules.CAMO_LINE} ({math.ceil(left)}s)`
+	end
+	campsBoard.Visible = show.camps
+	local mySide = Sides.playerSide(player:GetAttribute("Side"), attr("Sides", nil))
+	campStroke.Enabled = show.camps
+	if not show.camps then
+		return
+	end
+	campStroke.Color = BrickColor.new(BattleFlow.campColor(mySide) :: any).Color
+	local camps = {}
+	for side = 1, math.floor(attr("Sides", 1)) do
+		local camp = attr(Sides.attr("Camp", side), nil)
+		if typeof(camp) == "string" then
+			table.insert(camps, {
+				side = side,
+				camp = camp,
+				fence = attr(Sides.attr("Lives", side), 0),
+				bones = attr(Sides.attr("CampBones", side), 0),
+				out = attr(Sides.attr("Out", side), false) == true,
+			})
+		end
+	end
+	local rows = PanelRules.campRows(camps, mySide)
+	local lines = { PanelRules.campsHeader(rows) }
+	for _, row in rows do
+		local swatch = `<font color="#{BrickColor.new(BattleFlow.campColor(row.side) :: any).Color:ToHex()}">■</font>`
+		local text = richEscape(PanelRules.campLine(row))
+		table.insert(lines, if row.mine then `{swatch} <b>{text}</b>` else `{swatch} {text}`)
+	end
+	campsBoard.Text = table.concat(lines, "\n")
+end
+
+for _, name in { "State", "BattleMode", "Overtime", "Sides" } do
+	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refreshBattle)
+end
+ReplicatedStorage.AttributeChanged:Connect(function(name: string)
+	for _, prefix in { "^Camp%d*$", "^CampBones%d*$", "^Lives%d*$", "^Out%d*$" } do
+		if string.match(name, prefix) then
+			refreshBattle()
+			return
+		end
+	end
+end)
+for _, name in { "Out", "Side" } do
+	player:GetAttributeChangedSignal(name):Connect(refreshBattle)
+end
+task.spawn(function() -- Camo Cover's countdown
+	while true do
+		task.wait(0.25)
+		if camoTag.Visible or camoLeft() > 0 then
+			refreshBattle()
+		end
+	end
+end)
+refreshBattle()
+
 gui.Parent = player:WaitForChild("PlayerGui")

@@ -13,6 +13,9 @@
 	                                       Profile screen (Profile.client, PLAN T57),
 	                                       owned the same way as the Hunt Board
 
+	A spectator (their battle camp is out, PLAN T83) can't open build, hero, upgrade or
+	mastery panels; the read-only tower panel (Inspect) stays.
+
 	When the state changes, a panel only survives the step from Building into
 	Playing, and only if it's still allowed there. Every other change closes
 	it: pressing Play on the home screen, the results screen, going home.
@@ -31,10 +34,18 @@ local PanelRules = {}
 local IN_MATCH = { Building = true, Playing = true }
 local BEFORE_ROUND = { Lobby = true, Building = true }
 
--- May `mode` be opened (or stay open) in `state`?
-function PanelRules.allowed(mode: string, state: string?, hasHero: boolean): boolean
+-- Panels a spectator can't use (PLAN T83): their camp is out, so they can't build, pick
+-- or upgrade a hero, or spend mastery. The tower panel stays: every tower left is another
+-- camp's, and it opens read-only (Inspect).
+local SPECTATOR_CLOSED = { list = true, placing = true, heroUpgrade = true, heroPick = true, mastery = true }
+
+-- May `mode` be opened (or stay open) in `state`? `out`: this hunter's battle camp is out.
+function PanelRules.allowed(mode: string, state: string?, hasHero: boolean, out: boolean?): boolean
 	if mode == "closed" then
 		return true
+	end
+	if out and SPECTATOR_CLOSED[mode] then
+		return false
 	end
 	local s = state or ""
 	if mode == "list" or mode == "placing" or mode == "manage" then
@@ -52,11 +63,11 @@ function PanelRules.allowed(mode: string, state: string?, hasHero: boolean): boo
 end
 
 -- Does an open `mode` stay open when the match moves to `newState`?
-function PanelRules.keepOnStateChange(mode: string, newState: string?, hasHero: boolean): boolean
+function PanelRules.keepOnStateChange(mode: string, newState: string?, hasHero: boolean, out: boolean?): boolean
 	if mode == "closed" then
 		return true
 	end
-	return newState == "Playing" and PanelRules.allowed(mode, newState, hasHero)
+	return newState == "Playing" and PanelRules.allowed(mode, newState, hasHero, out)
 end
 
 -- The tower panel's level line, or nil at level 1 (nothing to say yet). `perLevel`
@@ -113,6 +124,66 @@ end
 -- it stays on the Mastery screen, the Profile screen and the hero card.
 function PanelRules.playerListColumns(): { string }
 	return { Theme.Bones, Theme.PlayerLevel, TrophyBoard.COLUMN, "Title" }
+end
+
+-- In-match battle screens (PLAN T83, DECISIONS #223) --------------------------------------
+-- All of them are labels: nothing to click, no mouse, nothing to close, so nothing can trap
+-- a player (DIRECTION no-trap rule). Wording: DINO_REVIEW Round 16 (accepted in #229).
+
+PanelRules.SPECTATE_LINE = "Your Fence is down — you're watching now."
+PanelRules.STAMPEDE_LINE = "Final Stampede! Dinos get tougher every round."
+PanelRules.CAMO_LINE = "Camo Cover: can't be hit"
+
+export type BattleHud = { camps: boolean, spectate: boolean, stampede: boolean, camo: boolean }
+
+-- Which battle labels show. `battle` = ReplicatedStorage BattleMode (nil in co-op, so
+-- co-op never shows any); `out` = this hunter's camp is out; `overtime` = the Final
+-- Stampede repeat (nil before it); `camoLeft` = seconds of Camo Cover left.
+function PanelRules.battleHud(state: string?, battle: string?, out: boolean, overtime: number?, camoLeft: number): BattleHud
+	local inBattle = battle ~= nil and IN_MATCH[state or ""] == true
+	return {
+		camps = inBattle, -- every camp's Fence and Bones: the scoreboard by side
+		spectate = inBattle and out,
+		stampede = inBattle and state == "Playing" and (overtime or 0) > 0,
+		camo = inBattle and not out and camoLeft > 0,
+	}
+end
+
+export type Camp = { side: number, camp: string, fence: number, bones: number, out: boolean }
+
+-- The camps board, top left: the camps still in first, then by Bones (most first), then
+-- by side; `mine` marks your camp. A new table: the input isn't reordered.
+function PanelRules.campRows(camps: { Camp }, mySide: number): { { side: number, camp: string, fence: number, bones: number, out: boolean, mine: boolean } }
+	local rows = {}
+	for _, c in camps do
+		table.insert(rows, { side = c.side, camp = c.camp, fence = c.fence, bones = c.bones, out = c.out, mine = c.side == mySide })
+	end
+	table.sort(rows, function(a, b)
+		if a.out ~= b.out then
+			return not a.out
+		elseif a.bones ~= b.bones then
+			return a.bones > b.bones
+		end
+		return a.side < b.side
+	end)
+	return rows
+end
+
+-- One camp's line: "Red Camp · Fence 12 · 40 Bones", or "Red Camp · out · 40 Bones".
+function PanelRules.campLine(row: { camp: string, fence: number, bones: number, out: boolean }): string
+	local fence = if row.out then "out" else `{Theme.Fence} {math.max(0, math.floor(row.fence))}`
+	return `{row.camp} · {fence} · {math.floor(row.bones)} {Theme.Bones}`
+end
+
+-- The board's header: how many camps are still in.
+function PanelRules.campsHeader(rows: { { out: boolean } }): string
+	local alive = 0
+	for _, row in rows do
+		if not row.out then
+			alive += 1
+		end
+	end
+	return `{alive}/{#rows} camps left`
 end
 
 return PanelRules
