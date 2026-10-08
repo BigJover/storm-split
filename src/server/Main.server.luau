@@ -37,6 +37,7 @@ local Pricing = require(Shared:WaitForChild("Pricing"))
 local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local BattleFlow = require(Shared:WaitForChild("BattleFlow"))
+local HomeLayout = require(Shared:WaitForChild("HomeLayout"))
 
 local MapBuilder = require(script.Parent.MapBuilder)
 local Enemies = require(script.Parent.Enemies)
@@ -201,6 +202,8 @@ Towers.init(map.towerFolder, {
 	end,
 })
 Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged, onLookChanged = Hero.lookChanged })
+-- The home screen's Practice Hunt line under Ready (PLAN T82): unpublished = Practice.
+ReplicatedStorage:SetAttribute("PracticeHunt", Progression.practice())
 Wardrobe.init() -- hats and trails on characters (PLAN T57)
 LevelBoard.init(remotes) -- the level leaderboard (PLAN T58); never blocks play
 TrophyBoard.init(remotes) -- the Trophy leaderboard (PLAN T81); never blocks play
@@ -274,15 +277,25 @@ lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
 	if not isHost(player) then
 		return
 	end
+	-- Ranked is a battle queue: it fixes the difficulty only while a battle mode is picked.
+	local function rankedBattle(): boolean
+		return ReplicatedStorage:GetAttribute("Ranked") == true and HomeLayout.isBattle(ReplicatedStorage:GetAttribute("Mode"))
+	end
 	if action == "ranked" and typeof(key) == "boolean" then
 		ReplicatedStorage:SetAttribute("Ranked", key) -- Casual / Ranked (battle modes only)
-		if key then
+		if rankedBattle() then
 			ReplicatedStorage:SetAttribute("Difficulty", PlayerLevel.BATTLE_CLEAR) -- Ranked is always Normal (#217)
 		end
-	elseif action == "difficulty" and ReplicatedStorage:GetAttribute("Ranked") == true then
+	elseif action == "difficulty" and rankedBattle() then
 		return -- fixed to Normal while Ranked
-	elseif action == "mode" and typeof(key) == "string" and Modes.Modes[key] and (Modes.Modes[key].available or RunService:IsStudio()) then
-		ReplicatedStorage:SetAttribute("Mode", key) -- battle modes: Studio only until T82
+	elseif action == "mode" and typeof(key) == "string" and Modes.Modes[key] and Modes.Modes[key].available then
+		ReplicatedStorage:SetAttribute("Mode", key) -- Camp Clash and Bone Rush are open from T82
+		if key == "TEAM" and not table.find(Modes.TeamSides, ReplicatedStorage:GetAttribute("BattleSides")) then
+			ReplicatedStorage:SetAttribute("BattleSides", nil) -- a Bone Rush seat count isn't a camp count
+		end
+		if rankedBattle() then
+			ReplicatedStorage:SetAttribute("Difficulty", PlayerLevel.BATTLE_CLEAR)
+		end
 	elseif action == "sides" and typeof(key) == "number" and key == math.floor(key) and key >= 2 and key <= Config.Tuning.BattleMaxPlayers then
 		ReplicatedStorage:SetAttribute("BattleSides", key) -- Camp Clash 2 or 3; Bone Rush seats with stand-ins
 	elseif action == "standins" and typeof(key) == "boolean" and RunService:IsStudio() then
@@ -292,7 +305,25 @@ lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
 	elseif action == "difficulty" and typeof(key) == "string" and Config.Difficulties[key] then
 		ReplicatedStorage:SetAttribute("Difficulty", key)
 	elseif action == "play" then
-		playPressed = true
+		-- PLAY works once the minimum is met (PLAN T82): Ranked counts the Ready hunters.
+		local ready = 0
+		for _, each in Players:GetPlayers() do
+			if each:GetAttribute("Ready") == true then
+				ready += 1
+			end
+		end
+		local picked = ReplicatedStorage:GetAttribute("BattleSides")
+		local canPlay = HomeLayout.canPlay(
+			ReplicatedStorage:GetAttribute("Mode"),
+			ReplicatedStorage:GetAttribute("Ranked") == true,
+			#Players:GetPlayers(),
+			ready,
+			if typeof(picked) == "number" then picked else nil,
+			RunService:IsStudio() and ReplicatedStorage:GetAttribute("StandIns") == true
+		)
+		if canPlay then
+			playPressed = true
+		end
 	end
 end)
 

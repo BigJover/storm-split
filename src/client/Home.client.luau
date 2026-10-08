@@ -1,7 +1,9 @@
 --[[
 	Home screen, shown while the server is in the Lobby state (Main).
 
-	Game mode, track and difficulty cards, your Amber and hero, buttons
+	Game mode, track and difficulty cards; for Camp Clash and Bone Rush the battle options
+	(Casual / Ranked, camps, Studio stand-ins) and, in Ranked, every player's own Ready with
+	its Entry fee confirm (PLAN T82, Shared/HomeLayout); your Amber and hero, buttons
 	for hero select, Unlocks & Mastery (they open Shop.client's panels) and the
 	Hunt Board (HuntBoard.client's screen; an amber dot says something is waiting
 	to be claimed), the Profile screen beside it (Profile.client, PLAN T57), and Play. The host — the longest-connected player — makes the choices and
@@ -196,12 +198,72 @@ for order, key in Config.DifficultyOrder do
 	difficultyCards[key] = button
 end
 
-local hostLine = text(9, "", 16, Enum.Font.GothamBold, TEXT_DIM)
+-- Battle options (PLAN T82, Shared/HomeLayout): shown only for Camp Clash and Bone Rush.
+-- The host's choices (Casual/Ranked, 2/3 camps, Studio stand-ins); everyone sees them live.
+local battleHeader = text(9, HomeLayout.BATTLE_HEADER, 16, Enum.Font.GothamBold, TEXT_DIM)
+local optionRow = row(10, HomeLayout.OPTION_HEIGHT)
+local function chip(order: number, spec: HomeLayout.Card, onClick: () -> ()): TextButton
+	local button = card(optionRow, order, spec.width, HomeLayout.OPTION_HEIGHT)
+	button.TextSize = spec.textSize
+	button.Text = spec.text
+	button.Activated:Connect(onClick)
+	return button
+end
+local casualChip = chip(1, HomeLayout.CASUAL, function()
+	lobby:FireServer("ranked", false)
+end)
+local rankedChip = chip(2, HomeLayout.RANKED, function()
+	lobby:FireServer("ranked", true)
+end)
+local sideChips: { [number]: TextButton } = {}
+for i, spec in HomeLayout.SIDES do
+	local count = Modes.TeamSides[i]
+	sideChips[count] = chip(2 + i, spec, function()
+		lobby:FireServer("sides", count)
+	end)
+end
+local seatsChip = chip(5, HomeLayout.SEATS, function()
+	lobby:FireServer("sides", HomeLayout.nextSeats(ReplicatedStorage:GetAttribute("BattleSides")))
+end)
+local standInChip = chip(6, HomeLayout.STAND_INS, function()
+	lobby:FireServer("standins", ReplicatedStorage:GetAttribute("StandIns") ~= true)
+end)
+
+-- Ranked: every player's own Ready (DECISIONS #223). The card opens an inline confirm
+-- ("Pay 15 Amber to enter?") with an X beside it; pressing the card again pays. It sits in
+-- the home column, so it scales with it, the home screen keeps the mouse free, and it
+-- closes on its X, on Ready, and on every state change (HomeLayout.confirmOpen).
+local FEE = Config.Tuning.CompetitiveBuyIn
+local readyRow = row(11, HomeLayout.ROW_HEIGHT)
+local readyCard = card(readyRow, 1, HomeLayout.READY_WIDTH, HomeLayout.ROW_HEIGHT)
+readyCard.TextSize = HomeLayout.READY_TEXT
+readyCard.Modal = true -- every Ranked player can reach it with a free mouse
+local readyX = card(readyRow, 2, HomeLayout.READY_X, HomeLayout.ROW_HEIGHT)
+readyX.Text = "X"
+local readyInfo = Instance.new("TextLabel")
+readyInfo.LayoutOrder = 3
+readyInfo.Size = UDim2.fromOffset(HomeLayout.READY_INFO, HomeLayout.ROW_HEIGHT)
+readyInfo.BackgroundTransparency = 1
+readyInfo.Font = Enum.Font.GothamBold
+readyInfo.TextColor3 = TEXT_DIM
+readyInfo.TextXAlignment = Enum.TextXAlignment.Left
+readyInfo.RichText = true
+readyInfo.TextScaled = true -- three short lines; shrinks rather than spill out of the row
+readyInfo.Parent = readyRow
+do
+	local limit = Instance.new("UITextSizeConstraint")
+	limit.MaxTextSize = 14
+	limit.MinTextSize = 8
+	limit.Parent = readyInfo
+end
+local confirmWanted = false
+
+local hostLine = text(12, "", 16, Enum.Font.GothamBold, TEXT_DIM)
 
 -- The Hunt Board has its own row above the action row (DECISIONS #138).
 -- HuntBoard.client keeps its board above this row (found by name), so its button,
 -- Play and the action row stay in reach while the board is open.
-local huntRow = row(10, HomeLayout.ROW_HEIGHT)
+local huntRow = row(13, HomeLayout.ROW_HEIGHT)
 huntRow.Name = HomeLayout.HUNT_ROW
 -- Every player has this button, host or not. Pressing it again closes the board.
 local huntCard = card(huntRow, 1, HomeLayout.HUNT_WIDTH, HomeLayout.ROW_HEIGHT)
@@ -228,7 +290,7 @@ profileCard.Activated:Connect(function()
 	player:SetAttribute("OpenPanel", ProfileScreen.MODE)
 end)
 
-local actionRow = row(11, HomeLayout.ROW_HEIGHT)
+local actionRow = row(14, HomeLayout.ROW_HEIGHT)
 actionRow.Name = "Actions"
 local heroCard = card(actionRow, 1, HomeLayout.HERO.width, HomeLayout.ROW_HEIGHT)
 heroCard.TextSize = HomeLayout.HERO.textSize
@@ -251,7 +313,7 @@ playButton.TextSize = HomeLayout.PLAY.textSize
 playButton.Text = HomeLayout.PLAY.text
 playButton.Modal = true -- the mouse is free on the home screen
 playButton.Activated:Connect(function()
-	lobby:FireServer("play")
+	lobby:FireServer("play") -- the server checks the minimum too (HomeLayout.canPlay)
 end)
 
 -- The waiting banner (PLAN T79b, DECISIONS #232): a player who joins mid-battle stays here
@@ -306,6 +368,8 @@ end
 local function refresh()
 	local inLobby = ReplicatedStorage:GetAttribute("State") == "Lobby"
 	local wait = waiting()
+	-- The Ready confirm closes on its X, on Ready and on every state change (no-trap rule).
+	confirmWanted = HomeLayout.confirmOpen(confirmWanted, ReplicatedStorage:GetAttribute("State"), ReplicatedStorage:GetAttribute("Mode"), ReplicatedStorage:GetAttribute("Ranked") == true, player:GetAttribute("Ready"))
 	gui.Enabled = inLobby or wait
 	column.Visible = inLobby
 	waitBanner.Visible = wait
@@ -328,11 +392,70 @@ local function refresh()
 	mark(trackCards, ReplicatedStorage:GetAttribute("Track"))
 	mark(difficultyCards, ReplicatedStorage:GetAttribute("Difficulty"))
 
+	-- Battle options and Ready (PLAN T82).
+	local modeKey = ReplicatedStorage:GetAttribute("Mode")
+	local ranked = ReplicatedStorage:GetAttribute("Ranked") == true
+	local options = HomeLayout.battleOptions(modeKey, RunService:IsStudio())
+	local rankedBattle = HomeLayout.readyRowVisible(modeKey, ranked)
+	local standIns = options.standIns and ReplicatedStorage:GetAttribute("StandIns") == true
+	local picked = ReplicatedStorage:GetAttribute("BattleSides")
+	battleHeader.Visible = options.queue
+	battleHeader.Text = if rankedBattle then `{HomeLayout.BATTLE_HEADER}  ·  {HomeLayout.RANKED_NORMAL}` else HomeLayout.BATTLE_HEADER
+	optionRow.Visible = options.queue
+	casualChip.Active, rankedChip.Active = host, host
+	mark({ casual = casualChip, ranked = rankedChip }, if ranked then "ranked" else "casual")
+	for count, button in sideChips do
+		button.Visible = options.sides
+		button.Active = host
+		local stroke = button:FindFirstChild("Selected") :: UIStroke?
+		if stroke then
+			stroke.Enabled = count == (if typeof(picked) == "number" then picked else Modes.TeamSides[1])
+		end
+	end
+	seatsChip.Visible = options.seats and standIns
+	seatsChip.Active = host
+	seatsChip.Text = HomeLayout.seatsText(if typeof(picked) == "number" then picked else 2)
+	standInChip.Visible = options.standIns
+	standInChip.Active = host
+	mark({ on = standInChip }, if standIns then "on" else nil)
+	if rankedBattle then
+		for _, button in difficultyCards do
+			button.Active = false -- Ranked is always Normal (#217)
+		end
+	end
+
+	local readyNames: { string } = {}
+	for _, each in Players:GetPlayers() do
+		if each:GetAttribute("Ready") == true then
+			table.insert(readyNames, each.DisplayName)
+		end
+	end
+	local amReady = player:GetAttribute("Ready") == true
+	readyRow.Visible = rankedBattle
+	readyX.Visible = confirmWanted
+	readyCard.Text = if amReady then HomeLayout.READY_DONE elseif confirmWanted then HomeLayout.confirmText(FEE, Theme.Currency) else HomeLayout.READY
+	readyCard.BackgroundColor3 = if amReady then PLAY else CARD
+	local stroke = readyCard:FindFirstChild("Selected") :: UIStroke?
+	if stroke then
+		stroke.Enabled = confirmWanted
+	end
+	local playOk, need = HomeLayout.canPlay(modeKey, ranked, #Players:GetPlayers(), #readyNames, if typeof(picked) == "number" then picked else nil, standIns)
+	local refused = HomeLayout.refusalLine(player:GetAttribute("ReadyRefused"), FEE, Theme.Currency)
+	local second = if refused
+		then `<font color="#ff788c">{refused}</font>`
+		elseif ReplicatedStorage:GetAttribute("PracticeHunt") == true then HomeLayout.PRACTICE_LINE
+		else HomeLayout.HOARD_LINE
+	readyInfo.Text = `{HomeLayout.feeLine(FEE, player:GetAttribute("Cores") or 0, Theme.Currency)}\n{second}\n{HomeLayout.readyLine(readyNames, need)}`
+
 	local hostPlayer = Players:GetPlayerByUserId(ReplicatedStorage:GetAttribute("Host") or 0)
-	hostLine.Text = if host
-		then "You're the host: pick a mode, track and difficulty, then Play."
+	local mode = if type(modeKey) == "string" then Modes.Modes[modeKey] else nil
+	hostLine.Text = if not playOk and mode
+		then HomeLayout.needLine(mode.display, need)
+		elseif host then "You're the host: pick a mode, track and difficulty, then Play."
 		else `Waiting for {if hostPlayer then hostPlayer.DisplayName else "the host"} to start…`
 	playButton.Visible = host
+	playButton.Active = playOk -- PLAY works once the minimum is met (PLAN T82)
+	playButton.BackgroundColor3 = if playOk then PLAY else CARD_LOCKED
 	huntDot.Visible = player:GetAttribute("RewardsClaimable") == true
 
 	local heroKey = player:GetAttribute("Hero") or ""
@@ -340,14 +463,38 @@ local function refresh()
 	profileLine.Text = `{player:GetAttribute("Cores") or 0} {Theme.Currency}  ·  Hero: {if hero then hero.display else "none yet (H)"}`
 end
 
-for _, name in { "State", "Host", "Mode", "Track", "Difficulty", "BattleMode" } do
+readyCard.Activated:Connect(function()
+	if player:GetAttribute("Ready") == true then
+		lobby:FireServer("ready", false) -- free: the Entry fee is only taken when Building starts
+	elseif confirmWanted then
+		confirmWanted = false
+		lobby:FireServer("ready", true)
+	else
+		confirmWanted = true
+	end
+	refresh()
+end)
+readyX.Activated:Connect(function()
+	confirmWanted = false
+	refresh()
+end)
+
+for _, name in { "State", "Host", "Mode", "Track", "Difficulty", "BattleMode", "Ranked", "BattleSides", "StandIns", "PracticeHunt" } do
 	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refresh)
 end
 player.AttributeChanged:Connect(function(name)
-	if name == "Cores" or name == "Hero" or name == "RewardsClaimable" or name == "BattleSide" then
+	if name == "Cores" or name == "Hero" or name == "RewardsClaimable" or name == "BattleSide" or name == "ReadyRefused" then
 		refresh()
 	end
 end)
+-- Who's ready: every player's own "Ready" (the server sets it).
+local function watchReady(each: Player)
+	each:GetAttributeChangedSignal("Ready"):Connect(refresh)
+end
+for _, each in Players:GetPlayers() do
+	watchReady(each)
+end
+Players.PlayerAdded:Connect(watchReady)
 Players.PlayerAdded:Connect(refresh)
 Players.PlayerRemoving:Connect(refresh)
 

@@ -32,8 +32,8 @@ local Modes = {
 	ModeOrder = { "COOP", "TEAM", "ROYALE" },
 	Modes = table.freeze({
 		COOP = { display = "Co-op", blurb = "Defend the track together. Casual: no buy-in.", available = true, sides = "one" },
-		TEAM = { display = "Camp Clash", blurb = "Two or three camps, each defending its own side.", available = false, sides = "choice" },
-		ROYALE = { display = "Bone Rush", blurb = `Every hunter for themselves. Most {Theme.Bones} wins.`, available = false, sides = "perPlayer" },
+		TEAM = { display = "Camp Clash", blurb = "Two or three camps, each defending its own side.", available = true, sides = "choice" },
+		ROYALE = { display = "Bone Rush", blurb = `Every hunter for themselves. Most {Theme.Bones} wins.`, available = true, sides = "perPlayer" },
 	} :: { [string]: Mode }),
 	TeamSides = TEAM_SIDES,
 
