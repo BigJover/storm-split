@@ -8,7 +8,7 @@ PLAYTEST.md re-run; blocked right now on Jovan reconnecting Rojo). It does not b
 phase-7 Builder batches. Each phase-7 batch still ends with its own Tester step, and phase 7
 is not "fully done" until those steps and Jovan's multi-player steps (T86) have run.
 
-**Status (2026-10-08): batch 4 signed off (34d3606 F4, 57c89cf T79b, d9c938b T80, 946bcd6 T81; 559 specs; #233). Next: batch 5 = T82, T83 with #233's fixes. Earlier: batch 3 signed off (45f5cb2, 8d4673e, bcdfe9f; 520 specs; T79 review = #232). No Builder while the Tester's Run 2 is live. Next: batch 4 = T79b, T80, T81. Earlier: batch 2 signed off (T75 0ab8f14, T76 9b356fa; 491 specs; #231). T77–T78 final with #231's additions. Earlier: batch 1 signed off (T73 62608e6, T71 86c94bf, T72 4b2a3bc; 467 specs; #227–#228). T75–T76 final as written. Queued: T78 amendments below.**
+**Status (2026-10-08): batch 5 signed off (8a42872, 2d96e1f, b314bcb, 9b430d7, 9c0b421, afe0dd1; 579 specs; #234). Next: T84 (Builder), then T85 + T86. Earlier: batch 4 signed off (34d3606 F4, 57c89cf T79b, d9c938b T80, 946bcd6 T81; 559 specs; #233). Next: batch 5 = T82, T83 with #233's fixes. Earlier: batch 3 signed off (45f5cb2, 8d4673e, bcdfe9f; 520 specs; T79 review = #232). No Builder while the Tester's Run 2 is live. Next: batch 4 = T79b, T80, T81. Earlier: batch 2 signed off (T75 0ab8f14, T76 9b356fa; 491 specs; #231). T77–T78 final with #231's additions. Earlier: batch 1 signed off (T73 62608e6, T71 86c94bf, T72 4b2a3bc; 467 specs; #227–#228). T75–T76 final as written. Queued: T78 amendments below.**
 
 Round 1–4 rules hold (one task = one commit, pushed; `tools/check.sh`, `export_constants.py`,
 `tools/test.sh` green; diff `Config.luau` after every sheet change; openpyxl only, assert a
@@ -295,23 +295,30 @@ balance.
 - **Accept:** `PanelRules` updated with spec; no-trap sweep for each screen; Tester solo
   with stand-ins (TEAM win, TEAM loss, ROYALE).
 
-### T84 — PvP parity bars
-- `value.py` "competitive edge" and "perk parity" reports; exporter bars from T73's levers.
-  If a bar fails, the Director names buff cells (buff, never nerf), the Builder applies them.
-- **Accept:** both bars met; Config diff accounted for; findings listed in the recap.
+### T84 — PvP parity bars (final, #234)
+- `tools/value.py` gains two reports, read by the exporter as bars (levers `CompetitiveEdgeMax` 0.10, `PerkParityBand` 0.15):
+  - **Edge (per hero):** maxed (mastery 20) vs mastery 0, as a share of a hunter's match output. Edge = (ability share of the hero's damage over a 40-round Normal match) × (ability gain from the cooldown −30% plus the 10 and 15 perks' #99 worth %) + (free first upgrade's cash ÷ the Normal starting cash) + (the small perks' #135 values, each as a % of its base: pick-up reach, heal, respawn, repair), each small-perk term × `0.25` (they're non-damage; document the weight in value.py's header and the recap). Print every component per hero.
+  - **Parity:** for each mastery 10, 15 and 20 (both perks summed), the max ÷ min of the heroes' #99 worth % ≤ 1 + `PerkParityBand`.
+- **If a bar fails, stop and report** the components. Don't touch the sheet; the Director names the buff cells (buff the weaker, never nerf; #220) in a follow-up T84b.
+- **Accept:** both reports print; the exporter enforces both bars (a negative test per bar); `audit.py --strict` 0; Config unchanged unless T84b.
 
 ### T85 — Docs + recap
+- **#234:** a short 🦖 pass on batch 5's invented strings, folded in here (Dino agent lists any must-fix; the Builder applies it in this task). Already decided: Bone Rush placements below 1st read **"Bone Rush — Nth place"** (not "Nth Hunter").
 `VISION.md` (modes built), `ARCHITECTURE.md` (phase 7 row, ownership: per-side Economy,
 Stakes/Trophies, stand-ins), `CLAUDE.md` status, `GAUNTLET.md` status, `RECAP.md` "Phase 7":
 what changed, what was tested where, and Jovan's script (T86). Update `SETUP.md` multi-client.
 
-### T86 — Tester sweep + Jovan's multi-player script
-- Tester: re-run every batch's solo steps on the final build plus co-op rounds 1–3; report in
-  `PLAYTEST.md`.
-- Jovan (Studio → Test → Clients and Servers, 2 then 3 players): hunter-vs-hunter damage and
-  spawn shield; teammate upgrade; enemy-tower sell/repair refused; non-host Ready + stake;
-  3-side Team; Royale with 3; leaver forfeits. Published-place items (DataStore stakes,
-  refunds, cross-server Trophy board, 10 real players) are listed for after publishing.
+### T86 — Tester sweep + Jovan's multi-player script (final, #234)
+**Tester (one MCP client, J first so nothing saves; report in `PLAYTEST.md` Run 3, pass/fail/not-testable + screenshots):**
+1. Co-op regression: Easy rounds 1–3, placement, an upgrade mid-round (F3), a Fence break on the last dino = loss (F4).
+2. Home screen: the Camp Clash and Bone Rush cards; Casual/Ranked, sides 2/3, stand-ins toggle; Ready shows the Practice line; PLAY enables at the minimum; every panel passes no-trap at 707×620 and a small window (X visible, key closes, mouse free).
+3. Camp Clash 2 camps + stand-ins (Casual): no Start, 30 s build; the build refusals on the strip and in the rival zone (exact strings); lockstep + 5 s break; shoot a stand-in tower to Trampled (kill-feed line); Inspect opens the read-only panel; own towers take no damage from own shots; towers ignore the rival track; your chest only; camps board + status line; the stand-in falls → results (title, placements, Amber, player XP).
+4. Camp Clash 3 camps, Ranked (Practice): stake leaves session Amber, the Amber Hoard share comes back; Trophies unchanged; results show the Practice Hunt line.
+5. Bone Rush with 3 and with 9 stand-ins: ranking by Bones (stand-ins score), the survivor bonus, the end at ≤1 alive, "Bone Rush — Nth place"; at 10 seats record the peak enemies vs the cap and the script cost from the console.
+6. Lose a camp on purpose: spectate banner; can't build/hero/upgrade; Inspect works. Final Stampede: reach overtime only if practical (else not testable, note it).
+7. Profile Trophies tab: arena ladder, This-server board; the player list shows Bones, Level, Trophies, Title.
+**Jovan (Studio → Test → Clients and Servers, 2 then 3 players; ~20 min):** hunter vs hunter (×0.5, respawn on your camp, Camo Cover countdown), teammate upgrade allowed, the enemy-tower refusals, the non-host Ready + stake, join mid-battle → waiting banner, a Ranked leaver → last-place Trophies (Practice: none), 3-camp balance, how raiding feels.
+**After publishing (listed in the recap, not testable now):** DataStore stakes, escrow refunds after a shutdown, saved Trophies, the cross-server Trophy board, 10 real players' load and hit fairness.
 
 ### T87 — Phase 8: to define (Director, when phase 7's loose ends are done)
 Jovan (2026-10-06): "begin phase 8 when all loose ends on phase 7 are done". Loose ends = T86 run, the rounds 1–4 playtest (T31/T38/T60/T70 + PLAYTEST re-run), every Tester failure fixed. Then the Director proposes a Phase 8 scope with a recommendation, for Jovan to pick from. Candidates: (a) the 4×-Amber tower batch (`TOWERS_LATER.md`, awaiting his picks); (b) **publishing readiness**: DataStore saves live, stakes/escrow and Trophies on real servers, cross-server boards, 10-player network load (ARCHITECTURE §7); (c) a lobby place + Teleport/MemoryStore matchmaking by Trophies (#219, needs (b)); (d) balance follow-ups from the playtests (e.g. Concussive T5 buff, the open issues in CLAUDE.md); (e) more tracks (VISION "each track is its own level"). Director's leaning, to confirm then: (b) → (c) first, since phase 7's ranked mode only becomes real once published, with (a) as the content batch alongside. Add phase 8 to the ARCHITECTURE phase table in that step.
