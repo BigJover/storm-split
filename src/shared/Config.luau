@@ -133,6 +133,7 @@ return table.freeze({
 		CompetitiveEdgeMax = 0.1,
 		PerkParityBand = 0.15,
 		BattleRoundBreak = 5,
+		BattleResultsTime = 15,
 	},
 	Towers = {
 		SCOUT = {

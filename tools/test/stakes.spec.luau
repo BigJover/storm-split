@@ -349,3 +349,33 @@ test("T80 a solo Practice against stand-ins: the stake comes back by the split",
 	local loss = Stakes.settleBattle("TEAM", 2, { seat("me", 2) }, true, true)
 	eq(loss.me.payout, 5, "loss: the stake stays in the pot (a sink)")
 end)
+
+test("T86b Practice: stand-ins hold their places in the split, their shares to the sink", function()
+	-- Bone Rush, 10 seats, 1 tester + 9 stand-ins. Last place gets last place's share (0).
+	local nine = { 1, 2, 3, 4, 5, 6, 7, 8, 9 }
+	local last, pot, left = Stakes.settleBattle("ROYALE", 10, { seat("me", 10) }, true, true, nine)
+	eq(pot, BUY)
+	eq(last.me.share, 0, "10th: no share")
+	eq(last.me.payout, 5, "10th: the casual rest payout only")
+	eq(left, BUY, "the whole Hoard to the sink")
+	local second, _, left2 = Stakes.settleBattle("ROYALE", 10, { seat("me", 2) }, true, true, { 1, 3, 4, 5, 6, 7, 8, 9, 10 })
+	eq(second.me.share, BUY * 23 // 100, "2nd: 2nd place's share")
+	eq(second.me.payout, 30 + BUY * 23 // 100)
+	eq(left2, BUY - BUY * 23 // 100, "1st's and 3rd's shares to the sink")
+	-- Camp Clash: a tied 1st-place stand-in side is a winner; its half goes to the sink.
+	local tie, _, left3 = Stakes.settleBattle("TEAM", 2, { seat("me", 1) }, true, true, { 1 })
+	eq(tie.me.share, BUY // 2)
+	eq(left3, BUY - BUY // 2)
+	local beat = Stakes.settleBattle("TEAM", 2, { seat("me", 2) }, true, true, { 1 })
+	eq(beat.me.share, 0)
+	eq(beat.me.payout, 5)
+end)
+
+test("T86b real matches (not Practice) keep the real-hunters-only split (#233)", function()
+	local out, _, left = Stakes.settleBattle("ROYALE", 10, { seat("me", 10) }, true, false, { 1, 2, 3 })
+	eq(out.me.share, BUY, "the only finisher takes the Hoard")
+	eq(left, 0)
+	local casual, pot = Stakes.settleBattle("ROYALE", 10, { seat("me", 10) }, false, true, { 1 })
+	eq(pot, 0, "casual: no Hoard")
+	eq(casual.me.payout, 5)
+end)

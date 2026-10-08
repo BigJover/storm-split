@@ -137,7 +137,7 @@ PanelRules.SPECTATE_LINE = "Your Fence is down — you're watching now."
 PanelRules.STAMPEDE_LINE = "Final Stampede! Dinos get tougher every round."
 PanelRules.CAMO_LINE = "Camo Cover: can't be hit"
 
-export type BattleHud = { camps: boolean, spectate: boolean, stampede: boolean, camo: boolean }
+export type BattleHud = { camps: boolean, spectate: boolean, stampede: boolean, camo: boolean, feed: boolean }
 
 -- Which battle labels show. `battle` = ReplicatedStorage BattleMode (nil in co-op, so
 -- co-op never shows any); `out` = this hunter's camp is out; `overtime` = the Final
@@ -149,7 +149,23 @@ function PanelRules.battleHud(state: string?, battle: string?, out: boolean, ove
 		spectate = inBattle and out,
 		stampede = inBattle and state == "Playing" and (overtime or 0) > 0,
 		camo = inBattle and not out and camoLeft > 0,
+		feed = inBattle, -- the battle feed (camp-out, raid, tranq lines): never over the results (T86b)
 	}
+end
+
+-- Banners and the feed never cover a result (PLAN T86b F5, #236; DIRECTION no-trap rule):
+-- none show while a results screen is up (Victory / GameOver), in co-op or a battle.
+function PanelRules.bannersShown(state: string?): boolean
+	return state ~= "Victory" and state ~= "GameOver"
+end
+
+-- The top-centre banners' top edge (PLAN T86b F6): `default` (under the XP rows), or below
+-- the camps board's bottom edge plus `gap` when the board shows, so they never cover it.
+function PanelRules.bannerTop(default: number, boardBottom: number?, gap: number): number
+	if boardBottom == nil then
+		return default
+	end
+	return math.max(default, boardBottom + gap)
 end
 
 export type Camp = { side: number, camp: string, fence: number, bones: number, out: boolean }
@@ -216,7 +232,6 @@ export type ResultsIn = {
 	camps: { { side: number, camp: string, place: number, bones: number } },
 	payout: number?, -- LastPayout (casual payout + Hoard share)
 	share: number?, -- LastPotShare: Ranked only
-	pot: number?, -- BattlePot: the Amber Hoard, Ranked only
 	trophies: number?, -- LastTrophies: the change (Ranked, not Practice)
 	trophiesNow: number?, -- your Trophies after it
 	newArena: string?, -- the arena first reached this match (its name)
@@ -226,6 +241,22 @@ export type ResultsIn = {
 	levelTo: number?,
 }
 
+-- The results' Amber line (PLAN T86b, #236). `total` = LastPayout, which already holds the
+-- Hoard share, so a share is shown as its breakdown, never as a separate "+share" that
+-- reads as extra: "Amber +{total} ({payout} payout + {share} Amber Hoard)"; no share:
+-- "Amber +{total}". Nil when nothing was paid out (no LastPayout).
+function PanelRules.amberLine(total: number?, share: number?): string?
+	if total == nil then
+		return nil
+	end
+	local whole = math.floor(total)
+	local hoard = math.floor(share or 0)
+	if hoard <= 0 then
+		return `{Theme.Currency} +{whole}`
+	end
+	return `{Theme.Currency} +{whole} ({whole - hoard} payout + {hoard} {Theme.Currency} Hoard)`
+end
+
 export type ResultsOut = { title: string, won: boolean, placements: { { text: string, mine: boolean } }, lines: { string } }
 
 function PanelRules.battleResults(r: ResultsIn): ResultsOut
@@ -234,9 +265,8 @@ function PanelRules.battleResults(r: ResultsIn): ResultsOut
 	local winTitle = BattleFlow.resultTitle(r.mode, r.place)
 	local title = winTitle
 	if not title then
-		title = if r.place == nil
+		title = if r.place == nil -- below 1st: "Nth place" in every mode (T86b, Dino 17)
 			then `{display} — GAME OVER`
-			elseif r.mode == "ROYALE" then `{display} — {PanelRules.ordinal(r.place)} Hunter`
 			else `{display} — {PanelRules.ordinal(r.place)} place`
 	end
 	local order = table.clone(r.camps)
@@ -248,13 +278,9 @@ function PanelRules.battleResults(r: ResultsIn): ResultsOut
 		table.insert(placements, { text = `{c.place}. {c.camp} · {math.floor(c.bones)} {Theme.Bones}`, mine = c.side == r.mySide })
 	end
 	local lines = {}
-	if r.payout ~= nil then
-		table.insert(lines, `+{math.floor(r.payout)} {Theme.Currency}`)
-	end
-	if r.share ~= nil then
-		table.insert(lines, if r.pot ~= nil
-			then `Amber Hoard {math.floor(r.pot)} {Theme.Currency} · your share +{math.floor(r.share)}`
-			else `Amber Hoard share +{math.floor(r.share)}`)
+	local amber = PanelRules.amberLine(r.payout, r.share)
+	if amber then
+		table.insert(lines, amber)
 	end
 	if r.practice then
 		table.insert(lines, HomeLayout.PRACTICE_LINE)

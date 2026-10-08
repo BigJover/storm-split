@@ -157,3 +157,7 @@ test("T82 PLAY enables at the minimum: Ranked counts Ready hunters, casual every
 	eq(HomeLayout.readyLine({}, 3), "Ready: nobody yet (3 needed)")
 	eq(HomeLayout.readyLine({ "Ann", "Bo" }, 3), "Ready: Ann, Bo (2 of 3 needed)")
 end)
+
+test("T86b the battle options header says HUNT OPTIONS (Dino 17)", function()
+	eq(HomeLayout.BATTLE_HEADER, "HUNT OPTIONS")
+end)

@@ -95,7 +95,7 @@ end
 	column hides on every state change (no-trap rule; `confirmOpen` is the rule).
 ]]
 
-HomeLayout.BATTLE_HEADER = "BATTLE OPTIONS"
+HomeLayout.BATTLE_HEADER = "HUNT OPTIONS" -- T86b (Dino 17)
 HomeLayout.OPTION_HEIGHT = 44
 HomeLayout.OPTION_TEXT = 16
 HomeLayout.CASUAL = { width = 120, textSize = 16, text = "Casual" } :: Card

@@ -324,7 +324,6 @@ local function renderBattleResults(battle: string)
 		camps = camps,
 		payout = player:GetAttribute("LastPayout"),
 		share = player:GetAttribute("LastPotShare"),
-		pot = attr("BattlePot", nil),
 		trophies = player:GetAttribute("LastTrophies"),
 		trophiesNow = player:GetAttribute("Trophies"),
 		newArena = arenaDisplay(player:GetAttribute("LastArena")),
@@ -464,6 +463,10 @@ local function hideBanner()
 end
 
 local function showBanner()
+	if not PanelRules.bannersShown(ReplicatedStorage:GetAttribute("State")) then
+		hideBanner() -- never over a results screen (T86b F5)
+		return
+	end
 	local lines = {}
 	if hunterLine then
 		table.insert(lines, hunterLine)
@@ -493,6 +496,12 @@ local function showBanner()
 		end
 	end)
 end
+
+ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(function()
+	if not PanelRules.bannersShown(ReplicatedStorage:GetAttribute("State")) then
+		hideBanner() -- the results are up: no banner over them (T86b F5)
+	end
+end)
 
 local shownHeroLevel = player:GetAttribute("HeroLevel") or 1
 player:GetAttributeChangedSignal("HeroLevel"):Connect(function()
@@ -843,8 +852,9 @@ end)
 -- nothing to click, no mouse, nothing to close (the no-trap rule has nothing to trap).
 -- Camps board, top left: every camp's colour, Fence and Bones, the camps still in first;
 -- your camp in bold (the scoreboard by side; the player list groups hunters by camp).
--- Under the status line: the spectate banner once your camp is out, and the Final
--- Stampede banner in overtime. Bottom centre: Camo Cover while your spawn shield lasts.
+-- Top centre, below the camps board: the Final Stampede banner in overtime. Bottom
+-- centre: the spectate banner once your camp is out, or Camo Cover while your spawn
+-- shield lasts (T86b F6). None of them, nor the feed, show over the results (T86b F5).
 -- The status line takes your camp's colour as an outline. Co-op shows none of these.
 local function richEscape(text: string): string
 	return (string.gsub(string.gsub(string.gsub(text, "&", "&amp;"), "<", "&lt;"), ">", "&gt;"))
@@ -893,7 +903,8 @@ end
 local battleBanners = Instance.new("Frame")
 battleBanners.Name = "BattleBanners"
 battleBanners.AnchorPoint = Vector2.new(0.5, 0)
-battleBanners.Position = UDim2.new(0.5, 0, 0, 116) -- under the XP rows
+local BANNERS_TOP = 116 -- under the XP rows; below the camps board when it shows (T86b F6)
+battleBanners.Position = UDim2.new(0.5, 0, 0, BANNERS_TOP)
 battleBanners.Size = UDim2.new(1, -32, 0, 0)
 battleBanners.AutomaticSize = Enum.AutomaticSize.Y
 battleBanners.BackgroundTransparency = 1
@@ -933,8 +944,18 @@ local function battleLabel(name: string, order: number, color: Color3, parent: I
 	return line
 end
 
-local spectateBanner = battleLabel("Spectate", 1, Color3.fromRGB(255, 120, 140), battleBanners)
+-- Bottom centre above the hotbar (T86b F6), where Camo Cover shows: never both (a
+-- spectator has no Camo Cover), and never over the camps board.
+local spectateBanner = battleLabel("Spectate", 1, Color3.fromRGB(255, 120, 140), gui)
 spectateBanner.Text = PanelRules.SPECTATE_LINE
+spectateBanner.AnchorPoint = Vector2.new(0.5, 1)
+spectateBanner.Position = UDim2.new(0.5, 0, 1, -96)
+spectateBanner.Size = UDim2.new(1, -32, 0, 30)
+do
+	local limit = Instance.new("UISizeConstraint")
+	limit.MaxSize = Vector2.new(520, 30)
+	limit.Parent = spectateBanner
+end
 local stampedeBanner = battleLabel("FinalStampede", 2, Color3.fromRGB(250, 205, 80), battleBanners)
 stampedeBanner.Text = PanelRules.STAMPEDE_LINE
 local camoTag = battleLabel("CamoCover", 1, Color3.fromRGB(140, 240, 170), gui)
@@ -965,10 +986,13 @@ local function refreshBattle()
 	spectateBanner.Visible = show.spectate
 	stampedeBanner.Visible = show.stampede
 	camoTag.Visible = show.camo
+	feedList.Visible = show.feed -- hidden while the results are up (T86b F5)
 	if show.camo then
 		camoTag.Text = `{PanelRules.CAMO_LINE} ({math.ceil(left)}s)`
 	end
 	campsBoard.Visible = show.camps
+	local boardBottom = if show.camps then campsBoard.Position.Y.Offset + campsBoard.AbsoluteSize.Y else nil
+	battleBanners.Position = UDim2.new(0.5, 0, 0, PanelRules.bannerTop(BANNERS_TOP, boardBottom, 8))
 	local mySide = Sides.playerSide(player:GetAttribute("Side"), attr("Sides", nil))
 	campStroke.Enabled = show.camps
 	if not show.camps then
@@ -1020,6 +1044,7 @@ task.spawn(function() -- Camo Cover's countdown
 		end
 	end
 end)
+campsBoard:GetPropertyChangedSignal("AbsoluteSize"):Connect(refreshBattle) -- the board resizes with the window
 refreshBattle()
 
 gui.Parent = player:WaitForChild("PlayerGui")

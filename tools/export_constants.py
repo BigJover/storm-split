@@ -1058,7 +1058,7 @@ BATTLE_LEVERS = [
     "BattleMaxPlayers", "CompetitiveBuyIn", "TeamWinPayout", "TeamLossPayout", "Royale1stPayout",
     "Royale2ndPayout", "Royale3rdPayout", "RoyaleRestPayout", "RoyalePot1st", "RoyalePot2nd", "RoyalePot3rd",
     "TeamWinTrophies", "TeamLossTrophies", "Royale1stTrophies", "RoyaleLastTrophies",
-    "CompetitiveEdgeMax", "PerkParityBand", "BattleRoundBreak",
+    "CompetitiveEdgeMax", "PerkParityBand", "BattleRoundBreak", "BattleResultsTime",
 ]
 BUY_IN_RANGE = (10, 20)  # VISION.md "Amber economy": a 10-20 buy-in
 
@@ -1117,7 +1117,7 @@ def validate_battle(data, problems, notes):
         problem = pvp_lever_problem(key, t[key])
         if problem:
             problems.append(problem)
-    for key in ("BattleBuildTime", "BattleRoundTime", "BattleSideDensity", "OvertimeHPStep"):
+    for key in ("BattleBuildTime", "BattleRoundTime", "BattleSideDensity", "OvertimeHPStep", "BattleResultsTime"):
         if t[key] <= 0:
             problems.append(f"Tuning {key} must be above 0")
     if t["OvertimeHPStep"] <= 1:

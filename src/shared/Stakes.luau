@@ -140,44 +140,66 @@ end
 -- a leaver's included (forfeit). Camp Clash: split equally among the hunters present on a
 -- 1st-place side. Bone Rush: the present hunters in placement order are the finishers
 -- for royaleSplit. A leaver (not present) gets nothing and no Trophy change here.
+--   standIns: Practice only (PLAN T86b, #236): each stand-in seat's placement. Stand-ins
+--            hold their places in the split (a 1st-place stand-in side is a Camp Clash
+--            winner; a Bone Rush stand-in takes its place's share) and their shares go to
+--            the sink, so a last-place tester gets last place's share. Real matches
+--            (not Practice) ignore it: real hunters only (#233).
 export type Seat<Id> = { id: Id, place: number, present: boolean, stake: number }
 export type Settlement = { payout: number, share: number, trophies: number }
 
-function Stakes.settleBattle<Id>(modeKey: string, n: number, hunters: { Seat<Id> }, ranked: boolean, practice: boolean): ({ [Id]: Settlement }, number, number)
+function Stakes.settleBattle<Id>(modeKey: string, n: number, hunters: { Seat<Id> }, ranked: boolean, practice: boolean, standIns: { number }?): ({ [Id]: Settlement }, number, number)
 	local stakes = {}
-	local present: { Seat<Id> } = {}
+	-- Who holds a place in the split: the present hunters, plus the stand-ins in Practice.
+	local split: { { key: any, place: number, real: boolean } } = {}
 	for _, h in hunters do
 		table.insert(stakes, if ranked then math.max(0, h.stake) else 0)
 		if h.present then
-			table.insert(present, h)
+			table.insert(split, { key = h.id, place = h.place, real = true })
+		end
+	end
+	if practice and standIns then
+		for i, place in standIns do
+			table.insert(split, { key = { standIn = i }, place = place, real = false })
 		end
 	end
 	local pot = Stakes.pot(stakes)
 	local shares: { [Id]: number } = {}
 	local leftover = pot
 	if ranked and pot > 0 then
+		local paid: { [any]: number } = {}
 		if modeKey == "TEAM" then
 			local winners = {}
-			for _, h in present do
-				if h.place == 1 then
-					table.insert(winners, h.id)
+			for _, e in split do
+				if e.place == 1 then
+					table.insert(winners, e.key)
 				end
 			end
 			local each
 			each, leftover = Stakes.teamSplit(pot, winners)
-			for _, id in winners do
-				shares[id] = each
+			for _, key in winners do
+				paid[key] = each
 			end
 		else
-			local order = table.clone(present)
+			local order = table.clone(split)
 			table.sort(order, function(a, b)
-				return a.place < b.place
+				if a.place ~= b.place then
+					return a.place < b.place
+				end
+				return a.real and not b.real -- a fixed order (Bone Rush places are unique)
 			end)
-			local ids = {}
-			for _, h in order do
-				table.insert(ids, h.id)
+			local keys = {}
+			for _, e in order do
+				table.insert(keys, e.key)
 			end
-			shares, leftover = Stakes.royaleSplit(pot, ids)
+			paid, leftover = Stakes.royaleSplit(pot, keys)
+		end
+		for _, e in split do
+			if e.real then
+				shares[e.key] = paid[e.key]
+			else
+				leftover += paid[e.key] or 0 -- a stand-in's share: to the sink
+			end
 		end
 	end
 	local out: { [Id]: Settlement } = {}

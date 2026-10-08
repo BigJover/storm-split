@@ -178,6 +178,7 @@ export type Outcome = {
 	mode: string,
 	n: number,
 	hunters: { { player: Player, place: number, present: boolean } },
+	standIns: { number }, -- each stand-in seat's placement (Practice's Hoard split, T86b)
 }
 
 -- Runs a whole battle. Returns false if it couldn't start (the lobby stays), true when it
@@ -524,8 +525,11 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 	print(`[DinoHunters] {display} over on round {round}: {table.concat(lines, " | ")}`)
 	-- Every real hunter seated at the start, leavers included (they forfeit); never a
 	-- stand-in (no player) or a mid-battle joiner (never seated).
-	local outcome: Outcome = { mode = modeKey, n = sides, hunters = {} }
+	local outcome: Outcome = { mode = modeKey, n = sides, hunters = {}, standIns = {} }
 	for side = 1, sides do
+		if seating.standIn[side] then
+			table.insert(outcome.standIns, places[side])
+		end
 		for _, player in seating.teams[side] do
 			table.insert(outcome.hunters, { player = player, place = places[side], present = player.Parent ~= nil })
 		end

@@ -158,6 +158,7 @@ test("T83 battle labels show only in a battle match, each on its own condition",
 		local h = PanelRules.battleHud(state, battle, out, overtime, camo)
 		return `{h.camps}{h.spectate}{h.stampede}{h.camo}`
 	end
+	eq(PanelRules.battleHud("Playing", "TEAM", false, nil, 0).feed, true, "the feed in a battle")
 	eq(hud("Playing", nil, true, 2, 3), "falsefalsefalsefalse", "co-op shows none")
 	eq(hud("Lobby", "TEAM", true, 2, 3), "falsefalsefalsefalse", "home screen")
 	eq(hud("Victory", "TEAM", true, 2, 3), "falsefalsefalsefalse", "results")
@@ -230,19 +231,69 @@ test("T83 results: winner titles, placements in order, Ranked Hoard + Trophies +
 	eq(r.placements[1].mine, true)
 	eq(r.placements[2].text, "2. Red Camp · 30 Bones", "a shared place: by side")
 	eq(r.placements[3].text, "2. Green Camp · 8 Bones")
-	eq(table.concat(r.lines, "|"), "+80 Amber|Amber Hoard 60 Amber · your share +30|+30 Trophies · Raptor Ridge|New arena: Raptor Ridge!|+120 player XP")
+	eq(table.concat(r.lines, "|"), "Amber +80 (50 payout + 30 Amber Hoard)|+30 Trophies · Raptor Ridge|New arena: Raptor Ridge!|+120 player XP")
 	eq(PanelRules.battleResults({ mode = "ROYALE", place = 1, mySide = 1, camps = {}, practice = false }).title, "Bone Rush — Top Hunter!")
 end)
 
 test("T83 results: losers' titles, a Trophy loss, Practice Hunt changes no Trophies, casual has no Hoard", function()
 	local loss = PanelRules.battleResults({ mode = "ROYALE", place = 3, mySide = 3, camps = {}, payout = 10, share = 0, trophies = -20, trophiesNow = 300, practice = false })
-	eq(loss.title, "Bone Rush — 3rd Hunter")
+	eq(loss.title, "Bone Rush — 3rd place", "every mode: Nth place (T86b, Dino 17)")
 	eq(loss.won, false)
-	eq(table.concat(loss.lines, "|"), "+10 Amber|Amber Hoard share +0|−20 Trophies · Raptor Ridge")
+	eq(table.concat(loss.lines, "|"), "Amber +10|−20 Trophies · Raptor Ridge")
 	eq(PanelRules.battleResults({ mode = "TEAM", place = 2, mySide = 2, camps = {}, practice = false }).title, "Camp Clash — 2nd place")
 	local practice = PanelRules.battleResults({ mode = "TEAM", place = 1, mySide = 1, camps = {}, payout = 80, share = 30, pot = 60, newArena = "Raptor Ridge", practice = true })
-	eq(table.concat(practice.lines, "|"), "+80 Amber|Amber Hoard 60 Amber · your share +30|Practice Hunt: session Amber only. Trophies won't change.")
+	eq(table.concat(practice.lines, "|"), "Amber +80 (50 payout + 30 Amber Hoard)|Practice Hunt: session Amber only. Trophies won't change.")
 	local casual = PanelRules.battleResults({ mode = "TEAM", place = 2, mySide = 2, camps = {}, payout = 5, practice = false })
-	eq(table.concat(casual.lines, "|"), "+5 Amber", "no Hoard, no Trophies")
+	eq(table.concat(casual.lines, "|"), "Amber +5", "no Hoard, no Trophies")
 	eq(PanelRules.ordinal(11) .. PanelRules.ordinal(22) .. PanelRules.ordinal(13) .. PanelRules.ordinal(101), "11th22nd13th101st")
+end)
+
+test("T86b F5: no banner or feed line over a results screen", function()
+	for _, state in { "Victory", "GameOver" } do
+		eq(PanelRules.bannersShown(state), false, state)
+		local h = PanelRules.battleHud(state, "ROYALE", true, 3, 2)
+		eq(`{h.spectate}{h.stampede}{h.camo}{h.feed}`, "falsefalsefalsefalse", `{state}: spectate, Stampede, Camo, feed`)
+	end
+	for _, state in { "Lobby", "Building", "Playing" } do
+		eq(PanelRules.bannersShown(state), true, state)
+	end
+	eq(PanelRules.battleHud("Lobby", "TEAM", false, nil, 0).feed, false, "home: no feed")
+	eq(PanelRules.battleHud("Playing", nil, false, nil, 0).feed, false, "co-op: no battle feed")
+end)
+
+test("T86b F6: the top-centre banners sit below the camps board", function()
+	eq(PanelRules.bannerTop(116, nil, 8), 116, "no board: under the XP rows")
+	eq(PanelRules.bannerTop(116, 354, 8), 362, "below the board's bottom edge")
+	eq(PanelRules.bannerTop(116, 60, 8), 116, "never above the XP rows")
+	local hud = require("@lune/fs").readFile("src/client/Hud.client.luau")
+	ok(hud:find('battleLabel("Spectate", 1, Color3.fromRGB(255, 120, 140), gui)', 1, true) ~= nil, "spectate out of the top banners")
+	ok(hud:find("spectateBanner.Position = UDim2.new(0.5, 0, 1, -96)", 1, true) ~= nil, "spectate bottom centre")
+	ok(hud:find("feedList.Visible = show.feed", 1, true) ~= nil, "the feed follows the rule")
+end)
+
+test("T86b place line: '{display} — {ordinal} place' below 1st in every mode", function()
+	for _, mode in { "TEAM", "ROYALE" } do
+		local display = if mode == "TEAM" then "Camp Clash" else "Bone Rush"
+		for _, place in { 2, 3, 4, 10 } do
+			eq(PanelRules.battleResults({ mode = mode, place = place, mySide = 1, camps = {}, practice = false }).title, `{display} — {PanelRules.ordinal(place)} place`)
+		end
+	end
+	eq(PanelRules.battleResults({ mode = "TEAM", place = 1, mySide = 1, camps = {}, practice = false }).title, "Camp Clash — Your camp wins the hunt!")
+	eq(PanelRules.battleResults({ mode = "ROYALE", place = 1, mySide = 1, camps = {}, practice = false }).title, "Bone Rush — Top Hunter!")
+end)
+
+test("T86b Amber line: the total with its breakdown when there's a share; never a separate +share", function()
+	eq(PanelRules.amberLine(20, 15), "Amber +20 (5 payout + 15 Amber Hoard)")
+	eq(PanelRules.amberLine(92, 32), "Amber +92 (60 payout + 32 Amber Hoard)")
+	eq(PanelRules.amberLine(5, 0), "Amber +5", "a zero share: no breakdown")
+	eq(PanelRules.amberLine(60, nil), "Amber +60", "casual")
+	eq(PanelRules.amberLine(nil, 10), nil, "nothing paid out")
+	local r = PanelRules.battleResults({ mode = "ROYALE", place = 1, mySide = 1, camps = {}, payout = 20, share = 15, practice = false })
+	local plus = 0
+	for _, line in r.lines do
+		for _ in string.gmatch(line, "%+") do
+			plus += 1
+		end
+	end
+	eq(plus, 2, "one total line, one '+' inside its breakdown")
 end)

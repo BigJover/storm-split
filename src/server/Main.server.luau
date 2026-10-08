@@ -542,10 +542,11 @@ local function playBattle()
 		for _, hunter in outcome.hunters do
 			table.insert(hunters, { player = hunter.player, place = hunter.place, present = hunter.present, staked = staked[hunter.player] == true })
 		end
-		Progression.endBattle({ mode = outcome.mode, n = outcome.n, ranked = ranked, matchId = matchId, hunters = hunters })
+		Progression.endBattle({ mode = outcome.mode, n = outcome.n, ranked = ranked, matchId = matchId, hunters = hunters, standIns = outcome.standIns })
 	end
-	ReplicatedStorage:SetAttribute("HomeAt", workspace:GetServerTimeNow() + Config.Tuning.ResultsTime)
-	task.wait(Config.Tuning.ResultsTime)
+	local resultsTime = BattleFlow.resultsTime(true) -- battles: Battle results time (T86b)
+	ReplicatedStorage:SetAttribute("HomeAt", workspace:GetServerTimeNow() + resultsTime)
+	task.wait(resultsTime)
 end
 
 local function playMatch()
@@ -688,8 +689,9 @@ local function playMatch()
 		difficulty = ReplicatedStorage:GetAttribute("Difficulty"),
 		players = players,
 	})
-	ReplicatedStorage:SetAttribute("HomeAt", workspace:GetServerTimeNow() + Config.Tuning.ResultsTime)
-	task.wait(Config.Tuning.ResultsTime)
+	local resultsTime = BattleFlow.resultsTime(false) -- co-op keeps Results time (T86b)
+	ReplicatedStorage:SetAttribute("HomeAt", workspace:GetServerTimeNow() + resultsTime)
+	task.wait(resultsTime)
 end
 
 ------------------------------------------------------------------ the loop

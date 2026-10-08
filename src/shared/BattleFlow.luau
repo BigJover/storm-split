@@ -108,6 +108,13 @@ function BattleFlow.resultTitle(modeKey: string, place: number?): string?
 	return `{mode.display} — {if modeKey == "TEAM" then "Your camp wins the hunt!" else "Top Hunter!"}`
 end
 
+-- How long the results show before everyone goes home (PLAN T86b, #236): a battle's card
+-- carries placements, the Hoard and Trophies, so battles get Battle results time; co-op
+-- keeps Results time.
+function BattleFlow.resultsTime(battle: boolean): number
+	return if battle then Config.Tuning.BattleResultsTime else Config.Tuning.ResultsTime
+end
+
 function BattleFlow.standInName(side: number): string
 	return `Stand-in {side}`
 end

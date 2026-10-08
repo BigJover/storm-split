@@ -525,6 +525,7 @@ export type BattleResult = {
 	ranked: boolean,
 	matchId: string?,
 	hunters: { BattleHunter }, -- every real hunter seated at the start; never stand-ins or joiners
+	standIns: { number }?, -- each stand-in seat's placement: they hold their places in Practice's split (T86b)
 }
 
 -- A battle's end (PLAN T80, DECISIONS #215-#218, #222): each hunter still here is paid
@@ -537,7 +538,7 @@ function Progression.endBattle(result: BattleResult)
 	for _, h in result.hunters do
 		table.insert(seats, { id = h.player, place = h.place, present = h.present and h.player.Parent ~= nil, stake = if h.staked then Config.Tuning.CompetitiveBuyIn else 0 })
 	end
-	local settled, pot, leftover = Stakes.settleBattle(result.mode, result.n, seats, result.ranked, practice)
+	local settled, pot, leftover = Stakes.settleBattle(result.mode, result.n, seats, result.ranked, practice, result.standIns)
 	ReplicatedStorage:SetAttribute("BattlePractice", if result.ranked and practice then true else nil)
 	ReplicatedStorage:SetAttribute("BattlePot", if result.ranked then pot else nil) -- the results' Amber Hoard (T83)
 	for _, seat in seats do
