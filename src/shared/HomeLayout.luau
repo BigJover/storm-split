@@ -63,4 +63,14 @@ function HomeLayout.actionCards(): { Card }
 	return { HomeLayout.HERO, HomeLayout.UNLOCKS, HomeLayout.PLAY }
 end
 
+-- A battle is on and this player isn't seated in it (joined mid-battle): the home screen
+-- stays up with the waiting banner (PLAN T79b, DECISIONS #232). Building and Playing only:
+-- the results and the Lobby change it (the banner closes on the hunt's end). Co-op never
+-- waits: a co-op joiner drops straight in.
+HomeLayout.WAITING_BANNER = "A hunt is on \u{2014} you'll join the next one."
+
+function HomeLayout.waitingForNextHunt(state: unknown, battleMode: unknown, seatedSide: unknown): boolean
+	return (state == "Building" or state == "Playing") and typeof(battleMode) == "string" and seatedSide == nil
+end
+
 return HomeLayout

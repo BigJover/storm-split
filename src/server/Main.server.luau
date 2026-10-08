@@ -138,6 +138,7 @@ Enemies.init(map.paths, map.enemyFolder, {
 	-- effective HP x CashPerEffectiveHP — the spreadsheet's "Kill income".
 	onKilled = function(enemy)
 		Economy.earnFor(enemy.side, enemy.share * Config.Tuning.CashPerEffectiveHP * difficulty().cashMult)
+		Battle.dinoPopped(enemy.side) -- a stand-in seat's Bone (Studio battles, T79b)
 	end,
 })
 

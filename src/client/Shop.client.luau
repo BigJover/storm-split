@@ -1587,6 +1587,34 @@ ReplicatedStorage:GetAttributeChangedSignal("Level"):Connect(function()
 	end
 end)
 
+-- Another camp's tower shows no "Upgrade" prompt (PLAN T79b, DECISIONS #232): a prompt the
+-- server always refuses is a small trap. Local only (the server's refusal stays); co-op is
+-- side 1 everywhere, so every prompt shows.
+local function showPromptIfMine(prompt: Instance)
+	local body = prompt.Parent
+	if prompt:IsA("ProximityPrompt") and body and body:GetAttribute("TowerId") then
+		local towerSide = body:GetAttribute("Side")
+		prompt.Enabled = not (typeof(towerSide) == "number" and Sides.isEnemyTower((mySide()), towerSide))
+	end
+end
+task.spawn(function()
+	local map = workspace:WaitForChild("StormSplitMap")
+	local folder = map:WaitForChild("Towers")
+	local function refreshPrompts()
+		for _, item in folder:GetDescendants() do
+			showPromptIfMine(item)
+		end
+	end
+	folder.DescendantAdded:Connect(function(item)
+		if item:IsA("ProximityPrompt") then
+			showPromptIfMine(item)
+		end
+	end)
+	player:GetAttributeChangedSignal("Side"):Connect(refreshPrompts)
+	ReplicatedStorage:GetAttributeChangedSignal("Sides"):Connect(refreshPrompts)
+	refreshPrompts()
+end)
+
 -- Your side's cash: "Cash" (co-op, side 1) or "Cash2"... (Shared/Sides.attr).
 ReplicatedStorage.AttributeChanged:Connect(function(name: string)
 	if name == Sides.attr("Cash", (mySide())) and (mode == "list" or mode == "manage" or mode == "heroUpgrade") then

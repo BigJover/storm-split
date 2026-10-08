@@ -1017,7 +1017,7 @@ BATTLE_LEVERS = [
     "BattleMaxPlayers", "CompetitiveBuyIn", "TeamWinPayout", "TeamLossPayout", "Royale1stPayout",
     "Royale2ndPayout", "Royale3rdPayout", "RoyaleRestPayout", "RoyalePot1st", "RoyalePot2nd", "RoyalePot3rd",
     "TeamWinTrophies", "TeamLossTrophies", "Royale1stTrophies", "RoyaleLastTrophies",
-    "CompetitiveEdgeMax", "PerkParityBand",
+    "CompetitiveEdgeMax", "PerkParityBand", "BattleRoundBreak",
 ]
 BUY_IN_RANGE = (10, 20)  # VISION.md "Amber economy": a 10-20 buy-in
 
@@ -1083,7 +1083,7 @@ def validate_battle(data, problems, notes):
         problems.append("Tuning Overtime HP step must be above 1, so overtime ends")
     for key in ("SpawnShield", "SurvivorBonus", "RaidBones", "TeamWinPayout", "TeamLossPayout",
                 "Royale1stPayout", "Royale2ndPayout", "Royale3rdPayout", "RoyaleRestPayout",
-                "CompetitiveEdgeMax", "PerkParityBand"):
+                "CompetitiveEdgeMax", "PerkParityBand", "BattleRoundBreak"):
         if t[key] < 0:
             problems.append(f"Tuning {key} must not be negative")
     if not (t["Royale1stPayout"] >= t["Royale2ndPayout"] >= t["Royale3rdPayout"] >= t["RoyaleRestPayout"]):

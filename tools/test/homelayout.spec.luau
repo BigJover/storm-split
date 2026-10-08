@@ -60,3 +60,22 @@ test("the title and a 6-digit balance fit the header on the narrowest board", fu
 		ok(HomeLayout.textWidth(HuntBoard.balance(999999), HuntBoard.BALANCE_MIN) <= balanceWidth, `big balance at {width}`)
 	end
 end)
+
+test("T79b: a mid-battle joiner waits on the home screen with the banner", function()
+	eq(HomeLayout.WAITING_BANNER, "A hunt is on — you'll join the next one.")
+	eq(HomeLayout.waitingForNextHunt("Playing", "ROYALE", nil), true, "joined during play")
+	eq(HomeLayout.waitingForNextHunt("Building", "TEAM", nil), true, "joined during the build phase")
+	eq(HomeLayout.waitingForNextHunt("Playing", "TEAM", 2), false, "seated hunters play")
+	eq(HomeLayout.waitingForNextHunt("Playing", nil, nil), false, "co-op: drop straight in")
+	eq(HomeLayout.waitingForNextHunt("Victory", "TEAM", nil), false, "closes when the hunt ends")
+	eq(HomeLayout.waitingForNextHunt("Lobby", nil, nil), false, "the lobby is the normal home screen")
+end)
+
+test("T79b: the waiting banner frees the mouse and fits the window", function()
+	local fs = require("@lune/fs")
+	local home = fs.readFile("src/client/Home.client.luau")
+	ok(home:find("waitBanner.Modal = true", 1, true) ~= nil, "Modal: the mouse is free")
+	ok(home:find("waitBanner.TextWrapped = true", 1, true) ~= nil, "wraps")
+	ok(home:find("waitBanner.Size = UDim2.new(0.8, 0, 0, 0)", 1, true) ~= nil, "a share of the window wide")
+	ok(home:find("gui.Enabled = inLobby or wait", 1, true) ~= nil, "shown while waiting")
+end)

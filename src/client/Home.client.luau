@@ -254,6 +254,35 @@ playButton.Activated:Connect(function()
 	lobby:FireServer("play")
 end)
 
+-- The waiting banner (PLAN T79b, DECISIONS #232): a player who joins mid-battle stays here
+-- until the next hunt. It wraps to the window's width (fits any size) and is a Modal
+-- button, so the mouse stays free; it goes when the hunt ends (refresh, on "State").
+local waitBanner = Instance.new("TextButton")
+waitBanner.Name = "WaitingBanner"
+waitBanner.AnchorPoint = Vector2.new(0.5, 0.5)
+waitBanner.Position = UDim2.fromScale(0.5, 0.5)
+waitBanner.Size = UDim2.new(0.8, 0, 0, 0)
+waitBanner.AutomaticSize = Enum.AutomaticSize.Y
+waitBanner.BackgroundColor3 = CARD
+waitBanner.AutoButtonColor = false
+waitBanner.Modal = true -- the mouse is free while waiting
+waitBanner.Font = Enum.Font.GothamBold
+waitBanner.TextSize = 26
+waitBanner.TextColor3 = AMBER
+waitBanner.TextWrapped = true
+waitBanner.Text = HomeLayout.WAITING_BANNER
+waitBanner.Visible = false
+waitBanner.Parent = backdrop
+corner(waitBanner, 10)
+do
+	local padding = Instance.new("UIPadding")
+	padding.PaddingTop = UDim.new(0, 18)
+	padding.PaddingBottom = UDim.new(0, 18)
+	padding.PaddingLeft = UDim.new(0, 18)
+	padding.PaddingRight = UDim.new(0, 18)
+	padding.Parent = waitBanner
+end
+
 ------------------------------------------------------------------ state
 
 local function isHost(): boolean
@@ -269,9 +298,17 @@ local function mark(cards: { [string]: TextButton }, selected: string?)
 	end
 end
 
+-- Joined while a battle is on (PLAN T79b): the home screen with only the waiting banner.
+local function waiting(): boolean
+	return HomeLayout.waitingForNextHunt(ReplicatedStorage:GetAttribute("State"), ReplicatedStorage:GetAttribute("BattleMode"), player:GetAttribute("BattleSide"))
+end
+
 local function refresh()
 	local inLobby = ReplicatedStorage:GetAttribute("State") == "Lobby"
-	gui.Enabled = inLobby
+	local wait = waiting()
+	gui.Enabled = inLobby or wait
+	column.Visible = inLobby
+	waitBanner.Visible = wait
 	if not inLobby then
 		return
 	end
@@ -303,11 +340,11 @@ local function refresh()
 	profileLine.Text = `{player:GetAttribute("Cores") or 0} {Theme.Currency}  ·  Hero: {if hero then hero.display else "none yet (H)"}`
 end
 
-for _, name in { "State", "Host", "Mode", "Track", "Difficulty" } do
+for _, name in { "State", "Host", "Mode", "Track", "Difficulty", "BattleMode" } do
 	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refresh)
 end
 player.AttributeChanged:Connect(function(name)
-	if name == "Cores" or name == "Hero" or name == "RewardsClaimable" then
+	if name == "Cores" or name == "Hero" or name == "RewardsClaimable" or name == "BattleSide" then
 		refresh()
 	end
 end)
@@ -318,7 +355,7 @@ Players.PlayerRemoving:Connect(refresh)
 
 local orbiting = false
 RunService.RenderStepped:Connect(function()
-	local inLobby = ReplicatedStorage:GetAttribute("State") == "Lobby"
+	local inLobby = ReplicatedStorage:GetAttribute("State") == "Lobby" or waiting()
 	if inLobby then
 		orbiting = true
 		camera.CameraType = Enum.CameraType.Scriptable

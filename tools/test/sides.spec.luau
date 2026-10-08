@@ -245,7 +245,9 @@ test("every side's copy places exactly like co-op's map", function()
 				local wantOk, wantWhy = Placement.check(p, {}, onTrack)
 				local gotOk, gotWhy = Placement.check(p + zone.offset, {}, onTrack, zone)
 				if wantWhy == "Outside the build area" then
-					wantWhy = "That's another camp's zone. Build inside your own camp."
+					-- a rival's zone or open ground (T79b), by where the spot lands
+					local q = p + zone.offset
+					wantWhy = Sides.buildRefusal(zone, Vector2.new(q.X, q.Z))
 				end
 				if gotOk ~= wantOk or gotWhy ~= wantWhy then
 					error(`side {side} at {p}: co-op {wantOk}/{wantWhy}, side {gotOk}/{gotWhy}`)
@@ -253,6 +255,26 @@ test("every side's copy places exactly like co-op's map", function()
 			end)
 		end
 	end
+end)
+
+test("T79b: rival zone vs open ground, in every layout (3-side row, 10-seat grid)", function()
+	for _, layout in { Sides.new(3), Sides.new(10, true) } do
+		for side = 1, layout.sides do
+			local mine = Sides.zone(layout, side)
+			eq(#mine.rivals, layout.sides - 1, "one rival rect per other side")
+			for other = 1, layout.sides do
+				if other ~= side then
+					local z = Sides.zone(layout, other)
+					local centre = (z.min + z.max) / 2
+					eq(Sides.buildRefusal(mine, centre), Sides.ZONE_REFUSAL, `{side} in {other}'s zone`)
+				end
+			end
+			for _, strip in layout.crossings do
+				eq(Sides.buildRefusal(mine, (strip.min + strip.max) / 2), Sides.STRIP_REFUSAL, `{side} on a strip`)
+			end
+		end
+	end
+	eq(Sides.STRIP_REFUSAL, "You can only build inside your own camp.")
 end)
 
 test("a ghost outside your zone is refused, the same rule client and server", function()
@@ -270,6 +292,10 @@ test("a ghost outside your zone is refused, the same rule client and server", fu
 	eq(Sides.sideAt(layout, onStrip), nil, "the strip is no side's")
 	eq((Placement.check(onStrip, {}, false, mine)), false, "strip, side 1")
 	eq((Placement.check(onStrip, {}, false, theirs)), false, "strip, side 2")
+	-- T79b (#232): the strip gets its own words, not "another camp's zone".
+	local _, stripWhy = Placement.check(onStrip, {}, false, mine)
+	eq(stripWhy, "You can only build inside your own camp.", "strip refusal, side 1")
+	eq(select(2, Placement.check(onStrip, {}, false, theirs)), "You can only build inside your own camp.", "strip refusal, side 2")
 	-- A Tar Pit goes only on its own side's track.
 	local theirLane = Vector3.new(0, Track.GroundTop, -45) + theirs.offset
 	eq((Placement.check(theirLane, {}, true, theirs)), true, "pit on side 2's lane by side 2")

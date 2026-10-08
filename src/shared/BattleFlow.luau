@@ -14,6 +14,8 @@
 	                                   for any other place (T74)
 	  standInName(side)                a stand-in side's name ("Stand-in 2")
 	  standInOwnerId(side)             a stand-in's owner id: negative, never a real UserId
+	  creditStandIn(bones, standIn, side) a pop on a stand-in's track = a Bone for that seat
+	                                   (T79b; battle-local, never saved, paid or ranked)
 	  seat(mode, ids, picked?, standIns?)
 	      the match's sides. Without stand-ins: Shared/Modes.sideCount decides (nil + reason
 	      when the lobby can't start). With stand-ins (Studio only, #221): one real player is
@@ -27,6 +29,8 @@
 	                                   HP x BattleRules.overtimeHpMult each time)
 	  clearedSides(sides, out, fenceOf) the sides that cleared a round: in, with Fence left
 	                                   (a Fence broken by the round's last dino = no clear, F4)
+	  roundDue(cleared, elapsed, clearedAt?) lockstep with the BattleRoundBreak pause after the
+	                                   last living side clears (T79b); -> due, clearedAt
 	  hasOvertime(mode)                Camp Clash only; Bone Rush ends at the last round
 	  sideScale(difficulty, hunters)   a side's Waves.Scale from its own hunter count (the
 	                                   CO-OP levers, as co-op scales by the whole server)
@@ -84,6 +88,19 @@ end
 
 function BattleFlow.standInName(side: number): string
 	return `Stand-in {side}`
+end
+
+-- A size taken off a dino on `side`: a stand-in seat scores it as a Bone (PLAN T79b, #232).
+-- Every dino on a side is only ever hurt by that side's own towers and hunters (#228,
+-- #231), so a pop on a stand-in's track is its own towers' take-down. Battle-local tally:
+-- never saved, paid or ranked. Returns whether it was credited (false = a real side; the
+-- Scoreboard counts its hunters' Bones).
+function BattleFlow.creditStandIn(bones: { [number]: number }, standIn: { [number]: boolean }, side: number): boolean
+	if not standIn[side] then
+		return false
+	end
+	bones[side] = (bones[side] or 0) + 1
+	return true
 end
 
 function BattleFlow.standInOwnerId(side: number): number
@@ -152,6 +169,22 @@ function BattleFlow.clearedSides(sides: number, out: { [number]: boolean }, fenc
 		end
 	end
 	return list
+end
+
+-- Lockstep with a break (PLAN T79b, DECISIONS #232): once every living side has cleared
+-- the round, the next waits Tuning BattleRoundBreak seconds so hunters can repair and
+-- spend; BattleRoundTime after the round started still forces it (BattleRules.nextRoundDue).
+-- `clearedAt`: when (in round time) every side was first seen cleared, nil until then.
+-- Returns whether the next round is due, and the clearedAt to keep for the next check.
+function BattleFlow.roundDue(sidesCleared: { [number]: boolean }, elapsed: number, clearedAt: number?): (boolean, number?)
+	if elapsed >= Config.Tuning.BattleRoundTime then
+		return true, clearedAt
+	end
+	if not BattleRules.nextRoundDue(sidesCleared, 0) then
+		return false, nil -- not everyone has cleared (a side's dinos came back? start over)
+	end
+	local at = clearedAt or elapsed
+	return elapsed - at >= Config.Tuning.BattleRoundBreak, at
 end
 
 function BattleFlow.hasOvertime(modeKey: string): boolean

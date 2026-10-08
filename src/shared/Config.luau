@@ -132,6 +132,7 @@ return table.freeze({
 		RoyaleLastTrophies = -20,
 		CompetitiveEdgeMax = 0.1,
 		PerkParityBand = 0.15,
+		BattleRoundBreak = 5,
 	},
 	Towers = {
 		SCOUT = {

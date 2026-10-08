@@ -28,9 +28,9 @@
 	            the match for everyone (the HUD reads BattlePlace for who won).
 
 	Stand-ins (Studio only, #221): a side with no player has a track, Fence and dinos, and
-	the fixed towers of BattleFlow.standInTowers (owner id negative). Never saved, paid or
-	ranked: battles don't call Progression at all yet (stakes, payouts, Trophies and XP
-	are T80).
+	the fixed towers of BattleFlow.standInTowers (owner id negative), and scores the Bones
+	those towers take (BattleFlow.creditStandIn, T79b). Never saved, paid or ranked:
+	battles don't call Progression at all yet (stakes, payouts, Trophies and XP are T80).
 
 	Every round prints the peak live enemies and the script cost, as co-op does.
 ]]
@@ -68,6 +68,9 @@ local feed: RemoteEvent? = nil
 local active = false
 local seatedSides = 0
 local layout: Sides.Layout = Sides.new(1)
+-- Studio stand-in seats and the Bones their own towers take (PLAN T79b): battle-local only.
+local standInSeats: { [number]: boolean } = {}
+local standInBones: { [number]: number } = {}
 
 ------------------------------------------------------------------ public helpers
 
@@ -111,6 +114,13 @@ function Battle.spawnPoint(player: Player): Vector3?
 	return Sides.spawn(layout, Sides.sideOf(player:GetAttribute("Side"), layout.sides))
 end
 
+-- A size came off a dino on `side` (Main's Enemies onKilled): a stand-in seat's Bone.
+function Battle.dinoPopped(side: number)
+	if active then
+		BattleFlow.creditStandIn(standInBones, standInSeats, side)
+	end
+end
+
 -- Between matches: no battle attributes left behind (co-op reads "Out" for side 1).
 function Battle.reset()
 	active = false
@@ -120,6 +130,8 @@ function Battle.reset()
 		end
 	end
 	seatedSides = 0
+	table.clear(standInSeats)
+	table.clear(standInBones)
 	ReplicatedStorage:SetAttribute("BattleMode", nil)
 	ReplicatedStorage:SetAttribute("Overtime", nil)
 	ReplicatedStorage:SetAttribute("BuildEndsAt", nil)
@@ -193,7 +205,10 @@ function Battle.play(ctx: Context): boolean
 		Economy.earnFor(side, BattleFlow.startingCash(chosen, #seating.teams[side]))
 	end
 
-	-- Studio stand-ins: their fixed towers.
+	-- Studio stand-ins: their fixed towers, and their Bones from them (T79b).
+	for side in seating.standIn do
+		standInSeats[side] = true
+	end
 	local towerKeys = BattleFlow.standInTowers()
 	for side in seating.standIn do
 		for i, spot in BattleFlow.standInSpots(layout, side, #towerKeys) do
@@ -239,6 +254,7 @@ function Battle.play(ctx: Context): boolean
 	local round = 0
 	local startedAt = 0
 	local spawnedRound: { [number]: number } = {} -- side -> the last round whose spawning finished
+	local clearedAt: number? = nil -- round time when every living side was cleared (the round break, T79b)
 	local matchSeed = math.random(1, 2 ^ 30)
 
 	local function living(): { number }
@@ -259,7 +275,7 @@ function Battle.play(ctx: Context): boolean
 		for _, player in huntersOf(side) do
 			total += Scoreboard.bones(player)
 		end
-		return total
+		return total + (standInBones[side] or 0) -- a stand-in's towers' take-downs (T79b)
 	end
 
 	local function startRound(r: number)
@@ -406,7 +422,10 @@ function Battle.play(ctx: Context): boolean
 		for _, side in living() do
 			cleared[side] = (spawnedRound[side] or 0) >= round and Enemies.remaining(side) == 0
 		end
-		if BattleRules.nextRoundDue(cleared, os.clock() - startedAt) then
+		local due
+		due, clearedAt = BattleFlow.roundDue(cleared, os.clock() - startedAt, clearedAt)
+		if due then
+			clearedAt = nil
 			endRound(round)
 			if not BattleFlow.hasOvertime(modeKey) and round >= #Config.Rounds then
 				result = verdict(true)

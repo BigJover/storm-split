@@ -230,3 +230,64 @@ test("SpawnQueue.clear: an out side's queue empties, the others keep theirs", fu
 	SpawnQueue.clear(q, 9) -- unknown side: nothing happens
 	eq(SpawnQueue.size(q), 8)
 end)
+
+-- T79b (DECISIONS #232) -------------------------------------------------------------
+
+test("T79b: the round break lever is 5 s and shorter than the round time", function()
+	eq(T.BattleRoundBreak, 5)
+	ok(T.BattleRoundBreak < T.BattleRoundTime, "the break fits inside a round")
+end)
+
+test("T79b: lockstep waits BattleRoundBreak after the last living side clears", function()
+	local due, at = BattleFlow.roundDue({ [1] = true, [2] = false }, 10, nil)
+	eq(due, false, "side 2 still has dinos")
+	eq(at, nil)
+	due, at = BattleFlow.roundDue({ [1] = true, [2] = true }, 12, at)
+	eq(due, false, "everyone cleared: the break starts")
+	eq(at, 12)
+	due, at = BattleFlow.roundDue({ [1] = true, [2] = true }, 12 + T.BattleRoundBreak - 0.1, at)
+	eq(due, false, "still in the break")
+	due = BattleFlow.roundDue({ [1] = true, [2] = true }, 12 + T.BattleRoundBreak, at)
+	eq(due, true, "break over: next round")
+end)
+
+test("T79b: the round time still forces the next round, break or not", function()
+	eq((BattleFlow.roundDue({ [1] = false }, T.BattleRoundTime, nil)), true, "uncleared side at the cap")
+	eq((BattleFlow.roundDue({ [1] = true }, T.BattleRoundTime, T.BattleRoundTime - 1)), true, "mid-break at the cap")
+end)
+
+test("T79b: a side that stops being cleared restarts the break", function()
+	local _, at = BattleFlow.roundDue({ [1] = true }, 5, nil)
+	eq(at, 5)
+	local due, again = BattleFlow.roundDue({ [1] = false }, 7, at)
+	eq(due, false)
+	eq(again, nil, "break reset")
+end)
+
+test("T79b: stand-ins score Bones from their own track; real sides don't go through it", function()
+	local bones = {}
+	local standIn = { [2] = true }
+	eq(BattleFlow.creditStandIn(bones, standIn, 2), true)
+	eq(BattleFlow.creditStandIn(bones, standIn, 2), true)
+	eq(BattleFlow.creditStandIn(bones, standIn, 1), false, "a real side: the Scoreboard counts it")
+	eq(bones[2], 2)
+	eq(bones[1], nil)
+end)
+
+test("T79b: Server/Battle adds stand-in Bones and Main reports every pop's side", function()
+	local fs = require("@lune/fs")
+	local battle = fs.readFile("src/server/Battle.luau")
+	ok(battle:find("return total + (standInBones[side] or 0)", 1, true) ~= nil, "sideBones adds the seat's Bones")
+	ok(battle:find("BattleFlow.roundDue(cleared, os.clock() - startedAt, clearedAt)", 1, true) ~= nil, "lockstep uses the break")
+	local main = fs.readFile("src/server/Main.server.luau")
+	ok(main:find("Battle.dinoPopped(enemy.side)", 1, true) ~= nil, "onKilled reports the side")
+	ok(main:find("if inMatch() and not Battle.active() then", 1, true) ~= nil, "a mid-battle joiner isn't seated")
+end)
+
+test("T79b: enemy towers hide the Upgrade prompt on the client", function()
+	local fs = require("@lune/fs")
+	local shop = fs.readFile("src/client/Shop.client.luau")
+	ok(shop:find("prompt.Enabled = not (typeof(towerSide) == \"number\" and Sides.isEnemyTower((mySide()), towerSide))", 1, true) ~= nil, "prompt rule")
+	eq(Sides.isEnemyTower(1, 2), true)
+	eq(Sides.isEnemyTower(1, 1), false, "co-op and your own camp keep it")
+end)

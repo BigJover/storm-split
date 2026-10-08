@@ -26,7 +26,9 @@
 	                                  another side's tower, or nil on your own side's
 	  attr(name, side)           -> a per-side attribute's name: side 1 keeps today's name
 	                                  ("Cash"), side n adds n ("Cash2"); Server/Economy publishes
-	  ZONE_REFUSAL               -> a battle build outside your own zone (Shared/Placement, T78)
+	  ZONE_REFUSAL               -> a battle build in a rival camp's zone (Shared/Placement, T78)
+	  STRIP_REFUSAL              -> a battle build off every zone: the crossing strip (T79b)
+	  buildRefusal(zone, point)  -> which of the two a build at `point` (flat X, Z) gets
 	  cashRefusal(sides)         -> "Not enough cash" (co-op) / "Not enough cash in your camp."
 	  isEnemyTower(mySide, towerSide) -> another camp's tower: its panel is read-only (T78)
 ]]
@@ -37,15 +39,16 @@ local Track = require(script.Parent.Track)
 
 local Sides = {}
 
+export type Rect = { min: Vector2, max: Vector2 }
+
 export type Zone = {
 	side: number,
 	offset: Vector3, -- this side's copy = the co-op map moved by this much
 	min: Vector2, -- the build zone, flat (X, Z)
 	max: Vector2,
 	battle: boolean, -- more than one side in the match
+	rivals: { Rect }, -- every other side's build zone (which refusal a build outside yours gets)
 }
-
-export type Rect = { min: Vector2, max: Vector2 }
 
 export type Layout = {
 	sides: number,
@@ -66,16 +69,28 @@ function Sides.new(sides: number, grid: boolean?): Layout
 	local columns = if grid then math.ceil(n / Track.GridRows) else n
 
 	local zones: { Zone } = {}
+	local rects: { Rect } = {}
+	for side = 1, n do
+		local column, row = (side - 1) % columns, (side - 1) // columns
+		local shift = flat(Vector3.new(column * stepX, 0, row * stepZ))
+		rects[side] = table.freeze({ min = area.Min + shift, max = area.Max + shift })
+	end
 	for side = 1, n do
 		local column, row = (side - 1) % columns, (side - 1) // columns
 		local offset = Vector3.new(column * stepX, 0, row * stepZ)
-		local shift = flat(offset)
+		local rivals: { Rect } = {}
+		for other, rect in rects do
+			if other ~= side then
+				table.insert(rivals, rect)
+			end
+		end
 		zones[side] = table.freeze({
 			side = side,
 			offset = offset,
-			min = area.Min + shift,
-			max = area.Max + shift,
+			min = rects[side].min,
+			max = rects[side].max,
 			battle = n > 1,
+			rivals = table.freeze(rivals),
 		})
 	end
 
@@ -175,6 +190,18 @@ local MANAGE_REFUSALS = table.freeze({
 })
 -- A battle build outside your own zone (Shared/Placement; PLAN T78).
 Sides.ZONE_REFUSAL = "That's another camp's zone. Build inside your own camp."
+-- A battle build off every camp's zone: the crossing strip or past the map (T79b, #232).
+Sides.STRIP_REFUSAL = "You can only build inside your own camp."
+
+-- Why a battle build at `point` outside `zone` is refused: a rival's zone or open ground.
+function Sides.buildRefusal(zone: Zone, point: Vector2): string
+	for _, rect in zone.rivals do
+		if point.X >= rect.min.X and point.X <= rect.max.X and point.Y >= rect.min.Y and point.Y <= rect.max.Y then
+			return Sides.ZONE_REFUSAL
+		end
+	end
+	return Sides.STRIP_REFUSAL
+end
 
 function Sides.manageRefusal(action: string, mySide: number, towerSide: number): string?
 	if mySide == towerSide then
