@@ -543,7 +543,7 @@ Saved stakes, saved Trophies and the world boards need the place published. Call
   refusals; stand-in tower to Trampled + kill line; Inspect; own shots never hurt own towers;
   spectate rules; Practice stake out and Hoard back, Trophies unchanged; Bone Rush 10 seats
   (peak 125 of 130 dinos, worst frame 8.37 ms), ranking by Bones; player list; no console errors.
-- **Run 4 (T86b re-check of c559cdc):** _RESULT PENDING — coordinator fills in._
+- **Run 4 (T86b re-check of c559cdc):** all seven T86b checks PASS in Studio — no banner over the results card (F5), spectate banner bottom-centre with the camps board readable (F6), "Nth place" in both modes, battle results ~15 s, "Amber +33 (30 payout + 3 Amber Hoard)", "HUNT OPTIONS", co-op round-trip with 8 s results; console clean. One new minor finding, F7: the camp-out banner shows top-right over the XP bar instead of below the camps board (queued with Phase 8 batch 1). The Ranked Bone Rush check ran with 2 seats (the 3-seat run was Casual Hard).
 - **Headless only:** the survivor bonus (not confirmed in Studio), your-chest-only, the F4
   exact case, Final Stampede (battles ended by round 9–11), everything multi-client.
 

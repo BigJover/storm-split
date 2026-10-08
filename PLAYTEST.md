@@ -365,3 +365,32 @@ Setup: Casual, Seats 4, stand-ins. **Scripted help:** K cash (~70 presses over t
 
 ## Studio state at the end
 - Play mode stopped. `get_studio_state`: **Current Studio Mode: Edit**, DataModels: Edit. Nothing changed in Edit, nothing published; `SaveStatus=offline` throughout (J pressed first in both Play sessions).
+
+# Run 4 — 2026-10-08 (Tester, agent) — T86b re-check
+
+- **Code tested:** Studio synced to c559cdc: `script_grep` "HUNT OPTIONS" → Shared.HomeLayout:82; "BattleResultsTime" → Shared.Config:134 (=15) and Shared.BattleFlow:103.
+- **Start state:** Studio in Edit mode. Work files: `~/.claude/jobs/2a8d6f9c/tmp/tester6/`.
+- **Conveniences (disclosed):** J first (no saves), K cash, home-screen clicks, read-only `execute_luau`.
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R4-1 | Bone Rush Ranked (Practice), stand-ins: setup | NOTE | Home clicks Bone Rush · Ranked · Fill with stand-ins · Seats · Ready · Pay · PLAY. Deviation: my Seats click stepped 3→**2**, so this was 2 seats (me + 1 stand-in). No defence; my Fence fell in round 1/2 and that ended the match. |
+| R4-2 | "HUNT OPTIONS" on home | PASS | Header "HUNT OPTIONS · Ranked is always Normal." `rhome.png` |
+| R4-3 | Place line (Bone Rush) | PASS | Card title "Bone Rush — 2nd place". `rush2-res.png` |
+| R4-4 | Amber line | PASS | "Amber +33 (30 payout + 3 Amber Hoard)"; no separate share line. Amber 85→118 (+33). Console "Battle settled (Practice Hunt): pot 15, sink 12" (stand-in's share to the sink, item 7). |
+| R4-5 | Results time in battle ~15 s | PASS | ~1.5 s after the state flipped the status read "GAME OVER · home in 14s". |
+| R4-6 | F5 (no banner/feed over results) | PASS (this case) | My "Fence is down! They're out." fired in the same step as the end; the HUD dump at results had no banner/feed label, title and X fully visible. Only the Studio-only "+1000 cash (K)" button clips the title's "B" (known Studio-only). |
+| R4-7 | F6 spectate banner (Bone Rush, Casual Hard, 3 seats, no defence) | PASS | "Your Fence is down — you're watching now." at bottom-centre (GUI y 436, above HP bar); the camps board's first row "Stand-in 2's Camp · Fence 20 · 35 Bones" fully readable. `spect.png` |
+| R4-8 | Camp-out banner placement (T86b item 2, 2nd sentence) | **FAIL (minor)** F7 | "Jover_428's Camp's Fence is down! They're out." shows top-**right** at GUI (408,64), over the level bar's "0 / 500 XP" text — not top-centre below the camps board (board ends at y≈340). `spect.png` |
+| R4-9 | F5 exact repro (a camp-out fires in the final step) | PASS | Feed "Stand-in 2's Camp's Fence is down! They're out." arrived at the end; HUD dump at results: no banner/feed/spectate label, only status, card and HP bar. |
+| R4-10 | Place line + Amber line, Casual | PASS | "Bone Rush — 3rd place"; "Amber +10" (no share). "home in 14s" ~1.5 s after the end. Console "Bone Rush over on round 10 …", "Battle settled (Casual): pot 0, sink 0". |
+| R4-11 | Camp Clash Casual, 2 camps, stand-ins, no defence | PASS | "Camp Clash — 2nd place", "Amber +5", "home in 14s", no banner/feed over the card. `clash-res.png`. (A second, accidental Camp Clash on Easy — my Co-op card click hit Studio's CoreGui band — gave the same.) |
+| R4-12 | Co-op round-trip, results 8 s | PASS | Easy, no defence: "GAME OVER on round 2", "Match over (round 2, lost): +0 Amber each"; status "home in 7s" ~1.5 s after, Lobby 2.3 s after a later poll. |
+| R4-13 | Console | PASS | Scan for error/warn/infinite: none from our scripts (only Assistant VirtualInput CoreGUI lines). |
+
+### F7. The camp-out banner sits top-right over the level bar, not top-centre below the camps board — minor (cosmetic)
+- **Repro:** any battle, a camp's Fence falls. **Seen:** "X's Camp's Fence is down! They're out." at GUI (408,64), covering the "0 / 500 XP" text of the level bar (`spect.png`). T86b item 2 asked for top-centre, below the camps board's bottom edge. **Suspect:** `src/client/Hud.client.luau` (out-banner position).
+
+**Run 4 summary:** F5 PASS, F6 (spectate) PASS, Nth place PASS (both modes), battle results ~15 s PASS, Amber line PASS, HUNT OPTIONS PASS, co-op 8 s PASS, console clean. 1 minor FAIL (F7, camp-out banner placement). Deviation: the Practice Bone Rush ran with 2 seats (Seats click went 3→2); the 3-seat Bone Rush was Casual Hard.
+
+**Studio state at the end:** Play stopped; `get_studio_state` = Edit. Nothing edited or published; `SaveStatus=offline` throughout (J first).
