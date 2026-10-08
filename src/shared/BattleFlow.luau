@@ -25,6 +25,8 @@
 	                                   HP multiplier and the overtime repeat (Camp Clash's
 	                                   Final Stampede: past the table the last row repeats,
 	                                   HP x BattleRules.overtimeHpMult each time)
+	  clearedSides(sides, out, fenceOf) the sides that cleared a round: in, with Fence left
+	                                   (a Fence broken by the round's last dino = no clear, F4)
 	  hasOvertime(mode)                Camp Clash only; Bone Rush ends at the last round
 	  sideScale(difficulty, hunters)   a side's Waves.Scale from its own hunter count (the
 	                                   CO-OP levers, as co-op scales by the whole server)
@@ -137,6 +139,19 @@ end
 function BattleFlow.roundRow(round: number): (number, number, number)
 	local repeats = BattleRules.overtimeRepeat(round)
 	return math.min(round, #Config.Rounds), BattleRules.overtimeHpMult(repeats), repeats
+end
+
+-- The sides that cleared a round: still in, with Fence left. A side whose last leak broke
+-- its Fence on the round's final dino didn't clear it (PLAYTEST F4), even before the
+-- elimination check has marked it out: no round bonus, heal or hero XP for it.
+function BattleFlow.clearedSides(sides: number, out: { [number]: boolean }, fenceOf: (number) -> number): { number }
+	local list = {}
+	for side = 1, sides do
+		if not out[side] and not BattleRules.sideOut(fenceOf(side)) then
+			table.insert(list, side)
+		end
+	end
+	return list
 end
 
 function BattleFlow.hasOvertime(modeKey: string): boolean

@@ -1040,11 +1040,18 @@ end
 -- never gets here, so its pops are dropped by Hero.resetMatch. `solo` = one hunter
 -- in the match as it was cleared (Main counts them): that round's take-down part
 -- counts double toward player XP only (DECISIONS #177).
-function Hero.roundCleared(index: number, solo: boolean?)
+-- `who` (battles): only these hunters cleared the round; anyone else (a side that is out,
+-- or whose Fence broke on the round's last dino, PLAYTEST F4) banks nothing and their
+-- pending pops are dropped, as on a lost round. nil = everyone (co-op).
+function Hero.roundCleared(index: number, solo: boolean?, who: { [Player]: boolean }?)
 	roundsCleared = index
 	local team = teamPops
 	teamPops = 0
-	for _, s in states do
+	for player, s in states do
+		if who and not who[player] then
+			s.pops = 0
+			continue
+		end
 		PlayerLevel.bankRound(s.tally, s.pops, team, solo == true) -- before the clamp
 		s.xp = HeroXp.bank(s.xp, s.pops, team, index)
 		s.pops = 0

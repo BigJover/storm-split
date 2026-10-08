@@ -22,12 +22,14 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local RoundFlow = require(Shared:WaitForChild("RoundFlow"))
 
 local Enemies = require(script.Parent.Enemies)
 
 local Waves = {}
 
 local INTERMISSION = 5 -- seconds between rounds
+local POLL = 0.25 -- seconds between "every dino dealt with?" checks
 
 export type Scale = { countMult: number, hpMult: number, promoteChance: number }
 
@@ -99,41 +101,34 @@ function Waves.spawnRound(options: RoundOptions): boolean
 	return true
 end
 
--- Returns true if every round was cleared.
+-- Returns true if every round was cleared. The loop is Shared/RoundFlow's (specced): a
+-- round whose last dino breaks the Fence is a loss, not a clear (PLAYTEST F4).
 function Waves.run(options: RunOptions): boolean
-	local first = options.startRound or 1
 	local side = options.side or 1
 	local density = options.density or 1
 
-	for index = first, #Config.Rounds do
-		if options.isOver() then
-			return false
-		end
-
-		ReplicatedStorage:SetAttribute("Round", index)
-		if options.onRoundStart then
-			options.onRoundStart(index)
-		end
-
-		local scale = if options.scale then options.scale() else NO_SCALE
-		if not Waves.spawnRound({ side = side, index = index, scale = scale, density = density, isOver = options.isOver }) then
-			return false
-		end
-
-		while Enemies.remaining(side) > 0 do
-			if options.isOver() then
-				return false
+	return RoundFlow.run({
+		first = options.startRound or 1,
+		last = #Config.Rounds,
+		isOver = options.isOver,
+		spawn = function(index)
+			ReplicatedStorage:SetAttribute("Round", index)
+			if options.onRoundStart then
+				options.onRoundStart(index)
 			end
-			task.wait(0.25)
-		end
-
-		if options.onRoundEnd then
-			options.onRoundEnd(index)
-		end
-		task.wait(INTERMISSION)
-	end
-
-	return true
+			local scale = if options.scale then options.scale() else NO_SCALE
+			return Waves.spawnRound({ side = side, index = index, scale = scale, density = density, isOver = options.isOver })
+		end,
+		remaining = function()
+			return Enemies.remaining(side)
+		end,
+		onRoundEnd = options.onRoundEnd,
+		wait = function(seconds)
+			task.wait(seconds)
+		end,
+		poll = POLL,
+		intermission = INTERMISSION,
+	})
 end
 
 return Waves

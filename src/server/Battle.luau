@@ -297,15 +297,18 @@ function Battle.play(ctx: Context): boolean
 	-- A round is over for everyone: each living side gets its round pay and heals.
 	local function endRound(r: number)
 		local index = math.min(r, #Config.Rounds)
-		for _, side in living() do
+		local clearedBy: { [Player]: boolean } = {}
+		-- Only sides still in with Fence left cleared it (PLAYTEST F4).
+		for _, side in BattleFlow.clearedSides(sides, out, Economy.livesOf) do
 			Economy.earnFor(side, (Config.Tuning.RoundBonusBase + Config.Tuning.RoundBonusPerRound * index) * chosen.cashMult)
 			Economy.earnFor(side, Towers.roundIncome(Economy.cashOf(side), side) * chosen.cashMult) -- its Supply Camps
 			for _, hunter in huntersOf(side) do
 				Health.heal(hunter, Config.Tuning.HealPerRound + SmallPerks.ofPlayer(hunter).healPerRound)
+				clearedBy[hunter] = true
 			end
 		end
 		ReplicatedStorage:SetAttribute("RoundsCleared", index)
-		Hero.roundCleared(index, false)
+		Hero.roundCleared(index, false, clearedBy)
 		local newLevel = HeroXp.roundLevel(index)
 		if newLevel > level then
 			level = newLevel
