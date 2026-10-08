@@ -112,3 +112,30 @@ test("the hunter's HP bar hides on the home screen and without a character (PLAY
 		eq(PanelRules.hpBarVisible(state, true), true, state)
 	end
 end)
+
+-- PLAN T83 (DECISIONS #233): the Inspect prompt and the four player-list columns ---------
+
+test("T83 another camp's tower says Inspect; your own keeps the server's text", function()
+	eq(PanelRules.towerPrompt(1, 2, "Upgrade"), "Inspect")
+	eq(PanelRules.towerPrompt(2, 1, "Upgrade / Repair"), "Inspect")
+	eq(PanelRules.towerPrompt(2, 2, "Upgrade / Repair"), "Upgrade / Repair", "own camp")
+	eq(PanelRules.towerPrompt(1, 1, "Upgrade"), "Upgrade", "co-op: side 1")
+	eq(PanelRules.towerPrompt(1, nil, "Upgrade"), "Upgrade", "no side published yet")
+end)
+
+test("T83 the player list is Bones, Level, Trophies, Title (no Mastery)", function()
+	local Theme = require(src.shared.Theme)
+	local columns = PanelRules.playerListColumns()
+	eq(table.concat(columns, "|"), `{Theme.Bones}|{Theme.PlayerLevel}|Trophies|Title`)
+	eq(#columns, 4, "Roblox shows four stats")
+	eq(table.find(columns, "Mastery"), nil)
+	local fs = require("@lune/fs")
+	local board = fs.readFile("src/server/Scoreboard.luau")
+	ok(board:find('"Mastery"', 1, true) == nil, "Server/Scoreboard no longer makes a Mastery column")
+	local at = {}
+	for i = 1, 4 do
+		at[i] = board:find(`.Name = columns[{i}]`, 1, true)
+		ok(at[i] ~= nil, `column {i} made from the list`)
+	end
+	ok(at[1] < at[2] and at[2] < at[3] and at[3] < at[4], "created in the list's order (Roblox shows them in that order)")
+end)

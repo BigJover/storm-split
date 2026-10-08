@@ -23,6 +23,9 @@
 	the tier count and the X stays on screen (no-trap rule).
 ]]
 
+local Theme = require(script.Parent.Theme)
+local TrophyBoard = require(script.Parent.TrophyBoard)
+
 local PanelRules = {}
 
 local IN_MATCH = { Building = true, Playing = true }
@@ -91,6 +94,25 @@ end
 function PanelRules.tierLadder(current: number, maxTier: number): string
 	local whole = math.clamp(math.floor(current), 0, maxTier)
 	return `{string.rep("●", whole)}{string.rep("○", maxTier - whole)} {whole}/{maxTier}`
+end
+
+-- A tower's prompt (PLAN T83, DECISIONS #233): your own camp's tower keeps the server's
+-- "Upgrade" / "Upgrade / Repair"; another camp's says "Inspect" and opens the read-only
+-- tower panel (T78). Co-op is side 1 everywhere, so every prompt keeps its text.
+PanelRules.INSPECT = "Inspect"
+
+function PanelRules.towerPrompt(mySide: number, towerSide: unknown, serverText: string): string
+	if typeof(towerSide) == "number" and towerSide ~= mySide then
+		return PanelRules.INSPECT
+	end
+	return serverText
+end
+
+-- Roblox's player list shows four stats (PLAN T83, DECISIONS #233), in this order:
+-- Bones, the player level, Trophies ("<n> · <Arena>") and the Title. Mastery isn't one:
+-- it stays on the Mastery screen, the Profile screen and the hero card.
+function PanelRules.playerListColumns(): { string }
+	return { Theme.Bones, Theme.PlayerLevel, TrophyBoard.COLUMN, "Title" }
 end
 
 return PanelRules

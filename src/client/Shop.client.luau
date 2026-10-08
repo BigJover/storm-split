@@ -1587,27 +1587,52 @@ ReplicatedStorage:GetAttributeChangedSignal("Level"):Connect(function()
 	end
 end)
 
--- Another camp's tower shows no "Upgrade" prompt (PLAN T79b, DECISIONS #232): a prompt the
--- server always refuses is a small trap. Local only (the server's refusal stays); co-op is
--- side 1 everywhere, so every prompt shows.
-local function showPromptIfMine(prompt: Instance)
+-- Another camp's tower says "Inspect" (PLAN T83, DECISIONS #233; Shared/PanelRules.towerPrompt)
+-- and opens the read-only tower panel (T78); your own camp's keeps the server's "Upgrade"
+-- (and the server's refusal stays). Local only; co-op is side 1 everywhere.
+local serverPromptText: { [ProximityPrompt]: string } = {}
+local function labelPrompt(prompt: Instance)
 	local body = prompt.Parent
 	if prompt:IsA("ProximityPrompt") and body and body:GetAttribute("TowerId") then
-		local towerSide = body:GetAttribute("Side")
-		prompt.Enabled = not (typeof(towerSide) == "number" and Sides.isEnemyTower((mySide()), towerSide))
+		local text = PanelRules.towerPrompt(mySide(), body:GetAttribute("Side"), serverPromptText[prompt] or prompt.ActionText)
+		if prompt.ActionText ~= text then
+			prompt.ActionText = text
+		end
 	end
+end
+local function watchPrompt(prompt: Instance)
+	if not prompt:IsA("ProximityPrompt") or serverPromptText[prompt] then
+		return
+	end
+	serverPromptText[prompt] = prompt.ActionText
+	prompt:GetPropertyChangedSignal("ActionText"):Connect(function()
+		if prompt.ActionText ~= PanelRules.INSPECT then
+			serverPromptText[prompt] = prompt.ActionText -- the server's new text ("Upgrade / Repair")
+		end
+		labelPrompt(prompt)
+	end)
+	prompt.AncestryChanged:Connect(function()
+		if not prompt:IsDescendantOf(workspace) then
+			serverPromptText[prompt] = nil
+		end
+	end)
+	labelPrompt(prompt)
+end
+local function labelTowerPrompt(prompt: Instance)
+	watchPrompt(prompt)
+	labelPrompt(prompt)
 end
 task.spawn(function()
 	local map = workspace:WaitForChild("StormSplitMap")
 	local folder = map:WaitForChild("Towers")
 	local function refreshPrompts()
 		for _, item in folder:GetDescendants() do
-			showPromptIfMine(item)
+			labelTowerPrompt(item)
 		end
 	end
 	folder.DescendantAdded:Connect(function(item)
 		if item:IsA("ProximityPrompt") then
-			showPromptIfMine(item)
+			labelTowerPrompt(item)
 		end
 	end)
 	player:GetAttributeChangedSignal("Side"):Connect(refreshPrompts)

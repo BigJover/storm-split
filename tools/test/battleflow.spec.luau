@@ -284,10 +284,11 @@ test("T79b: Server/Battle adds stand-in Bones and Main reports every pop's side"
 	ok(main:find("if inMatch() and not Battle.active() then", 1, true) ~= nil, "a mid-battle joiner isn't seated")
 end)
 
-test("T79b: enemy towers hide the Upgrade prompt on the client", function()
+test("T79b → T83: enemy towers say Inspect instead of Upgrade on the client (#233)", function()
 	local fs = require("@lune/fs")
 	local shop = fs.readFile("src/client/Shop.client.luau")
-	ok(shop:find("prompt.Enabled = not (typeof(towerSide) == \"number\" and Sides.isEnemyTower((mySide()), towerSide))", 1, true) ~= nil, "prompt rule")
+	ok(shop:find("PanelRules.towerPrompt(mySide(), body:GetAttribute(\"Side\")", 1, true) ~= nil, "prompt rule")
+	ok(shop:find("prompt.Enabled = ", 1, true) == nil, "the prompt is no longer hidden")
 	eq(Sides.isEnemyTower(1, 2), true)
 	eq(Sides.isEnemyTower(1, 1), false, "co-op and your own camp keep it")
 end)
