@@ -459,9 +459,9 @@ test("mastery 10: only the level-10 lever moves, by the sheet value (and stays t
 	-- hero -> the fields that change at 10, and the lever's new value (PLAN round 3)
 	local want = {
 		PISTOL = { fields = "abilitySeconds", lever = "abilitySeconds", add = "abilitySecondsAdd", value = 10 }, -- Sticky Dart 8 -> 10
-		RIFLE = { fields = "abilityRadius", lever = "abilityRadius", add = "abilityRadiusAdd", value = 30 }, -- Hunting Horn 25 -> 30
-		SHOTGUN = { fields = "abilityRadius", lever = "abilityRadius", add = "abilityRadiusAdd", value = 11.5 }, -- Wide Flare 10 -> 11.5
-		MEDIC = { fields = "abilityRadius,healRadius", lever = "healRadius", add = "abilityRadiusAdd", value = 24 }, -- Far Reach 20 -> 24
+		RIFLE = { fields = "abilityRadius", lever = "abilityRadius", add = "abilityRadiusAdd", value = 31 }, -- Hunting Horn 25 -> 31 (T84b)
+		SHOTGUN = { fields = "abilityRadius", lever = "abilityRadius", add = "abilityRadiusAdd", value = 12.5 }, -- Wide Flare 10 -> 12.5 (T84b)
+		MEDIC = { fields = "abilityRadius,healRadius", lever = "healRadius", add = "abilityRadiusAdd", value = 25 }, -- Far Reach 20 -> 25 (T84b)
 	}
 	for _, key in Config.HeroOrder do
 		local w = want[key]
@@ -479,13 +479,13 @@ test("mastery 15: both perks (and nothing more at 20); perks never touch the gun
 		-- Sticky Dart + Spare Dart: 10s, 1 extra mark at 0.4x within 10 studs
 		PISTOL = { fields = "abilitySeconds,markExtra,markExtraPowerMult,markExtraReach",
 			values = { abilitySeconds = 10, abilityPower = 50, markExtra = 1, markExtraPowerMult = 0.4, markExtraReach = 10 } },
-		-- Hunting Horn + Long Rally: 30 studs, 13s, still +40%
-		RIFLE = { fields = "abilityRadius,abilitySeconds", values = { abilityRadius = 30, abilitySeconds = 13, abilityPower = 40 } },
-		-- Wide Flare + Smoulder: 11.5 studs, 12% a second for 3s; the stun and the damage don't move
+		-- Hunting Horn + Long Rally: 31 studs, 13.5s, still +40% (T84b)
+		RIFLE = { fields = "abilityRadius,abilitySeconds", values = { abilityRadius = 31, abilitySeconds = 13.5, abilityPower = 40 } },
+		-- Wide Flare + Smoulder: 12.5 studs, 12% a second for 3s; the stun and the damage don't move
 		SHOTGUN = { fields = "abilityRadius,strikeBurnPercent,strikeBurnSeconds",
-			values = { abilityRadius = 11.5, strikeBurnPercent = 12, strikeBurnSeconds = 3, abilitySeconds = 2, abilityPower = 30 } },
-		-- Far Reach + Stocked Kit: 24 studs, 50 HP
-		MEDIC = { fields = "abilityPower,abilityRadius,heal,healRadius", values = { healRadius = 24, heal = 50, abilityPower = 50 } },
+			values = { abilityRadius = 12.5, strikeBurnPercent = 12, strikeBurnSeconds = 3, abilitySeconds = 2, abilityPower = 30 } },
+		-- Far Reach + Stocked Kit: 25 studs, 54 HP (T84b)
+		MEDIC = { fields = "abilityPower,abilityRadius,heal,healRadius", values = { healRadius = 25, heal = 54, abilityPower = 54 } },
 	}
 	local gun = { "damage", "shotDamage", "rate", "magazine", "reload", "pellets", "spread", "recoilPerShot", "recoilMax", "range",
 		"pierce", "bounces", "burnDps", "burnSeconds", "splashRadius", "knockback", "markPercent", "markedDamageMult", "abilityCooldown" }
@@ -510,12 +510,12 @@ end)
 test("mastery perks add to the base before path multipliers: Stocked Kit x Clean Bandages, Far Reach x Triage Tent", function()
 	eq(Config.Heroes.MEDIC.paths[1].tiers[1].name, "Clean Bandages")
 	eq(Config.Heroes.MEDIC.paths[1].tiers[4].name, "Triage Tent")
-	near(mastered("MEDIC", 15, { 1, 0, 0 }).heal, 50 * 1.25, "Stocked Kit + Clean Bandages = 50 x 1.25")
+	near(mastered("MEDIC", 15, { 1, 0, 0 }).heal, 54 * 1.25, "Stocked Kit + Clean Bandages = 54 x 1.25")
 	near(mastered("MEDIC", 10, { 1, 0, 0 }).heal, 40 * 1.25, "no Stocked Kit at 10")
-	near(mastered("MEDIC", 10, { 4, 0, 0 }).healRadius, 24 * 1.5, "Far Reach + Triage Tent = 24 x 1.5")
+	near(mastered("MEDIC", 10, { 4, 0, 0 }).healRadius, 25 * 1.5, "Far Reach + Triage Tent = 25 x 1.5")
 	near(mastered("MEDIC", 9, { 4, 0, 0 }).healRadius, 20 * 1.5, "no Far Reach at 9")
-	near(mastered("MEDIC", 15, { 4, 0, 0 }).heal, 50 * 1.25, "both, through the whole Triage path")
-	near(mastered("MEDIC", 15, { 4, 0, 0 }).healRadius, 24 * 1.5, "both, through the whole Triage path")
+	near(mastered("MEDIC", 15, { 4, 0, 0 }).heal, 54 * 1.25, "both, through the whole Triage path")
+	near(mastered("MEDIC", 15, { 4, 0, 0 }).healRadius, 25 * 1.5, "both, through the whole Triage path")
 end)
 
 test("Rally Cry: the radius and seconds Server/Hero hands towerRateBoost are the merged ones", function()
@@ -523,9 +523,9 @@ test("Rally Cry: the radius and seconds Server/Hero hands towerRateBoost are the
 	-- overdrive state that Hero.towerRateBoost reads.
 	eq(Config.Heroes.RIFLE.abilityKind, "OVERDRIVE")
 	near(mastered("RIFLE", 0).abilityRadius, 25, "no mastery")
-	near(mastered("RIFLE", 10).abilityRadius, 30, "Hunting Horn")
+	near(mastered("RIFLE", 10).abilityRadius, 31, "Hunting Horn")
 	near(mastered("RIFLE", 10).abilitySeconds, 10, "not longer yet")
-	near(mastered("RIFLE", 15).abilitySeconds, 13, "Long Rally")
+	near(mastered("RIFLE", 15).abilitySeconds, 13.5, "Long Rally")
 	near(mastered("RIFLE", 15).abilityPower, 40, "never stronger")
 end)
 
@@ -548,7 +548,7 @@ test("the mastery perks carry their reviewed names and texts", function()
 		end
 		eq(seen, 2, `{key}: one perk at 10, one at 15`)
 	end
-	eq(texts["Wide Flare"], "Flare Strike reaches 1.5 studs further", "Wide Flare")
+	eq(texts["Wide Flare"], "Flare Strike reaches 2.5 studs further", "Wide Flare")
 	eq(texts["Smoulder"], "Flare Strike leaves burning ground for 3s (12% of the strike's damage each second)", "Smoulder")
 	eq(Config.Mastery[10].unlock, "Start every match with your first upgrade free, plus this hero's mastery-10 ability perk", "mastery 10")
 	eq(Config.Mastery[15].unlock, "Ability cooldown -30%, plus this hero's mastery-15 ability perk", "mastery 15")

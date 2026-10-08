@@ -37,16 +37,18 @@ advantage", safe for the PvP modes). A hero with mastery 15 has both.
 | Hero | Mastery 10 | Mastery 15 |
 |---|---|---|
 | Tracker | **Sticky Dart**: Tracking Dart lasts 2s longer (8 → 10) | **Spare Dart**: also marks the nearest dino within 10 studs at 40% strength |
-| Big Game Hunter | **Hunting Horn**: Rally Cry reaches 5 studs further (25 → 30) | **Long Rally**: Rally Cry lasts 3s longer (10 → 13) |
-| Brush Beater | **Wide Flare**: Flare Strike reaches 1.5 studs further (10 → 11.5) | **Smoulder**: leaves burning ground for 3s (12% of the strike's damage each second) |
-| Field Medic | **Far Reach**: Triage Kit reaches 4 studs further (20 → 24) | **Stocked Kit**: Triage Kit heals 10 more HP (40 → 50) |
+| Big Game Hunter | **Hunting Horn**: Rally Cry reaches 6 studs further (25 → 31) | **Long Rally**: Rally Cry lasts 3.5s longer (10 → 13.5) |
+| Brush Beater | **Wide Flare**: Flare Strike reaches 2.5 studs further (10 → 12.5) | **Smoulder**: leaves burning ground for 3s (12% of the strike's damage each second) |
+| Field Medic | **Far Reach**: Triage Kit reaches 5 studs further (20 → 25) | **Stocked Kit**: Triage Kit heals 14 more HP (40 → 54) |
 
 - Numbers: the `Mastery Perks` sheet, one row per hero and level. A perk adds to the hero's
-  base ability value, before path upgrades multiply it (Stocked Kit + Clean Bandages = 50 ×
+  base ability value, before path upgrades multiply it (Stocked Kit + Clean Bandages = 54 ×
   1.25).
 - The exporter refuses a sheet where a hero's mastery-15 perk isn't worth more than the
   mastery-10 one, where any perk is worth more than 40% of one cast (`Tuning` → MASTERY
-  PERKS), or where a perk adds stun time. No perk column raises gun damage.
+  PERKS), or where a perk adds stun time. No perk column raises gun damage. Heroes stay
+  level with each other: at mastery 10 and at 15+ (both perks summed) the strongest hero's
+  perk worth is at most 1.15× the weakest's (`Perk parity band`, DECISIONS #235).
 - Perks act on dinos and allies only: nothing stuns, slows or marks another hunter.
 - Marks don't stack (DECISIONS #106): the stronger mark wins; a weaker one changes neither
   its strength nor its time; an equal one keeps the longer time.
