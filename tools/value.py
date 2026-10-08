@@ -93,6 +93,9 @@ Usage:
     python3 tools/value.py --full    every band's cost per eDPS, every tower
     python3 tools/value.py --overkill  eDPS before (zero-waste) -> after (overkill counted),
                                      every damage path's T4-T5 in every band (PLAN T47/T48)
+    python3 tools/value.py --edge    the PvP edge report alone (PLAN T84, #235; also in the default
+                                     report): maxed vs mastery 0 per hero, every component, the duel
+                                     edge, and WATCH lines over CompetitiveEdgeMax (never a bar)
     python3 tools/value.py --breaks1   Z / B1 (every break forced to 1) / S per raw-damage tier
                                      and the three break bars (PLAN T48 final, #160, #164-#166);
                                      exits 1 if a bar fails (tools/test.sh runs it)
@@ -163,6 +166,12 @@ ERUPTION_EVERY_CAP = 15  # the lever's ceiling (s); at it the bar reports and pa
 # Dig Site's bar (#203): each cash tier (T1-T3) pays back in this many rounds, r31-40.
 DIG_PAYBACK = (8, 15)
 DIG_TIERS = 3
+# PvP edge report (PLAN T84, #234/#235), stated assumptions: a Flare Strike catches this many
+# dinos (the Mortar Pit stand-in again); non-damage small perks weigh SMALL_WEIGHT (#234); Triage
+# Kit's HP per round uses this round's length (the sheet's spawn gaps + 14 s, as hero_lines).
+FLARE_DINOS = 3
+SMALL_WEIGHT = 0.25
+EDGE_ROUND = 20
 
 
 def load():
@@ -980,6 +989,103 @@ def hero_lines(data, rows, mixes):
     return out, findings
 
 
+# ---------------------------------------------------------------- PvP edge (report only)
+
+def edge_rows(data, mixes):
+    """PLAN T84 (revised, DECISIONS #235): a maxed hunter (the last Mastery row) vs mastery 0
+    on the same hero. A REPORT, never a bar: totals over CompetitiveEdgeMax become watch lines.
+
+      ability term   share x gain. gain = the cooldown cut (1 / Ability cooldown x - 1) + the
+                     level-10 and level-15 perks' #99 worth % (export_constants.perk_worth).
+                     share = the ability's part of the hero's own effect over one base
+                     cooldown: A / (A + gun DPS x cooldown), gun DPS = the base gun's
+                     sustained DPS (levels left out: they scale the gun and the ability alike).
+                       MARK (Tracking Dart): A = mark % x gun DPS x seconds (assumed: only the
+                         hunter's own gun on the marked dino, a lower bound).
+                       AIRBURST (Flare Strike): A = power x FLARE_DINOS (assumed dinos caught).
+                       OVERDRIVE (Rally Cry): A = the tower DPS it adds x seconds: its rate %
+                         as a rate aura on the 3 neighbour T2 Blinds (aura_credit, rounds 31-40).
+                       HEAL (Triage Kit): no damage share; reported in HP per round instead.
+      free upgrade   the cheapest first hero upgrade's cash / Normal starting cash.
+      repair         (1 - Repair cost x) x SMALL_WEIGHT (non-damage, #234).
+      in studs       pick-up reach (base 0, so no %).
+      duel edge      what touches hunter-vs-hunter fights (perks never touch hunters, #212):
+                     the round-clear heal in HP and the respawn time in s. Not in the total.
+      not counted    the Mastery upgrade discount (not one of T84's components): shown only."""
+    tuning, mastery = data["Tuning"], data["Mastery"]
+    top = mastery[-1]
+    normal_cash = data["Difficulties"]["NORMAL"]["startingCash"]
+    rounds = data["Rounds"]
+    ref = rounds[min(EDGE_ROUND, len(rounds)) - 1]
+    round_seconds = sum(ref["counts"].values()) * ref["spawnGap"] + 14
+    out = []
+    for key in data["HeroOrder"]:
+        h = data["Heroes"][key]
+        perks = data["MasteryPerks"].get(key, [])
+        worth = sum(export_constants.perk_worth(h, p) or 0 for p in perks if p["level"] <= len(mastery))
+        cd_gain = 1 / top["abilityCooldownMult"] - 1
+        gain = cd_gain + worth / 100
+        _, gun = hero_dps(h, 0, 0)
+        kind = h["abilityKind"].upper()
+        cycle = gun * h["abilityCooldown"]
+        hp = None
+        if kind == "MARK":
+            effect = h["abilityPower"] / 100 * gun * h["abilitySeconds"]
+        elif kind == "AIRBURST":
+            effect = h["abilityPower"] * FLARE_DINOS
+        elif kind == "OVERDRIVE":
+            blind = data["Towers"][NEIGHBOUR_TOWER]
+            s = dict(path_stats(blind, 0, NEIGHBOUR_TIER), auraRatePercent=h["abilityPower"], auraDamagePercent=0,
+                     auraPiercesArmor=False, brittlePercent=0)
+            effect = aura_credit(data, s, mixes[-1]) * h["abilitySeconds"]
+        else:
+            effect = 0.0
+            power = h["abilityPower"] + sum(p["abilityPowerAdd"] for p in perks)
+            hp = (h["abilityPower"] * round_seconds / h["abilityCooldown"],
+                  power * round_seconds / (h["abilityCooldown"] * top["abilityCooldownMult"]))
+        share = effect / (effect + cycle) if effect + cycle else 0.0
+        free = min(p["tiers"][0]["cost"] for p in h["paths"]) / normal_cash if top["freeFirstUpgrade"] else 0.0
+        repair = (1 - top["repairCostMult"]) * SMALL_WEIGHT
+        out.append({"key": key, "display": h["display"], "ability": h["ability"], "share": share, "cdGain": cd_gain,
+                    "worth": worth, "gain": gain, "abilityTerm": share * gain, "free": free, "repair": repair,
+                    "total": share * gain + free + repair, "healHp": hp, "reach": top["pickupReachAdd"],
+                    "duelHeal": (tuning["HealPerRound"], tuning["HealPerRound"] + top["healPerRoundAdd"]),
+                    "duelRespawn": (tuning["RespawnTime"], tuning["RespawnTime"] * top["respawnMult"]),
+                    "discount": top["upgradeDiscountPercent"], "roundSeconds": round_seconds})
+    return out
+
+
+def edge_lines(data, mixes):
+    """The edge report's lines and its watch lines (PLAN T84; not findings, never a bar)."""
+    limit = data["Tuning"]["CompetitiveEdgeMax"]
+    rows = edge_rows(data, mixes)
+    out = [f"  maxed (mastery {len(data['Mastery'])}) vs mastery 0, same hero; watch at CompetitiveEdgeMax {limit:.0%}"
+           f" (report only, #235); small perks x{SMALL_WEIGHT:g}; Triage per round = a round-{EDGE_ROUND} length ({rows[0]['roundSeconds']:.0f} s)"]
+    watch = []
+    for r in rows:
+        if r["healHp"]:
+            ability = f"{r['ability']} {r['healHp'][0]:.0f} -> {r['healHp'][1]:.0f} HP/round (in HP, not in the total)"
+        else:
+            ability = (f"{r['ability']} share {r['share']:.1%} x gain {r['gain']:.0%} (cooldown {r['cdGain']:.0%}"
+                       f" + perks {r['worth']:g}%) = {r['abilityTerm']:.1%}")
+        out.append(f"  {r['display'][:15]:<15} {ability}; free upgrade {r['free']:.1%}; repair {r['repair']:.2%};"
+                   f" TOTAL {r['total']:.1%}; reach +{r['reach']:g} studs")
+        if r["total"] > limit:
+            watch.append(f"  WATCH: {r['display']} edge {r['total']:.1%} > {limit:.0%}")
+    first = rows[0]
+    out.append(f"  duel edge (every hero; perks never touch hunters, #212): round-clear heal {first['duelHeal'][0]:g} -> {first['duelHeal'][1]:g} HP,"
+               f" respawn {first['duelRespawn'][0]:g} -> {first['duelRespawn'][1]:g} s")
+    out.append(f"  not counted (not a T84 component): Mastery upgrade discount {first['discount']:g}% on hero upgrades")
+    return out, watch
+
+
+def edge_report(data):
+    print("PvP edge report (PLAN T84, #235):")
+    lines, watch = edge_lines(data, band_mix(data))
+    for line in lines + watch:
+        print(line)
+
+
 # ---------------------------------------------------------------- report
 
 def value_report(data, full=False):
@@ -1037,6 +1143,10 @@ def value_report(data, full=False):
     for line in lines:
         print(line)
     findings += econ + heroes
+    print("PvP edge (PLAN T84, #235; a report: WATCH lines are for the recap, not findings):")
+    lines, watch = edge_lines(data, mixes)
+    for line in lines + watch:
+        print(line)
     print(f"Findings ({len(findings)}):")
     for f in findings:
         print(f"  - {f}")
@@ -1522,6 +1632,8 @@ def main():
         overkill_report(data)
     elif "--chaos" in args:
         sys.exit(1 if chaos_report(data) else 0)
+    elif "--edge" in args:
+        edge_report(data)
     elif "--breaks1" in args:
         sys.exit(1 if breaks_report(data) else 0)
     else:

@@ -879,6 +879,39 @@ def perk_worth(hero, perk):
     return round(100 * share + perk["strikeBurnPercent"] * perk["strikeBurnSeconds"], 6)
 
 
+def perk_parity(worth, band):
+    """Hero-vs-hero perk parity (PLAN T84, DECISIONS #220, #235): at mastery 10 (the level-10
+    perk) and at mastery 15+ (level 10 + level 15 summed; 20 adds no ability perk), the max
+    / min of the heroes' #99 worth % must be at most 1 + band. `worth` is {hero name:
+    {level: worth %}}. Returns (problems, ratios) with ratios {label: max / min}.
+
+    >>> perk_parity({"A": {10: 25, 15: 40}, "B": {10: 24, 15: 35}}, 0.15)[0]
+    []
+    >>> problems, ratios = perk_parity({"A": {10: 25, 15: 40}, "B": {10: 20, 15: 30}}, 0.15)
+    >>> problems
+    ['Mastery Perks: parity at mastery 10 is 1.25 (A 25% / B 20%), above 1 + Perk parity band (1.15; buff the weaker perk, DECISIONS #220, #235)', 'Mastery Perks: parity at mastery 15+ is 1.30 (A 65% / B 50%), above 1 + Perk parity band (1.15; buff the weaker perk, DECISIONS #220, #235)']
+    >>> round(ratios["mastery 15+"], 2)
+    1.3
+    >>> perk_parity({"A": {10: 0, 15: 40}, "B": {10: 20, 15: 20}}, 0.15)[0]
+    ['Mastery Perks: parity at mastery 10 has a hero worth 0%, so the max / min is unbounded (DECISIONS #235)']
+    """
+    low, high = PERK_LEVELS
+    problems, ratios = [], {}
+    for label, total in ((f"mastery {low}", lambda w: w[low]), (f"mastery {high}+", lambda w: w[low] + w[high])):
+        sums = {name: total(w) for name, w in worth.items() if low in w and high in w}
+        if len(sums) < 2:
+            continue
+        top, bottom = max(sums, key=sums.get), min(sums, key=sums.get)
+        if sums[bottom] <= 0:
+            problems.append(f"Mastery Perks: parity at {label} has a hero worth 0%, so the max / min is unbounded (DECISIONS #235)")
+            continue
+        ratios[label] = sums[top] / sums[bottom]
+        if ratios[label] > 1 + band + 1e-9:
+            problems.append(f"Mastery Perks: parity at {label} is {ratios[label]:.2f} ({top} {sums[top]:g}% / {bottom} {sums[bottom]:g}%),"
+                            f" above 1 + Perk parity band ({1 + band:g}; buff the weaker perk, DECISIONS #220, #235)")
+    return problems, ratios
+
+
 def validate_perks(data, problems, notes):
     """Mastery Perks (PLAN round 3 T32). "Level 15 is objectively stronger" and
     "PvP-safe" are rules here, not opinions (DECISIONS #99)."""
@@ -887,7 +920,7 @@ def validate_perks(data, problems, notes):
     if not isinstance(cap, (int, float)) or cap <= 0:
         problems.append("Tuning is missing 'Mastery perk worth cap' (MASTERY PERKS; the exporter checks every perk against it)")
         cap = None
-    shown = []
+    shown, by_hero = [], {}
     for key, rows in perks.items():
         hero = heroes.get(key)
         if hero is None:
@@ -938,6 +971,7 @@ def validate_perks(data, problems, notes):
             if worth[high] <= worth[low]:
                 problems.append(f"Mastery Perks {key}: level {high} (worth {worth[high]:g}%) must be worth more than level {low} ({worth[low]:g}%)")
             shown.append(f"{hero['display']} {worth[low]:g} / {worth[high]:g}")
+            by_hero[hero["display"]] = worth
     for key, hero in heroes.items():
         have = {p["level"] for p in perks.get(key, [])}
         for level in PERK_LEVELS:
@@ -946,6 +980,13 @@ def validate_perks(data, problems, notes):
     if shown:
         limit = f", cap {cap:g}" if cap is not None else ""
         notes.append(f"mastery perks worth % (level {PERK_LEVELS[0]} / {PERK_LEVELS[1]}{limit}): " + ", ".join(shown))
+    band = tuning.get("PerkParityBand")
+    if not isinstance(band, (int, float)) or band < 0:
+        problems.append("Tuning is missing 'Perk parity band' (PVP; the exporter checks hero-vs-hero perk parity against it)")
+    elif by_hero:
+        parity_problems, ratios = perk_parity(by_hero, band)
+        problems += parity_problems
+        notes.append(f"perk parity max / min (bar {1 + band:g}): " + ", ".join(f"{label} {r:.2f}" for label, r in ratios.items()))
 
 
 XP_LEVERS = ["XPPerLevel", "XPPerPop", "PopXPCapPerRound", "TeamPopShare", "HeroLevelLeadCap"]

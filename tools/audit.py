@@ -69,6 +69,8 @@ DEAD_ALLOWED = {
     ("Bounties", "title"): "display text: the Hunt Board card and the in-match toast (PLAN round 2 T28/T29)",
     ("Bounties", "text"): "display text: the Hunt Board card (PLAN round 2 T29)",
     ("Tuning", "MasteryPerkWorthCap"): "an exporter rule, not a game number: every perk's worth is checked against it (DECISIONS #99)",
+    ("Tuning", "PerkParityBand"): "an exporter rule, not a game number: hero-vs-hero perk parity at mastery 10 and 15+ (PLAN T84, DECISIONS #235)",
+    ("Tuning", "CompetitiveEdgeMax"): "a value.py watch threshold, not a game number or a bar: the PvP edge report's WATCH lines (PLAN T84, DECISIONS #235)",
 }
 
 
@@ -76,9 +78,6 @@ DEAD_ALLOWED = {
 # an entry becomes a finding the moment some src file reads the field, so it can't
 # outlive its task. (block, field): the task that reads it
 DEAD_PENDING = {
-    # Phase 7 batch 1 (PLAN T73): the levers whose readers come later in phase 7.
-    ("Tuning", "CompetitiveEdgeMax"): "T84 (value.py/exporter edge bar; then DEAD_ALLOWED as an exporter rule)",
-    ("Tuning", "PerkParityBand"): "T84 (value.py/exporter parity bar; then DEAD_ALLOWED as an exporter rule)",
 }
 
 # Words no tower or tier name may use: "Trophy" is reserved for ranked (DECISIONS #130,
