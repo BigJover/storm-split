@@ -168,6 +168,18 @@ function PanelRules.bannerTop(default: number, boardBottom: number?, gap: number
 	return math.max(default, boardBottom + gap)
 end
 
+-- Where a battle feed line shows (PLAYTEST Run 4 F7; PLAN T86b F6, #236): a camp-out line
+-- ("<Camp>'s Fence is down! They're out.") is a top-centre "banner" laid out below the
+-- camps board (`bannerTop`); every other line (raids, "Tranqed by <name>!") stays in the
+-- top-right "feed". Both hide while a result shows (`battleHud(...).feed`).
+local OUT_SUFFIX = BattleFlow.outLine("")
+function PanelRules.feedSlot(text: string): "banner" | "feed"
+	if #text > #OUT_SUFFIX and string.sub(text, -#OUT_SUFFIX) == OUT_SUFFIX then
+		return "banner"
+	end
+	return "feed"
+end
+
 export type Camp = { side: number, camp: string, fence: number, bones: number, out: boolean }
 
 -- The camps board, top left: the camps still in first, then by Bones (most first), then

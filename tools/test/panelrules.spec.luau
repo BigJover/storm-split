@@ -271,6 +271,19 @@ test("T86b F6: the top-centre banners sit below the camps board", function()
 	ok(hud:find("feedList.Visible = show.feed", 1, true) ~= nil, "the feed follows the rule")
 end)
 
+test("Run 4 F7: the camp-out line is a top-centre banner below the camps board, not a feed line", function()
+	local BattleFlow = require(src.shared.BattleFlow)
+	eq(PanelRules.feedSlot(BattleFlow.outLine("Jover_428's Camp")), "banner", "camp-out → banner")
+	eq(PanelRules.feedSlot(BattleFlow.outLine("Red Camp")), "banner", "any camp")
+	eq(PanelRules.feedSlot(BattleFlow.tranqLine("Rex")), "feed", "tranq stays in the feed")
+	eq(PanelRules.feedSlot("Red Camp's Spotter was Trampled!"), "feed", "raid lines stay in the feed")
+	eq(PanelRules.feedSlot(BattleFlow.outLine("")), "feed", "no camp name: not a camp-out line")
+	local hud = require("@lune/fs").readFile("src/client/Hud.client.luau")
+	ok(hud:find('PanelRules.feedSlot(text) == "banner"', 1, true) ~= nil, "the HUD routes by the rule")
+	ok(hud:find("outBanners.Parent = battleBanners", 1, true) ~= nil, "camp-out lines live in the top-centre stack")
+	ok(hud:find("outBanners.Visible = show.feed", 1, true) ~= nil, "and hide over the results (F5)")
+end)
+
 test("T86b place line: '{display} — {ordinal} place' below 1st in every mode", function()
 	for _, mode in { "TEAM", "ROYALE" } do
 		local display = if mode == "TEAM" then "Camp Clash" else "Bone Rush"

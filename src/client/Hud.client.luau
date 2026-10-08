@@ -789,8 +789,8 @@ ReplicatedStorage.AttributeChanged:Connect(function(name: string)
 end)
 refresh()
 
--- Battle feed (Server/Battle, T77/T78): "<Camp>'s Fence is down! They're out.", raid
--- knock-outs, and this hunter's own "Tranqed by <name>!". Top right, nothing to click:
+-- Battle feed (Server/Battle, T77/T78): raid knock-outs and this hunter's own "Tranqed by
+-- <name>!"; camp-out lines go to the top-centre banners (PanelRules.feedSlot). Top right, nothing to click:
 -- each line shows for a moment and goes (the DIRECTION no-trap rule has nothing to trap).
 local FEED_SECONDS = 6 -- UI timing, not a gameplay number
 local FEED_LINES = 4
@@ -809,10 +809,15 @@ feedLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
 feedLayout.Padding = UDim.new(0, 4)
 feedLayout.Parent = feedList
 local feedCount = 0
+local showOutBanner: (text: string) -> () -- set below the top-centre banner stack (Run 4 F7)
 task.spawn(function()
 	local event = remotes:WaitForChild("Feed") :: RemoteEvent
 	event.OnClientEvent:Connect(function(text: unknown)
 		if typeof(text) ~= "string" then
+			return
+		end
+		if PanelRules.feedSlot(text) == "banner" then
+			showOutBanner(text) -- a camp-out: top centre, below the camps board
 			return
 		end
 		feedCount += 1
@@ -956,6 +961,45 @@ do
 	limit.MaxSize = Vector2.new(520, 30)
 	limit.Parent = spectateBanner
 end
+-- Camp-out lines (PLAN T86b F6, PLAYTEST Run 4 F7): top centre in the banner stack, so
+-- below the camps board; each shows for a moment and goes, like a feed line.
+local outBanners = Instance.new("Frame")
+outBanners.Name = "CampOut"
+outBanners.LayoutOrder = 1
+outBanners.Size = UDim2.new(1, 0, 0, 0)
+outBanners.AutomaticSize = Enum.AutomaticSize.Y
+outBanners.BackgroundTransparency = 1
+outBanners.Active = false
+outBanners.Parent = battleBanners
+do
+	local list = Instance.new("UIListLayout")
+	list.SortOrder = Enum.SortOrder.LayoutOrder
+	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	list.Padding = UDim.new(0, 4)
+	list.Parent = outBanners
+end
+local outCount = 0
+showOutBanner = function(text: string)
+	outCount += 1
+	local line = battleLabel("Out", outCount, Color3.fromRGB(250, 205, 80), outBanners)
+	line.Text = text
+	line.Visible = true
+	local lines = {}
+	for _, child in outBanners:GetChildren() do
+		if child:IsA("TextLabel") then
+			table.insert(lines, child)
+		end
+	end
+	table.sort(lines, function(x, y)
+		return x.LayoutOrder < y.LayoutOrder
+	end)
+	for i = 1, #lines - FEED_LINES do
+		lines[i]:Destroy() -- only the newest few stay
+	end
+	task.delay(FEED_SECONDS, function()
+		line:Destroy()
+	end)
+end
 local stampedeBanner = battleLabel("FinalStampede", 2, Color3.fromRGB(250, 205, 80), battleBanners)
 stampedeBanner.Text = PanelRules.STAMPEDE_LINE
 local camoTag = battleLabel("CamoCover", 1, Color3.fromRGB(140, 240, 170), gui)
@@ -987,6 +1031,7 @@ local function refreshBattle()
 	stampedeBanner.Visible = show.stampede
 	camoTag.Visible = show.camo
 	feedList.Visible = show.feed -- hidden while the results are up (T86b F5)
+	outBanners.Visible = show.feed -- camp-out banners too (T86b F5)
 	if show.camo then
 		camoTag.Text = `{PanelRules.CAMO_LINE} ({math.ceil(left)}s)`
 	end
