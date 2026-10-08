@@ -16,8 +16,8 @@
 
 	Camp Clash and Bone Rush (PLAN phase 7 T77) run through Server/Battle instead of the
 	co-op rounds: sides, one timed build phase, lockstep rounds, elimination, results.
-	Studio only: the host can pick a battle mode before T82 makes it available, set the
-	side / seat count ("sides", n) and fill empty sides with stand-ins ("standins", on).
+	The host sets the side / seat count ("sides", n); Studio only (Shared/StudioOnly,
+	PLAN T89): fill empty sides with stand-ins ("standins", on).
 
 	Every round prints peak live enemies and how many milliseconds our own code
 	costs per frame (ARCHITECTURE.md §7). Watch the Output window.
@@ -38,6 +38,7 @@ local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local BattleFlow = require(Shared:WaitForChild("BattleFlow"))
 local HomeLayout = require(Shared:WaitForChild("HomeLayout"))
+local StudioOnly = require(Shared:WaitForChild("StudioOnly"))
 
 local MapBuilder = require(script.Parent.MapBuilder)
 local Enemies = require(script.Parent.Enemies)
@@ -58,8 +59,9 @@ local Health = require(script.Parent.Health)
 local DinoAttacks = require(script.Parent.DinoAttacks)
 local Battle = require(script.Parent.Battle)
 
--- Testing only: set above 1 to jump straight to a later round.
-local START_ROUND = 1
+-- Testing only: set above 1 to jump straight to a later round (Studio only: a live
+-- server always starts at round 1, Shared/StudioOnly).
+local START_ROUND = StudioOnly.startRound(RunService:IsStudio(), 1)
 -- Testing only: what the Studio-only "+cash" button adds. Never active in a
 -- published game (checked with RunService:IsStudio() on the server).
 local STUDIO_CASH_GRANT = 1000
@@ -94,17 +96,25 @@ startGame.Parent = remotes
 local lobby = Instance.new("RemoteEvent")
 lobby.Name = "Lobby"
 lobby.Parent = remotes
-if RunService:IsStudio() then
+-- Studio-only test remotes (PLAN T89): made only in Studio, and each handler asks again.
+if StudioOnly.allowed(RunService:IsStudio(), "cash") then
 	local studioCash = Instance.new("RemoteEvent")
 	studioCash.Name = "StudioCash"
 	studioCash.OnServerEvent:Connect(function(player: Player)
+		if not StudioOnly.allowed(RunService:IsStudio(), "cash") then
+			return
+		end
 		Economy.earnFor(Sides.playerSide(player:GetAttribute("Side"), ReplicatedStorage:GetAttribute("Sides")), STUDIO_CASH_GRANT)
 	end)
 	studioCash.Parent = remotes
-
+end
+if StudioOnly.allowed(RunService:IsStudio(), "towerHit") then
 	local studioTrample = Instance.new("RemoteEvent")
 	studioTrample.Name = "StudioTowerHit"
 	studioTrample.OnServerEvent:Connect(function(player)
+		if not StudioOnly.allowed(RunService:IsStudio(), "towerHit") then
+			return
+		end
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
 		if not root or not root:IsA("BasePart") then
@@ -298,7 +308,7 @@ lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
 		end
 	elseif action == "sides" and typeof(key) == "number" and key == math.floor(key) and key >= 2 and key <= Config.Tuning.BattleMaxPlayers then
 		ReplicatedStorage:SetAttribute("BattleSides", key) -- Camp Clash 2 or 3; Bone Rush seats with stand-ins
-	elseif action == "standins" and typeof(key) == "boolean" and RunService:IsStudio() then
+	elseif action == "standins" and typeof(key) == "boolean" and StudioOnly.allowed(RunService:IsStudio(), "standIns") then
 		ReplicatedStorage:SetAttribute("StandIns", key) -- "Fill with stand-ins" (DECISIONS #221)
 	elseif action == "track" and typeof(key) == "string" and Modes.Tracks[key] then
 		ReplicatedStorage:SetAttribute("Track", key)
@@ -319,7 +329,7 @@ lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
 			#Players:GetPlayers(),
 			ready,
 			if typeof(picked) == "number" then picked else nil,
-			RunService:IsStudio() and ReplicatedStorage:GetAttribute("StandIns") == true
+			StudioOnly.allowed(RunService:IsStudio(), "standIns") and ReplicatedStorage:GetAttribute("StandIns") == true
 		)
 		if canPlay then
 			playPressed = true

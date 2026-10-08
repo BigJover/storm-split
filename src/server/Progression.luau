@@ -73,6 +73,7 @@ local Theme = require(Shared:WaitForChild("Theme"))
 local ShopRules = require(Shared:WaitForChild("ShopRules"))
 local Stakes = require(Shared:WaitForChild("Stakes"))
 local Trophies = require(Shared:WaitForChild("Trophies"))
+local StudioOnly = require(Shared:WaitForChild("StudioOnly"))
 
 local Progression = {}
 
@@ -675,10 +676,13 @@ function Progression.init(
 	-- Studio-only test shortcut (J): +100 Amber for this session, so buying
 	-- unlocks and mastery can be tried. Never saved, never present in a
 	-- published game.
-	if RunService:IsStudio() then
+	if StudioOnly.allowed(RunService:IsStudio(), "amber") then
 		local studio = Instance.new("RemoteEvent")
 		studio.Name = "StudioProgress"
 		studio.OnServerEvent:Connect(function(player)
+			if not StudioOnly.allowed(RunService:IsStudio(), "amber") then
+				return
+			end
 			local profile = profiles[player]
 			if profile then
 				canSave[player] = false -- keep test progress out of the real save

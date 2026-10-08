@@ -156,7 +156,7 @@ not rolled back by this, only the place.
 
 **Studio test keys never work in the published game:** K (+1000 cash), J (+100 Amber, no
 saving), L (damage the nearest tower) and "Fill with stand-ins" only exist when the server
-runs in Studio (the server checks).
+runs in Studio (the server asks `Shared/StudioOnly`; a spec proves each is refused live).
 
 ## 4. Connect Claude to Studio (MCP)
 

@@ -53,6 +53,7 @@ local HeroXp = require(Shared:WaitForChild("HeroXp"))
 local Modes = require(Shared:WaitForChild("Modes"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
+local StudioOnly = require(Shared:WaitForChild("StudioOnly"))
 
 local Airdrops = require(script.Parent.Airdrops)
 local Economy = require(script.Parent.Economy)
@@ -188,7 +189,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 	local modeKey = ReplicatedStorage:GetAttribute("Mode")
 	local chosen = ctx.difficulty()
 	local roster = ctx.roster or Players:GetPlayers()
-	local standIns = RunService:IsStudio() and ReplicatedStorage:GetAttribute("StandIns") == true
+	local standIns = StudioOnly.allowed(RunService:IsStudio(), "standIns") and ReplicatedStorage:GetAttribute("StandIns") == true
 	local picked = ReplicatedStorage:GetAttribute("BattleSides")
 	local seating, why = BattleFlow.seat(modeKey, roster, if typeof(picked) == "number" then picked else nil, standIns, ctx.competitive)
 	if not seating then

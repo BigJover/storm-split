@@ -63,6 +63,8 @@ src/
 │   ├── Stakes.luau          Competitive buy-in: who may stake (offline, Practice), escrow/refund, pot,
 │   │                        Team and Royale splits, casual battle payouts, settle; pure, for Progression
 │   ├── Trophies.luau        Ranked Trophies: delta per mode/placement, arena floors, first-reach arenas; pure
+│   ├── StudioOnly.luau      Studio-only test features (K/J/L, stand-ins, START_ROUND): the one gate the
+│   │                        server asks with RunService:IsStudio(); refused in a live server; pure (T89)
 │   ├── RoundFlow.luau       The co-op round loop Waves.run drives: a round whose last dino breaks the Fence
 │   │                        is a loss, never a clear (PLAYTEST F4); pure
 │   ├── PanelRules.luau      Which panel may be open in which match state, and what a state change closes;
