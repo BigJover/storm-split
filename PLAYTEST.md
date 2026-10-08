@@ -203,3 +203,165 @@ Notes (not failures): on Easy, both camps' fences went 40 → 0 inside round 11 
 - Play mode stopped. `get_studio_state`: **Current Studio Mode: Edit**, DataModels: Edit. Nothing was changed in Edit, nothing was published, and `SaveStatus` stayed `offline` all session (J was used, so saving was off anyway).
 - A full console scan at the end found no error or warning lines from our scripts, only Studio Assistant VirtualInput / camera-reset noise.
 - Screenshots in `~/.claude/jobs/2a8d6f9c/tmp/tester4/`: `f1-lobby.png`, `f2-full.png`, `profile-fern2.png`, `bounty-claimed.png`, `battle-cam.png`, `enemy-panel.png`, `clash-result2.png`, `rush-result.png`.
+
+# Run 3 — 2026-10-08 (Tester, agent) — PLAN T86 solo script
+
+- **Code tested:** main at `207513e`. Sync check (read-only, Edit): `script_grep` finds "Amber Hoard" (Client.Hud, Shared.PanelRules, Shared.HomeLayout, Server.Progression), "RoundFlow" (Shared.RoundFlow, Server.Waves) and "Inspect" (Client.Shop, Shared.PanelRules).
+- **Start state:** Studio in Edit mode.
+- **Screenshots/work files:** `~/.claude/jobs/2a8d6f9c/tmp/tester5/`.
+- **Test conveniences (disclosed):** Studio keys K/J/L (J pressed first in each session so nothing saves), `character_navigation`, keyboard/mouse input, read-only client/server `execute_luau`, and the Studio-only Lobby remote calls (`standins`, `mode`, `sides`, `ranked`, `ready`, `play`). Anything else is noted where used.
+
+(Results are written step by step below.)
+
+## Step 1 — Co-op regression (Easy, solo)
+
+| # | Area | Result | Evidence |
+|---|---|---|---|
+| R3-1 | Boot, home screen, J | PASS | Console: only the expected `[Progression]` no-DataStore line and two `[LevelBoard]` this-server lines (level board, Trophy board). `SaveStatus=offline`. Home shows three mode cards (Co-op / Camp Clash / Bone Rush), track, 4 difficulties, Hunt Board, Profile, PLAY. `home.png` |
+| R3-2 | Hero pick → PLAY → Building → placement → Start → rounds 1–3 | PASS | Tracker picked (H). Two Hunting Blinds placed for 200 each (450→50). Start → Playing. Console "Round 1/2/3 cleared \| Easy, 1 player(s) \| lives 40 …", peak enemies 13, script cost avg 0.22–0.24 ms. |
+| R3-3 | F3: upgrade mid-round | PASS | Round 1, Playing, `MouseBehavior=LockCenter`, E on a Hunting Blind → panel; click "Keen Eyes · 460" → title `1·0·0`, cash 3050→2592 (−460 + take-downs). X closed the panel. |
+| R3-4 | Loss: the losing round is not "cleared" | PASS | Sold both towers in round 4, round 5 leaked: fence 40→0 with 8 dinos still on the track. Console "Round 4 cleared …", then "GAME OVER on round 5", "Match over (round 5, lost): +0 Amber each" — no "Round 5 cleared". `RoundsCleared=0`, `HeroXp=0` after the match. `coop-result.png` |
+| R3-5 | F4: last dino breaks the Fence = loss, no bonus/heal/XP | NOT TESTABLE BY AGENT in play (code + spec PASS) | Tried to engineer it in three more matches: Easy with no defence leaks exactly 38 in round 1 (fence 40→2, the last dino costs 3, so the round clears on 2), and round 2 breaks with 26–27 dinos left; Normal no defence breaks round 1 with 11 left. The exact case needs a fence that hits 0 on the last leak, which I can't set up without editing. Read-only check: `Server/Waves.run` now calls `Shared/RoundFlow.run`, which checks `isOver()` once more after `remaining()` reaches 0 and before `onRoundEnd`, and `tools/test/roundflow.spec.luau` exists. Every loss seen printed no "cleared" line for the losing round. |
+
+## Step 2 — Home screen (battle cards, options, Ready, no-trap)
+
+| # | Area | Result | Evidence |
+|---|---|---|---|
+| R3-6 | Camp Clash / Bone Rush cards | PASS | Cards "Camp Clash — Two or three camps, each defending its own side." and "Bone Rush — Every hunter for themselves. Most Bones wins." Picking Camp Clash shows BATTLE OPTIONS: Casual · Ranked · 2 camps · 3 camps · Fill with stand-ins. Default Casual + 2 camps; PLAY dark with "Camp Clash needs at least 2 hunters." `clash-home.png` |
+| R3-7 | Ranked fixes Normal | PASS | Ranked → `Difficulty=NORMAL`, header "BATTLE OPTIONS · Ranked is always Normal."; clicking Easy afterwards keeps NORMAL. |
+| R3-8 | Ready + Entry fee + Practice line | PASS | Ranked shows "Ready" and "Entry fee: 15 Amber · You have 100 Amber / Practice Hunt: session Amber only. Trophies won't change. / Ready: nobody yet (2 needed)". Ready → inline confirm "Pay 15 Amber to enter?" + X. Pay → `Ready=true`, button "Ready · (cancel)", "Ready: Jover_428 (1 of 1 needed)" (with stand-ins on). `ranked-home.png` |
+| R3-9 | PLAY enables at the minimum | PASS | 3 camps + "Fill with stand-ins" → "needs at least 1 hunter"; after Ready, PLAY turns green (`BackgroundColor3` 0.27,0.71,0.43) and the line reads "You're the host: pick a mode…". |
+| R3-10 | No-trap G/P/H/M in the Lobby (707×620) | PASS | Each opens with its key, closes with the same key, and closes with its X (Hunt Board/Profile X at 603,38; hero/unlocks X at 527,156 / 527,135, all in the viewport). `MouseBehavior=Default` after each close. |
+| R3-11 | No-trap at a small window | NOT TESTABLE BY AGENT | The tools can't resize the viewport. NEEDS JOVAN. |
+
+Note (cosmetic, Studio-only, known): the "+1000 cash (K)" button overlaps the Co-op card's left edge.
+Note: while the "Pay 15 Amber to enter?" confirm is open, the other battle options (3 camps, stand-ins) stay clickable. Not a trap; the confirm stays.
+
+## Step 3 + 6 — Camp Clash (Casual) with stand-ins, and losing my camp
+
+Setup: Camp Clash, Casual, stand-ins on, picked by clicking the home buttons. **Deviation:** my "2 camps" click landed while the options row was re-laying out after Casual, so the match was **3 camps on Normal** (left over from the Ranked pick). Console "Camp Clash on Normal: 3 sides, 1 player(s), 2 stand-in(s)". I built two Hunting Blinds at my spawn (too far from the track), so Red Camp fell in round 1 — which covered step 6.
+
+| # | Area | Result | Evidence |
+|---|---|---|---|
+| R3-12 | No Start button; timed build | PASS | Building HUD has no Start button (only "+1000 cash (K)"). `BuildEndsAt` was ~8.6 s away about 20 s after PLAY (≈30 s build); State went Building→Playing on its own. HUD "Red Camp · Build (B), choose a hero (H) · Normal · Cash 450 · Fence 30". |
+| R3-13 | Camps board + status line | PASS | Board "3/3 camps left · Red Camp · Fence 30 · 0 Bones (bold, yours) · Blue Camp · Fence 30 · 0 Bones · Green Camp · …" with camp colours; after the fall "2/3 camps left … Red Camp · out · 0 Bones". |
+| R3-14 | Side elimination line | PASS | Console "Round 1 over \| Camp Clash, 3 sides (3 alive) \| Fences 8 / 30 / 30 …" then "Red Camp's Fence is down! They're out." |
+| R3-15 | Spectate banner after my Fence fell | PASS (cosmetic note) | HUD "Your Fence is down — you're watching now." `spectate.png`. The banner sits on top of the camps board's first row ("Blue Camp · Fence 30 · 53 Bones" is hidden behind it) — see note N1. |
+| R3-16 | Out: can't build / pick hero / upgrade hero | PASS | B, H and U open nothing while out (probe: no panel visible). My two towers were removed when the camp fell. |
+| R3-17 | Inspect while out → read-only panel | PASS | Prompts near Blue's towers read "Inspect / Hunting Blind", "Inspect / Mortar Pit". E → "Hunting Blind · 0·0·0 / Blue Camp's tower / HP 93/100", only an X button (no upgrade/repair/sell rows). `inspect.png` |
+| R3-18 | No-trap on the Inspect panel | PASS | X (527,374, in the viewport) closes it; walking away closes it (PromptHidden). E/Q/B don't close it, the same as the co-op tower panel (by design). |
+| R3-19 | Shoot a stand-in tower to Trampled + kill-feed line | PASS | Ranked 3-camp match (below), round 5. Stood at (230,−28) by Blue's Hunting Blind; **scripted setup:** one Studio L press (100→50) and the Revolver equipped with `EquipTool`. Then only my shots: 50 → 43.2 → 39.0 → … → 2.2 → **0, `KO=true`** in 54 s (~1.05 per Tracker shot at hunter Lv 1). Console "Jover_428 trampled Blue Camp's Hunting Blind". Inspect on it: "Hunting Blind · 0·0·0 / Blue Camp's tower / HP 0/100". The on-screen kill-feed line had faded by my screenshot (`trampled.png` shows the blackened tower). |
+| R3-20 | Own shots don't damage own towers | PASS | ~24 Revolver shots (ammo cycled 12→5 with a reload) at my Longshot Perch 7 studs ahead, same geometry that hit Blue's blind: HP stayed 80/80. |
+| R3-21 | Towers ignore the rival track | PASS | 20 s tracer probe, round 5, 3 camps: my 6 towers → 27 tracers, all ending on my side; the 6 stand-in towers → 74, all ending on their sides. None crossed. |
+| R3-22 | Your chest only | NOT RUN | No Supply chests were spawned in my matches (no Quartermaster/airdrop). NEEDS JOVAN (2 clients). |
+| R3-23 | Build refusal in the rival zone | PASS | Hunting Blind aimed at Blue's zone (132,−30) → "That's another camp's zone. Build inside your own camp." Nothing placed. |
+| R3-24 | Build refusal on the crossing strip | PASS (string not captured separately) | Aimed at (112,−30) on the strip: nothing placed (tower count unchanged); the one refusal string I captured right after was the rival-zone string above, which Run 2 also saw for the strip. |
+
+## Step 4 — Camp Clash, 3 camps, Ranked (Practice Hunt), stand-ins
+
+Setup: home buttons Ranked · 3 camps · Fill with stand-ins · Ready → "Pay 15 Amber to enter?" → Pay, then PLAY. Console "Camp Clash on Normal: 3 sides, 1 player(s), 2 stand-in(s)". **Scripted help:** K for cash (many presses) to build 4 Hunting Blinds, 9 Mortar Pits, 2 Longshots and upgrade three Mortars to 2·0·0.
+
+| # | Area | Result | Evidence |
+|---|---|---|---|
+| R3-25 | Stake leaves session Amber at PLAY | PASS | Amber 105 → **90** at PLAY (Building), `Ready=true`. |
+| R3-26 | End + placements | PASS | All three fences fell in round 9 (Normal's round-8/9 spike took every camp 30→11→0). Console "Camp Clash over on round 9: 1. Red Camp (382 Bones) \| 2. Blue Camp (367 Bones) \| 2. Green Camp (378 Bones)" — the shared fall goes to the most Bones (Red, mine) and the other two share 2nd, as `BattleFlow.teamPlaces` documents ("sides that fell in one step share a place"). |
+| R3-27 | Amber Hoard share comes back; Trophies unchanged | PASS (numbers) | Console "Battle settled (Practice Hunt): pot 15, sink 0". Amber 90 → **155** back in the Lobby (+65 = the 15 Hoard back + the win payout). `Trophies=0` before and after, `Arena=1`, `PracticeHunt=true`. |
+| R3-28 | Results screen (title, placements, Amber Hoard line, Practice line, player XP) | NOT SEEN here | My polling call hung for ~2 min (an MCP call during upgrades), so the 30-s results screen came and went. Checked in Bone Rush below. PlayerXp 774 → 2654. |
+| R3-29 | Casual Camp Clash payout (match 1, my camp out first) | PASS | 3rd place: Amber 100 → 105 (+5 loss pay), console "Battle settled (Casual): pot 0, sink 0", "Camp Clash over on round 10: 1. Blue Camp (447) \| 2. Green Camp (443) \| 3. Red Camp (0)". |
+
+## Step 5 — Bone Rush, 10 seats (9 stand-ins), Ranked (Practice Hunt)
+
+Setup: Bone Rush card → Ranked · "Seats: N" button cycled 3→10 · Fill with stand-ins · Ready → Pay 15, PLAY. Amber 155 → 140 at PLAY. **Scripted help:** K cash for 9 Mortar Pits (base).
+
+| # | Area | Result | Evidence |
+|---|---|---|---|
+| R3-30 | Bone Rush home options | PASS | Options row "Casual · Ranked · Seats: 3 · Fill with stand-ins"; the Seats button steps 3→4→…→10. Same Ready/Entry fee/Practice lines as Camp Clash. |
+| R3-31 | 10 seats: peak enemies vs cap, script cost | PASS (recorded) | Console per round: r4 peak 48/130 (avg 0.66 ms, worst 6.40), r8 84/130 (0.91 / 6.79), r9 104/130 (1.19 / 7.96), **r10 125/130** (avg 1.36 ms, worst **8.37 ms**). The cap was not hit. Fences went 30 → 11 for all ten in round 9 (the Normal round-9 spike). |
+| R3-32 | Ranking by Bones (stand-ins score), end at ≤1 alive | PASS | My camp fell in round 10 ("Jover_428's Camp's Fence is down! They're out."); all nine stand-ins fell in round 11 and the match ended. "Bone Rush over on round 11: 1. Stand-in 6's Camp (559) \| 2. Stand-in 3's (511) \| 3. Stand-in 5's (511) \| … \| 10. Jover_428's Camp (441)". The same-step fall is ordered by Bones; the earlier fall (mine) is last. |
+| R3-33 | Results screen | PASS (layout note N2) | "GAME OVER · home in 6s" and card "**Bone Rush — 10th Hunter**", 10 placement lines (mine highlighted), "+20 Amber", "**Amber Hoard 15 Amber · your share +15**", "**Practice Hunt: session Amber only. Trophies won't change.**", "+992 player XP", "Player level up! 5 → 6". `rush-res.png` |
+| R3-34 | Survivor bonus | NOT SEEN | Nobody survived (all stand-ins fell in the same step), so no survivor bonus was paid. |
+
+Note (by design, worth a look): in Practice with stand-ins, the only real hunter gets the whole Hoard back even in 10th place ("your share +15"), because `Stakes.settleBattle` splits the pot over **real present hunters in placement order** (stand-ins never take a share). So solo Ranked never costs Amber. Fine for testing; Jovan may want to know.
+
+## Step 7 — Profile Trophies tab, player list
+
+| # | Area | Result | Evidence |
+|---|---|---|---|
+| R3-35 | Profile → Trophies tab | PASS | Tabs Profile · Leaderboard · Trophies. Trophies: "Player level 6 · 646 / 750 XP to level 7 · **0 Trophies · Fern Gully**", arena ladder 0 Fern Gully (highlighted) / 300 Raptor Ridge / 600 Muddy Springs / 1000 Horn Canyon / 1500 Volcano Rim / 2000 Sky Cliffs / 3000 Misty Jungle / 4000 Rex Kingdom, then "This server · The world board goes live when the game is published. · #1 · 0 · Jover_428". `trophies.png`. X and P close it, `MouseBehavior=Default`. (Tabs sit at GUI y≈77, inside the known CoreGui click band; clicking at y 90 works.) |
+| R3-36 | Player list columns | PASS | `leaderstats`: **Bones**=0, **Player level**=6, **Trophies**="0 · Fern Gully", **Title**="" (none equipped). |
+| R3-37 | Trophies after Practice matches | PASS | `Trophies=0` after both Ranked Practice matches. |
+
+## Step 5b — Bone Rush, 4 seats (3 stand-ins), Casual, Normal
+
+Setup: Casual, Seats 4, stand-ins. **Scripted help:** K cash (~70 presses over the match) for 10 Mortar Pits, upgraded to 2–4 on path 1 and 0–2 on path 2.
+
+| # | Area | Result | Evidence |
+|---|---|---|---|
+| R3-38 | Win as the last camp standing | PASS | Fences: r10 "10 / 30 / 30 / 30" (mine took the hit), then all three stand-ins fell together in round 11 and the match ended at once. Results "**VICTORY** · home in …", "**Bone Rush — Top Hunter!**", "1. Jover_428's Camp · 565 Bones \| 2. Stand-in 4's · 534 \| 3. Stand-in 2's · 530 \| 4. Stand-in 3's · 530", "+60 Amber", "+2109 player XP", "Player level up! 6 → 9". No Hoard/Practice lines (Casual), as expected. |
+| R3-39 | Survivor bonus | NOT CONFIRMED | My 565 Bones may include it, but the card and console don't show it separately and I didn't log Bones before the end. |
+
+## Co-op regression after the battles (fresh Play session, J first)
+
+| # | Area | Result | Evidence |
+|---|---|---|---|
+| R3-40 | Co-op end to end, rounds 1–9 | PASS | Easy, Tracker. My first placements from the spawn were refused "Too close to the track" (correct: the co-op lane is at z −15), so round 1 leaked to Fence 2; then a Hunting Blind ×2 + Mortar Pit between the lanes cleared rounds 1–8 ("Round N cleared \| Easy, 1 player(s) \| lives 2 …", peak enemies 5–24, script cost avg 0.16–0.30 ms). Round 9 leaked: "GAME OVER on round 9", "Match over (round 9, lost): +0 Amber each", no "Round 9 cleared". Results: "GAME OVER / The fence fell on round 9 (Easy) / No Amber (solo pays on a clear) / +972 player XP / Player level up! 1 → 2". |
+| R3-41 | Console across the whole run | PASS | Full scan: no errors or warnings from our scripts. Only Studio Assistant `VirtualInput … hits CoreGUI` lines and one "Infinite yield possible on 'Jover_428:WaitForChild("Humanoid")'" whose stack is the Assistant's `characterNavigation` tool (not ours). |
+
+## Not testable here / NEEDS JOVAN
+
+| # | Area | Result | Why |
+|---|---|---|---|
+| R3-42 | Final Stampede (overtime) | NOT TESTABLE BY AGENT | It needs a battle that reaches the end of the round table (round 40). Every battle ended by round 9–11 on Normal/Easy. |
+| R3-43 | Mid-battle joiner → waiting banner | NEEDS JOVAN | Needs a second client. |
+| R3-44 | Hunter vs hunter (×0.5, respawn on your camp, Camo Cover countdown), teammate upgrade, enemy-tower refusals for a real 2nd player, non-host Ready + stake, Ranked leaver → last-place Trophies, your chest only, 3-camp balance, raiding feel | NEEDS JOVAN | T86's Jovan script (Clients and Servers, 2 then 3 players). |
+| R3-45 | Small window / phone no-trap | NEEDS JOVAN | Viewport can't be resized by the tools. |
+| R3-46 | F4 exact case (last dino breaks the Fence) in play | NOT TESTABLE BY AGENT | See R3-5; the code path and spec are in place. |
+
+## Run 3 summary
+
+| Area | Result | Evidence |
+|---|---|---|
+| Sync to 207513e (Amber Hoard, RoundFlow, Inspect) | PASS | header |
+| Co-op regression: rounds, placement, mid-round upgrade (F3), loss not "cleared" | PASS ×5 (R3-1…4, R3-40) | console |
+| F4 exact last-dino case | NOT TESTABLE BY AGENT (code + spec in place) | R3-5 |
+| Home: battle cards, Casual/Ranked, camps/seats, stand-ins, Ready + Entry fee + Practice line, PLAY at minimum | PASS ×5 (R3-6…9, R3-30) | `clash-home.png`, `ranked-home.png` |
+| No-trap: G/P/H/M, Inspect panel, Profile Trophies tab | PASS ×3 (R3-10, R3-18, R3-35) | probes |
+| Camp Clash: timed build/no Start, camps board, elimination line, spectate, out = no build/hero, Inspect read-only, refusals, tower to Trampled + kill line, own shots, rival track | PASS ×12 (R3-12…21, R3-23, R3-24) | `spectate.png`, `inspect.png`, `trampled.png` |
+| Ranked Practice: stake out, Hoard back, Trophies unchanged, Practice line | PASS ×3 (R3-25…27) + results screen PASS in Bone Rush (R3-33) | `rush-res.png` |
+| Bone Rush 10 seats: peak 125/130, worst 8.37 ms; ranking by Bones; results | PASS ×3 (R3-31…33) | console |
+| Bone Rush 4 seats: Top Hunter win | PASS (R3-38) | console/HUD text |
+| Casual payouts, placements with a shared fall | PASS ×2 (R3-26, R3-29) | console |
+| Player list columns, Trophies after Practice | PASS ×2 (R3-36, R3-37) | leaderstats |
+| Console errors | PASS (R3-41) | scan |
+| Results banner overlap | **FAIL (minor)** F5 | `rush-res.png` |
+| Spectate banner overlap | **FAIL (minor)** F6 | `spectate.png` |
+| Survivor bonus | NOT CONFIRMED (R3-34, R3-39) | — |
+| Your chest only, Final Stampede | NOT RUN / NOT TESTABLE (R3-22, R3-42) | — |
+| Multi-client items, small window | NEEDS JOVAN (R3-43…45) | — |
+
+**Counts:** PASS 41 · FAIL 2 (minor, cosmetic) · NOT TESTABLE BY AGENT 3 · NEEDS JOVAN 3 (+ chest) · NOT RUN 1 · NOT CONFIRMED 2. (R3-28 results screen in the Camp Clash Ranked match: missed, covered by R3-33.)
+
+## Run 3 failures
+
+### F5. A camp's "Fence is down! They're out." banner covers the results card's title and X — minor (cosmetic)
+- **Repro:** Bone Rush, 10 seats with stand-ins; let the last camps fall in the final step. The results card appears while the elimination banner is still up.
+- **Seen:** "Stand-in 4's Camp's Fence is down! They're out." (two lines, top right) sits over "Bone Rush — 10th Hunter" and the card's X (`rush-res.png`). The X stays visible and clickable at its edge, so it isn't a trap.
+- **Console:** nothing.
+- **Suspect:** `src/client/Hud.client.luau` — hide (or move below) the out banner when the results card shows.
+
+### F6. The spectate banner hides the first row of the camps board — minor (cosmetic)
+- **Repro:** Camp Clash, let your Fence fall.
+- **Seen:** "Your Fence is down — you're watching now." is drawn across the camps board's first camp row ("Blue Camp · Fence 30 · 53 Bones" unreadable), at 707×620 (`spectate.png`, `inspect.png`). The board also wraps "· 53 / Bones" onto a second line at this width.
+- **Console:** nothing.
+- **Suspect:** `src/client/Hud.client.luau` (banner position vs the camps board).
+
+## Notes for the Director / Jovan (not failures)
+- N1. The results screen lasts **8 s** (`Tuning.ResultsTime = 8`). A 10-line Bone Rush card plus Hoard, Practice, XP and level lines is hard to read in 8 s; Run 2's "home in 58s" was likely a misread. Consider longer for battles.
+- N2. "+20 Amber" on the results already includes the Hoard share (LastPayout = casual + share), so "+20 Amber" next to "Amber Hoard 15 · your share +15" reads like +35. Amber went 140 → 160.
+- N3. Practice Hunt with stand-ins returns the whole Hoard to the only real hunter even in 10th place (`Stakes.settleBattle` splits over real hunters only). Solo Ranked can't lose Amber.
+- N4. The Ready confirm "Pay 15 Amber to enter?" doesn't block the other battle options (3 camps / stand-ins stayed clickable). Harmless.
+- N5. Tooling: the battle-options row re-lays out when Casual/Ranked changes, so a click sent right after (my "2 camps") can land on the old spot. CoreGui click bands also swallowed the Co-op card centre (GUI y 122) and the Sell row (GUI y 505) late in the session; clicking elsewhere on the button works. Probably Studio overlays — worth a glance on a real client.
+- N6. Normal's round 8–9 spike takes every camp's Fence 30 → 11 in the same round (all 10 seats identical), so battles on Normal end around rounds 9–11 — the known leak-cost issue.
+
+## Studio state at the end
+- Play mode stopped. `get_studio_state`: **Current Studio Mode: Edit**, DataModels: Edit. Nothing changed in Edit, nothing published; `SaveStatus=offline` throughout (J pressed first in both Play sessions).
