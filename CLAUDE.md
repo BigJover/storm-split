@@ -25,8 +25,8 @@ design in the PDF still holds; its UEFN-specific sections don't. Old UEFN materi
   Build tower mechanics to match it.
 - `HEROES.md` — the approved hero design: free pick, three upgrade paths per hero about how
   the gun handles and fires. More heroes will be added later.
-- `VISION.md` — scale and modes: ~10-player chaotic co-op, difficulty levels, and future
-  team-battle and battle-royale modes. Don't write code that blocks them.
+- `VISION.md` — scale and modes: ~10-player chaotic co-op, difficulty levels, and the
+  battle modes Camp Clash (team battle) and Bone Rush (battle royale), Casual and Ranked.
 - `SETUP.md` — Mac setup: Studio, Rokit, Rojo, MCP
 - `src/` — Luau, synced into Studio by Rojo (`default.project.json`)
 - `tools/export_constants.py` — spreadsheet → `src/shared/Config.luau`
@@ -212,14 +212,29 @@ new towers**, all on sale: Storm Coil, Falcon Roost, Tar Pit (on the track) and 
 Ballista (Amber 300/200/250/300; Falcon Roost and Tar Pit can't be damaged). Summary in
 `RECAP.md` "Round 4"; calls in `DECISIONS.md` #118–#206.
 
-Next: Jovan restarts Studio, turns on "Enable Studio as MCP server" and **reconnects Rojo**
-(disconnected since 2026-10-01 afternoon, so Studio holds pre-round-2 code) so the Tester can
-run T31 + T38 + T60 + T70; playtests rounds 1–4 himself (see `RECAP.md`); and answers the
-"ask Jovan" lists, including the 4×-Amber tower picks (`TOWERS_LATER.md`). Then phase 7
-(not started).
+Studio playtests (2026-10-06 → 10-08, `PLAYTEST.md`): the Tester drove Studio through the
+MCP. Run 1 (rounds 1–4: 35 pass, F1–F3) and Run 2 (27 pass, F4) closed T31/T38/T60/T70;
+every fail is fixed.
+
+Phase 7 (gauntlet loop, 2026-10-06 → 10-08): the battle modes, **Camp Clash (team battle)**
+and **Bone Rush (battle royale)**. Built and headless-tested (587 specs, `audit.py --strict`
+0) and **playtested in Studio solo with Studio-only stand-in camps** (Run 3: 41 pass, 2
+cosmetic fails fixed in T86b; Run 4 re-checks T86b). Camps on copies of the track with build
+zones and a crossing strip, lockstep rounds, raiding (hunters shoot rival towers to
+Trampled), hunter vs hunter at ×0.5 with Camo Cover, elimination + spectate, Final Stampede
+(overtime), Casual payouts, **Ranked** with an Entry fee into the Amber Hoard (saved escrow,
+refunds; **Practice Hunt** when unpublished), Trophies with 8 arenas and a Trophy board, a
+perk-parity bar. Not testable by the Tester: hunter-vs-hunter and second-player steps
+(Jovan's Clients and Servers script, `RECAP.md` "Phase 7"); real stakes, saved Trophies and
+world boards (need a published place). Calls: `DECISIONS.md` #208–#243.
+
+Next: Jovan's multi-client script and the asks in `RECAP.md` "Phase 7" (battle difficulty,
+publishing, the 4×-Amber tower picks in `TOWERS_LATER.md`). **Phase 8 "Ready to publish"** is
+proposed at the top of `PLAN.md`; its batch 1 needs nothing from Jovan.
 
 ## Open issues
 
-- Leak cost is effective HP (BTD6-style), so 40 starting lives is likely too few.
+- Leak cost is effective HP (BTD6-style), so 40 starting lives is likely too few. In
+  battles on Normal every camp's Fence falls by round 9–11 (PLAYTEST Run 3 N6; ask-Jovan).
 - Scout Range path has range *and* its old damage/rate boosts — likely too strong; trim.
 - Folder is still named `~/Fortnite`.

@@ -15,7 +15,7 @@ this covers scale, difficulty and modes. Build toward it; don't paint the code i
 - **Player-count scaling** on top of difficulty: every extra player adds enemy density, a bit
   of HP, and starting cash to the shared pot (spreadsheet `Tuning`, CO-OP).
 
-## Future battle modes
+## Battle modes (built in phase 7: Camp Clash, Bone Rush)
 
 **Team battle.** Two or three teams, each with its own side of the map and its own track.
 Players can cross onto other sides, but can only build towers on their own team's side.
@@ -24,10 +24,27 @@ Teams attack each other's towers; the focus is surviving longer than the other t
 **Battle royale.** Every player for themselves. Winner is whoever gets the most **Bones**
 (take-downs credited to their towers).
 
-**Competitive and ranked (Jovan, 2026-10-02; phase 7, nothing built, DECISIONS #139).**
+**Competitive and ranked (Jovan, 2026-10-02; DECISIONS #139).**
 Mastery perks stay on in competitive modes; other perks may be buffed so a money advantage
 isn't too big (maxed players are the audience). Ranked uses a **Clash Royale-style trophy
 system**: the word **Trophies** is reserved for it (take-downs are **Bones**).
+
+**As built (phase 7, 2026-10-08; playtested solo in Studio, DECISIONS #208–#243).**
+- **Camp Clash (team battle):** 2 or 3 camps, each on a copy of the track, joined by a
+  crossing strip; build only in your camp; same dinos per camp, rounds in lockstep. Hunters
+  raid by shooting rival towers to Trampled (×0.35) and shoot rival hunters (×0.5, Camo Cover
+  3 s on respawn). A camp is out at Fence 0. Last camp wins; Final Stampede after round 40.
+- **Bone Rush (battle royale):** a camp each (2–10); most Bones wins; ends at ≤1 alive or
+  round 40; the last alive gets +10% Bones.
+- **Casual / Ranked** in one server (Ready on the home screen). Ranked: Entry fee 15 Amber
+  into the Amber Hoard (Camp Clash: winners split; Bone Rush 72/23/5), saved escrow with
+  refunds, Trophies (±30; Bone Rush by placement), 8 arenas with floors and a first-reach
+  cosmetic, a Trophy board. Unpublished it runs as Practice Hunt.
+- **Fairness:** perk parity between heroes within 15% (exporter); the maxed-vs-new edge is a
+  report, not a cap (#235).
+- **Needs publishing:** real Entry fees and saved Trophies, the world boards, 10 real players'
+  load. A lobby place with cross-server matchmaking by Trophies comes after publishing
+  (phase 8, #240).
 
 ## Theme: Dino Hunters (user, 2026-09-29)
 
@@ -130,6 +147,6 @@ Some of this is cheap now and expensive later, so it's built early:
 | Bones (take-downs) credited per player (leaderboard) | ✅ phase 3c |
 | Difficulty and player-count scaling | ✅ phase 3c |
 | Towers with HP that can be damaged and destroyed | ✅ Step 2 (dinos trample them and players repair them; players damaging towers comes with the battle modes) |
-| Cash per team / per player instead of one pot | later — `Economy` is the only cash owner, so this is one module's change |
-| Map sides: build zones per team, several tracks | later — `Shared/Placement` already decides where building is allowed; zones become one more check |
+| Cash per team / per player instead of one pot | ✅ phase 7 (`Economy` per side, `Shared/Ledger`) |
+| Map sides: build zones per team, several tracks | ✅ phase 7 (`Shared/Sides`, zone check in `Placement`) |
 | Network scale for 10 players (ARCHITECTURE.md §7): clients move enemy copies locally | measure first with Studio's multi-client test |

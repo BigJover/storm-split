@@ -102,7 +102,17 @@ through the MCP with Studio-only stand-in sides (#221). Hunter-vs-hunter and non
 go to Jovan's Clients and Servers script (T86). Saved stakes and Trophies, the cross-server
 board, and 10-player load need a published place.
 
-**Status (2026-10-06):** planned, nothing built.
+**Status (2026-10-08):** built (T71–T84b, T86b) and playtested solo in Studio (PLAYTEST
+Runs 1–3; Run 4 re-checks T86b). The rounds 1–4 playtest is closed. Left for Jovan: the
+Clients and Servers script and the after-publishing list (`RECAP.md` "Phase 7").
+
+## Phase 8 scope (Director proposal, 2026-10-08)
+
+Jovan: "begin phase 8 when all loose ends on phase 7 are done". Recommended: **Ready to
+publish** (`PLAN.md` "Phase 8", DECISIONS #238): batch 1 (docs + publish checklist,
+Studio-only gating, DataStore hardening, battle pacing report, Concussive T5 buff, stand-in
+hunter for solo PvP tests) needs nothing from Jovan; the private publish, the lobby place and
+the 4×-Amber towers wait on his answers.
 
 ## Rules
 

@@ -1,3 +1,126 @@
+# Plan — Phase 8: ready to publish (Director, 2026-10-08) — PROPOSAL, batch 1 can start
+
+Jovan (2026-10-06): **"begin phase 8 when all loose ends on phase 7 are done"**. Phase 7's
+loose ends: T86b re-check (Tester Run 4, running), then only the items that need Jovan
+(Clients and Servers script) or a published place remain (`RECAP.md` "Phase 7"). The rounds
+1–4 Studio playtest (T31/T38/T60/T70) was covered by PLAYTEST Runs 1–2 and its fails (F1–F4)
+are fixed. Design calls: `DECISIONS.md` #237–#243.
+
+**Status (2026-10-08): proposed. Batch 1 needs nothing from Jovan and can start once Run 4
+passes. Batches 2–3 wait on him.**
+
+## Ask Jovan first (Phase 8 can't finish without these)
+1. **The 4×-Amber towers (`TOWERS_LATER.md` "What Jovan needs to pick"):** (a) which of
+   Meteor Beacon / Amber Resin Cannon / Ranger Station / Spotter Blimp, and is 400–600 Amber
+   right; (b) one option per tier-4 and tier-5 slot; (c) Extinction Event button or automatic;
+   (d) Amber Rush in or out; (e) Ranger Station worth its cost or swap for a simpler tower.
+2. **Publish the place (privately is fine)?** Saving, Ranked stakes, saved Trophies and both
+   world boards only work published. Batch 2 is a checklist he follows (~15 min).
+3. **Battle difficulty:** on Normal every battle ended by round 9–11 (Fence 30 → 11 in round
+   8–9), so Final Stampede never happens. Easier battles (more Fence or lower density), or is
+   a short, sharp battle right?
+4. **A lobby place with cross-server matchmaking** (#219 kept it out of phase 7): build it
+   after publishing (batch 3), or stay one-server for now?
+
+## Scope options
+| Option | What | For | Against |
+|---|---|---|---|
+| **A — Ready to publish (recommended)** | Publish checklist + live-only hardening (DataStore, escrow, boards), multi-client test support, battle pacing + open balance items; then a private publish and a published smoke test; the lobby place after that; the 4×-Amber towers as the content batch once he picks | Ranked, stakes, Trophies and the world boards are built but can't be real until published. Most of batch 1 needs no Jovan | Little new to play until the towers land |
+| B — Content first | The 4×-Amber towers now, publishing later | New toys | Blocked on his picks today; adds more untestable-unpublished surface |
+| C — Full online in one go | Publish + lobby place + Teleport/MemoryStore matchmaking by Trophies + analytics | The "real game" end state | Biggest, and the lobby can't be tested before a publish; VISION never mentions monetisation or analytics, so those stay out |
+
+**Recommendation: A.** It turns phase 7 from "Practice Hunt only" into real Ranked, matches
+DIRECTION ("tested in Studio whenever possible", "honest about what was verified"), and every
+batch-1 task is testable now. Monetisation and analytics are not in VISION: out of scope
+unless Jovan asks.
+
+## Batches (option A)
+| Batch | Tasks | Needs Jovan? |
+|---|---|---|
+| 1 | T88 docs (multi-client + publish checklist), T89 Studio-only gating audit, T90 DataStore hardening specs, T91 battle pacing report, T92 Concussive T5 buff, T93 stand-in hunter for solo PvP tests, Tester Run 5 | No |
+| 2 | T94 Jovan's private publish, T95 published smoke (saves, Ranked stake/escrow/refund, Trophies, world boards, 2 real clients) | Yes (ask 2) |
+| 3 | T96 lobby place + TeleportService + MemoryStore queue by Trophies (reuses `Shared/Matchmaking`) | Yes (ask 4, after batch 2) |
+| content | T97 the 4×-Amber towers, in the round-4 tower pattern | Yes (ask 1) |
+| — | T98 battle difficulty change, if ask 3 says so | Yes (ask 3) |
+| — | T99 Director: phase 8 docs + recap | No |
+
+Round 1–4 and phase 7 rules hold (one task = one commit, pushed; check/export/test green;
+Config diff after any sheet change; openpyxl, assert cells; co-op must not change; pure
+rules first; never publish or write DataStores from an agent).
+
+### T88 — Docs: multi-client testing + publish checklist (Builder, `SETUP.md`)
+- **Multi-client** (left over from T85, #241): Studio → Test → Clients and Servers, 2 or 3
+  players; which window is the host; that J (no saving) is per client; where Output for the
+  server vs each client is; how to end the session. Link the T86 script in `RECAP.md`.
+- **Publish checklist:** File → Publish to Roblox (private); Game Settings → Security →
+  "Enable Studio Access to API Services"; keep the experience private until the smoke test;
+  what each `SaveStatus` value means; the DataStore names in use (list them from
+  `Progression`, `LevelBoard`, `TrophyBoard`) so he never renames one by accident; how to
+  roll back (Version History).
+- **Accept:** every DataStore name in the list matches a `grep` of `src/server`; no code change.
+
+### T89 — Studio-only gating audit (Builder)
+- Every Studio-only path is behind `RunService:IsStudio()` on the **server**: K/J/L keys,
+  stand-in sides, the Studio Lobby remotes (`standins`, etc.), the J "no saving" switch.
+  Move any check into one pure helper (e.g. `Shared/StudioOnly.allowed(isStudio, feature)`)
+  that the server calls.
+- **Accept:** a spec lists each Studio-only feature and asserts it's refused when
+  `isStudio = false`; a grep-based spec fails if a new Studio key handler skips the helper;
+  co-op specs unchanged; Tester: K/J/L and stand-ins still work in Studio.
+
+### T90 — DataStore hardening, specs with a fake store (Builder)
+- A fake DataStore in `tools/test/` (throttle errors, `UpdateAsync` conflicts, a failing
+  `GetAsync`). Specs for: a failed load never overwrites; saves retry with backoff inside the
+  budget; Ranked escrow is refunded on BindToClose and on a later load; a leaver's forfeit and
+  last-place Trophies land in one save; the Trophy and level boards stay in their write
+  budget at 10 players. Fix only what a spec proves wrong (report each fix).
+- **Session lock** (needed before batch 3, when a player can hop servers): a profile loaded
+  on server B while server A still holds it must not lose A's last save. Spec the rule in
+  `Shared/Profile`; wire it in `Progression`.
+- **Accept:** specs green; `Progression` is still the only profile writer; no DataStore is
+  touched in Studio (`SaveStatus` offline as today).
+
+### T91 — Battle pacing report (Builder, `tools/threat.py` / `value.py`; no sheet change)
+- Model a battle side on Normal at `Battle side density` 0.6 and 2/3/10 sides: the round
+  where an average camp's Fence falls with a typical build, and how far that is from round
+  40 / Final Stampede. Compare Run 3's observed round 8–9 spike (Fence 30 → 11).
+- **Accept:** the report prints per mode; the Director turns it into ask 3's options (e.g.
+  a `Battle starting lives` lever, or density) with numbers. Nothing changes until Jovan answers.
+
+### T92 — Concussive T5 (Tectonic Slam) buff (Director's cell, Builder applies)
+- value.py's standing finding (Round 4 recap). Buff only, never a nerf (#235's rule): the
+  Director picks one cell so Tectonic Slam meets the T5 "worth it" bar; assert the old value.
+- **Accept:** value.py finding gone; Config diff = that cell; `audit.py --strict` 0.
+
+### T93 — Stand-in hunter for solo PvP tests (Builder, Studio-only)
+- With stand-ins on, each stand-in camp also gets a **stand-in hunter**: a dummy character
+  on its plot (100 HP, never shoots, never saved/paid/ranked), so one Tester client can check
+  hunter-vs-hunter ×`PvP hunter damage`, "Tranqed by <name>!", respawn on its own camp and the
+  Camo Cover countdown. Gated by T89's helper.
+- **Accept:** specs for the dummy's damage via `BattleRules.pvpDamage`; Tester Run 5 checks
+  it; co-op and real-player PvP paths unchanged.
+
+### Tester Run 5 (after batch 1)
+Co-op smoke (rounds 1–3); K/J/L + stand-ins still work; shoot a stand-in hunter (×0.5, kill
+line, respawn, Camo Cover); Concussive T5 in play; no new console errors.
+
+### T94 — Private publish (Jovan, following T88)
+### T95 — Published smoke (Jovan; Tester reads Output if the MCP can reach it)
+Saves load and save; Ranked with 2 real clients: Entry fee taken, Amber Hoard paid,
+Trophies saved; shut the server mid-match → refund on next join; both world boards show
+rows; a leaver loses Trophies. **Accept:** each line pass/fail in `PLAYTEST.md`.
+
+### T96 — Lobby place + matchmaking (needs ask 4 and batch 2)
+Design first (Director, DECISIONS): lobby place, MemoryStore queue by mode and Trophies,
+TeleportService to a reserved match server, `Shared/Matchmaking` reused, session lock (T90)
+required. Testable only published.
+
+### T97 — The 4×-Amber towers (needs ask 1)
+Same pattern as round 4's T62–T69: names (🦖), sheet rows, pure rules module per tower, server
+behaviour, panel, value.py bars, Tester steps.
+
+### T98 — Battle difficulty (needs ask 3) · T99 — Phase 8 docs + recap (Director)
+
 # Plan — Phase 7: the battle modes (Director, 2026-10-06)
 
 Scope (Jovan, 2026-10-06): **"make sure everything is play tested and phase 7 is fully
@@ -8,7 +131,7 @@ PLAYTEST.md re-run; blocked right now on Jovan reconnecting Rojo). It does not b
 phase-7 Builder batches. Each phase-7 batch still ends with its own Tester step, and phase 7
 is not "fully done" until those steps and Jovan's multi-player steps (T86) have run.
 
-**Status (2026-10-08): T84/T84b done (bf6d09b, 207513e); Tester Run 3 41 pass / 2 minor fail; Dino Round 17. Next: T86b (fixes, #236), then T85 + T87 (Director). Earlier: T84 stopped on its bars as designed; #235 makes the edge report-only and T84b buffs four perks. Next: T84 (rerun, revised) + T84b in one Builder run. Earlier: batch 5 signed off (8a42872, 2d96e1f, b314bcb, 9b430d7, 9c0b421, afe0dd1; 579 specs; #234). Next: T84 (Builder), then T85 + T86. Earlier: batch 4 signed off (34d3606 F4, 57c89cf T79b, d9c938b T80, 946bcd6 T81; 559 specs; #233). Next: batch 5 = T82, T83 with #233's fixes. Earlier: batch 3 signed off (45f5cb2, 8d4673e, bcdfe9f; 520 specs; T79 review = #232). No Builder while the Tester's Run 2 is live. Next: batch 4 = T79b, T80, T81. Earlier: batch 2 signed off (T75 0ab8f14, T76 9b356fa; 491 specs; #231). T77–T78 final with #231's additions. Earlier: batch 1 signed off (T73 62608e6, T71 86c94bf, T72 4b2a3bc; 467 specs; #227–#228). T75–T76 final as written. Queued: T78 amendments below.**
+**Status (2026-10-08, final): Phase 7 built. T71–T84b, T86b (c559cdc) done; T85 + T87 written by the Director (#237–#243). Tester Runs 1–3 done (T31/T38/T60/T70 covered by Runs 1–2); Run 4 re-checks T86b. Left: Jovan's Clients and Servers script (T86) and the after-publishing list → Phase 8 (top of this file).** Earlier: **T84/T84b done (bf6d09b, 207513e); Tester Run 3 41 pass / 2 minor fail; Dino Round 17. Next: T86b (fixes, #236), then T85 + T87 (Director). Earlier: T84 stopped on its bars as designed; #235 makes the edge report-only and T84b buffs four perks. Next: T84 (rerun, revised) + T84b in one Builder run. Earlier: batch 5 signed off (8a42872, 2d96e1f, b314bcb, 9b430d7, 9c0b421, afe0dd1; 579 specs; #234). Next: T84 (Builder), then T85 + T86. Earlier: batch 4 signed off (34d3606 F4, 57c89cf T79b, d9c938b T80, 946bcd6 T81; 559 specs; #233). Next: batch 5 = T82, T83 with #233's fixes. Earlier: batch 3 signed off (45f5cb2, 8d4673e, bcdfe9f; 520 specs; T79 review = #232). No Builder while the Tester's Run 2 is live. Next: batch 4 = T79b, T80, T81. Earlier: batch 2 signed off (T75 0ab8f14, T76 9b356fa; 491 specs; #231). T77–T78 final with #231's additions. Earlier: batch 1 signed off (T73 62608e6, T71 86c94bf, T72 4b2a3bc; 467 specs; #227–#228). T75–T76 final as written. Queued: T78 amendments below.**
 
 Round 1–4 rules hold (one task = one commit, pushed; `tools/check.sh`, `export_constants.py`,
 `tools/test.sh` green; diff `Config.luau` after every sheet change; openpyxl only, assert a
@@ -311,13 +434,13 @@ balance.
 | G12 (MEDIC 15 power) | 10 → **14** | "Triage Kit heals 14 more HP" |
 Expected worth % (bases 8 s / 25 / 10 / 20 radius, 10 s Rally, 40 HP heal): M10 = 25 / 24 / 25 / 25 → 1.04; summed = 65 / 59 / 61 / 60 → 1.10; each L15 > its L10; all ≤ 40 cap. Tracker unchanged (the top). **If the exporter's numbers differ from these, stop and report**, with no other cells changed. HEROES.md "Mastery" table and the perk names' text updated to match. Config diff = these 5 values + 5 texts.
 
-### T85 — Docs + recap
+### T85 — Docs + recap — DONE (Director, 2026-10-08; `RECAP.md` "Phase 7"; SETUP.md multi-client moved to Phase 8 T88, #241)
 - **#234:** a short 🦖 pass on batch 5's invented strings, folded in here (Dino agent lists any must-fix; the Builder applies it in this task). Already decided: Bone Rush placements below 1st read **"Bone Rush — Nth place"** (not "Nth Hunter").
 `VISION.md` (modes built), `ARCHITECTURE.md` (phase 7 row, ownership: per-side Economy,
 Stakes/Trophies, stand-ins), `CLAUDE.md` status, `GAUNTLET.md` status, `RECAP.md` "Phase 7":
 what changed, what was tested where, and Jovan's script (T86). Update `SETUP.md` multi-client.
 
-### T86 — Tester sweep + Jovan's multi-player script (final, #234)
+### T86 — Tester sweep + Jovan's multi-player script (final, #234) — Tester part DONE (PLAYTEST Run 3: 41 pass, F5/F6 fixed in T86b); Jovan's part OPEN
 **Tester (one MCP client, J first so nothing saves; report in `PLAYTEST.md` Run 3, pass/fail/not-testable + screenshots):**
 1. Co-op regression: Easy rounds 1–3, placement, an upgrade mid-round (F3), a Fence break on the last dino = loss (F4).
 2. Home screen: the Camp Clash and Bone Rush cards; Casual/Ranked, sides 2/3, stand-ins toggle; Ready shows the Practice line; PLAY enables at the minimum; every panel passes no-trap at 707×620 and a small window (X visible, key closes, mouse free).
@@ -339,7 +462,7 @@ what changed, what was tested where, and Jovan's script (T86). Update `SETUP.md`
 7. **Practice with stand-ins:** stand-ins hold their placements in the Hoard split. Their shares go to the sink, so a last-place tester gets only last place's share. Real hunters-only splits (#233) are unchanged for real matches. Spec.
 **Accept:** specs for 1, 3, 5, 6 (string builder), 7; Config diff = one key; co-op specs unchanged. Tester re-check: F5, F6, the place line, the Amber line (one solo Bone Rush + one Camp Clash with stand-ins).
 
-### T87 — Phase 8: to define (Director, when phase 7's loose ends are done)
+### T87 — Phase 8: to define — DONE (Director, 2026-10-08): proposal at the top of this file (#238–#240)
 Jovan (2026-10-06): "begin phase 8 when all loose ends on phase 7 are done". Loose ends = T86 run, the rounds 1–4 playtest (T31/T38/T60/T70 + PLAYTEST re-run), every Tester failure fixed. Then the Director proposes a Phase 8 scope with a recommendation, for Jovan to pick from. Candidates: (a) the 4×-Amber tower batch (`TOWERS_LATER.md`, awaiting his picks); (b) **publishing readiness**: DataStore saves live, stakes/escrow and Trophies on real servers, cross-server boards, 10-player network load (ARCHITECTURE §7); (c) a lobby place + Teleport/MemoryStore matchmaking by Trophies (#219, needs (b)); (d) balance follow-ups from the playtests (e.g. Concussive T5 buff, the open issues in CLAUDE.md); (e) more tracks (VISION "each track is its own level"). Director's leaning, to confirm then: (b) → (c) first, since phase 7's ranked mode only becomes real once published, with (a) as the content batch alongside. Add phase 8 to the ARCHITECTURE phase table in that step.
 
 # Plan — Round 4: Jovan's answers (Director, 2026-10-02)
@@ -352,6 +475,8 @@ leaderboard). The next tower batch is **not built**: `TOWERS_NEXT.md` is a propo
 Jovan to pick from. Design calls: `DECISIONS.md` #118–#142. **T31 + T38 (the Studio
 playtest) stay open**; T60 adds round 4's steps. **Stop before phase 7** and append a
 round-4 recap to `RECAP.md` (T61).
+
+**Update (2026-10-08): T31 + T38 + T60 + T70 run as PLAYTEST Runs 1–2 (35 + 27 pass; F1–F4 fixed in e9b0d00 / 34d3606). Closed (#237).**
 
 **Status (2026-10-06): round 4 done — T40–T59, T62–T69 and T68b built and signed off, T61
 written (`RECAP.md` "Round 4", #206). 406 specs, all checks green; not playtested. OPEN: T31 +

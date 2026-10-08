@@ -486,3 +486,112 @@ what Chaos needs; skilled aim 86% to round 30 and 42% in rounds 31–40 ("nearly
 3. **Phase 7** (team battle, battle royale, buy-ins, ranked). Not started. Notes for it: mastery
    perks stay on in competitive modes, other perks may be buffed so money doesn't decide
    matches, and ranked uses a Clash Royale-style **Trophies** system.
+
+---
+
+# Phase 7 recap for Jovan: the battle modes (2026-10-06 → 10-08)
+
+**Your words (2026-10-06):** "make sure everything is play tested and phase 7 is fully done",
+then "go with the name changes" (Team Battle → **Camp Clash**, Battle Royale → **Bone Rush**)
+and "begin phase 8 when all loose ends on phase 7 are done".
+
+**Honest status:** built, 587 headless specs green (`check.sh`, exporter, `audit.py --strict`
+0), and **played in Studio by the Tester** with one client and Studio-only stand-in camps.
+Hunter-vs-hunter and anything needing a second real player is your 20-minute script below.
+Saved stakes, saved Trophies and the world boards need the place published. Calls:
+`DECISIONS.md` #208–#243.
+
+## What was built
+
+- **Camp Clash (team battle):** 2 or 3 camps (host picks), each on its own copy of the track,
+  joined by an open crossing strip. You build only in your camp. Every camp gets the same dinos,
+  and rounds move together. Shoot a rival camp's towers to **Trampled** (only they can repair).
+  Your gun, towers and abilities only ever hurt your own camp's dinos. Camp Fence at 0 = out:
+  towers gone, you spectate. Last camp standing wins; after round 40, **Final Stampede**
+  repeats the last round harder until one falls.
+- **Bone Rush (battle royale):** one camp each (2–10). Most **Bones** wins; the last one alive
+  gets +10% Bones. Raiding pays by making rivals leak (no Bones for a knock-out).
+- **Hunter vs hunter:** enemy hunters' shots hit at ×0.5, you respawn on your own camp with 3 s
+  of **Camo Cover**. No friendly fire, no crowd control on hunters.
+- **Casual / Ranked:** Casual pays Amber (Camp Clash win 50 / loss 5; Bone Rush 60/30/10/5).
+  Ranked: everyone presses **Ready**, pays a 15 Amber **Entry fee** into the **Amber Hoard**
+  (winners split it; Bone Rush 72/23/5), held in a saved escrow and refunded if the server
+  dies. Unpublished, Ranked runs as **Practice Hunt** (session Amber, no Trophies).
+- **Trophies and arenas:** ±30 in Camp Clash, by placement in Bone Rush; 8 arenas (Fern Gully
+  → Rex Kingdom) with floors you can't drop below and a cosmetic on first reach. Trophy board
+  (This server until published), Trophies on the player list and a Profile Trophies tab. A
+  Ranked leaver loses Trophies as last place.
+- **Screens:** battle cards and Hunt Options on the home screen, Ready + Entry fee confirm,
+  camps board, kill feed, Inspect on enemy towers (read-only), spectate and Final Stampede
+  banners, a results card (placements, Amber with Hoard share, ±Trophies, arena change).
+- **Fairness:** heroes' mastery perks are held within 15% of each other (exporter bar); four
+  perks were buffed to meet it, none nerfed.
+- **Under the hood:** pure rules modules (`BattleRules`, `BattleFlow`, `Matchmaking`, `Sides`,
+  `Stakes`, `Trophies`, `SpawnQueue`, `Ledger`, `RoundFlow`, `TrophyBoard`) with specs; co-op
+  is "one camp" and its specs never changed.
+
+## How it was verified
+
+- **Headless:** 587 specs; exporter refuses bad buy-ins, splits, arena floors, PvP levers.
+- **Studio, Tester Run 1** (round 4 build): 35 pass, 3 fail (F1–F3, fixed). Covered the
+  rounds 1–4 playtest: towers, Tar Pit, boss bar, tier 6, player level, Profile.
+- **Run 2:** 27 pass, 1 fail (F4: a round whose last dino breaks the Fence counted as a clear;
+  fixed). First solo battles with stand-ins.
+- **Run 3 (the T86 solo script):** 41 pass, 2 minor cosmetic fails (F5 banner over the
+  results card, F6 spectate banner over the camps board; fixed in T86b). **Passed in Studio:**
+  co-op regression; home cards, Casual/Ranked, Ready + Entry fee + Practice line; build
+  refusals; stand-in tower to Trampled + kill line; Inspect; own shots never hurt own towers;
+  spectate rules; Practice stake out and Hoard back, Trophies unchanged; Bone Rush 10 seats
+  (peak 125 of 130 dinos, worst frame 8.37 ms), ranking by Bones; player list; no console errors.
+- **Run 4 (T86b re-check of c559cdc):** _RESULT PENDING — coordinator fills in._
+- **Headless only:** the survivor bonus (not confirmed in Studio), your-chest-only, the F4
+  exact case, Final Stampede (battles ended by round 9–11), everything multi-client.
+
+## Your 20-minute script (Studio → Test → Clients and Servers)
+
+1. **2 players.** Press J in each window. Host: Camp Clash, Casual, 2 camps, PLAY.
+2. Walk to the other camp: shoot the other hunter (half damage, "Tranqed by…", respawn at
+   their camp, Camo Cover countdown). Try to build/upgrade/sell their tower (refusal text).
+3. Upgrade your teammate's tower (3 players, same camp): allowed.
+4. Non-host presses **Ready** + confirms the Entry fee; PLAY lights at the minimum.
+5. Mid-battle, start a 3rd client: it waits with "A hunt is on — you'll join the next one."
+6. Ranked (Practice) match, then close one client mid-match: no Trophy change in Practice.
+7. 3 players, 3 camps: are teams fair? How does raiding feel? Is the results card readable
+   in 15 s? Try a small window: every panel keeps its X visible and its key closes it.
+
+**After publishing (can't be tested now):** real Entry fees and escrow refunds after a
+shutdown, saved Trophies and arenas, the world Trophy and level boards, 10 real players'
+network load and hit fairness under real latency.
+
+## Ask Jovan
+
+- **Battle difficulty:** on Normal every camp's Fence goes 30 → 11 in round 8–9, so battles end
+  by round 9–11 and Final Stampede never comes. Right for a short, sharp battle, or should
+  battles get more Fence / fewer dinos?
+- **Competitive edge (report only):** a maxed hunter vs mastery 0 on the same hero: Tracker
+  57%, Big Game Hunter 84.9%, Brush Beater 82.8%, Field Medic 48.2% (watch line 10%). Ranked
+  matches like with like, so we left it. Cap it?
+- **The 4×-Amber towers:** your picks from `TOWERS_LATER.md` (first ask of phase 8).
+- **Publish the place** (privately) so Ranked becomes real? And a lobby place with
+  cross-server matchmaking after that?
+- Still open: dino-sending between camps (default no), Trophy seasons (default none).
+
+## Decisions you may want to overturn
+
+- #211: raiding = shooting towers at ×0.35; Falcon Roost and Tar Pit can't be raided.
+- #212: hunter vs hunter at ×0.5; abilities never touch hunters.
+- #214: Bone Rush ends at ≤1 alive with +10% survivor bonus; knock-outs give no Bones.
+- #216: Entry fee 15 flat; a leaver forfeits it.
+- #218: Trophies ±30, arena floors, no seasons.
+- #219 / #240: one-server matchmaking; the lobby place waits for publishing.
+- #233: a Ranked leaver loses Trophies as last place.
+- #235 / #243: the competitive edge is a report, not a cap.
+
+## What's next
+
+1. Your multi-client script above; any bug it finds gets fixed first.
+2. **Phase 8 (proposed, `PLAN.md` top): "Ready to publish."** Batch 1 needs nothing from you:
+   a publish checklist and multi-client guide, Studio-only cheats locked to Studio, save
+   hardening, a battle-pacing report, the Concussive T5 buff, and a stand-in hunter so the
+   Tester can test PvP alone. Then you publish privately and we smoke-test Ranked for real;
+   then the lobby place; your tower picks become the content batch.
