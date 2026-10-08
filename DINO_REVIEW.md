@@ -619,3 +619,20 @@ Read: VISION "Future battle modes" + stakes, DIRECTION #8 (Trophies = ranked onl
 1. 0 Fern Gully · 2. 300 Raptor Ridge · 3. 600 Muddy Springs · 4. 1000 Horn Canyon · 5. 1500 Volcano Rim · 6. 2000 Sky Cliffs · 7. 3000 Misty Jungle · 8. 4000 Rex Kingdom
 
 Banned-word check: none of the above use pop / split / balloon / Storm. The VISION line "the pot is split among the winning team" stays out of the UI; the UI says "Winners share the Hoard".
+
+## Round 17 — Phase 7 shipped strings (T85 pass, #234)
+
+Read: DIRECTION, Round 16, PLAN T85, DECISIONS #229/#230/#233/#234. Grepped every added player string in src/client + src/shared, 62608e6..207513e. Matches Round 16 + #230: Camp Clash / Bone Rush (+ both blurbs), Casual / Ranked (no "Competitive"), Practice Hunt line, Entry fee ("Pay 15 Amber to enter?"), Amber Hoard lines, Ready refusals (#233), camps board ("n/m camps left", "<Camp> · out · N Bones"), Final Stampede, Camo Cover (Ns), "Your Fence is down — you're watching now.", Fence-down + Tranqed feed lines, "<name> trampled <Camp>'s <tower>", win titles, "+N Trophies · <Arena>", "New arena: X!", waiting banner, own-camp build line, "Inspect", 8 arena names. No pop/split/balloon/Storm, no "Team Battle"/"Battle Royale" in player text; "Trophies" only on ranked surfaces (result line, Trophies tab, player-list column — #233).
+
+**Must-fix**
+| File | Current | Proposed |
+|---|---|---|
+| src/shared/PanelRules.luau:239 | `{display} — {ordinal} Hunter` ("Bone Rush — 2nd Hunter") | `{display} — {ordinal} place` — #234; just drop the ROYALE branch so both modes share the "place" line. |
+
+**Nice-to-have**
+| File | Current | Proposed |
+|---|---|---|
+| src/shared/HomeLayout.luau:98 | "BATTLE OPTIONS" | "HUNT OPTIONS" (fits Practice Hunt / "A hunt is on"); fine to leave as is. |
+| BattleFlow.standInName | "Stand-in 2" → "Stand-in 2's Camp" | keep; kid-plain. |
+
+Comments only: BattleFlow.luau:18/117 say "a pop" — not shown to players.
