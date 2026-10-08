@@ -1,7 +1,8 @@
 --[[
 	What the Profile screen shows (Profile.client, PLAN round 4 T57): the player level, the
-	XP bar, the next rewards and an equip row per slot; and its Leaderboard tab (T58,
-	the rows from Shared/LevelBoard). Pure — no services — so
+	XP bar, the next rewards and an equip row per slot; its Leaderboard tab (T58,
+	the rows from Shared/LevelBoard); and its Trophies tab (PLAN phase 7 T83: your
+	Trophies and arena, the arena ladder, the Trophy board from Shared/TrophyBoard). Pure — no services — so
 	tools/test/profilescreen.spec.luau runs it headlessly. What may be worn is
 	Shared/Cosmetics' rule and the server's call; this only decides what to draw.
 
@@ -18,6 +19,9 @@ local PlayerLevel = require(script.Parent.PlayerLevel)
 local Cosmetics = require(script.Parent.Cosmetics)
 local Theme = require(script.Parent.Theme)
 local LevelBoard = require(script.Parent.LevelBoard)
+local Config = require(script.Parent.Config)
+local Trophies = require(script.Parent.Trophies)
+local TrophyBoard = require(script.Parent.TrophyBoard)
 
 local ProfileScreen = {}
 
@@ -45,6 +49,8 @@ ProfileScreen.SECTION = 20
 ProfileScreen.REWARD = 20 -- one "Next rewards" line
 ProfileScreen.SLOT = 58 -- a slot's label and its row of chips
 ProfileScreen.BOARD_ROW = 30 -- one leaderboard row
+ProfileScreen.ARENA = 20 -- one arena ladder line (Trophies tab)
+ProfileScreen.TAB_TROPHIES = TrophyBoard.COLUMN -- the third tab (T83)
 ProfileScreen.NOTE = 36 -- the board's one-line note (two lines on a narrow screen)
 ProfileScreen.MIN_LIST = 100
 ProfileScreen.MIN_SCALE = 0.4
@@ -184,6 +190,47 @@ function ProfileScreen.layout(viewportX: number, top: number, bottom: number, li
 		listHeight = math.floor(listHeight),
 		height = fixed + math.floor(listHeight),
 	}
+end
+
+-- Trophies tab (PLAN T83, DECISIONS #218) ------------------------------------------------
+
+-- The tab's first line: "340 Trophies · Raptor Ridge".
+function ProfileScreen.trophyLine(trophies: number): string
+	return `{math.max(0, math.floor(trophies))} {TrophyBoard.COLUMN} · {TrophyBoard.arenaName(trophies)}`
+end
+
+-- The arena ladder, lowest first: "300 · Raptor Ridge". Trophies never drop below a
+-- reached arena's floor, so the arena your Trophies are in is the best you've reached;
+-- every arena up to it is `reached`, that one is `current`.
+export type ArenaRow = { text: string, current: boolean, reached: boolean }
+
+function ProfileScreen.arenaRows(trophies: number): { ArenaRow }
+	local at = Trophies.arenaOf(math.max(0, trophies))
+	local rows = {}
+	for i, arena in Config.Arenas do
+		table.insert(rows, { text = `{arena.floor} · {arena.display}`, current = i == at, reached = i <= at })
+	end
+	return rows
+end
+
+-- A Trophy board row: as a Leaderboard row, but the badge is the Trophy count and its
+-- colour band is the row's arena (capped to the level bands' count `bands`).
+function ProfileScreen.trophyBoardLine(row: LevelBoard.Row, title: string?, bands: number): BoardLine
+	local trophies = math.max(0, math.floor(row.xp))
+	return {
+		rank = LevelBoard.rankText(row),
+		name = row.name,
+		title = title or "",
+		level = trophies,
+		band = math.clamp(Trophies.arenaOf(trophies), 1, math.max(1, bands)),
+		self = row.self == true,
+	}
+end
+
+-- The Trophies tab's list height: the Trophies line, `arenas` ladder lines, then the
+-- board below them (`boardHeight`: boardContent, as on the Leaderboard tab).
+function ProfileScreen.trophyContent(arenas: number, boardHeight: number): number
+	return ProfileScreen.SECTION + (ProfileScreen.ARENA + ProfileScreen.GAP) * arenas + ProfileScreen.GAP + boardHeight
 end
 
 return ProfileScreen

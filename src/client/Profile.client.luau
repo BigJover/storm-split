@@ -34,10 +34,12 @@ local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 local HomeLayout = require(Shared:WaitForChild("HomeLayout"))
 local LevelBoard = require(Shared:WaitForChild("LevelBoard"))
 local ProfileScreen = require(Shared:WaitForChild("ProfileScreen"))
+local TrophyBoard = require(Shared:WaitForChild("TrophyBoard"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local progressRequest = remotes:WaitForChild("ProgressRequest") :: RemoteFunction
 local boardRequest = remotes:WaitForChild("LevelBoard") :: RemoteFunction
+local trophyRequest = remotes:WaitForChild("TrophyBoard") :: RemoteFunction -- Server/TrophyBoard (T81)
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -161,7 +163,7 @@ closeButton.Modal = true -- the mouse is free while the screen is showing
 closeButton.Parent = header
 corner(closeButton, 6)
 
--- The tabs: Profile and Leaderboard.
+-- The tabs: Profile, Leaderboard and Trophies (PLAN T83).
 local tabRow = section(2, ProfileScreen.TABS)
 tabRow.Name = "Tabs"
 do
@@ -174,9 +176,13 @@ end
 local function tabButton(order: number, text: string): TextButton
 	local button = Instance.new("TextButton")
 	button.LayoutOrder = order
-	button.Size = UDim2.new(0.5, -3, 1, 0)
+	button.Size = UDim2.new(1 / 3, -4, 1, 0)
 	button.Font = Enum.Font.GothamBold
-	button.TextSize = 14
+	button.TextScaled = true -- three tabs still fit the narrowest screen
+	local limit = Instance.new("UITextSizeConstraint")
+	limit.MaxTextSize = 14
+	limit.MinTextSize = 8
+	limit.Parent = button
 	button.TextColor3 = TEXT
 	button.Text = text
 	button.Parent = tabRow
@@ -185,6 +191,7 @@ local function tabButton(order: number, text: string): TextButton
 end
 local profileTab = tabButton(1, ProfileScreen.TAB_PROFILE)
 local boardTab = tabButton(2, ProfileScreen.TAB_BOARD)
+local trophiesTab = tabButton(3, ProfileScreen.TAB_TROPHIES)
 
 -- The level block: "Player level 12", the bar, "340 / 1,050 XP to level 13".
 local levelBlock = section(3, ProfileScreen.LEVEL)
@@ -234,10 +241,14 @@ message.Size = UDim2.fromScale(1, 1)
 
 local listContent = 0
 local busy = false
-local tab: "profile" | "board" = "profile"
+type Tab = "profile" | "board" | "trophies"
+local tab: Tab = "profile"
 local boardView: LevelBoard.View? = nil -- the last answer from Server/LevelBoard
 local boardAskedAt = -math.huge
 local boardAsking = false
+local trophyView: LevelBoard.View? = nil -- the last answer from Server/TrophyBoard
+local trophyAskedAt = -math.huge
+local trophyAsking = false
 
 local function shown(): boolean
 	return ProfileScreen.shown(player:GetAttribute("ProfileOpen") == true, ReplicatedStorage:GetAttribute("State"))
@@ -317,6 +328,30 @@ local function askBoard()
 	end)
 	boardAsking = false
 	boardView = if ok and type(answer) == "table" and type(answer.rows) == "table" then answer :: LevelBoard.View else localBoard()
+	render()
+end
+
+-- The players here with their live Trophies: the "This server" Trophy board fallback.
+local function localTrophyBoard(): LevelBoard.View
+	local here = {}
+	for _, other in Players:GetPlayers() do
+		local trophies = other:GetAttribute("Trophies")
+		table.insert(here, { userId = other.UserId, name = other.DisplayName, trophies = if type(trophies) == "number" then trophies else 0 })
+	end
+	return TrophyBoard.view(nil, here, player.UserId)
+end
+
+local function askTrophies()
+	if trophyAsking then
+		return
+	end
+	trophyAsking = true
+	trophyAskedAt = os.clock()
+	local ok, answer = pcall(function()
+		return trophyRequest:InvokeServer()
+	end)
+	trophyAsking = false
+	trophyView = if ok and type(answer) == "table" and type(answer.rows) == "table" then answer :: LevelBoard.View else localTrophyBoard()
 	render()
 end
 
@@ -411,7 +446,7 @@ local function addSlot(order: number, row: ProfileScreen.SlotRow)
 	end
 end
 
-local function addBoardRow(order: number, row: LevelBoard.Row)
+local function addBoardRow(order: number, row: LevelBoard.Row, trophies: boolean?)
 	local other = Players:GetPlayerByUserId(row.userId) -- cosmetics are known for players here only
 	local function worn(slot: string): Cosmetics.Item?
 		return if other
@@ -421,7 +456,10 @@ local function addBoardRow(order: number, row: LevelBoard.Row)
 			else nil
 	end
 	local titleItem = worn("title")
-	local line = ProfileScreen.boardLine(row, if titleItem then titleItem.name else nil)
+	local titleName = if titleItem then titleItem.name else nil
+	local line = if trophies
+		then ProfileScreen.trophyBoardLine(row, titleName, #BAND_COLOURS)
+		else ProfileScreen.boardLine(row, titleName)
 	local frame = Instance.new("Frame")
 	frame.LayoutOrder = order
 	frame.Size = UDim2.new(1, -8, 0, ProfileScreen.BOARD_ROW)
@@ -464,9 +502,11 @@ local function addBoardRow(order: number, row: LevelBoard.Row)
 	title.TextXAlignment = Enum.TextXAlignment.Right
 end
 
-local function renderBoard(): number
-	local current = boardView
-	local order = 0
+-- `trophies`: the Trophy board (Trophies tab) instead of the level board; `start`: the
+-- layout order to follow (the Trophies tab's ladder sits above it).
+local function renderBoard(trophies: boolean?, start: number?): number
+	local current = if trophies then trophyView else boardView
+	local order = start or 0
 	local function next(): number
 		order += 1
 		return order
@@ -484,7 +524,7 @@ local function renderBoard(): number
 		note.TextTruncate = Enum.TextTruncate.None
 	end
 	for _, row in current.rows do
-		addBoardRow(next(), row)
+		addBoardRow(next(), row, trophies)
 	end
 	return ProfileScreen.boardContent(#current.rows, current.note ~= nil)
 end
@@ -495,6 +535,7 @@ render = function()
 	end
 	profileTab.BackgroundColor3 = if tab == "profile" then CHIP_ON else CHIP
 	boardTab.BackgroundColor3 = if tab == "board" then CHIP_ON else CHIP
+	trophiesTab.BackgroundColor3 = if tab == "trophies" then CHIP_ON else CHIP
 	local xp = player:GetAttribute("PlayerXp")
 	xp = if type(xp) == "number" then xp else 0
 	levelLabel.Text = ProfileScreen.levelLine(xp)
@@ -504,6 +545,24 @@ render = function()
 
 	local position = list.CanvasPosition
 	clear(list)
+	if tab == "trophies" then
+		-- Your Trophies and arena, the arena ladder (reached in full colour, yours in
+		-- amber), then the Trophy board, all in the one scrolling list.
+		local count = player:GetAttribute("Trophies")
+		count = if type(count) == "number" then count else 0
+		addLine(1, ProfileScreen.trophyLine(count), 16, Enum.Font.GothamBold, AMBER, ProfileScreen.SECTION)
+		local arenas = ProfileScreen.arenaRows(count)
+		for i, arena in arenas do
+			local color = if arena.current then AMBER elseif arena.reached then TEXT else TEXT_DIM
+			addLine(1 + i, arena.text, 13, if arena.current then Enum.Font.GothamBold else Enum.Font.Gotham, color, ProfileScreen.ARENA)
+		end
+		local boardHeight = renderBoard(true, 1 + #arenas)
+		listContent = ProfileScreen.trophyContent(#arenas, boardHeight)
+		list.CanvasSize = UDim2.fromOffset(0, listContent)
+		list.CanvasPosition = position
+		fit()
+		return
+	end
 	if tab == "board" then
 		listContent = renderBoard()
 		list.CanvasSize = UDim2.fromOffset(0, listContent)
@@ -550,7 +609,7 @@ local function setShown(show: boolean)
 	end
 end
 
-local function showTab(which: "profile" | "board")
+local function showTab(which: Tab)
 	if tab == which then
 		return
 	end
@@ -559,6 +618,8 @@ local function showTab(which: "profile" | "board")
 	render()
 	if which == "board" then
 		task.spawn(askBoard)
+	elseif which == "trophies" then
+		task.spawn(askTrophies)
 	end
 end
 profileTab.Activated:Connect(function()
@@ -566,6 +627,9 @@ profileTab.Activated:Connect(function()
 end)
 boardTab.Activated:Connect(function()
 	showTab("board")
+end)
+trophiesTab.Activated:Connect(function()
+	showTab("trophies")
 end)
 
 local function apply()
@@ -580,7 +644,7 @@ end)
 player:GetAttributeChangedSignal("ProfileOpen"):Connect(apply)
 ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(apply)
 player.AttributeChanged:Connect(function(name)
-	if name == "PlayerXp" or name == "SaveStatus" or string.sub(name, 1, 6) == "Equip_" then
+	if name == "PlayerXp" or name == "SaveStatus" or name == "Trophies" or string.sub(name, 1, 6) == "Equip_" then
 		render()
 	end
 end)
@@ -602,6 +666,8 @@ task.spawn(function()
 		task.wait(1)
 		if gui.Enabled and tab == "board" and os.clock() - boardAskedAt >= BOARD_ASK_SECONDS then
 			task.spawn(askBoard)
+		elseif gui.Enabled and tab == "trophies" and os.clock() - trophyAskedAt >= BOARD_ASK_SECONDS then
+			task.spawn(askTrophies)
 		end
 	end
 end)

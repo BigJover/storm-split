@@ -69,3 +69,32 @@ test("the screen fits every window with the X on screen (no-trap rule)", functio
 	eq(big.scale, 1, "full size on a big window")
 	ok(big.listHeight < content, "the list scrolls rather than overflow")
 end)
+
+-- PLAN T83: the Trophies tab -------------------------------------------------------------
+
+test("T83 Trophies tab: the Trophies line, the ladder lowest first, reached up to your arena", function()
+	eq(ProfileScreen.TAB_TROPHIES, "Trophies")
+	eq(ProfileScreen.trophyLine(340), "340 Trophies · Raptor Ridge")
+	eq(ProfileScreen.trophyLine(-5), "0 Trophies · Fern Gully")
+	local rows = ProfileScreen.arenaRows(620)
+	eq(#rows, 8)
+	eq(rows[1].text, "0 · Fern Gully")
+	eq(rows[8].text, "4000 · Rex Kingdom")
+	local marks = {}
+	for _, row in rows do
+		table.insert(marks, if row.current then "C" elseif row.reached then "r" else "-")
+	end
+	eq(table.concat(marks), "rrC-----", "Muddy Springs at 620")
+	eq(rows[3].reached, true, "your own arena counts as reached")
+	eq(rows[4].reached, false)
+	eq(ProfileScreen.arenaRows(0)[1].current, true, "everyone starts in Fern Gully")
+end)
+
+test("T83 Trophy board rows: the badge is the Trophy count, the band its arena (capped)", function()
+	local line = ProfileScreen.trophyBoardLine({ userId = 1, name = "Ava", xp = 1600, rank = 2, self = true } :: any, "Trapper", 4)
+	eq(line.level, 1600, "badge = Trophies")
+	eq(line.band, 4, "Volcano Rim is arena 5, capped to 4 bands")
+	eq(line.self, true)
+	eq(ProfileScreen.trophyBoardLine({ userId = 2, name = "Bo", xp = 300, rank = 3 } :: any, nil, 4).band, 2)
+	eq(ProfileScreen.trophyContent(8, 100), ProfileScreen.SECTION + (ProfileScreen.ARENA + ProfileScreen.GAP) * 8 + ProfileScreen.GAP + 100)
+end)
