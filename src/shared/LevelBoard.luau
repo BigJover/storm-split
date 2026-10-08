@@ -30,7 +30,10 @@ LevelBoard.NOTE = "The world board goes live when the game is published." -- DEC
 LevelBoard.LOADING = "Checking the board…"
 LevelBoard.TAB = "Leaderboard"
 
-export type Row = { userId: number, name: string, xp: number, rank: number?, self: boolean? }
+-- `xp` is the score the board ranks by: player XP here, Trophies on the Trophy board
+-- (Shared/TrophyBoard, PLAN T81). `live` (a row from this server): its value replaces the
+-- store's, for a score that can go down (Trophies); without it the higher one stands.
+export type Row = { userId: number, name: string, xp: number, rank: number?, self: boolean?, live: boolean? }
 export type View = { mode: "world" | "server", title: string, note: string?, rows: { Row }, mine: Row? }
 
 -- May the server ask the store again? `lastAt` = when it last asked (nil = never).
@@ -78,6 +81,11 @@ function LevelBoard.view(world: { Row }?, here: { Row }, me: number): View
 		local known = merged[row.userId]
 		if not known then
 			merged[row.userId] = { userId = row.userId, name = row.name, xp = PlayerLevel.whole(row.xp) }
+		elseif row.live then
+			known.xp = PlayerLevel.whole(row.xp) -- this server's own value (a score that can drop)
+			if row.name ~= "" then
+				known.name = row.name
+			end
 		else
 			known.xp = math.max(known.xp, PlayerLevel.whole(row.xp)) -- live XP beats a stale store value
 			if row.name ~= "" then
@@ -144,9 +152,10 @@ function LevelBoard.newCache(): Cache
 	return { world = nil, lastTick = nil, failing = false, pending = {}, written = {} }
 end
 
--- A hunter's XP to write on the next tick (only call for a save that loaded).
+-- A hunter's XP to write on the next tick (only call for a save that loaded). 0 is only
+-- written over a value this server wrote or seeded (Trophies can drop to 0; XP can't).
 function LevelBoard.queue(cache: Cache, userId: number, xp: number)
-	if xp > 0 then
+	if xp > 0 or cache.written[userId] ~= nil then
 		cache.pending[userId] = PlayerLevel.whole(xp)
 	end
 end

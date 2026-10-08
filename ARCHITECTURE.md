@@ -73,6 +73,7 @@ src/
 │   ├── PlayerLevel.luau     The saved player level: curve, one match's player XP, reward tier; pure
 │   ├── Cosmetics.luau       The player level's rewards: cosmetics and titles by level, equip checks; pure
 │   ├── LevelBoard.luau      Level leaderboard rules: rows, own row, This-server fallback, write budget; pure
+│   ├── TrophyBoard.luau     The Trophy board on LevelBoard's rules (live rows: Trophies can drop), arena badge; pure
 │   ├── ProfileScreen.luau   What the Profile screen (P) and its Leaderboard tab draw; pure
 │   ├── HomeLayout.luau      The home screen's bottom rows (Hunt Board row; hero · Unlocks · PLAY)
 │   ├── HitNotice.luau       The private "what hit you" line beside your HP bar; pure
@@ -108,6 +109,7 @@ src/
 │   │                        `bountyEvent` is the one way in for match events
 │   ├── Effects.luau         Tracers, blasts, burn discs (visual only)
 │   ├── LevelBoard.luau      The level leaderboard: OrderedDataStore top 50, cache, budgeted writes
+│   ├── TrophyBoard.luau     The Trophy leaderboard: LevelBoard.start on its own store, remote and cache
 │   ├── Wardrobe.luau        The only adder/remover of worn cosmetics on characters (hat, sprint trail)
 │   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
 ├── starter/StarterCharacterScripts → StarterPlayer.StarterCharacterScripts

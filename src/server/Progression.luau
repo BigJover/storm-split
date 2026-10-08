@@ -605,7 +605,7 @@ local function equip(player: Player, slot: unknown, id: unknown): (boolean, stri
 	end
 	-- Lobby only, and the player sees only REFUSED / NOT_LOBBY (DECISIONS #184, #187).
 	local state = ReplicatedStorage:GetAttribute("State")
-	local allowed, text, why = Cosmetics.request(state, slot, id, PlayerLevel.level(profile.playerXp))
+	local allowed, text, why = Cosmetics.request(state, slot, id, PlayerLevel.level(profile.playerXp), Profile.bestArenaIndex(profile))
 	if not allowed then
 		warn(`[Progression] equip refused for {player.Name}: {why}`)
 		return false, text

@@ -47,6 +47,7 @@ local Shop = require(script.Parent.Shop)
 local Scoreboard = require(script.Parent.Scoreboard)
 local Wardrobe = require(script.Parent.Wardrobe)
 local LevelBoard = require(script.Parent.LevelBoard)
+local TrophyBoard = require(script.Parent.TrophyBoard)
 local Effects = require(script.Parent.Effects)
 local Hero = require(script.Parent.Hero)
 local Hazards = require(script.Parent.Hazards)
@@ -202,6 +203,7 @@ Towers.init(map.towerFolder, {
 Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged, onLookChanged = Hero.lookChanged })
 Wardrobe.init() -- hats and trails on characters (PLAN T57)
 LevelBoard.init(remotes) -- the level leaderboard (PLAN T58); never blocks play
+TrophyBoard.init(remotes) -- the Trophy leaderboard (PLAN T81); never blocks play
 Health.init(remotes, {
 	-- An Armory covering where the hunter stands, and a Field Medic's Second Wind.
 	resistOf = function(player)

@@ -101,6 +101,27 @@ local function freshRewards(now: number, rng: Bounties.Rng): Bounties.State?
 	return if ok then state else nil
 end
 
+local function arenaIndex(key: unknown): number?
+	for i, arena in Config.Arenas do
+		if arena.key == key then
+			return i
+		end
+	end
+	return nil
+end
+
+-- The best arena reached, as a saved key: the stored one (if it's a real arena) or the
+-- one the Trophies are in, whichever is higher. nil = the first arena.
+function Profile.bestArenaKey(stored: unknown, trophies: number): string?
+	local best = math.max(arenaIndex(stored) or 1, Trophies.arenaOf(trophies))
+	return if best > 1 then Config.Arenas[best].key else nil
+end
+
+-- The best arena reached as an index into Config.Arenas (1 = the first).
+function Profile.bestArenaIndex(profile: Profile): number
+	return arenaIndex(profile.bestArena) or 1
+end
+
 function Profile.blank(now: number, rng: Bounties.Rng): Profile
 	return {
 		cores = 0,
@@ -133,11 +154,12 @@ function Profile.sanitize(raw: any, now: number, rng: Bounties.Rng): Profile
 		profile.highestRound = math.floor(raw.highestRound)
 	end
 	profile.playerXp = PlayerLevel.whole(raw.playerXp) -- missing (an older save) or garbage: 0
-	-- Only what this level has unlocked, in the right slot; anything else is dropped.
-	profile.equipped = Cosmetics.clean(raw.equipped, PlayerLevel.level(profile.playerXp))
 	-- Ranked (PLAN T80): older saves have none of these and load as 0 / nil.
 	profile.trophies = PlayerLevel.whole(raw.trophies)
 	profile.bestArena = Profile.bestArenaKey(raw.bestArena, profile.trophies)
+	-- Only what this level (or an arena reached, T81) has unlocked, in the right slot;
+	-- anything else is dropped.
+	profile.equipped = Cosmetics.clean(raw.equipped, PlayerLevel.level(profile.playerXp), Profile.bestArenaIndex(profile))
 	if
 		type(raw.escrow) == "table"
 		and type(raw.escrow.matchId) == "string"
@@ -209,7 +231,7 @@ end
 -- Wear item `id` in `slot` ("" or nil takes it off). Refused (with the reason) for an
 -- unknown slot or item, an item of another kind, or one above the player's level.
 function Profile.equip(profile: Profile, slot: unknown, id: unknown): (boolean, string)
-	local ok, why = Cosmetics.check(slot, id, PlayerLevel.level(profile.playerXp))
+	local ok, why = Cosmetics.check(slot, id, PlayerLevel.level(profile.playerXp), Profile.bestArenaIndex(profile))
 	if not ok then
 		return false, why
 	end
@@ -224,21 +246,6 @@ end
 
 -- Ranked: stakes and Trophies (PLAN T80, DECISIONS #216, #218) ----------------------
 
-local function arenaIndex(key: unknown): number?
-	for i, arena in Config.Arenas do
-		if arena.key == key then
-			return i
-		end
-	end
-	return nil
-end
-
--- The best arena reached, as a saved key: the stored one (if it's a real arena) or the
--- one the Trophies are in, whichever is higher. nil = the first arena.
-function Profile.bestArenaKey(stored: unknown, trophies: number): string?
-	local best = math.max(arenaIndex(stored) or 1, Trophies.arenaOf(trophies))
-	return if best > 1 then Config.Arenas[best].key else nil
-end
 
 -- Take `amount` into escrow for `matchId`. Refused (false) while another escrow is open,
 -- for a bad amount, or when the Amber doesn't cover it.

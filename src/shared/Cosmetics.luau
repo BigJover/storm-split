@@ -162,8 +162,23 @@ end
 
 -- Unlocks ----------------------------------------------------------------------------
 
-function Cosmetics.unlocked(item: Item, level: number): boolean
-	return math.floor(level) >= item.level
+-- `arena` = the index of the best arena reached (Config.Arenas, PLAN T81): an arena's
+-- Reward item is unlocked from the first time it's reached, whatever the level. nil = 1.
+function Cosmetics.arenaUnlocked(id: string, arena: number?, arenas: { { reward: string } }?): boolean
+	local list: { { reward: string } } = arenas or (Config.Arenas :: any)
+	for i, row in list do
+		if i > (arena or 1) then
+			break
+		end
+		if row.reward ~= "" and row.reward == id then -- a blank Reward cell unlocks nothing
+			return true
+		end
+	end
+	return false
+end
+
+function Cosmetics.unlocked(item: Item, level: number, arena: number?): boolean
+	return math.floor(level) >= item.level or Cosmetics.arenaUnlocked(item.id, arena)
 end
 
 -- Everything `level` has unlocked for `slot`, oldest first.
@@ -225,7 +240,7 @@ end
 
 -- May a player at `level` wear item `id` in `slot`? `id` "" or nil = take it off (always
 -- allowed). The reason is internal (logs, specs); players see `request`'s text.
-function Cosmetics.check(slot: unknown, id: unknown, level: number): (boolean, string)
+function Cosmetics.check(slot: unknown, id: unknown, level: number, arena: number?): (boolean, string)
 	if not Cosmetics.isSlot(slot) then
 		return false, "Unknown slot"
 	end
@@ -239,7 +254,7 @@ function Cosmetics.check(slot: unknown, id: unknown, level: number): (boolean, s
 	if item.kind ~= slot then
 		return false, "That doesn't go there"
 	end
-	if not Cosmetics.unlocked(item, level) then
+	if not Cosmetics.unlocked(item, level, arena) then
 		return false, `Unlocks at player level {item.level}`
 	end
 	return true, ""
@@ -252,11 +267,11 @@ Cosmetics.NOT_LOBBY = "Equip in the lobby."
 
 -- The server's answer to an equip request in match state `state` (the "State" attribute):
 -- (allowed, the text the player sees, the internal reason). Lobby only (#184).
-function Cosmetics.request(state: unknown, slot: unknown, id: unknown, level: number): (boolean, string, string)
+function Cosmetics.request(state: unknown, slot: unknown, id: unknown, level: number, arena: number?): (boolean, string, string)
 	if state ~= "Lobby" then
 		return false, Cosmetics.NOT_LOBBY, `Not in the Lobby ({tostring(state)})`
 	end
-	local allowed, why = Cosmetics.check(slot, id, level)
+	local allowed, why = Cosmetics.check(slot, id, level, arena)
 	if not allowed then
 		return false, Cosmetics.REFUSED, why
 	end
@@ -266,13 +281,13 @@ end
 -- `equipped` with every unknown slot, unknown id, wrong kind or locked item dropped (an
 -- old or edited save, or a level that somehow went down). Anything that isn't a table
 -- comes back as {}.
-function Cosmetics.clean(equipped: unknown, level: number): Equipped
+function Cosmetics.clean(equipped: unknown, level: number, arena: number?): Equipped
 	local out: Equipped = {}
 	if type(equipped) ~= "table" then
 		return out
 	end
 	for slot, id in equipped :: { [any]: any } do
-		if type(id) == "string" and id ~= "" and Cosmetics.check(slot, id, level) then
+		if type(id) == "string" and id ~= "" and Cosmetics.check(slot, id, level, arena) then
 			out[slot] = id
 		end
 	end

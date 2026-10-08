@@ -8,7 +8,8 @@
 	name — the design doc's visible badge. Read from the Hero and Mastery_*
 	player attributes that Hero and Progression publish. And each hunter's player
 	level badge and title (PLAN T58), on the home screen and in a match alike, from
-	the PlayerXp and Equip_title attributes Progression publishes.
+	the PlayerXp and Equip_title attributes Progression publishes. And their ranked
+	Trophies with the arena badge (PLAN T81, Shared/TrophyBoard.badge).
 ]]
 
 local Players = game:GetService("Players")
@@ -18,6 +19,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Theme = require(Shared:WaitForChild("Theme"))
 local PlayerLevel = require(Shared:WaitForChild("PlayerLevel"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
+local TrophyBoard = require(Shared:WaitForChild("TrophyBoard"))
 
 local Scoreboard = {}
 
@@ -38,8 +40,20 @@ local function setUp(player: Player)
 	local title = Instance.new("StringValue")
 	title.Name = "Title"
 	title.Parent = stats
+	-- Ranked Trophies and the arena badge (PLAN T81): "320 · Raptor Ridge", from the
+	-- Trophies attribute Progression publishes. Last, so it never pushes an older column
+	-- off Roblox's player list (it shows the first four stats).
+	local trophies = Instance.new("StringValue")
+	trophies.Name = TrophyBoard.COLUMN
+	trophies.Parent = stats
 	stats.Parent = player
 	pops[player] = value
+	local function refreshTrophies()
+		local count = player:GetAttribute("Trophies")
+		trophies.Value = TrophyBoard.badge(if type(count) == "number" then count else 0)
+	end
+	player:GetAttributeChangedSignal("Trophies"):Connect(refreshTrophies)
+	refreshTrophies()
 	local function refreshLevel()
 		local xp = player:GetAttribute("PlayerXp")
 		level.Value = PlayerLevel.level(if type(xp) == "number" then xp else 0)
