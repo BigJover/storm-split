@@ -696,14 +696,23 @@ function Progression.init(
 		task.spawn(load, player)
 	end
 	Players.PlayerRemoving:Connect(function(player)
-		-- An open ranked stake: a leaver forfeits it to the pot; a shutdown gives it back
-		-- (DECISIONS #216). Either way the escrow is closed before the last save.
+		-- An open ranked stake: a leaver forfeits it to the pot and loses Trophies as last
+		-- place in that lobby (PLAN T82, DECISIONS #233; never in Practice); a shutdown gives
+		-- it back (DECISIONS #216). Either way the escrow is closed before the last save.
 		local profile = profiles[player]
 		if profile and profile.escrow then
 			if closing then
 				Profile.refundEscrow(profile)
 			else
-				Profile.forfeitEscrow(profile, profile.escrow.matchId)
+				local modeKey = ReplicatedStorage:GetAttribute("BattleMode")
+				local n = ReplicatedStorage:GetAttribute("Sides")
+				Profile.leaveRanked(
+					profile,
+					profile.escrow.matchId,
+					if typeof(modeKey) == "string" then modeKey else "",
+					if typeof(n) == "number" then n else 0,
+					Progression.practice()
+				)
 			end
 		end
 		save(player)

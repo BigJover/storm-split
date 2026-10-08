@@ -40,6 +40,8 @@
 	  stake        take a ranked stake into escrow (refused while one is open or unaffordable)
 	  refundEscrow give back an escrow that was never settled (load, shutdown); returns it
 	  forfeitEscrow  a leaver's stake stays in the pot: the escrow just closes
+	  leaveRanked  a Ranked leaver: the escrow forfeits and the Trophies drop as last place,
+	               together (one save; PLAN T82, DECISIONS #233)
 	  settleBattle the match end: pay, apply Trophies, clear that match's escrow (one save)
 	  equip        wear an unlocked item in its slot, or take one off
 	  hold / settleHeld   player XP that arrived while the save was still loading: held,
@@ -280,6 +282,20 @@ function Profile.forfeitEscrow(profile: Profile, matchId: string): boolean
 	end
 	profile.escrow = nil
 	return true
+end
+
+-- A Ranked leaver (PLAN T82, DECISIONS #233): the stake stays in the pot (the escrow
+-- closes with nothing back) and the Trophies drop as if they'd placed last in that lobby
+-- (Trophies.leaverDelta; the arena floor holds), in one step so one save stores both.
+-- Practice changes no Trophies. Returns the Trophies change; nothing is touched (0) when
+-- that match's escrow isn't open (a casual battle, or one already settled).
+function Profile.leaveRanked(profile: Profile, matchId: string, modeKey: string, n: number, practice: boolean?): number
+	if not Profile.forfeitEscrow(profile, matchId) then
+		return 0
+	end
+	local before = profile.trophies
+	profile.trophies = Trophies.apply(before, Trophies.leaverDelta(modeKey, n, practice))
+	return profile.trophies - before
 end
 
 -- The match end for one hunter: `payout` Amber (casual payout + pot share), `delta`

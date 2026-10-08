@@ -17,6 +17,8 @@
 	      you're in is always the best you've reached
 	  newArenas(old, new)      the arenas reached for the first time going from old to new
 	                           (indices, lowest first); empty when none
+	  leaverDelta(mode, n, practice?)  a Ranked leaver's Trophies (PLAN T82, DECISIONS #233):
+	      what last place in that lobby gives (Camp Clash: the loss; Bone Rush: last of n)
 ]]
 
 local Config = require(script.Parent.Config)
@@ -48,6 +50,10 @@ function Trophies.delta(modeKey: string, placement: number, n: number, practice:
 		return round(t.RoyaleLastTrophies * (placement - (n - third)) / third)
 	end
 	return 0
+end
+
+function Trophies.leaverDelta(modeKey: string, n: number, practice: boolean?): number
+	return Trophies.delta(modeKey, n, n, practice)
 end
 
 function Trophies.arenaOf(trophies: number, arenas: { Arena }?): number
