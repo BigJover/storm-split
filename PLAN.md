@@ -8,7 +8,7 @@ PLAYTEST.md re-run; blocked right now on Jovan reconnecting Rojo). It does not b
 phase-7 Builder batches. Each phase-7 batch still ends with its own Tester step, and phase 7
 is not "fully done" until those steps and Jovan's multi-player steps (T86) have run.
 
-**Status (2026-10-08): batch 5 signed off (8a42872, 2d96e1f, b314bcb, 9b430d7, 9c0b421, afe0dd1; 579 specs; #234). Next: T84 (Builder), then T85 + T86. Earlier: batch 4 signed off (34d3606 F4, 57c89cf T79b, d9c938b T80, 946bcd6 T81; 559 specs; #233). Next: batch 5 = T82, T83 with #233's fixes. Earlier: batch 3 signed off (45f5cb2, 8d4673e, bcdfe9f; 520 specs; T79 review = #232). No Builder while the Tester's Run 2 is live. Next: batch 4 = T79b, T80, T81. Earlier: batch 2 signed off (T75 0ab8f14, T76 9b356fa; 491 specs; #231). T77–T78 final with #231's additions. Earlier: batch 1 signed off (T73 62608e6, T71 86c94bf, T72 4b2a3bc; 467 specs; #227–#228). T75–T76 final as written. Queued: T78 amendments below.**
+**Status (2026-10-08): T84 stopped on its bars as designed; #235 makes the edge report-only and T84b buffs four perks. Next: T84 (rerun, revised) + T84b in one Builder run. Earlier: batch 5 signed off (8a42872, 2d96e1f, b314bcb, 9b430d7, 9c0b421, afe0dd1; 579 specs; #234). Next: T84 (Builder), then T85 + T86. Earlier: batch 4 signed off (34d3606 F4, 57c89cf T79b, d9c938b T80, 946bcd6 T81; 559 specs; #233). Next: batch 5 = T82, T83 with #233's fixes. Earlier: batch 3 signed off (45f5cb2, 8d4673e, bcdfe9f; 520 specs; T79 review = #232). No Builder while the Tester's Run 2 is live. Next: batch 4 = T79b, T80, T81. Earlier: batch 2 signed off (T75 0ab8f14, T76 9b356fa; 491 specs; #231). T77–T78 final with #231's additions. Earlier: batch 1 signed off (T73 62608e6, T71 86c94bf, T72 4b2a3bc; 467 specs; #227–#228). T75–T76 final as written. Queued: T78 amendments below.**
 
 Round 1–4 rules hold (one task = one commit, pushed; `tools/check.sh`, `export_constants.py`,
 `tools/test.sh` green; diff `Config.luau` after every sheet change; openpyxl only, assert a
@@ -295,12 +295,21 @@ balance.
 - **Accept:** `PanelRules` updated with spec; no-trap sweep for each screen; Tester solo
   with stand-ins (TEAM win, TEAM loss, ROYALE).
 
-### T84 — PvP parity bars (final, #234)
-- `tools/value.py` gains two reports, read by the exporter as bars (levers `CompetitiveEdgeMax` 0.10, `PerkParityBand` 0.15):
-  - **Edge (per hero):** maxed (mastery 20) vs mastery 0, as a share of a hunter's match output. Edge = (ability share of the hero's damage over a 40-round Normal match) × (ability gain from the cooldown −30% plus the 10 and 15 perks' #99 worth %) + (free first upgrade's cash ÷ the Normal starting cash) + (the small perks' #135 values, each as a % of its base: pick-up reach, heal, respawn, repair), each small-perk term × `0.25` (they're non-damage; document the weight in value.py's header and the recap). Print every component per hero.
-  - **Parity:** for each mastery 10, 15 and 20 (both perks summed), the max ÷ min of the heroes' #99 worth % ≤ 1 + `PerkParityBand`.
-- **If a bar fails, stop and report** the components. Don't touch the sheet; the Director names the buff cells (buff the weaker, never nerf; #220) in a follow-up T84b.
-- **Accept:** both reports print; the exporter enforces both bars (a negative test per bar); `audit.py --strict` 0; Config unchanged unless T84b.
+### T84 — PvP parity: perk-parity bar + edge report (revised, #235)
+- **Parity bar (exporter-enforced):** the max ÷ min of the heroes' #99 worth % ≤ 1 + `PerkParityBand` (1.15) at **mastery 10** (the L10 perk) and at **mastery 15+** (L10 + L15 summed; 20 adds no ability perk). Negative test.
+- **Edge = report only, never a bar.** value.py prints per hero: the free first upgrade (cash ÷ Normal starting cash), the cooldown −30% and the perks as ability gain, each small perk, and a **duel edge** (what touches hunter-vs-hunter fights: the round-clear heal in HP and the respawn time in s; perks never touch hunters, #212). It flags any total over `CompetitiveEdgeMax` as a **watch line** for the recap. That lever stays as the watch threshold. The exporter doesn't enforce it.
+- **Definitions:** "ability share" is the ability's share of that hero's *own effect*: for damage abilities (Tracking Dart, Flare Strike) it's the damage share; for **Rally Cry** it's the tower DPS it adds (towers in radius × boost × uptime, from value.py's existing tower model); for **Triage Kit** it's HP restored per round, reported in HP, not as a damage %. **Pick-up reach** (base 0) is reported in studs, not as a % of base.
+- **Accept:** the parity bar passes after T84b; the edge report prints every component; `audit.py --strict` 0.
+
+### T84b — Parity buffs (Director's cells; `Mastery Perks` sheet; assert each old value first)
+| Cell | Old → new | Text cell (D) new |
+|---|---|---|
+| F7 (RIFLE 10 radius) | 5 → **6** | "Rally Cry reaches 6 studs further" |
+| E8 (RIFLE 15 seconds) | 3 → **3.5** | "Rally Cry lasts 3.5s longer" |
+| F9 (SHOTGUN 10 radius) | 1.5 → **2.5** | "Flare Strike reaches 2.5 studs further" |
+| F11 (MEDIC 10 radius) | 4 → **5** | "Triage Kit reaches 5 studs further" |
+| G12 (MEDIC 15 power) | 10 → **14** | "Triage Kit heals 14 more HP" |
+Expected worth % (bases 8 s / 25 / 10 / 20 radius, 10 s Rally, 40 HP heal): M10 = 25 / 24 / 25 / 25 → 1.04; summed = 65 / 59 / 61 / 60 → 1.10; each L15 > its L10; all ≤ 40 cap. Tracker unchanged (the top). **If the exporter's numbers differ from these, stop and report**, with no other cells changed. HEROES.md "Mastery" table and the perk names' text updated to match. Config diff = these 5 values + 5 texts.
 
 ### T85 — Docs + recap
 - **#234:** a short 🦖 pass on batch 5's invented strings, folded in here (Dino agent lists any must-fix; the Builder applies it in this task). Already decided: Bone Rush placements below 1st read **"Bone Rush — Nth place"** (not "Nth Hunter").
