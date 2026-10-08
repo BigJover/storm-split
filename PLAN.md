@@ -8,7 +8,7 @@ PLAYTEST.md re-run; blocked right now on Jovan reconnecting Rojo). It does not b
 phase-7 Builder batches. Each phase-7 batch still ends with its own Tester step, and phase 7
 is not "fully done" until those steps and Jovan's multi-player steps (T86) have run.
 
-**Status (2026-10-06): batch 3 signed off (45f5cb2, 8d4673e, bcdfe9f; 520 specs; T79 review = #232). No Builder while the Tester's Run 2 is live. Next: batch 4 = T79b, T80, T81. Earlier: batch 2 signed off (T75 0ab8f14, T76 9b356fa; 491 specs; #231). T77–T78 final with #231's additions. Earlier: batch 1 signed off (T73 62608e6, T71 86c94bf, T72 4b2a3bc; 467 specs; #227–#228). T75–T76 final as written. Queued: T78 amendments below.**
+**Status (2026-10-08): batch 4 signed off (34d3606 F4, 57c89cf T79b, d9c938b T80, 946bcd6 T81; 559 specs; #233). Next: batch 5 = T82, T83 with #233's fixes. Earlier: batch 3 signed off (45f5cb2, 8d4673e, bcdfe9f; 520 specs; T79 review = #232). No Builder while the Tester's Run 2 is live. Next: batch 4 = T79b, T80, T81. Earlier: batch 2 signed off (T75 0ab8f14, T76 9b356fa; 491 specs; #231). T77–T78 final with #231's additions. Earlier: batch 1 signed off (T73 62608e6, T71 86c94bf, T72 4b2a3bc; 467 specs; #227–#228). T75–T76 final as written. Queued: T78 amendments below.**
 
 Round 1–4 rules hold (one task = one commit, pushed; `tools/check.sh`, `export_constants.py`,
 `tools/test.sh` green; diff `Config.luau` after every sheet change; openpyxl only, assert a
@@ -279,6 +279,8 @@ balance.
 - **Accept:** spec for the fallback; Tester: Profile shows the This-server board.
 
 ### T82 — Home screen battle options + Ready
+- **#233, first commit (server):** a **Ranked leaver loses Trophies** as if they placed last (Camp Clash: the loss delta; Bone Rush: last place in that lobby size), applied and saved when they leave (PlayerRemoving, same save as the forfeited escrow); never in Practice. Spec.
+- **Ready refusal strings** (`ReadyRefused` reason → text; `{fee}` = `Competitive buy-in`, `{cur}` = Theme.Currency): `offline` → "Your save didn't load, so you can't pay the Entry fee. Casual is still open." · `cantAfford` → "You need {fee} {cur} for the Entry fee." · `loading` → "Your save is still loading. Try again in a moment." · `practice` (not a refusal, an info line under Ready) → "Practice Hunt: session Amber only. Trophies won't change." · any other key → "You can't ready up right now."
 - TEAM/ROYALE cards available; host: Casual/Competitive, 2/3 sides, stand-ins (Studio).
   Every player: Ready + stake confirm (shows buy-in, balance, Practice/offline reason), who's
   ready, min-players line; PLAY is enabled when the minimum is met.
@@ -286,6 +288,7 @@ balance.
   Tester solo as host. Non-host Ready → T86.
 
 ### T83 — In-match + results UI
+- **#233 first:** (a) enemy towers get an **"Inspect"** prompt (ActionText "Inspect") that opens T78's read-only panel; own-camp towers keep "Upgrade". (b) **Player list = 4 stats:** Bones, Level, Trophies ("<n> · <Arena>"), Title. The **Mastery** column leaves the player list (it stays on the Mastery screen, Profile and the hero card). Spec the column order.
 - Side banner/colour, own cash/Fence, sides alive, Tab scoreboard by side (Bones), spectate
   banner, overtime banner; results: placement, pot shares, ±Trophies, arena change, Practice
   tag; Profile Trophies tab (arena ladder, current arena, board).
