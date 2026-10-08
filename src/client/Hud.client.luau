@@ -203,6 +203,77 @@ do
 	limit.Parent = clearText
 end
 
+-- Battle results (PLAN T83; Shared/PanelRules.battleResults/resultsOpen): placements of
+-- every camp, your Amber (payout, Amber Hoard share), Trophies and arena, the Practice
+-- Hunt note, player XP. No-trap: it fits any window (its body scrolls, the X sits outside
+-- the scroll), the X is Modal so the mouse is free, and it closes on X or on going home.
+local resultsDismissed = false
+local battleResults = Instance.new("Frame")
+battleResults.Name = "BattleResults"
+battleResults.AnchorPoint = Vector2.new(0.5, 0.5)
+battleResults.Position = UDim2.fromScale(0.5, 0.5)
+battleResults.Size = UDim2.new(1, -32, 1, -136) -- clear of the status line, inside any window
+battleResults.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
+battleResults.BackgroundTransparency = 0.1
+battleResults.Visible = false
+battleResults.Parent = gui
+do
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 12)
+	c.Parent = battleResults
+	local limit = Instance.new("UISizeConstraint")
+	limit.MaxSize = Vector2.new(480, 460)
+	limit.Parent = battleResults
+end
+local resultsTitle = Instance.new("TextLabel")
+resultsTitle.Name = "Title"
+resultsTitle.Position = UDim2.new(0, 12, 0, 8)
+resultsTitle.Size = UDim2.new(1, -64, 0, 40) -- leaves room for the X
+resultsTitle.BackgroundTransparency = 1
+resultsTitle.Font = Enum.Font.GothamBlack
+resultsTitle.TextScaled = true
+resultsTitle.TextXAlignment = Enum.TextXAlignment.Left
+resultsTitle.Parent = battleResults
+do
+	local limit = Instance.new("UITextSizeConstraint")
+	limit.MaxTextSize = 24
+	limit.MinTextSize = 8
+	limit.Parent = resultsTitle
+end
+local resultsClose = Instance.new("TextButton")
+resultsClose.Name = "Close"
+resultsClose.AnchorPoint = Vector2.new(1, 0)
+resultsClose.Position = UDim2.new(1, -8, 0, 8)
+resultsClose.Size = UDim2.fromOffset(40, 40)
+resultsClose.BackgroundColor3 = Color3.fromRGB(150, 60, 70)
+resultsClose.TextColor3 = Color3.new(1, 1, 1)
+resultsClose.Font = Enum.Font.GothamBlack
+resultsClose.TextSize = 20
+resultsClose.Text = "X"
+resultsClose.Modal = true -- frees the mouse while the results are up
+resultsClose.Parent = battleResults
+do
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 8)
+	c.Parent = resultsClose
+end
+local resultsBody = Instance.new("ScrollingFrame")
+resultsBody.Name = "Body"
+resultsBody.Position = UDim2.new(0, 12, 0, 56)
+resultsBody.Size = UDim2.new(1, -24, 1, -64)
+resultsBody.BackgroundTransparency = 1
+resultsBody.BorderSizePixel = 0
+resultsBody.CanvasSize = UDim2.new()
+resultsBody.AutomaticCanvasSize = Enum.AutomaticSize.Y
+resultsBody.ScrollBarThickness = 6
+resultsBody.Parent = battleResults
+do
+	local list = Instance.new("UIListLayout")
+	list.SortOrder = Enum.SortOrder.LayoutOrder
+	list.Padding = UDim.new(0, 4)
+	list.Parent = resultsBody
+end
+
 local function attr(name: string, default: any): any
 	local value = ReplicatedStorage:GetAttribute(name)
 	if value == nil then
@@ -210,6 +281,85 @@ local function attr(name: string, default: any): any
 	end
 	return value
 end
+
+local function arenaDisplay(key: unknown): string?
+	for _, arena in Config.Arenas do
+		if arena.key == key then
+			return arena.display
+		end
+	end
+	return nil
+end
+
+local function resultsLine(name: string, order: number, text: string, color: Color3, bold: boolean)
+	local line = Instance.new("TextLabel")
+	line.Name = name
+	line.LayoutOrder = order
+	line.Size = UDim2.new(1, -8, 0, 0)
+	line.AutomaticSize = Enum.AutomaticSize.Y
+	line.BackgroundTransparency = 1
+	line.TextColor3 = color
+	line.Font = if bold then Enum.Font.GothamBlack else Enum.Font.GothamBold
+	line.TextSize = 17
+	line.TextWrapped = true
+	line.TextXAlignment = Enum.TextXAlignment.Left
+	line.Text = text
+	line.Parent = resultsBody
+end
+
+local function renderBattleResults(battle: string)
+	local mySide = Sides.playerSide(player:GetAttribute("Side"), attr("Sides", nil))
+	local camps = {}
+	for side = 1, math.floor(attr("Sides", 1)) do
+		local camp, place = attr(Sides.attr("Camp", side), nil), attr(Sides.attr("Place", side), nil)
+		if typeof(camp) == "string" and typeof(place) == "number" then
+			table.insert(camps, { side = side, camp = camp, place = place, bones = attr(Sides.attr("CampBones", side), 0) })
+		end
+	end
+	local place = player:GetAttribute("BattlePlace")
+	local out = PanelRules.battleResults({
+		mode = battle,
+		place = if typeof(place) == "number" then place else nil,
+		mySide = mySide,
+		camps = camps,
+		payout = player:GetAttribute("LastPayout"),
+		share = player:GetAttribute("LastPotShare"),
+		pot = attr("BattlePot", nil),
+		trophies = player:GetAttribute("LastTrophies"),
+		trophiesNow = player:GetAttribute("Trophies"),
+		newArena = arenaDisplay(player:GetAttribute("LastArena")),
+		practice = attr("BattlePractice", false) == true,
+		xp = player:GetAttribute("LastPlayerXp"),
+		levelFrom = player:GetAttribute("LastPlayerLevelFrom"),
+		levelTo = player:GetAttribute("LastPlayerLevel"),
+	})
+	local color = if out.won then Color3.fromRGB(140, 240, 170) else Color3.fromRGB(255, 120, 140)
+	resultsTitle.Text = out.title
+	resultsTitle.TextColor3 = color
+	label.TextColor3 = color
+	for _, child in resultsBody:GetChildren() do
+		if child:IsA("TextLabel") then
+			child:Destroy()
+		end
+	end
+	local order = 0
+	for _, row in out.placements do
+		order += 1
+		resultsLine("Place", order, row.text, if row.mine then Color3.fromRGB(250, 205, 80) else Color3.fromRGB(240, 236, 250), row.mine)
+	end
+	for _, text in out.lines do
+		order += 1
+		resultsLine("Line", order, text, Color3.fromRGB(250, 205, 80), false)
+	end
+end
+
+resultsClose.Activated:Connect(function()
+	resultsDismissed = true
+	battleResults.Visible = false
+end)
+ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(function()
+	resultsDismissed = false -- every results screen opens once
+end)
 
 local function refresh()
 	local state = attr("State", "Waiting")
@@ -241,15 +391,10 @@ local function refresh()
 	local difficultyKey = attr("Difficulty", Config.DifficultyOrder[1])
 	local difficultyName = Config.Difficulties[difficultyKey] and Config.Difficulties[difficultyKey].display or ""
 
+	results.Visible = results.Visible and battle == nil -- a battle has its own results panel
+	battleResults.Visible = PanelRules.resultsOpen(state, battle, resultsDismissed)
 	if battle and (state == "GameOver" or state == "Victory") then
-		-- Battle results (the full screen is T83): the winner's title, else the place.
-		local place = player:GetAttribute("BattlePlace")
-		local title = BattleFlow.resultTitle(battle, place)
-		local bones = player:GetAttribute("BattleBones") or 0
-		local placeLine = if typeof(place) == "number" then `Place {place}  ·  {bones} {Theme.Bones}` else ""
-		results.Text = `<font color="{if title then "#8cf0aa" else "#ff788c"}">{title or "GAME OVER"}</font>\n<font size="18">{camp}\n{placeLine}</font>`
-		label.Text = title or `GAME OVER  ·  {placeLine}`
-		label.TextColor3 = if title then Color3.fromRGB(140, 240, 170) else Color3.fromRGB(255, 120, 140)
+		renderBattleResults(battle)
 	elseif state == "GameOver" or state == "Victory" then
 		local won = state == "Victory"
 		local payout = player:GetAttribute("LastPayout")
@@ -616,12 +761,20 @@ end)
 for _, name in { "State", "Round", "Lives", "Alive", "Cash", "Difficulty", "RoundsCleared", "Sides", "BattleMode" } do
 	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refresh)
 end
-for _, name in { "HeroXp", "HeroXpPending", "HeroLevel", "Side", "BattlePlace", "BattleBones" } do
+for _, name in { "HeroXp", "HeroXpPending", "HeroLevel", "Side", "BattlePlace", "BattleBones", "LastPotShare", "LastTrophies", "LastArena", "LastPlayerLevel", "Trophies" } do
 	player:GetAttributeChangedSignal(name):Connect(refresh)
 end
 -- Another battle side's cash or Fence ("Cash2", "Lives3"...; Shared/Sides.attr).
 ReplicatedStorage.AttributeChanged:Connect(function(name: string)
-	if string.match(name, "^Cash%d+$") or string.match(name, "^Lives%d+$") or string.match(name, "^Camp%d*$") then
+	if
+		string.match(name, "^Cash%d+$")
+		or string.match(name, "^Lives%d+$")
+		or string.match(name, "^Camp%d*$")
+		or string.match(name, "^Place%d*$")
+		or string.match(name, "^CampBones%d*$")
+		or name == "BattlePot"
+		or name == "BattlePractice"
+	then
 		refresh()
 	end
 end)

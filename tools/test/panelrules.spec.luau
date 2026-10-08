@@ -197,3 +197,52 @@ test("T83 Server/Battle publishes each camp's Bones and a Team per camp, and cle
 	ok(src:find("team:Destroy()", 1, true) ~= nil, "reset removes the camp Teams")
 	ok(src:find("BattleFlow.campColor(side)", 1, true) ~= nil, "Team colour = the camp colour")
 end)
+
+-- PLAN T83: the battle results screen ---------------------------------------------------
+
+local function camps3()
+	return {
+		{ side = 2, camp = "Blue Camp", place = 1, bones = 12 },
+		{ side = 1, camp = "Red Camp", place = 2, bones = 30 },
+		{ side = 3, camp = "Green Camp", place = 2, bones = 8 },
+	}
+end
+
+test("T83 results open only for a battle's end, until the X", function()
+	eq(PanelRules.resultsOpen("Victory", "TEAM", false), true)
+	eq(PanelRules.resultsOpen("GameOver", "ROYALE", false), true)
+	eq(PanelRules.resultsOpen("Victory", "TEAM", true), false, "X pressed")
+	eq(PanelRules.resultsOpen("Victory", nil, false), false, "co-op keeps its own label")
+	for _, state in { "Lobby", "Building", "Playing" } do
+		eq(PanelRules.resultsOpen(state, "TEAM", false), false, `closes on {state}`)
+	end
+end)
+
+test("T83 results: winner titles, placements in order, Ranked Hoard + Trophies + new arena", function()
+	local r = PanelRules.battleResults({
+		mode = "TEAM", place = 1, mySide = 2, camps = camps3(),
+		payout = 80, share = 30, pot = 60, trophies = 30, trophiesNow = 330, newArena = "Raptor Ridge",
+		practice = false, xp = 120,
+	})
+	eq(r.title, "Camp Clash — Your camp wins the hunt!")
+	eq(r.won, true)
+	eq(r.placements[1].text, "1. Blue Camp · 12 Bones")
+	eq(r.placements[1].mine, true)
+	eq(r.placements[2].text, "2. Red Camp · 30 Bones", "a shared place: by side")
+	eq(r.placements[3].text, "2. Green Camp · 8 Bones")
+	eq(table.concat(r.lines, "|"), "+80 Amber|Amber Hoard 60 Amber · your share +30|+30 Trophies · Raptor Ridge|New arena: Raptor Ridge!|+120 player XP")
+	eq(PanelRules.battleResults({ mode = "ROYALE", place = 1, mySide = 1, camps = {}, practice = false }).title, "Bone Rush — Top Hunter!")
+end)
+
+test("T83 results: losers' titles, a Trophy loss, Practice Hunt changes no Trophies, casual has no Hoard", function()
+	local loss = PanelRules.battleResults({ mode = "ROYALE", place = 3, mySide = 3, camps = {}, payout = 10, share = 0, trophies = -20, trophiesNow = 300, practice = false })
+	eq(loss.title, "Bone Rush — 3rd Hunter")
+	eq(loss.won, false)
+	eq(table.concat(loss.lines, "|"), "+10 Amber|Amber Hoard share +0|−20 Trophies · Raptor Ridge")
+	eq(PanelRules.battleResults({ mode = "TEAM", place = 2, mySide = 2, camps = {}, practice = false }).title, "Camp Clash — 2nd place")
+	local practice = PanelRules.battleResults({ mode = "TEAM", place = 1, mySide = 1, camps = {}, payout = 80, share = 30, pot = 60, newArena = "Raptor Ridge", practice = true })
+	eq(table.concat(practice.lines, "|"), "+80 Amber|Amber Hoard 60 Amber · your share +30|Practice Hunt: session Amber only. Trophies won't change.")
+	local casual = PanelRules.battleResults({ mode = "TEAM", place = 2, mySide = 2, camps = {}, payout = 5, practice = false })
+	eq(table.concat(casual.lines, "|"), "+5 Amber", "no Hoard, no Trophies")
+	eq(PanelRules.ordinal(11) .. PanelRules.ordinal(22) .. PanelRules.ordinal(13) .. PanelRules.ordinal(101), "11th22nd13th101st")
+end)

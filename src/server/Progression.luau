@@ -539,6 +539,7 @@ function Progression.endBattle(result: BattleResult)
 	end
 	local settled, pot, leftover = Stakes.settleBattle(result.mode, result.n, seats, result.ranked, practice)
 	ReplicatedStorage:SetAttribute("BattlePractice", if result.ranked and practice then true else nil)
+	ReplicatedStorage:SetAttribute("BattlePot", if result.ranked then pot else nil) -- the results' Amber Hoard (T83)
 	for _, seat in seats do
 		local player: Player = seat.id
 		local profile = profiles[player]

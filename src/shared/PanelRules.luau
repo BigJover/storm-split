@@ -26,6 +26,9 @@
 	the tier count and the X stays on screen (no-trap rule).
 ]]
 
+local BattleFlow = require(script.Parent.BattleFlow)
+local HomeLayout = require(script.Parent.HomeLayout)
+local Modes = require(script.Parent.Modes)
 local Theme = require(script.Parent.Theme)
 local TrophyBoard = require(script.Parent.TrophyBoard)
 
@@ -184,6 +187,93 @@ function PanelRules.campsHeader(rows: { { out: boolean } }): string
 		end
 	end
 	return `{alive}/{#rows} camps left`
+end
+
+-- The battle results screen (PLAN T83, DECISIONS #218, #223) -----------------------------
+-- A panel with an X: it frees the mouse, fits any window (its body scrolls) and closes on
+-- its X or when the match leaves the results (going home). No key opened it, so no key
+-- closes it. Co-op keeps its own result label.
+
+-- Is the battle results panel open? `dismissed`: the hunter pressed its X this match.
+function PanelRules.resultsOpen(state: string?, battle: string?, dismissed: boolean): boolean
+	return battle ~= nil and (state == "Victory" or state == "GameOver") and not dismissed
+end
+
+function PanelRules.ordinal(n: number): string
+	local whole = math.floor(n)
+	local tens = whole % 100
+	local suffix = "th"
+	if tens < 11 or tens > 13 then
+		suffix = ({ "st", "nd", "rd" })[whole % 10] or "th"
+	end
+	return `{whole}{suffix}`
+end
+
+export type ResultsIn = {
+	mode: string, -- "TEAM" / "ROYALE"
+	place: number?, -- your camp's placement
+	mySide: number,
+	camps: { { side: number, camp: string, place: number, bones: number } },
+	payout: number?, -- LastPayout (casual payout + Hoard share)
+	share: number?, -- LastPotShare: Ranked only
+	pot: number?, -- BattlePot: the Amber Hoard, Ranked only
+	trophies: number?, -- LastTrophies: the change (Ranked, not Practice)
+	trophiesNow: number?, -- your Trophies after it
+	newArena: string?, -- the arena first reached this match (its name)
+	practice: boolean, -- a Practice Hunt (unpublished Ranked)
+	xp: number?,
+	levelFrom: number?,
+	levelTo: number?,
+}
+
+export type ResultsOut = { title: string, won: boolean, placements: { { text: string, mine: boolean } }, lines: { string } }
+
+function PanelRules.battleResults(r: ResultsIn): ResultsOut
+	local mode = Modes.Modes[r.mode]
+	local display = if mode then mode.display else ""
+	local winTitle = BattleFlow.resultTitle(r.mode, r.place)
+	local title = winTitle
+	if not title then
+		title = if r.place == nil
+			then `{display} — GAME OVER`
+			elseif r.mode == "ROYALE" then `{display} — {PanelRules.ordinal(r.place)} Hunter`
+			else `{display} — {PanelRules.ordinal(r.place)} place`
+	end
+	local order = table.clone(r.camps)
+	table.sort(order, function(a, b)
+		return if a.place ~= b.place then a.place < b.place else a.side < b.side
+	end)
+	local placements = {}
+	for _, c in order do
+		table.insert(placements, { text = `{c.place}. {c.camp} · {math.floor(c.bones)} {Theme.Bones}`, mine = c.side == r.mySide })
+	end
+	local lines = {}
+	if r.payout ~= nil then
+		table.insert(lines, `+{math.floor(r.payout)} {Theme.Currency}`)
+	end
+	if r.share ~= nil then
+		table.insert(lines, if r.pot ~= nil
+			then `Amber Hoard {math.floor(r.pot)} {Theme.Currency} · your share +{math.floor(r.share)}`
+			else `Amber Hoard share +{math.floor(r.share)}`)
+	end
+	if r.practice then
+		table.insert(lines, HomeLayout.PRACTICE_LINE)
+	elseif r.trophies ~= nil then
+		local n = math.floor(r.trophies)
+		local change = if n < 0 then `−{-n}` else `+{n}`
+		local arena = if r.trophiesNow ~= nil then ` · {TrophyBoard.arenaName(r.trophiesNow)}` else ""
+		table.insert(lines, `{change} Trophies{arena}`)
+	end
+	if r.newArena ~= nil and not r.practice then
+		table.insert(lines, `New arena: {r.newArena}!`)
+	end
+	if r.xp ~= nil then
+		table.insert(lines, `+{math.floor(r.xp)} player XP`)
+		if r.levelFrom ~= nil and r.levelTo ~= nil then
+			table.insert(lines, `Player level up! {r.levelFrom} → {r.levelTo}`)
+		end
+	end
+	return { title = title, won = winTitle ~= nil, placements = placements, lines = lines }
 end
 
 return PanelRules

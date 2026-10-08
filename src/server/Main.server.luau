@@ -472,6 +472,7 @@ local function resetBoard()
 	end
 	ReplicatedStorage:SetAttribute("BattleRanked", nil)
 	ReplicatedStorage:SetAttribute("BattlePractice", nil)
+	ReplicatedStorage:SetAttribute("BattlePot", nil)
 end
 
 local function playBattle()
