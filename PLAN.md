@@ -1,4 +1,4 @@
-# Plan — Phase 8: ready to publish (Director, 2026-10-08) — PROPOSAL, batch 1 can start
+# Plan — Phase 8: ready to publish (Director, 2026-10-08) — batch 1 DONE; the rest needs Jovan
 
 Jovan (2026-10-06): **"begin phase 8 when all loose ends on phase 7 are done"**. Phase 7's
 loose ends: T86b re-check (Tester Run 4, running), then only the items that need Jovan
@@ -6,8 +6,12 @@ loose ends: T86b re-check (Tester Run 4, running), then only the items that need
 1–4 Studio playtest (T31/T38/T60/T70) was covered by PLAYTEST Runs 1–2 and its fails (F1–F4)
 are fixed. Design calls: `DECISIONS.md` #237–#243.
 
-**Status (2026-10-08): proposed. Batch 1 needs nothing from Jovan and can start once Run 4
-passes. Batches 2–3 wait on him.**
+**Status (2026-10-08, batch 1 done): T88–T93 + T91b + F7 built (87cf75c, 6209a88, b76c179,
+8e07fdf, 72495d3, e2ba805, 60accd3, b1a090c; 619 specs). Studio: Run 4 (T86b) and Run 5
+(23 pass, 0 fail). Open for agents: N7 (Studio-only: "Stand-ins hold" can be released
+mid-battle, so a held battle can end; Builder now). Recap: `RECAP.md` "Phase 8" (T99 done,
+#246–#248). Everything else needs Jovan: asks 1–4 below, plus the battle length (ask 3 now
+reads: "rounds are 120 s and a full battle ~60–80 min: too long?"). Earlier: proposed.**
 
 ## Ask Jovan first (Phase 8 can't finish without these)
 1. **The 4×-Amber towers (`TOWERS_LATER.md` "What Jovan needs to pick"):** (a) which of
@@ -16,9 +20,11 @@ passes. Batches 2–3 wait on him.**
    (d) Amber Rush in or out; (e) Ranger Station worth its cost or swap for a simpler tower.
 2. **Publish the place (privately is fine)?** Saving, Ranked stakes, saved Trophies and both
    world boards only work published. Batch 2 is a checklist he follows (~15 min).
-3. **Battle difficulty:** on Normal every battle ended by round 9–11 (Fence 30 → 11 in round
-   8–9), so Final Stampede never happens. Easier battles (more Fence or lower density), or is
-   a short, sharp battle right?
+3. **Battle length (revised by T91b, #245):** the cause was the 60 s round cap (Normal rounds
+   run 90–119 s), not Fence or density. Rounds are now 120 s: a typical camp lasts to round
+   21 (2 camps) / 32 (3 camps, Bone Rush), a competent one sees Final Stampede, and a full
+   battle runs ~60–80 min. Too long? (Levers if so: a lower round cap, or a shorter battle
+   that ends earlier than round 40.)
 4. **A lobby place with cross-server matchmaking** (#219 kept it out of phase 7): build it
    after publishing (batch 3), or stay one-server for now?
 
@@ -37,18 +43,18 @@ unless Jovan asks.
 ## Batches (option A)
 | Batch | Tasks | Needs Jovan? |
 |---|---|---|
-| 1 | T88, T89, T90, T91, T93 DONE (6209a88, b76c179, 8e07fdf, 72495d3, e2ba805; F7 87cf75c; 614 specs). Open: **T92 (final) + T91b**, then Tester Run 5 | No |
+| 1 | **DONE.** T88, T89, T90, T91, T93, T92 (final), T91b (6209a88, b76c179, 8e07fdf, 72495d3, e2ba805, 60accd3, b1a090c; F7 87cf75c; 619 specs); Tester Run 5 23 pass / 0 fail. Open: N7 (Studio test aid, Builder) | No |
 | 2 | T94 Jovan's private publish, T95 published smoke (saves, Ranked stake/escrow/refund, Trophies, world boards, 2 real clients) | Yes (ask 2) |
 | 3 | T96 lobby place + TeleportService + MemoryStore queue by Trophies (reuses `Shared/Matchmaking`) | Yes (ask 4, after batch 2) |
 | content | T97 the 4×-Amber towers, in the round-4 tower pattern | Yes (ask 1) |
 | — | T98 battle difficulty change, if ask 3 says so | Yes (ask 3) |
-| — | T99 Director: phase 8 docs + recap | No |
+| — | T99 Director: phase 8 docs + recap — **DONE** (batch 1 part; `RECAP.md` "Phase 8") | No |
 
 Round 1–4 and phase 7 rules hold (one task = one commit, pushed; check/export/test green;
 Config diff after any sheet change; openpyxl, assert cells; co-op must not change; pure
 rules first; never publish or write DataStores from an agent).
 
-### T88 — Docs: multi-client testing + publish checklist (Builder, `SETUP.md`)
+### T88 — Docs: multi-client testing + publish checklist (Builder, `SETUP.md`) — DONE (6209a88)
 - **Multi-client** (left over from T85, #241): Studio → Test → Clients and Servers, 2 or 3
   players; which window is the host; that J (no saving) is per client; where Output for the
   server vs each client is; how to end the session. Link the T86 script in `RECAP.md`.
@@ -59,7 +65,7 @@ rules first; never publish or write DataStores from an agent).
   roll back (Version History).
 - **Accept:** every DataStore name in the list matches a `grep` of `src/server`; no code change.
 
-### T89 — Studio-only gating audit (Builder)
+### T89 — Studio-only gating audit (Builder) — DONE (b76c179)
 - Every Studio-only path is behind `RunService:IsStudio()` on the **server**: K/J/L keys,
   stand-in sides, the Studio Lobby remotes (`standins`, etc.), the J "no saving" switch.
   Move any check into one pure helper (e.g. `Shared/StudioOnly.allowed(isStudio, feature)`)
@@ -68,7 +74,7 @@ rules first; never publish or write DataStores from an agent).
   `isStudio = false`; a grep-based spec fails if a new Studio key handler skips the helper;
   co-op specs unchanged; Tester: K/J/L and stand-ins still work in Studio.
 
-### T90 — DataStore hardening, specs with a fake store (Builder)
+### T90 — DataStore hardening, specs with a fake store (Builder) — DONE (8e07fdf)
 - A fake DataStore in `tools/test/` (throttle errors, `UpdateAsync` conflicts, a failing
   `GetAsync`). Specs for: a failed load never overwrites; saves retry with backoff inside the
   budget; Ranked escrow is refunded on BindToClose and on a later load; a leaver's forfeit and
@@ -80,19 +86,19 @@ rules first; never publish or write DataStores from an agent).
 - **Accept:** specs green; `Progression` is still the only profile writer; no DataStore is
   touched in Studio (`SaveStatus` offline as today).
 
-### T91 — Battle pacing report (Builder, `tools/threat.py` / `value.py`; no sheet change)
+### T91 — Battle pacing report (Builder, `tools/threat.py` / `value.py`; no sheet change) — DONE (72495d3)
 - Model a battle side on Normal at `Battle side density` 0.6 and 2/3/10 sides: the round
   where an average camp's Fence falls with a typical build, and how far that is from round
   40 / Final Stampede. Compare Run 3's observed round 8–9 spike (Fence 30 → 11).
 - **Accept:** the report prints per mode; the Director turns it into ask 3's options (e.g.
   a `Battle starting lives` lever, or density) with numbers. Nothing changes until Jovan answers.
 
-### T92 — Concussive T5 (Tectonic Slam) buff (Director's cell, Builder applies)
+### T92 — Concussive T5 (Tectonic Slam) buff (Director's cell, Builder applies) — superseded by T92 (final)
 - value.py's standing finding (Round 4 recap). Buff only, never a nerf (#235's rule): the
   Director picks one cell so Tectonic Slam meets the T5 "worth it" bar; assert the old value.
 - **Accept:** value.py finding gone; Config diff = that cell; `audit.py --strict` 0.
 
-### T93 — Stand-in hunter for solo PvP tests (Builder, Studio-only)
+### T93 — Stand-in hunter for solo PvP tests (Builder, Studio-only) — DONE (e2ba805)
 - With stand-ins on, each stand-in camp also gets a **stand-in hunter**: a dummy character
   on its plot (100 HP, never shoots, never saved/paid/ranked), so one Tester client can check
   hunter-vs-hunter ×`PvP hunter damage`, "Tranqed by <name>!", respawn on its own camp and the
@@ -100,7 +106,7 @@ rules first; never publish or write DataStores from an agent).
 - **Accept:** specs for the dummy's damage via `BattleRules.pvpDamage`; Tester Run 5 checks
   it; co-op and real-player PvP paths unchanged.
 
-### T92 (final, #244) — Tectonic Slam: one cell (Builder applies; assert the old value)
+### T92 (final, #244) — Tectonic Slam: one cell (Builder applies; assert the old value) — DONE (60accd3)
 - **`Tower Upgrades!G49` (Mortar Pit · Concussive · T5 Tectonic Slam, Damage x): 24.76 → 34.**
   Nothing else: stun stays `U49` 1 s, `V49` (stuns bosses) stays blank, knockback `W49` 6,
   cost formulas untouched. Director's trial on a copy of the sheet: eDPS r31–40 232 → 292,
@@ -111,7 +117,7 @@ rules first; never publish or write DataStores from an agent).
   from 258 ± 10, stop and report.** UPGRADES.md: update a Tectonic Slam damage line only if
   it states the multiplier.
 
-### T91b (#245) — Battle pacing: let rounds breathe (Builder; one cell + Studio test aids)
+### T91b (#245) — Battle pacing: let rounds breathe (Builder; one cell + Studio test aids) — DONE (b1a090c; "match ends when a camp falls in overtime" waits on N7)
 **Finding (T91, Director's trials on the model):** the battle killer is the lockstep cap, not
 armour or Fence size. Normal's natural round runs 90–119 s; `Battle round time` 60 cuts every
 camp to ~2/3 of the time, so EHP outruns DPS by round 11. Trials (model "typical" build, which
@@ -139,11 +145,11 @@ is conservative: co-op solo Normal also falls at 21 in it):
   strong one sees Final Stampede. Cost: a full battle can now run ~60–80 min. Unchanged on
   purpose: armour leak cost, promotion, Fence, starting cash (the trials show they barely move it).
 
-### Tester Run 5 (after batch 1)
+### Tester Run 5 (after batch 1) — DONE (304822e: 23 pass, 0 fail; N7 → Builder)
 Co-op smoke (rounds 1–3); K/J/L + stand-ins still work; shoot a stand-in hunter (×0.5, kill
 line, respawn, Camo Cover); Concussive T5 in play; no new console errors.
 
-### T94 — Private publish (Jovan, following T88)
+### T94 — Private publish (Jovan, following T88) — NEEDS JOVAN (`SETUP.md` "Publish checklist")
 ### T95 — Published smoke (Jovan; Tester reads Output if the MCP can reach it)
 Saves load and save; Ranked with 2 real clients: Entry fee taken, Amber Hoard paid,
 Trophies saved; shut the server mid-match → refund on next join; both world boards show
@@ -158,7 +164,7 @@ required. Testable only published.
 Same pattern as round 4's T62–T69: names (🦖), sheet rows, pure rules module per tower, server
 behaviour, panel, value.py bars, Tester steps.
 
-### T98 — Battle difficulty (needs ask 3) · T99 — Phase 8 docs + recap (Director)
+### T98 — Battle difficulty/length (needs ask 3; T91b already moved rounds to 120 s) · T99 — Phase 8 docs + recap (Director) — DONE for batch 1
 
 # Plan — Phase 7: the battle modes (Director, 2026-10-06)
 

@@ -595,3 +595,84 @@ network load and hit fairness under real latency.
    hardening, a battle-pacing report, the Concussive T5 buff, and a stand-in hunter so the
    Tester can test PvP alone. Then you publish privately and we smoke-test Ranked for real;
    then the lobby place; your tower picks become the content batch.
+
+# Phase 8 recap for Jovan: ready to publish, batch 1 (2026-10-08)
+
+**Your words (2026-10-06):** "begin phase 8 when all loose ends on phase 7 are done".
+
+**Honest status:** batch 1 is built, 619 headless specs green (`check.sh`, exporter,
+`audit.py --strict` 0), and **played in Studio by the Tester** (Run 5: 23 pass, 0 fail).
+Everything that needs real servers is still untested because the place isn't published.
+The rest of phase 8 waits on you. Calls: `DECISIONS.md` #244–#248.
+
+## What was built
+
+- **A publish checklist and a multi-player guide** (`SETUP.md`): how to run 2–3 test
+  players on one Mac, and a ~15-minute private publish with the save stores named so none
+  gets renamed by accident, plus how to roll back.
+- **Cheats locked to Studio:** K/J/L, stand-in camps and every test option go through one
+  gate (`Shared/StudioOnly`) that a live server refuses. A spec fails if a new Studio key
+  skips it.
+- **Safer saves:** every save goes through `Shared/SaveStore` (retries, backoff, no
+  overwrite after a failed load), and a **session lock** stops two servers holding the same
+  player, so nobody loses progress when they hop servers later (needed for a lobby place).
+  Tested against a fake store that throttles and conflicts.
+- **Battle pacing report** (`value.py --battle`) and the fix it found (below).
+- **Tectonic Slam buff:** Concussive T5 damage ×24.76 → ×34 (stun, knockback and cost
+  unchanged). It was the one tier that wasn't worth buying; now it is.
+- **Studio test helpers:** a **stand-in hunter** on each stand-in camp (you can shoot it to
+  check ×0.5, "Tranqed by…", respawn, Camo Cover alone), "Start at round N", and
+  "Stand-ins hold" (stand-in camps never fall), so the Tester could reach Final Stampede.
+  Stand-in towers pierce armour so they keep up. None of this exists on a live server.
+- **F7:** the "Fence is down" banner sits below the camps board, off the XP bar.
+
+## The battle-pacing finding
+
+Battles on Normal ended by round 9–11 and nobody saw Final Stampede. The cause wasn't Fence
+or dino count: **every battle round was cut off at 60 s, while a Normal round naturally
+runs 90–119 s**, so every camp got two-thirds of the time to kill each wave. Rounds may now
+run to **120 s** (the next round still starts 5 s after every camp clears, so fast camps
+don't wait). Model: a typical camp now lasts to round 21 (2 camps) / 32 (3 camps, Bone
+Rush); a competent one reaches round 40 and Final Stampede. Co-op is unchanged.
+**The cost: a full battle can now run ~60–80 minutes.** Is that too long? (See asks.)
+
+## How it was verified
+
+- **Headless:** 619 specs (Studio gate, save store with fake throttles/conflicts, session
+  lock, stand-in hunter damage); `value.py` shows Tectonic Slam no longer "dead".
+- **Studio Run 4 (T86b re-check):** all 7 checks pass; one minor fail (F7), fixed in batch 1.
+- **Studio Run 5 (batch 1): 23 pass, 0 fail.** Stand-in hunter ×0.5, kill line, respawn,
+  Camo Cover; Final Stampede banner from round 38 with HP ×1.25 per repeat; rounds wait for
+  every camp and a 115 s round isn't cut; Tectonic Slam buys and fires; Studio options on;
+  saves offline and a clean stop mid-battle; co-op rounds 1–3 and pacing unchanged; no
+  console errors.
+- **Not yet checked:** "the match ends when a camp falls in overtime" (N7: with "Stand-ins
+  hold" on, the held camps could never fall). A Builder is making the hold switchable
+  mid-battle. **N7 result (Run 6, c2ec04d): PASS before overtime** — with 3 camps from round 38 and the hold on, the real camp fell, the held stand-ins were released and fell, and the match ended with the results card; switching the hold off mid-match also ended a 2-camp match. No script errors. A camp falling *during* Final Stampede itself is still unchecked (an agent can't build a defence that survives to round 41) — it's in your multi-client script.
+- **Needs a live server:** K/J/L refused live, real saves, the session lock, escrow refunds.
+
+## What needs you
+
+1. **Your ~20-minute multi-player script** (Studio → Test → Clients and Servers): the steps
+   are in the Phase 7 recap above ("Your 20-minute script"); `SETUP.md` "Testing with
+   several players" shows how to start it.
+2. **Publish privately** by `SETUP.md` "Publish checklist" (~15 min). That makes testable,
+   for the first time: **real saves** (Amber kept after rejoining), **the session lock**,
+   **world Trophy and level boards** across servers, and **Ranked** for real (Entry fee,
+   Amber Hoard, saved Trophies, refund after a server shutdown). The checklist ends with
+   that smoke test (PLAN T95).
+3. **The 4×-Amber towers:** your picks in `TOWERS_LATER.md` "What Jovan needs to pick".
+4. **Competitive edge** (report only): maxed vs mastery 0 on the same hero is Tracker 57%,
+   Big Game Hunter 84.9%, Brush Beater 82.8%, Field Medic 48.2% over the 10% watch line.
+   Leave it until real Ranked data, or cap it?
+5. **Battle length:** ~60–80 min with 120 s rounds. Keep it, or shorten (lower round cap,
+   or end battles before round 40)?
+
+## What's next
+
+1. N7 re-check, then your script; anything it finds gets fixed first.
+2. After you publish: the published smoke test (T95), then **a lobby place with
+   cross-server matchmaking** by Trophies (TeleportService + MemoryStore queue, T96; the
+   session lock is already in for it).
+3. Your tower picks become the content batch (T97); your battle-length answer becomes T98.
+4. No Phase 9 proposed yet: the rest of phase 8 comes first.

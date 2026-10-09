@@ -34,6 +34,7 @@ system**: the word **Trophies** is reserved for it (take-downs are **Bones**).
   crossing strip; build only in your camp; same dinos per camp, rounds in lockstep. Hunters
   raid by shooting rival towers to Trampled (×0.35) and shoot rival hunters (×0.5, Camo Cover
   3 s on respawn). A camp is out at Fence 0. Last camp wins; Final Stampede after round 40.
+  Rounds may run up to 120 s (#245), so a full battle can last ~60–80 min (Jovan to confirm).
 - **Bone Rush (battle royale):** a camp each (2–10); most Bones wins; ends at ≤1 alive or
   round 40; the last alive gets +10% Bones.
 - **Casual / Ranked** in one server (Ready on the home screen). Ranked: Entry fee 15 Amber

@@ -513,3 +513,16 @@ Read-only server watcher: round start times vs when each side's dinos reached 0.
 
 ## Studio state at the end
 - Play stopped. `get_studio_state`: **Current Studio Mode: Edit**, DataModels: Edit. Nothing changed in Edit, nothing published, `SaveStatus=offline` in both sessions (J pressed first in the second; the first never saved: offline). Screenshots in `~/.claude/jobs/2a8d6f9c/tmp/tester7/`: `home5.png`, `f7b.png`, `stampede.png`, `r40res.png` (+ working shots).
+
+# Run 6 — 2026-10-08 (Tester, agent) — R5-19 re-test (c2ec04d)
+
+- **Code tested:** Studio synced to c2ec04d: `script_grep` "standinshold" → Server.Main:251 handler no longer Lobby-only ("also works mid-match", line 83), Shared.StudioOnly:42 `heldLoss(... realAlive)`, Server.Battle:121.
+- **Conveniences (disclosed):** J, read-only `execute_luau`, Studio Lobby remotes (`mode` TEAM, `sides`, `standins`, `startround` 38, `standinshold`, `play`). No towers placed.
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R6-1 | Auto-release: 3 camps, stand-ins, Start 38, hold on; my camp falls | PASS | Round 38: Red (mine) out, then Blue and Green (held) fell — "Camp Clash over on round 38: 1. Blue Camp (35 Bones) \| 1. Green Camp (35 Bones) \| 3. Red Camp (0 Bones)". State → Victory, results card "GAME OVER · home in 14s / Camp Clash — 3rd place / ...". Before c2ec04d this ran forever (N7). |
+| R6-2 | `("standinshold", false)` mid-match | PASS | 2 camps, Start 38: fired 4 s into round 38 → `StandInsHold=false` (was ignored in Run 5). Match ended round 38 (my camp fell): "1. Blue Camp (30 Bones) \| 2. Red Camp (0 Bones)", results card shown. |
+| R6-3 | Same, reached in Final Stampede | NOT TESTABLE BY AGENT | Still needs my camp alive through round 40 (R5-20); both releases verified pre-overtime only. The end check is the same per-leak/side-out path, so overtime should behave the same. |
+
+Console: no script errors or warnings in either match. Studio left in Edit mode.

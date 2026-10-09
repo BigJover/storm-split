@@ -114,6 +114,11 @@ Studio-only gating, DataStore hardening, battle pacing report, Concussive T5 buf
 hunter for solo PvP tests) needs nothing from Jovan; the private publish, the lobby place and
 the 4×-Amber towers wait on his answers.
 
+**Status (2026-10-08):** batch 1 built (T88–T93, T91b, F7; 619 specs) and playtested in
+Studio (Run 5: 23 pass, 0 fail). Open for agents: N7 (Studio test aid). Everything else
+waits on Jovan (`RECAP.md` "Phase 8"): his multi-client script, the private publish
+(`SETUP.md`), battle length, the 4×-Amber picks, then the lobby place.
+
 ## Rules
 
 - **Verify every step:** `tools/check.sh` clean; `python3 tools/export_constants.py` clean;

@@ -228,13 +228,24 @@ perk-parity bar. Not testable by the Tester: hunter-vs-hunter and second-player 
 (Jovan's Clients and Servers script, `RECAP.md` "Phase 7"); real stakes, saved Trophies and
 world boards (need a published place). Calls: `DECISIONS.md` #208–#243.
 
-Next: Jovan's multi-client script and the asks in `RECAP.md` "Phase 7" (battle difficulty,
-publishing, the 4×-Amber tower picks in `TOWERS_LATER.md`). **Phase 8 "Ready to publish"** is
-proposed at the top of `PLAN.md`; its batch 1 needs nothing from Jovan.
+Phase 8 "Ready to publish", batch 1 (2026-10-08): built and headless-tested (619 specs) and
+**playtested in Studio** (Run 5: 23 pass, 0 fail). A publish checklist and multi-client guide
+(`SETUP.md`); every Studio cheat behind `Shared/StudioOnly` (refused on a live server); saves
+through `Shared/SaveStore` with retries and a **session lock** (`Shared/Profile`), specced
+against a fake store; `value.py --battle` pacing report; **battle rounds 60 → 120 s** (battles
+reached only round 9–11; now ~60–80 min, Jovan to confirm); Tectonic Slam damage ×24.76 → 34;
+a Studio-only **stand-in hunter** for solo PvP tests, plus "Start at round N" and "Stand-ins
+hold". Calls: `DECISIONS.md` #244–#248. Open for agents: N7 (release "Stand-ins hold"
+mid-battle).
+
+Next (all need Jovan, `RECAP.md` "Phase 8"): his multi-client script, a private publish per
+`SETUP.md`'s checklist (then the published smoke T95), the 4×-Amber tower picks
+(`TOWERS_LATER.md`), battle length, then the lobby place + teleport matchmaking (T96).
 
 ## Open issues
 
-- Leak cost is effective HP (BTD6-style), so 40 starting lives is likely too few. In
-  battles on Normal every camp's Fence falls by round 9–11 (PLAYTEST Run 3 N6; ask-Jovan).
+- Leak cost is effective HP (BTD6-style), so 40 starting lives is likely too few in co-op.
+  Battles ending by round 9–11 was the 60 s round cap, fixed by 120 s (#245); battle length
+  (~60–80 min) is an ask-Jovan.
 - Scout Range path has range *and* its old damage/rate boosts — likely too strong; trim.
 - Folder is still named `~/Fortnite`.
