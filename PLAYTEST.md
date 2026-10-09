@@ -394,3 +394,122 @@ Setup: Casual, Seats 4, stand-ins. **Scripted help:** K cash (~70 presses over t
 **Run 4 summary:** F5 PASS, F6 (spectate) PASS, Nth place PASS (both modes), battle results ~15 s PASS, Amber line PASS, HUNT OPTIONS PASS, co-op 8 s PASS, console clean. 1 minor FAIL (F7, camp-out banner placement). Deviation: the Practice Bone Rush ran with 2 seats (Seats click went 3→2); the 3-seat Bone Rush was Casual Hard.
 
 **Studio state at the end:** Play stopped; `get_studio_state` = Edit. Nothing edited or published; `SaveStatus=offline` throughout (J first).
+
+# Run 5 — 2026-10-08 (Tester, agent) — Phase 8 batch 1 (T89, T90, T91b, T92, T93, F7)
+
+- **Code tested:** Studio synced to b1a090c: `script_grep` "StudioOnly" → Shared.StudioOnly, Client.Home:267, Shared.HomeLayout:190; "standinshold" → Server.Main:291–292, Client.Home:280, Shared.StudioOnly:25, Server.Battle:119; "SaveStore" → Shared.SaveStore (ATTEMPTS 3, LOCK_WAITS 6, backoff).
+- **Start state:** Studio in Edit mode. Work files: `~/.claude/jobs/2a8d6f9c/tmp/tester7/`.
+- **Conveniences (disclosed):** J first in each Play session (no saves), K cash, home-screen clicks, keyboard/mouse input, `character_navigation`, read-only `execute_luau`, and the Studio-only Lobby remotes (`standins`, `mode`, `sides`, `startround`, `standinshold`, `play`). Anything else is noted where used.
+
+(Results are written step by step below.)
+
+## Step 1 — Boot, saves offline, Studio-only options (T89, T90)
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R5-1 | Boot with no save errors (T90) | PASS | Play → console only the expected `[Progression] No data store…` and the two `[LevelBoard] Not published…` lines. `SaveStatus=offline`. |
+| R5-2 | Studio-only host options visible in Studio (T89/T91b) | PASS | Home (Camp Clash, stand-ins) shows a bottom row "Start at round 1 · Stand-ins hold" under PLAY. `home5.png` |
+| R5-3 | Gate exists (T89) | PASS (code) | `Shared.StudioOnly.allowed(isStudio, feature)` = `isStudio == true and FEATURES[feature]`; Server.Main gates `standins` (314), `startround` (316), `standinshold` (318) on `StudioOnly.allowed(RunService:IsStudio(), …)`. A live server can't be tested here. |
+
+## Step 2 — T93 stand-in hunter (Camp Clash, 2 camps, Easy, stand-ins)
+
+Setup (disclosed): Tracker, Revolver equipped with client `Humanoid:EquipTool` (key 1 is a CoreGui key for VirtualInput, as in Runs 2–3); K for cash; 4 Mortar Pits. Stood at (145, 3, 12) facing Blue's stand-in hunter at (146, 1.6, 0). A read-only server watcher logged every change of the dummy's billboard text.
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R5-4 | Dummy spawns on the stand-in camp | PASS | Console "Stand-in hunter on Blue Camp (Studio only): 100 HP, never shoots"; model `StandInHunter2` at Blue's spawn; billboard "Blue Camp stand-in hunter / HP 100 / 100". |
+| R5-5 | Hunter-vs-hunter damage ×0.5 | PASS | 8 single shots, ≥0.4 s apart, hunter Lv 2: billboard HP 75 → 68 (7 lost; expected 8 × 1.5 Tracker × 1.25 Lv 2 × 0.5 = 7.5; full damage would be 15). Earlier at Lv 1 the HP fell 1 per ~1.3 shots (0.75 per shot). |
+| R5-6 | "Tranqed by <name>!" on its label and in Output | PASS | Billboard "Blue Camp stand-in hunter / Tranqed by Jover_428!" (body drops to y 0.7) twice; console `[DinoHunters] Blue Camp's stand-in hunter: Blue Camp stand-in hunter · Tranqed by Jover_428!`. |
+| R5-7 | Respawn on its own camp after Respawn time | PASS | Down at 115.85 s → back at 118.86 s (3.0 s = `RespawnTime` 3) at (146, 1.6, 0), "HP 100 / 100". Second down 212.91 → back 215.93. |
+| R5-8 | Camo Cover after respawn: can't be hit, countdown shown | PASS | Billboard "HP 100 / 100 / Camo Cover 3.0s" at 118.86; the Camo line was gone at 121.89 (3.03 s = `SpawnShield` 3). I fired the whole time; HP stayed 100 through the Camo window and started falling at 123.98. |
+
+Tooling notes: `character_navigation` unequips the gun; clicks sent while the Build panel is in "Placing…" mode are placement attempts, not shots (cost me two attempts). In zsh, `$p` doesn't word-split (use `${=p}`). Placement works when the move and click are in one `user_mouse_input` call, during Building.
+
+## Step 3 — T92 Tectonic Slam (Concussive T5), same match
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R5-9 | Buy Concussive 1→5 on a Mortar Pit | PASS | K cash (60 presses, disclosed). Panel row clicked 5×: Shockwave 1265, Armor Crack 2909, Stun Grenade 6692, Earthshaker 15391, Tectonic Slam 35400 → row "Concussive · maxed · Tectonic Slam", Sell 43544. Tower attrs `Path3=5`, `Spent=62207`. Studio `Config` Tectonic Slam `damageMult = 34` (T92 value), stun 1 s, no boss stun. |
+| R5-10 | It fires, no errors | PASS | 75-s read-only probe: 9 shell tracers from the T5 tower (few dinos come within its range at (−12, −2); the neighbouring base Mortar fired more). No script errors or warnings. Knockback/stun not isolated (no jumps/stops seen in the samples) — not measured. |
+
+## Step 4 — T91b pacing (battle round time 120), Camp Clash 2 camps, Easy, rounds 7–10
+
+Read-only server watcher: round start times vs when each side's dinos reached 0.
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R5-11 | Next round waits for the previous to clear | PASS | r7: s2 clear 11.3 s, s1 14.7 → R8 at 20.0 (+5.3). r8: s1 96.0, s2 96.8 → R9 at 102.1 (+5.3). r9: s2 206.6, s1 217.7 → R10 at 222.3 (+4.6). Round 9 ran **115.6 s** before both cleared and round 10 still waited (with 60 s it would have started at 162 s on top of live dinos). Round 10's s1 cleared at 125 s after its start, then the match ended (Blue fell). No round started with dinos left on either side ("left s1=0 s2=0" at every start). |
+| R5-12 | Battle round-over lines | PASS | Console "Round N over \| Camp Clash, 2 sides (2 alive) \| Fences 40 / 40 \| peak enemies 16–24/130 \| script cost avg 0.25–0.34 ms, worst ≤2.27 ms", one per round. Match: "Camp Clash over on round 10: 1. Red Camp (607 Bones) \| 2. Blue Camp (586 Bones)" (stand-in hold was off). |
+
+## Step 5 — F7 camp-out banner (Camp Clash, 3 camps, Easy, Start at round 38, Stand-ins hold)
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R5-13 | F7: camp-out banner top-centre below the camps board, not over the XP bar | PASS | My undefended camp fell in round 38. "Red Camp's Fence is down! They're out." in `CampOut` at GUI (93, 348) 520×30 — horizontally centred (centre x 353, same as the screen), directly below `CampsBoard` (12, 104, 212×236 → bottom y 340). The XP bar `HeroXp` is at y 56–80, untouched. The spectate banner sits lower and doesn't overlap. `f7b.png` |
+| R5-14 | Studio options reach the server | PASS | `("sides",3)`, `("startround",38)`, `("standinshold",true)` → `BattleSides=3`, `StudioStartRound=38`, `StandInsHold=true`; home chip reads "Start at round 38". Match started at Round 38 (hunter Lv 8). |
+
+## Step 6 — Final Stampede (same match)
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R5-15 | Stand-ins hold keeps stand-in camps at Fence 1 | PASS | Round 38: "Fences out / 1 / 1" (Blue and Green 40 → 1 and held through rounds 38–44). |
+| R5-16 | Round 40 → Final Stampede banner | PASS | Round 41 at +285 s: `Overtime=1`, HUD `FinalStampede` label "Final Stampede! Dinos get tougher every round." at GUI (93, 352), under the camps board, above the spectate banner. Status still reads "Round 41". `stampede.png` |
+| R5-17 | HP step ×1.25 per repeat | PASS | Console "Final Stampede 1: round 40 again, dino HP x1.25", "2: … x1.56", "3: … x1.95", "4: … x2.44" (= 1.25ⁿ). Each repeat plays round 40 (peak 86/130 enemies, avg 0.77–0.80 ms, worst ≤2.55 ms). |
+| R5-18 | Rounds 38–44 pacing with held camps | NOTE | Each round ran the full 120 s cap (held stand-in camps never clear: leaks keep coming). R39 at 44.8 s, R40 165.0, R41 285.2 (120.2 s apart). |
+| R5-19 | Match ends when a camp falls in overtime → results | **NOT TESTABLE this way** (N7) | With my camp out and both stand-in camps held at 1, nobody can fall, so the match runs forever. `("standinshold", false)` mid-match is ignored (the Lobby remote returns unless `State == "Lobby"`, Server/Main:276), so I couldn't release them. I stopped Play to end it. |
+| R5-20 | Retry: 2 camps, Start at round 40, hold, 5 base Mortars (K cash) | NOTE | My camp fell inside round 40 (5 base Mortars don't hold Easy round 40), so the match ended before overtime: "Camp Clash over on round 40: 1. Blue Camp (28 Bones) \| 2. Red Camp (88 Bones)" — the camp still standing is placed first despite fewer Bones, as designed. A second (accidental — my upgrade clicks landed on PLAY after the results) round-40 match: results card "GAME OVER · home in 14s / Camp Clash — 2nd place / 1. Blue Camp · 28 Bones / 2. Red Camp · 0 Bones / Amber +5 / +0 player XP". `r40res.png`. Surviving rounds 40+ alone needs a much bigger build than I can place in the 30-s build window with agent clicks, so the overtime-end step stays open (R5-19). |
+
+## Step 7 — Saves offline across Play stop/start (T90)
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R5-21 | Stop Play mid-match (BindToClose), restart, no save errors | PASS | Stopped Play during Final Stampede 4 (a live 3-camp battle): "Game Stopped", Studio back in Edit, no error/warning lines. Restarted Play: the same three boot lines only; `SaveStatus=offline`; Amber back to the session default (100), so nothing persisted. Two more stops (end of run) were clean too. |
+| R5-22 | Join/leave save path in Studio | PASS (offline) | Only the `[Progression] No data store…` line per session; no `[SaveStore]` retry or error lines in any session. Live DataStore behaviour (retries, session lock, escrow refund) needs a published place → T95, NEEDS JOVAN. |
+
+## Step 8 — Co-op regression (Easy, solo, 3 base Mortars)
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R5-23 | Co-op rounds 1–3 | PASS | "Co-op on Easy with 1 player(s)"; "Round 1/2/3 cleared \| Easy, 1 player(s) \| lives 40 \| cash 2877/2959/3046 \| peak enemies 13 \| peak projectiles 0/80 \| script cost avg 0.17–0.21 ms". Start button (clicked low; the top is in the known CoreGui band). |
+| R5-24 | Co-op pacing unchanged by B143 | PASS | Next round 5.2 s after each clear (r1 clear 30.8 → R2 36.0; 81.2 → 86.4; 135.6 → 140.9). |
+| R5-25 | Studio "Start at round" back to 1 for co-op | PASS | After `("startround",1)` co-op started at Round 1. (Note: the option persists across matches in the session; it carried round 40 into my accidental second battle.) |
+
+## Run 5 — console
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R5-26 | Script errors across both Play sessions | PASS | Scan for error/warn/infinite/Stack: only 12 Studio Assistant `VirtualInput::SendMousePosition … hits CoreGUI` traces (TestAutomationUtils) and one Assistant "Humanoid is not a valid member" from my own execute_luau during a respawn. None from our scripts. |
+
+## Not testable here / NEEDS JOVAN
+| # | Item | Result | Why |
+|---|---|---|---|
+| R5-27 | T89 on a live server (K/J/L and Studio remotes refused) | NOT TESTABLE BY AGENT | Needs a published place; the gate and its use are confirmed in code (R5-3). |
+| R5-28 | Real hunter vs hunter (2 clients), Camo Cover on a real respawn, "Tranqed by" for a real player | NEEDS JOVAN | Clients and Servers; the stand-in hunter covers the rules solo (R5-5…8). |
+| R5-29 | Live saves, session lock, escrow refund on BindToClose | NEEDS JOVAN | T95 (published). |
+
+## Notes for the Director / Jovan (not failures)
+- **N7 (Studio test aid).** "Stand-ins hold" + a real camp that's already out = a battle that never ends (held camps can't fall; each round runs the 120-s cap forever), and the Lobby remote ignores `("standinshold", false)` outside the Lobby, so only stopping Play ends it. Reaching overtime *with my own camp alive* needs a round-40-proof build the agent can't place in the 30-s window, so "the match ends when a camp falls in overtime" (T91b accept) is still unverified. Options: let the hold apply only while a real camp is alive, or let the Studio host toggle the hold mid-match, or a Studio "my camp holds too" option.
+- **N8.** With held stand-in camps, rounds 38–44 always ran the full 120 s (they never clear). Fine for the test aid; just slow (~2 min per repeat).
+- **N9.** The status line still reads "Round 41/42…" during Final Stampede; the banner says Final Stampede. Consider "Final Stampede 1" in the status line.
+- **N10 (tooling).** `character_navigation` unequips the gun; zsh needs `${=var}` to split args; clicks sent while "Placing…" is open are placements; results-screen clicks can land on PLAY and start a new match.
+
+## Run 5 summary
+
+| Area | Result | Evidence |
+|---|---|---|
+| Sync to b1a090c | PASS | header |
+| F7 camp-out banner position | PASS (R5-13) | `f7b.png` |
+| T93 stand-in hunter: ×0.5, Tranqed by line + Output, respawn 3 s, Camo Cover 3 s countdown + immune | PASS ×5 (R5-4…8) | watcher log, console |
+| Final Stampede: start 38 + hold, banner, ×1.25 per repeat | PASS ×4 (R5-14…17) | `stampede.png`, console |
+| Final Stampede: match ends when a camp falls → results | NOT TESTABLE BY AGENT (R5-19, N7); round-40 end + results PASS (R5-20) | `r40res.png` |
+| T91b pacing: next round waits for clears; 115-s round not cut | PASS ×2 (R5-11, 12) | watcher log |
+| T89 Studio-only options present + gate in code | PASS ×2 (R5-2, 3) | `home5.png`, grep |
+| T90 saves offline, stop/start clean | PASS ×3 (R5-1, 21, 22) | console |
+| T92 Tectonic Slam buy + fire | PASS ×2 (R5-9, 10) | panel, probe |
+| Co-op regression | PASS ×3 (R5-23…25) | console |
+| Console | PASS (R5-26) | scan |
+| Live server / multi-client / published saves | NOT TESTABLE / NEEDS JOVAN (R5-27…29) | — |
+
+**Counts:** PASS 23 · FAIL 0 · NOT TESTABLE BY AGENT 2 (R5-19, R5-27) · NEEDS JOVAN 2 (R5-28, R5-29) · NOT RUN 0 · notes 2 (R5-18, R5-20).
+
+## Studio state at the end
+- Play stopped. `get_studio_state`: **Current Studio Mode: Edit**, DataModels: Edit. Nothing changed in Edit, nothing published, `SaveStatus=offline` in both sessions (J pressed first in the second; the first never saved: offline). Screenshots in `~/.claude/jobs/2a8d6f9c/tmp/tester7/`: `home5.png`, `f7b.png`, `stampede.png`, `r40res.png` (+ working shots).
