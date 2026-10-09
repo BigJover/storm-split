@@ -37,7 +37,7 @@ unless Jovan asks.
 ## Batches (option A)
 | Batch | Tasks | Needs Jovan? |
 |---|---|---|
-| 1 | T88 docs (multi-client + publish checklist), T89 Studio-only gating audit, T90 DataStore hardening specs, T91 battle pacing report, T92 Concussive T5 buff, T93 stand-in hunter for solo PvP tests, Tester Run 5 | No |
+| 1 | T88, T89, T90, T91, T93 DONE (6209a88, b76c179, 8e07fdf, 72495d3, e2ba805; F7 87cf75c; 614 specs). Open: **T92 (final) + T91b**, then Tester Run 5 | No |
 | 2 | T94 Jovan's private publish, T95 published smoke (saves, Ranked stake/escrow/refund, Trophies, world boards, 2 real clients) | Yes (ask 2) |
 | 3 | T96 lobby place + TeleportService + MemoryStore queue by Trophies (reuses `Shared/Matchmaking`) | Yes (ask 4, after batch 2) |
 | content | T97 the 4×-Amber towers, in the round-4 tower pattern | Yes (ask 1) |
@@ -99,6 +99,45 @@ rules first; never publish or write DataStores from an agent).
   Camo Cover countdown. Gated by T89's helper.
 - **Accept:** specs for the dummy's damage via `BattleRules.pvpDamage`; Tester Run 5 checks
   it; co-op and real-player PvP paths unchanged.
+
+### T92 (final, #244) — Tectonic Slam: one cell (Builder applies; assert the old value)
+- **`Tower Upgrades!G49` (Mortar Pit · Concussive · T5 Tectonic Slam, Damage x): 24.76 → 34.**
+  Nothing else: stun stays `U49` 1 s, `V49` (stuns bosses) stays blank, knockback `W49` 6,
+  cost formulas untouched. Director's trial on a copy of the sheet: eDPS r31–40 232 → 292,
+  c/e 268 → 213, marginal 454 → **258 (1.5× the T5 median 174)**; DEAD flag gone; the T5
+  median doesn't move. (30 → 1.8×, too close to the 2× DEAD line; 38 → 1.3×, more than needed.)
+- **Accept:** Config diff = that one value; `value.py` shows Tectonic Slam without DEAD and
+  no new finding; `audit.py --strict` 0; exporter green. **If value.py's marginal differs
+  from 258 ± 10, stop and report.** UPGRADES.md: update a Tectonic Slam damage line only if
+  it states the multiplier.
+
+### T91b (#245) — Battle pacing: let rounds breathe (Builder; one cell + Studio test aids)
+**Finding (T91, Director's trials on the model):** the battle killer is the lockstep cap, not
+armour or Fence size. Normal's natural round runs 90–119 s; `Battle round time` 60 cuts every
+camp to ~2/3 of the time, so EHP outruns DPS by round 11. Trials (model "typical" build, which
+is conservative: co-op solo Normal also falls at 21 in it):
+| change | 2 camps ×1 | 2 camps ×5 | 3 camps / Bone Rush | 1.5× typical (competent) |
+|---|---|---|---|---|
+| today (60 s) | 11 | 11 | 17 | 18–20 |
+| armour leak ×0.25 / Fence 100 / cash 1200 / no promotion | 11–12 | 11 | 17–18 | — |
+| **round time 120 s** | **21** | **21** | **32** | **40 → Final Stampede** |
+1. **`Tuning!B143` Battle round time: 60 → 120** (assert 60). Lockstep still starts the next
+   round 5 s after every live camp clears, so quick camps don't wait; 120 only stops a
+   struggling camp from being buried. Update the C143 note: "…(≥ the longest Normal round, 119 s)".
+2. **Studio stand-in camps' fixed towers pierce armour** (Studio-only via `Shared/StudioOnly`,
+   no sheet value: a flag on the stand-in tower set). Test fidelity only; never in real play.
+3. **Studio-only host options for testing late rounds** (behind `StudioOnly`, hidden unless
+   `IsStudio()`): "Start at round N" (battles and co-op) and "Stand-ins hold" (a stand-in
+   camp's Fence never drops below 1), so the Tester can reach round 40 and Final Stampede.
+- **Accept:** Config diff = B143 only; `value.py --battle` prints, for Normal with 1 hunter:
+  2 camps ≥ round 20, 3 camps and Bone Rush ≥ 30, and a new "competent (1.5× typical)" column
+  reaching round 40 in every mode (add that column); co-op specs and co-op pacing unchanged
+  (B143 is battles only); specs that both Studio options are refused when `isStudio = false`.
+  Tester Run 5 adds: a Camp Clash with "Start at round 38" + "Stand-ins hold" → Final Stampede
+  banner, HP step ×1.25 per repeat, and the match ends when a camp falls.
+- **Target (for Jovan to confirm, ask 3):** a competent 1-hunter camp reaches round 25+ and a
+  strong one sees Final Stampede. Cost: a full battle can now run ~60–80 min. Unchanged on
+  purpose: armour leak cost, promotion, Fence, starting cash (the trials show they barely move it).
 
 ### Tester Run 5 (after batch 1)
 Co-op smoke (rounds 1–3); K/J/L + stand-ins still work; shoot a stand-in hunter (×0.5, kill
