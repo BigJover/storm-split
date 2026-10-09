@@ -35,6 +35,7 @@ StudioOnly.FEATURES = {
 	startRound = 'Start at round N: the host\'s Lobby ("startround", n), co-op and battles (Server/Main, Server/Battle)',
 	standInsHold = 'Stand-ins hold: a stand-in camp\'s Fence stays at 1 while a real camp is in (Lobby ("standinshold", on), also mid-match; Server/Battle)',
 	standInPierce = "Stand-in camps' fixed towers pierce armour, for test fidelity (Server/Shop, PLAN T91b)",
+	lateStandIn = 'Late stand-in joins now: the host\'s Lobby ("latestandin") mid-battle seats a stand-in as a late joiner (catch-up cash, toast), refused like a player in Ranked/Practice or after Late join last round (Server/Main, Server/Battle, PLAN T105)',
 	clockCap = 'Short match clock: the host\'s Lobby ("clockcap", seconds) for testing the clock end and its warning (Server/Main, Server/Battle, PLAN T104)',
 } :: { [string]: string }
 

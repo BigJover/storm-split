@@ -39,6 +39,7 @@ local Sides = require(Shared:WaitForChild("Sides"))
 local BattleFlow = require(Shared:WaitForChild("BattleFlow"))
 local HomeLayout = require(Shared:WaitForChild("HomeLayout"))
 local StudioOnly = require(Shared:WaitForChild("StudioOnly"))
+local Pace = require(Shared:WaitForChild("Pace"))
 
 local MapBuilder = require(script.Parent.MapBuilder)
 local Enemies = require(script.Parent.Enemies)
@@ -94,7 +95,7 @@ startGame.Name = "StartGame"
 startGame.Parent = remotes
 -- Home screen, host only: ("mode" | "track" | "difficulty", key), ("sides", n), ("standins",
 -- on), ("ranked", on) or ("play"); Studio only (PLAN T91b): ("startround", n) and
--- ("standinshold", on), which also works mid-match. Every player: ("ready", on) for Ranked (PLAN T80; its
+-- ("standinshold", on), which also works mid-match, and ("latestandin") mid-battle (T105). Every player: ("ready", on) for Ranked (PLAN T80; its
 -- buttons are T82's)
 local lobby = Instance.new("RemoteEvent")
 lobby.Name = "Lobby"
@@ -281,6 +282,17 @@ lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
 		end
 		return
 	end
+	-- Studio "Late stand-in joins now" (T105): a stand-in arrives mid-battle and is seated
+	-- like a late joiner, so one client can test the path; refused (Output) like a player.
+	if action == "latestandin" and StudioOnly.allowed(RunService:IsStudio(), "lateStandIn") then
+		if isHost(player) then
+			local seated, why = Battle.lateJoin(nil, player)
+			if not seated then
+				print(`[DinoHunters] Late stand-in refused: {why}`)
+			end
+		end
+		return
+	end
 	if ReplicatedStorage:GetAttribute("State") ~= "Lobby" then
 		return
 	end
@@ -417,13 +429,19 @@ local function watchCharacter(player: Player)
 	end)
 end
 
--- Starting cash: each player beyond the first adds to the pot, once per match.
+-- Starting cash: each player beyond the first adds to the pot, once per match: Tuning
+-- StartingCashPerExtraPlayer, plus (dropped in mid-match, T105 #254/#262) 1.1 x the income
+-- one more hunter would have brought in every round already under way (Shared/Pace).
 local function joinMatch(player: Player)
 	if not joinedThisMatch[player.UserId] then
+		local before = #hunters()
 		local first = next(joinedThisMatch) == nil
 		joinedThisMatch[player.UserId] = true
 		if not first then
-			Economy.earn(Config.Tuning.StartingCashPerExtraPlayer)
+			local playing = ReplicatedStorage:GetAttribute("State") == "Playing"
+			local round = ReplicatedStorage:GetAttribute("Round")
+			local reached = Pace.joinRound(playing, if typeof(round) == "number" then round else 0)
+			Economy.earn(Pace.catchUpCash(reached, math.max(1, before), difficulty()))
 		end
 	end
 	spawn(player)
@@ -431,8 +449,17 @@ end
 
 Players.PlayerAdded:Connect(function(player)
 	watchCharacter(player)
-	if inMatch() and not Battle.active() then
-		joinMatch(player) -- dropped in mid-match: straight onto the track (co-op; a battle's sides are set)
+	if inMatch() then
+		if Battle.active() then
+			-- A battle (T105): casual seats them through Late join last round; Ranked never
+			-- does. Refused = the home screen's waiting banner until the next hunt.
+			local seated, why = Battle.lateJoin(player)
+			if not seated then
+				print(`[DinoHunters] {player.Name} waits for the next hunt: {why}`)
+			end
+		else
+			joinMatch(player) -- co-op: dropped in mid-match, straight onto the track
+		end
 	end
 end)
 for _, player in Players:GetPlayers() do

@@ -255,6 +255,12 @@ function Enemies.setPaths(mapPaths: { Path.Path })
 	table.clear(liveBySide)
 end
 
+-- How many of the map's sides are seated (T105): a casual Bone Rush's empty spare plots
+-- don't take a share of the live cap until a late joiner takes one (Shared/SpawnQueue).
+function Enemies.setSeatedSides(n: number)
+	SpawnQueue.setSeated(spawnQueue, n)
+end
+
 -- Queue a fresh enemy at the start of a side's track (co-op: side 1). The ONLY way a
 -- dino comes into the game (ARCHITECTURE §5.1). `cashX` / `leakX` (default 1): the round
 -- pace's kill-cash and leak-cost factors (Shared/Pace.plan, #258).
@@ -651,7 +657,9 @@ function Enemies.clearAll()
 	for _, enemy in live do
 		remove(enemy)
 	end
+	local seated = spawnQueue.seated
 	spawnQueue = SpawnQueue.new(spawnQueue.sides)
+	SpawnQueue.setSeated(spawnQueue, seated)
 end
 
 return Enemies

@@ -15,6 +15,10 @@
 	  size(q, side?)                     -> queued for that side, or for every side
 	  take(q, liveTotal, liveBySide, cap) -> the next item and its side, or nil
   clear(q, side)                     -> drops that side's queue (a battle side is out, T77)
+  setSeated(q, n)                    -> the cap is split over the first n sides only (T105:
+                                        a casual Bone Rush lays out empty spare plots for
+                                        late joiners; they don't shrink the seated sides'
+                                        share until one is taken). Default: every side
 ]]
 
 local Sides = require(script.Parent.Sides)
@@ -23,7 +27,7 @@ local SpawnQueue = {}
 
 type Fifo = { items: { any }, head: number, tail: number }
 
-export type Queue = { sides: number, lists: { Fifo }, nextSide: number }
+export type Queue = { sides: number, lists: { Fifo }, nextSide: number, seated: number }
 
 local function fifo(): Fifo
 	return { items = {}, head = 1, tail = 0 }
@@ -34,7 +38,7 @@ function SpawnQueue.new(sides: number): Queue
 	for side = 1, math.max(1, sides) do
 		lists[side] = fifo()
 	end
-	return { sides = #lists, lists = lists, nextSide = 1 }
+	return { sides = #lists, lists = lists, nextSide = 1, seated = #lists }
 end
 
 -- An unknown side is refused (returns false): a dino always belongs to a real side.
@@ -78,7 +82,7 @@ function SpawnQueue.take(q: Queue, liveTotal: number, liveBySide: { [number]: nu
 	if liveTotal >= cap then
 		return nil, nil
 	end
-	local share = Sides.sideCap(cap, q.sides)
+	local share = Sides.sideCap(cap, q.seated)
 	for step = 0, q.sides - 1 do
 		local side = (q.nextSide - 1 + step) % q.sides + 1
 		local list = q.lists[side]
@@ -88,6 +92,10 @@ function SpawnQueue.take(q: Queue, liveTotal: number, liveBySide: { [number]: nu
 		end
 	end
 	return nil, nil
+end
+
+function SpawnQueue.setSeated(q: Queue, n: number)
+	q.seated = math.clamp(math.floor(n), 1, q.sides)
 end
 
 function SpawnQueue.clear(q: Queue, side: number)

@@ -83,6 +83,9 @@ local standInSeats: { [number]: boolean } = {}
 local realCampIn = false -- a real hunter's camp is still in (Studio "Stand-ins hold" needs one, N7)
 local standInBones: { [number]: number } = {}
 local campTeams: { Team } = {} -- one per camp this match (the player list's groups)
+-- Seats a late joiner in the match under way (T105); nil between matches. (player, host):
+-- a real player, or (nil, host) for the Studio-only late stand-in.
+local lateJoiner: ((Player?, Player?) -> (boolean, string?))? = nil
 
 ------------------------------------------------------------------ public helpers
 
@@ -142,8 +145,21 @@ function Battle.leakCost(side: number, cost: number): number
 	return StudioOnly.heldLoss(RunService:IsStudio(), hold, standInSeats[side] == true, Economy.livesOf(side), cost, realCampIn)
 end
 
+-- A player arrived mid-battle (Main's PlayerAdded) or the Studio host asked for a late
+-- stand-in (player nil): seated by Shared/BattleFlow.lateJoin / lateSeat with catch-up cash
+-- (Shared/Pace.catchUpCash), or refused with the reason ("ranked", "closed", "full",
+-- "noCamp", "over"). Refused players wait on the home screen for the next hunt (#232).
+-- Never staked or ranked: Battle never calls Progression, and Ranked never seats one.
+function Battle.lateJoin(player: Player?, host: Player?): (boolean, string?)
+	if not active or not lateJoiner then
+		return false, "over"
+	end
+	return lateJoiner(player, host)
+end
+
 function Battle.reset()
 	active = false
+	lateJoiner = nil
 	for side = 1, math.max(MAX_SIDES, seatedSides) do
 		for _, name in { "Camp", "Out", "Place", "CampBones" } do
 			ReplicatedStorage:SetAttribute(Sides.attr(name, side), nil)
@@ -215,25 +231,21 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		warn(`[DinoHunters] Can't start {modeKey}: {why}`)
 		return false
 	end
-	local sides = seating.sides
+	local sides = seating.sides -- grows when a late joiner takes a Bone Rush spare plot (T105)
 	local display = Modes.Modes[modeKey].display
 
-	-- The map: one copy of the track per side.
-	layout = Sides.new(sides, Sides.gridFor(modeKey))
+	-- The map: one copy of the track per side, plus a casual Bone Rush's spare plots (T105).
+	layout = Sides.new(sides + BattleFlow.sparePlots(modeKey, ctx.competitive, sides), Sides.gridFor(modeKey))
 	if MapBuilder.relayout(ctx.map, layout) then
 		Enemies.setPaths(ctx.map.paths)
 	end
+	Enemies.setSeatedSides(sides)
 	active = true
-	seatedSides = sides
+	seatedSides = layout.sides
 	ReplicatedStorage:SetAttribute("BattleMode", modeKey)
 
-	for player, side in seating.sideOf do
-		player:SetAttribute("Side", side)
-		player:SetAttribute("BattleSide", side)
-	end
-	for side = 1, sides do
-		local first = seating.teams[side][1]
-		local camp = BattleFlow.campName(modeKey, side, if first then first.DisplayName else nil)
+	local function openCamp(side: number, ownerName: string?)
+		local camp = BattleFlow.campName(modeKey, side, ownerName)
 		ReplicatedStorage:SetAttribute(Sides.attr("Camp", side), camp)
 		ReplicatedStorage:SetAttribute(Sides.attr("CampBones", side), 0)
 		local team = Instance.new("Team")
@@ -242,15 +254,25 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		team.AutoAssignable = false
 		team.Parent = Teams
 		campTeams[side] = team
+	end
+	local function joinCamp(player: Player, side: number)
+		player:SetAttribute("Side", side)
+		player:SetAttribute("BattleSide", side)
+		player.Neutral = false
+		player.Team = campTeams[side]
+	end
+	for side = 1, sides do
+		local first = seating.teams[side][1]
+		openCamp(side, if first then first.DisplayName else nil)
 		for _, player in seating.teams[side] do
-			player.Neutral = false
-			player.Team = team
+			joinCamp(player, side)
 		end
 	end
 
-	-- Economy: each side its own pot (scaled by its hunters) and Fence.
+	-- Economy: each side its own pot (scaled by its hunters) and Fence; spare plots get a
+	-- full Fence and no cash until a late joiner takes one (T105).
 	local pendingOut: { number } = {}
-	Economy.initSides(sides, 0, chosen.startingLives, function(side)
+	Economy.initSides(layout.sides, 0, chosen.startingLives, function(side)
 		table.insert(pendingOut, side)
 	end)
 	local function huntersOf(side: number): { Player }
@@ -267,16 +289,122 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 	end
 
 	-- Studio stand-ins: their fixed towers, and their Bones from them (T79b).
-	for side in seating.standIn do
-		standInSeats[side] = true
-	end
 	local towerKeys = BattleFlow.standInTowers()
-	for side in seating.standIn do
+	local function seatStandIn(side: number)
+		standInSeats[side] = true
 		for i, spot in BattleFlow.standInSpots(layout, side, #towerKeys) do
 			Shop.placeStandIn(towerKeys[i], spot, side, BattleFlow.standInOwnerId(side), BattleFlow.standInName(side))
 		end
 		-- And a stand-in hunter to shoot (T93, Studio only like every stand-in).
 		StandInHunters.spawn(side, Sides.spawn(layout, side), Battle.campOf(side))
+	end
+	for side in seating.standIn do
+		seatStandIn(side)
+	end
+
+	-- The match's standing (out sides, Bones), shared by the late joiners below and the rounds.
+	local out: { [number]: boolean } = {}
+	local outAt: { [number]: number } = {}
+	local frozenBones: { [number]: number } = {}
+	local bonesStart: { [number]: number } = {} -- a Bone Rush joiner's Bones floor (T105)
+	local lateStandIns: { [number]: number } = {} -- Studio late stand-ins on a camp: hunters with no player
+	local finished = false
+	local round = 0
+	local density = Sides.density(modeKey, sides) -- the seats at the start; spare plots don't change it
+	-- The queue's first played round (#251); Studio "Start at round N" snaps to the next played one.
+	local firstRound = Pace.firstRound(modeKey, ctx.competitive, ctx.startRound)
+
+	local function living(): { number }
+		local list = {}
+		for side = 1, sides do
+			if not out[side] then
+				table.insert(list, side)
+			end
+		end
+		return list
+	end
+
+	-- A side's hunters for its dino scale and income: its players still here, plus Studio
+	-- late stand-ins (T105). A late joiner counts from the next round (Waves reads it as a
+	-- round starts).
+	local function hunterCount(side: number): number
+		return #huntersOf(side) + (lateStandIns[side] or 0)
+	end
+
+	local function refreshRealCampIn()
+		realCampIn = false
+		for _, side in living() do
+			if not seating.standIn[side] then
+				realCampIn = true
+			end
+		end
+	end
+	refreshRealCampIn()
+
+	local function sideBones(side: number): number
+		if frozenBones[side] then
+			return frozenBones[side]
+		end
+		local total = 0
+		for _, player in huntersOf(side) do
+			total += Scoreboard.bones(player)
+		end
+		-- a stand-in's towers' take-downs (T79b), and a Bone Rush joiner's floor (T105)
+		return total + (standInBones[side] or 0) + (bonesStart[side] or 0)
+	end
+
+	-- Late joiners (T105, #254, #262): open in casual through Late join last round; Ranked
+	-- never seats one. Camp Clash: the standing camp with the fewest hunters; Bone Rush: a
+	-- spare plot with full Fence and the Bones floor. Catch-up cash on the seat; the dino
+	-- scale grows from the next round. Never staked or ranked (Battle never calls
+	-- Progression); a seated joiner is in the Outcome like anyone (casual payouts).
+	lateJoiner = function(player: Player?, host: Player?): (boolean, string?)
+		if finished then
+			return false, "over"
+		end
+		local open, why = BattleFlow.lateJoin(modeKey, ctx.competitive, round)
+		if not open then
+			return false, why
+		end
+		local camps: { BattleFlow.LateCamp } = {}
+		for side = 1, sides do
+			table.insert(camps, { side = side, hunters = hunterCount(side), fence = Economy.livesOf(side), bones = sideBones(side), out = out[side] == true })
+		end
+		local seat, refused = BattleFlow.lateSeat(modeKey, camps, if sides < layout.sides then sides + 1 else nil)
+		if not seat then
+			return false, refused
+		end
+		local side = seat.side
+		local playing = ReplicatedStorage:GetAttribute("State") == "Playing"
+		local cash = Pace.catchUpCash(Pace.joinRound(playing, round), seat.hunters, chosen, density)
+		if seat.newPlot then
+			sides = side -- the next spare plot is now a seat
+			Enemies.setSeatedSides(sides)
+			seating.teams[side] = {}
+			bonesStart[side] = seat.bones
+			openCamp(side, if player then player.DisplayName else nil)
+			if not player then
+				seating.standIn[side] = true -- Studio: a stand-in seat, towers and all
+				seatStandIn(side)
+			end
+		elseif not player then
+			lateStandIns[side] = (lateStandIns[side] or 0) + 1
+		end
+		Economy.earnFor(side, cash)
+		ReplicatedStorage:SetAttribute(Sides.attr("CampBones", side), sideBones(side))
+		local line = BattleFlow.lateJoinLine(modeKey, Battle.campOf(side), if playing then round else firstRound, cash, seat.bones)
+		if player then
+			table.insert(seating.teams[side], player)
+			seating.sideOf[player] = side
+			joinCamp(player, side)
+			ctx.spawn(player)
+			Battle.tell(player, line)
+		elseif host then
+			Battle.tell(host, line) -- the Studio tester sees the stand-in's toast
+		end
+		refreshRealCampIn()
+		print(`[DinoHunters] Late join ({if player then player.Name else "stand-in"}): {line}`)
+		return true, nil
 	end
 
 	-- The match clock (T104, #252): from Building; casual 900 s, Ranked 1800 s (a Studio
@@ -304,8 +432,6 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 	-- Playing.
 	ReplicatedStorage:SetAttribute("State", "Playing")
 	ReplicatedStorage:SetAttribute("BuildEndsAt", nil)
-	-- The queue's first played round (#251); Studio "Start at round N" snaps to the next played one.
-	local firstRound = Pace.firstRound(modeKey, ctx.competitive, ctx.startRound)
 	local level = HeroXp.roundLevel(firstRound - 1)
 	ReplicatedStorage:SetAttribute("Level", level)
 	ReplicatedStorage:SetAttribute("RoundsCleared", firstRound - 1)
@@ -313,52 +439,15 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 	Towers.setLevel(level, chosen)
 	Enemies.setSpeedMult(chosen.speedMult)
 	Enemies.resetDamage() -- the tie-break's damage dealt counts from round 1 (T104)
-	local density = Sides.density(modeKey, sides)
 	local standInCount = 0
 	for _ in seating.standIn do
 		standInCount += 1
 	end
 	print(`[DinoHunters] {display} on {chosen.display}: {sides} sides, {#roster} player(s), {standInCount} stand-in(s)`)
 
-	local out: { [number]: boolean } = {}
-	local outAt: { [number]: number } = {}
-	local frozenBones: { [number]: number } = {}
 	local elimination: { { number } } = {}
-	local finished = false
-	local round = 0
 	local spawnedRound: { [number]: number } = {} -- side -> the last round whose spawning finished
 	local matchSeed = math.random(1, 2 ^ 30)
-
-	local function living(): { number }
-		local list = {}
-		for side = 1, sides do
-			if not out[side] then
-				table.insert(list, side)
-			end
-		end
-		return list
-	end
-
-	local function refreshRealCampIn()
-		realCampIn = false
-		for _, side in living() do
-			if not seating.standIn[side] then
-				realCampIn = true
-			end
-		end
-	end
-	refreshRealCampIn()
-
-	local function sideBones(side: number): number
-		if frozenBones[side] then
-			return frozenBones[side]
-		end
-		local total = 0
-		for _, player in huntersOf(side) do
-			total += Scoreboard.bones(player)
-		end
-		return total + (standInBones[side] or 0) -- a stand-in's towers' take-downs (T79b)
-	end
 
 	local function startRound(r: number)
 		round = r
@@ -382,7 +471,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		end
 		for _, side in living() do
 			Airdrops.drop(side) -- each side's chests on its own plot (#231)
-			local scale = BattleFlow.sideScale(chosen, #huntersOf(side))
+			local scale = BattleFlow.sideScale(chosen, hunterCount(side))
 			task.spawn(function()
 				Waves.spawnRound({
 					side = side,
@@ -513,7 +602,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 	local function paySkipped(from: number, to: number)
 		for _, side in living() do
 			local hunters = huntersOf(side)
-			local amount = Pace.skippedIncome(from, to, #hunters, chosen, density)
+			local amount = Pace.skippedIncome(from, to, hunterCount(side), chosen, density)
 			Economy.earnFor(side, amount)
 			for _, hunter in hunters do
 				Battle.tell(hunter, BattleFlow.suppliesLine(amount, from, to))

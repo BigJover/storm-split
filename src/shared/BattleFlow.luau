@@ -44,6 +44,25 @@
 	      clock in the result's ranking order (T104), then the sides that fell, the latest
 	      fall first; sides that fell in one step share a place
 	  royalePlaces(ranking)            id -> placement (1st first)
+	  lateJoin(mode, competitive, round) can a hunter who arrives now be seated? (T105, #254)
+	                                 co-op: always (drop-in); Ranked: never (seats lock at
+	                                 Building, "ranked"); casual battles: while the round
+	                                 under way is at most Tuning LateJoinLastRound ("closed")
+	  sparePlots(mode, competitive, seats) the empty plots a casual Bone Rush lays out for
+	                                 joiners: Tuning BoneRushSparePlots, within Battle max
+	                                 players; 0 in Camp Clash and Ranked
+	  lateSeat(mode, camps, spare?)    where a late joiner goes. camps: { side, hunters, fence,
+	                                 bones, out }. Camp Clash: the standing camp with the
+	                                 fewest hunters, then lower Fence, then lower side (nil,
+	                                 "noCamp" when none stands). Bone Rush: the spare plot
+	                                 `spare` (nil, "full" when there is none) with Bones =
+	                                 bonesFloor(camps). Returns { side, newPlot, hunters (the
+	                                 side's before the join, for Pace.catchUpCash), bones }
+	  bonesFloor(camps)                the lowest Bones among the camps still standing (0 if
+	                                 none): a Bone Rush joiner's starting Bones
+	  lateJoinLine(mode, camp, round, cash, bones?) the joiner's toast: "Joined Red Camp at
+	                                 round 17: +N cash to catch up" (Bone Rush: "Joined the
+	                                 hunt at round 17: +N cash and M Bones to catch up")
 	  standInTowers()                  the stand-ins' fixed towers: one of each free tower
 	                                   that can be damaged (raid targets), in TowerOrder
 	  standInSpots(layout, side, n)    n build spots in that side's zone beside its track,
@@ -242,6 +261,72 @@ end
 
 function BattleFlow.startingCash(difficulty: { startingCash: number }, hunters: number): number
 	return Pricing.startingPot(difficulty, math.max(1, hunters))
+end
+
+-- Late joiners (PLAN T105, DECISIONS #254, #262). Pure; Server/Battle seats them.
+function BattleFlow.lateJoin(modeKey: string, competitive: boolean?, round: number): (boolean, string?)
+	local mode = Modes.Modes[modeKey]
+	if not mode or mode.sides == "one" then
+		return true, nil -- co-op: drop straight in
+	elseif competitive then
+		return false, "ranked" -- seats lock when Building starts; leavers aren't refilled
+	elseif round > Config.Tuning.LateJoinLastRound then
+		return false, "closed"
+	end
+	return true, nil
+end
+
+function BattleFlow.sparePlots(modeKey: string, competitive: boolean?, seats: number): number
+	if modeKey ~= "ROYALE" or competitive then
+		return 0
+	end
+	return math.clamp(Config.Tuning.BoneRushSparePlots, 0, math.max(0, Config.Tuning.BattleMaxPlayers - seats))
+end
+
+export type LateCamp = { side: number, hunters: number, fence: number, bones: number, out: boolean }
+export type LateSeat = { side: number, newPlot: boolean, hunters: number, bones: number }
+
+function BattleFlow.bonesFloor(camps: { LateCamp }): number
+	local floor: number? = nil
+	for _, camp in camps do
+		if not camp.out and (floor == nil or camp.bones < floor) then
+			floor = camp.bones
+		end
+	end
+	return floor or 0
+end
+
+function BattleFlow.lateSeat(modeKey: string, camps: { LateCamp }, spare: number?): (LateSeat?, string?)
+	if modeKey == "ROYALE" then
+		if not spare then
+			return nil, "full"
+		end
+		return { side = spare, newPlot = true, hunters = 0, bones = BattleFlow.bonesFloor(camps) }, nil
+	elseif modeKey ~= "TEAM" then
+		return nil, "notBattle"
+	end
+	local best: LateCamp? = nil
+	for _, camp in camps do
+		if not camp.out then
+			local better = best == nil
+				or camp.hunters < best.hunters
+				or (camp.hunters == best.hunters and (camp.fence < best.fence or (camp.fence == best.fence and camp.side < best.side)))
+			if better then
+				best = camp
+			end
+		end
+	end
+	if not best then
+		return nil, "noCamp"
+	end
+	return { side = best.side, newPlot = false, hunters = best.hunters, bones = 0 }, nil
+end
+
+function BattleFlow.lateJoinLine(modeKey: string, camp: string, round: number, cash: number, bones: number?): string
+	if modeKey == "ROYALE" then
+		return `Joined the hunt at round {round}: +{math.floor(cash)} cash and {math.floor(bones or 0)} Bones to catch up`
+	end
+	return `Joined {camp} at round {round}: +{math.floor(cash)} cash to catch up`
 end
 
 function BattleFlow.teamPlaces(eliminationOrder: { { number } }, result: BattleRules.TeamResult, sides: number): { [number]: number }

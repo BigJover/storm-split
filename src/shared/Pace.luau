@@ -1,7 +1,7 @@
 --[[
 	Pace: how long a match is (PLAN Phase 8 batch 2 T100, DECISIONS #250-#254). Pure:
 	Config in, answers out. Wiring into play is T103 (Waves/Enemies/Battle), the clock T104,
-	joiners T105.
+	joiners T105 (catchUpCash, joinRound).
 
 	Every played round is co-op's round, time-compressed by Tuning RoundPace (#250; in play
 	since #258 by fewer, tougher dinos: plan() below):
@@ -28,11 +28,17 @@
 	      the sum of expectedIncome over fromRound..toRound (0 when from > to): what a battle
 	      side is paid at a played round's start for the rounds skipped before it (#251)
 	  catchUpCash(roundReached, hunters, difficulty, density?)
-	      a late joiner's cash (#254): Tuning LateJoinCashX x the expected income ONE more
-	      hunter would have added over rounds 1 .. roundReached - 1, i.e. income with
-	      hunters + 1 minus income with `hunters` (the side's hunters before the join; 0 =
-	      a new camp of its own, which adds its whole income); never below Tuning
-	      StartingCashPerExtraPlayer (co-op's old flat amount)
+	      a late joiner's cash (#254, additive since #262): what they'd have brought at
+	      round 1 PLUS Tuning LateJoinCashX x the expected income ONE more hunter would have
+	      added over rounds 1 .. roundReached - 1 (income with hunters + 1 minus income with
+	      `hunters`, the side's hunters before the join). hunters = 0 is a plot of their own
+	      (Bone Rush): the 1-hunter starting cash (difficulty.startingCash =
+	      BattleFlow.startingCash(difficulty, 1)) + its whole income; a camp or co-op joiner:
+	      Tuning StartingCashPerExtraPlayer + the marginal income
+	  joinRound(playing, round)       the first round whose dino scale counts a joiner (T105):
+	                                  round + 1 while Playing (the round under way was
+	                                  scaled at its start, so its income is missed too), 1
+	                                  before that (Building: nothing missed)
 	  crowd(modeKey)                  #258: Tuning BattleCrowdX in a battle, 1 in co-op
   plan(round, countMult, promoteChance, difficulty, crowd?)
       #258, how a round is paced in play: fewer, tougher dinos (spawn gaps unchanged).
@@ -67,6 +73,7 @@ local Config = require(script.Parent.Config)
 
 export type PaceDifficulty = { speedMult: number }
 export type IncomeDifficulty = { countMult: number, hpMult: number, promoteChance: number, cashMult: number }
+export type JoinDifficulty = { countMult: number, hpMult: number, promoteChance: number, cashMult: number, startingCash: number }
 
 local Pace = {}
 
@@ -225,11 +232,16 @@ function Pace.skippedIncome(fromRound: number, toRound: number, hunters: number,
 	return total
 end
 
-function Pace.catchUpCash(roundReached: number, hunters: number, difficulty: IncomeDifficulty, density: number?): number
+function Pace.catchUpCash(roundReached: number, hunters: number, difficulty: JoinDifficulty, density: number?): number
 	local before = roundReached - 1
 	local with = Pace.skippedIncome(1, before, hunters + 1, difficulty, density)
 	local without = if hunters >= 1 then Pace.skippedIncome(1, before, hunters, difficulty, density) else 0
-	return math.max(T.StartingCashPerExtraPlayer, T.LateJoinCashX * (with - without))
+	local start = if hunters >= 1 then T.StartingCashPerExtraPlayer else difficulty.startingCash
+	return start + T.LateJoinCashX * (with - without)
+end
+
+function Pace.joinRound(playing: boolean, round: number): number
+	return if playing then math.max(0, math.floor(round)) + 1 else 1
 end
 
 function Pace.abilityCooldown(seconds: number): number

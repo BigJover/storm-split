@@ -20,7 +20,7 @@ test("the seeds this spec means", function()
 	eq(T.RankedMatchCap, 1800, "Ranked match cap (#252)")
 	eq(T.ClockWarning, 60, "Clock warning (#252)")
 	eq(T.LateJoinCashX, 1.1, "Late join cash x (#254)")
-	eq(T.StartingCashPerExtraPlayer, 200, "the catch-up floor")
+	eq(T.StartingCashPerExtraPlayer, 200, "round-1 cash of a camp or co-op joiner (#262)")
 	eq(LAST, 40, "rounds")
 	eq(#Config.DifficultyOrder, 4, "difficulties")
 end)
@@ -171,24 +171,42 @@ test("skipped + played income = co-op's cumulative income to round 40 (#251)", f
 	eq(Pace.skippedIncome(5, 4, 1, D.EASY), 0, "nothing skipped")
 end)
 
-test("catchUpCash: the floor at round 1, monotonic, 1.1 x one more hunter's income (#254)", function()
+test("catchUpCash: round-1 cash + 1.1 x one more hunter's income, additive (#254, #262)", function()
 	for _, key in Config.DifficultyOrder do
+		local d = D[key]
 		for _, hunters in { 0, 1, 2, 4, 9 } do
-			eq(Pace.catchUpCash(1, hunters, D[key]), T.StartingCashPerExtraPlayer, `{key} {hunters}: round 1 = the floor only`)
+			local start = if hunters == 0 then BattleFlow.startingCash(d, 1) else T.StartingCashPerExtraPlayer
+			eq(Pace.catchUpCash(1, hunters, d), start, `{key} {hunters}: round 1 = what they'd have brought at round 1`)
 			local last = 0
 			for r = 1, LAST do
-				local cash = Pace.catchUpCash(r, hunters, D[key])
+				local cash = Pace.catchUpCash(r, hunters, d)
 				ok(cash >= last, `{key} {hunters} hunters: round {r} not below round {r - 1}`)
-				ok(cash >= T.StartingCashPerExtraPlayer, "never below the floor")
+				local missed = if hunters == 0
+					then Pace.skippedIncome(1, r - 1, 1, d)
+					else Pace.skippedIncome(1, r - 1, hunters + 1, d) - Pace.skippedIncome(1, r - 1, hunters, d)
+				near(cash, start + T.LateJoinCashX * missed, `{key} {hunters} r{r}: start + 1.1 x missed`, 1e-6)
 				last = cash
 			end
 		end
 	end
 	local n = D.NORMAL
 	local marginal = Pace.skippedIncome(1, 29, 3, n) - Pace.skippedIncome(1, 29, 2, n)
-	near(Pace.catchUpCash(30, 2, n), 1.1 * marginal, "joining a camp of 2 at round 30", 1e-6)
+	near(Pace.catchUpCash(30, 2, n), 200 + 1.1 * marginal, "joining a camp of 2 at round 30: 200 + 1.1 x missed", 1e-6)
 	ok(Pace.catchUpCash(30, 2, n) > 10 * T.StartingCashPerExtraPlayer, "well above the old flat 200 by round 30")
-	near(Pace.catchUpCash(30, 0, n, 0.6), 1.1 * Pace.skippedIncome(1, 29, 1, n, 0.6), "a new camp (Bone Rush plot): its whole income", 1e-6)
+	near(Pace.catchUpCash(30, 0, n, 0.6), n.startingCash + 1.1 * Pace.skippedIncome(1, 29, 1, n, 0.6), "a Bone Rush plot: 1-hunter starting cash + its whole income", 1e-6)
+	eq(n.startingCash, BattleFlow.startingCash(n, 1), "the 1-hunter starting cash is BattleFlow.startingCash")
+end)
+
+test("joinRound: the round under way is missed too; nothing before Playing (T105)", function()
+	eq(Pace.joinRound(false, 0), 1, "Building: nothing missed")
+	eq(Pace.joinRound(false, 17), 1, "not playing: nothing missed")
+	eq(Pace.joinRound(true, 17), 18, "mid round 17: rounds 1-17 missed (its scale was set at its start)")
+	eq(Pace.joinRound(true, 0), 1)
+	-- a joiner at a casual round + the skipped income paid with them aboard = co-op's cumulative
+	local n = D.NORMAL
+	local joined = Pace.catchUpCash(Pace.joinRound(true, 28), 1, n) - T.StartingCashPerExtraPlayer
+	local skipped = Pace.skippedIncome(29, 30, 2, n) - Pace.skippedIncome(29, 30, 1, n)
+	near((joined / T.LateJoinCashX) + skipped, Pace.skippedIncome(1, 30, 2, n) - Pace.skippedIncome(1, 30, 1, n), "no round counted twice or lost", 1e-6)
 end)
 
 test("matchCap: casual 900, Ranked 1800, none in co-op (#252)", function()

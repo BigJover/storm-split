@@ -172,7 +172,7 @@ test("wiring: Waves paces every round by Pace.plan at the sheet's gap; kill cash
 	ok(battle:find("crowd = Pace.crowd(modeKey)", 1, true) ~= nil, "battles: Battle crowd x")
 	ok(battle:find("BattleLoop.run(", 1, true) ~= nil, "battles: the round driver")
 	ok(battle:find("Pace.firstRound(modeKey, ctx.competitive, ctx.startRound)", 1, true) ~= nil, "battles: the first played round")
-	ok(battle:find("Pace.skippedIncome(from, to, #hunters, chosen, density)", 1, true) ~= nil, "battles: skipped income")
+	ok(battle:find("Pace.skippedIncome(from, to, hunterCount(side), chosen, density)", 1, true) ~= nil, "battles: skipped income")
 end)
 
 test("Ability tempo (#259): cooldowns / 2, hospital heal x 2, wired in Hero and Towers", function()
