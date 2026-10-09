@@ -7,7 +7,7 @@ pushed; check/export/test green; Config diff after any sheet change; openpyxl, a
 old value or empty cell first; append Tuning rows, never insert; pure rules first; co-op
 specs re-run every task; no publish, no DataStore writes from an agent).
 
-**Status (2026-10-09): batch 2a done (29720d9 T101, 4548d14 T100, e9aab47 T102; 639 specs). Review = #258–#262 (amendments below, folded into T103/T104/T105). Next: batch 2b (T103, T104) without stopping; no Tester run until T104 lands.**
+**Status (2026-10-09): 2a + 2b done (29720d9, 4548d14, e9aab47, 76d1e04 T103, 717942e T104; 662 specs; review #263–#264). Next: T105 (running) → T103b (one cell) → T106 🦖 → Tester Run 6.**
 
 ## Target timelines (model: `Round pace` 0.4, 30 s build, 5 s breaks; Normal)
 | Mode | Rounds played | Round 40 reached at | After round 40 | Hard cap |
@@ -162,8 +162,13 @@ Studio-only "Late stand-in joins now" host option so one MCP client can test the
 - **Accept:** pure specs for lateSeat and the Bones floor; Ranked join refused after
   Building; a late joiner's profile never gets an escrow; co-op specs green.
 
+### T103b (#264) — Bone Rush live-cap margin (one cell; after T105)
+`Battle crowd x` 0.75 → **0.7** (assert 0.75). Accept: Config diff = that line; value.py peaks
+at max players Bone Rush ≤ 122, Camp Clash ≤ 92; timelines ±0.2 min; T91b bars and
+affordability unchanged.
+
 ### T106 🦖 — Dino review of new strings, then fixes
-Clock label, last-minute banner, "Decided by …" lines (six per mode), coin-flip wording,
+Every batch-2 string (T103/T104 list in #263: supplies lines, "Round 22 / 40", "Final Stampede N", "Clock m:ss", "One minute left on the clock!", "Time's up!", "Last camp standing", the six "Decided by …" lines, plus T105's), clock label, last-minute banner, "Decided by …" lines (six per mode), coin-flip wording,
 supplies feed line, late-join toast ("Joined Red Camp at round 17: +N cash to catch up"),
 Ranked waiting text. Player text says **Bones**/take-downs.
 
