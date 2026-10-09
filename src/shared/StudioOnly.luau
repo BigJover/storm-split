@@ -7,10 +7,13 @@
 	                                          feature nobody listed, a live server) is false
 	  StudioOnly.startRound(isStudio, wanted, last?) "Start at round N": `wanted` (whole,
 	                                          at most `last`) in Studio, round 1 live
-	  StudioOnly.heldLoss(isStudio, hold, standIn, fence, cost)
+	  StudioOnly.heldLoss(isStudio, hold, standIn, fence, cost, realAlive)
 	                                          "Stand-ins hold": the Fence a leak takes. A
-	                                          stand-in camp with hold on keeps 1; anything
-	                                          else (or a live server) loses `cost`
+	                                          stand-in camp with hold on keeps 1 while a
+	                                          real hunter's camp is still in (PLAYTEST N7:
+	                                          once they're all out the hold lets go, so the
+	                                          match can end); anything else (or a live
+	                                          server) loses `cost`
 	  StudioOnly.FEATURES                     every Studio-only feature and what it does
 
 	The server passes RunService:IsStudio(); a client is never asked (it could lie). The
@@ -26,7 +29,7 @@ StudioOnly.FEATURES = {
 	towerHit = "L: knock HP off the tower nearest you (the StudioTowerHit remote, Server/Main)",
 	standIns = "Fill with stand-ins: camps with no player in battles (Server/Main lobby, Server/Battle)",
 	startRound = 'Start at round N: the host\'s Lobby ("startround", n), co-op and battles (Server/Main, Server/Battle)',
-	standInsHold = 'Stand-ins hold: a stand-in camp\'s Fence never drops below 1 (Lobby ("standinshold", on), Server/Battle)',
+	standInsHold = 'Stand-ins hold: a stand-in camp\'s Fence stays at 1 while a real camp is in (Lobby ("standinshold", on), also mid-match; Server/Battle)',
 	standInPierce = "Stand-in camps' fixed towers pierce armour, for test fidelity (Server/Shop, PLAN T91b)",
 } :: { [string]: string }
 
@@ -42,8 +45,8 @@ function StudioOnly.startRound(isStudio: boolean, wanted: unknown, last: number?
 	return 1
 end
 
-function StudioOnly.heldLoss(isStudio: boolean, hold: unknown, standIn: boolean, fence: number, cost: number): number
-	if StudioOnly.allowed(isStudio, "standInsHold") and hold == true and standIn then
+function StudioOnly.heldLoss(isStudio: boolean, hold: unknown, standIn: boolean, fence: number, cost: number, realAlive: boolean?): number
+	if StudioOnly.allowed(isStudio, "standInsHold") and hold == true and standIn and realAlive == true then
 		return math.max(0, math.min(cost, fence - 1))
 	end
 	return cost

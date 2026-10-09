@@ -78,6 +78,7 @@ local seatedSides = 0
 local layout: Sides.Layout = Sides.new(1)
 -- Studio stand-in seats and the Bones their own towers take (PLAN T79b): battle-local only.
 local standInSeats: { [number]: boolean } = {}
+local realCampIn = false -- a real hunter's camp is still in (Studio "Stand-ins hold" needs one, N7)
 local standInBones: { [number]: number } = {}
 local campTeams: { Team } = {} -- one per camp this match (the player list's groups)
 
@@ -133,9 +134,10 @@ end
 -- Between matches: no battle attributes left behind (co-op reads "Out" for side 1).
 -- The Fence a leak takes on `side` (PLAN T91b): Studio "Stand-ins hold" keeps a stand-in
 -- camp at 1, so the Tester can reach round 40 and Final Stampede; real camps pay in full.
+-- Once every real hunter's camp is out the hold lets go (PLAYTEST N7), so the match ends.
 function Battle.leakCost(side: number, cost: number): number
 	local hold = ReplicatedStorage:GetAttribute("StandInsHold")
-	return StudioOnly.heldLoss(RunService:IsStudio(), hold, standInSeats[side] == true, Economy.livesOf(side), cost)
+	return StudioOnly.heldLoss(RunService:IsStudio(), hold, standInSeats[side] == true, Economy.livesOf(side), cost, realCampIn)
 end
 
 function Battle.reset()
@@ -148,6 +150,7 @@ function Battle.reset()
 	seatedSides = 0
 	table.clear(standInSeats)
 	table.clear(standInBones)
+	realCampIn = false
 	StandInHunters.clear()
 	for _, player in Players:GetPlayers() do
 		if player.Team and table.find(campTeams, player.Team) then
@@ -322,6 +325,16 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		return list
 	end
 
+	local function refreshRealCampIn()
+		realCampIn = false
+		for _, side in living() do
+			if not seating.standIn[side] then
+				realCampIn = true
+			end
+		end
+	end
+	refreshRealCampIn()
+
 	local function sideBones(side: number): number
 		if frozenBones[side] then
 			return frozenBones[side]
@@ -438,6 +451,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 			end
 			Battle.announce(BattleFlow.outLine(Battle.campOf(side)))
 		end
+		refreshRealCampIn()
 	end
 
 	-- Is the match over? Returns the result once it is.

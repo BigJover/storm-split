@@ -94,7 +94,7 @@ startGame.Name = "StartGame"
 startGame.Parent = remotes
 -- Home screen, host only: ("mode" | "track" | "difficulty", key), ("sides", n), ("standins",
 -- on), ("ranked", on) or ("play"); Studio only (PLAN T91b): ("startround", n) and
--- ("standinshold", on). Every player: ("ready", on) for Ranked (PLAN T80; its
+-- ("standinshold", on), which also works mid-match. Every player: ("ready", on) for Ranked (PLAN T80; its
 -- buttons are T82's)
 local lobby = Instance.new("RemoteEvent")
 lobby.Name = "Lobby"
@@ -273,6 +273,14 @@ end
 
 local playPressed = false
 lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
+	-- Studio "Stand-ins hold" (T91b) is the one option the host may flip mid-match too
+	-- (PLAYTEST N7), so held stand-in camps can fall again; refused live like the rest.
+	if action == "standinshold" and typeof(key) == "boolean" and StudioOnly.allowed(RunService:IsStudio(), "standInsHold") then
+		if isHost(player) then
+			ReplicatedStorage:SetAttribute("StandInsHold", key) -- a stand-in camp's Fence stays at 1
+		end
+		return
+	end
 	if ReplicatedStorage:GetAttribute("State") ~= "Lobby" then
 		return
 	end
@@ -315,8 +323,6 @@ lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
 		ReplicatedStorage:SetAttribute("StandIns", key) -- "Fill with stand-ins" (DECISIONS #221)
 	elseif action == "startround" and typeof(key) == "number" and StudioOnly.allowed(RunService:IsStudio(), "startRound") then
 		ReplicatedStorage:SetAttribute("StudioStartRound", StudioOnly.startRound(RunService:IsStudio(), key, #Config.Rounds))
-	elseif action == "standinshold" and typeof(key) == "boolean" and StudioOnly.allowed(RunService:IsStudio(), "standInsHold") then
-		ReplicatedStorage:SetAttribute("StandInsHold", key) -- a stand-in camp's Fence never drops below 1
 	elseif action == "track" and typeof(key) == "string" and Modes.Tracks[key] then
 		ReplicatedStorage:SetAttribute("Track", key)
 	elseif action == "difficulty" and typeof(key) == "string" and Config.Difficulties[key] then
