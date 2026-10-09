@@ -16,12 +16,19 @@
 	multiplies the counts on top of the scale, so many tracks fit under the shared cap.
 	Battles (PLAN T77) don't use run(): Server/Battle starts every living side's round
 	together with spawnRound() (lockstep, Shared/BattleRules.nextRoundDue).
+
+	PACE (PLAN T103, DECISIONS #250, #258): every round is paced by Shared/Pace.plan: the
+	gap is not paced (a battle's is / Battle crowd x, which thins the round like density),
+	the counts x Round pace (x Battle crowd x in battles; bosses kept),
+	each dino tougher by plan.hpX, kill cash x plan.cashX and leak cost x plan.leakX, so a
+	round's EHP, required DPS, cash and Fence at stake are co-op's unpaced round's.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local Pace = require(Shared:WaitForChild("Pace"))
 local RoundFlow = require(Shared:WaitForChild("RoundFlow"))
 
 local Enemies = require(script.Parent.Enemies)
@@ -35,6 +42,7 @@ export type Scale = { countMult: number, hpMult: number, promoteChance: number }
 
 export type RunOptions = {
 	startRound: number?,
+	speedMult: number, -- the difficulty's dino speed (the pace factor's walk, #250)
 	side: number?, -- whose track (default 1, co-op)
 	density: number?, -- count multiplier per side (default 1)
 	isOver: () -> boolean,
@@ -68,6 +76,8 @@ export type RoundOptions = {
 	scale: Scale,
 	density: number?, -- count multiplier per side (default 1)
 	hpMult: number?, -- extra HP multiplier (battle overtime, Shared/BattleFlow; default 1)
+	speedMult: number, -- the difficulty's dino speed (Shared/Pace.plan)
+	crowd: number?, -- Shared/Pace.crowd: Battle crowd x in battles (default 1, co-op)
 	random: Random?, -- promotion rolls (battles: one seed per round, so every side gets the same dinos)
 	isOver: () -> boolean,
 }
@@ -78,14 +88,17 @@ function Waves.spawnRound(options: RoundOptions): boolean
 	local round = Config.Rounds[options.index]
 	local scale = options.scale
 	local countMult = scale.countMult * (options.density or 1)
-	local gap = round.spawnGap / math.max(countMult, 0.01)
-	local hpMult = round.hpMult * scale.hpMult * (options.hpMult or 1)
+	-- Not x pace (#258); Battle crowd x thins a battle round like density does: fewer dinos,
+	-- the gap / crowd, so the spawn phase stays pace x S and the live peak drops x crowd.
+	local gap = round.spawnGap / math.max(countMult * (options.crowd or 1), 0.01)
+	local plan = Pace.plan(options.index, countMult, scale.promoteChance, { speedMult = options.speedMult }, options.crowd)
+	local hpMult = round.hpMult * scale.hpMult * (options.hpMult or 1) * plan.hpX
 	local roll = options.random or random
 
 	for _, key in Config.EnemyOrder do
-		local count = round.counts[key]
-		if count and count > 0 then
-			for _ = 1, math.max(1, math.floor(count * countMult + 0.5)) do
+		local count = plan.counts[key]
+		if count then
+			for _ = 1, count do
 				if options.isOver() then
 					return false
 				end
@@ -93,7 +106,7 @@ function Waves.spawnRound(options: RoundOptions): boolean
 				if promotion[key] and roll:NextNumber() < scale.promoteChance then
 					spawnKey = promotion[key]
 				end
-				Enemies.enqueue(options.side, spawnKey, hpMult)
+				Enemies.enqueue(options.side, spawnKey, hpMult, plan.cashX, plan.leakX)
 				task.wait(gap)
 			end
 		end
@@ -117,7 +130,14 @@ function Waves.run(options: RunOptions): boolean
 				options.onRoundStart(index)
 			end
 			local scale = if options.scale then options.scale() else NO_SCALE
-			return Waves.spawnRound({ side = side, index = index, scale = scale, density = density, isOver = options.isOver })
+			return Waves.spawnRound({
+				side = side,
+				index = index,
+				scale = scale,
+				density = density,
+				speedMult = options.speedMult,
+				isOver = options.isOver,
+			})
 		end,
 		remaining = function()
 			return Enemies.remaining(side)

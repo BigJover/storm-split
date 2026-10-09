@@ -18,11 +18,12 @@ Assumptions (deliberately pessimistic):
   - projectiles always hit (towers can't dodge); a Boss species' projectiles deal
     x `Boss ranged vs towers x` to towers (Tuning, BOSS THROWS; DECISIONS #138, #154);
   - a dino is full size on its first lane and half size after (its damage halves).
-Round pace (Tuning, DECISIONS #250; PLAN T101): spawn gaps x pace, dino HP x the pace factor,
-walk speed unchanged. No dino is killed here, so per-round damage is the same paced or not;
-the paced round is shorter, so the same damage lands in fewer seconds: the "len" column is
-the paced Easy round length and "mid def/s" the defended mid-gap ranged damage per second
-(report only; a tower's own heal per second is unchanged, its heal per round shrinks).
+Round pace (Tuning, DECISIONS #250, #258; PLAN T103): fewer, tougher dinos, as Shared/Pace.plan
+spawns them: each species' count x Round pace (half up, min 1; bosses keep theirs), spawn gaps
+and walk speed unchanged. No dino is killed here, so a round's damage scales with its paced
+counts (each dino's bites and throws per walk are unchanged): the "len" column is the paced
+Easy round length and "mid def/s" the defended mid-gap ranged damage per second (report only;
+a Field Hospital heals x Ability tempo per second, #259).
 It prints per-round damage at each spot and, for each tower type at T0 max HP, the
 rounds where one round's worst-case damage at the mid-gap spot would trample it.
 
@@ -154,7 +155,7 @@ def main():
           + (f"; can't be damaged (left out): {', '.join(untouchable)}" if untouchable else ""))
     print(f"  defended = worst case x {DEFENDED} (DECISIONS #42); boss throws vs towers x {boss_vs_towers:g} (DECISIONS #154)")
     pace = data["Tuning"]["RoundPace"]
-    print(f"  Round pace {pace:g}: per-round damage unchanged (same counts, same walk); len = paced Easy round length (unpaced in brackets)")
+    print(f"  Round pace {pace:g}: paced counts (x pace, half up, min 1, bosses kept; #258), same walk; len = paced Easy round length (unpaced in brackets)")
     print(f"  {'round':>5} | {'bites hug':>9} {'mid':>6} {'corner':>7} | {'ranged hug':>10} {'mid':>6} {'corner':>7} {'mid def':>8} {'back':>5} | {'len':>9} {'mid def/s':>9}")
     findings = []
     trampled = {name: [] for name in t0}
@@ -162,8 +163,9 @@ def main():
     for index, round_ in enumerate(data["Rounds"], start=1):
         totals = {name: {"melee": 0.0, "ranged": 0.0} for name in spots}
         boss_mid = 0.0  # the Boss species' share of the mid-gap ranged damage
+        paced_n = export_constants.paced_counts(data, round_, easy["countMult"])
         for key, count in round_["counts"].items():
-            n = count * easy["countMult"]
+            n = paced_n.get(key, 0)  # Shared/Pace.plan (#258)
             if enemies[key]["boss"]:
                 boss_mid += n * per_dino[key]["mid-gap"]["ranged"]
             for name in spots:

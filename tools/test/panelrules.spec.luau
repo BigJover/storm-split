@@ -310,3 +310,11 @@ test("T86b Amber line: the total with its breakdown when there's a share; never 
 	end
 	eq(plus, 2, "one total line, one '+' inside its breakdown")
 end)
+
+test("T103 round label: the real round of 40, then Final Stampede N (never 'Round 41 / 40')", function()
+	eq(PanelRules.roundLabel(1, 40), "Round 1 / 40")
+	eq(PanelRules.roundLabel(22, 40), "Round 22 / 40")
+	eq(PanelRules.roundLabel(40, 40), "Round 40 / 40")
+	eq(PanelRules.roundLabel(41, 40), "Final Stampede 1")
+	eq(PanelRules.roundLabel(43, 40), "Final Stampede 3")
+end)

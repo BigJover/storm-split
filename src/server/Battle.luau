@@ -48,9 +48,11 @@ local Teams = game:GetService("Teams")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local BattleFlow = require(Shared:WaitForChild("BattleFlow"))
+local BattleLoop = require(Shared:WaitForChild("BattleLoop"))
 local BattleRules = require(Shared:WaitForChild("BattleRules"))
 local HeroXp = require(Shared:WaitForChild("HeroXp"))
 local Modes = require(Shared:WaitForChild("Modes"))
+local Pace = require(Shared:WaitForChild("Pace"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
 local StudioOnly = require(Shared:WaitForChild("StudioOnly"))
@@ -290,7 +292,8 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 	-- Playing.
 	ReplicatedStorage:SetAttribute("State", "Playing")
 	ReplicatedStorage:SetAttribute("BuildEndsAt", nil)
-	local firstRound = math.max(1, ctx.startRound or 1) -- Studio "Start at round N"; live always 1
+	-- The queue's first played round (#251); Studio "Start at round N" snaps to the next played one.
+	local firstRound = Pace.firstRound(modeKey, ctx.competitive, ctx.startRound)
 	local level = HeroXp.roundLevel(firstRound - 1)
 	ReplicatedStorage:SetAttribute("Level", level)
 	ReplicatedStorage:SetAttribute("RoundsCleared", firstRound - 1)
@@ -310,9 +313,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 	local elimination: { { number } } = {}
 	local finished = false
 	local round = 0
-	local startedAt = 0
 	local spawnedRound: { [number]: number } = {} -- side -> the last round whose spawning finished
-	local clearedAt: number? = nil -- round time when every living side was cleared (the round break, T79b)
 	local matchSeed = math.random(1, 2 ^ 30)
 
 	local function living(): { number }
@@ -357,7 +358,6 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		ctx.resetCost()
 		Enemies.resetPeak()
 		Towers.newRound()
-		startedAt = os.clock()
 		if ctx.onRoundStart then
 			local still = {}
 			for _, side in living() do
@@ -377,6 +377,8 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 					scale = scale,
 					density = density,
 					hpMult = hpExtra,
+					speedMult = chosen.speedMult,
+					crowd = Pace.crowd(modeKey), -- Battle crowd x (#258)
 					random = Random.new(matchSeed + r), -- every side rolls the same promotions
 					isOver = function()
 						return finished or out[side] == true
@@ -472,51 +474,69 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		return if result.over then result else nil
 	end
 
-	startRound(firstRound)
-	local result: any = nil
-	while true do
-		task.wait(CHECK_EVERY)
-		if #Players:GetPlayers() == 0 then
-			finished = true
-			return true
-		end
-		-- A Bone Rush hunter who leaves is out (PLAN T77); a Camp Clash leaver's towers stay.
-		if modeKey == "ROYALE" then
-			for side = 1, sides do
-				if not out[side] and not seating.standIn[side] and #huntersOf(side) == 0 then
-					table.insert(pendingOut, side)
-				end
-			end
-		end
-		for side = 1, sides do -- the camps board (only a change replicates)
-			ReplicatedStorage:SetAttribute(Sides.attr("CampBones", side), sideBones(side))
-		end
-		if #pendingOut > 0 then
-			local fallen = pendingOut
-			pendingOut = {}
-			eliminate(fallen)
-		end
-		result = verdict(false)
-		if result then
-			break
-		end
-		local cleared = {}
+	-- The skipped rounds' expected income, to each living side as a played round starts (#251).
+	local function paySkipped(from: number, to: number)
 		for _, side in living() do
-			cleared[side] = (spawnedRound[side] or 0) >= round and Enemies.remaining(side) == 0
-		end
-		local due
-		due, clearedAt = BattleFlow.roundDue(cleared, os.clock() - startedAt, clearedAt)
-		if due then
-			clearedAt = nil
-			endRound(round)
-			if not BattleFlow.hasOvertime(modeKey) and round >= #Config.Rounds then
-				result = verdict(true)
-				break
+			local hunters = huntersOf(side)
+			local amount = Pace.skippedIncome(from, to, #hunters, chosen, density)
+			Economy.earnFor(side, amount)
+			for _, hunter in hunters do
+				Battle.tell(hunter, BattleFlow.suppliesLine(amount, from, to))
 			end
-			startRound(round + 1)
 		end
 	end
+
+	local empty = {} -- the result when everyone left
+	local result: any
+	result, round = BattleLoop.run({
+		modeKey = modeKey,
+		competitive = ctx.competitive,
+		first = firstRound,
+		poll = CHECK_EVERY,
+		now = os.clock,
+		wait = function(seconds)
+			task.wait(seconds)
+		end,
+		tick = function()
+			if #Players:GetPlayers() == 0 then
+				return empty
+			end
+			-- A Bone Rush hunter who leaves is out (PLAN T77); a Camp Clash leaver's towers stay.
+			if modeKey == "ROYALE" then
+				for side = 1, sides do
+					if not out[side] and not seating.standIn[side] and #huntersOf(side) == 0 then
+						table.insert(pendingOut, side)
+					end
+				end
+			end
+			for side = 1, sides do -- the camps board (only a change replicates)
+				ReplicatedStorage:SetAttribute(Sides.attr("CampBones", side), sideBones(side))
+			end
+			if #pendingOut > 0 then
+				local fallen = pendingOut
+				pendingOut = {}
+				eliminate(fallen)
+			end
+			return verdict(false)
+		end,
+		cleared = function(r)
+			local cleared = {}
+			for _, side in living() do
+				cleared[side] = (spawnedRound[side] or 0) >= r and Enemies.remaining(side) == 0
+			end
+			return cleared
+		end,
+		startRound = startRound,
+		endRound = endRound,
+		paySkipped = paySkipped,
+		finish = function()
+			return verdict(true)
+		end,
+	})
 	finished = true
+	if result == empty then
+		return true
+	end
 
 	-- Results.
 	local places: { [number]: number }

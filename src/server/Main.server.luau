@@ -154,7 +154,7 @@ Enemies.init(map.paths, map.enemyFolder, {
 	-- Each split layer pays for its own HP, so a full cascade pays the round's
 	-- effective HP x CashPerEffectiveHP — the spreadsheet's "Kill income".
 	onKilled = function(enemy)
-		Economy.earnFor(enemy.side, enemy.share * Config.Tuning.CashPerEffectiveHP * difficulty().cashMult)
+		Economy.earnFor(enemy.side, enemy.share * enemy.cashX * Config.Tuning.CashPerEffectiveHP * difficulty().cashMult)
 		Battle.dinoPopped(enemy.side) -- a stand-in seat's Bone (Studio battles, T79b)
 	end,
 })
@@ -633,6 +633,7 @@ local function playMatch()
 
 	local won = Waves.run({
 		startRound = startAt,
+		speedMult = chosen.speedMult, -- the pace factor's walk (Shared/Pace.plan, #258)
 		isOver = function()
 			return over or #Players:GetPlayers() == 0
 		end,

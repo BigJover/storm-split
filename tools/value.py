@@ -1028,7 +1028,7 @@ def edge_rows(data, mixes):
         gain = cd_gain + worth / 100
         _, gun = hero_dps(h, 0, 0)
         kind = h["abilityKind"].upper()
-        cycle = gun * h["abilityCooldown"]
+        cycle = gun * h["abilityCooldown"] / tuning["AbilityTempo"]  # Ability tempo (#259): Shared/Pace.abilityCooldown
         hp = None
         if kind == "MARK":
             effect = h["abilityPower"] / 100 * gun * h["abilitySeconds"]
@@ -1042,8 +1042,9 @@ def edge_rows(data, mixes):
         else:
             effect = 0.0
             power = h["abilityPower"] + sum(p["abilityPowerAdd"] for p in perks)
-            hp = (h["abilityPower"] * round_seconds / h["abilityCooldown"],
-                  power * round_seconds / (h["abilityCooldown"] * top["abilityCooldownMult"]))
+            cooldown = h["abilityCooldown"] / tuning["AbilityTempo"]  # #259
+            hp = (h["abilityPower"] * round_seconds / cooldown,
+                  power * round_seconds / (cooldown * top["abilityCooldownMult"]))
         share = effect / (effect + cycle) if effect + cycle else 0.0
         free = min(p["tiers"][0]["cost"] for p in h["paths"]) / normal_cash if top["freeFirstUpgrade"] else 0.0
         repair = (1 - top["repairCostMult"]) * SMALL_WEIGHT
@@ -1061,7 +1062,8 @@ def edge_lines(data, mixes):
     limit = data["Tuning"]["CompetitiveEdgeMax"]
     rows = edge_rows(data, mixes)
     out = [f"  maxed (mastery {len(data['Mastery'])}) vs mastery 0, same hero; watch at CompetitiveEdgeMax {limit:.0%}"
-           f" (report only, #235); small perks x{SMALL_WEIGHT:g}; Triage per round = a paced round-{EDGE_ROUND} length ({rows[0]['roundSeconds']:.0f} s)"]
+           f" (report only, #235); small perks x{SMALL_WEIGHT:g}; Triage per round = a paced round-{EDGE_ROUND} length ({rows[0]['roundSeconds']:.0f} s),"
+           f" cooldowns / Ability tempo {data['Tuning']['AbilityTempo']:g} (#259)"]
     watch = []
     for r in rows:
         if r["healHp"]:
@@ -1491,6 +1493,10 @@ def pacing_report(data):
 
 
 TIMER_ROUNDS = (10, 20, 30, 40)
+# PLAN T103 accept (#259, Ability tempo): Tracking Dart uses at round 20 (Normal solo, paced),
+# and each Field Hospital's heal per paced round vs unpaced.
+TEMPO_DART_R20_MIN = 2.3
+TEMPO_HOSPITAL_BAND = 0.15
 
 
 def timer_lines(data, normal):
@@ -1501,14 +1507,21 @@ def timer_lines(data, normal):
     the worst case (threat.py); a paced dino has LESS HP (x the pace factor < 1), so a fixed hit
     (Flare Strike, a bolt) is worth more per dino, while heals per round shrink with the round."""
     tuning = data["Tuning"]
-    print(f"  (e) per-round uses at Round pace {tuning['RoundPace']:g} (Normal solo; unpaced -> paced; report only, #250)")
+    tempo = tuning["AbilityTempo"]
+    print(f"  (e) per-round uses at Round pace {tuning['RoundPace']:g} (Normal solo; unpaced -> paced; report only, #250);"
+          f" hero cooldowns / Ability tempo {tempo:g}, Field Hospital heal x {tempo:g} (#259)")
     print("    round length s: " + ", ".join(f"r{r} {normal[r - 1]['length']:g} -> {normal[r - 1]['paced']:.0f}" for r in TIMER_ROUNDS))
     for key in data["HeroOrder"]:
         h = data["Heroes"][key]
         cd = h["abilityCooldown"]
         if cd > 0:
-            print(f"    {h['display'][:15]:<15} {h['ability'][:14] if h.get('ability') else h['abilityKind']:<14} every {cd:g} s: "
-                  + ", ".join(f"r{r} {normal[r - 1]['length'] / cd:.1f} -> {normal[r - 1]['paced'] / cd:.1f}" for r in TIMER_ROUNDS))
+            fast = cd / tempo  # Shared/Pace.abilityCooldown
+            mark = ""
+            if h.get("ability") == "Tracking Dart":
+                uses = normal[19]["paced"] / fast
+                mark = f"  {'ok' if uses >= TEMPO_DART_R20_MIN else 'MISS'} r20 {uses:.1f} >= {TEMPO_DART_R20_MIN:g} (T103)"
+            print(f"    {h['display'][:15]:<15} {h['ability'][:14] if h.get('ability') else h['abilityKind']:<14} every {cd:g} s -> {fast:g} s: "
+                  + ", ".join(f"r{r} {normal[r - 1]['length'] / cd:.1f} -> {normal[r - 1]['paced'] / fast:.1f}" for r in TIMER_ROUNDS) + mark)
     for name, key in (("Power Grid", "PowerGridEvery"), ("Judgement Bolt", "JudgementBoltEvery"),
                       ("Tow Line", "TowLineEvery"), ("Eruption", "EruptionEvery")):
         every = tuning[key]
@@ -1516,13 +1529,15 @@ def timer_lines(data, normal):
     d = data["Difficulties"]["NORMAL"]
     bosses = [r for r, rd in enumerate(data["Rounds"], start=1) if any(data["Enemies"][k]["boss"] for k in rd["counts"])]
     if bosses:
-        hp = [export_constants.pace_hp_x(data, data["Rounds"][r - 1], d) for r in bosses]
-        print(f"    boss rounds {ranges(bosses)}: dino HP x the pace factor {min(hp):.2f}-{max(hp):.2f} (throws per boss walk unchanged; fewer when it dies sooner)")
+        hp = [export_constants.pace_plan_x(data, data["Rounds"][r - 1], d, d["countMult"], 1, promotion(data))[0] for r in bosses]
+        print(f"    boss rounds {ranges(bosses)}: bosses keep their count (#258); every dino's HP x {min(hp):.2f}-{max(hp):.2f}"
+              " (fewer dinos, each tougher; throws per boss walk unchanged, fewer when it dies sooner)")
     heal = [t for t in data["Towers"].values() if t.get("healPerSecond", 0) > 0]
     for t in heal:
-        print(f"    {t['display'][:15]:<15} heals {t['healPerSecond']:g} HP/s: per round " + ", ".join(
-            f"r{r} {t['healPerSecond'] * normal[r - 1]['length']:.0f} -> {t['healPerSecond'] * normal[r - 1]['paced']:.0f}" for r in TIMER_ROUNDS)
-              + " (dino damage per round unchanged: WATCH)")
+        worst = max(abs(tempo * normal[r - 1]["paced"] / normal[r - 1]["length"] - 1) for r in TIMER_ROUNDS)
+        print(f"    {t['display'][:15]:<15} heals {t['healPerSecond']:g} -> {t['healPerSecond'] * tempo:g} HP/s: per round " + ", ".join(
+            f"r{r} {t['healPerSecond'] * normal[r - 1]['length']:.0f} -> {t['healPerSecond'] * tempo * normal[r - 1]['paced']:.0f}" for r in TIMER_ROUNDS)
+              + f"  {'ok' if worst <= TEMPO_HOSPITAL_BAND else 'MISS'} within {TEMPO_HOSPITAL_BAND:.0%} of unpaced (worst {worst:.1%}, T103)")
 
 
 # ---------------------------------------------------------------- Chaos skill (PLAN T50 final)
@@ -1596,8 +1611,8 @@ def bounty_report(data, easy, unlock, findings):
     log-ins and bounties adds. `easy` is pacing_rounds for Easy solo.
 
     One match = solo Easy to round BOUNTY_MATCH_ROUND; a clear = all the rounds. What one
-    match can hold: pops = the Rounds sheet's counts; ability uses = paced round seconds / the
-    best free hero's cooldown; builds = cash earned / the cheapest free tower; upgrades =
+    match can hold: pops = the paced counts in play (Shared/Pace.plan, #258); ability uses =
+    paced round seconds / the best free hero's cooldown / Ability tempo (#259); builds = cash earned / the cheapest free tower; upgrades =
     the n that cash covers at two tier-1 upgrades per cheapest free tower. Repairs of
     trampled towers aren't modelled (how often a tower falls depends on where it stands)."""
     tuning, rounds = data["Tuning"], data["Rounds"]
@@ -1605,7 +1620,10 @@ def bounty_report(data, easy, unlock, findings):
     free_heroes = [h for h in data["Heroes"].values() if h["unlockCost"] == 0]
     tower = min(t["baseCost"] for t in free_towers)
     upgrade = min(p["tiers"][0]["cost"] for t in free_towers for p in t["paths"] if p["tiers"])
-    cooldown = min(h["abilityCooldown"] for h in free_heroes)
+    cooldown = min(h["abilityCooldown"] for h in free_heroes) / tuning["AbilityTempo"]  # #259
+    easy_d = data["Difficulties"][data["DifficultyOrder"][0]]
+    # Take-downs in play: Shared/Pace.plan's counts (#258: fewer, tougher dinos), Easy solo.
+    spawned = [export_constants.paced_counts(data, rd, easy_d["countMult"]) for rd in rounds]
 
     def capacity(b, upto):
         """How much of bounty b one match to round `upto` can do; None = not modelled."""
@@ -1613,9 +1631,9 @@ def bounty_report(data, easy, unlock, findings):
         cash = easy[upto - 1]["cumulative"]
         event = b["event"]
         if event == "pop":
-            return sum(rd["counts"].get(b["target"], 0) for rd in played)
+            return sum(c.get(b["target"], 0) for c in spawned[:upto])
         if event == "popTotal":
-            return sum(sum(rd["counts"].values()) for rd in played)
+            return sum(sum(c.values()) for c in spawned[:upto])
         if event == "reachRound":
             return (1 if upto >= b["round"] else 0) if b["round"] else upto
         if event == "clear":
@@ -1718,8 +1736,9 @@ def battle_side(data, difficulty, modeKey, sides, hunters, cost_per_dps, mixes, 
       stand-in  the fixed stand-in towers (base tier, never upgraded) x tower level
       typical   the pacing model's typical build: AssumedSpendOnTowers of the side's cash at
                 that round's cost per DPS x ExpectedEfficiency, plus a base Pistol per hunter x hero level
-    Fence: a leaked dino costs its species' effective HP (Enemies.leakCost, not x the round's
-    HP x or the pace factor), so a round leaks the unpaced share it doesn't kill:
+    Fence: a leaked dino costs its species' effective HP x the plan's count ratio
+    (Enemies.leakCost x leakX, #258: fewer, tougher dinos, the same Fence at stake; not x the
+    round's HP x or the pace factor), so a round leaks the unpaced share it doesn't kill:
     max(0, paced EHP - DPS x length) / pace factor, and the Fence starts at the difficulty's
     lives. Neither the stand-in towers nor a base Pistol pierce armour, so every armoured dino
     leaks whole for a base Pistol; `typical` assumes the camp bought armour pierce, and since
@@ -1803,9 +1822,12 @@ def track_length():
     return sum(math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(points, points[1:]))
 
 
-def peak_live(data, difficulty, modeKey, hunters_per_side, pace, keeps_up=False):
+def peak_live(data, difficulty, modeKey, hunters_per_side, paced, keeps_up=False):
     """Most dinos alive at once across every side's track, spawned as Server/Waves does:
-    EnemyOrder blocks, max(1, round(n x count x)) each, one every spawn gap x pace / count x.
+    EnemyOrder blocks, one every spawn gap / count x (not x pace, #258; / Battle crowd x in
+    battles when `paced`, which thins a round like density); `paced`: the
+    counts of Shared/Pace.plan (x Round pace, x Battle crowd x in battles, bosses kept), else
+    max(1, round(n x count x)) each (unpaced).
     Each dino lives: worst case, its whole walk (nothing is killed; track length / speed);
     `keeps_up`, the Rounds sheet's W = Track walk seconds / difficulty speed (a defence that
     meets Required DPS clears the round W after the last spawn). Returns (peak, round)."""
@@ -1819,12 +1841,16 @@ def peak_live(data, difficulty, modeKey, hunters_per_side, pace, keeps_up=False)
         events = []
         for hunters in hunters_per_side:
             count_x = d["countMult"] * (1 + tuning["ExtraEnemiesPerPlayer"] * (hunters - 1)) * density
-            gap = rd["spawnGap"] * pace / max(count_x, 0.01)
+            crowd = tuning["BattleCrowdX"] if paced and modeKey != "COOP" else 1
+            gap = rd["spawnGap"] / max(count_x * crowd, 0.01)  # not x pace; / crowd like density (#258)
+            if paced:
+                counts = export_constants.paced_counts(data, rd, count_x, crowd)
+            else:
+                counts = {k: max(1, math.floor(n * count_x + 0.5)) for k, n in rd["counts"].items() if n > 0}
             t = 0.0
             for key in data["EnemyOrder"]:
-                n = rd["counts"].get(key, 0)
-                if n > 0:
-                    for _ in range(max(1, math.floor(n * count_x + 0.5))):
+                if counts.get(key, 0) > 0:
+                    for _ in range(counts[key]):
                         events.append((t, 1))
                         life = tuning["TrackWalkSeconds"] / d["speedMult"] if keeps_up else walk / enemies[key]["speedMult"]
                         events.append((t + life, -1))
@@ -1907,8 +1933,8 @@ def battle_report(data, difficulty="NORMAL"):
     for name, modeKey, layout in LIVE_LAYOUTS:
         cells, worst = [], 0
         for keeps_up in (False, True):
-            before, _ = peak_live(data, difficulty, modeKey, layout, 1, keeps_up)
-            after, at = peak_live(data, difficulty, modeKey, layout, tuning["RoundPace"], keeps_up)
+            before, _ = peak_live(data, difficulty, modeKey, layout, False, keeps_up)
+            after, at = peak_live(data, difficulty, modeKey, layout, True, keeps_up)
             worst = max(worst, after) if keeps_up else worst
             cells.append(f"{'keeps up' if keeps_up else 'worst case'} {before:>4} -> {after:>4} (round {at})")
         print(f"    {'ok  ' if worst <= cap else 'MISS'} {name:<27} unpaced -> paced: " + "; ".join(cells))

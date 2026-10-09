@@ -153,6 +153,15 @@ function PanelRules.battleHud(state: string?, battle: string?, out: boolean, ove
 	}
 end
 
+-- The HUD's round (PLAN T103): the real round of the table, "Round 22 / 40" (battles skip
+-- rounds, #251, so the number jumps); past the last row, "Final Stampede N" (Camp Clash).
+function PanelRules.roundLabel(round: number, last: number): string
+	if round > last then
+		return `Final Stampede {round - last}`
+	end
+	return `Round {round} / {last}`
+end
+
 -- Banners and the feed never cover a result (PLAN T86b F5, #236; DIRECTION no-trap rule):
 -- none show while a results screen is up (Victory / GameOver), in co-op or a battle.
 function PanelRules.bannersShown(state: string?): boolean

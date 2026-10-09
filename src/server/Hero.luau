@@ -61,6 +61,7 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local Pace = require(Shared:WaitForChild("Pace"))
 local HeroStats = require(Shared:WaitForChild("HeroStats"))
 local HeroXp = require(Shared:WaitForChild("HeroXp"))
 local PlayerLevel = require(Shared:WaitForChild("PlayerLevel"))
@@ -256,10 +257,10 @@ local function isOut(player: Player): boolean
 	return player:GetAttribute("Out") == true
 end
 
--- The ability's cooldown per charge, with the mastery cooldown cut.
+-- The ability's cooldown per charge, with the mastery cooldown cut, / Ability tempo (#259).
 local function abilityCooldown(player: Player, s: State): number
 	local rewards = mastery(player, s)
-	return if s.stats then s.stats.abilityCooldown * (if rewards then rewards.abilityCooldownMult else 1) else 0
+	return if s.stats then Pace.abilityCooldown(s.stats.abilityCooldown * (if rewards then rewards.abilityCooldownMult else 1)) else 0
 end
 
 -- Everything the client HUD needs, as player attributes. Times are server time.

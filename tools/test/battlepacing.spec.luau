@@ -38,7 +38,7 @@ test("T91b: the Lobby's Studio actions are refused live; battles and co-op read 
 	ok(main:find("local startAt = studioStartRound()", 1, true) ~= nil, "co-op gets it")
 	ok(main:find("Battle.leakCost(enemy.side, Enemies.leakCost(enemy))", 1, true) ~= nil, "every leak asks Battle (hold)")
 	local battle = read("src/server/Battle.luau")
-	ok(battle:find("startRound(firstRound)", 1, true) ~= nil, "a battle starts at its first round")
+	ok(battle:find("first = firstRound,", 1, true) ~= nil, "a battle starts at its first round (snapped to a played one, T103)")
 	ok(battle:find("standInSeats[side] == true", 1, true) ~= nil, "hold is for stand-in seats only")
 end)
 

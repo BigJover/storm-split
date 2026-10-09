@@ -416,9 +416,9 @@ local function refresh()
 	elseif state == "Building" then
 		label.Text = `Build (B), choose a hero (H), then Start  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}`
 	elseif battle then
-		label.Text = `{camp}  ·  Round {round}  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}  ·  Dinos {alive}`
+		label.Text = `{camp}  ·  {PanelRules.roundLabel(round, #Config.Rounds)}  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}  ·  Dinos {alive}`
 	else
-		label.Text = `Round {round}  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}  ·  Dinos {alive}`
+		label.Text = `{PanelRules.roundLabel(round, #Config.Rounds)}  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}  ·  Dinos {alive}`
 	end
 end
 

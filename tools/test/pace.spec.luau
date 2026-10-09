@@ -50,7 +50,7 @@ test("Required DPS is unchanged by pace: every round x every difficulty (1e-9)",
 	end
 end)
 
-test("paced length = pace x spawn phase + walk; spawn gap x pace; past the table the last row", function()
+test("paced length = pace x spawn phase + walk; past the table the last row", function()
 	local n = D.NORMAL
 	local rd = Config.Rounds[20]
 	local enemies = 0
@@ -59,11 +59,8 @@ test("paced length = pace x spawn phase + walk; spawn gap x pace; past the table
 	end
 	near(Pace.roundLength(20, n), 0.4 * enemies * rd.spawnGap + 14 / n.speedMult, "round 20 Normal", 1e-9)
 	near(Pace.roundLength(20, n), 55.7, "the 56 s PLAN quotes", 0.05)
-	for round = 1, LAST do
-		near(Pace.spawnGap(round), Config.Rounds[round].spawnGap * 0.4, `gap {round}`, 1e-12)
-	end
 	eq(Pace.hpX(LAST + 3, n), Pace.hpX(LAST, n), "Final Stampede repeats the last row")
-	eq(Pace.spawnGap(LAST + 1), Pace.spawnGap(LAST))
+	eq(Pace.spawnGap, nil, "#258: no paced spawn gap (gaps stay as the sheet has them)")
 end)
 
 test("Battle round time covers the longest paced Normal and Chaos round (#251)", function()
@@ -212,4 +209,124 @@ test("clockWarning: the last 60 s before the cap, not at or after it, never with
 	eq(Pace.clockWarning(1740, 1800), true)
 	eq(Pace.clockWarning(1739, 1800), false)
 	eq(Pace.clockWarning(5000, nil), false, "co-op")
+end)
+
+------------------------------------------------------------------ #258: fewer, tougher dinos (T103)
+
+-- Expected EHP of one spawn, promotions at their chance (written here on its own).
+local function each(key: string, p: number): number
+	local promo, previous = {}, nil
+	for _, k in Config.EnemyOrder do
+		local def = Config.Enemies[k]
+		if not def.flying and not def.boss then
+			if previous then
+				promo[previous] = k
+			end
+			previous = k
+		end
+	end
+	local e = Config.Enemies[key].effectiveHp
+	if promo[key] and p > 0 then
+		e = (1 - p) * e + p * Config.Enemies[promo[key]].effectiveHp
+	end
+	return e
+end
+
+test("the #258/#259 seeds", function()
+	eq(T.BattleCrowdX, 0.75, "Battle crowd x (#258)")
+	eq(T.AbilityTempo, 2, "Ability tempo (#259)")
+	eq(T.MaxConcurrentEnemies, 130, "the live cap stays")
+	eq(Pace.crowd("COOP"), 1, "co-op: no crowd")
+	eq(Pace.crowd("TEAM"), 0.75)
+	eq(Pace.crowd("ROYALE"), 0.75)
+end)
+
+test("plan: counts x pace (x crowd) half up, min 1, bosses kept", function()
+	local d = D.NORMAL
+	local bosses = 0
+	for round = 1, LAST do
+		for _, cm in { 1, 1.35, 2.2 * 0.6 } do
+			for _, crowd in { 1, 0.75 } do
+				local plan = Pace.plan(round, cm, 0, d, crowd)
+				for key, n in Config.Rounds[round].counts do
+					if n > 0 then
+						local want = if Config.Enemies[key].boss
+							then math.max(1, math.floor(n * cm + 0.5))
+							else math.max(1, math.floor(n * cm * 0.4 * crowd + 0.5))
+						eq(plan.counts[key], want, `round {round} {key} cm {cm} crowd {crowd}`)
+						if Config.Enemies[key].boss then
+							bosses += 1
+						end
+					else
+						eq(plan.counts[key], nil, `round {round} {key} not spawned`)
+					end
+				end
+			end
+		end
+	end
+	ok(bosses > 0, "some rounds have bosses (kept)")
+	eq(Pace.plan(7, 1, 0, d).counts.HUSK or 0, Pace.plan(7, 1, 0, d, 1).counts.HUSK or 0, "crowd defaults to 1")
+end)
+
+test("plan: round EHP = unpaced x hpX, kill cash = unpaced, Fence at stake = unpaced (every round, 4 difficulties)", function()
+	for _, key in Config.DifficultyOrder do
+		local d = D[key]
+		for round = 1, LAST + 2 do
+			local rd = Config.Rounds[math.min(round, LAST)]
+			for _, crowd in { 1, 0.75 } do
+				local cm, p = d.countMult * 1.35, d.promoteChance
+				local plan = Pace.plan(round, cm, p, d, crowd)
+				local base, hp, cash, leak = 0, 0, 0, 0
+				for k, n in rd.counts do
+					if n > 0 then
+						base += math.max(1, math.floor(n * cm + 0.5)) * each(k, p)
+						hp += plan.counts[k] * each(k, p) * plan.hpX
+						cash += plan.counts[k] * each(k, p) * plan.hpX * plan.cashX
+						leak += plan.counts[k] * each(k, p) * plan.leakX
+					end
+				end
+				local tag = `{key} round {round} crowd {crowd}`
+				near(hp, base * Pace.hpX(round, d), tag .. ": EHP", 1e-6)
+				near(hp / Pace.roundLength(round, d), base / unpaced(math.min(round, LAST), d), tag .. ": required DPS", 1e-6)
+				near(cash, base, tag .. ": kill cash", 1e-6)
+				near(leak, base, tag .. ": Fence at stake", 1e-6)
+				ok(plan.hpX >= Pace.hpX(round, d) - 1e-12, tag .. ": tougher than #250's dinos")
+			end
+		end
+	end
+end)
+
+test("nextRound / firstRound / skippedBefore follow the lists (#251)", function()
+	for _, case in { { "COOP", false }, { "TEAM", false }, { "TEAM", true }, { "ROYALE", false }, { "ROYALE", true } } do
+		local mode, competitive = case[1], case[2]
+		local list = Pace.playedRounds(mode, competitive)
+		eq(Pace.firstRound(mode, competitive), list[1], `{mode} {competitive} first`)
+		local paidFor = {}
+		for i, r in list do
+			eq(Pace.nextRound(r, mode, competitive), list[i + 1] or LAST + 1, `{mode} {competitive} after {r}`)
+			local from, to = Pace.skippedBefore(r, mode, competitive)
+			for s = from, to do
+				ok(not Pace.isPlayed(s, mode, competitive), `{s} is a skipped round`)
+				ok(not paidFor[s], `{s} paid once`)
+				paidFor[s] = true
+			end
+		end
+		for r = 1, LAST do
+			eq(paidFor[r] == true, not Pace.isPlayed(r, mode, competitive), `{mode} {competitive}: round {r} skipped <=> paid`)
+		end
+		eq(Pace.nextRound(LAST, mode, competitive), LAST + 1, "then Final Stampede")
+		eq(Pace.nextRound(LAST + 2, mode, competitive), LAST + 3)
+		local from, to = Pace.skippedBefore(LAST + 1, mode, competitive)
+		ok(from > to, "nothing skipped in Final Stampede")
+	end
+	-- Studio "Start at round N" snaps forward to a played round.
+	eq(Pace.firstRound("TEAM", false, 37), 37)
+	eq(Pace.firstRound("TEAM", false, 38), 40)
+	eq(Pace.firstRound("TEAM", true, 37), 38)
+	eq(Pace.firstRound("COOP", false, 23), 23)
+	eq(Pace.firstRound("ROYALE", false, 99), 40, "never past the last row")
+	eq(Pace.firstRound("ROYALE", true, 0), 2)
+	local from, to = Pace.skippedBefore(40, "TEAM", false)
+	eq(from, 38)
+	eq(to, 39)
 end)

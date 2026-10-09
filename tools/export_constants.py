@@ -17,6 +17,7 @@ at least once after editing so formula results are cached. openpyxl reads
 cached values; it does not calculate formulas itself.
 """
 
+import math
 import os
 import re
 import sys
@@ -1176,6 +1177,7 @@ def validate_battle(data, problems, notes):
 PACE_LEVERS = [
     "RoundPace", "TrackWalkSeconds", "CasualRoundStep", "RankedRoundStep", "CasualMatchCap", "RankedMatchCap",
     "ClockWarning", "LateJoinCashX", "LateJoinLastRound", "BoneRushSparePlots", "CoOpLengthMax",
+    "BattleCrowdX", "AbilityTempo",
 ]
 CASUAL_CAP_MAX, RANKED_CAP_MAX = 900, 1800  # DIRECTION 2026-10-09: casual <= 15 min, Ranked <= 30 min (#249, #252)
 
@@ -1198,6 +1200,37 @@ def pace_hp_x(data, rd, difficulty):
     """Dino HP x for a round: (pace x S + W) / (S + W), so EHP / length is unchanged."""
     s, w = round_parts(data, rd, difficulty)
     return (data["Tuning"]["RoundPace"] * s + w) / (s + w) if s + w > 0 else 1.0
+
+
+def paced_counts(data, rd, count_x, crowd=1.0):
+    """Shared/Pace.plan's counts (DECISIONS #258): species -> spawns in play. Unpaced =
+    max(1, round half up(n x count x)); paced = max(1, round half up(n x count x x Round pace
+    x crowd)), bosses keep the unpaced count. The spawn gap is the sheet's / count x (unchanged)."""
+    pace, out = data["Tuning"]["RoundPace"], {}
+    for key, n in rd["counts"].items():
+        if n > 0:
+            boss = data["Enemies"][key]["boss"]
+            out[key] = max(1, math.floor(n * count_x * (1 if boss else pace * crowd) + 0.5))
+    return out
+
+
+def pace_plan_x(data, rd, difficulty, count_x, crowd=1.0, promote=None):
+    """Shared/Pace.plan's (hpX, ratio) for one round (DECISIONS #258): ratio = unpaced round
+    EHP / paced round EHP (expected EHP per spawn; `promote` = species -> its promotion, with
+    the difficulty's promoteChance), hpX = pace_hp_x x ratio."""
+    p, enemies = difficulty.get("promoteChance", 0), data["Enemies"]
+    paced = paced_counts(data, rd, count_x, crowd)
+    before = after = 0.0
+    for key, n in rd["counts"].items():
+        if n > 0:
+            each = enemies[key]["effectiveHp"]
+            up = (promote or {}).get(key)
+            if up and p:
+                each = (1 - p) * each + p * enemies[up]["effectiveHp"]
+            before += max(1, math.floor(n * count_x + 0.5)) * each
+            after += paced[key] * each
+    ratio = before / after if after else 1.0
+    return pace_hp_x(data, rd, difficulty) * ratio, ratio
 
 
 def played_rounds(last, step):
@@ -1241,6 +1274,10 @@ def validate_pace(data, problems, notes):
         problems.append(f"Tuning Bone Rush spare plots ({spare:g}) must be a whole number >= 0")
     if t["CoOpLengthMax"] <= 0:
         problems.append("Tuning Co-op length max must be above 0")
+    if not 0 < t["BattleCrowdX"] <= 1:
+        problems.append(f"Tuning Battle crowd x ({t['BattleCrowdX']:g}) must be above 0 and at most 1 (DECISIONS #258)")
+    if 0 < t["RoundPace"] <= 1 and not 1 <= t["AbilityTempo"] <= 1 / t["RoundPace"] + 1e-9:
+        problems.append(f"Tuning Ability tempo ({t['AbilityTempo']:g}) must be from 1 to 1 / Round pace ({1 / t['RoundPace']:g}) (DECISIONS #259)")
     for key in ("NORMAL", "CHAOS"):
         d = data["Difficulties"].get(key)
         if not d:

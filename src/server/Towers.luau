@@ -106,6 +106,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local Pace = require(Shared:WaitForChild("Pace"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local Placement = require(Shared:WaitForChild("Placement"))
 local Ballista = require(Shared:WaitForChild("Ballista"))
@@ -1391,15 +1392,15 @@ end
 ------------------------------------------------------------------ Field Hospital
 
 -- The strongest standing hospital's heal (and revive) rate covering a point, from
--- `side`'s hospitals only.
+-- `side`'s hospitals only; x Ability tempo (Shared/Pace.healRate, #259).
 local function healRates(point: Vector3, side: number): (number, number)
 	local heal, revive = 0, 0
 	for _, source in towers do
 		local s = source.stats
 		if s.healPerSecond > 0 and not source.knockedOut and covers(source, point) and BattleRules.canSupport(source.side, side) then
-			heal = math.max(heal, s.healPerSecond)
+			heal = math.max(heal, Pace.healRate(s.healPerSecond))
 			if s.revives then
-				revive = math.max(revive, s.healPerSecond * s.reviveSpeed)
+				revive = math.max(revive, Pace.healRate(s.healPerSecond) * s.reviveSpeed)
 			end
 		end
 	end

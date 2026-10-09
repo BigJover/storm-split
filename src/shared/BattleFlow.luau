@@ -10,6 +10,9 @@
 	  outLine(camp)                    "<Camp>'s Fence is down! They're out."
 	  tranqLine(name)                  "Tranqed by <name>!" (a hunter down, T78)
 	  raidLine(name, camp, tower)      "<name> trampled <Camp>'s <tower>" (a raid knock-out)
+	  suppliesLine(amount, from, to)   "+N supplies for rounds X–Y" ("for round X" when one):
+	                                   the skipped rounds' income, paid as a played round
+	                                   starts (T103, #251)
 	  resultTitle(mode, place)         the winner's results title: "Camp Clash — Your camp
 	                                   wins the hunt!" / "Bone Rush — Top Hunter!"; nil
 	                                   for any other place (T74)
@@ -94,6 +97,11 @@ end
 
 function BattleFlow.tranqLine(name: string): string
 	return `Tranqed by {name}!`
+end
+
+function BattleFlow.suppliesLine(amount: number, from: number, to: number): string
+	local rounds = if from == to then `round {from}` else `rounds {from}–{to}`
+	return `+{math.floor(amount)} supplies for {rounds}`
 end
 
 function BattleFlow.raidLine(name: string, camp: string, tower: string): string

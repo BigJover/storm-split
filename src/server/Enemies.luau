@@ -64,6 +64,8 @@ export type Enemy = {
 	hp: number, -- what's left of the one pool (all sizes)
 	share: number, -- HP per size: the pool's thresholds are multiples of it
 	hpMult: number,
+	cashX: number, -- kill cash per HP x (Shared/Pace.plan, #258: cash from the unpaced HP x the count ratio)
+	leakX: number, -- Fence a leak costs x (Shared/Pace.plan: fewer, tougher dinos each cost more)
 	distance: number,
 	speed: number,
 	height: number,
@@ -94,7 +96,7 @@ export type Enemy = {
 -- carries it, Hazards acts on it.
 export type Fire = { tick: number, untilTime: number, piercesArmor: boolean, owner: any }
 
-type Pending = { key: string, distance: number, hpMult: number }
+type Pending = { key: string, distance: number, hpMult: number, cashX: number, leakX: number }
 
 ------------------------------------------------------------------ state
 
@@ -174,6 +176,8 @@ local function spawnNow(item: Pending, side: number)
 		hp = hpPerSize * sizes,
 		share = hpPerSize,
 		hpMult = item.hpMult,
+		cashX = item.cashX,
+		leakX = item.leakX,
 		distance = item.distance,
 		speed = baseSpeed * speedMult * def.speedMult,
 		height = 0,
@@ -244,9 +248,10 @@ function Enemies.setPaths(mapPaths: { Path.Path })
 end
 
 -- Queue a fresh enemy at the start of a side's track (co-op: side 1). The ONLY way a
--- dino comes into the game (ARCHITECTURE §5.1).
-function Enemies.enqueue(side: number, key: string, hpMult: number)
-	if not SpawnQueue.push(spawnQueue, side, { key = key, distance = 0, hpMult = hpMult }) then
+-- dino comes into the game (ARCHITECTURE §5.1). `cashX` / `leakX` (default 1): the round
+-- pace's kill-cash and leak-cost factors (Shared/Pace.plan, #258).
+function Enemies.enqueue(side: number, key: string, hpMult: number, cashX: number?, leakX: number?)
+	if not SpawnQueue.push(spawnQueue, side, { key = key, distance = 0, hpMult = hpMult, cashX = cashX or 1, leakX = leakX or 1 }) then
 		warn(`[Enemies] No side {side} on this map`)
 	end
 end
@@ -507,9 +512,10 @@ function Enemies.showBurning(enemy: Enemy, on: boolean)
 end
 
 -- Lives lost when this enemy leaks: its effective HP for the sizes it still
--- has (BTD6's RBE idea), so leaking a big dino hurts more than a shrunk one.
+-- has (BTD6's RBE idea), so leaking a big dino hurts more than a shrunk one; x leakX, so a
+-- paced round's fewer, tougher dinos put the same Fence at stake (#258).
 function Enemies.leakCost(enemy: Enemy): number
-	return math.max(1, math.ceil(enemy.def.effectiveHp * enemy.size / enemy.sizes))
+	return math.max(1, math.ceil(enemy.def.effectiveHp * enemy.size / enemy.sizes * enemy.leakX))
 end
 
 -- Called every Heartbeat by Main.

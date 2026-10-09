@@ -75,6 +75,11 @@ src/
 │   │                        BattleRules.pvpDamage, respawn + Camo Cover; never saved/paid/ranked); pure (T93)
 │   ├── RoundFlow.luau       The co-op round loop Waves.run drives: a round whose last dino breaks the Fence
 │   │                        is a loss, never a clear (PLAYTEST F4); pure
+│   ├── Pace.luau            Match length (#250-#259): a round's paced plan (fewer, tougher dinos: counts x
+│   │                        Round pace / Battle crowd x, HP/cash/leak factors), battle round lists and
+│   │                        skipped income, catch-up cash, match caps, Ability tempo; pure (T100, T103)
+│   ├── BattleLoop.luau      A battle's round driver Server/Battle runs: played rounds, skipped income paid
+│   │                        once, lockstep + break, Final Stampede; fake-clock specs; pure (T103)
 │   ├── PanelRules.luau      Which panel may be open in which match state, and what a state change closes;
 │   │                        the tower panel's "Tower level" line
 │   ├── Bounties.luau        Daily Haul and bounty rules: roll, reset, progress, claim, swap, sanitise a save; pure
