@@ -79,14 +79,6 @@ DEAD_ALLOWED = {
 # an entry becomes a finding the moment some src file reads the field, so it can't
 # outlive its task. (block, field): the task that reads it
 DEAD_PENDING = {
-    ("Tuning", "RoundPace"): "PLAN T100 Shared/Pace",
-    ("Tuning", "TrackWalkSeconds"): "PLAN T100 Shared/Pace",
-    ("Tuning", "CasualRoundStep"): "PLAN T100 Shared/Pace",
-    ("Tuning", "RankedRoundStep"): "PLAN T100 Shared/Pace",
-    ("Tuning", "CasualMatchCap"): "PLAN T100 Shared/Pace",
-    ("Tuning", "RankedMatchCap"): "PLAN T100 Shared/Pace",
-    ("Tuning", "ClockWarning"): "PLAN T100 Shared/Pace",
-    ("Tuning", "LateJoinCashX"): "PLAN T100 Shared/Pace",
     ("Tuning", "LateJoinLastRound"): "PLAN T105 joiners",
     ("Tuning", "BoneRushSparePlots"): "PLAN T105 joiners",
 }
