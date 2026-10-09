@@ -14,6 +14,10 @@
 	                                          once they're all out the hold lets go, so the
 	                                          match can end); anything else (or a live
 	                                          server) loses `cost`
+	  StudioOnly.matchCap(isStudio, wanted, cap?) the battle clock (T104): a Studio test
+	                                          clock of `wanted` seconds (whole, above 0)
+	                                          when shorter than `cap`; `cap` otherwise and
+	                                          always live (nil cap = no clock, co-op)
 	  StudioOnly.FEATURES                     every Studio-only feature and what it does
 
 	The server passes RunService:IsStudio(); a client is never asked (it could lie). The
@@ -31,6 +35,7 @@ StudioOnly.FEATURES = {
 	startRound = 'Start at round N: the host\'s Lobby ("startround", n), co-op and battles (Server/Main, Server/Battle)',
 	standInsHold = 'Stand-ins hold: a stand-in camp\'s Fence stays at 1 while a real camp is in (Lobby ("standinshold", on), also mid-match; Server/Battle)',
 	standInPierce = "Stand-in camps' fixed towers pierce armour, for test fidelity (Server/Shop, PLAN T91b)",
+	clockCap = 'Short match clock: the host\'s Lobby ("clockcap", seconds) for testing the clock end and its warning (Server/Main, Server/Battle, PLAN T104)',
 } :: { [string]: string }
 
 function StudioOnly.allowed(isStudio: boolean, feature: string): boolean
@@ -43,6 +48,13 @@ function StudioOnly.startRound(isStudio: boolean, wanted: unknown, last: number?
 		return if last then math.min(round, last) else round
 	end
 	return 1
+end
+
+function StudioOnly.matchCap(isStudio: boolean, wanted: unknown, cap: number?): number?
+	if cap and StudioOnly.allowed(isStudio, "clockCap") and type(wanted) == "number" and wanted >= 1 and wanted < cap then
+		return math.floor(wanted)
+	end
+	return cap
 end
 
 function StudioOnly.heldLoss(isStudio: boolean, hold: unknown, standIn: boolean, fence: number, cost: number, realAlive: boolean?): number

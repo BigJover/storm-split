@@ -104,6 +104,14 @@ local live: { [number]: Enemy } = {}
 local liveCount = 0
 local liveBySide: { [number]: number } = {}
 local peakLive = 0
+-- Battle tie-break (#253 step 4, T104): HP taken off each side's own dinos, so overkill never
+-- counts (a hit past the pool, or past a size's share, adds only what came off).
+local damageBySide: { [number]: number } = {}
+local function tally(side: number, removed: number)
+	if removed > 0 then
+		damageBySide[side] = (damageBySide[side] or 0) + removed
+	end
+end
 local nextId = 0
 
 local spawnQueue = SpawnQueue.new(1) -- Shared/SpawnQueue: one FIFO per side, the shared cap
@@ -283,6 +291,7 @@ function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?, br
 		amount *= 1 + enemy.brittlePercent / 100
 	end
 	local hp, dropped, dead = SizeBreaks.apply(enemy.hp, enemy.share, enemy.size, amount, breaks)
+	tally(enemy.side, enemy.hp - hp)
 	enemy.hp = hp
 	if dropped == 0 then
 		showPool(enemy)
@@ -405,6 +414,7 @@ function Enemies.sink(enemy: Enemy): (boolean, string?)
 	if not enemy.alive or enemy.size > 1 or enemy.def.boss or enemy.def.flying then
 		return false, nil
 	end
+	tally(enemy.side, enemy.hp)
 	enemy.hp = 0
 	if callbacks.onKilled then
 		callbacks.onKilled(enemy)
@@ -423,6 +433,7 @@ function Enemies.dropSizes(enemy: Enemy, sizes: number): (boolean, string?, numb
 	if dropped == 0 then
 		return false, nil, 0
 	end
+	tally(enemy.side, enemy.hp - hp)
 	enemy.hp = hp
 	for _ = 1, dropped do
 		if callbacks.onKilled then
@@ -611,6 +622,15 @@ end
 
 function Enemies.peak(): number
 	return peakLive
+end
+
+-- HP taken off `side`'s dinos since the last resetDamage (the battle tie-break, T104).
+function Enemies.damageDealt(side: number): number
+	return damageBySide[side] or 0
+end
+
+function Enemies.resetDamage()
+	table.clear(damageBySide)
 end
 
 function Enemies.resetPeak()

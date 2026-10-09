@@ -167,6 +167,9 @@ function Battle.reset()
 	ReplicatedStorage:SetAttribute("BattleMode", nil)
 	ReplicatedStorage:SetAttribute("Overtime", nil)
 	ReplicatedStorage:SetAttribute("BuildEndsAt", nil)
+	ReplicatedStorage:SetAttribute("MatchEndsAt", nil)
+	ReplicatedStorage:SetAttribute("BattleDecidedBy", nil)
+	ReplicatedStorage:SetAttribute("BattleAtClock", nil)
 	for _, player in Players:GetPlayers() do
 		for _, name in { "Side", "Out", "BattleSide", "BattlePlace", "BattleBones" } do
 			player:SetAttribute(name, nil)
@@ -186,6 +189,7 @@ export type Context = {
 	competitive: boolean?, -- Ranked: the competitive minimum players (Modes.minPlayers)
 	onRoundStart: ((number, { Player }) -> ())?, -- a round began: the hunters still in it (bounties)
 	startRound: number?, -- Studio "Start at round N" (Shared/StudioOnly already applied; nil = 1)
+	matchId: string, -- every battle's id: the tie-break coin flip's seed (#261), Ranked's escrow
 }
 
 -- What Main settles at the end (Progression.endBattle, PLAN T80): every real hunter seated
@@ -275,6 +279,14 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		StandInHunters.spawn(side, Sides.spawn(layout, side), Battle.campOf(side))
 	end
 
+	-- The match clock (T104, #252): from Building; casual 900 s, Ranked 1800 s (a Studio
+	-- test clock may be shorter, Shared/StudioOnly). The HUD counts down to MatchEndsAt.
+	local cap = StudioOnly.matchCap(RunService:IsStudio(), ReplicatedStorage:GetAttribute("StudioClockCap"), Pace.matchCap(modeKey, ctx.competitive))
+	local clockStart = os.clock()
+	if cap then
+		ReplicatedStorage:SetAttribute("MatchEndsAt", workspace:GetServerTimeNow() + cap)
+	end
+
 	-- Building: one shared build phase.
 	ReplicatedStorage:SetAttribute("State", "Building")
 	ReplicatedStorage:SetAttribute("BuildEndsAt", workspace:GetServerTimeNow() + Config.Tuning.BattleBuildTime)
@@ -300,6 +312,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 	Hero.startMatch(firstRound - 1)
 	Towers.setLevel(level, chosen)
 	Enemies.setSpeedMult(chosen.speedMult)
+	Enemies.resetDamage() -- the tie-break's damage dealt counts from round 1 (T104)
 	local density = Sides.density(modeKey, sides)
 	local standInCount = 0
 	for _ in seating.standIn do
@@ -456,22 +469,44 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		refreshRealCampIn()
 	end
 
-	-- Is the match over? Returns the result once it is.
-	local function verdict(roundsDone: boolean): any?
-		local bones = {}
+	-- The tie-break chain's inputs (#253, T104): Fence, damage dealt to its own dinos (capped
+	-- per dino, Enemies.damageDealt), total round-clear seconds (BattleLoop), the matchId seed.
+	local clearTime: { [number]: number } = {}
+	local atClock = false
+	local function standings()
+		local bones, fence, damage, clear = {}, {}, {}, {}
 		for side = 1, sides do
 			bones[side] = sideBones(side)
-		end
-		if modeKey == "TEAM" then
-			local result = BattleRules.teamResult(elimination, bones)
-			return if result.over then result else nil
+			fence[side] = Economy.livesOf(side)
+			damage[side] = Enemies.damageDealt(side)
+			clear[side] = clearTime[side] or 0
 		end
 		local seats = {}
 		for side = 1, sides do
-			table.insert(seats, { id = side, bones = bones[side], fence = Economy.livesOf(side), outAt = outAt[side] })
+			table.insert(seats, { id = side, bones = bones[side], fence = fence[side], outAt = outAt[side], damage = damage[side], clearTime = clear[side] })
 		end
-		local result = BattleRules.royaleResult(seats, roundsDone)
+		return bones, fence, damage, clear, seats
+	end
+
+	-- Is the match over? Returns the result once it is.
+	local function verdict(roundsDone: boolean): any?
+		local bones, fence, damage, clear, seats = standings()
+		if modeKey == "TEAM" then
+			local result = BattleRules.teamResult(elimination, bones, { fence = fence, damage = damage, clearTime = clear, seed = ctx.matchId })
+			return if result.over then result else nil
+		end
+		local result = BattleRules.royaleResult(seats, roundsDone, ctx.matchId)
 		return if result.over then result else nil
+	end
+
+	-- The clock ran out (#252): over at once, everyone standing ranked by the chain.
+	local function clockEnd(): any
+		atClock = true
+		local bones, fence, damage, clear, seats = standings()
+		if modeKey == "TEAM" then
+			return BattleRules.atClock({ modeKey = "TEAM", eliminationOrder = elimination, bones = bones, fence = fence, damage = damage, clearTime = clear, seed = ctx.matchId })
+		end
+		return BattleRules.atClock({ modeKey = "ROYALE", players = seats, seed = ctx.matchId })
 	end
 
 	-- The skipped rounds' expected income, to each living side as a played round starts (#251).
@@ -532,6 +567,10 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		finish = function()
 			return verdict(true)
 		end,
+		cap = cap,
+		clockStart = clockStart,
+		atClock = clockEnd,
+		clearTime = clearTime,
 	})
 	finished = true
 	if result == empty then
@@ -570,8 +609,11 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 	for _, side in order do
 		table.insert(lines, `{places[side]}. {Battle.campOf(side)} ({finalBones[side]} Bones)`)
 	end
+	ReplicatedStorage:SetAttribute("MatchEndsAt", nil)
+	ReplicatedStorage:SetAttribute("BattleDecidedBy", result.decidedBy) -- the results' "Decided by" line (T104)
+	ReplicatedStorage:SetAttribute("BattleAtClock", if atClock then true else nil)
 	ReplicatedStorage:SetAttribute("State", "Victory")
-	print(`[DinoHunters] {display} over on round {round}: {table.concat(lines, " | ")}`)
+	print(`[DinoHunters] {display} over on round {round}{if atClock then " at the clock" else ""}, decided by {result.decidedBy or "-"}: {table.concat(lines, " | ")}`)
 	-- Every real hunter seated at the start, leavers included (they forfeit); never a
 	-- stand-in (no player) or a mid-battle joiner (never seated).
 	local outcome: Outcome = { mode = modeKey, n = sides, hunters = {}, standIns = {} }

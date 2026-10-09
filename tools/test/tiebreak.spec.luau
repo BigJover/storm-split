@@ -15,7 +15,7 @@ test("Camp Clash: each step decides alone", function()
 	eq(r.winners[1], 1)
 	eq(r.decidedBy, "standing")
 	-- the rest at the clock: both standing, level on every earlier step
-	local base = { modeKey = "TEAM", eliminationOrder = {}, bones = { [1] = 5, [2] = 5 } }
+	local base = { modeKey = "TEAM", eliminationOrder = {}, bones = { [1] = 5, [2] = 5 }, seed = 1 }
 	local function clock(extra)
 		local input = table.clone(base)
 		for k, v in extra do
@@ -61,7 +61,7 @@ test("atClock (Camp Clash): over at once, everyone standing ranked first, fallen
 	eq(table.concat(r.ranking, ","), "2,1,3", "Fence among the standing; the fallen camp last despite its Bones")
 	eq(r.decidedBy, "fence")
 	eq(r.tie, false)
-	eq(BattleRules.teamResult({}, { [1] = 1, [2] = 2 }).over, false, "without the clock two standing is not over")
+	eq(BattleRules.teamResult({}, { [1] = 1, [2] = 2 }, { seed = 1 }).over, false, "without the clock two standing is not over")
 end)
 
 -- Bone Rush -----------------------------------------------------------------------
@@ -196,4 +196,27 @@ test("fuzz: 1,000 random results, never a tie, rankings follow the chain", funct
 			ok(better ~= false, `royale case {case}: place {i} is not worse than place {i + 1}`)
 		end
 	end
+end)
+
+test("#261: a nil seed is an error in every result (T104 always passes matchId)", function()
+	local function fails(f: () -> any, what: string)
+		local okay, why = pcall(f)
+		ok(not okay and tostring(why):find("match seed", 1, true) ~= nil, what)
+	end
+	fails(function()
+		return BattleRules.teamResult({ { 1, 2 } }, { [1] = 1, [2] = 1 }, {})
+	end, "teamResult, stats without a seed")
+	fails(function()
+		return (BattleRules.teamResult :: any)({ { 1, 2 } }, { [1] = 1, [2] = 1 })
+	end, "teamResult, no stats")
+	fails(function()
+		return (BattleRules.royaleResult :: any)({ { id = 1, bones = 1, fence = 1 } }, true)
+	end, "royaleResult")
+	fails(function()
+		return BattleRules.atClock({ modeKey = "TEAM", eliminationOrder = {}, bones = { [1] = 1, [2] = 1 } })
+	end, "atClock (Camp Clash)")
+	fails(function()
+		return BattleRules.atClock({ modeKey = "ROYALE", players = {} })
+	end, "atClock (Bone Rush)")
+	eq(BattleRules.teamResult({ { 1, 2 } }, { [1] = 1, [2] = 1 }, { seed = "match-guid" }).over, true, "a string matchId is a seed")
 end)

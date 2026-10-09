@@ -79,7 +79,8 @@ src/
 │   │                        Round pace / Battle crowd x, HP/cash/leak factors), battle round lists and
 │   │                        skipped income, catch-up cash, match caps, Ability tempo; pure (T100, T103)
 │   ├── BattleLoop.luau      A battle's round driver Server/Battle runs: played rounds, skipped income paid
-│   │                        once, lockstep + break, Final Stampede; fake-clock specs; pure (T103)
+│   │                        once, lockstep + break, Final Stampede, the match clock and each side's
+│   │                        round-clear time (tie-break); fake-clock specs; pure (T103, T104)
 │   ├── PanelRules.luau      Which panel may be open in which match state, and what a state change closes;
 │   │                        the tower panel's "Tower level" line
 │   ├── Bounties.luau        Daily Haul and bounty rules: roll, reset, progress, claim, swap, sanitise a save; pure
@@ -181,7 +182,7 @@ This dissolves most of the problems the UEFN plan was built around:
 | A hunter's XP, pending pops and hero level (per match, never saved) | `Hero` (rules in the pure `Shared/HeroXp`) | Main calls `Hero.addPop()` on every credited pop, `Hero.roundCleared(index, solo)` when a round is cleared (solo = one hunter present then: that round's take-downs count ×2 toward player XP, DECISIONS #177) and `Hero.startMatch()` at Start; clients read the `HeroLevel`, `HeroXp`, `HeroXpPending` player attributes |
 | Tower level (the round level) and rounds cleared | `Main` | Main calls `Towers.setLevel(HeroXp.roundLevel(...))`; clients read the `Level` and `RoundsCleared` attributes on ReplicatedStorage |
 | Match state (`State`), mode, track, difficulty, host | `Main` | Clients read the attributes; the host changes mode/track/difficulty through the `Lobby` remote, in the Lobby only |
-| A battle's sides: each hunter's `Side`, camp names, who is out, placements | `Battle` (rules in the pure `Shared/BattleFlow` / `Shared/BattleRules`) | Clients read `Side` / `Out` / `BattlePlace` / `BattleBones` player attributes and `Camp<n>` / `Out<n>` / `Place<n>` / `BattleMode` / `Overtime` on ReplicatedStorage (`Shared/Sides.attr`); Shop and Hero refuse a hunter whose side is out |
+| A battle's sides: each hunter's `Side`, camp names, who is out, placements | `Battle` (rules in the pure `Shared/BattleFlow` / `Shared/BattleRules`) | Clients read `Side` / `Out` / `BattlePlace` / `BattleBones` player attributes and `Camp<n>` / `Out<n>` / `Place<n>` / `BattleMode` / `Overtime` / `MatchEndsAt` / `BattleDecidedBy` / `BattleAtClock` (T104) on ReplicatedStorage (`Shared/Sides.attr`); Shop and Hero refuse a hunter whose side is out |
 | A player's hero, upgrades, ammo, recoil, cooldown, Overdrive | `Hero` | Clients read `Hero`, `HeroPath1-3`, `Ammo`, `Magazine`, `ReloadUntil`, `AbilityReadyAt` player attributes; Towers ask `Hero.towerRateBoost` |
 | Burning patches | `Hazards` | Towers and Hero call `Hazards.burn()` |
 | Current round | `Waves` | Read the `Round` attribute |

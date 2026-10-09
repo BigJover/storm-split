@@ -27,6 +27,7 @@
 ]]
 
 local BattleFlow = require(script.Parent.BattleFlow)
+local Config = require(script.Parent.Config)
 local HomeLayout = require(script.Parent.HomeLayout)
 local Modes = require(script.Parent.Modes)
 local Theme = require(script.Parent.Theme)
@@ -136,15 +137,22 @@ end
 PanelRules.SPECTATE_LINE = "Your Fence is down — you're watching now."
 PanelRules.STAMPEDE_LINE = "Final Stampede! Dinos get tougher every round."
 PanelRules.CAMO_LINE = "Camo Cover: can't be hit"
+PanelRules.CLOCK_WARNING_LINE = "One minute left on the clock!" -- T104, #252 (wording: T106)
 
-export type BattleHud = { camps: boolean, spectate: boolean, stampede: boolean, camo: boolean, feed: boolean }
+export type BattleHud = { camps: boolean, spectate: boolean, stampede: boolean, camo: boolean, feed: boolean, clock: boolean, clockWarning: boolean }
 
 -- Which battle labels show. `battle` = ReplicatedStorage BattleMode (nil in co-op, so
 -- co-op never shows any); `out` = this hunter's camp is out; `overtime` = the Final
--- Stampede repeat (nil before it); `camoLeft` = seconds of Camo Cover left.
-function PanelRules.battleHud(state: string?, battle: string?, out: boolean, overtime: number?, camoLeft: number): BattleHud
+-- Stampede repeat (nil before it); `camoLeft` = seconds of Camo Cover left; `clockLeft` =
+-- seconds to the match cap (T104; nil = no clock): the status line's clock while it runs,
+-- and the warning banner in its last Tuning ClockWarning seconds. Like every battle label,
+-- none of it shows over a result (no-trap rule).
+function PanelRules.battleHud(state: string?, battle: string?, out: boolean, overtime: number?, camoLeft: number, clockLeft: number?): BattleHud
 	local inBattle = battle ~= nil and IN_MATCH[state or ""] == true
+	local clock = inBattle and clockLeft ~= nil
 	return {
+		clock = clock,
+		clockWarning = clock and (clockLeft :: number) > 0 and (clockLeft :: number) <= Config.Tuning.ClockWarning,
 		camps = inBattle, -- every camp's Fence and Bones: the scoreboard by side
 		spectate = inBattle and out,
 		stampede = inBattle and state == "Playing" and (overtime or 0) > 0,
@@ -160,6 +168,31 @@ function PanelRules.roundLabel(round: number, last: number): string
 		return `Final Stampede {round - last}`
 	end
 	return `Round {round} / {last}`
+end
+
+-- The match clock (T104): seconds left as "m:ss", rounded up, never below 0:00.
+function PanelRules.clockText(secondsLeft: number): string
+	local left = math.max(0, math.ceil(secondsLeft))
+	return string.format("%d:%02d", left // 60, left % 60)
+end
+
+-- The results' "decided by" line (T104, #253): the BattleRules decidedBy key; at the clock
+-- it starts "Time's up!". Nil when there's nothing to say (one camp, no clock).
+local DECIDED = {
+	standing = "Last camp standing",
+	fence = `Decided by {Theme.Fence} left`,
+	bones = `Decided by {Theme.Bones}`,
+	survived = "Decided by who lasted longer",
+	damage = "Decided by damage dealt to dinos",
+	clearTime = "Decided by faster round clears",
+	coinFlip = "Decided by a coin flip (seeded by the match)",
+}
+function PanelRules.decidedLine(decidedBy: string?, atClock: boolean?): string?
+	local line = if decidedBy then DECIDED[decidedBy] else nil
+	if atClock then
+		return if line then `Time's up! {line}` else "Time's up!"
+	end
+	return line
 end
 
 -- Banners and the feed never cover a result (PLAN T86b F5, #236; DIRECTION no-trap rule):
@@ -260,6 +293,8 @@ export type ResultsIn = {
 	xp: number?,
 	levelFrom: number?,
 	levelTo: number?,
+	decidedBy: string?, -- BattleDecidedBy (T104)
+	atClock: boolean?, -- BattleAtClock: the match clock ended it
 }
 
 -- The results' Amber line (PLAN T86b, #236). `total` = LastPayout, which already holds the
@@ -299,6 +334,10 @@ function PanelRules.battleResults(r: ResultsIn): ResultsOut
 		table.insert(placements, { text = `{c.place}. {c.camp} · {math.floor(c.bones)} {Theme.Bones}`, mine = c.side == r.mySide })
 	end
 	local lines = {}
+	local decided = PanelRules.decidedLine(r.decidedBy, r.atClock)
+	if decided then
+		table.insert(lines, decided)
+	end
 	local amber = PanelRules.amberLine(r.payout, r.share)
 	if amber then
 		table.insert(lines, amber)

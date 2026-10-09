@@ -159,44 +159,44 @@ end)
 -- Team result -------------------------------------------------------------------
 
 test("Team: not over while two sides stand", function()
-	local r = BattleRules.teamResult({}, { [1] = 5, [2] = 9 })
+	local r = BattleRules.teamResult({}, { [1] = 5, [2] = 9 }, { seed = 1 })
 	eq(r.over, false)
-	r = BattleRules.teamResult({ { 2 } }, { [1] = 0, [2] = 0, [3] = 0 })
+	r = BattleRules.teamResult({ { 2 } }, { [1] = 0, [2] = 0, [3] = 0 }, { seed = 1 })
 	eq(r.over, false, "3 sides, one out")
 end)
 
 test("Team: the last side standing wins", function()
-	local r = BattleRules.teamResult({ { 2 } }, { [1] = 0, [2] = 50 })
+	local r = BattleRules.teamResult({ { 2 } }, { [1] = 0, [2] = 50 }, { seed = 1 })
 	eq(r.over, true)
 	eq(#r.winners, 1)
 	eq(r.winners[1], 1, "side 1 stands, even with fewer Bones")
 	eq(r.losers[1], 2)
 	eq(r.tie, false)
-	r = BattleRules.teamResult({ { 3 }, { 1 } }, { [1] = 10, [2] = 1, [3] = 99 })
+	r = BattleRules.teamResult({ { 3 }, { 1 } }, { [1] = 10, [2] = 1, [3] = 99 }, { seed = 1 })
 	eq(r.winners[1], 2, "3 sides")
 	eq(#r.losers, 2)
 end)
 
 test("Team: a simultaneous fall goes to more Bones", function()
-	local r = BattleRules.teamResult({ { 1, 2 } }, { [1] = 30, [2] = 31 })
+	local r = BattleRules.teamResult({ { 1, 2 } }, { [1] = 30, [2] = 31 }, { seed = 1 })
 	eq(r.over, true)
 	eq(#r.winners, 1)
 	eq(r.winners[1], 2)
 	eq(r.tie, false)
 	-- only the sides of the last step count: side 3 fell earlier with more Bones
-	r = BattleRules.teamResult({ { 3 }, { 2, 1 } }, { [1] = 8, [2] = 7, [3] = 100 })
+	r = BattleRules.teamResult({ { 3 }, { 2, 1 } }, { [1] = 8, [2] = 7, [3] = 100 }, { seed = 1 })
 	eq(r.winners[1], 1)
 	eq(#r.losers, 2)
 end)
 
 test("Team: a simultaneous fall with equal Bones goes down the chain, never a tie (#253)", function()
-	local r = BattleRules.teamResult({ { 1, 2 } }, { [1] = 30, [2] = 30 })
+	local r = BattleRules.teamResult({ { 1, 2 } }, { [1] = 30, [2] = 30 }, { seed = 1 })
 	eq(r.over, true)
 	eq(r.tie, false)
 	eq(#r.winners, 1, "the seeded coin flip picks one")
 	eq(#r.losers, 1)
 	eq(r.decidedBy, "coinFlip")
-	r = BattleRules.teamResult({ { 1 }, { 2, 3 } }, { [1] = 0, [2] = 4, [3] = 4 }, { damage = { [2] = 10, [3] = 11 } })
+	r = BattleRules.teamResult({ { 1 }, { 2, 3 } }, { [1] = 0, [2] = 4, [3] = 4 }, { damage = { [2] = 10, [3] = 11 }, seed = 1 })
 	eq(r.tie, false, "3 sides, last two level on Bones")
 	eq(r.winners[1], 3, "more damage")
 	eq(r.decidedBy, "damage")
@@ -210,7 +210,7 @@ test("Royale: not over while two are alive and rounds remain", function()
 		{ id = "a", bones = 10, fence = 5 },
 		{ id = "b", bones = 20, fence = 5 },
 		{ id = "c", bones = 30, fence = 0, outAt = 1 },
-	}, false)
+	}, false, 1)
 	eq(r.over, false)
 	eq(r.survivor, nil)
 end)
@@ -220,7 +220,7 @@ test("Royale: ends at one alive; the survivor gets +10% Bones (rounded down)", f
 		{ id = "a", bones = 105, fence = 3 },
 		{ id = "b", bones = 110, fence = 0, outAt = 2 },
 		{ id = "c", bones = 50, fence = 0, outAt = 1 },
-	}, false)
+	}, false, 1)
 	eq(r.over, true)
 	eq(r.survivor, "a")
 	eq(r.bones.a, 115, "105 x 1.1 = 115.5 -> 115")
@@ -234,7 +234,7 @@ test("Royale: most Bones wins even over the survivor", function()
 	local r = BattleRules.royaleResult({
 		{ id = "a", bones = 10, fence = 9 },
 		{ id = "b", bones = 200, fence = 0, outAt = 1 },
-	}, false)
+	}, false, 1)
 	eq(r.over, true)
 	eq(r.ranking[1], "b")
 	eq(r.bones.a, 11)
@@ -244,7 +244,7 @@ test("Royale: ends at the last round with several alive; no survivor bonus", fun
 	local r = BattleRules.royaleResult({
 		{ id = "a", bones = 40, fence = 3 },
 		{ id = "b", bones = 50, fence = 3 },
-	}, true)
+	}, true, 1)
 	eq(r.over, true)
 	eq(r.survivor, nil)
 	eq(r.bones.a, 40)
@@ -256,7 +256,7 @@ test("Royale: nobody alive (the last fall together): over, no bonus", function()
 	local r = BattleRules.royaleResult({
 		{ id = "a", bones = 40, fence = 0, outAt = 5 },
 		{ id = "b", bones = 40, fence = 0, outAt = 5 },
-	}, false)
+	}, false, 1)
 	eq(r.over, true)
 	eq(r.survivor, nil)
 	eq(#r.ranking, 2)
@@ -269,7 +269,7 @@ test("Royale ties: survived longer, then more Fence", function()
 		{ id = "late", bones = 30, fence = 0, outAt = 4 },
 		{ id = "aliveLow", bones = 30, fence = 2 },
 		{ id = "aliveHigh", bones = 30, fence = 9 },
-	}, true)
+	}, true, 1)
 	eq(r.ranking[1], "aliveHigh")
 	eq(r.ranking[2], "aliveLow")
 	eq(r.ranking[3], "late")

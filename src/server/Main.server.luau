@@ -321,6 +321,8 @@ lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
 		ReplicatedStorage:SetAttribute("BattleSides", key) -- Camp Clash 2 or 3; Bone Rush seats with stand-ins
 	elseif action == "standins" and typeof(key) == "boolean" and StudioOnly.allowed(RunService:IsStudio(), "standIns") then
 		ReplicatedStorage:SetAttribute("StandIns", key) -- "Fill with stand-ins" (DECISIONS #221)
+	elseif action == "clockcap" and typeof(key) == "number" and StudioOnly.allowed(RunService:IsStudio(), "clockCap") then
+		ReplicatedStorage:SetAttribute("StudioClockCap", key) -- a short battle clock for testing (T104)
 	elseif action == "startround" and typeof(key) == "number" and StudioOnly.allowed(RunService:IsStudio(), "startRound") then
 		ReplicatedStorage:SetAttribute("StudioStartRound", StudioOnly.startRound(RunService:IsStudio(), key, #Config.Rounds))
 	elseif action == "track" and typeof(key) == "string" and Modes.Tracks[key] then
@@ -504,10 +506,10 @@ local function playBattle()
 	-- hunt. Casual seats everyone and stakes nothing.
 	local ranked = ReplicatedStorage:GetAttribute("Ranked") == true
 	local roster: { Player }? = nil
-	local matchId: string? = nil
+	-- Every battle has an id: the tie-break coin flip's seed (#261); Ranked's escrow too.
+	local matchId: string = HttpService:GenerateGUID(false)
 	local staked: { [Player]: boolean } = {}
 	if ranked then
-		matchId = HttpService:GenerateGUID(false)
 		local list = {}
 		for _, player in Players:GetPlayers() do
 			if player:GetAttribute("Ready") == true and Progression.stake(player, matchId :: string) then
@@ -522,6 +524,7 @@ local function playBattle()
 		roster = roster,
 		startRound = studioStartRound(), -- 1 unless the Studio host picked "Start at round N"
 		competitive = ranked,
+		matchId = matchId, -- always: the tie-break seed (#261)
 		onRoundStart = function(round, still)
 			for _, hunter in still do
 				Progression.bountyEvent(hunter, "reachRound", nil, round) -- battles count as matches (#222)

@@ -40,8 +40,9 @@
 	                                   CO-OP levers, as co-op scales by the whole server)
 	  startingCash(difficulty, hunters) a side's starting cash (Pricing.startingPot)
 	  teamPlaces(eliminationOrder, result, sides)
-	      side -> placement: the winners 1st (a tie shares 1st), then the sides that fell,
-	      the latest fall first; sides that fell in one step share a place
+	      side -> placement: the winner 1st, then the sides still standing at the match
+	      clock in the result's ranking order (T104), then the sides that fell, the latest
+	      fall first; sides that fell in one step share a place
 	  royalePlaces(ranking)            id -> placement (1st first)
 	  standInTowers()                  the stand-ins' fixed towers: one of each free tower
 	                                   that can be damaged (raid targets), in TowerOrder
@@ -251,6 +252,19 @@ function BattleFlow.teamPlaces(eliminationOrder: { { number } }, result: BattleR
 		won[side] = true
 	end
 	local place = #result.winners + 1
+	-- Still standing but not 1st (the match clock, #252): next, in the chain's order.
+	local fallen: { [number]: boolean } = {}
+	for _, step in eliminationOrder do
+		for _, side in step do
+			fallen[side] = true
+		end
+	end
+	for _, side in result.ranking do
+		if not won[side] and not fallen[side] and places[side] == nil then
+			places[side] = place
+			place += 1
+		end
+	end
 	for step = #eliminationOrder, 1, -1 do
 		local fell = 0
 		for _, side in eliminationOrder[step] do

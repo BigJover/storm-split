@@ -331,6 +331,8 @@ local function renderBattleResults(battle: string)
 		xp = player:GetAttribute("LastPlayerXp"),
 		levelFrom = player:GetAttribute("LastPlayerLevelFrom"),
 		levelTo = player:GetAttribute("LastPlayerLevel"),
+		decidedBy = attr("BattleDecidedBy", nil),
+		atClock = attr("BattleAtClock", false) == true,
 	})
 	local color = if out.won then Color3.fromRGB(140, 240, 170) else Color3.fromRGB(255, 120, 140)
 	resultsTitle.Text = out.title
@@ -360,6 +362,15 @@ ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(function()
 	resultsDismissed = false -- every results screen opens once
 end)
 
+-- Seconds to the battle's match cap (T104), nil with no clock (co-op, or none running).
+local function clockLeft(): number?
+	local endsAt = ReplicatedStorage:GetAttribute("MatchEndsAt")
+	if typeof(endsAt) ~= "number" then
+		return nil
+	end
+	return math.max(0, endsAt - workspace:GetServerTimeNow())
+end
+
 local function refresh()
 	local state = attr("State", "Waiting")
 	local round = math.floor(attr("Round", 0))
@@ -371,6 +382,8 @@ local function refresh()
 	-- A battle (Server/Battle, T77) has a timed build phase and no Start button.
 	local battle = attr("BattleMode", nil)
 	local camp = if battle then attr(Sides.attr("Camp", side), "") else ""
+	local left = clockLeft()
+	local clock = if battle and left then `  ·  Clock {PanelRules.clockText(left)}` else "" -- T104
 	startButton.Visible = state == "Building" and battle == nil
 	label.Visible = state ~= "Lobby" -- the home screen has its own layout
 	results.Visible = state == "GameOver" or state == "Victory"
@@ -412,11 +425,11 @@ local function refresh()
 	elseif state == "Lobby" then
 		label.Text = ""
 	elseif state == "Building" and battle then
-		label.Text = `{camp}  ·  Build (B), choose a hero (H)  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}`
+		label.Text = `{camp}  ·  Build (B), choose a hero (H)  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}{clock}`
 	elseif state == "Building" then
 		label.Text = `Build (B), choose a hero (H), then Start  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}`
 	elseif battle then
-		label.Text = `{camp}  ·  {PanelRules.roundLabel(round, #Config.Rounds)}  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}  ·  Dinos {alive}`
+		label.Text = `{camp}  ·  {PanelRules.roundLabel(round, #Config.Rounds)}  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}  ·  Dinos {alive}{clock}`
 	else
 		label.Text = `{PanelRules.roundLabel(round, #Config.Rounds)}  ·  {difficultyName}  ·  Cash {cash}  ·  {Theme.Fence} {lives}  ·  Dinos {alive}`
 	end
@@ -1002,6 +1015,8 @@ showOutBanner = function(text: string)
 end
 local stampedeBanner = battleLabel("FinalStampede", 2, Color3.fromRGB(250, 205, 80), battleBanners)
 stampedeBanner.Text = PanelRules.STAMPEDE_LINE
+local clockBanner = battleLabel("ClockWarning", 1, Color3.fromRGB(255, 120, 140), battleBanners) -- T104
+clockBanner.Text = PanelRules.CLOCK_WARNING_LINE
 local camoTag = battleLabel("CamoCover", 1, Color3.fromRGB(140, 240, 170), gui)
 camoTag.AnchorPoint = Vector2.new(0.5, 1)
 camoTag.Position = UDim2.new(0.5, 0, 1, -96)
@@ -1026,7 +1041,8 @@ local function refreshBattle()
 	local battle = attr("BattleMode", nil)
 	local out = player:GetAttribute("Out") == true
 	local left = camoLeft()
-	local show = PanelRules.battleHud(state, battle, out, attr("Overtime", nil), left)
+	local show = PanelRules.battleHud(state, battle, out, attr("Overtime", nil), left, clockLeft())
+	clockBanner.Visible = show.clockWarning
 	spectateBanner.Visible = show.spectate
 	stampedeBanner.Visible = show.stampede
 	camoTag.Visible = show.camo
@@ -1081,11 +1097,15 @@ end)
 for _, name in { "Out", "Side" } do
 	player:GetAttributeChangedSignal(name):Connect(refreshBattle)
 end
-task.spawn(function() -- Camo Cover's countdown
+task.spawn(function() -- Camo Cover's countdown, and the match clock's (T104)
 	while true do
 		task.wait(0.25)
-		if camoTag.Visible or camoLeft() > 0 then
+		local ticking = clockLeft() ~= nil and PanelRules.battleHud(attr("State", "Waiting"), attr("BattleMode", nil), false, nil, 0, clockLeft()).clock
+		if camoTag.Visible or camoLeft() > 0 or ticking or clockBanner.Visible then
 			refreshBattle()
+		end
+		if ticking then
+			refresh() -- the status line's clock
 		end
 	end
 end)

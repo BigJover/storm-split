@@ -166,7 +166,7 @@ end)
 
 test("Camp Clash places: the winner 1st, then the latest fall", function()
 	local order = { { 3 }, { 2 } }
-	local result = BattleRules.teamResult(order, { [1] = 5, [2] = 9, [3] = 1 })
+	local result = BattleRules.teamResult(order, { [1] = 5, [2] = 9, [3] = 1 }, { seed = 1 })
 	eq(result.over, true)
 	local p = BattleFlow.teamPlaces(order, result, 3)
 	eq(p[1], 1)
@@ -176,16 +176,16 @@ end)
 
 test("Camp Clash places: a simultaneous fall decided by Bones; a full tie is a coin flip (#253)", function()
 	local order = { { 1, 2 } }
-	local result = BattleRules.teamResult(order, { [1] = 7, [2] = 3 })
+	local result = BattleRules.teamResult(order, { [1] = 7, [2] = 3 }, { seed = 1 })
 	local p = BattleFlow.teamPlaces(order, result, 2)
 	eq(p[1], 1)
 	eq(p[2], 2)
-	result = BattleRules.teamResult(order, { [1] = 4, [2] = 4 })
+	result = BattleRules.teamResult(order, { [1] = 4, [2] = 4 }, { seed = 1 })
 	p = BattleFlow.teamPlaces(order, result, 2)
 	eq(p[result.winners[1]], 1)
 	eq(p[result.losers[1]], 2, "no shared 1st any more")
 	order = { { 2, 3 } }
-	result = BattleRules.teamResult(order, { [1] = 0, [2] = 1, [3] = 1 })
+	result = BattleRules.teamResult(order, { [1] = 0, [2] = 1, [3] = 1 }, { seed = 1 })
 	p = BattleFlow.teamPlaces(order, result, 3)
 	eq(p[1], 1, "the one standing")
 	eq(p[2], 2, "fell together")
@@ -197,7 +197,7 @@ test("Bone Rush places follow the ranking (Bones, then survival, then Fence)", f
 		{ id = 1, bones = 10, fence = 0, outAt = 1 },
 		{ id = 2, bones = 30, fence = 5 },
 		{ id = 3, bones = 20, fence = 0, outAt = 2 },
-	}, false)
+	}, false, 1)
 	eq(result.over, true, "one left alive")
 	local p = BattleFlow.royalePlaces(result.ranking)
 	eq(p[2], 1)
@@ -280,7 +280,7 @@ test("T79b: Server/Battle adds stand-in Bones and Main reports every pop's side"
 	ok(battle:find("return total + (standInBones[side] or 0)", 1, true) ~= nil, "sideBones adds the seat's Bones")
 	ok(battle:find("BattleLoop.run(", 1, true) ~= nil, "Battle drives Shared/BattleLoop (T103)")
 	local loop = fs.readFile("src/shared/BattleLoop.luau")
-	ok(loop:find("BattleFlow.roundDue(steps.cleared(round), steps.now() - startedAt, clearedAt)", 1, true) ~= nil, "lockstep uses the break")
+	ok(loop:find("BattleFlow.roundDue(cleared, steps.now() - startedAt, clearedAt)", 1, true) ~= nil, "lockstep uses the break")
 	local main = fs.readFile("src/server/Main.server.luau")
 	ok(main:find("Battle.dinoPopped(enemy.side)", 1, true) ~= nil, "onKilled reports the side")
 	ok(main:find("if inMatch() and not Battle.active() then", 1, true) ~= nil, "a mid-battle joiner isn't seated")

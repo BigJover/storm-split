@@ -45,15 +45,16 @@
 	  sideOut(fence)              a side is out at Fence 0
 	  overtimeRepeat(round)       0 up to the last round of the table; then 1, 2, ...
 	  overtimeHpMult(n)           Tuning OvertimeHPStep ^ n (1 when n <= 0)
-	  teamResult(eliminationOrder, bones, stats?)
+	  teamResult(eliminationOrder, bones, stats)
 	      `bones` has every side (side -> Bones, 0 if none); `eliminationOrder` lists the
 	      falls in order, each a list of the sides that fell in that same step. Not over
 	      while two or more sides stand. One standing = it wins. None standing = the sides
 	      of the last step fell together and the tie-break chain (#253) picks one. `stats`
-	      = { fence, damage, clearTime (side -> number), seed (matchId) }, missing = 0.
+	      = { fence, damage, clearTime (side -> number), seed (matchId) }, missing = 0; a nil
+	      seed is an error (#261), here, in royaleResult and in atClock.
 	      Returns { over, winners (always one when over), losers (sorted), tie (always
 	      false), ranking (every side, 1st first), decidedBy }.
-	  royaleResult(players, roundsDone, seed?)
+	  royaleResult(players, roundsDone, seed)
 	      players: { id, bones, fence, outAt?, damage?, clearTime? } with outAt nil while
 	      alive, else when the player went out (bigger = later). Over when at most one is
 	      alive or the last round of the table is done (`roundsDone`). The one player still
@@ -262,6 +263,14 @@ local function chain<T>(items: { T }, steps: { Step }, idOf: (T) -> any, seed: a
 	return order, decidedBy
 end
 
+-- #261: every result is seeded by the match (Server/Battle passes matchId); a nil seed would
+-- make every "coin flip" the same, so it is an error, not a default.
+local function needSeed(seed: any)
+	if seed == nil then
+		error("BattleRules: a result needs the match seed (matchId, DECISIONS #261)", 3)
+	end
+end
+
 local function teamSteps(bones: { [Side]: number }, stats: TeamStats?): { Step }
 	local fence = stats and stats.fence or {}
 	local damage = stats and stats.damage or {}
@@ -334,7 +343,8 @@ local function teamFrom(ranking: { Side }, decidedBy: string?): TeamResult
 	}
 end
 
-function BattleRules.teamResult(eliminationOrder: { { Side } }, bones: { [Side]: number }, stats: TeamStats?): TeamResult
+function BattleRules.teamResult(eliminationOrder: { { Side } }, bones: { [Side]: number }, stats: TeamStats): TeamResult
+	needSeed(stats and stats.seed)
 	local fell: { [Side]: boolean } = {}
 	for _, step in eliminationOrder do
 		for _, side in step do
@@ -373,7 +383,8 @@ local function royaleSteps<Id>(final: { [Id]: number }): { Step }
 	}
 end
 
-function BattleRules.royaleResult<Id>(players: { RoyalePlayer<Id> }, roundsDone: boolean, seed: any?): RoyaleResult<Id>
+function BattleRules.royaleResult<Id>(players: { RoyalePlayer<Id> }, roundsDone: boolean, seed: any): RoyaleResult<Id>
+	needSeed(seed)
 	local alive = {}
 	for _, p in players do
 		if p.outAt == nil then
@@ -400,6 +411,7 @@ function BattleRules.royaleResult<Id>(players: { RoyalePlayer<Id> }, roundsDone:
 end
 
 function BattleRules.atClock(input: ClockInput): any
+	needSeed(input.seed)
 	if input.modeKey == "ROYALE" then
 		return BattleRules.royaleResult(input.players or {}, true, input.seed)
 	end
