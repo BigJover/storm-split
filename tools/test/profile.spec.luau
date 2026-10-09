@@ -711,12 +711,15 @@ test("T80 Server/Progression: refund on load only after a good load; leave / shu
 	local canSaveAt = src:find("canSave[player] = profile ~= nil", 1, true)
 	local refundAt = src:find("local refunded = Profile.refundEscrow(loaded)", 1, true)
 	ok(canSaveAt ~= nil and refundAt ~= nil and canSaveAt < refundAt, "refund after the load is judged")
-	ok(src:find("if not profile or not canSave[player] or not store then", 1, true) ~= nil, "save never writes a failed load")
+	-- T90: a failed load never takes the lock (no write at all); a loaded save that can't be
+	-- read only refreshes the lock (data = nil keeps what's stored).
+	ok(src:find("if not store or not session or not locked[player] then", 1, true) ~= nil, "save never writes without the lock")
+	ok(src:find("local data = if profile and canSave[player]", 1, true) ~= nil, "save never writes a failed load")
 	ok(src:find("Profile.leaveRanked(", 1, true) ~= nil, "a leaver forfeits and loses Trophies (T82)")
 	local leaveAt = src:find("Profile.leaveRanked(", 1, true)
-	local saveAt = src:find("save(player)\n\t\tprofiles[player] = nil", 1, true)
+	local saveAt = src:find("save(player, true) -- the last write frees the session lock for the next server\n\t\tprofiles[player] = nil", 1, true)
 	ok(leaveAt ~= nil and saveAt ~= nil and leaveAt < saveAt, "the Trophies drop before the leaver's last save (same save)")
-	ok(src:find("Profile.refundEscrow(profile) -- an open stake comes back on a shutdown", 1, true) ~= nil, "BindToClose refunds")
+	ok(src:find("Profile.refundEscrow(profile)\n\t\t\t\ttask.spawn(save, player, true)", 1, true) ~= nil, "BindToClose refunds")
 end)
 
 -- T82: a Ranked leaver loses Trophies as last place (DECISIONS #233) ----------------------

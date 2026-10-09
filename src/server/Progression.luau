@@ -74,14 +74,14 @@ local ShopRules = require(Shared:WaitForChild("ShopRules"))
 local Stakes = require(Shared:WaitForChild("Stakes"))
 local Trophies = require(Shared:WaitForChild("Trophies"))
 local StudioOnly = require(Shared:WaitForChild("StudioOnly"))
+local SaveStore = require(Shared:WaitForChild("SaveStore"))
 
 local Progression = {}
 
 type Profile = Profile.Profile
 
 local STORE_NAME = "StormSplitProgress_v1"
-local LOAD_ATTEMPTS = 3
-local RETRY_DELAY = 2 -- seconds between load attempts
+local CLOSE_DEADLINE = 25 -- seconds BindToClose waits for the last saves (Roblox allows 30)
 
 local profiles: { [Player]: Profile } = {}
 local onMasteryChanged: ((Player) -> ())? = nil
@@ -89,7 +89,21 @@ local canSave: { [Player]: boolean } = {} -- false = session-only (store unreach
 local held: { [Player]: Profile.Held } = {} -- player XP that arrived while the save was loading
 local onLookChanged: ((Player) -> ())? = nil
 local bountyDone: RemoteEvent? = nil -- (bounty id), to the hunter who finished it only
-local store: DataStore? = nil
+local store: SaveStore.Store? = nil -- the DataStore behind Shared/SaveStore (PLAN T90)
+local sessions: { [Player]: string } = {} -- this server's lock id for each player's save
+local locked: { [Player]: boolean } = {} -- this server holds that save's session lock
+local leaving: { [Player]: boolean } = {} -- PlayerRemoving is saving them (BindToClose skips)
+local inFlight = 0 -- store requests still running (BindToClose waits for them)
+local sessionCount = 0
+local env: SaveStore.Env = {
+	now = os.time,
+	wait = function(seconds: number)
+		task.wait(seconds)
+	end,
+	log = function(text: string)
+		warn(text)
+	end,
+}
 local saveHintGiven = false -- the developer's "publish the place" hint: one warn per session
 local closing = false -- the server is shutting down (BindToClose): open stakes are refunded
 do
@@ -97,7 +111,15 @@ do
 		return DataStoreService:GetDataStore(STORE_NAME)
 	end)
 	if ok then
-		store = result
+		local dataStore: DataStore = result
+		store = {
+			update = function(k: string, transform: (any) -> any): any
+				return dataStore:UpdateAsync(k, transform)
+			end,
+			budget = function(): number
+				return DataStoreService:GetRequestBudgetForRequestType(Enum.DataStoreRequestType.UpdateAsync)
+			end,
+		}
 	else
 		warn(`[Progression] No data store, so progress isn't saving. Publish the place to Roblox to keep it (SETUP.md): {result}`)
 		saveHintGiven = true
@@ -162,32 +184,47 @@ end
 
 ------------------------------------------------------------------ load / save
 
-local save: (Player) -> () -- below: a load that settles held XP saves it
+local save: (Player, boolean?) -> () -- below: a load that settles held XP saves it
 
 local function load(player: Player)
 	local profile: Profile? = nil
+	local session = ""
+	local took = false -- this load took the session lock
 	if store then
-		for attempt = 1, LOAD_ATTEMPTS do
-			local ok, raw = pcall(function()
-				return (store :: DataStore):GetAsync(key(player))
-			end)
+		sessionCount += 1
+		session = `{if game.JobId ~= "" then game.JobId else "studio"}/{player.UserId}/{sessionCount}`
+		sessions[player] = session
+		-- Takes the session lock in the same step (Shared/SaveStore, Profile.mayTake): a
+		-- save another server still holds waits for its last write instead of loading old data.
+		inFlight += 1
+		local status, raw = SaveStore.load(store, key(player), session, env)
+		inFlight -= 1
+		if status == "ok" then
+			took = true
+			locked[player] = true
+			-- A stored value that can't be read at all counts as a failed load.
+			local ok, result = pcall(Profile.sanitize, raw, os.time(), rng)
 			if ok then
-				-- A stored value that can't be read at all counts as a failed load.
-				ok, raw = pcall(Profile.sanitize, raw, os.time(), rng)
-				if ok then
-					profile = raw
-				else
-					warn(`[Progression] Couldn't read {player.Name}'s save: {raw}`)
-				end
-				break
+				profile = result
+			else
+				warn(`[Progression] Couldn't read {player.Name}'s save: {result}`)
 			end
-			warn(`[Progression] Load {attempt}/{LOAD_ATTEMPTS} failed for {player.Name}: {raw}`)
-			task.wait(RETRY_DELAY)
+		elseif status == "locked" then
+			warn(`[Progression] {player.Name}'s save is still open on another server; this session won't save`)
+		else
+			warn(`[Progression] Load failed for {player.Name}: {raw}`)
 		end
 	end
 	if not player.Parent then
 		held[player] = nil
-		return -- left while loading
+		if took then
+			-- Left while loading: free the lock, write nothing else (PlayerRemoving may
+			-- already have cleared this player's entries).
+			sessions[player], locked[player], profiles[player] = session, true, nil
+			save(player, true)
+		end
+		sessions[player], locked[player] = nil, nil
+		return
 	end
 	-- Only a successful load may ever be saved back, so a failed load can't
 	-- overwrite real progress with a blank profile.
@@ -228,16 +265,36 @@ local function load(player: Player)
 	end
 end
 
-save = function(player: Player)
-	local profile = profiles[player]
-	if not profile or not canSave[player] or not store then
+-- Write this player's save (or, with `release`, the last write: it frees the lock).
+-- Only a save that loaded is ever written (canSave); one that didn't only frees its lock.
+-- If another server took the lock, nothing is written and this session stops saving.
+save = function(player: Player, release: boolean?)
+	local session = sessions[player]
+	if not store or not session or not locked[player] then
 		return
 	end
-	local ok, err = pcall(function()
-		(store :: DataStore):SetAsync(key(player), Profile.toSave(profile))
-	end)
-	if not ok then
+	local profile = profiles[player]
+	local data = if profile and canSave[player]
+		then function()
+			return Profile.toSave(profile)
+		end
+		else nil
+	inFlight += 1
+	local status, err = SaveStore.write(store, key(player), session, env, data, release)
+	inFlight -= 1
+	if status == "lost" then
+		locked[player] = nil
+		if canSave[player] then
+			canSave[player] = false
+			warn(`[Progression] {player.Name}'s save was taken by another server; this session stops saving`)
+			if player.Parent then
+				publish(player)
+			end
+		end
+	elseif status ~= "ok" then
 		warn(`[Progression] Save failed for {player.Name}: {err}`)
+	elseif release then
+		locked[player] = nil
 	end
 end
 
@@ -702,6 +759,7 @@ function Progression.init(
 		task.spawn(load, player)
 	end
 	Players.PlayerRemoving:Connect(function(player)
+		leaving[player] = true
 		-- An open ranked stake: a leaver forfeits it to the pot and loses Trophies as last
 		-- place in that lobby (PLAN T82, DECISIONS #233; never in Practice); a shutdown gives
 		-- it back (DECISIONS #216). Either way the escrow is closed before the last save.
@@ -721,16 +779,38 @@ function Progression.init(
 				)
 			end
 		end
-		save(player)
+		save(player, true) -- the last write frees the session lock for the next server
 		profiles[player] = nil
 		canSave[player] = nil
 		held[player] = nil
+		sessions[player], locked[player], leaving[player] = nil, nil, nil
 	end)
+	-- Keep each held lock fresh (well inside Profile.LOCK_STALE), so only a crashed
+	-- server's lock ever goes stale. A save that loaded is written; others only touch the lock.
+	task.spawn(function()
+		while true do
+			task.wait(Profile.LOCK_REFRESH)
+			for player in locked do
+				if not leaving[player] and not closing then
+					task.spawn(save, player)
+				end
+			end
+		end
+	end)
+	-- Shutdown: every open stake comes back (#216) and every save is written and released
+	-- at once, in parallel; wait (up to CLOSE_DEADLINE) for those and any leaver's save.
 	game:BindToClose(function()
 		closing = true
 		for player, profile in profiles do
-			Profile.refundEscrow(profile) -- an open stake comes back on a shutdown (#216)
-			save(player)
+			if not leaving[player] then
+				Profile.refundEscrow(profile)
+				task.spawn(save, player, true)
+			end
+		end
+		local started = os.clock()
+		task.wait() -- let the saves start
+		while inFlight > 0 and os.clock() - started < CLOSE_DEADLINE do
+			task.wait(0.25)
 		end
 	end)
 end

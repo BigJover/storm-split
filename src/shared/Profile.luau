@@ -220,6 +220,38 @@ function Profile.toSave(profile: Profile): { [string]: any }
 	}
 end
 
+-- Session lock (PLAN T90; needed before players hop servers, #240) ---------------------
+-- The stored record carries `lock = { session, at }`: the server session that loaded it
+-- and when it last wrote. Server B may load (and take) a save only when it's free, already
+-- its own, or stale (the holder stopped writing LOCK_STALE seconds ago: it crashed).
+-- A server may write only while the stored lock is its own, so a server that lost the
+-- lock can never overwrite the newer save. Sanitize ignores the field.
+export type Lock = { session: string, at: number }
+
+Profile.LOCK_STALE = 600 -- seconds without a write before a lock counts as abandoned
+Profile.LOCK_REFRESH = 120 -- the holder rewrites its lock this often (well inside LOCK_STALE)
+
+function Profile.lockOf(raw: any): Lock?
+	local lock = if type(raw) == "table" then raw.lock else nil
+	if type(lock) == "table" and type(lock.session) == "string" and type(lock.at) == "number" and lock.at == lock.at then
+		return { session = lock.session, at = lock.at }
+	end
+	return nil
+end
+
+-- May `session` load (and take) this stored record now?
+function Profile.mayTake(raw: any, session: string, now: number): boolean
+	local lock = Profile.lockOf(raw)
+	return lock == nil or lock.session == session or now - lock.at >= Profile.LOCK_STALE
+end
+
+-- May `session` write over this stored record? Only while it holds the lock: a free
+-- record was released (or taken and released by another server), so it isn't ours.
+function Profile.mayWrite(raw: any, session: string): boolean
+	local lock = Profile.lockOf(raw)
+	return lock ~= nil and lock.session == session
+end
+
 -- Player level (Shared/PlayerLevel) --------------------------------------------------
 
 -- Bank one match's player XP. Only whole, finite, positive amounts count: XP never
