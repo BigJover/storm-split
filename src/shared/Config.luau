@@ -3869,7 +3869,7 @@ return table.freeze({
 						{
 							name = "Tectonic Slam",
 							cost = 35400,
-							damageMult = 24.76,
+							damageMult = 34,
 							rateMult = 1,
 							targetsMult = 1,
 							rangeMult = 1,
