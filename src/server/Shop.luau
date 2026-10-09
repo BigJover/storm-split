@@ -24,6 +24,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Combat = require(Shared:WaitForChild("Combat"))
@@ -33,6 +34,7 @@ local Placement = require(Shared:WaitForChild("Placement"))
 local Pricing = require(Shared:WaitForChild("Pricing"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local SmallPerks = require(Shared:WaitForChild("SmallPerks"))
+local StudioOnly = require(Shared:WaitForChild("StudioOnly"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 
@@ -329,6 +331,9 @@ function Shop.placeStandIn(key: string, spot: Vector3, side: number, ownerId: nu
 	if tower then
 		spent[tower] = 0
 		standIns[tower] = { id = ownerId, name = ownerName }
+		if StudioOnly.allowed(RunService:IsStudio(), "standInPierce") then
+			Towers.pierceArmourForStandIn(tower) -- test fidelity only (PLAN T91b)
+		end
 		decorate(tower)
 	end
 	return tower

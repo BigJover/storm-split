@@ -219,6 +219,27 @@ function HomeLayout.nextSeats(n: unknown): number
 	return if current >= 2 and current < most then current + 1 else 2
 end
 
+-- Studio-only host test options (PLAN T91b; the server asks Shared/StudioOnly): "Start at
+-- round N" for co-op and battles, and "Stand-ins hold" for a battle with stand-ins on. The
+-- chip cycles START_ROUNDS; the Lobby remote takes any round ("startround", n).
+HomeLayout.START_ROUNDS = { 1, 10, 20, 30, 38 }
+HomeLayout.START_AT = { width = 200, textSize = 16, text = "Start at round 38" } :: Card -- its widest text
+HomeLayout.HOLD = { width = 170, textSize = 16, text = "Stand-ins hold" } :: Card
+
+function HomeLayout.startText(n: number): string
+	return `Start at round {n}`
+end
+
+function HomeLayout.nextStartRound(n: unknown): number
+	local list = HomeLayout.START_ROUNDS
+	local i = table.find(list, if type(n) == "number" then n else 1) -- not picked = round 1
+	return list[if i and i < #list then i + 1 else 1]
+end
+
+function HomeLayout.studioOptions(modeKey: unknown, studio: boolean, standIns: boolean): { row: boolean, hold: boolean }
+	return { row = studio == true, hold = studio == true and HomeLayout.isBattle(modeKey) and standIns == true }
+end
+
 function HomeLayout.optionCards(): { Card }
 	return { HomeLayout.CASUAL, HomeLayout.RANKED, HomeLayout.SIDES[1], HomeLayout.SIDES[2], HomeLayout.STAND_INS }
 end

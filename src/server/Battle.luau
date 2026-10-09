@@ -131,6 +131,13 @@ function Battle.dinoPopped(side: number)
 end
 
 -- Between matches: no battle attributes left behind (co-op reads "Out" for side 1).
+-- The Fence a leak takes on `side` (PLAN T91b): Studio "Stand-ins hold" keeps a stand-in
+-- camp at 1, so the Tester can reach round 40 and Final Stampede; real camps pay in full.
+function Battle.leakCost(side: number, cost: number): number
+	local hold = ReplicatedStorage:GetAttribute("StandInsHold")
+	return StudioOnly.heldLoss(RunService:IsStudio(), hold, standInSeats[side] == true, Economy.livesOf(side), cost)
+end
+
 function Battle.reset()
 	active = false
 	for side = 1, math.max(MAX_SIDES, seatedSides) do
@@ -173,6 +180,7 @@ export type Context = {
 	roster: { Player }?, -- who is seated (Ranked: the Ready hunters who staked); nil = everyone
 	competitive: boolean?, -- Ranked: the competitive minimum players (Modes.minPlayers)
 	onRoundStart: ((number, { Player }) -> ())?, -- a round began: the hunters still in it (bounties)
+	startRound: number?, -- Studio "Start at round N" (Shared/StudioOnly already applied; nil = 1)
 }
 
 -- What Main settles at the end (Progression.endBattle, PLAN T80): every real hunter seated
@@ -279,10 +287,11 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 	-- Playing.
 	ReplicatedStorage:SetAttribute("State", "Playing")
 	ReplicatedStorage:SetAttribute("BuildEndsAt", nil)
-	local level = HeroXp.roundLevel(0)
+	local firstRound = math.max(1, ctx.startRound or 1) -- Studio "Start at round N"; live always 1
+	local level = HeroXp.roundLevel(firstRound - 1)
 	ReplicatedStorage:SetAttribute("Level", level)
-	ReplicatedStorage:SetAttribute("RoundsCleared", 0)
-	Hero.startMatch(0)
+	ReplicatedStorage:SetAttribute("RoundsCleared", firstRound - 1)
+	Hero.startMatch(firstRound - 1)
 	Towers.setLevel(level, chosen)
 	Enemies.setSpeedMult(chosen.speedMult)
 	local density = Sides.density(modeKey, sides)
@@ -449,7 +458,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		return if result.over then result else nil
 	end
 
-	startRound(1)
+	startRound(firstRound)
 	local result: any = nil
 	while true do
 		task.wait(CHECK_EVERY)

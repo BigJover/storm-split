@@ -291,6 +291,22 @@ profileCard.Activated:Connect(function()
 end)
 
 local actionRow = row(14, HomeLayout.ROW_HEIGHT)
+
+-- Studio-only test options (PLAN T91b; the server refuses them live, Shared/StudioOnly).
+local studioRow = row(15, HomeLayout.OPTION_HEIGHT)
+local function studioChip(order: number, spec: HomeLayout.Card, onClick: () -> ()): TextButton
+	local button = card(studioRow, order, spec.width, HomeLayout.OPTION_HEIGHT)
+	button.TextSize = spec.textSize
+	button.Text = spec.text
+	button.Activated:Connect(onClick)
+	return button
+end
+local startAtChip = studioChip(1, HomeLayout.START_AT, function()
+	lobby:FireServer("startround", HomeLayout.nextStartRound(ReplicatedStorage:GetAttribute("StudioStartRound")))
+end)
+local holdChip = studioChip(2, HomeLayout.HOLD, function()
+	lobby:FireServer("standinshold", ReplicatedStorage:GetAttribute("StandInsHold") ~= true)
+end)
 actionRow.Name = "Actions"
 local heroCard = card(actionRow, 1, HomeLayout.HERO.width, HomeLayout.ROW_HEIGHT)
 heroCard.TextSize = HomeLayout.HERO.textSize
@@ -418,6 +434,15 @@ local function refresh()
 	standInChip.Visible = options.standIns
 	standInChip.Active = host
 	mark({ on = standInChip }, if standIns then "on" else nil)
+	local studio = HomeLayout.studioOptions(modeKey, RunService:IsStudio(), standIns)
+	local startAt = ReplicatedStorage:GetAttribute("StudioStartRound")
+	studioRow.Visible = studio.row
+	startAtChip.Active = host
+	startAtChip.Text = HomeLayout.startText(if typeof(startAt) == "number" then startAt else 1)
+	mark({ on = startAtChip }, if typeof(startAt) == "number" and startAt > 1 then "on" else nil)
+	holdChip.Visible = studio.hold
+	holdChip.Active = host
+	mark({ on = holdChip }, if ReplicatedStorage:GetAttribute("StandInsHold") == true then "on" else nil)
 	if rankedBattle then
 		for _, button in difficultyCards do
 			button.Active = false -- Ranked is always Normal (#217)
@@ -479,7 +504,7 @@ readyX.Activated:Connect(function()
 	refresh()
 end)
 
-for _, name in { "State", "Host", "Mode", "Track", "Difficulty", "BattleMode", "Ranked", "BattleSides", "StandIns", "PracticeHunt" } do
+for _, name in { "State", "Host", "Mode", "Track", "Difficulty", "BattleMode", "Ranked", "BattleSides", "StandIns", "PracticeHunt", "StudioStartRound", "StandInsHold" } do
 	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refresh)
 end
 player.AttributeChanged:Connect(function(name)

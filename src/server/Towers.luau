@@ -146,6 +146,7 @@ export type Tower = {
 	key: string,
 	def: any,
 	owner: Player?, -- who built it; nil if they've left
+	standInPierce: boolean, -- a Studio stand-in camp's tower: pierces armour (PLAN T91b, Shared/StudioOnly)
 	side: number, -- the side it was built on (Shared/Sides; co-op = 1); its pool and track effects use that track
 	base: Vector3, -- on the build floor; what Placement checks against
 	position: Vector3,
@@ -570,6 +571,7 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 		key = key,
 		def = def,
 		owner = owner,
+		standInPierce = false,
 		side = side or 1,
 		base = base,
 		position = base + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0),
@@ -623,7 +625,13 @@ end
 ------------------------------------------------------------------ targeting
 
 local function piercing(tower: Tower): boolean
-	return tower.stats.piercesArmor or tower.buff.piercesArmor
+	return tower.stats.piercesArmor or tower.buff.piercesArmor or tower.standInPierce
+end
+
+-- A Studio stand-in camp's fixed tower pierces armour (PLAN T91b): test fidelity only, so a
+-- stand-in camp isn't buried by armoured leaks. Shop.placeStandIn asks Shared/StudioOnly first.
+function Towers.pierceArmourForStandIn(tower: Tower)
+	tower.standInPierce = true
 end
 
 -- Can this tower both reach and hurt this enemy?

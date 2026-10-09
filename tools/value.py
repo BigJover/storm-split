@@ -1625,9 +1625,14 @@ def bounty_report(data, easy, unlock, findings):
 
 BATTLE_MODES = (("Camp Clash, 2 camps", "TEAM", 2), ("Camp Clash, 3 camps", "TEAM", 3), ("Bone Rush, 10 camps", "ROYALE", 10))
 STAND_IN_TOWERS = ("SCOUT", "SNIPER", "GRENADIER")  # BattleFlow.standInTowers: free, damageable, off-track, base tier
+COMPETENT = 1.5  # PLAN T91b: a "competent" camp = 1.5x the typical build's DPS
+OVERTIME_REPEATS = 20  # Final Stampede repeats modelled after the last round (Camp Clash only)
+BATTLE_TARGETS = (  # PLAN T91b / #245, Normal with 1 hunter: (mode, sides, defence, first round the Fence may fall)
+    ("TEAM", 2, "typical", 20), ("TEAM", 3, "typical", 30), ("ROYALE", 10, "typical", 30),
+    ("TEAM", 2, "competent", None), ("TEAM", 3, "competent", None), ("ROYALE", 10, "competent", None))
 
 
-def battle_side(data, difficulty, modeKey, sides, hunters, cost_per_dps, mixes):
+def battle_side(data, difficulty, modeKey, sides, hunters, cost_per_dps, mixes, overtime=0):
     """One battle camp, round by round (PLAN T91; a report, the sheet is untouched).
 
     Dinos as Server/Battle + Waves spawn them for one side: the co-op round x the side's
@@ -1642,7 +1647,11 @@ def battle_side(data, difficulty, modeKey, sides, hunters, cost_per_dps, mixes):
     the round's HP x), so a round leaks max(0, EHP - DPS x round length) and the Fence starts
     at the difficulty's lives. Neither the stand-in towers nor a base Pistol pierce armour,
     so every armoured dino (scheduled, or promoted at the difficulty's promotion chance)
-    leaks whole for the stand-in; `typical` assumes the camp bought armour pierce."""
+    leaks whole for a base Pistol; `typical` assumes the camp bought armour pierce, and since
+    T91b the Studio stand-in towers pierce armour too (Shared/StudioOnly "standInPierce").
+      competent `typical` x COMPETENT (PLAN T91b)
+    `overtime` > 0 adds that many Final Stampede repeats after the last round (Camp Clash,
+    BattleFlow.roundRow): the last round again at dino HP x OvertimeHPStep^n, levels frozen."""
     tuning, enemies = data["Tuning"], data["Enemies"]
     d = data["Difficulties"][difficulty]
     density = 1 if sides <= 1 else tuning["BattleSideDensity"] if (modeKey == "ROYALE" or sides >= 3) else 1
@@ -1654,9 +1663,12 @@ def battle_side(data, difficulty, modeKey, sides, hunters, cost_per_dps, mixes):
     cash = d["startingCash"] + tuning["StartingCashPerExtraPlayer"] * extra
     standin = [sum(edps(path_stats(data["Towers"][k], 0, 0), m, tuning) for k in STAND_IN_TOWERS) for m in mixes]
     pistol = hero_dps(data["Heroes"]["PISTOL"], 0, 0)[1]
-    fence = {"stand-in": d["startingLives"], "typical": d["startingLives"]}
+    fence = {"stand-in": d["startingLives"], "typical": d["startingLives"], "competent": d["startingLives"]}
     out = []
-    for r, rd in enumerate(data["Rounds"], start=1):
+    last = len(data["Rounds"])
+    for r in range(1, last + overtime + 1):
+        rd = data["Rounds"][min(r, last) - 1]
+        repeats = max(0, r - last)
         ehp = n_all = armour = 0.0
         for key, n in rd["counts"].items():
             spawns = max(1, math.floor(n * count_x + 0.5))
@@ -1668,24 +1680,24 @@ def battle_side(data, difficulty, modeKey, sides, hunters, cost_per_dps, mixes):
                 each = (1 - p) * each + p * enemies[up]["effectiveHp"]
             ehp += spawns * each
             n_all += n
-        ehp *= rd["hpMult"] * hp_x
+        ehp *= rd["hpMult"] * hp_x * tuning["OvertimeHPStep"] ** repeats
         # Server/Waves: the spawn gap shrinks by the count factor (density included), so the
         # spawn phase stays the co-op round's enemies x gap; only the walk shortens.
         length = n_all * rd["spawnGap"] + WALK_SECONDS / d["speedMult"]
         # Lockstep: a camp that's behind gets the next round BattleRoundTime after this one
         # started (its leftovers stay), so it has at most that long per round's dinos.
         length = min(length, tuning["BattleRoundTime"])
-        level = round_level(tuning, r)
+        level = round_level(tuning, min(r, last))
         tower_x = (1 + tuning["TowerDamagePerLevel"] * (level - 1)) * d["towerDamageMult"]
         cost = cost_per_dps * growth ** min(5, r / tuning["RoundsPerTier"])
-        dps = {"stand-in": standin[(r - 1) // 10] * tower_x,
-               "typical": cash * tuning["AssumedSpendOnTowers"] / cost * tuning["ExpectedEfficiency"]
-               + hunters * pistol * (1 + tuning["HeroDamagePerLevel"] * (level - 1)) * d["heroDamageMult"]}
+        typical = (cash * tuning["AssumedSpendOnTowers"] / cost * tuning["ExpectedEfficiency"]
+                   + hunters * pistol * (1 + tuning["HeroDamagePerLevel"] * (level - 1)) * d["heroDamageMult"])
+        dps = {"stand-in": standin[(min(r, last) - 1) // 10] * tower_x, "typical": typical, "competent": typical * COMPETENT}
         row = {"r": r, "ehp": ehp, "length": length, "cash": cash, "dps": dps, "fence": {}, "armour": armour}
         for k in fence:
-            fence[k] = max(0.0, fence[k] - max(0.0, ehp - dps[k] * length) - (armour if k == "stand-in" else 0))
+            fence[k] = max(0.0, fence[k] - max(0.0, ehp - dps[k] * length))
             row["fence"][k] = fence[k]
-        cash += (ehp * tuning["CashPerEffectiveHP"] + tuning["RoundBonusBase"] + tuning["RoundBonusPerRound"] * r) * d["cashMult"]
+        cash += (ehp * tuning["CashPerEffectiveHP"] + tuning["RoundBonusBase"] + tuning["RoundBonusPerRound"] * min(r, last)) * d["cashMult"]
         out.append(row)
     return out
 
@@ -1697,31 +1709,51 @@ def battle_report(data, difficulty="NORMAL"):
     mixes = band_mix(data)
     d = data["Difficulties"][difficulty]
     last = len(data["Rounds"])
-    print(f"battle pacing (PLAN T91): one camp on {d['display']}, Fence {d['startingLives']:g}, density {data['Tuning']['BattleSideDensity']:g}; "
+    print(f"battle pacing (PLAN T91, T91b): one camp on {d['display']}, Fence {d['startingLives']:g}, density {data['Tuning']['BattleSideDensity']:g}; "
           f"round = co-op round x side scale x density (lockstep cap {data['Tuning']['BattleRoundTime']:g} s); a leak costs its species' EHP")
-    print(f"  {'mode':<20} {'hunters':>7} {'defence':<9} {'Fence falls':>11} {'to round ' + str(last):>12}   r8 / r9 / r10: DPS x length / EHP   cash at r9")
+    print(f"  {'mode':<20} {'hunters':>7} {'defence':<9} {'Fence falls':>14} {'to round ' + str(last):>12}   r8 / r9 / r10: DPS x length / EHP   cash at r9")
+    falls_at = {}
     for name, modeKey, sides in BATTLE_MODES:
+        overtime = OVERTIME_REPEATS if modeKey == "TEAM" else 0  # BattleFlow.hasOvertime
         for hunters in ((1, 5) if modeKey == "TEAM" and sides == 2 else (1,)):
-            rows = battle_side(data, difficulty, modeKey, sides, hunters, cost_per_dps, mixes)
-            for k in ("stand-in", "typical"):
+            rows = battle_side(data, difficulty, modeKey, sides, hunters, cost_per_dps, mixes, overtime)
+            for k in ("stand-in", "typical", "competent"):
                 fall = next((row["r"] for row in rows if row["fence"][k] <= 0), None)
+                if hunters == 1:
+                    falls_at[(modeKey, sides, k)] = fall
                 cover = " / ".join(f"{rows[i]['dps'][k] * rows[i]['length'] / rows[i]['ehp']:.2f}" for i in (7, 8, 9))
-                falls = f"round {fall}" if fall else "never"
-                gap = f"{last - fall + 1} short" if fall else "reaches it"
-                print(f"  {name:<20} {hunters:>7} {k:<9} {falls:>11} {gap:>12}   {cover:<35} {rows[8]['cash']:>9.0f}")
+                if fall and fall > last:
+                    falls = f"Stampede {fall - last}"
+                else:
+                    falls = f"round {fall}" if fall else ("never" if not overtime else f"> Stampede {overtime}")
+                gap = f"{last - fall + 1} short" if fall and fall <= last else "reaches it"
+                print(f"  {name:<20} {hunters:>7} {k:<9} {falls:>14} {gap:>12}   {cover:<35} {rows[8]['cash']:>9.0f}")
     rows = battle_side(data, difficulty, "TEAM", 3, 1, cost_per_dps, mixes)
     print("  per camp, Camp Clash 3 camps, 1 hunter:  round  EHP  length s  stand-in DPS  typical DPS  armoured leak (expected)  Fence stand-in / typical")
     for row in rows[5:11]:
         print(f"    {row['r']:>3} {row['ehp']:>7.0f} {row['length']:>6.1f} {row['dps']['stand-in']:>10.1f} {row['dps']['typical']:>12.1f} {row['armour']:>10.1f}"
               f"   {row['fence']['stand-in']:>5.1f} / {row['fence']['typical']:.1f}")
-    print("  Run 3 observed (PLAYTEST R3-26, R3-31): every camp 30 -> 11 -> 0 in round 8-9, stand-ins and the Tester alike.")
+    print("  Run 3 observed (PLAYTEST R3-26, R3-31, before T91b): every camp 30 -> 11 -> 0 in round 8-9, stand-ins and the Tester alike.")
+    print(f"  targets (PLAN T91b, #245; 1 hunter; competent = {COMPETENT:g}x typical; Camp Clash goes on into Final Stampede):")
+    missed = []
+    for modeKey, sides, k, floor in BATTLE_TARGETS:
+        fall = falls_at[(modeKey, sides, k)]
+        need = floor if floor else last  # None: PLAN T91b's "reaching round {last} in every mode"
+        good = fall is None or fall >= need
+        want = f"falls at round {floor}+" if floor else f"reaches round {last}"
+        seen = ("never falls" if fall is None else f"falls in Final Stampede {fall - last}" if fall > last
+                else f"falls in round {fall}" + (", before Final Stampede" if fall == last and modeKey == "TEAM" else ""))
+        print(f"    {'ok  ' if good else 'MISS'} {modeKey:<6} {sides:>2} camps {k:<9} {want:<18} model: {seen}")
+        if not good:
+            missed.append(f"{modeKey} {sides} {k}")
+    return missed
 
 
 def main():
     args = sys.argv[1:]
     data = load()
     if "--battle" in args:
-        battle_report(data)
+        sys.exit(1 if battle_report(data) else 0)
     elif "--pacing" in args:
         pacing_report(data)
     elif "--overkill" in args:

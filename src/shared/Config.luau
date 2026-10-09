@@ -105,7 +105,7 @@ return table.freeze({
 		TowLinePull = 10,
 		BoltWidth = 3,
 		BattleBuildTime = 30,
-		BattleRoundTime = 60,
+		BattleRoundTime = 120,
 		BattleSideDensity = 0.6,
 		PvPTowerDamage = 0.35,
 		PvPHunterDamage = 0.5,

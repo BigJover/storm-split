@@ -59,9 +59,11 @@ local Health = require(script.Parent.Health)
 local DinoAttacks = require(script.Parent.DinoAttacks)
 local Battle = require(script.Parent.Battle)
 
--- Testing only: set above 1 to jump straight to a later round (Studio only: a live
--- server always starts at round 1, Shared/StudioOnly).
-local START_ROUND = StudioOnly.startRound(RunService:IsStudio(), 1)
+-- Testing only: the host's Studio-only "Start at round N" (Lobby ("startround", n), PLAN
+-- T91b). A live server always starts at round 1 (Shared/StudioOnly).
+local function studioStartRound(): number
+	return StudioOnly.startRound(RunService:IsStudio(), ReplicatedStorage:GetAttribute("StudioStartRound"), #Config.Rounds)
+end
 -- Testing only: what the Studio-only "+cash" button adds. Never active in a
 -- published game (checked with RunService:IsStudio() on the server).
 local STUDIO_CASH_GRANT = 1000
@@ -91,7 +93,8 @@ local startGame = Instance.new("RemoteEvent")
 startGame.Name = "StartGame"
 startGame.Parent = remotes
 -- Home screen, host only: ("mode" | "track" | "difficulty", key), ("sides", n), ("standins",
--- on), ("ranked", on) or ("play"). Every player: ("ready", on) for Ranked (PLAN T80; its
+-- on), ("ranked", on) or ("play"); Studio only (PLAN T91b): ("startround", n) and
+-- ("standinshold", on). Every player: ("ready", on) for Ranked (PLAN T80; its
 -- buttons are T82's)
 local lobby = Instance.new("RemoteEvent")
 lobby.Name = "Lobby"
@@ -146,7 +149,7 @@ local over = false -- this match has been lost
 
 Enemies.init(map.paths, map.enemyFolder, {
 	onLeak = function(enemy)
-		Economy.loseFor(enemy.side, Enemies.leakCost(enemy)) -- only that side's Fence (T76)
+		Economy.loseFor(enemy.side, Battle.leakCost(enemy.side, Enemies.leakCost(enemy))) -- only that side's Fence (T76)
 	end,
 	-- Each split layer pays for its own HP, so a full cascade pays the round's
 	-- effective HP x CashPerEffectiveHP — the spreadsheet's "Kill income".
@@ -310,6 +313,10 @@ lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
 		ReplicatedStorage:SetAttribute("BattleSides", key) -- Camp Clash 2 or 3; Bone Rush seats with stand-ins
 	elseif action == "standins" and typeof(key) == "boolean" and StudioOnly.allowed(RunService:IsStudio(), "standIns") then
 		ReplicatedStorage:SetAttribute("StandIns", key) -- "Fill with stand-ins" (DECISIONS #221)
+	elseif action == "startround" and typeof(key) == "number" and StudioOnly.allowed(RunService:IsStudio(), "startRound") then
+		ReplicatedStorage:SetAttribute("StudioStartRound", StudioOnly.startRound(RunService:IsStudio(), key, #Config.Rounds))
+	elseif action == "standinshold" and typeof(key) == "boolean" and StudioOnly.allowed(RunService:IsStudio(), "standInsHold") then
+		ReplicatedStorage:SetAttribute("StandInsHold", key) -- a stand-in camp's Fence never drops below 1
 	elseif action == "track" and typeof(key) == "string" and Modes.Tracks[key] then
 		ReplicatedStorage:SetAttribute("Track", key)
 	elseif action == "difficulty" and typeof(key) == "string" and Config.Difficulties[key] then
@@ -507,6 +514,7 @@ local function playBattle()
 	ReplicatedStorage:SetAttribute("BattleRanked", if ranked then true else nil)
 	local started, outcome = Battle.play({
 		roster = roster,
+		startRound = studioStartRound(), -- 1 unless the Studio host picked "Start at round N"
 		competitive = ranked,
 		onRoundStart = function(round, still)
 			for _, hunter in still do
@@ -596,12 +604,13 @@ local function playMatch()
 
 	-- Playing.
 	setState("Playing")
+	local startAt = studioStartRound()
 	-- Towers ride the round level (the old every-RoundsPerLevel curve); each
 	-- hunter's own level comes from their XP and is Hero's to change.
-	local level = HeroXp.roundLevel(START_ROUND - 1)
+	local level = HeroXp.roundLevel(startAt - 1)
 	ReplicatedStorage:SetAttribute("Level", level)
-	ReplicatedStorage:SetAttribute("RoundsCleared", START_ROUND - 1)
-	Hero.startMatch(START_ROUND - 1)
+	ReplicatedStorage:SetAttribute("RoundsCleared", startAt - 1)
+	Hero.startMatch(startAt - 1)
 	Towers.setLevel(level, difficulty())
 	Enemies.setSpeedMult(chosen.speedMult)
 	print(`[DinoHunters] {Modes.Modes[ReplicatedStorage:GetAttribute("Mode")].display} on {chosen.display} with {#Players:GetPlayers()} player(s)`)
@@ -617,7 +626,7 @@ local function playMatch()
 	end
 
 	local won = Waves.run({
-		startRound = START_ROUND,
+		startRound = startAt,
 		isOver = function()
 			return over or #Players:GetPlayers() == 0
 		end,
