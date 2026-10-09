@@ -1,3 +1,157 @@
+# Plan — Phase 8 batch 2: match length and joiners (Director, 2026-10-09)
+
+Jovan answered ask 3 and more on 2026-10-09 (verbatim in `DIRECTION.md` "Match length,
+joiners, strength gap"). Design calls: `DECISIONS.md` #249–#257. **This batch replaces T98
+and comes before T97 (the 4×-Amber picks).** Phase 7/8 rules hold (one task = one commit,
+pushed; check/export/test green; Config diff after any sheet change; openpyxl, assert each
+old value or empty cell first; append Tuning rows, never insert; pure rules first; co-op
+specs re-run every task; no publish, no DataStore writes from an agent).
+
+**Status (2026-10-09): planned, nothing built. Next: Builder batch 2a (T100–T102).**
+
+## Target timelines (model: `Round pace` 0.4, 30 s build, 5 s breaks; Normal)
+| Mode | Rounds played | Round 40 reached at | After round 40 | Hard cap |
+|---|---|---|---|---|
+| Solo / co-op PvE | all 40 | ~33.6 min (30.1 min of rounds) | victory | none in game; **model bar ≤ 35 min** (Jovan's 30–40) |
+| Casual Camp Clash | 1, 4, 7 … 40 (14) | ~12 min | Final Stampede (~3 repeats) | **15:00 clock** → tie-break |
+| Casual Bone Rush | 1, 4, 7 … 40 (14) | ~12 min | match ends | 15:00 clock (backstop) |
+| Ranked Camp Clash | 2, 4 … 40 (20) | ~17.5 min | Final Stampede (~13 repeats fit, HP ×18) | **30:00 clock** → tie-break |
+| Ranked Bone Rush | 2, 4 … 40 (20) | ~17.5 min | match ends | 30:00 clock (backstop) |
+
+How (#250–#252): every played round is co-op's round, time-compressed: spawn gap × pace,
+dino HP × `(pace·S + W) / (S + W)` (S = enemies × spawn gap, W = 14 ÷ difficulty speed),
+kill cash from the **unpaced** HP. Required DPS and cash per round are unchanged, so the
+Balance Check, affordability and the T91b battle bars stay true. Battles skip rounds by a
+step and pay each skipped round's expected income at the next played round's start, so
+cumulative cash at round R matches co-op's. Lockstep cap `B143` 120 → 60.
+
+## Tie-break chain (#253; every queue; no result is ever a tie)
+- **Camp Clash** (fell in the same step, or standing at the clock): standing/fell later →
+  more Fence left → more Bones (camp) → more damage dealt to own dinos (capped at each
+  dino's HP) → lower total round-clear time → coin flip seeded by matchId.
+- **Bone Rush:** final Bones → survived longer → more Fence → more damage dealt → lower
+  total round-clear time → seeded coin flip (replaces "order given").
+- Results line names the deciding step. At the clock: the match ends at once; everyone still
+  standing is ranked by the chain. Stakes' tie-split path becomes unreachable (keep, spec it).
+
+## Joiners (#254)
+- **Ranked:** seats lock when Building starts; joiners wait (existing waiting banner);
+  leavers aren't refilled. Never staked/ranked/escrowed late.
+- **Casual battles:** seated until the end of round 30 (`Late join last round`). Camp
+  Clash → the standing camp with fewest hunters (then lower Fence, then lower side). Bone
+  Rush → a spare plot (`Bone Rush spare plots` 2, within 10), full Fence, Bones = the lowest
+  Bones among players still standing.
+- **Co-op:** drop-in stays (Main `PlayerAdded` → `joinMatch`), but the flat 200 becomes the
+  catch-up when larger.
+- **Catch-up cash** = `Late join cash x` 1.1 × the expected income of one more hunter for
+  every round played before the join (difficulty, side scale, pace; the same function as
+  skipped-round income). Dino scale grows from the next round, never mid-round.
+
+## Strength gap (#255): intended. No parity change; the edge stays a value.py watch line (#235).
+
+## New Tuning rows (append from row 172; assert each A/B empty; B143 assert 120)
+| Row | Name | Seed | Note |
+|---|---|---|---|
+| 143 | Battle round time | 120 → **60** | ≥ longest paced Normal round (56 s) |
+| 172 | Round pace | 0.4 | spawn gap × and HP pace factor, every mode |
+| 173 | Track walk seconds | 14 | the Rounds sheet's "+14"; pace formula + models |
+| 174 | Casual round step | 3 | rounds 1, 4 … 40 |
+| 175 | Ranked round step | 2 | rounds 2, 4 … 40 |
+| 176 | Casual match cap | 900 | seconds from Building |
+| 177 | Ranked match cap | 1800 | includes Final Stampede |
+| 178 | Clock warning | 60 | seconds before the cap |
+| 179 | Late join cash x | 1.1 | × one hunter's missed expected income |
+| 180 | Late join last round | 30 | casual battles |
+| 181 | Bone Rush spare plots | 2 | within Battle max players |
+| 182 | Co-op length max | 2100 | model bar only (value.py/audit), not a game clock |
+
+## Builder batches
+| Batch | Tasks | Needs Jovan? |
+|---|---|---|
+| 2a | T100 `Shared/Pace` (pure), T101 sheet + exporter/audit + models, T102 tie-break chain (pure) | No |
+| 2b | T103 pace + round lists in play, T104 match clock + tie-break wiring + N7 | No |
+| 2c | T105 joiners, T106 🦖 strings review + fixes; Tester Run 6 | Multi-client join only |
+
+### T100 — `Shared/Pace` (pure, headless specs)
+`hpX(round, difficulty)`, `spawnGap(round)`, `playedRounds(modeKey, competitive)` (co-op =
+1..40; battles = first..40 by step, first = 40 − step·⌊39/step⌋), `isPlayed(round, …)`,
+`expectedIncome(round, hunters, difficulty)` (kill cash from unpaced EHP × side scale +
+round bonus × cash mult; same maths as value.py's income), `skippedIncome(fromRound,
+toRound, …)`, `catchUpCash(roundReached, …)` (× `Late join cash x`, ≥ `StartingCashPerExtraPlayer`),
+`matchCap(modeKey, competitive)` (nil for co-op), `clockWarning(elapsed, cap)`.
+- **Accept:** specs: hpX(r) × paced length = unpaced EHP ÷ unpaced length × paced length
+  (required DPS equal to 1e-9) for all 40 rounds × 4 difficulties; casual list = 14 rounds
+  ending 40, Ranked = 20 ending 40, co-op = 40; Σ played income + Σ skipped income = co-op
+  cumulative income to round 40; catchUpCash monotonic in round, 0 joiner bonus at round 1
+  except the floor; matchCap nil for co-op.
+
+### T101 — Sheet + exporter/audit + models (Builder; openpyxl)
+Rows above (assert empty / B143 = 120). Exporter checks: 0 < pace ≤ 1; steps ≥ 1 and the
+list ends at 40; casual cap ≤ 900; Ranked cap ≤ 1800; warning < both caps; late-join round
+< 40; spare plots ≥ 0; B143 ≥ the longest paced round on Normal and Chaos.
+**value.py:** `--pacing` adds paced minutes per difficulty with breaks and fails if Normal
+solo > `Co-op length max`; affordability columns must be unchanged (diff before/after);
+Amber/h line becomes a watch line (#256); hero/ability lines use paced round lengths.
+`--battle` per mode uses its played-round list + skipped income: prints round-40 time,
+Stampede repeats that fit before the cap, and keeps the T91b bars (typical: 2 camps fall ≥
+20, 3 camps / Bone Rush ≥ 30; competent reaches 40) per queue; a peak-live-dinos estimate per
+mode at max players vs `MaxConcurrentEnemies` (report; a fail goes to the Director).
+`--edge` parity bar re-run with paced cooldown uses. **threat.py** re-run with paced lengths.
+- **Accept:** check/export/test green; Config diff = rows 143, 172–182 only; value.py
+  prints co-op Normal ≤ 35 min, casual round 40 ≤ 12.5 min, Ranked ≤ 18 min; affordability
+  unchanged; any failing parity/threat/live-cap bar is **reported, not fixed** (Director
+  picks buff cells, #250).
+
+### T102 — Tie-break chain (pure; `BattleRules`)
+`teamResult` gains per-side `fence`, `damage`, `clearTime` and a `seed`; `royaleResult`
+gains `damage`, `clearTime`, `seed`; new `atClock(...)` ends with everyone standing ranked by
+the chain; every result returns `decidedBy` (key for the results line). `tie` is always false.
+- **Accept:** specs for each step of both chains deciding alone; same inputs + same seed =
+  same result; random fuzz (1,000 cases) never returns a tie; co-op specs unchanged.
+
+### T103 — Pace and round lists in play (server: Waves/Enemies/Battle)
+Spawn gap × pace and HP × hpX in co-op and battles; kill cash from unpaced HP; battles run
+`playedRounds` and pay `skippedIncome` at each played round's start (feed line "+N supplies
+for rounds X–Y"); HUD shows the real round number ("Round 22 / 40"); hero levels/XP follow the
+real round; "Start at round N" (Studio) snaps to the next played round.
+- **Accept:** headless specs for the battle round driver with a fake clock (played rounds,
+  skipped income paid once, B143 60); co-op round-1 spawn timing spec updated to the paced
+  gap; kill cash per dino unchanged (spec).
+
+### T104 — Match clock, tie-break wiring, N7
+Clock from Building (`matchCap`), HUD clock, warning banner at cap − 60 s, end at the cap via
+`atClock`; per-side damage (capped) and clear-time counters feed T102; results show
+`decidedBy`. N7: "Stand-ins hold" can be released mid-battle (Studio-only).
+- **Accept:** specs: cap 900/1800 picked by queue, none in co-op; a clock end settles stakes,
+  Trophies and payouts exactly like a normal end (no tie path); Studio-only options refused
+  when `isStudio = false`.
+
+### T105 — Joiners
+Ranked: keep the lock + waiting banner (spec). Casual: seat via a pure
+`BattleFlow.lateSeat(...)` (fewest hunters → lower Fence → lower side; Bone Rush spare plot +
+Bones floor; closed after round 30); catch-up cash on seat; dino scale from the next round.
+Co-op: catch-up replaces the flat 200 when larger. Late joiners never staked/ranked.
+Studio-only "Late stand-in joins now" host option so one MCP client can test the path.
+- **Accept:** pure specs for lateSeat and the Bones floor; Ranked join refused after
+  Building; a late joiner's profile never gets an escrow; co-op specs green.
+
+### T106 🦖 — Dino review of new strings, then fixes
+Clock label, last-minute banner, "Decided by …" lines (six per mode), coin-flip wording,
+supplies feed line, late-join toast ("Joined Red Camp at round 17: +N cash to catch up"),
+Ranked waiting text. Player text says **Bones**/take-downs.
+
+### Tester Run 6 (after 2c)
+Studio, stand-ins: (1) co-op Normal solo rounds 1–3 with a timer: paced spawn gaps, kill
+cash unchanged, no new errors; (2) casual Camp Clash with "Start at round 37" + "Stand-ins
+hold": rounds jump 37 → 40, supplies line, Final Stampede, released hold → ends, results
+"Decided by …"; (3) casual clock: Start at round 40 + hold, let the 15:00 clock run out
+(or a Studio-only short-cap option if T104 adds one), warning banner at 14:00, clock end
+ranks by Fence; (4) Bone Rush step list and the end at 40; (5) "Late stand-in joins now"
+in casual (seated, catch-up cash toast) and refused in Ranked/Practice; (6) No-trap rule
+on the new banners. **Needs Jovan:** a real second client joining late (Clients and
+Servers), a full-length timed match of each mode for feel, Ranked stakes/Trophies on the
+published place (T95).
+
 # Plan — Phase 8: ready to publish (Director, 2026-10-08) — batch 1 DONE; the rest needs Jovan
 
 Jovan (2026-10-06): **"begin phase 8 when all loose ends on phase 7 are done"**. Phase 7's
@@ -12,6 +166,9 @@ are fixed. Design calls: `DECISIONS.md` #237–#243.
 mid-battle, so a held battle can end; Builder now). Recap: `RECAP.md` "Phase 8" (T99 done,
 #246–#248). Everything else needs Jovan: asks 1–4 below, plus the battle length (ask 3 now
 reads: "rounds are 120 s and a full battle ~60–80 min: too long?"). Earlier: proposed.**
+**Update 2026-10-09: ask 3 answered → "Phase 8 batch 2 — match length and joiners"
+(T100–T106) at the top of this file runs next, then T97 (ask 1, #257). The publish batch
+below (T94/T95) keeps its own number and waits on Jovan as before.**
 
 ## Ask Jovan first (Phase 8 can't finish without these)
 1. **The 4×-Amber towers (`TOWERS_LATER.md` "What Jovan needs to pick"):** (a) which of
@@ -20,7 +177,9 @@ reads: "rounds are 120 s and a full battle ~60–80 min: too long?"). Earlier: p
    (d) Amber Rush in or out; (e) Ranger Station worth its cost or swap for a simpler tower.
 2. **Publish the place (privately is fine)?** Saving, Ranked stakes, saved Trophies and both
    world boards only work published. Batch 2 is a checklist he follows (~15 min).
-3. **Battle length (revised by T91b, #245):** the cause was the 60 s round cap (Normal rounds
+3. **ANSWERED 2026-10-09 (#249): casual ≤ 15 min, Ranked ≤ 30 min with overtime, co-op ≤
+   30–40 min, no ties in Ranked, late-joiner rules → "Phase 8 batch 2" at the top; T98 is
+   replaced by it.** Was: **Battle length (revised by T91b, #245):** the cause was the 60 s round cap (Normal rounds
    run 90–119 s), not Fence or density. Rounds are now 120 s: a typical camp lasts to round
    21 (2 camps) / 32 (3 camps, Bone Rush), a competent one sees Final Stampede, and a full
    battle runs ~60–80 min. Too long? (Levers if so: a lower round cap, or a shorter battle

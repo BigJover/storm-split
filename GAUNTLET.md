@@ -119,6 +119,13 @@ Studio (Run 5: 23 pass, 0 fail). Open for agents: N7 (Studio test aid). Everythi
 waits on Jovan (`RECAP.md` "Phase 8"): his multi-client script, the private publish
 (`SETUP.md`), battle length, the 4×-Amber picks, then the lobby place.
 
+**Update (2026-10-09):** Jovan answered battle length (`DIRECTION.md` "Match length,
+joiners, strength gap"): casual ≤ 15 min, Ranked ≤ 30 min with overtime and no ties, co-op ≤
+30–40 min, Ranked seats lock, casual/co-op late joiners get catch-up cash, the strength gap
+stays. Next scope: **Phase 8 batch 2 — match length and joiners** (`PLAN.md` top, T100–T106,
+DECISIONS #249–#257; Builder batches 2a/2b/2c, Dino review T106, Tester Run 6). Then the
+4×-Amber picks (T97).
+
 ## Rules
 
 - **Verify every step:** `tools/check.sh` clean; `python3 tools/export_constants.py` clean;

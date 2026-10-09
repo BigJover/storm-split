@@ -121,6 +121,33 @@ What this adds to his taste:
   proposed with reasons.
 - **Next:** "begin phase 8 when all loose ends on phase 7 are done" (PLAN T87).
 
+## Match length, joiners, strength gap (Jovan, 2026-10-09)
+
+Verbatim: "60-80 mins is a little long for a multiplayer, lets have a 15 min max for pvp
+modes that arent competitve then 30 min max with overtime included for competitve we need
+tie breakers so you cant tie in comp, single player/co-op pve lets half that time so
+30-40min max make sure there is no mid round joining for comp and that late joiners are
+accounted for with some extra cash so they arent a detriment to their team or unable to
+fairly compete in battle royale, that strength difference is good as competitve is meant
+for players who have maxed out troops, sort of like clash royale, where trophy road is card
+level based, quick play should still have a strength difference as i want new players to
+encounter maxed out hunters of other classes and think "i need to unlock that one" lets do
+the 4x picks after all of this is dealt with"
+
+What this adds to his taste (applied in DECISIONS #249–#257, PLAN "Phase 8 batch 2"):
+- **Match length is a hard ceiling, per mode:** casual Camp Clash / Bone Rush ≤ 15 min;
+  Ranked ≤ 30 min *including* overtime; solo/co-op PvE ≤ 30–40 min. Shorter matches beat
+  the full 40-round epic for multiplayer.
+- **Ranked can never tie.** Every ranked result needs a decided winner/placing.
+- **Ranked seats lock at the start** (no mid-match joining). **Casual welcomes late
+  joiners**, who get catch-up cash so they help their camp and can still fight for Bone
+  Rush placings.
+- **The strength gap is a feature.** Competitive is for maxed players (Clash Royale's
+  level-based trophy road). Quick play keeps the gap on purpose: a new player meeting a
+  maxed hunter of another class should think "I need to unlock that one". Don't level or
+  normalise power in either queue; parity *between heroes* (#235) still holds.
+- **Order:** finish match length and joiners first, then the 4×-Amber picks.
+
 ## Economy (his numbers)
 
 - Casual: solo pays only on a track clear (Easy 50 / Normal 100 / Hard 150 / Chaos 200
