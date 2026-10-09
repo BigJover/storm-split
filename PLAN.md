@@ -7,7 +7,7 @@ pushed; check/export/test green; Config diff after any sheet change; openpyxl, a
 old value or empty cell first; append Tuning rows, never insert; pure rules first; co-op
 specs re-run every task; no publish, no DataStore writes from an agent).
 
-**Status (2026-10-09): planned, nothing built. Next: Builder batch 2a (T100–T102).**
+**Status (2026-10-09): batch 2a done (29720d9 T101, 4548d14 T100, e9aab47 T102; 639 specs). Review = #258–#262 (amendments below, folded into T103/T104/T105). Next: batch 2b (T103, T104) without stopping; no Tester run until T104 lands.**
 
 ## Target timelines (model: `Round pace` 0.4, 30 s build, 5 s breaks; Normal)
 | Mode | Rounds played | Round 40 reached at | After round 40 | Hard cap |
@@ -108,6 +108,33 @@ gains `damage`, `clearTime`, `seed`; new `atClock(...)` ends with everyone stand
 the chain; every result returns `decidedBy` (key for the results line). `tie` is always false.
 - **Accept:** specs for each step of both chains deciding alone; same inputs + same seed =
   same result; random fuzz (1,000 cases) never returns a tie; co-op specs unchanged.
+
+### Batch 2a review — amendments for 2b/2c (#258–#262)
+1. **Live cap (#258): pace by fewer, tougher dinos, not denser spawns.** Spawn gaps stay as
+   the sheet has them. Each species' count × `Round pace` (round half up, min 1 if it was ≥ 1;
+   bosses keep their count); battles also × new lever **`Battle crowd x` 0.75** (Tuning row
+   183, assert empty). Each dino's HP × (unpaced round EHP × hpX) ÷ (paced round EHP before
+   the HP factor), so the round's EHP and required DPS are unchanged; kill cash per dino × the
+   same count ratio, so cash per round is unchanged. `MaxConcurrentEnemies` stays 130.
+   - T103 accept adds: value.py peak live at max players ≤ 130 in co-op, Camp Clash and Bone
+     Rush (targets ≈ co-op 113, Camp Clash ~99, Bone Rush ~128); co-op 33.6 / casual 12.1 /
+     Ranked 17.4 min timelines within ±1 min; T91b bars met; round EHP spec exact per round.
+   - If Bone Rush is still > 130: Director picks `Battle crowd x` (report, don't guess).
+2. **Ability tempo (#259): new lever `Ability tempo` 2.0** (row 184): hero ability cooldowns
+   ÷ tempo (on top of `abilityCooldownMult`) and the Field Hospital's heal rate × tempo; the
+   Triage Kit follows its cooldown. Tower timers (Eruption, Tow Line, Power Grid, Judgement
+   Bolt) are DPS already: unchanged. Exporter: 1 ≤ tempo ≤ 1 ÷ pace. Accept: value.py
+   Tracking Dart uses at r20 ≥ 2.3 (was 2.6), Triage ≥ 120 HP/round (was 137), Hospital heal
+   per round within ±15% of unpaced; parity bar (#235) and threat.py re-run green; the
+   competitive edge stays a watch line.
+3. **B143 60 before pace is wired (#260):** fine; T103 is next and nobody playtests between.
+4. **Seed (#261):** T104 always passes `matchId` as the seed plus per-side fence, damage and
+   clearTime; `BattleRules` errors on a nil seed (spec). Until then no Studio run.
+5. **Late-joiner start cash (#262, revises #254):** a joiner brings what they'd have brought at
+   round 1 **plus** catch-up: own plot (Bone Rush) = the 1-hunter starting cash
+   (`BattleFlow.startingCash`) + 1.1 × missed income; a camp/co-op joiner =
+   `StartingCashPerExtraPlayer` 200 + 1.1 × missed income (no longer a floor). T105 changes
+   `Pace.catchUpCash` + its spec.
 
 ### T103 — Pace and round lists in play (server: Waves/Enemies/Battle)
 Spawn gap × pace and HP × hpX in co-op and battles; kill cash from unpaced HP; battles run
