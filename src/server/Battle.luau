@@ -57,6 +57,7 @@ local StudioOnly = require(Shared:WaitForChild("StudioOnly"))
 
 local Airdrops = require(script.Parent.Airdrops)
 local Economy = require(script.Parent.Economy)
+local StandInHunters = require(script.Parent.StandInHunters)
 local Enemies = require(script.Parent.Enemies)
 local Health = require(script.Parent.Health)
 local Hero = require(script.Parent.Hero)
@@ -140,6 +141,7 @@ function Battle.reset()
 	seatedSides = 0
 	table.clear(standInSeats)
 	table.clear(standInBones)
+	StandInHunters.clear()
 	for _, player in Players:GetPlayers() do
 		if player.Team and table.find(campTeams, player.Team) then
 			player.Team = nil
@@ -256,6 +258,8 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		for i, spot in BattleFlow.standInSpots(layout, side, #towerKeys) do
 			Shop.placeStandIn(towerKeys[i], spot, side, BattleFlow.standInOwnerId(side), BattleFlow.standInName(side))
 		end
+		-- And a stand-in hunter to shoot (T93, Studio only like every stand-in).
+		StandInHunters.spawn(side, Sides.spawn(layout, side), Battle.campOf(side))
 	end
 
 	-- Building: one shared build phase.
@@ -419,6 +423,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 			ReplicatedStorage:SetAttribute(Sides.attr("Out", side), true)
 			Towers.removeSide(side)
 			Enemies.clearSide(side)
+			StandInHunters.remove(side)
 			for _, player in huntersOf(side) do
 				player:SetAttribute("Out", true) -- spectating: walk, no damage, no building
 			end

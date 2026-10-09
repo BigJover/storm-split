@@ -80,6 +80,7 @@ local Enemies = require(script.Parent.Enemies)
 local Hazards = require(script.Parent.Hazards)
 local Health = require(script.Parent.Health)
 local Towers = require(script.Parent.Towers)
+local StandInHunters = require(script.Parent.StandInHunters)
 
 local Hero = {}
 
@@ -658,7 +659,7 @@ end
 -- What an enemy pellet can hit besides dinos: enemy towers and enemy hunters
 -- (Shared/BattleRules.canDamage; spectators are out of the game and aren't targets).
 -- Empty in co-op (one side), so co-op shots are exactly what they were.
-type Foe = { position: Vector3, tower: any?, hunter: Player? }
+type Foe = { position: Vector3, tower: any?, hunter: Player?, standIn: number? } -- standIn: that side's stand-in hunter (T93)
 
 local function foesOf(player: Player, mySide: number): { Foe }
 	local foes: { Foe } = {}
@@ -675,6 +676,12 @@ local function foesOf(player: Player, mySide: number): { Foe }
 		local humanoid = other.Character and other.Character:FindFirstChildOfClass("Humanoid")
 		if other ~= player and otherBody and humanoid and humanoid.Health > 0 and not isOut(other) and BattleRules.canDamage(mySide, sideOf(other), "hunter") then
 			table.insert(foes, { position = otherBody.Position, hunter = other })
+		end
+	end
+	-- Studio stand-in camps' dummy hunters (T93; StandInHunters only spawns them in Studio).
+	for _, dummy in StandInHunters.standing() do
+		if BattleRules.canDamage(mySide, dummy.side, "hunter") then
+			table.insert(foes, { position = dummy.position, standIn = dummy.side })
 		end
 	end
 	return foes
@@ -694,6 +701,13 @@ local function hitFoe(player: Player, mySide: number, foe: Foe, amount: number, 
 			if onRaid then
 				onRaid(player, tower) -- "<name> trampled <Camp>'s <tower>"
 			end
+		end
+		return
+	end
+	if foe.standIn then
+		local _, downed = StandInHunters.hit(foe.standIn, amount, mySide, player.DisplayName)
+		if downed then
+			outcome.killed = true
 		end
 		return
 	end
