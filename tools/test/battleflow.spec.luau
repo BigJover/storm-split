@@ -174,7 +174,7 @@ test("Camp Clash places: the winner 1st, then the latest fall", function()
 	eq(p[3], 3)
 end)
 
-test("Camp Clash places: a simultaneous fall decided by Bones, a full tie shares 1st", function()
+test("Camp Clash places: a simultaneous fall decided by Bones; a full tie is a coin flip (#253)", function()
 	local order = { { 1, 2 } }
 	local result = BattleRules.teamResult(order, { [1] = 7, [2] = 3 })
 	local p = BattleFlow.teamPlaces(order, result, 2)
@@ -182,8 +182,8 @@ test("Camp Clash places: a simultaneous fall decided by Bones, a full tie shares
 	eq(p[2], 2)
 	result = BattleRules.teamResult(order, { [1] = 4, [2] = 4 })
 	p = BattleFlow.teamPlaces(order, result, 2)
-	eq(p[1], 1)
-	eq(p[2], 1)
+	eq(p[result.winners[1]], 1)
+	eq(p[result.losers[1]], 2, "no shared 1st any more")
 	order = { { 2, 3 } }
 	result = BattleRules.teamResult(order, { [1] = 0, [2] = 1, [3] = 1 })
 	p = BattleFlow.teamPlaces(order, result, 3)

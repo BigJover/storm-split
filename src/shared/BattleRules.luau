@@ -45,22 +45,38 @@
 	  sideOut(fence)              a side is out at Fence 0
 	  overtimeRepeat(round)       0 up to the last round of the table; then 1, 2, ...
 	  overtimeHpMult(n)           Tuning OvertimeHPStep ^ n (1 when n <= 0)
-	  teamResult(eliminationOrder, bones)
+	  teamResult(eliminationOrder, bones, stats?)
 	      `bones` has every side (side -> Bones, 0 if none); `eliminationOrder` lists the
 	      falls in order, each a list of the sides that fell in that same step. Not over
 	      while two or more sides stand. One standing = it wins. None standing = the sides
-	      of the last step fell together: most Bones wins; equal Bones = a tie (every tied
-	      side wins and the pot is split across them). Returns { over, winners, losers,
-	      tie }; winners/losers sorted by side.
-	  royaleResult(players, roundsDone)
-	      players: { id, bones, fence, outAt? } with outAt nil while alive, else when the
-	      player went out (bigger = later). Over when at most one is alive or the last
-	      round of the table is done (`roundsDone`). The one player still alive at the end
-	      by elimination gets Tuning SurvivorBonus x Bones on top (rounded down; nobody
-	      when several are alive at the last round or none is). Ranking: final Bones, then
-	      survived longer (alive beats out; later out beats earlier), then more Fence, then
-	      the order given (deterministic). Returns { over, ranking (ids, 1st first),
-	      bones (id -> final Bones), survivor (id?) }.
+	      of the last step fell together and the tie-break chain (#253) picks one. `stats`
+	      = { fence, damage, clearTime (side -> number), seed (matchId) }, missing = 0.
+	      Returns { over, winners (always one when over), losers (sorted), tie (always
+	      false), ranking (every side, 1st first), decidedBy }.
+	  royaleResult(players, roundsDone, seed?)
+	      players: { id, bones, fence, outAt?, damage?, clearTime? } with outAt nil while
+	      alive, else when the player went out (bigger = later). Over when at most one is
+	      alive or the last round of the table is done (`roundsDone`). The one player still
+	      alive at the end gets Tuning SurvivorBonus x Bones on top (rounded down; nobody
+	      when several are alive at the end or none is). Ranked by the Bone Rush chain.
+	      Returns { over, ranking (ids, 1st first), bones (id -> final Bones), survivor
+	      (id?), decidedBy }.
+	  atClock(input)
+	      the match clock ran out (#252): over at once. TEAM: { eliminationOrder, bones,
+	      fence, damage, clearTime, seed }: everyone standing ranked by the chain from Fence
+	      on, then the fallen sides, latest fall first. ROYALE: { players, seed } =
+	      royaleResult(players, true, seed). Returns teamResult's / royaleResult's shape.
+
+	TIE-BREAK CHAIN (DECISIONS #253; every queue, so no result is ever a tie)
+	  Camp Clash: standing / fell later -> more Fence -> more Bones -> more damage dealt to
+	      its own dinos (capped by the caller at each dino's HP) -> lower total round-clear
+	      seconds -> a coin flip seeded by matchId
+	  Bone Rush: final Bones -> survived longer -> more Fence -> more damage -> lower clear
+	      time -> seeded coin flip
+	  The coin flip is a seeded shuffle of the still-level group (ids sorted first), so the
+	  same inputs and seed always give the same order. decidedBy: "standing", "fence",
+	  "bones", "survived", "damage", "clearTime" or "coinFlip": the step that set 1st apart
+	  from 2nd (the results line, T104); nil when not over or alone.
 ]]
 
 local Config = require(script.Parent.Config)
@@ -69,9 +85,22 @@ export type Side = number
 export type Kind = "hunter" | "tower" | "dino"
 export type Attacker = "hunter" | "tower" | "hazard" | "ability" | "dino"
 export type DamageOpts = { attacker: Attacker?, tower: { untouchable: boolean? }?, attackerOut: boolean?, shielded: boolean? }
-export type TeamResult = { over: boolean, winners: { Side }, losers: { Side }, tie: boolean }
-export type RoyalePlayer<Id> = { id: Id, bones: number, fence: number, outAt: number? }
-export type RoyaleResult<Id> = { over: boolean, ranking: { Id }, bones: { [Id]: number }, survivor: Id? }
+export type TeamResult = { over: boolean, winners: { Side }, losers: { Side }, tie: boolean, ranking: { Side }, decidedBy: string? }
+-- Per-side tie-break inputs (#253): Fence left, damage dealt to its own dinos (capped at each
+-- dino's HP), total round-clear seconds, and the match seed (matchId) for the coin flip.
+export type TeamStats = { fence: { [Side]: number }?, damage: { [Side]: number }?, clearTime: { [Side]: number }?, seed: any? }
+export type RoyalePlayer<Id> = { id: Id, bones: number, fence: number, outAt: number?, damage: number?, clearTime: number? }
+export type RoyaleResult<Id> = { over: boolean, ranking: { Id }, bones: { [Id]: number }, survivor: Id?, decidedBy: string? }
+export type ClockInput = {
+	modeKey: string,
+	eliminationOrder: { { Side } }?,
+	bones: { [Side]: number }?,
+	fence: { [Side]: number }?,
+	damage: { [Side]: number }?,
+	clearTime: { [Side]: number }?,
+	players: { RoyalePlayer<any> }?,
+	seed: any?,
+}
 
 local BattleRules = {}
 
@@ -166,53 +195,185 @@ local function sorted(list: { Side }): { Side }
 	return list
 end
 
-function BattleRules.teamResult(eliminationOrder: { { Side } }, bones: { [Side]: number }): TeamResult
+-- Tie-break chain (DECISIONS #253). The last step is a coin flip seeded by the match: a
+-- seeded shuffle of the still-equal group, so it is reproducible and never leaves a tie.
+local MODULUS = 2147483647 -- Park-Miller: every product stays below 2^53
+
+local function seedOf(seed: any): number
+	local h = 5381
+	for i = 1, #tostring(seed) do
+		h = (h * 33 + string.byte(tostring(seed), i)) % MODULUS
+	end
+	return if h == 0 then 1 else h
+end
+
+local function idBefore(a: any, b: any): boolean
+	if type(a) == "number" and type(b) == "number" then
+		return a < b
+	end
+	return tostring(a) < tostring(b)
+end
+
+-- id -> its coin-flip position among `ids` (1 = wins the flip), from the match seed.
+local function coinFlip(ids: { any }, seed: any): { [any]: number }
+	local order = table.clone(ids)
+	table.sort(order, idBefore)
+	local state = seedOf(seed)
+	for i = #order, 2, -1 do
+		state = (state * 48271) % MODULUS
+		local j = state % i + 1
+		order[i], order[j] = order[j], order[i]
+	end
+	local at = {}
+	for i, id in order do
+		at[id] = i
+	end
+	return at
+end
+
+export type Step = { key: string, value: (any) -> number, higher: boolean }
+
+-- Ranks `items` by `steps` (first difference wins), then the coin flip. Returns the
+-- ranked items and the step that set 1st apart from 2nd ("coinFlip" if none did).
+local function chain<T>(items: { T }, steps: { Step }, idOf: (T) -> any, seed: any): ({ T }, string?)
+	local ids = {}
+	for _, item in items do
+		table.insert(ids, idOf(item))
+	end
+	local flip = coinFlip(ids, seed)
+	local function decide(a: T, b: T): (boolean?, string)
+		for _, step in steps do
+			local x, y = step.value(a), step.value(b)
+			if x ~= y then
+				return if step.higher then x > y else x < y, step.key
+			end
+		end
+		return flip[idOf(a)] < flip[idOf(b)], "coinFlip"
+	end
+	local order = table.clone(items)
+	table.sort(order, function(a, b)
+		return (decide(a, b))
+	end)
+	local decidedBy: string? = nil
+	if #order >= 2 then
+		local _, key = decide(order[1], order[2])
+		decidedBy = key
+	end
+	return order, decidedBy
+end
+
+local function teamSteps(bones: { [Side]: number }, stats: TeamStats?): { Step }
+	local fence = stats and stats.fence or {}
+	local damage = stats and stats.damage or {}
+	local clear = stats and stats.clearTime or {}
+	return {
+		{ key = "fence", value = function(side)
+			return fence[side] or 0
+		end, higher = true },
+		{ key = "bones", value = function(side)
+			return bones[side] or 0
+		end, higher = true },
+		{ key = "damage", value = function(side)
+			return damage[side] or 0
+		end, higher = true },
+		{ key = "clearTime", value = function(side)
+			return clear[side] or 0
+		end, higher = false },
+	}
+end
+
+local function same(side: Side): Side
+	return side
+end
+
+-- Every side, best first: the standing ones (ranked by the chain from Fence on), then each
+-- elimination step from the latest, each ranked by the chain. decidedBy = "standing" when
+-- 1st stood and 2nd had fallen, else the chain step between them.
+local function teamRanking(eliminationOrder: { { Side } }, bones: { [Side]: number }, stats: TeamStats?): ({ Side }, string?)
 	local fell: { [Side]: boolean } = {}
 	for _, step in eliminationOrder do
 		for _, side in step do
 			fell[side] = true
 		end
 	end
-	local standing, all = {}, {}
+	local standing = {}
 	for side in bones do
-		table.insert(all, side)
 		if not fell[side] then
 			table.insert(standing, side)
 		end
 	end
-	if #standing >= 2 then
-		return { over = false, winners = {}, losers = {}, tie = false }
-	end
-	local winners: { Side }
-	if #standing == 1 then
-		winners = standing
-	else
-		local last = eliminationOrder[#eliminationOrder] or {}
-		local best = -math.huge
-		for _, side in last do
-			best = math.max(best, bones[side] or 0)
+	local steps = teamSteps(bones, stats)
+	local seed = if stats then stats.seed else nil
+	local ranking, decidedBy = chain(standing, steps, same, seed)
+	for i = #eliminationOrder, 1, -1 do
+		local group, by = chain(table.clone(eliminationOrder[i]), steps, same, seed)
+		if #ranking == 1 and #group > 0 then
+			decidedBy = "standing"
+		elseif #ranking == 0 then
+			decidedBy = by
 		end
-		winners = {}
-		for _, side in last do
-			if (bones[side] or 0) == best then
-				table.insert(winners, side)
-			end
+		for _, side in group do
+			table.insert(ranking, side)
 		end
 	end
-	local won: { [Side]: boolean } = {}
-	for _, side in winners do
-		won[side] = true
-	end
-	local losers = {}
-	for _, side in all do
-		if not won[side] then
-			table.insert(losers, side)
-		end
-	end
-	return { over = #winners > 0, winners = sorted(winners), losers = sorted(losers), tie = #winners > 1 }
+	return ranking, decidedBy
 end
 
-function BattleRules.royaleResult<Id>(players: { RoyalePlayer<Id> }, roundsDone: boolean): RoyaleResult<Id>
+local function teamFrom(ranking: { Side }, decidedBy: string?): TeamResult
+	local losers = {}
+	for i = 2, #ranking do
+		table.insert(losers, ranking[i])
+	end
+	return {
+		over = #ranking > 0,
+		winners = if #ranking > 0 then { ranking[1] } else {},
+		losers = sorted(losers),
+		tie = false,
+		ranking = ranking,
+		decidedBy = if #ranking >= 2 then decidedBy else nil,
+	}
+end
+
+function BattleRules.teamResult(eliminationOrder: { { Side } }, bones: { [Side]: number }, stats: TeamStats?): TeamResult
+	local fell: { [Side]: boolean } = {}
+	for _, step in eliminationOrder do
+		for _, side in step do
+			fell[side] = true
+		end
+	end
+	local standing = 0
+	for side in bones do
+		if not fell[side] then
+			standing += 1
+		end
+	end
+	if standing >= 2 then
+		return { over = false, winners = {}, losers = {}, tie = false, ranking = {}, decidedBy = nil }
+	end
+	return teamFrom(teamRanking(eliminationOrder, bones, stats))
+end
+
+local function royaleSteps<Id>(final: { [Id]: number }): { Step }
+	return {
+		{ key = "bones", value = function(p)
+			return final[p.id]
+		end, higher = true },
+		{ key = "survived", value = function(p)
+			return p.outAt or math.huge
+		end, higher = true },
+		{ key = "fence", value = function(p)
+			return p.fence
+		end, higher = true },
+		{ key = "damage", value = function(p)
+			return p.damage or 0
+		end, higher = true },
+		{ key = "clearTime", value = function(p)
+			return p.clearTime or 0
+		end, higher = false },
+	}
+end
+
+function BattleRules.royaleResult<Id>(players: { RoyalePlayer<Id> }, roundsDone: boolean, seed: any?): RoyaleResult<Id>
 	local alive = {}
 	for _, p in players do
 		if p.outAt == nil then
@@ -225,30 +386,25 @@ function BattleRules.royaleResult<Id>(players: { RoyalePlayer<Id> }, roundsDone:
 		survivor = alive[1].id
 	end
 	local final: { [Id]: number } = {}
-	local index: { [Id]: number } = {}
-	for i, p in players do
-		index[p.id] = i
+	for _, p in players do
 		final[p.id] = if p.id == survivor then math.floor(p.bones * (1 + Config.Tuning.SurvivorBonus)) else p.bones
 	end
-	local order = table.clone(players)
-	table.sort(order, function(a, b)
-		if final[a.id] ~= final[b.id] then
-			return final[a.id] > final[b.id]
-		end
-		local aOut, bOut = a.outAt or math.huge, b.outAt or math.huge
-		if aOut ~= bOut then
-			return aOut > bOut
-		end
-		if a.fence ~= b.fence then
-			return a.fence > b.fence
-		end
-		return index[a.id] < index[b.id]
-	end)
+	local order, decidedBy = chain(players, royaleSteps(final), function(p)
+		return p.id
+	end, seed)
 	local ranking = {}
 	for _, p in order do
 		table.insert(ranking, p.id)
 	end
-	return { over = over, ranking = ranking, bones = final, survivor = survivor }
+	return { over = over, ranking = ranking, bones = final, survivor = survivor, decidedBy = if over then decidedBy else nil }
+end
+
+function BattleRules.atClock(input: ClockInput): any
+	if input.modeKey == "ROYALE" then
+		return BattleRules.royaleResult(input.players or {}, true, input.seed)
+	end
+	local stats: TeamStats = { fence = input.fence, damage = input.damage, clearTime = input.clearTime, seed = input.seed }
+	return teamFrom(teamRanking(input.eliminationOrder or {}, input.bones or {}, stats))
 end
 
 return table.freeze(BattleRules)
