@@ -1173,6 +1173,87 @@ def validate_battle(data, problems, notes):
     notes.append("arenas: " + ", ".join(f"{a['display']} {a['floor']:g}" for a in arenas))
 
 
+PACE_LEVERS = [
+    "RoundPace", "TrackWalkSeconds", "CasualRoundStep", "RankedRoundStep", "CasualMatchCap", "RankedMatchCap",
+    "ClockWarning", "LateJoinCashX", "LateJoinLastRound", "BoneRushSparePlots", "CoOpLengthMax",
+]
+CASUAL_CAP_MAX, RANKED_CAP_MAX = 900, 1800  # DIRECTION 2026-10-09: casual <= 15 min, Ranked <= 30 min (#249, #252)
+
+
+def round_parts(data, rd, difficulty):
+    """(S, W) of one round (DECISIONS #250): S = enemies x spawn gap (the spawn phase, which
+    count scaling and density don't change: the gap shrinks by the same factor), W = Track
+    walk seconds / the difficulty's speed. Shared/Pace computes the same."""
+    s = sum(rd["counts"].values()) * rd["spawnGap"]
+    return s, data["Tuning"]["TrackWalkSeconds"] / difficulty["speedMult"]
+
+
+def paced_length(data, rd, difficulty):
+    """A round's length at Round pace: pace x S + W (unrounded)."""
+    s, w = round_parts(data, rd, difficulty)
+    return data["Tuning"]["RoundPace"] * s + w
+
+
+def pace_hp_x(data, rd, difficulty):
+    """Dino HP x for a round: (pace x S + W) / (S + W), so EHP / length is unchanged."""
+    s, w = round_parts(data, rd, difficulty)
+    return (data["Tuning"]["RoundPace"] * s + w) / (s + w) if s + w > 0 else 1.0
+
+
+def played_rounds(last, step):
+    """The rounds a battle plays (#251): first = last - step x floor((last - 1) / step), then every step-th."""
+    step = int(step)
+    first = last - step * ((last - 1) // step)
+    return list(range(first, last + 1, step))
+
+
+def validate_pace(data, problems, notes):
+    """Match length levers (PLAN Phase 8 batch 2 T101, DECISIONS #250-#254)."""
+    t = data["Tuning"]
+    missing = [k for k in PACE_LEVERS if k not in t]
+    for key in missing:
+        problems.append(f"Tuning is missing '{key}' (MATCH LENGTH; the game and the models read it by name)")
+    if missing:
+        return
+    last = len(data["Rounds"])
+    if not 0 < t["RoundPace"] <= 1:
+        problems.append(f"Tuning Round pace ({t['RoundPace']:g}) must be above 0 and at most 1 (DECISIONS #250)")
+    if t["TrackWalkSeconds"] <= 0:
+        problems.append("Tuning Track walk seconds must be above 0")
+    for key in ("CasualRoundStep", "RankedRoundStep"):
+        step = t[key]
+        if step < 1 or step != int(step):
+            problems.append(f"Tuning {key} ({step:g}) must be a whole number >= 1 (DECISIONS #251)")
+        elif played_rounds(last, step)[-1] != last:
+            problems.append(f"Tuning {key}: the round list must end at round {last}")
+    if not 0 < t["CasualMatchCap"] <= CASUAL_CAP_MAX:
+        problems.append(f"Tuning Casual match cap ({t['CasualMatchCap']:g}) must be above 0 and at most {CASUAL_CAP_MAX} s (DECISIONS #252)")
+    if not 0 < t["RankedMatchCap"] <= RANKED_CAP_MAX:
+        problems.append(f"Tuning Ranked match cap ({t['RankedMatchCap']:g}) must be above 0 and at most {RANKED_CAP_MAX} s (DECISIONS #252)")
+    if not 0 < t["ClockWarning"] < min(t["CasualMatchCap"], t["RankedMatchCap"]):
+        problems.append(f"Tuning Clock warning ({t['ClockWarning']:g}) must be above 0 and below both match caps")
+    if t["LateJoinCashX"] < 0:
+        problems.append("Tuning Late join cash x must not be negative")
+    if not 1 <= t["LateJoinLastRound"] < last or t["LateJoinLastRound"] != int(t["LateJoinLastRound"]):
+        problems.append(f"Tuning Late join last round ({t['LateJoinLastRound']:g}) must be a whole round from 1 to below {last} (DECISIONS #254)")
+    spare = t["BoneRushSparePlots"]
+    if spare < 0 or spare != int(spare):
+        problems.append(f"Tuning Bone Rush spare plots ({spare:g}) must be a whole number >= 0")
+    if t["CoOpLengthMax"] <= 0:
+        problems.append("Tuning Co-op length max must be above 0")
+    for key in ("NORMAL", "CHAOS"):
+        d = data["Difficulties"].get(key)
+        if not d:
+            problems.append(f"Difficulty {key} is missing (Battle round time is checked against it)")
+            continue
+        longest, at = max((paced_length(data, rd, d), i) for i, rd in enumerate(data["Rounds"], start=1))
+        if t["BattleRoundTime"] < longest:
+            problems.append(f"Tuning Battle round time ({t['BattleRoundTime']:g}) must be >= the longest paced {d['display']} round"
+                            f" ({longest:.1f} s, round {at}; DECISIONS #251)")
+        else:
+            notes.append(f"pace: longest paced {d['display']} round {longest:.1f} s (round {at}) <= Battle round time {t['BattleRoundTime']:g}")
+
+
 def guard_levels(data):
     """(tower level, highest hero level) in play during the last round: what the
     hero-vs-tower guard compares. tools/value.py asserts its last checkpoint matches."""
@@ -1492,6 +1573,7 @@ def validate(data):
     validate_xp(data, problems, notes)
     validate_cosmetics(data, problems, notes)
     validate_battle(data, problems, notes)
+    validate_pace(data, problems, notes)
 
     return problems, notes
 

@@ -71,6 +71,7 @@ DEAD_ALLOWED = {
     ("Tuning", "MasteryPerkWorthCap"): "an exporter rule, not a game number: every perk's worth is checked against it (DECISIONS #99)",
     ("Tuning", "PerkParityBand"): "an exporter rule, not a game number: hero-vs-hero perk parity at mastery 10 and 15+ (PLAN T84, DECISIONS #235)",
     ("Tuning", "CompetitiveEdgeMax"): "a value.py watch threshold, not a game number or a bar: the PvP edge report's WATCH lines (PLAN T84, DECISIONS #235)",
+    ("Tuning", "CoOpLengthMax"): "a model bar, not a game clock: value.py --pacing fails if Normal solo with breaks is longer (PLAN T101, DECISIONS #250)",
 }
 
 
@@ -78,6 +79,16 @@ DEAD_ALLOWED = {
 # an entry becomes a finding the moment some src file reads the field, so it can't
 # outlive its task. (block, field): the task that reads it
 DEAD_PENDING = {
+    ("Tuning", "RoundPace"): "PLAN T100 Shared/Pace",
+    ("Tuning", "TrackWalkSeconds"): "PLAN T100 Shared/Pace",
+    ("Tuning", "CasualRoundStep"): "PLAN T100 Shared/Pace",
+    ("Tuning", "RankedRoundStep"): "PLAN T100 Shared/Pace",
+    ("Tuning", "CasualMatchCap"): "PLAN T100 Shared/Pace",
+    ("Tuning", "RankedMatchCap"): "PLAN T100 Shared/Pace",
+    ("Tuning", "ClockWarning"): "PLAN T100 Shared/Pace",
+    ("Tuning", "LateJoinCashX"): "PLAN T100 Shared/Pace",
+    ("Tuning", "LateJoinLastRound"): "PLAN T105 joiners",
+    ("Tuning", "BoneRushSparePlots"): "PLAN T105 joiners",
 }
 
 # Words no tower or tier name may use: "Trophy" is reserved for ranked (DECISIONS #130,

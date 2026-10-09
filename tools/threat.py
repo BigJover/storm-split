@@ -18,6 +18,11 @@ Assumptions (deliberately pessimistic):
   - projectiles always hit (towers can't dodge); a Boss species' projectiles deal
     x `Boss ranged vs towers x` to towers (Tuning, BOSS THROWS; DECISIONS #138, #154);
   - a dino is full size on its first lane and half size after (its damage halves).
+Round pace (Tuning, DECISIONS #250; PLAN T101): spawn gaps x pace, dino HP x the pace factor,
+walk speed unchanged. No dino is killed here, so per-round damage is the same paced or not;
+the paced round is shorter, so the same damage lands in fewer seconds: the "len" column is
+the paced Easy round length and "mid def/s" the defended mid-gap ranged damage per second
+(report only; a tower's own heal per second is unchanged, its heal per round shrinks).
 It prints per-round damage at each spot and, for each tower type at T0 max HP, the
 rounds where one round's worst-case damage at the mid-gap spot would trample it.
 
@@ -148,7 +153,9 @@ def main():
     print(f"  T0 max HP: " + ", ".join(f"{k} {v:g}" for k, v in t0.items())
           + (f"; can't be damaged (left out): {', '.join(untouchable)}" if untouchable else ""))
     print(f"  defended = worst case x {DEFENDED} (DECISIONS #42); boss throws vs towers x {boss_vs_towers:g} (DECISIONS #154)")
-    print(f"  {'round':>5} | {'bites hug':>9} {'mid':>6} {'corner':>7} | {'ranged hug':>10} {'mid':>6} {'corner':>7} {'mid def':>8} {'back':>5}")
+    pace = data["Tuning"]["RoundPace"]
+    print(f"  Round pace {pace:g}: per-round damage unchanged (same counts, same walk); len = paced Easy round length (unpaced in brackets)")
+    print(f"  {'round':>5} | {'bites hug':>9} {'mid':>6} {'corner':>7} | {'ranged hug':>10} {'mid':>6} {'corner':>7} {'mid def':>8} {'back':>5} | {'len':>9} {'mid def/s':>9}")
     findings = []
     trampled = {name: [] for name in t0}
     boss_rounds = []
@@ -163,11 +170,15 @@ def main():
                 for kind in ("melee", "ranged"):
                     totals[name][kind] += n * per_dino[key][name][kind]
         mid = totals["mid-gap"]
+        paced = export_constants.paced_length(data, round_, easy)
+        spawn_s, walk_s = export_constants.round_parts(data, round_, easy)
+        unpaced = spawn_s + walk_s
         defended = mid["ranged"] * DEFENDED
         back = totals["back line"]["melee"] + totals["back line"]["ranged"]
         if index % 5 == 0 or index == 1 or index in (11, 21, 31):
             print(f"  {index:>5} | {totals['hugging']['melee']:>9.0f} {mid['melee']:>6.0f} {totals['corner']['melee']:>7.0f}"
-                  f" | {totals['hugging']['ranged']:>10.0f} {mid['ranged']:>6.0f} {totals['corner']['ranged']:>7.0f} {defended:>8.1f} {back:>5.0f}")
+                  f" | {totals['hugging']['ranged']:>10.0f} {mid['ranged']:>6.0f} {totals['corner']['ranged']:>7.0f} {defended:>8.1f} {back:>5.0f}"
+                  f" | {paced:>4.0f} [{unpaced:>3.0f}] {defended / paced:>9.2f}")
         if mid["melee"] > 0:
             findings.append(f"round {index}: bites reach a mid-gap tower ({mid['melee']:.0f} damage)")
         if back > 0:
