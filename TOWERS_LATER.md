@@ -1,6 +1,8 @@
-# The 4×-Amber tower batch — PROPOSAL (refreshed 2026-10-13)
+# The 4×-Amber tower batch — APPROVED (Jovan, 2026-10-13): all seven
 
-> **PROPOSAL — not to be built until Jovan picks.** First written 2026-10-02 (DECISIONS
+> **APPROVED 2026-10-13: all 7 towers, at these prices, every A/B/C option an in-game pick at
+> tiers 4 and 5; Extinction Event automatic; Raider options in (DIRECTION.md "The 4× towers and
+> A/B/C upgrades", DECISIONS #274–#287, PLAN "Phase 9").** Was a proposal: First written 2026-10-02 (DECISIONS
 > #153), refreshed 2026-10-13 after Phase 8 batch 2 (#273). Jovan: "we now only need the 4x
 > amber costing ones" and "when that part of batch 8 is done give me some ideas on the 4x
 > amber towers". Working names; the Dino agent (🦖) names the picks. Numbers are rough seeds.
@@ -48,7 +50,9 @@ tower does, and each tier 5 is a "moment" the whole lobby sees.
 | **Bone Totem** *(new)* | turns Bones into power for your camp | 450 | 800 | yes | new |
 | **Volcano Vent** *(new)* | a slow lava eruption that changes the map | 600 | 1,000 | yes | new |
 
-Tiers 1–3 are proposed; **tiers 4 and 5 have options to pick from** (A, B, C).
+Tiers 1–3 are fixed; **tiers 4 and 5 are in-game picks** (A, B, C; the tier-5 pick is free of
+the tier-4 one, #276; options at a tier cost the same, #277). No tower has a button: "once a
+round" effects fire themselves (#283). Raider options follow #284 (always a dino effect too).
 
 ---
 
@@ -70,16 +74,18 @@ the extinction). With fewer, tougher dinos it shines on boss rounds and Final St
 **Impact T4:** A *Planet Killer Core* (centre breaks 3, ×2 vs bosses). B *Shell Cracker*
 (the centre pierces armour). C *Short Fuse* (a meteor every 8 s).
 **Impact T5:** A **Extinction Event** — once per round played, a giant meteor: every dino on
-your side ×20, the centre breaks 4 (panel button, or automatic, Jovan's call). B **Dino
+your side ×20, the centre breaks 4. **Automatic** (#283): fires itself the first moment a boss or
+6 dinos are in the strike, else when the round's last dino has spawned. B **Dino
 Killer** — each meteor breaks the biggest dino it hits 2 extra sizes. C **Impact Winter** —
 after each meteor, every dino on your side slowed 30% for 3 s.
 
 **Shower T4:** A *Endless Rain* (a small meteor every 4 s). B *Scatter Field* (meteors spread
-along the whole track).
+along the whole track). C *Cinder Trail* (each small meteor leaves a 3 s burning streak).
 **Shower T5:** A **Starfall** — 20 meteors across your side every 15 s. B **Comet Tail** — a
 comet sweeps the full track once per round played. C **Shooting Stars** — meteors hit flyers.
 
-**Aftermath T4:** A *Smoke Plume* (craters last 8 s). B *Glass Crater* (craters strip armour).
+**Aftermath T4:** A *Smoke Plume* (craters last 8 s). B *Glass Crater* (craters strip armour). C *Scorch
+Marks* (dinos that cross a crater take +15% for 3 s).
 **Aftermath T5:** A **Fire Line** — craters burn and join into one burning stretch. B **Dust
 Storm** — dinos in the ash can't bite or throw. C **New Ice Age** — craters freeze instead of
 burn: a 2 s hard stop, bosses 1 s.
@@ -101,19 +107,22 @@ for a moment (a hard stop, glowing orange). The more of its HP is gone, the fast
 | **Resin Shell** *(new, was Sap Spray)* | protects towers | Coat of Resin (towers in range +15% max HP) | Sticky Armour (bites on them −20%) | *Amber Shield* (once a round, a tower about to be Trampled is sealed in amber 3 s instead) |
 
 **Entomb T4:** A *Hardened Amber* (entombed dinos take +30% from everything). B *Chain Tomb*
-(entombing spreads to the nearest dino).
+(entombing spreads to the nearest dino). C *Sticky Bed* (dinos passing an entombed one are
+slowed 25%).
 **Entomb T5:** A **Amber Age** — every 20 s every dino in range is entombed 2 s (bosses 1 s).
 B **Living Amber** — a boss can be entombed 3 s once per boss. C **Time Capsule** — the
 entombed dino is sent 15 studs back up the track (not bosses).
 
 **Fossilize T4:** A *Museum Piece* (fossils pay ×2 cash). B *Dig Crew* (a fossil drops a cash
-chest, like an Air Drop).
+chest, like an Air Drop). C *Bone Dust* (each fossil marks dinos within 6 studs +15% for 3 s).
 **Fossilize T5:** A **Fossil Fuel** — each fossil gives towers in range +5% attack speed for
 the round (max +30%). B **Jurassic Archive** — fossils count double for bounties. C **Amber
 Heart** — every 10th fossil this match entombs every dino on your side 1 s.
 
 **Resin Shell T4:** A *Self-Sealing* (sealed towers heal 25% when the shell breaks). B *Raider
-Glue* (enemy hunters who shoot towers in range are slowed 20% for 2 s — battles only).
+Glue* (Raider, #284: enemy hunters who shoot towers in range are slowed 20% for 2 s; in every
+mode, dinos that bite towers in range are slowed 20% for 2 s). C *Amber Coat* (a sealed tower's
+biters are slowed 30% for 2 s and take its thorns-like 3 damage).
 **Resin Shell T5:** A **Amber Fortress** — towers in range can't drop below 1 HP while the
 cannon stands (cooldown per tower). B **Resin Wall** — once a round, a wall of amber on the
 track holds every dino 3 s (bosses 1 s). C **Amber Mirror** — throws aimed at towers in range
@@ -138,19 +147,19 @@ rather than roaming, and at most 3 per station (5 at Ranger Corps).
 | **Wardens** | tougher rangers | Leather Coats | Medic Bag | *Shield Wall* (rangers take 40% less) |
 
 **Riflemen T4:** A *Elite Squad* (rangers pierce armour). B *Big Bore Ranger* (one ranger,
-breaks 3).
+breaks 3). C *Flare Rounds* (rangers can hit low flyers).
 **Riflemen T5:** A **Ranger Corps** — 5 rangers in formation. B **Legend of the Park** — one
 hero-grade ranger with its own Tracking Dart. C **Patrol Jeep** — rangers ride a jeep up and
 down the track, firing.
 
 **Trackers T4:** A *Pit Traps* (traps hold a dino 1 s). B *Lure Calls* (dinos stop to fight
-rangers 1 s).
+rangers 1 s). C *Tripwire* (a trap also knocks its dino 4 studs back, not bosses).
 **Trackers T5:** A **Master Trapper** — a trap line along your whole track each round.
 B **Net Launchers** — rangers net a boss 2 s, once per boss. C **Game Warden** — every
 ranger take-down marks nearby dinos +20%.
 
 **Wardens T4:** A *Field Rations* (rangers heal between rounds). B *Rally Point* (rangers
-return 2× faster).
+return 2× faster). C *Sandbags* (towers near a ranger post +10% max HP).
 **Wardens T5:** A **Last Stand** — rangers can't fall during a boss round. B **Bodyguards** —
 rangers stand by towers and take bites for them. C **Hunter's Lodge** — hunters respawn at
 the cabin in half the time (battles: your camp only).
@@ -170,20 +179,21 @@ Covers the whole side. **Why 4×:** covers everything, never needs a repair, and
 | **Searchlight** | support | Spotlight (dinos in light take +10%) | Wide Beam | *Night Hunt* (towers in the light +15% range) |
 | **Cargo** | drops | Supply Crates (cash crates, like Air Drop) | Ammo Drop (hunters below reload 20% faster) | *Med Drop* (heals hunters below) |
 
-**Door Gun T4:** A *Heavy Mount* (pierces armour, breaks 2). B *Rocket Pods* (splash).
+**Door Gun T4:** A *Heavy Mount* (pierces armour, breaks 2). B *Rocket Pods* (splash). C *Tracer Belt* (hit dinos marked
++10% for 2 s).
 **Door Gun T5:** A **Gunship** — circles faster with two guns and rockets. B **Bombing Run** —
 once per round played, bombs the full track. C **Sky Hook** — every 5 s snatches the
 smallest dino off the track (not bosses).
 
 **Searchlight T4:** A *Floodlights* (lights the whole circle). B *Tracking Beam* (the light
-follows the biggest dino).
+follows the biggest dino). C *Blinding Glare* (dinos in the light miss 20% of their throws).
 **Searchlight T5:** A **Eye in the Storm** — every dino under the blimp marked +30%. B
 **Lighthouse** — towers anywhere on your side +10% damage while the blimp passes. C
 **Spotter's Map** — hunters see every dino's outline through walls (dinos only; never shows
 players, so PvP stays fair).
 
 **Cargo T4:** A *Heavy Cargo* (bigger crates). B *Rebuild Kits* (repairs a Trampled tower
-below it each lap).
+below it each lap). C *Spare Parts* (a crate heals the tower it lands nearest 20%).
 **Cargo T5:** A **Supply Chain** — a crate every lap. B **Paratroopers** — drops 2 rangers
 each round (they share a look with Ranger Station). C **Airlift** — once a round, lifts a
 Trampled tower and puts it down repaired somewhere you choose.
@@ -208,23 +218,26 @@ be hurt. Unlike Ranger Station they don't shoot: they lock onto **one** dino and
 | **Trainer** | support, control | Tracking Nose (raptors pick the dino furthest along) | Herding Call (bitten dinos slowed 20%) | *Pack Howl* (towers in range +15% attack speed while a raptor is fighting) |
 
 **Pack T4:** A *Hunting Party* (raptors pierce armour). B *Flanking* (each raptor targets a
-different dino).
+different dino). C *Ambush* (each raptor's first pounce out of the pen ×2).
 **Pack T5:** A **Raptor Swarm** — 10 small raptors pour out once per round played and swarm
 the whole track. B **Clever Girls** — raptors dodge a bite every 3 s and never get trampled
 by small dinos. C **Night Raid** — raptors also attack flyers that swoop low (Pteranodons).
 
 **Alpha T4:** A *Killing Claw* (×3 vs the alpha's target, breaks 3). B *Boss Hunter* (the
-alpha can hold a boss 0.5 s, once per boss).
+alpha can hold a boss 0.5 s, once per boss). C *Scent Trail* (the alpha's target is marked +15%).
 **Alpha T5:** A **King of the Pack** — a giant raptor: pounce breaks 4, takes half damage. B
 **Rex Tamer** — the alpha is a tamed T. rex: a roar every 15 s stuns small dinos in range 1 s.
 C **Apex** — every take-down by the alpha makes it 10% stronger for the round (max +50%).
 
 **Trainer T4:** A *Treat Bag* (raptors heal fully between rounds and come back 2× faster). B
-*Guard Dogs* (one raptor stays by each tower in range and bites dinos that throw at it).
+*Guard Dogs* (one raptor stays by each tower in range and bites dinos that throw at it). C
+*Whistle Drill* (raptors run 30% faster).
 **Trainer T5:** A **Stampede Call** — once per round played, every raptor charges the full
 track, knocking small dinos back. B **Pack Bond** — while 3+ raptors are out, hunters in
-range deal +20%. C **Raider Hounds** *(battles only)* — raptors chase enemy hunters who raid
-your towers and nip them (×0.5 like any PvP hit, Camo Cover still protects).
+range deal +20%. C **Raider Hounds** *(Raider, #284)* — in battles, raptors chase enemy hunters who
+raid your towers and nip them (×0.5 like any PvP hit, Camo Cover still protects, no stun); in
+every mode, with no raider about, they hunt the last dino that hurt a tower in range (bite ×2,
+breaks 2).
 
 ---
 
@@ -247,18 +260,20 @@ slow, low-kill rounds; useless if nothing dies near it. Doesn't add Bones to the
 | **Bone Pile** | cash | Bone Collector (+1 cash per Bone in range) | Trade Post | *Bone Market* (when full, pays the camp 150 cash instead of roaring) |
 
 **Roar T4:** A *Echo* (the roar hits twice). B *Fear* (the roar sends small dinos 8 studs back).
+C *Shatter Roar* (the roar strips armour for 4 s).
 **Roar T5:** A **Ancient Roar** — a roar that reaches your whole track. B **Skull Storm** —
 the roar becomes a stream of flying skulls that each hunt a dino. C **Last Breath** — when a
 boss's HP drops below 25% in range, the totem fires a free full-power roar at it.
 
 **Ancestors T4:** A *War Paint* (hunters in range +15% damage when full). B *Bone Armour*
-(towers in range +20% max HP).
+(towers in range +20% max HP). C *Ancestor's Eye* (towers in range +10% range while full).
 **Ancestors T5:** A **Spirit Hunters** — when full, 3 ghost hunters appear and fire for 6 s.
 B **Totem Pole** — buffs reach every tower on your side at half strength. C **Old Ways** —
 hero abilities of hunters in range recharge 25% faster.
 
 **Bone Pile T4:** A *Rare Bones* (bosses fill half the charge). B *Bone Bank* (unspent charge
-at round end pays 20% interest in cash).
+at round end pays 20% interest in cash). C *Bone Tithe* (each full charge also pays its owner
+40 cash; never Amber).
 **Bone Pile T5:** A **Bone Hoard** — every full charge pays every hunter in your camp. B
 **Trophy Wall** — Bones near it count +25% for bounties (never for Bone Rush score or
 Ranked). C **Ancient Treasure** — once per match, a full charge spawns a big treasure chest.
@@ -275,7 +290,7 @@ track** for a while, which no other tower does. Different from Tar Pit (always o
 slows and sinks, can't be damaged), Mortar Pit (quick shells) and Meteor Beacon (strikes
 the densest bunch from above): the Vent owns one stretch and floods it in big pulses.
 **Weakness:** long wait between eruptions; fixed spot, so placement matters; no flyers.
-*(If Jovan picks Meteor Beacon, pick at most one of the two: they're both "big area".)*
+*(Both are in (#282): Meteor = strikes on the densest bunch; Vent = owns one stretch.)*
 
 | Path | Focus | T1 | T2 | T3 |
 |---|---|---|---|---|
@@ -284,37 +299,30 @@ the densest bunch from above): the Vent owns one stretch and floods it in big pu
 | **Obsidian** | control | Cooling Crust (the flow hardens: dinos slowed 30% on it) | Sharp Glass (armour cracked on the crust) | *Obsidian Wall* (once a round, a glass wall holds dinos 2 s) |
 
 **Magma T4:** A *White Hot* (pierces armour). B *Rivers of Fire* (the flow runs 20 studs
-further down the track).
+further down the track). C *Ember Rain* (each eruption's embers hit low flyers in range).
 **Magma T5:** A **Supervolcano** — once per round played, an eruption that floods the whole
 track with lava for 4 s. B **Pyroclast** — each eruption also throws 6 lava bombs at the
 biggest dinos (breaks 2). C **Fire Mountain** — the Vent grows a cone: eruptions twice as big.
 
 **Pressure T4:** A *Steam Burst* (eruptions knock small dinos back). B *Rumble* (dinos in range
-stumble, −20% speed, while it builds up).
+stumble, −20% speed, while it builds up). C *Pressure Valve* (erupts early when a boss enters
+range, once per boss).
 **Pressure T5:** A **Ring of Fire** — 3 small vents open around it and erupt in turn. B **Old
 Faithful** — erupts exactly every 8 s, but smaller. C **Ash Plume** — each eruption covers
 your track in ash: dinos miss 30% of their throws for 5 s.
 
 **Obsidian T4:** A *Glass Shards* (crust damages dinos walking on it). B *Black Glass* (towers
-in range +15% range, they can see through the glow).
+in range +15% range, they can see through the glow). C *Heat Shimmer* (dinos on the crust
+can't throw).
 **Obsidian T5:** A **Glass Maze** — the crust pushes dinos into a longer path through it. B
 **Obsidian Armour** — towers in range take 30% less from throws. C **Frozen Fire** — the
 whole flow hardens at once: 2 s hard stop for everything on it (bosses 1 s).
 
 ---
 
-## What Jovan needs to pick
+## Jovan's answers (2026-10-13)
 
-1. **Which towers.** There are 7 here; we suggest picking **4** (like the 2× batch). Our
-   pick if you want one: **Amber Resin Cannon, Raptor Pen, Spotter Blimp, Bone Totem**
-   (one control, one fighter, one untouchable support, one team-growth tower; none of them
-   copies a 2× tower). Meteor Beacon and Volcano Vent overlap (big area): at most one.
-   Ranger Station is the biggest build job; Raptor Pen gives a similar "fighters on the
-   track" feel with simpler AI.
-2. **Is 4× (400–600 Amber) right?** With shorter co-op you earn ~175 Amber an hour on
-   Normal, so a 600 tower is ~3½ hours of play.
-3. **One option per tier-4 and tier-5 slot** for the towers you pick (A, B or C), or "you
-   choose" and the Director picks in line with `DIRECTION.md`.
-4. **Extinction Event** (if Meteor Beacon): a button you press once a round, or automatic?
-5. **Raider Hounds / Raider Glue** (battle-only effects that touch enemy hunters): in or out?
-   They're the only ideas here that change PvP.
+1. **Which towers:** all seven. 2. **Prices:** as proposed. 3. **Options:** all A/B/C stay as
+in-game picks at tiers 4 and 5 (and every existing tower and hero path gets A/B/C too).
+4. **Extinction Event:** automatic. 5. **Raider Glue / Raider Hounds:** in, with a real dino
+effect (#284). Build order and names: `PLAN.md` "Phase 9" (🦖 names before batch 9g).

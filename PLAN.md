@@ -1,3 +1,145 @@
+# Plan — Phase 9: the 4× towers and A/B/C upgrades (Director, 2026-10-13)
+
+Jovan's answer to T97 (verbatim in `DIRECTION.md` "The 4× towers and A/B/C upgrades"): all 7
+`TOWERS_LATER.md` towers at the proposed prices; **an in-game A/B/C pick at tiers 4 and 5 of
+every path** — the 11 built towers, the 7 new ones and all 12 hero paths (hero tier 6 stays
+one capstone); Extinction Event automatic; Raider options in, always with a dino effect.
+Calls: `DECISIONS.md` #274–#287. **Phase 9, not a Phase 8 batch (#274).** Phase 7/8 rules
+hold (one task = one commit, pushed; check/export/test green; Config diff after every sheet
+change, every changed line accounted for; openpyxl, assert each cell old-value-or-empty;
+append rows, never insert; pure rules first; co-op specs re-run every task; no publish, no
+DataStore writes from an agent). N15 rides any `Battle` commit (#272).
+
+**Status (2026-10-13): planned. Next: batch 9a (T110 + T111).**
+
+## Size of the job
+| | Slots (T4+T5) | Options to build | New options to design |
+|---|---|---|---|
+| 11 built towers × 3 paths | 66 | 198 (66 A exist) | **132** B/C (Director, 9c–9e) |
+| 4 heroes × 3 paths | 24 | 72 (24 A exist) | **48** B/C (Director, 9f) + T6 rewording (#278) |
+| 7 new towers × 3 paths | 42 | 126 | 20 T4 "C" — **done** in `TOWERS_LATER.md` (#285) |
+| **Total** | 132 | **396** (306 new rows) | **180 still to design** |
+
+## The A/B/C system (9a–9b)
+- **Sheet (#275).** `Tower Upgrades` and `Hero Upgrades`: new `Option` column (blank at
+  tiers 1–3 and hero T6; `A`/`B`/`C` at tiers 4 and 5) and `Blurb` (card line ≤ 60 chars).
+  Tiers 1–3 rows stay cumulative. A T4 / T5 / hero-T6 row holds only **its own step**.
+  The exporter has a column registry (`mult` / `add` / `max` / `flag` / `set`) and
+  **precomposes** cumulative builds: `t4[o]` (3 per path), `t5[o4..o5]` (9 per path),
+  hero `t6[o4..o5]` (9). Runtime keeps reading one cumulative row. Existing T4/T5 rows
+  become option A by converting them to steps (A4 = T4 ⊖ T3, A5 = T5 ⊖ T4; hero T6 = T6 ⊖ T5).
+  New rows (B/C, new towers) are **appended** at the bottom; the exporter groups by
+  (tower, path, tier, option), not by row order (confirm the key columns exist; add them if not).
+- **Rules (#276–#278).** T5 pick independent of T4 (9 builds/path); same price for every
+  option at a tier; a pick is final until the tower is sold; refund unchanged; crossover
+  rule unchanged (counts tiers). Heroes: free switch + full refund until Start; T6 needs
+  T5 on its path (any letter) and must work after every T5.
+- **State (#287).** `tower.pathTiers` unchanged; new `tower.pathPicks[path]` = "", "B", "BA".
+  Replicated as a tower attribute (panel, tier label "4B · 5A", spectators, late joiners).
+  Hero picks live in `Hero` state. Match-only; nothing saved. Stand-ins/scripted builds = A.
+- **Remotes.** Shop/Hero upgrade request gains `option` ("A"/"B"/"C"); the server refuses a
+  missing option at T4/T5, any option at T1–3/T6, an unknown letter, or a letter whose row
+  doesn't exist (until B/C land, only A is offered or accepted).
+- **Panel (#279).** Pure `Shared/OptionPick` layout used by the tower panel and hero U panel:
+  3 cards (name, Blurb, price shown once), tap a card then "Buy B — 2,400" to confirm; blocked
+  / can't-afford reasons as today; Back + X in the header outside the scroll; cards scroll
+  first then scale; stack vertically below the width threshold; every state change closes it.
+- **Models (#280).** `value.py --options`: per slot, each option's worth (eDPS/cash; support,
+  economy, control metrics as today) within **0.8–1.25× of the slot median**; all 9 builds
+  per path under the existing caps (#193/#200; untouchables 1.25–2 × M; Tar Pit = control);
+  heroes 0.8–1.25× of the slot median on `hero_dps`/handling, per-hero parity of best builds
+  ≤ 1.15 (#235). Raider options (#284): dino part alone ≥ 0.8× the slot median.
+  The exporter enforces the bars from 9b on, for slots that have B/C.
+- **Audit.** Doc option tables (`| Path | Tier | A | B | C |` under each tower/hero in
+  `UPGRADES.md` / `HEROES.md`) match the sheet names, letters and Blurbs; a slot with B but
+  not C is a finding; `--strict` demands full A/B/C everywhere from 9k.
+
+## Content rules for B/C (#281, #284)
+Keep the path's focus; B/C differ in *how* (target, timing, area, control, support), not just
+numbers; reuse built mechanics first, ≤ 3 new mechanics per tower; no tower buttons — "once a
+round" fires itself (#283); 2× towers use their unpicked `TOWERS_NEXT.md` ideas first; heroes
+only handling / fire mode / special rounds, never raw gun damage; ≤ 1 Raider option per tower,
+with the #284 limits (×0.5, Camo Cover, no reveal, no stun/hard stop on hunters, slows ≤ 30%
+≤ 3 s, own side only). The Director writes each batch's designs as a table here **before**
+its Builder starts; 🦖 names them; the Builder copies them into `UPGRADES.md`/`HEROES.md`.
+
+## Batches (fresh Builder each; Tester steps at the end of each)
+
+**9a — the system, option A only (no number changes).**
+- **T110 data + exporter + audit:** `Option`/`Blurb` columns, step conversion of every
+  existing T4/T5 (and hero T6) row to option A, column registry, precomposition,
+  `Config` shape `tiers[1..3]`, `t4`, `t5`, hero `t6`. Accept: Config diff shows only the
+  shape change + Blurbs; a spec asserts every precomposed `(A,A)` build == the old cumulative
+  T5 (and hero T6) values; audit reads the option tables; 682 specs green.
+- **T111 rules + server:** `Shared/Upgrades.stepFor(def, tiers, picks, path, option)`; Shop and
+  Hero take `option`; `pathPicks` + attribute; `TowerStats`/`HeroStats` read the composed row;
+  sell/refund, Supply Camp discount, mastery free upgrade, hero switch-refund unchanged.
+  Accept: specs for every refusal case; a match bought to 5A plays exactly as before
+  (same damage numbers in a fixed-seed spec).
+
+**9b — the pick panel and the models.**
+- **T112 `Shared/OptionPick` + tower/hero panels** (#279). Accept: layout specs at 3 window
+  sizes (phone-ish, small, full); no-trap checks; with only A present the pick shows one card.
+- **T113 `value.py --options` + exporter bars + Raider floor** (#280, #284). Accept: report
+  runs on option-A-only data (each slot median = A, so bars pass); a fixture with a dead
+  option and a must-pick option both fail.
+- **Tester Run 8:** buy a Hunting Blind to 4A then 5A through the pick cards; confirm label
+  "4A · 5A", sell refund, a T3→T4 pick at a small window (cards stack, X works), hero U panel
+  pick + switch-refund before Start; a co-op round and a Camp Clash round with picked towers.
+
+**9c — B/C for the starters** (Hunting Blind, Longshot Perch, Mortar Pit: 9 paths, **36 options**).
+Director design table → 🦖 names → **T114** sheet rows + mechanics + specs, **T115** tune with
+`--options` + docs tables. Tester: one B and one C per tower in a match; each fires as written.
+
+**9d — B/C for Tranq Station, Supply Camp, Field Hospital, Armory** (12 paths, **48**).
+Same shape: **T116** (Tranq + Supply), **T117** (Hospital + Armory), **T118** tune + docs.
+Tester: economy options pay as shown; auras don't stack (strongest wins) across options.
+
+**9e — B/C for the 2× batch** (Storm Coil, Falcon Roost, Tar Pit, Harpoon Ballista: 12 paths,
+**48**; `TOWERS_NEXT.md` unpicked ideas first, A = Jovan's own T5 picks, unchanged).
+**T119** (Coil + Falcon), **T120** (Tar Pit + Ballista), tune + docs in each. Tester: per tower.
+
+**9f — B/C for the heroes** (12 paths, **48**, handling only) + T6 works after any T5 (#278:
+Big Five, Endless Belt, Dynamite Rounds grant their T5-A mechanic). **T121** Tracker + Big Game
+Hunter, **T122** Brush Beater + Field Medic, parity check. Tester: one B/C per hero in first
+person, T6 after a B or C T5; Practice Hunt duel with stand-in still fair.
+
+**🦖 naming point:** the 7 tower names (and look notes) once before 9g, then each batch's
+option names (all 126 working names in `TOWERS_LATER.md` are drafts).
+
+**9g — Amber Resin Cannon + Raptor Pen** (new "walker" module for raptors: track movement, HP,
+pounce/hold, return; Raider Hounds). **T123** Resin Cannon (entomb, fossils, Resin Shell incl.
+Raider Glue), **T124** Raptor Pen; each: pure rules → sheet (tiers 1–3 + 9 option rows per
+path) → Towers/look/unlock → value.py bars. Unlock 500/500 Amber, cash 800/850.
+
+**9h — Spotter Blimp + Bone Totem.** **T125** Blimp (untouchable, 1.25–2 × M; circling
+coverage; Paratroopers reuse the walker with a ranger look), **T126** Bone Totem (charge from
+in-range Bones; never adds to Bone Rush score or Ranked; no Amber). 400 / 450 Amber.
+
+**9i — Meteor Beacon + Volcano Vent.** **T127** Meteor (densest-bunch targeting, craters;
+Extinction Event automatic #283 with `Extinction min bunch` Tuning row), **T128** Vent (lava
+flow on a stretch, sideways shove, crust). 600 / 600 Amber, cash 1,000 each.
+
+**9j — Ranger Station** (heaviest; rangers at chosen posts, 3 max / 5 at Ranger Corps; walker
+reuse). **T129** rules + sheet + tower, **T130** posts UI + value.py. 500 Amber / 900 cash.
+
+**Every new-tower batch, Tester:** buy, unlock, place, upgrade to a T4 and T5 pick on each
+path once (Studio K/J keys), Trampled + repair (not the Blimp), a battle round (own dinos
+only); for Raider options, the Studio stand-in hunter raids and the effect lands at ×0.5,
+Camo Cover blocks it; co-op round with the Raider option still doing its dino part.
+
+**9k — balance pass.** `value.py --options` + `--battle`, `threat.py`, per-hero parity;
+`audit.py --strict` with full A/B/C everywhere; co-op ~34 min and battle clocks unchanged
+(a new tower must matter by round ~20). **T131** tune, **T132** fixes from Run 9. Tester Run 9:
+a full co-op match on Normal with new towers + a casual Camp Clash with stand-ins.
+
+**9l — docs + recap.** **T133** `UPGRADES.md` / `HEROES.md` option tables complete, Mechanics
+table, `ARCHITECTURE.md` (Upgrades/OptionPick, sheet columns, phase table), `CLAUDE.md` status,
+`VISION.md` if needed; Director writes `RECAP.md` "Phase 9" (what to playtest first, what
+needs Jovan: multi-client Raider tests, feel of 9 builds per path).
+
+---
+
 # Plan — Phase 8 batch 2: match length and joiners (Director, 2026-10-09)
 
 Jovan answered ask 3 and more on 2026-10-09 (verbatim in `DIRECTION.md` "Match length,

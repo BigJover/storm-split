@@ -8,7 +8,7 @@ time.
 
 | Agent | Job | Writes |
 |---|---|---|
-| **Director** | Knows Jovan's taste (`DIRECTION.md`) and the plans (`VISION.md`, `UPGRADES.md`, `HEROES.md`, `ARCHITECTURE.md`). Breaks work into tasks with acceptance checks, answers open design questions, reviews every build against the vision. | `PLAN.md`, `DECISIONS.md` |
+| **Director** | Knows Jovan's taste (`DIRECTION.md`) and the plans (`VISION.md`, `UPGRADES.md`, `HEROES.md`, `ARCHITECTURE.md`). Breaks work into tasks with acceptance checks, answers open design questions, reviews every build against the vision; in Phase 9 also designs the B/C upgrade options. | `PLAN.md`, `DECISIONS.md` (also `DIRECTION.md`, `GAUNTLET.md`, `TOWERS_LATER.md` when recording Jovan's answers) |
 | **Builder** | Builds and polishes game functionality, one task at a time, and verifies it. Doesn't make design calls; asks the Director through the coordinator. | code, spreadsheet, docs |
 | **Dino agent** | Guards the dinosaur vision: names, looks, attack flavour, wording. Reviews each build and proposes theme fixes. | review notes (fixes go through the Director to the Builder) |
 | **Tester** (added 2026-10-01, Jovan's request) | Playtests in Roblox Studio through Studio's built-in MCP server, using `tools/studio/mcp.py` (`tools` / `call <tool> '<json>'`), following the playtest script in `PLAN.md`. Reports each step as pass, fail or not testable, with console output and screenshots. Doesn't judge feel or balance; doesn't fix anything. Bugs go to the Director, who queues fixes for the Builder. | `PLAYTEST.md`, screenshots in `playtest/` |
@@ -132,6 +132,17 @@ playtested in Studio (Run 7: 27 pass, F8 fixed; Run 7b: 9 pass, 0 fail); signed 
 next `Battle` commit. Next: T97 — Jovan picks from the refreshed `TOWERS_LATER.md`, the
 Dino agent names the picks, then the round-4 tower pattern. Still his: multi-client script
 (incl. a real late joiner), private publish, lobby place.
+
+## Phase 9 scope (Jovan, 2026-10-13)
+
+Jovan answered T97 (`DIRECTION.md` "The 4× towers and A/B/C upgrades"): **all 7 4× towers**
+at the proposed prices, an **A/B/C in-game pick at tiers 4 and 5 of every tower and hero
+path** (hero tier 6 stays one capstone), Extinction Event automatic, Raider options in with a
+real dino effect. Plan: `PLAN.md` "Phase 9" (batches 9a–9l), calls DECISIONS #274–#287.
+Extra loop rules for this phase: the **Director writes each content batch's B/C designs into
+`PLAN.md` before its Builder starts**; the **Dino agent names them before the Builder**; a
+fresh Builder per batch; option A must never change a number (compose guard, #275); every
+batch ends with its Tester steps. Phase 8's Jovan-only leftovers don't block Phase 9.
 
 ## Rules
 

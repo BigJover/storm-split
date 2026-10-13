@@ -148,6 +148,28 @@ What this adds to his taste (applied in DECISIONS #249–#257, PLAN "Phase 8 bat
   normalise power in either queue; parity *between heroes* (#235) still holds.
 - **Order:** finish match length and joiners first, then the 4×-Amber picks.
 
+## The 4× towers and A/B/C upgrades (Jovan, 2026-10-13)
+
+Verbatim: "I like all of the towers suggesterd, i say we add them all price seems about right
+for each, i do want multiple upgrade pathes so having a/b/c upgrade options for each is ideal
+and all towers/weapons should have this a/b/c upgrade path up to tier 5, lets have the
+extinction event be automatic as unlike btd players need to be actively engaged in the
+gameplay, i like towers touching enemy hunters however they shouldnt be useless against the
+dinos, have them at least do something to the dinos but they can mainly focus on other
+hunters". Clarified by question: the A/B/C choice is an **in-game pick at tiers 4 and 5** of
+every path (tiers 1–3 unchanged), for **every tower** (the 11 built + all 7 new) and **every
+hero path**; hero **tier 6 stays one capstone**.
+
+What this adds to his taste (applied in DECISIONS #274–#287, PLAN "Phase 9"):
+- **More choice beats fewer, sharper towers.** All 7 concepts, at the proposed prices
+  (`TOWERS_LATER.md`). He wants depth of build choice, BTD6-plus.
+- **Every option must be a real choice:** no dead option, no must-pick (value.py bars).
+- **Players stay busy with their gun, not buttons.** Big tower moments fire on their own
+  (Extinction Event is automatic); avoid "remember to press it" tower buttons.
+- **Towers may touch enemy hunters** in battles, but a PvP-leaning option must still do
+  something real to dinos, and be worth its slot in co-op where there are no raiders.
+- Heroes keep the rule: options change handling and fire modes, never raw gun damage.
+
 ## Economy (his numbers)
 
 - Casual: solo pays only on a track clear (Easy 50 / Normal 100 / Hard 150 / Chaos 200
