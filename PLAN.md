@@ -12,6 +12,7 @@ DataStore writes from an agent). N15 rides any `Battle` commit (#272).
 
 **Status (2026-10-13): planned. Next: batch 9a (T110 + T111).**
 **Status (2026-10-13, later): 9a + 9b done (c1a7c5a, 0f82bb7, 929b66a, cd6a413, cd749d2; 706 specs); Tester Run 8 running. 9c designed below (#290). Next: 🦖 names 9c → Builder T114 + T115.**
+**Status (2026-10-13, Director): 9d + 9e designed below (#292–#297; 96 options, metrics, 6 new mechanics). Next after 9c: 🦖 names 9d → T116–T118, then 9e → T119–T120.**
 
 ## Size of the job
 | | Slots (T4+T5) | Options to build | New options to design |
@@ -162,13 +163,256 @@ higher" (#275) is why T5 line-hit options are tuned against their T4 siblings.
   card text matches what happens; a stripped Ankylosaurus takes damage from a non-piercing
   tower; Seismic Charge never moves a boss; Rockfall stuns a boss 0.5 s.
 
-**9d — B/C for Tranq Station, Supply Camp, Field Hospital, Armory** (12 paths, **48**).
-Same shape: **T116** (Tranq + Supply), **T117** (Hospital + Armory), **T118** tune + docs.
-Tester: economy options pay as shown; auras don't stack (strongest wins) across options.
+**9d — B/C for Tranq Station, Supply Camp, Field Hospital, Armory** (12 paths, **48 options**).
+**DESIGNED (Director, 2026-10-13, #292–#295) — enter as written** (🦖 names first; working
+names here). Row recipe exactly as 9c (append; Tower / Path / Path focus / Tier from the
+slot's A row; `Upgrade cost` `=E<A row>`, `Cumulative cost` `=F<A row>`; `Damage x`,
+`Rate x`, `Targets x`, `Range x` = 1 unless listed; every other cell blank unless listed).
+Raider rows: `PvP effect` = `yes` (one per tower, #284). Steps combine as the column
+registry says (x columns multiply, amounts take the higher), so a T5 cell lower than its T4
+sibling's does nothing after that T4 — the numbers below are tuned for all 9 builds.
+
+**Worth metrics for these paths (#292; #289 — they replace today's `tower_worth` branches
+for these towers; r31–40 mix, `boss` = the band's boss HP share, dwell 2 s):**
+| Path | Metric (one build) |
+|---|---|
+| Tranq Sedate | Slow % × (1 + Slow linger ÷ 2) × Range x × (1 + boss if Slows bosses) |
+| Tranq Knockout | Freeze (s) ÷ Freeze every (s) × Range x × (1 + boss if Freeze holds bosses) |
+| Tranq Weak Spot | eDPS + brittle aura credit, with **Boss mark % × boss** added to Aura damage % |
+| Supply Yield | 150 × Income x + Interest cap (if Interest %) + Bounty cash × 30 (in-range take-downs a round, r31–40: a quarter of the round's dinos) |
+| Supply Airdrop / Logistics | today's branches (chests × chest cash + income; discount + 100 × refund over base + aura rate) |
+| Hospital Ward | Heal/s × Range x × (1 + 0.5 × Revive speed x if Revives) |
+| Hospital Rescue | (Med kits × Med kit heal + 1) × Range x × (2 − respawn x) |
+| Hospital Tonic | Aura HP % + Aura rate % + 10 if Last stand + Biter slow % × Biter slow (s) ÷ 4 |
+| Armory Plating | Resist % + Thorns damage + 20 × Stuns biters (s) |
+| Armory Gunsmith | today's aura credit |
+| Armory Outfitter | today's formula, but reading the hunter reload/spread/recoil multipliers from the **composed build** (today they read 1, so B/C tie) |
+A Raider option's worth is the same metric with the Raider columns ignored (its dino part).
+Checked on a sheet copy with these metrics (Director scratch, `value.py` internals): every
+one of the 12 paths' 4 slots (T4, T5 after A/B/C) has every option within 0.8–1.25× of its
+median and both Raider options ≥ 0.8× the others' median. Today's `value.py --options`
+(old metrics) flags 16 of them — that's the metric gap, not the designs: **the metric change
+goes in the same commit as each tower's rows** (the exporter enforces the bars).
+
+**New mechanics (9d; keep generic, 9e/9g reuse them):**
+1. **Raider sting** (`Raider slow %`, `Raider slow (s)`, `Raider damage`; new Tuning row
+   `Raider sting cooldown (s)` seed 3): battles only, own side only. When an enemy hunter
+   damages a tower on this tower's side while inside this tower's range, this tower stings
+   them: Raider damage × 0.5 (the PvP rule) and a slow of Raider slow % for Raider slow (s);
+   at most once per cooldown per hunter, never through Camo Cover, never a stun or a reveal;
+   slows ≤ 30 % and ≤ 3 s (exporter check). Co-op: does nothing (the option's dino part
+   carries it). Used by Sleeper Darts, Barbed Wire; 9e: Rod Strike, Guard Falcons, Bog
+   Boots, Snag Line.
+2. **Biter slow** (`Biter slow %`, `Biter slow (s)`): a dino that bites a tower in range is
+   slowed (not bosses). Same mechanic as #284's Raider Glue bonus (9g reuses it).
+3. **Bounty cash** (`Bounty cash`): the Supply Camp's owner gets this much cash for every dino
+   taken down inside its range (by anyone on its side; sinks count, shrinks don't), through
+   `Economy`. Bounty cash amounts take the higher (no stacking across camps: the strongest
+   camp covering the take-down pays).
+Wirings (existing columns on a tower that didn't use them): Tranq `Aura rate %` at T4/T5 and
+`Boss mark %` (Weak Spot); Supply `Aura rate %` + `Sell refund` together (Depot); Hospital
+`Revive speed x` at T4. Auras don't stack (strongest wins), as today.
+
+**Tranq Station**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; unset = 1 / blank) |
+|---|---|---|---|---|---|
+| Sedate | 4 | B | Drowsy Trail | Dinos stay slowed 4 s after they leave | Damage x 1.3, Rate x 1.15132, Slow % 65, Slow linger (s) 4 |
+| Sedate | 4 | C | Sleeper Darts | Also slows raiders who shoot your towers | Damage x 1.3, Rate x 1.15132, Slow % 72, Raider slow % 30, Raider slow (s) 2, **PvP effect yes** |
+| Sedate | 5 | B | Fog Bank | A huge sleepy cloud slows a much wider ring | Damage x 1.2972, Rate x 1.14857, Slow % 80, Range x 1.6, Slow linger (s) 3 |
+| Sedate | 5 | C | Long Nap | Dinos stay slowed 7 s after they leave | Damage x 1.2972, Rate x 1.14857, Slow % 80, Slow linger (s) 7 |
+| Knockout | 4 | B | Long Sleep | Knockouts hold dinos 1.8 s instead of 1 | Damage x 1.34959, Rate x 1.42308, Freeze (s) 1.8, Freeze damage 3 |
+| Knockout | 4 | C | Knockout Ring | Knocks out dinos in a much wider ring | Damage x 1.34959, Rate x 1.42308, Range x 1.3, Freeze every (s) 6, Freeze damage 3 |
+| Knockout | 5 | B | Snooze Alarm | Knocks out every dino in range every 4 s | Damage x 1.3494, Rate x 1.41769, Freeze every (s) 4, Freeze (s) 2, Freeze damage 5 |
+| Knockout | 5 | C | Sleep Wave | A giant knockout ring | Damage x 1.3494, Rate x 1.41769, Range x 1.6, Freeze (s) 2, Freeze damage 5 |
+| Weak Spot | 4 | B | Pack Instinct | Towers in range fire 20% faster | Damage x 1.9, Aura rate % 20, Brittle % 40 |
+| Weak Spot | 4 | C | Big Game Weakness | Bosses in range take +40% from everything | Damage x 1.9, Boss mark % 40, Brittle % 40 |
+| Weak Spot | 5 | B | Feeding Frenzy | Towers in range fire 35% faster | Damage x 1.9, Aura rate % 35, Brittle % 60 |
+| Weak Spot | 5 | C | Killing Ground | Bosses in range take +75% from everything | Damage x 1.9, Boss mark % 75, Brittle % 60 |
+
+**Supply Camp**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; unset = 1 / blank) |
+|---|---|---|---|---|---|
+| Yield | 4 | B | Savings Jar | Less income, but 3% interest on banked cash | Income x 1.45, Interest % 3, Interest cap 250 |
+| Yield | 4 | C | Bounty Board | +8 cash for each dino taken down in its range | Income x 1.3, Bounty cash 8 |
+| Yield | 5 | B | Gold Reserve | Big interest: 8% on banked cash | Income x 1.3, Interest % 8, Interest cap 1000 |
+| Yield | 5 | C | Bounty Hall | +25 cash for each dino taken down in its range | Income x 1.3, Bounty cash 25 |
+| Airdrop | 4 | B | Heavy Crates | Two crates a round, worth more each | Chest cash 790 |
+| Airdrop | 4 | C | Extra Drop | Four crates a round | Chests 4 |
+| Airdrop | 5 | B | Supply Fleet | Five crates a round | Chests 5, Chest cash 790 |
+| Airdrop | 5 | C | Gold Crates | Four crates a round, worth 900 each | Chests 4, Chest cash 900 |
+| Logistics | 4 | B | Bulk Buyer | Upgrades in range cost 18% less | Upgrade discount % 18 |
+| Logistics | 4 | C | Scrap Dealer | Towers in range sell for 97% | Sell refund 0.97 |
+| Logistics | 5 | B | Wholesale | Upgrades in range cost 32% less | Upgrade discount % 32 |
+| Logistics | 5 | C | Depot | Towers in range fire 20% faster, cost 15% less | Aura rate % 20, Upgrade discount % 15, Sell refund 0.95 |
+
+**Field Hospital**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; unset = 1 / blank) |
+|---|---|---|---|---|---|
+| Ward | 4 | B | Quick Stitch | Trampled towers stand up twice as fast | Revive speed x 1 |
+| Ward | 4 | C | Big Tent | Heals towers in a wider ring | Range x 1.25 |
+| Ward | 5 | B | Field Ward | Heals a huge ring of towers | Heal x 1.2, Range x 1.4 |
+| Ward | 5 | C | Rapid Recovery | Trampled towers jump back up 4x as fast | Heal x 1.25, Revive speed x 2 |
+| Rescue | 4 | B | Long Whistle | Kits reach hunters in a much wider ring | Range x 1.3, Med kits 3 |
+| Rescue | 4 | C | Kit Bags | Four med kits land each round | Med kits 4 |
+| Rescue | 5 | B | Pack Train | Five med kits a round, 50 each | Range x 1.15, Med kits 5, Med kit heal 50 |
+| Rescue | 5 | C | Medevac | Downed hunters come back 3x as fast | Range x 1.15, Med kit heal 45, Rescue beacon (respawn x) 0.35 |
+| Tonic | 4 | B | Hot Coffee | Towers in range fire 18% faster | Aura rate % 18, Aura HP % 25 |
+| Tonic | 4 | C | Bitter Tonic | Dinos that bite towers in range get slowed | Aura HP % 25, Biter slow % 25, Biter slow (s) 2 |
+| Tonic | 5 | B | Adrenaline | Towers in range fire 30% faster | Aura rate % 30, Aura HP % 40 |
+| Tonic | 5 | C | Bitter Brew | Biters slowed 30% for 3 s; towers +45% HP | Aura HP % 45, Biter slow % 30, Biter slow (s) 3 |
+
+**Armory**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; unset = 1 / blank) |
+|---|---|---|---|---|---|
+| Plating | 4 | B | Spiked Walls | Dinos that bite take 10 damage back | Resist % 30, Thorns damage 10 |
+| Plating | 4 | C | Barbed Wire | Stings and slows raiders who shoot towers here | Resist % 32, Raider slow % 20, Raider slow (s) 2, Raider damage 10, **PvP effect yes** |
+| Plating | 5 | B | Iron Fortress | Towers in range take 55% less damage | Resist % 55 |
+| Plating | 5 | C | Spike Fortress | Biters take 18 damage back | Resist % 40, Thorns damage 18 |
+| Gunsmith | 4 | B | Rapid Feed | Towers in range fire 20% faster | Aura rate % 20, Aura damage % 15 |
+| Gunsmith | 4 | C | Heavy Loads | Towers in range hit 30% harder | Aura rate % 5, Aura damage % 30 |
+| Gunsmith | 5 | B | Machine Shop | Towers in range fire 30% faster | Aura rate % 30, Aura damage % 25 |
+| Gunsmith | 5 | C | Magnum Loads | Towers in range hit 40% harder | Aura rate % 15, Aura damage % 40 |
+| Outfitter | 4 | B | Speed Loader | Hunters in range reload 30% faster | Hunter reload x 0.7 |
+| Outfitter | 4 | C | Gun Braces | Hunters in range have 30% less recoil | Hunter recoil x 0.7 |
+| Outfitter | 5 | B | Gun Oil | Wider ring; hunters in it reload 20% faster | Hunter reload x 0.8, Range x 1.15385 |
+| Outfitter | 5 | C | Steady Aim | Wider ring; hunters in it aim 20% tighter | Hunter spread x 0.8, Range x 1.15385 |
+
+- **T116** Tranq + Supply rows, Raider sting, Bounty cash, their `tower_worth` metrics;
+  specs: each option's composed stats, a sting spec (×0.5, cooldown, Camo Cover, own side,
+  co-op no-op), a bounty spec (strongest camp pays once). **T117** Hospital + Armory rows,
+  Biter slow, their metrics (incl. Outfitter reading the composed build). **T118** `UPGRADES.md`
+  option tables for the 4 towers, audit clean, `value.py --options` clean, Config diff
+  accounted for. Tester: one B and one C per tower in a match; Bounty Board pays +8 per
+  take-down in range (cash log); Heavy Crates drop 2 crates; Bitter Tonic slows a biting
+  dino; auras don't stack across options (a 5B Gunsmith + a 5C Gunsmith on one tower: the
+  stronger of each aura only); Sleeper Darts / Barbed Wire sting the stand-in hunter at ×0.5
+  in a Camp Clash round and do nothing through Camo Cover.
 
 **9e — B/C for the 2× batch** (Storm Coil, Falcon Roost, Tar Pit, Harpoon Ballista: 12 paths,
-**48**; `TOWERS_NEXT.md` unpicked ideas first, A = Jovan's own T5 picks, unchanged).
-**T119** (Coil + Falcon), **T120** (Tar Pit + Ballista), tune + docs in each. Tester: per tower.
+**48 options**; A = Jovan's own T4/T5 picks, unchanged). **DESIGNED (Director, 2026-10-13,
+#296–#297) — enter as written** (🦖 names first). Same row recipe as 9c/9d. Built from the
+unpicked `TOWERS_NEXT.md` ideas first: Storm Front, Supercell, Superconductor, Lightning
+Shield; Raking Strike, Harpy Strike, Sky Hunters; La Brea, Ever-Burn, Preserved Specimens; Serrated, Leviathan Bolt, Heartseeker, Tether, Anchor Line,
+Fire Bolts, Siege Battery. (Left out, each a new system: Carry Off, Thunderhead, Clothesline,
+Fossil Trap, Rain of Spears, Asphalt (a button), Spotter's Eye (reveal-like).)
+
+**Worth metrics (#296):** damage paths = eDPS + aura credit as today, plus **Field strike**
+credit (20 dinos × the coil's damage × Field strike x ÷ every × the share it can hurt:
+plain + boss + flying, + armoured if it pierces). Lightning Rod = eDPS + aura + 20 ÷
+Grounding every (s). Falcon Falconer = eDPS + aura with Boss mark % × boss share added to
+Aura damage % (as Tranq Weak Spot). Tar Pit: Deep Tar = today's slow-seconds × (1 + sinks ÷
+ground dinos), Bubbling / Dig Site today's. **Ballista Reel = hold-seconds per second:**
+rate × max(1, Line hits) × (min(shot gap, Stun s) + Knockback ÷ 8 studs/s) × (1 − boss) +
+rate × Slow % × min(shot gap, Slow linger) × boss (if Slows bosses) + Tow Line 10 ÷ 8 ÷ 15 ×
+boss (today Reel scores eDPS only, so its options all tie). Worth caps unchanged (#193/#200).
+Checked on a sheet copy with these metrics: all 48 slots inside 0.8–1.25× of the median,
+the four Raider options ≥ 0.8× the others; best builds: Coil 131, Ballista 133 (≤ 1.25 × M =
+178); Falcon builds 181–276 (untouchable band 178–284). Today's `--options` flags 4 (Coil
+Arc: Field strike unmodelled; Falcon Falconer: boss mark) — the metric change goes in the
+same commit as the rows. Model blind spots (carry damage, feel-check in the Tester run, 9k):
+stun, chain stun, Static %, mark on Ballista/Falcon dives, Strips armour on tar.
+
+**New mechanics (9e, ≤ 3 per tower):**
+1. **Field strike** (`Field strike every (s)`, `Field strike x`; Storm Coil Storm Front):
+   every N s the coil strikes **every dino on its side's field** for x × its damage (air
+   too; armour only if it pierces; breaks 1, area). Fires itself (#283); several Storm Front
+   coils each fire their own. Jovan's "reaching all dinos on the field at once".
+2. **Chain effects** (flag; Supercell, Superconductor): the strike's slow and stun land on
+   every dino in the chain, not just the first; an arc's stun is capped at the new Tuning
+   row `Chain stun cap (s)` seed 0.3 (the first target keeps its full stun); never bosses
+   unless the build stuns bosses.
+3. **Targets biggest** (flag; Ballista Heartseeker): aims at the biggest dino in range (the
+   Judgement Bolt pick, made generic) instead of the furthest along.
+Plus Raider sting (9d) on Rod Strike, Guard Falcons, Bog Boots, Snag Line. Wirings: Falcon
+dives take `Targets x` (a dive also hits the nearest other dino), `Line hits`, `Size
+breaks`, `Boss x`, `Armoured x`, `Mark %`; Ballista bolts take `Mark %`, `Boss x`, `Slow %` /
+`Slow linger` / `Slows bosses`, `Burn DPS` / `Burn (s)`; Tar Pit `Strips armour` (9c's
+generic strip) and `Sink seconds` at T5; Coil `Size breaks` per strike and `Aura rate %` at
+T4/T5. Note on Bog Boots: its `Range x` 1.5 multiplies with Tar Lake (×3 → 81 studs): fine
+by the pool-overlap rule (#189), playtest watch.
+
+**Storm Coil**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; unset = 1 / blank) |
+|---|---|---|---|---|---|
+| Arc | 4 | B | Branching Bolt | Every arc forks three ways | Damage x 1.15, Arc forks 3 |
+| Arc | 4 | C | Chain Surge | Three more arcs on every strike | Damage x 1.4, Arcs 9 |
+| Arc | 5 | B | Storm Front | Every 8 s a strike hits every dino on the field | Damage x 1.45, Field strike every (s) 8, Field strike x 0.5 |
+| Arc | 5 | C | Supercell | A 14-arc chain that slows every dino it hits | Damage x 1.5, Arcs 14, Slow % 20, Slow linger (s) 1, Chain effects Yes |
+| Charge | 4 | B | Overcharge | Stuns its first target for 0.8 s | Damage x 1.35, Pierces armour Yes, Stun (s) 0.8 |
+| Charge | 4 | C | Static Storm | Struck dinos take +30% from the next strike | Damage x 1.3, Pierces armour Yes, Static % 30 |
+| Charge | 5 | B | Superconductor | Every dino in the chain is stunned for a moment | Damage x 1.85, Pierces armour Yes, Chain effects Yes |
+| Charge | 5 | C | Thunderstrike | Huge strikes that break 2 sizes | Damage x 2, Pierces armour Yes, Size breaks 2 |
+| Lightning Rod | 4 | B | Ground Wire | Strikes down a dino throw every 2 s | Damage x 1.3, Grounding every (s) 2 |
+| Lightning Rod | 4 | C | Rod Strike | Zaps raiders; towers in range fire 15% faster | Damage x 1.3, Aura rate % 15, Raider slow % 20, Raider slow (s) 1, Raider damage 8, **PvP effect yes** |
+| Lightning Rod | 5 | B | Lightning Shield | Strikes down a throw at a tower every second | Damage x 1.3, Grounding every (s) 1, Aura damage % 10 |
+| Lightning Rod | 5 | C | Thunder Drums | Towers in range fire 25% faster | Damage x 1.3, Aura rate % 25 |
+
+**Falcon Roost**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; unset = 1 / blank) |
+|---|---|---|---|---|---|
+| Talons | 4 | B | Raking Strike | Each dive also slashes the dino beside it | Damage x 1.2, Targets x 2, Pierces armour Yes |
+| Talons | 4 | C | Stoop Strike | The first dive on a dino hits 6x | Damage x 1.35, First dive x 6, Pierces armour Yes |
+| Talons | 5 | B | Harpy Strike | Dives break 4 sizes and hit bosses 2x | Damage x 2.1, Size breaks 4, Boss x 2 |
+| Talons | 5 | C | Hide Ripper | Talons shred armoured dinos | Damage x 3.2, Armoured x 2.5 |
+| Flock | 4 | B | Swift Wings | Birds fly back much faster | Damage x 1.85, Rate x 1.6 |
+| Flock | 4 | C | Second Flock | Seven bigger birds hunt at once | Damage x 2.7, Birds 7 |
+| Flock | 5 | B | Sky Hunters | Twelve birds hunt twice as far out | Damage x 3.3, Range x 2, Birds 12 |
+| Flock | 5 | C | Strafing Run | Each dive cuts through 3 dinos in a line | Damage x 1.05, Line hits 3 |
+| Falconer | 4 | B | Loud Bells | Struck dinos take +25% from every tower | Damage x 1.3, Mark % 25 |
+| Falconer | 4 | C | Guard Falcons | Birds dive at raiders; bosses take +40% | Damage x 1.3, Boss mark % 40, Raider slow % 20, Raider slow (s) 1, Raider damage 6, **PvP effect yes** |
+| Falconer | 5 | B | Royal Hood | Bosses in range take +60% from everything | Damage x 1.3, Boss mark % 60 |
+| Falconer | 5 | C | Bell Chorus | Struck dinos take +40% from every tower | Damage x 1.3, Mark % 40 |
+
+**Tar Pit**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; unset = 1 / blank) |
+|---|---|---|---|---|---|
+| Deep Tar | 4 | B | Thick Mire | Thicker tar: dinos wade much slower | Slow % 55 |
+| Deep Tar | 4 | C | Bog Boots | A longer pool that also slows raiders | Range x 1.5, Slow % 45, Raider slow % 30, Raider slow (s) 2, **PvP effect yes** |
+| Deep Tar | 5 | B | La Brea | Smallest dinos sink at once; the rest crawl | Sink seconds 0.05, Slow % 62, Range x 1.15, Slow linger (s) 3 |
+| Deep Tar | 5 | C | Black Glue | Dinos stay slowed 5 s after they climb out | Slow % 50, Slow linger (s) 5 |
+| Bubbling | 4 | B | Boiling Splash | A bigger pool of boiling tar | Range x 1.3 |
+| Bubbling | 4 | C | Pitch Coat | Sticky tar strips armour; dinos leave burning | Strips armour Yes, Burn DPS 85, Burn (s) 1 |
+| Bubbling | 5 | B | Ever-Burn | Dinos keep burning 2.75 s after they leave | Burn (s) 2.75 |
+| Bubbling | 5 | C | Tar Inferno | The tar boils 50% hotter | Burn DPS 120 |
+| Dig Site | 4 | B | Bone Yard | Every sunk dino pays more cash | Sink cash 28, Sink chest cash 36 |
+| Dig Site | 4 | C | Fossil Finder | Bigger chests where dinos go under | Sink cash 15, Sink chest cash 55 |
+| Dig Site | 5 | B | Preserved Specimens | Every sunk dino pays 36 cash | Sink cash 36, Sink chest cash 40 |
+| Dig Site | 5 | C | Amber Seep | Chests where dinos sink are worth 60 | Sink cash 25, Sink chest cash 60 |
+
+**Harpoon Ballista**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; unset = 1 / blank) |
+|---|---|---|---|---|---|
+| Spearhead | 4 | B | Serrated Head | Hit dinos take +20% from every tower | Damage x 1.7, Pierces armour Yes, Mark % 20 |
+| Spearhead | 4 | C | Whale Lance | Bolts hit bosses 40% harder | Damage x 1.6, Pierces armour Yes, Boss x 1.4 |
+| Spearhead | 5 | B | Leviathan Bolt | Bolts break 4 sizes and hit bosses 3x | Damage x 2.5, Rate x 1.4, Size breaks 4, Boss x 3 |
+| Spearhead | 5 | C | Heartseeker | Always aims for the biggest dino in range | Damage x 3, Rate x 2.1, Size breaks 3, Targets biggest Yes |
+| Reel | 4 | B | Tether | Pinned dinos stay held 2 s | Damage x 1.3, Stun (s) 2 |
+| Reel | 4 | C | Snag Line | Harpoons raiders too; holds dinos 1.75 s | Damage x 1.3, Stun (s) 1.75, Raider slow % 30, Raider slow (s) 3, Raider damage 12, **PvP effect yes** |
+| Reel | 5 | B | Anchor Line | Bolts slow bosses too: 30% for 2 s | Damage x 1.3, Slow % 30, Slow linger (s) 2, Slows bosses Yes |
+| Reel | 5 | C | Winch Haul | Drags hit dinos 7.5 studs back | Damage x 1.3, Knockback (studs) 7.5 |
+| Volley | 4 | B | Wide Volley | Five bolts per volley | Damage x 1.15, Shots 5 |
+| Volley | 4 | C | Fire Bolts | Bolts set dinos on fire | Rate x 1.6, Burn DPS 6, Burn (s) 3 |
+| Volley | 5 | B | Siege Battery | Six bolts per volley | Damage x 2.4, Shots 6 |
+| Volley | 5 | C | Firestorm Volley | Faster volleys of burning bolts | Damage x 2, Rate x 1.8, Burn DPS 12, Burn (s) 3 |
+
+- **T119** Coil + Falcon rows, Field strike, Chain effects, their metrics; specs: composed
+  stats; a Storm Front spec (every dino on the side's field, air hit, armour skipped without
+  pierce); a chain-stun-cap spec; a Raking Strike spec (two dinos per dive). **T120** Tar Pit
+  + Ballista rows, Targets biggest, the Reel metric; specs: Heartseeker picks the biggest;
+  Anchor Line slows a boss; La Brea sinks a last-size dino at once. Each task: `UPGRADES.md`
+  option tables, audit clean, `--options` clean, Config diff accounted for. Tester: one B and
+  one C per tower; Storm Front visibly hits dinos outside the coil's range every 8 s;
+  Superconductor stuns the chain briefly, never a boss; Heartseeker shoots the biggest dino;
+  Bog Boots / Snag Line / Guard Falcons / Rod Strike sting the stand-in at ×0.5 in Camp Clash,
+  never through Camo Cover, and still do their dino part in co-op.
 
 **9f — B/C for the heroes** (12 paths, **48**, handling only) + T6 works after any T5 (#278:
 Big Five, Endless Belt, Dynamite Rounds grant their T5-A mechanic). **T121** Tracker + Big Game
