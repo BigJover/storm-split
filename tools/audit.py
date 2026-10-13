@@ -264,6 +264,22 @@ def check_names(findings, block, items, doc_name, heading_level, compared):
                     seen.setdefault(name.lower(), f"{key} {where}")
 
 
+
+def check_option_names(findings, data):
+    """DECISIONS #291: a tier-4/5 option's name is unique across every tower and hero
+    (no other option, tier or capstone of any tower or hero shares it)."""
+    seen = {}  # lower-case name -> [(where, is_option)]
+    for block in ("Towers", "Heroes"):
+        for key, item in data[block].items():
+            for path in item["paths"]:
+                for label, row in export_constants.option_rows(path):
+                    name = (row.get("name") or "").strip()
+                    if name:
+                        seen.setdefault(name.lower(), []).append((f"{block}.{key} {path['id']} T{label}", len(label) == 2))
+    for name, places in seen.items():
+        if len(places) > 1 and any(is_option for _, is_option in places):
+            findings.append(f"option name '{name}' is used {len(places)} times: {', '.join(w for w, _ in places)} (#291)")
+
 # ---------------------------------------------------------------- 2. unlocks
 
 def direction_ladder():
@@ -646,7 +662,8 @@ def main():
     compared = []
     checks = [
         ("names", lambda f, n: (check_names(f, "Towers", data["Towers"], "UPGRADES.md", "##", compared),
-                             check_names(f, "Heroes", data["Heroes"], "HEROES.md", "###", compared))),
+                             check_names(f, "Heroes", data["Heroes"], "HEROES.md", "###", compared),
+                             check_option_names(f, data))),
         ("options", lambda f, n: (check_options(f, n, "Towers", data["Towers"], "UPGRADES.md", "##"),
                                check_options(f, n, "Heroes", data["Heroes"], "HEROES.md", "###"))),
         ("unlocks", lambda f, n: check_unlocks(f, data)),
