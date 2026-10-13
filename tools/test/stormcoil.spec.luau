@@ -3,6 +3,7 @@
 	Judgement Bolt's target, Grounding Spike's pick, and the sheet's tiers.
 ]]
 
+local Upgrades = require(src.shared.Upgrades)
 local Config = require(src.shared.Config)
 local StormCoil = require(src.shared.StormCoil)
 local TowerStats = require(src.shared.TowerStats)
@@ -149,7 +150,7 @@ test("the sheet's tiers (UPGRADES.md, TOWERS_NEXT final names)", function()
 	}
 	for p, path in COIL.paths do
 		eq(path.id, ({ "Arc", "Charge", "Lightning Rod" })[p], `path {p}`)
-		for t, step in path.tiers do
+		for t, step in Upgrades.line(path) do
 			eq(step.name, names[p][t], `path {p} T{t}`)
 		end
 	end

@@ -4,13 +4,14 @@
 	test catches a row that moved.
 ]]
 
+local Upgrades = require(src.shared.Upgrades)
 local Config = require(src.shared.Config)
 local TowerStats = require(src.shared.TowerStats)
 
 -- The stats of `key` with only `path` bought, up to `tier`, and that tier's name.
 local function at(key: string, path: number, tier: number, name: string)
 	local def = Config.Towers[key]
-	eq(def.paths[path].tiers[tier].name, name, `{key} path {path} T{tier} name`)
+	eq(Upgrades.row(def.paths[path], tier).name, name, `{key} path {path} T{tier} name`)
 	local tiers = { 0, 0, 0 }
 	tiers[path] = tier
 	return TowerStats.compute(def, tiers), def
@@ -37,7 +38,7 @@ test("Hunting Blind Trigger Happy: Double Tap 2 shots, Lead Rain fastest fire of
 	local fastest = lead.shots * lead.rate
 	for _, key in Config.TowerOrder do
 		for p, path in Config.Towers[key].paths do
-			for t in path.tiers do
+			for t in Upgrades.line(path) do
 				local tiers = { 0, 0, 0 }
 				tiers[p] = t
 				local s = TowerStats.compute(Config.Towers[key], tiers)

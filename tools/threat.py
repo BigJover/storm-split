@@ -204,7 +204,7 @@ def main():
         print(f"    {name}: " + (f"from round {rounds[0]} ({len(rounds)} rounds)" if rounds else "never"))
     weakest = min(mid_gap, key=mid_gap.get)
     weakest_hp = mid_gap[weakest]
-    resist = max((step.get("resistPercent", 0) for path in towers[RESIST_TOWER]["paths"] for step in path["tiers"]),
+    resist = max((step.get("resistPercent", 0) for path in towers[RESIST_TOWER]["paths"] for _, step in export_constants.all_rows(path)),
                  default=0)
     print(f"  boss rounds {BOSS_ROUNDS[0]}-{BOSS_ROUNDS[-1]}, mid-gap defended ranged damage per round as % of T0 max HP,"
           f" plain / with the {towers[RESIST_TOWER]['display']}'s top resist ({resist:g}%);"

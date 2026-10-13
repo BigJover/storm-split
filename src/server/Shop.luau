@@ -193,7 +193,7 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 		return false, "Repair it first"
 	end
 
-	local why = Upgrades.check(tower.pathTiers, pathIndex, #path.tiers)
+	local why = Upgrades.check(tower.pathTiers, pathIndex, Upgrades.tierCount(path))
 	if why ~= "ok" then
 		return false, UPGRADE_REFUSALS[why] or "Can't upgrade that"
 	end

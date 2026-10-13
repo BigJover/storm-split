@@ -5,6 +5,7 @@
 	tier 5's Damage x.
 ]]
 
+local Upgrades = require(src.shared.Upgrades)
 local Config = require(src.shared.Config)
 local HeroStats = require(src.shared.HeroStats)
 local GunRules = require(src.shared.GunRules)
@@ -19,16 +20,16 @@ end
 
 -- (hero, path, tier 6 name): the tier 6 and tier 5 stats.
 local function six(key: string, path: number, name: string): (any, any)
-	eq(Config.Heroes[key].paths[path].tiers[6].name, name, `{key} path {path} T6 name`)
+	eq(Upgrades.row(Config.Heroes[key].paths[path], 6).name, name, `{key} path {path} T6 name`)
 	return stats(key, path, 6), stats(key, path, 5)
 end
 
 test("every hero path has six tiers; tier 6 costs 6,400 and keeps tier 5's damage", function()
 	for key, hero in Config.Heroes do
 		for _, path in hero.paths do
-			eq(#path.tiers, 6, `{key} {path.id} tiers`)
-			eq(path.tiers[6].cost, 6400, `{key} {path.id} T6 cost`)
-			eq(path.tiers[6].damageMult, path.tiers[5].damageMult, `{key} {path.id} T6 Damage x`)
+			eq(Upgrades.tierCount(path), 6, `{key} {path.id} tiers`)
+			eq(Upgrades.row(path, 6).cost, 6400, `{key} {path.id} T6 cost`)
+			eq(Upgrades.row(path, 6).damageMult, Upgrades.row(path, 5).damageMult, `{key} {path.id} T6 Damage x`)
 		end
 	end
 end)
@@ -151,7 +152,7 @@ test("Field Medic: Rapid Response, Bottomless Tube, Lights Out", function()
 	near(GunRules.readyAt(single, 105, 1, cd), 110, "ready after the cooldown")
 
 	s, t5 = six("MEDIC", 2, "Bottomless Tube")
-	eq(s.magazine, math.floor(Config.Heroes.MEDIC.magazine * Config.Heroes.MEDIC.paths[2].tiers[5].magazineMult * 1.5 + 0.5), "magazine +50%")
+	eq(s.magazine, math.floor(Config.Heroes.MEDIC.magazine * Upgrades.row(Config.Heroes.MEDIC.paths[2], 5).magazineMult * 1.5 + 0.5), "magazine +50%")
 	near(s.reload, t5.reload * 0.5, "reload x0.5")
 
 	s, t5 = six("MEDIC", 3, "Lights Out")

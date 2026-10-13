@@ -6,6 +6,7 @@
 
 local fs = require("@lune/fs")
 
+local Upgrades = require(src.shared.Upgrades)
 local Ballista = require(src.shared.Ballista)
 local Config = require(src.shared.Config)
 local TowerStats = require(src.shared.TowerStats)
@@ -68,7 +69,7 @@ test("the paths and names are TOWERS_NEXT's Final names", function()
 	for i, id in { "Spearhead", "Reel", "Volley" } do
 		eq(BALLISTA.paths[i].id, id)
 		for tier, name in names[id] do
-			eq(BALLISTA.paths[i].tiers[tier].name, name, `{id} T{tier}`)
+			eq(Upgrades.row(BALLISTA.paths[i], tier).name, name, `{id} T{tier}`)
 		end
 	end
 end)
@@ -119,7 +120,7 @@ test("harpoon abilities only on a tower with harpoons", function()
 		if not def.harpoons then
 			local tiers = {}
 			for i in def.paths do
-				tiers[i] = #def.paths[i].tiers
+				tiers[i] = Upgrades.tierCount(def.paths[i])
 			end
 			local s = TowerStats.compute(def, tiers)
 			eq(s.skewer or s.towLine or s.chainHarpoons, false, key)

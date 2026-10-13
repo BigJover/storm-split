@@ -21,7 +21,7 @@ local function expected(def, tiers: { number })
 	local rows = {}
 	for pathIndex, tier in tiers do
 		if tier > 0 then
-			table.insert(rows, def.paths[pathIndex].tiers[tier])
+			table.insert(rows, Upgrades.row(def.paths[pathIndex], tier))
 		end
 	end
 	local function product(field: string): number
@@ -142,7 +142,7 @@ end
 test("every combine-list field exists on every Config tier", function()
 	for _, key in Config.TowerOrder do
 		for pathIndex, path in Config.Towers[key].paths do
-			for tier, row in path.tiers do
+			for tier, row in Upgrades.line(path) do
 				for _, list in { TowerStats.MULTIPLIERS, TowerStats.HIGHEST, TowerStats.FLAGS } do
 					for _, field in list do
 						ok(row[field] ~= nil, `{key} path {pathIndex} tier {tier} has no {field}`)
@@ -165,7 +165,7 @@ test("each tier alone gives that Config row's numbers (15 per tower)", function(
 	for _, key in Config.TowerOrder do
 		local def = Config.Towers[key]
 		for pathIndex, path in def.paths do
-			for tier in path.tiers do
+			for tier in Upgrades.line(path) do
 				local tiers = { 0, 0, 0 }
 				tiers[pathIndex] = tier
 				compare(key, def, tiers)
@@ -182,8 +182,8 @@ test("every legal two-path crossover multiplies, takes the highest and ORs", fun
 		local def = Config.Towers[key]
 		for p = 1, 3 do
 			for q = p + 1, 3 do
-				for a = 1, #def.paths[p].tiers do
-					for b = 1, #def.paths[q].tiers do
+				for a = 1, Upgrades.tierCount(def.paths[p]) do
+					for b = 1, Upgrades.tierCount(def.paths[q]) do
 						local tiers = { 0, 0, 0 }
 						tiers[p], tiers[q] = a, b
 						if a <= 2 or b <= 2 then -- the crossover rule (cap 2)
@@ -200,7 +200,7 @@ end)
 
 test("a known crossover: Hunting Blind Lookout 3 + Trigger Happy 2", function()
 	local def = Config.Towers.SCOUT
-	local a, b = def.paths[1].tiers[3], def.paths[2].tiers[2]
+	local a, b = Upgrades.row(def.paths[1], 3), Upgrades.row(def.paths[2], 2)
 	eq(Upgrades.check({ 3, 1, 0 }, 2, 5), "ok", "legal")
 	local stats = TowerStats.compute(def, { 3, 2, 0 })
 	near(stats.damage, def.baseDamage * a.damageMult * b.damageMult, "damage")

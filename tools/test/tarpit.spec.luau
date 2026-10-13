@@ -6,6 +6,7 @@
 
 local fs = require("@lune/fs")
 
+local Upgrades = require(src.shared.Upgrades)
 local Config = require(src.shared.Config)
 local Placement = require(src.shared.Placement)
 local TarPit = require(src.shared.TarPit)
@@ -54,7 +55,7 @@ test("the paths and names are TOWERS_NEXT's Final names", function()
 	for i, path in want do
 		eq(PIT.paths[i].id, path[1])
 		for t, name in path[2] do
-			eq(PIT.paths[i].tiers[t].name, name, `{path[1]} T{t}`)
+			eq(Upgrades.row(PIT.paths[i], t).name, name, `{path[1]} T{t}`)
 		end
 	end
 end)
@@ -102,7 +103,7 @@ test("tar abilities only on a tower placed on the track", function()
 	for key, def in Config.Towers do
 		if not def.onTrack then
 			for i = 1, #def.paths do
-				for t = 1, #def.paths[i].tiers do
+				for t = 1, Upgrades.tierCount(def.paths[i]) do
 					local tiers = { 0, 0, 0 }
 					tiers[i] = t
 					local s = TowerStats.compute(def, tiers)
@@ -143,7 +144,7 @@ test("a dino in two pools gets the strongest one only: the most cash in, first p
 	eq(TarPit.strength(PIT, { 0, 0, 0 }), 450)
 	local cash = 450
 	for t = 1, 5 do
-		cash += PIT.paths[1].tiers[t].cost
+		cash += Upgrades.row(PIT.paths[1], t).cost
 	end
 	eq(TarPit.strength(PIT, { 5, 0, 0 }), cash, "Tar Lake: base + every Deep Tar tier")
 	ok(TarPit.strength(PIT, { 5, 2, 0 }) > TarPit.strength(PIT, { 5, 0, 0 }))

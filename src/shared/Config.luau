@@ -422,7 +422,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Watch Post",
 							cost = 5597,
 							damageMult = 2.86,
@@ -503,8 +505,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Signal Tower",
 							cost = 12873,
 							damageMult = 3.71,
@@ -585,6 +591,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -838,7 +846,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Bullet Hose",
 							cost = 5597,
 							damageMult = 3.32,
@@ -919,8 +929,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Lead Rain",
 							cost = 12873,
 							damageMult = 4.48,
@@ -1001,6 +1015,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -1254,7 +1270,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Railshot",
 							cost = 5597,
 							damageMult = 13.03,
@@ -1335,8 +1353,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Hide Buster",
 							cost = 12873,
 							damageMult = 24.76,
@@ -1417,6 +1439,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -1694,7 +1718,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Tungsten Core",
 							cost = 9794,
 							damageMult = 4.42,
@@ -1775,8 +1801,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Linebreaker",
 							cost = 22527,
 							damageMult = 8.84,
@@ -1857,6 +1887,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -2110,7 +2142,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Game Spotter",
 							cost = 9794,
 							damageMult = 3.32,
@@ -2191,8 +2225,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Eye in the Sky",
 							cost = 22527,
 							damageMult = 4.48,
@@ -2273,6 +2311,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -2526,7 +2566,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Punt Gun",
 							cost = 9794,
 							damageMult = 13.03,
@@ -2607,8 +2649,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Extinction Round",
 							cost = 22527,
 							damageMult = 24.76,
@@ -2689,6 +2735,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -2966,7 +3014,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Firestorm",
 							cost = 15391,
 							damageMult = 4.42,
@@ -3047,8 +3097,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Scorched Earth",
 							cost = 35400,
 							damageMult = 6.41,
@@ -3129,6 +3183,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -3382,7 +3438,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Carpet Shelling",
 							cost = 15391,
 							damageMult = 4.42,
@@ -3463,8 +3521,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Meteor Shower",
 							cost = 35400,
 							damageMult = 6.41,
@@ -3545,6 +3607,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -3798,7 +3862,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Earthshaker",
 							cost = 15391,
 							damageMult = 13.03,
@@ -3879,8 +3945,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Tectonic Slam",
 							cost = 35400,
 							damageMult = 34,
@@ -3961,6 +4031,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -4238,7 +4310,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Sedative Cloud",
 							cost = 11194,
 							damageMult = 2.86,
@@ -4319,8 +4393,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Deep Sleep",
 							cost = 25745,
 							damageMult = 3.71,
@@ -4401,6 +4479,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -4654,7 +4734,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Quick Cycle",
 							cost = 11194,
 							damageMult = 3.32,
@@ -4735,8 +4817,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Big Game Tranq",
 							cost = 25745,
 							damageMult = 4.48,
@@ -4817,6 +4903,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -5070,7 +5158,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Vital Points",
 							cost = 11194,
 							damageMult = 13.03,
@@ -5151,8 +5241,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Apex Predator",
 							cost = 25745,
 							damageMult = 24.76,
@@ -5233,6 +5327,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -5510,7 +5606,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "War Chest",
 							cost = 6554,
 							damageMult = 1,
@@ -5591,8 +5689,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Amber Vault",
 							cost = 10486,
 							damageMult = 1,
@@ -5673,6 +5775,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -5926,7 +6030,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Supply Chain",
 							cost = 6554,
 							damageMult = 1,
@@ -6007,8 +6113,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Treasure Haul",
 							cost = 10486,
 							damageMult = 1,
@@ -6089,6 +6199,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -6342,7 +6454,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Forward Camp",
 							cost = 6554,
 							damageMult = 1,
@@ -6423,8 +6537,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Base Camp",
 							cost = 10486,
 							damageMult = 1,
@@ -6505,6 +6623,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -6782,7 +6902,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Night Shift",
 							cost = 12593,
 							damageMult = 1,
@@ -6863,8 +6985,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Miracle Ward",
 							cost = 28964,
 							damageMult = 1,
@@ -6945,6 +7071,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -7198,7 +7326,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Pack Mules",
 							cost = 12593,
 							damageMult = 1,
@@ -7279,8 +7409,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Rescue Beacon",
 							cost = 28964,
 							damageMult = 1,
@@ -7361,6 +7495,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -7614,7 +7750,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Bone Broth",
 							cost = 12593,
 							damageMult = 1,
@@ -7695,8 +7833,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Last Stand",
 							cost = 28964,
 							damageMult = 1,
@@ -7777,6 +7919,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -8054,7 +8198,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Tempered Steel",
 							cost = 16790,
 							damageMult = 1,
@@ -8135,8 +8281,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Bulwark",
 							cost = 38618,
 							damageMult = 1,
@@ -8217,6 +8367,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -8470,7 +8622,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Match Grade",
 							cost = 16790,
 							damageMult = 1,
@@ -8551,8 +8705,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Master Gunsmith",
 							cost = 38618,
 							damageMult = 1,
@@ -8633,6 +8791,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -8886,7 +9046,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Steady Rests",
 							cost = 16790,
 							damageMult = 1,
@@ -8967,8 +9129,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Full Kit",
 							cost = 38618,
 							damageMult = 1,
@@ -9049,6 +9215,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -9326,7 +9494,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Jump Spark",
 							cost = 11194,
 							damageMult = 4.42,
@@ -9407,8 +9577,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Power Grid",
 							cost = 25745,
 							damageMult = 6.41,
@@ -9489,6 +9663,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -9742,7 +9918,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "High Voltage",
 							cost = 11194,
 							damageMult = 6.58,
@@ -9823,8 +10001,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Judgement Bolt",
 							cost = 25745,
 							damageMult = 12.5,
@@ -9905,6 +10087,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -10158,7 +10342,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Storm Warning",
 							cost = 11194,
 							damageMult = 2.86,
@@ -10239,8 +10425,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Lightning Rodeo",
 							cost = 25745,
 							damageMult = 3.71,
@@ -10321,6 +10511,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -10598,7 +10790,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Iron Talons",
 							cost = 11194,
 							damageMult = 13.03,
@@ -10679,8 +10873,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Eagle of the Peak",
 							cost = 25745,
 							damageMult = 12,
@@ -10761,6 +10959,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -11014,7 +11214,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Wide Circle",
 							cost = 11194,
 							damageMult = 5.2,
@@ -11095,8 +11297,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Murmuration",
 							cost = 25745,
 							damageMult = 4.4,
@@ -11177,6 +11383,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -11430,7 +11638,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Lure",
 							cost = 11194,
 							damageMult = 2.86,
@@ -11511,8 +11721,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Hunting Party",
 							cost = 25745,
 							damageMult = 3.71,
@@ -11593,6 +11807,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -11870,7 +12086,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Clinging Tar",
 							cost = 12593,
 							damageMult = 1,
@@ -11951,8 +12169,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Tar Lake",
 							cost = 28964,
 							damageMult = 1,
@@ -12033,6 +12255,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -12286,7 +12510,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Tar Fire",
 							cost = 12593,
 							damageMult = 1,
@@ -12367,8 +12593,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Eruption",
 							cost = 28964,
 							damageMult = 1,
@@ -12449,6 +12679,8 @@ return table.freeze({
 							eruption = true,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -12702,7 +12934,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Tar Tracks",
 							cost = 12593,
 							damageMult = 1,
@@ -12783,8 +13017,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 15,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Tar Totem",
 							cost = 28964,
 							damageMult = 1,
@@ -12865,6 +13103,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 15,
 							auraSlowedPercent = 15,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -13142,7 +13382,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Great Harpoon",
 							cost = 13992,
 							damageMult = 13.03,
@@ -13223,8 +13465,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Skewer",
 							cost = 32182,
 							damageMult = 24.76,
@@ -13305,6 +13551,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -13558,7 +13806,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Reel In",
 							cost = 13992,
 							damageMult = 2.86,
@@ -13639,8 +13889,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Tow Line",
 							cost = 32182,
 							damageMult = 3.71,
@@ -13721,6 +13975,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -13974,7 +14230,9 @@ return table.freeze({
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Steam Crank",
 							cost = 13992,
 							damageMult = 1.2,
@@ -14055,8 +14313,12 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Chain Harpoons",
 							cost = 32182,
 							damageMult = 1.6,
@@ -14137,6 +14399,8 @@ return table.freeze({
 							eruption = false,
 							tracksSlowPercent = 0,
 							auraSlowedPercent = 0,
+							option = "A",
+							blurb = "",
 						},
 					},
 				},
@@ -14316,7 +14580,9 @@ return table.freeze({
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Fan the Hammer",
 							cost = 1600,
 							rateMult = 1.6,
@@ -14366,8 +14632,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Akimbo Frenzy",
 							cost = 3200,
 							rateMult = 2,
@@ -14417,8 +14687,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t6 = {
+						AA = {
 							name = "Hot Swap",
 							cost = 6400,
 							rateMult = 2,
@@ -14628,7 +14902,9 @@ return table.freeze({
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Hollow Tips",
 							cost = 1600,
 							rateMult = 1,
@@ -14678,8 +14954,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Deadshot",
 							cost = 3200,
 							rateMult = 1,
@@ -14729,8 +15009,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t6 = {
+						AA = {
 							name = "Heart Shot",
 							cost = 6400,
 							rateMult = 1,
@@ -14940,7 +15224,9 @@ return table.freeze({
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Quick Dart",
 							cost = 1600,
 							rateMult = 1,
@@ -14990,8 +15276,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Chain Shot",
 							cost = 3200,
 							rateMult = 1,
@@ -15041,8 +15331,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t6 = {
+						AA = {
 							name = "Bounce Back",
 							cost = 6400,
 							rateMult = 1,
@@ -15280,7 +15574,9 @@ return table.freeze({
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Trigger Discipline",
 							cost = 1600,
 							rateMult = 1.4,
@@ -15330,8 +15626,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Precision Burst",
 							cost = 3200,
 							rateMult = 1.5,
@@ -15381,8 +15681,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t6 = {
+						AA = {
 							name = "Big Five",
 							cost = 6400,
 							rateMult = 1.5,
@@ -15592,7 +15896,9 @@ return table.freeze({
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Bipod",
 							cost = 1600,
 							rateMult = 1,
@@ -15642,8 +15948,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Spin-Up",
 							cost = 3200,
 							rateMult = 1,
@@ -15693,8 +16003,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t6 = {
+						AA = {
 							name = "Endless Belt",
 							cost = 6400,
 							rateMult = 1,
@@ -15904,7 +16218,9 @@ return table.freeze({
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Hot Load",
 							cost = 1600,
 							rateMult = 1,
@@ -15954,8 +16270,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Explosive Tips",
 							cost = 3200,
 							rateMult = 1,
@@ -16005,8 +16325,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t6 = {
+						AA = {
 							name = "Dynamite Rounds",
 							cost = 6400,
 							rateMult = 1,
@@ -16244,7 +16568,9 @@ return table.freeze({
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Long Barrel",
 							cost = 1600,
 							rateMult = 1,
@@ -16294,8 +16620,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Railslug",
 							cost = 3200,
 							rateMult = 1,
@@ -16345,8 +16675,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t6 = {
+						AA = {
 							name = "Thunder Slug",
 							cost = 6400,
 							rateMult = 1,
@@ -16556,7 +16890,9 @@ return table.freeze({
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Auto-Loader",
 							cost = 1600,
 							rateMult = 1.6,
@@ -16606,8 +16942,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Thicket Sweeper",
 							cost = 3200,
 							rateMult = 2.2,
@@ -16657,8 +16997,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t6 = {
+						AA = {
 							name = "Wildfire Drum",
 							cost = 6400,
 							rateMult = 2.2,
@@ -16868,7 +17212,9 @@ return table.freeze({
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Kickback",
 							cost = 1600,
 							rateMult = 1,
@@ -16918,8 +17264,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Frag Shells",
 							cost = 3200,
 							rateMult = 1,
@@ -16969,8 +17319,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t6 = {
+						AA = {
 							name = "Quad Barrel",
 							cost = 6400,
 							rateMult = 1,
@@ -17208,7 +17562,9 @@ return table.freeze({
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Triage Tent",
 							cost = 1600,
 							rateMult = 1,
@@ -17258,8 +17614,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Second Wind",
 							cost = 3200,
 							rateMult = 1,
@@ -17309,8 +17669,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t6 = {
+						AA = {
 							name = "Rapid Response",
 							cost = 6400,
 							rateMult = 1,
@@ -17520,7 +17884,9 @@ return table.freeze({
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Smooth Action",
 							cost = 1600,
 							rateMult = 1.2,
@@ -17570,8 +17936,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Runaway Lever",
 							cost = 3200,
 							rateMult = 1.6,
@@ -17621,8 +17991,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t6 = {
+						AA = {
 							name = "Bottomless Tube",
 							cost = 6400,
 							rateMult = 1.6,
@@ -17832,7 +18206,9 @@ return table.freeze({
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
 						},
-						{
+					},
+					t4 = {
+						A = {
 							name = "Long Dose",
 							cost = 1600,
 							rateMult = 1,
@@ -17882,8 +18258,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t5 = {
+						AA = {
 							name = "Lullaby Rounds",
 							cost = 3200,
 							rateMult = 1,
@@ -17933,8 +18313,12 @@ return table.freeze({
 							stillSpreadMult = 1,
 							scopedSpreadMult = 1,
 							abilityCharges = 0,
+							option = "A",
+							blurb = "",
 						},
-						{
+					},
+					t6 = {
+						AA = {
 							name = "Lights Out",
 							cost = 6400,
 							rateMult = 1,

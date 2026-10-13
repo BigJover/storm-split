@@ -299,7 +299,7 @@ end
 -- A trampled tower can't be upgraded until it's repaired.
 function Towers.canUpgrade(tower: Tower, pathIndex: number): boolean
 	local path = tower.def.paths[pathIndex]
-	return path ~= nil and not tower.knockedOut and Upgrades.check(tower.pathTiers, pathIndex, #path.tiers) == "ok"
+	return path ~= nil and not tower.knockedOut and Upgrades.check(tower.pathTiers, pathIndex, Upgrades.tierCount(path)) == "ok"
 end
 
 ------------------------------------------------------------------ health
@@ -462,7 +462,7 @@ local function swapStage(tower: Tower): number
 	for pathIndex, tier in tower.pathTiers do
 		local reached = 0
 		for t = 1, tier do
-			if tower.def.paths[pathIndex].tiers[t].swapsModel then
+			if Upgrades.row(tower.def.paths[pathIndex], t).swapsModel then
 				reached += 1
 			end
 		end

@@ -3,13 +3,14 @@
 	looked up by (tower, path, tier) so a renamed tier can't hide a changed number.
 ]]
 
+local Upgrades = require(src.shared.Upgrades)
 local Config = require(src.shared.Config)
 local Pricing = require(src.shared.Pricing)
 
 local LOGISTICS = Config.Towers.QUARTERMASTER.paths[3]
-local BULK_ORDER = LOGISTICS.tiers[1]
-local RECYCLER = LOGISTICS.tiers[3]
-local COMMAND_CENTER = LOGISTICS.tiers[5]
+local BULK_ORDER = Upgrades.row(LOGISTICS, 1)
+local RECYCLER = Upgrades.row(LOGISTICS, 3)
+local COMMAND_CENTER = Upgrades.row(LOGISTICS, 5)
 
 test("the Logistics tiers are the ones this spec means", function()
 	eq(LOGISTICS.id, "Logistics")

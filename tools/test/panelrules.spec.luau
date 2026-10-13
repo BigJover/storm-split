@@ -2,6 +2,7 @@
 	Which shop panel may be open in which match state (Shared/PanelRules). Guards the bug
 	Jovan found: Unlocks & Mastery stayed on screen after pressing Play.
 ]]
+local Upgrades = require(src.shared.Upgrades)
 local PanelRules = require(src.shared.PanelRules)
 
 local MODES = { "list", "placing", "manage", "heroUpgrade", "heroPick", "mastery", "huntBoard", "profile" }
@@ -89,8 +90,8 @@ test("every hero path's ladder has six pips, one line each (no-trap: the panel d
 	local Config = require(src.shared.Config)
 	for key, hero in Config.Heroes do
 		for _, path in hero.paths do
-			local ladder = PanelRules.tierLadder(0, #path.tiers)
-			eq(#path.tiers, 6, `{key} {path.id} has six tiers`)
+			local ladder = PanelRules.tierLadder(0, Upgrades.tierCount(path))
+			eq(Upgrades.tierCount(path), 6, `{key} {path.id} has six tiers`)
 			ok(not string.find(ladder, "\n"), `{key} {path.id}: one line`)
 		end
 	end

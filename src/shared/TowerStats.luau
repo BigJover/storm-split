@@ -11,6 +11,7 @@
 ]]
 
 local Config = require(script.Parent.Config)
+local Upgrades = require(script.Parent.Upgrades)
 
 local TowerStats = {}
 
@@ -194,7 +195,7 @@ function TowerStats.compute(def, pathTiers: { number }): Stats
 
 	for pathIndex, tier in pathTiers do
 		if tier > 0 then
-			local step = def.paths[pathIndex].tiers[tier]
+			local step = Upgrades.row(def.paths[pathIndex], tier)
 			for _, field in MULTIPLIERS do
 				mult[field] *= step[field] or 1
 			end

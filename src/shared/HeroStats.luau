@@ -27,6 +27,7 @@
 ]]
 
 local Config = require(script.Parent.Config)
+local Upgrades = require(script.Parent.Upgrades)
 
 local HeroStats = {}
 
@@ -238,7 +239,7 @@ function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?, mast
 	for _, pathIndex in order do
 		local tier = tiers[pathIndex] or 0
 		if tier > 0 then
-			local step = hero.paths[pathIndex].tiers[tier]
+			local step = Upgrades.row(hero.paths[pathIndex], tier)
 			for _, field in MULTIPLY do
 				mult[field] *= step[field] or 1
 			end

@@ -685,8 +685,8 @@ end
 -- "+30% damage · +15% rate · 2 shots per trigger" for going from `current`
 -- to `current + 1` on a path.
 local function describeStep(path, current: number): string
-	local now = if current > 0 then path.tiers[current] else nil
-	local nextStep = path.tiers[current + 1]
+	local now = Upgrades.row(path, current)
+	local nextStep = Upgrades.row(path, current + 1)
 	local parts = {}
 	local tar = TAR_PATHS[path] == true
 	describeAbilities(now, nextStep, parts, tar)
@@ -704,8 +704,8 @@ end
 -- What a hero upgrade tier changes, in words (HEROES.md). Only fields that
 -- differ from the previous tier are mentioned.
 local function describeHeroStep(path, current: number): string
-	local now = if current > 0 then path.tiers[current] else nil
-	local nextStep = path.tiers[current + 1]
+	local now = Upgrades.row(path, current)
+	local nextStep = Upgrades.row(path, current + 1)
 	local parts = {}
 	local function before(field: string, default: any): any
 		return if now and now[field] ~= nil then now[field] else default
@@ -1251,15 +1251,15 @@ renderRows = function()
 			for pathIndex, path in hero.paths do
 				local current = tiers[pathIndex]
 				local name = escape(path.id)
-				local why = Upgrades.check(tiers, pathIndex, #path.tiers, if rewards then rewards.crossoverCap else nil)
+				local why = Upgrades.check(tiers, pathIndex, Upgrades.tierCount(path), if rewards then rewards.crossoverCap else nil)
 				-- All six tiers on one line per path (PLAN T53), so the panel never grows.
-				local ladder = PanelRules.tierLadder(current, #path.tiers)
+				local ladder = PanelRules.tierLadder(current, Upgrades.tierCount(path))
 				if why == "maxed" then
-					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(path.tiers[#path.tiers].name)}\n<font size="13">{ladder}</font>`, LOCKED_COLOR, false)
+					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(Upgrades.row(path, current).name)}\n<font size="13">{ladder}</font>`, LOCKED_COLOR, false)
 				elseif why ~= "ok" then
 					addRow(pathIndex, `<b>{name}</b>  ·  {ladder}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
 				else
-					local step = path.tiers[current + 1]
+					local step = Upgrades.row(path, current + 1)
 					local cost = if free then 0 else math.floor(step.cost * (1 - discount / 100) + 0.5)
 					local affordable = cash >= cost
 					local price = if free then "FREE" elseif discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
@@ -1415,16 +1415,16 @@ renderRows = function()
 			for pathIndex, path in def.paths do
 				local current = tiers[pathIndex]
 				local name = escape(path.id)
-				local why = Upgrades.check(tiers, pathIndex, #path.tiers)
+				local why = Upgrades.check(tiers, pathIndex, Upgrades.tierCount(path))
 				if trampled and why ~= "maxed" then
 					-- Mirrors Server/Shop: no upgrades until it's repaired.
 					addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">Repair it first</font>`, LOCKED_COLOR, false)
 				elseif why == "maxed" then
-					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(path.tiers[#path.tiers].name or "")}`, LOCKED_COLOR, false)
+					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(Upgrades.row(path, current).name or "")}`, LOCKED_COLOR, false)
 				elseif why ~= "ok" then
 					addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
 				else
-					local step = path.tiers[current + 1]
+					local step = Upgrades.row(path, current + 1)
 					-- Mirrors Server/Shop: a Supply Camp's Logistics discount (Shared/Pricing).
 					local discount = managed:GetAttribute("Discount") or 0
 					local cost = Pricing.upgradeCost(step, discount)

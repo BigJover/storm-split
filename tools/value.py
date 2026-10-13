@@ -209,7 +209,7 @@ def tower_stats(t, tiers):
     sink_seconds = 0
     for path, tier in zip(t["paths"], tiers):
         if tier > 0:
-            step = path["tiers"][tier - 1]
+            step = export_constants.line(path)[tier - 1]
             for f in MULTIPLIERS:
                 mult[f] *= step.get(f, 1)
             for f in HIGHEST:
@@ -329,7 +329,7 @@ def path_stats(t, path_index, tier):
 
 
 def cumulative_cost(t, path_index, tier):
-    return t["baseCost"] + sum(s["cost"] for s in t["paths"][path_index]["tiers"][:tier])
+    return t["baseCost"] + sum(s["cost"] for s in export_constants.line(t["paths"][path_index])[:tier])
 
 
 # ---------------------------------------------------------------- wave mix
@@ -592,14 +592,14 @@ def value_table(data, mixes):
         if key in SUPPORT_TOWERS:
             continue
         for pi, path in enumerate(t["paths"]):
-            for tier in range(0, len(path["tiers"]) + 1):
+            for tier in range(0, len(export_constants.line(path)) + 1):
                 s = path_stats(t, pi, tier)
                 own = [edps(s, m, tuning) for m in mixes]
                 zero_waste = [edps(s, m, tuning, overkill=False) for m in mixes]
                 aura = [aura_credit(data, s, m, brittle=is_support(key, path)) for m in mixes]
                 rows[(key, pi, tier)] = {
                     "cost": cumulative_cost(t, pi, tier),
-                    "step": path["tiers"][tier - 1]["cost"] if tier else t["baseCost"],
+                    "step": export_constants.line(path)[tier - 1]["cost"] if tier else t["baseCost"],
                     "edps": [a + b for a, b in zip(own, aura)],
                     "aura": aura,
                     "before": [a + b for a, b in zip(zero_waste, aura)],
@@ -647,13 +647,13 @@ def judge(data, rows):
             if is_support(key, path):
                 continue
             dominant = all(rows[(key, pi, tier)]["cpd"][i] < DOMINANT_X * medians[tier]["cpd"][i]
-                           for tier in range(1, len(path["tiers"]) + 1) for i in range(len(BANDS)))
-            for tier in range(1, len(path["tiers"]) + 1):
+                           for tier in range(1, len(export_constants.line(path)) + 1) for i in range(len(BANDS)))
+            for tier in range(1, len(export_constants.line(path)) + 1):
                 r = rows[(key, pi, tier)]
                 if r["dead"]:
                     lo, hi = BANDS[BOUGHT_BAND[tier]]
                     findings.append(
-                        f"DEAD tier: {t['display']} {path['id']} T{tier} {path['tiers'][tier - 1]['name']}: "
+                        f"DEAD tier: {t['display']} {path['id']} T{tier} {export_constants.line(path)[tier - 1]['name']}: "
                         f"marginal {fmt(r['marginal'][BOUGHT_BAND[tier]])} cash/eDPS = {r['vsMedian']:.1f}x the T{tier} median "
                         f"({fmt(medians[tier]['marginal'])}) in rounds {lo}-{hi}")
             if dominant:
@@ -698,7 +698,7 @@ def worth_lines(data, rows):
         if key not in ROUND4_BATCH or key in SUPPORT_TOWERS:
             continue
         untouchable = t.get("untouchable", False)
-        t5 = [(t["paths"][pi]["tiers"][4]["name"], r["cpd"][late]) for (k, pi, tier), r in rows.items()
+        t5 = [(export_constants.line(t["paths"][pi])[4]["name"], r["cpd"][late]) for (k, pi, tier), r in rows.items()
               if k == key and tier == 5 and not r["support"]]
         judged = t5 if untouchable else [min(t5, key=lambda x: x[1])]
         bits = []
@@ -724,7 +724,7 @@ def tar_lines(data, mixes):
     out, findings = [], []
     for pi, path in enumerate(t["paths"]):
         bits, prev_cash = [], 0.0
-        for tier in range(1, len(path["tiers"]) + 1):
+        for tier in range(1, len(export_constants.line(path)) + 1):
             s = path_stats(t, pi, tier)
             removed, hp, sinks = tar_removed(s, late, tuning)
             if pi == 0:
@@ -737,7 +737,7 @@ def tar_lines(data, mixes):
             else:
                 cash = sinks / rounds * (s["sinkCash"] + s["sinkChestCash"])
                 gain = cash - prev_cash
-                step = path["tiers"][tier - 1]["cost"]
+                step = export_constants.line(path)[tier - 1]["cost"]
                 bits.append(f"T{tier} +{cash:.0f}/round" + (f" = {fmt(step / gain)}r" if gain > 0 else ""))
                 payback = step / gain if gain > 0 else math.inf
                 if tier <= DIG_TIERS and not dig_payback_ok(payback):
@@ -751,7 +751,7 @@ def tar_lines(data, mixes):
             head = f"cash a round, payback (T1-T{DIG_TIERS} bar {DIG_PAYBACK[0]}-{DIG_PAYBACK[1]}r)"
         out.append(f"  Tar Pit {path['id']:<9} {head}: " + "; ".join(bits))
         if pi == 1:
-            s = path_stats(t, pi, len(path["tiers"]))
+            s = path_stats(t, pi, len(export_constants.line(path)))
             removed, hp, _ = tar_removed(s, late, tuning)
             every = tuning["EruptionEvery"]
             gate = eruption_gate(removed / hp, every, ERUPTION_EVERY_CAP)
@@ -784,7 +784,7 @@ def support_lines(data, mixes):
             if not is_support(key, path) or key in ("QUARTERMASTER", "TARPIT"):
                 continue
             bits = []
-            for tier in range(1, len(path["tiers"]) + 1):
+            for tier in range(1, len(export_constants.line(path)) + 1):
                 s = path_stats(t, pi, tier)
                 if path["id"] == "Lookout":
                     bit = f"range x{s['rangeMult']:.2f}"
@@ -870,9 +870,9 @@ def economy_lines(data):
     for pi, path in enumerate(t["paths"]):
         prev = path_stats(t, pi, 0)
         cells = []
-        for tier in range(1, len(path["tiers"]) + 1):
+        for tier in range(1, len(export_constants.line(path)) + 1):
             s = path_stats(t, pi, tier)
-            cost = path["tiers"][tier - 1]["cost"]
+            cost = export_constants.line(path)[tier - 1]["cost"]
             if path["id"] == "Logistics":
                 gain = s["discountPercent"] - prev["discountPercent"]
                 need = cost / (gain / 100) if gain > 0 else math.inf
@@ -886,7 +886,7 @@ def economy_lines(data):
                 rounds = cost / gain if gain > 0 else math.inf
                 cells.append(f"T{tier} {fmt(cost)}/+{gain:g} = {fmt(rounds)}r")
                 if rounds > 10:
-                    findings.append(f"ECONOMY: Supply Camp {path['id']} T{tier} {path['tiers'][tier - 1]['name']} repays in {fmt(rounds)} rounds (#55 bar: 5-10)")
+                    findings.append(f"ECONOMY: Supply Camp {path['id']} T{tier} {export_constants.line(path)[tier - 1]['name']} repays in {fmt(rounds)} rounds (#55 bar: 5-10)")
             prev = s
         out.append(f"  {path['id']:<9} " + "; ".join(cells))
     return out, findings
@@ -894,7 +894,7 @@ def economy_lines(data):
 
 def top_tier(h, path_index):
     """A hero path's highest tier: 6 since PLAN T53 (DECISIONS #133)."""
-    return len(h["paths"][path_index]["tiers"])
+    return len(export_constants.line(h["paths"][path_index]))
 
 
 def hero_dps(h, path_index, tier):
@@ -903,7 +903,7 @@ def hero_dps(h, path_index, tier):
     if tier == 0:
         step = None
     else:
-        step = h["paths"][path_index]["tiers"][tier - 1]
+        step = export_constants.line(h["paths"][path_index])[tier - 1]
 
     def g(field, default):
         return step[field] if step and step[field] else default
@@ -964,7 +964,7 @@ def hero_lines(data, rows, mixes):
         best = max(range(len(h["paths"])), key=lambda i: hero_dps(h, i, top_tier(h, i))[0])
         top = top_tier(h, best)
         peak, sustained = hero_dps(h, best, top)
-        cash = sum(s["cost"] for s in h["paths"][best]["tiers"])
+        cash = sum(s["cost"] for s in export_constants.line(h["paths"][best]))
         cells = []
         for lv, rd, b in checkpoints:
             hs, ts = (1 + hero_x) ** (lv - 1), (1 + tower_x) ** (lv - 1)
@@ -1046,7 +1046,7 @@ def edge_rows(data, mixes):
             hp = (h["abilityPower"] * round_seconds / cooldown,
                   power * round_seconds / (cooldown * top["abilityCooldownMult"]))
         share = effect / (effect + cycle) if effect + cycle else 0.0
-        free = min(p["tiers"][0]["cost"] for p in h["paths"]) / normal_cash if top["freeFirstUpgrade"] else 0.0
+        free = min(export_constants.line(p)[0]["cost"] for p in h["paths"]) / normal_cash if top["freeFirstUpgrade"] else 0.0
         repair = (1 - top["repairCostMult"]) * SMALL_WEIGHT
         out.append({"key": key, "display": h["display"], "ability": h["ability"], "share": share, "cdGain": cd_gain,
                     "worth": worth, "gain": gain, "abilityTerm": share * gain, "free": free, "repair": repair,
@@ -1107,10 +1107,10 @@ def value_report(data, full=False):
         for pi, path in enumerate(t["paths"]):
             label = f"{t['display'][:14]} {path['id']}" + (" (support: not judged)" if is_support(key, path) else "")
             print(f"  {label}")
-            for tier in range(0 if pi == 0 else 1, len(path["tiers"]) + 1):
+            for tier in range(0 if pi == 0 else 1, len(export_constants.line(path)) + 1):
                 r = rows[(key, pi, tier)]
                 b = BOUGHT_BAND.get(tier, 0)
-                name = "base" if tier == 0 else path["tiers"][tier - 1]["name"]
+                name = "base" if tier == 0 else export_constants.line(path)[tier - 1]["name"]
                 line = (f"    T{tier} {name[:16]:<16} {fmt(r['cost']):>7}  eDPS " + "/".join(fmt(e) for e in r["edps"])
                         + f"  c/e {fmt(r['cpd'][b])}")
                 if full:
@@ -1189,7 +1189,7 @@ def raw_tiers(data):
         t = data["Towers"][key]
         for pi, path in enumerate(t["paths"]):
             if (t["display"], path["id"]) in export_constants.BREAK_PATHS:
-                out += [(key, pi, i) for i, step in enumerate(path["tiers"], start=1) if step["sizeBreaks"] > 1]
+                out += [(key, pi, i) for i, step in enumerate(export_constants.line(path), start=1) if step["sizeBreaks"] > 1]
     return out
 
 
@@ -1243,7 +1243,7 @@ def breaks_report(data):
         path = t["paths"][pi]
         r = rows[(key, pi, tier)]
         s = path_stats(t, pi, tier)
-        label = f"{t['display'][:14]} {path['id']} T{tier} {path['tiers'][tier - 1]['name']} b{r['breaks']}"
+        label = f"{t['display'][:14]} {path['id']} T{tier} {export_constants.line(path)[tier - 1]['name']} b{r['breaks']}"
         specialist = (key, path["id"], tier) in BOSS_SPECIALIST
         # A tower that can't be damaged is held to the "worth it" window instead (#193: its damage
         # T5s 1.25x-2x the median cost/eDPS), so bar 3 doesn't gate it: reported like a boss specialist.
@@ -1619,7 +1619,7 @@ def bounty_report(data, easy, unlock, findings):
     free_towers = [t for t in data["Towers"].values() if t["unlockCost"] == 0]
     free_heroes = [h for h in data["Heroes"].values() if h["unlockCost"] == 0]
     tower = min(t["baseCost"] for t in free_towers)
-    upgrade = min(p["tiers"][0]["cost"] for t in free_towers for p in t["paths"] if p["tiers"])
+    upgrade = min(export_constants.line(p)[0]["cost"] for t in free_towers for p in t["paths"] if export_constants.line(p))
     cooldown = min(h["abilityCooldown"] for h in free_heroes) / tuning["AbilityTempo"]  # #259
     easy_d = data["Difficulties"][data["DifficultyOrder"][0]]
     # Take-downs in play: Shared/Pace.plan's counts (#258: fewer, tougher dinos), Easy solo.

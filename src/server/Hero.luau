@@ -424,11 +424,11 @@ local function upgrade(player: Player, pathIndex: unknown): (boolean, string)
 		return false, "Unknown upgrade"
 	end
 	local rewards = mastery(player, s)
-	local why = Upgrades.check(s.tiers, pathIndex, #path.tiers, if rewards then rewards.crossoverCap else nil)
+	local why = Upgrades.check(s.tiers, pathIndex, Upgrades.tierCount(path), if rewards then rewards.crossoverCap else nil)
 	if why ~= "ok" then
 		return false, REFUSALS[why] or "Can't upgrade that"
 	end
-	local step = path.tiers[s.tiers[pathIndex] + 1]
+	local step = Upgrades.row(path, s.tiers[pathIndex] + 1)
 	-- Mastery: a discount on every upgrade, and possibly the first one free.
 	local discount = if rewards then rewards.upgradeDiscountPercent else 0
 	local cost = if s.freeUpgrade then 0 else math.floor(step.cost * (1 - discount / 100) + 0.5)

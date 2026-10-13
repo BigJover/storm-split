@@ -4,6 +4,7 @@
 	cover, and the sheet's tiers.
 ]]
 
+local Upgrades = require(src.shared.Upgrades)
 local Combat = require(src.shared.Combat)
 local Config = require(src.shared.Config)
 local Falcon = require(src.shared.Falcon)
@@ -98,7 +99,7 @@ test("Talons: raw damage, Power Dive breaks 2, Iron Talons pierces and breaks 3,
 	local first = { 1, 1, 3, 3, 3 }
 	for tier = 1, 5 do
 		local s = at(1, tier)
-		eq(ROOST.paths[1].tiers[tier].name, names[tier])
+		eq(Upgrades.row(ROOST.paths[1], tier).name, names[tier])
 		eq(s.sizeBreaks, breaks[tier], `T{tier} breaks`)
 		eq(s.firstDiveX, first[tier], `T{tier} first dive`)
 		eq(s.piercesArmor, tier >= 4, `T{tier} pierces`)

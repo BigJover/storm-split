@@ -216,9 +216,244 @@ def read_towers(ws):
     return towers, order
 
 
+# ---------------------------------------------------------------- A/B/C options
+# (PLAN Phase 9 "The A/B/C system", DECISIONS #275-#278.) Tiers 1-3 rows are cumulative.
+# A tier-4 or tier-5 row is one option (`Option` A/B/C) and holds only ITS OWN STEP; a
+# hero tier-6 row (no option) holds only its own step too. Each effect column declares how
+# a step combines with the build below it (the column registry):
+#   mult  cumulative x step (blank = 1)          add   cumulative + step (blank = 0)
+#   max   the higher of the two (blank = keep)   flag  on if either is on (blank = keep)
+#   set   the step's value replaces it (blank = keep)
+# The exporter precomposes every build into cumulative rows, so runtime keeps reading one
+# row: path.tiers[1..3], path.t4[o4] (3 per path), path.t5[o4 .. o5] (9 per path) and, for
+# heroes, path.t6[o4 .. o5] (9 per path). Picks: the T5 letter is independent of the T4
+# letter (#276). Rows are grouped by (tower/hero, path, tier, option), never by row order,
+# so new option rows are appended at the bottom of the sheet.
+
+OPTIONS = ("A", "B", "C")
+TOWER_OPTION_COLUMN, TOWER_BLURB_COLUMN = 87, 88  # Tower Upgrades CI, CJ
+HERO_OPTION_COLUMN, HERO_BLURB_COLUMN = 54, 55  # Hero Upgrades BB, BC
+BLURB_MAX = 60  # the pick card's line (#275)
+# Composed numbers are rounded here, so a step written as a ratio (1.6 / 1.3) composes
+# back to exactly 1.6; the snapshot spec (tools/test/optiona.spec.luau) holds option A to it.
+COMPOSE_DIGITS = 6
+
+# Shared/TowerStats combines PATHS by: x columns multiply, amounts take the highest, flags
+# OR, freezeEvery / sinkSeconds the shortest. Within a path the steps combine the same way,
+# except freezeEvery / sinkSeconds, which a step sets.
+TOWER_STEP_KINDS = {
+    "damageMult": "mult", "rateMult": "mult", "targetsMult": "mult", "rangeMult": "mult",
+    "armoredMult": "mult", "bossMult": "mult", "splashMult": "mult", "incomeMult": "mult",
+    "hunterRecoilMult": "mult", "hunterReloadMult": "mult", "hunterSpreadMult": "mult", "healMult": "mult",
+    "freezeEvery": "set", "sinkSeconds": "set",
+}
+for _key, _col, _kind, _default in ABILITY_COLUMNS:
+    TOWER_STEP_KINDS.setdefault(_key, "flag" if _kind == "bool" else "max")
+
+# Shared/HeroStats: x columns multiply, amounts the highest, flags OR; Fire mode (with its
+# Burst count) and Pellets override, so a step sets them.
+HERO_STEP_KINDS = {"fireMode": "set", "burstCount": "set", "pellets": "set"}
+
+
+def _hero_kinds():
+    for key, _col, kind, _default in HERO_UPGRADE_COLUMNS:
+        HERO_STEP_KINDS.setdefault(key, {"mult": "mult", "bool": "flag", "text": "set"}.get(kind, "max"))
+
+
+def compose_value(kind, below, step):
+    """One column of a build: the cumulative value `below` plus this step.
+
+    >>> compose_value("mult", 1.3, 1.6 / 1.3), compose_value("add", 2, 1), compose_value("max", 3, 2)
+    (1.6, 3, 3)
+    >>> compose_value("flag", False, True), compose_value("set", "auto", "burst"), compose_value("set", "auto", None)
+    (True, 'burst', 'auto')
+    """
+    if step is None:
+        return below
+    if kind == "mult":
+        return round(below * step, COMPOSE_DIGITS)
+    if kind == "add":
+        return round(below + step, COMPOSE_DIGITS)
+    if kind == "max":
+        return max(below, step)
+    if kind == "flag":
+        return below or step
+    if kind == "set":
+        return step
+    raise ValueError(f"unknown step kind {kind}")
+
+
+def step_value(kind, below, full):
+    """The step that takes cumulative `below` to cumulative `full` (None = blank), or
+    raises ValueError when this kind can't express it. Used once to turn the old
+    cumulative tier-4/5 (and hero tier-6) rows into steps (option A).
+
+    >>> step_value("mult", 1.3, 1.6), step_value("max", 3, 3), step_value("set", "auto", "burst")
+    (1.230769230769, None, 'burst')
+    """
+    if full == below:
+        return None
+    if kind == "mult" and below:
+        step = round(full / below, 12)
+    elif kind == "add":
+        step = round(full - below, 12)
+    elif kind == "max" and full > below:
+        step = full
+    elif kind == "flag" and full and not below:
+        step = full
+    elif kind == "set":
+        step = full
+    else:
+        raise ValueError(f"{kind}: {below!r} -> {full!r}")
+    if compose_value(kind, below, step) != full:
+        raise ValueError(f"{kind}: {below!r} -> {full!r} doesn't compose back")
+    return step
+
+
+def compose_row(kinds, below, step, tier, option):
+    """A cumulative row: `below` (the build under it) plus the option row `step`. The
+    composed row keeps the step's own name, cost and Blurb."""
+    row = {field: compose_value(kind, below[field], step["steps"][field]) for field, kind in kinds.items()}
+    row.update(step["own"])
+    if option:
+        row["option"] = option
+    return row
+
+
+def _option_key(ws, r, tier, entity, pid, option_col, blurb_col):
+    raw = v(ws, r, option_col)
+    option = str(raw).strip().upper() if raw is not None and str(raw).strip() else ""
+    blurb = str(v(ws, r, blurb_col) or "").strip()
+    where = f"{ws.title} row {r} ({entity} {pid} T{tier})"
+    if tier in (4, 5):
+        if option not in OPTIONS:
+            sys.exit(f"{where}: Option must be A, B or C at tiers 4 and 5 (DECISIONS #275)")
+        if len(blurb) > BLURB_MAX:
+            sys.exit(f"{where}: Blurb is {len(blurb)} characters (max {BLURB_MAX})")
+    elif option or blurb:
+        sys.exit(f"{where}: Option and Blurb are only for tier-4/5 option rows (blank at tiers 1-3 and hero tier 6)")
+    return option, blurb
+
+
+def _ordered(row, order):
+    """The row's fields in the sheet's column order (so Config keeps its old layout)."""
+    return {**{k: row[k] for k in order if k in row}, **{k: x for k, x in row.items() if k not in order}}
+
+
+def _build_path(path, kinds, rows, max_tier, where, extra=None, order=()):
+    """Turn the (tier, option) -> parsed row map into path.tiers[1..3], t4, t5 (and t6)."""
+    for tier in (1, 2, 3):
+        if (tier, "") not in rows:
+            sys.exit(f"{where}: no tier {tier} row")
+        row = {field: rows[(tier, "")]["full"][field] for field in kinds}
+        row.update(rows[(tier, "")]["own"])
+        if extra:
+            row.update(extra(tier))
+        path["tiers"].append(_ordered(row, order))
+    for tier in (4, 5):
+        if (tier, "A") not in rows:
+            sys.exit(f"{where}: no tier {tier} option A row (every slot keeps today's upgrade as A, #281)")
+    path["t4"], path["t5"] = {}, {}
+    for o4 in OPTIONS:
+        if (4, o4) not in rows:
+            continue
+        row = compose_row(kinds, path["tiers"][2], rows[(4, o4)], 4, o4)
+        if extra:
+            row.update(extra(4))
+        path["t4"][o4] = _ordered(row, order)
+    for o4, below in path["t4"].items():
+        for o5 in OPTIONS:
+            if (5, o5) in rows:
+                row = compose_row(kinds, below, rows[(5, o5)], 5, o5)
+                if extra:
+                    row.update(extra(5))
+                path["t5"][o4 + o5] = _ordered(row, order)
+    if max_tier == 6:
+        if (6, "") not in rows:
+            sys.exit(f"{where}: no tier 6 row")
+        path["t6"] = {key: _ordered(compose_row(kinds, below, rows[(6, "")], 6, ""), order)
+                      for key, below in path["t5"].items()}
+    extra_tiers = sorted(t for t, _ in rows if t > max_tier or t < 1)
+    if extra_tiers:
+        sys.exit(f"{where}: tier {extra_tiers[0]} is out of range 1-{max_tier}")
+
+
+def line(path, picks="AA"):
+    """A path's rows from tier 1 up, for one pair of picks (option A by default):
+    tiers 1-3, then t4[picks[0]], t5[picks[:2]] and, for heroes, t6[picks[:2]]."""
+    out = list(path["tiers"]) + [path["t4"][picks[0]], path["t5"][picks[:2]]]
+    if "t6" in path:
+        out.append(path["t6"][picks[:2]])
+    return out
+
+
+def all_rows(path):
+    """(label, row) for every cumulative row of a path: '1'..'3', '4A', '5AB', '6AB'..."""
+    for i, row in enumerate(path["tiers"], start=1):
+        yield str(i), row
+    for key, row in path["t4"].items():
+        yield "4" + key, row
+    for key, row in path["t5"].items():
+        yield "5" + key, row
+    for key, row in path.get("t6", {}).items():
+        yield "6" + key, row
+
+
+def option_rows(path):
+    """(label, row) once per row WRITTEN on the sheet: '1'..'3', then '4A', '4B'.., '5A'..
+    (each T5 option shown on its A-after build), and hero '6'. Names, letters and Blurbs
+    are the written row's; the effect numbers are a composed build's."""
+    for i, row in enumerate(path["tiers"], start=1):
+        yield str(i), row
+    for key, row in path["t4"].items():
+        yield "4" + key, row
+    for key, row in path["t5"].items():
+        if key[0] == "A":
+            yield "5" + key[1], row
+    if "t6" in path:
+        yield "6", path["t6"]["AA"]
+
+
+def top_rows(path):
+    """Every maxed build of a path (each T5 pick pair; heroes: each T6)."""
+    return list(path.get("t6", path["t5"]).values())
+
+
+def tier_count(path):
+    return len(path["tiers"]) + 2 + (1 if "t6" in path else 0)
+
+
+TOWER_ROW_ORDER = ["name", "cost", "damageMult", "rateMult", "targetsMult", "rangeMult", "swapsModel",
+                   *[key for key, _c, _k, _d in ABILITY_COLUMNS], "option", "blurb"]
+
+
+def read_tower_row(ws, r):
+    """One Tower Upgrades row as written: its effect columns (cumulative at tiers 1-3, a
+    step at tiers 4-5) and its own name and cost."""
+    full = {
+        "damageMult": num(v(ws, r, 7), 1),
+        "rateMult": num(v(ws, r, 8), 1),
+        "targetsMult": num(v(ws, r, 9), 1),
+        "rangeMult": num(v(ws, r, 12), 1),
+        **{
+            key: (yes(v(ws, r, col)) if kind == "bool" else num(v(ws, r, col), default))
+            for key, col, kind, default in ABILITY_COLUMNS
+        },
+    }
+    steps = {
+        "damageMult": v(ws, r, 7), "rateMult": v(ws, r, 8), "targetsMult": v(ws, r, 9), "rangeMult": v(ws, r, 12),
+        **{key: v(ws, r, col) for key, col, _kind, _default in ABILITY_COLUMNS},
+    }
+    for key, _col, kind, _default in ABILITY_COLUMNS:
+        if kind == "bool":
+            steps[key] = True if yes(steps[key]) else None
+    steps = {k: (None if s is None or s == "" or s == "n/a" else s) for k, s in steps.items()}
+    return {"full": full, "steps": steps, "own": {"name": str(v(ws, r, 13) or ""), "cost": num(v(ws, r, 5))}}
+
+
 def attach_paths(ws, towers):
     by_display = {t["display"]: k for k, t in towers.items()}
-    index = {}
+    grouped = {}  # (key, pid) -> {(tier, option): row}
     r = 5
     while True:
         tower = v(ws, r, 1)
@@ -228,25 +463,22 @@ def attach_paths(ws, towers):
         if key is None:
             sys.exit(f"Tower Upgrades row {r}: unknown tower '{tower}' (not on the Towers sheet)")
         pid = str(v(ws, r, 2))
-        if (key, pid) not in index:
-            path = {"id": pid, "focus": v(ws, r, 3) or "", "tiers": []}
-            index[(key, pid)] = path
-            towers[key]["paths"].append(path)
         tier = int(v(ws, r, 4))
-        index[(key, pid)]["tiers"].append({
-            "name": str(v(ws, r, 13) or ""),
-            "cost": num(v(ws, r, 5)),
-            "damageMult": num(v(ws, r, 7), 1),
-            "rateMult": num(v(ws, r, 8), 1),
-            "targetsMult": num(v(ws, r, 9), 1),
-            "rangeMult": num(v(ws, r, 12), 1),
-            "swapsModel": tier in (3, 5),
-            **{
-                key: (yes(v(ws, r, col)) if kind == "bool" else num(v(ws, r, col), default))
-                for key, col, kind, default in ABILITY_COLUMNS
-            },
-        })
+        option, blurb = _option_key(ws, r, tier, towers[key]["display"], pid, TOWER_OPTION_COLUMN, TOWER_BLURB_COLUMN)
+        if (key, pid) not in grouped:
+            grouped[(key, pid)] = {}
+            towers[key]["paths"].append({"id": pid, "focus": v(ws, r, 3) or "", "tiers": []})
+        if (tier, option) in grouped[(key, pid)]:
+            sys.exit(f"Tower Upgrades row {r}: {towers[key]['display']} {pid} T{tier}{option} appears twice")
+        row = read_tower_row(ws, r)
+        if option:
+            row["own"]["blurb"] = blurb
+        grouped[(key, pid)][(tier, option)] = row
         r += 1
+    for (key, pid), rows in grouped.items():
+        path = next(p for p in towers[key]["paths"] if p["id"] == pid)
+        _build_path(path, TOWER_STEP_KINDS, rows, 5, f"Tower Upgrades {towers[key]['display']} {pid}",
+                    extra=lambda tier: {"swapsModel": tier in (3, 5)}, order=TOWER_ROW_ORDER)
 
 
 HERO_BASE_COLUMNS = [
@@ -299,6 +531,7 @@ HERO_UPGRADE_COLUMNS = [
 # Every hero path has this many tiers (DECISIONS #133: "the same amount of upgrades on
 # each path").
 HERO_TIERS = 6
+_hero_kinds()  # the hero column registry (A/B/C steps), now that the columns exist
 
 ABILITY_KINDS = ("MARK", "OVERDRIVE", "AIRBURST", "HEAL")
 
@@ -321,33 +554,50 @@ def read_heroes(ws):
     return heroes, order
 
 
+def read_hero_row(ws, r):
+    """One Hero Upgrades row as written (cumulative at tiers 1-3, a step at 4-6)."""
+    full, steps = {}, {}
+    for field, col, kind, default in HERO_UPGRADE_COLUMNS:
+        raw = v(ws, r, col)
+        if kind == "bool":
+            full[field] = yes(raw)
+            steps[field] = True if yes(raw) else None
+        elif kind == "text":
+            full[field] = str(raw or "").strip().lower()
+            steps[field] = full[field] or None
+        else:
+            full[field] = num(raw, default)
+            steps[field] = None if raw is None or raw == "" or raw == "n/a" else raw
+    return {"full": full, "steps": steps, "own": {"name": str(v(ws, r, 5) or ""), "cost": num(v(ws, r, 6))}}
+
+
+HERO_ROW_ORDER = ["name", "cost", *[field for field, _c, _k, _d in HERO_UPGRADE_COLUMNS], "option", "blurb"]
+
+
 def attach_hero_paths(ws, heroes):
     by_display = {h["display"]: h for h in heroes.values()}
-    index = {}
+    grouped = {}  # (display, pid) -> {(tier, option): row}
     r = 5
     while v(ws, r, 1):
         hero = by_display.get(str(v(ws, r, 1)).strip())
         if hero is None:
             sys.exit(f"Hero Upgrades row {r}: unknown hero '{v(ws, r, 1)}' (not on the Heroes sheet)")
         pid = str(v(ws, r, 2))
-        if (hero["display"], pid) not in index:
-            path = {"id": pid, "focus": v(ws, r, 3) or "", "tiers": []}
-            index[(hero["display"], pid)] = path
-            hero["paths"].append(path)
-        tier = num(v(ws, r, 4))
-        if tier != len(index[(hero["display"], pid)]["tiers"]) + 1:
-            sys.exit(f"Hero Upgrades row {r}: {hero['display']} {pid} Tier {tier} is out of order (a path's rows run 1, 2, 3... top to bottom)")
-        step = {"name": str(v(ws, r, 5) or ""), "cost": num(v(ws, r, 6))}
-        for field, col, kind, default in HERO_UPGRADE_COLUMNS:
-            raw = v(ws, r, col)
-            if kind == "bool":
-                step[field] = yes(raw)
-            elif kind == "text":
-                step[field] = str(raw or "").strip().lower()
-            else:
-                step[field] = num(raw, default)
-        index[(hero["display"], pid)]["tiers"].append(step)
+        tier = int(num(v(ws, r, 4)))
+        option, blurb = _option_key(ws, r, tier, hero["display"], pid, HERO_OPTION_COLUMN, HERO_BLURB_COLUMN)
+        if (hero["display"], pid) not in grouped:
+            grouped[(hero["display"], pid)] = {}
+            hero["paths"].append({"id": pid, "focus": v(ws, r, 3) or "", "tiers": []})
+        if (tier, option) in grouped[(hero["display"], pid)]:
+            sys.exit(f"Hero Upgrades row {r}: {hero['display']} {pid} T{tier}{option} appears twice")
+        row = read_hero_row(ws, r)
+        if option:
+            row["own"]["blurb"] = blurb
+        grouped[(hero["display"], pid)][(tier, option)] = row
         r += 1
+    for (display, pid), rows in grouped.items():
+        path = next(p for p in by_display[display]["paths"] if p["id"] == pid)
+        _build_path(path, HERO_STEP_KINDS, rows, HERO_TIERS, f"Hero Upgrades {display} {pid}", order=HERO_ROW_ORDER)
 
 
 # Mastery small perks (PLAN T51, DECISIONS #135): the only columns allowed after the
@@ -1365,7 +1615,7 @@ def validate(data):
         elif not isinstance(t["maxHp"], (int, float)) or t["maxHp"] <= 0:
             problems.append(f"{key} needs a Max HP above 0 (Towers column P)")
         for p in t["paths"]:
-            for i, step in enumerate(p["tiers"], start=1):
+            for i, step in all_rows(p):
                 if not isinstance(step["cost"], (int, float)) or step["cost"] <= 0:
                     problems.append(
                         f"{key} {p['id']} tier {i} has no upgrade cost. If the spreadsheet was saved by a "
@@ -1418,9 +1668,9 @@ def validate(data):
         if len(h["paths"]) != 3:
             problems.append(f"Hero {name}: needs exactly 3 upgrade paths on Hero Upgrades (has {len(h['paths'])})")
         for p in h["paths"]:
-            if len(p["tiers"]) != HERO_TIERS:
-                problems.append(f"Hero {name} {p['id']}: needs {HERO_TIERS} tiers on Hero Upgrades (has {len(p['tiers'])}; DECISIONS #133)")
-            for i, step in enumerate(p["tiers"], start=1):
+            if tier_count(p) != HERO_TIERS:
+                problems.append(f"Hero {name} {p['id']}: needs {HERO_TIERS} tiers on Hero Upgrades (has {tier_count(p)}; DECISIONS #133)")
+            for i, step in all_rows(p):
                 where = f"Hero {name} {p['id']} tier {i}"
                 if step["abilityCharges"] != int(step["abilityCharges"]):
                     problems.append(f"{where}: Ability charges must be a whole number")
@@ -1551,18 +1801,15 @@ def validate(data):
     for t in data["Towers"].values():
         base = t["baseDamage"] * t["baseRate"] * t["baseTargets"]
         for p in t["paths"]:
-            if p["focus"] == "economy" or not p["tiers"]:
+            if p["focus"] == "economy":
                 continue
-            top = p["tiers"][-1]
-            dps = base * top["damageMult"] * top["rateMult"] * top["targetsMult"]
-            best_tower = max(best_tower, dps)
-            best_by_tower[t["display"]] = max(best_by_tower.get(t["display"], 0.0), dps)
+            for top in top_rows(p):  # every T5 pick pair
+                dps = base * top["damageMult"] * top["rateMult"] * top["targetsMult"]
+                best_tower = max(best_tower, dps)
+                best_by_tower[t["display"]] = max(best_by_tower.get(t["display"], 0.0), dps)
     def hero_peak_dps(h):
         best = 0.0
-        for p in h["paths"]:
-            if not p["tiers"]:
-                continue
-            t = p["tiers"][-1]
+        for t in (row for p in h["paths"] for row in top_rows(p)):  # every T6 after each T5 pick pair
             guns = max(1, t["guns"] or 1)
             pellets = h["pellets"]  # damage per shot is conserved across pellet counts
             shots = max(1, t["shotsPerTrigger"] or 1)

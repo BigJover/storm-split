@@ -42,13 +42,54 @@ function Upgrades.check(tiers: { number }, pathIndex: number, maxTier: number, s
 	return "ok"
 end
 
--- The next tier's Config row for a path, or nil if it's maxed.
+-- A/B/C options (PLAN Phase 9, DECISIONS #275-#278). Config keeps tiers 1-3 in
+-- `path.tiers` and the precomposed builds above them: `path.t4[o4]`, `path.t5[o4 .. o5]`
+-- and, on hero paths, `path.t6[o4 .. o5]` (the exporter composes each option's step onto
+-- the build under it). `picks` is a path's letters so far: "" below tier 4, "B" at tier
+-- 4, "BA" at tier 5 and 6. A missing `picks` means option A (stand-ins and scripted
+-- builds take A, #287).
+
+-- How many tiers a path has: 5 on towers, 6 on hero paths.
+function Upgrades.tierCount(path): number
+	return #path.tiers + (if path.t4 then 1 else 0) + (if path.t5 then 1 else 0) + (if path.t6 then 1 else 0)
+end
+
+-- The cumulative Config row of a path at `tier` with these picks, or nil (tier 0, past the
+-- top, or a pick with no row).
+function Upgrades.row(path, tier: number, picks: string?): any
+	if tier <= 0 then
+		return nil
+	elseif tier <= #path.tiers then
+		return path.tiers[tier]
+	end
+	local letters = picks or "AA"
+	if tier == 4 then
+		return path.t4 and path.t4[string.sub(letters, 1, 1)]
+	elseif tier == 5 then
+		return path.t5 and #letters >= 2 and path.t5[string.sub(letters, 1, 2)] or nil
+	elseif tier == 6 then
+		return path.t6 and #letters >= 2 and path.t6[string.sub(letters, 1, 2)] or nil
+	end
+	return nil
+end
+
+-- A path's rows from tier 1 to the top for these picks (option A by default).
+function Upgrades.line(path, picks: string?): { any }
+	local out = {}
+	for tier = 1, Upgrades.tierCount(path) do
+		out[tier] = Upgrades.row(path, tier, picks)
+	end
+	return out
+end
+
+-- The next tier's Config row for a path with option A at tiers 4 and 5, or nil if it's
+-- maxed.
 function Upgrades.nextStep(def, tiers: { number }, pathIndex: number): any?
 	local path = def.paths[pathIndex]
 	if not path then
 		return nil
 	end
-	return path.tiers[(tiers[pathIndex] or 0) + 1]
+	return Upgrades.row(path, (tiers[pathIndex] or 0) + 1)
 end
 
 return Upgrades

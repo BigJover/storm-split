@@ -110,17 +110,112 @@ def doc_path_tables(text, heading_level):
     sections = {}
     current = None
     heading = re.compile(r"^" + re.escape(heading_level) + r" (.+?) \(")
+    in_options = False
     for line in text.splitlines():
         if line.startswith("#"):
             m = heading.match(line)
             current = m.group(1).strip() if m else None
             if current:
                 sections[current] = []
-        elif current and line.startswith("|"):
+        if not line.startswith("|"):
+            in_options = False
+        elif is_option_header(line):
+            in_options = True  # an A/B/C option table: doc_option_tables reads it
+        elif current and not in_options:
             row = cells(line)
             if len(row) >= 3 and row[0].startswith("**"):
                 sections[current].append((plain(row[0]), [plain(c) for c in row[2:]]))
     return {k: v for k, v in sections.items() if v}
+
+
+OPTION_HEADER = ["path", "tier", "a", "b", "c"]
+
+
+def is_option_header(line):
+    return [plain(c).lower() for c in cells(line)] == OPTION_HEADER
+
+
+def doc_option_tables(text, heading_level):
+    """{section display name: [(path id, tier, {letter: (name, blurb)}), ...]} from the
+    A/B/C option tables (PLAN Phase 9 "Audit", DECISIONS #280): under a tower or hero
+    heading, a table headed `| Path | Tier | A | B | C |` whose rows are
+    `| **Path** | 4 | Name — Blurb | Name — Blurb | Name — Blurb |`. A blank cell (or
+    one dash) means no such option. Tier may be written `4` or `T4`.
+    """
+    sections = {}
+    current = None
+    heading = re.compile(r"^" + re.escape(heading_level) + r" (.+?) \(")
+    in_options = False
+    for line in text.splitlines():
+        if line.startswith("#"):
+            m = heading.match(line)
+            current = m.group(1).strip() if m else None
+        if not line.startswith("|"):
+            in_options = False
+        elif is_option_header(line):
+            in_options = bool(current)
+        elif in_options and not set(line.replace("|", "").strip()) <= set("-: "):
+            row = cells(line)
+            tier = plain(row[1]).upper().lstrip("T")
+            options = {}
+            for letter, cell in zip("ABC", row[2:5]):
+                cell = plain(cell)
+                if cell and cell not in ("-", "—"):
+                    name, _, blurb = cell.partition(" — ")
+                    options[letter] = (name.strip(), blurb.strip())
+            sections.setdefault(current, []).append((plain(row[0]), int(tier) if tier.isdigit() else tier, options))
+    return sections
+
+
+def check_options(findings, notes, block, items, doc_name, heading_level):
+    """The A/B/C options on the sheet against the doc's option tables: every documented
+    option exists with that name and Blurb, every sheet B/C is documented, and a slot with
+    B has C too. Slots with option A only need no table (A is the path table's T4/T5)."""
+    tables = doc_option_tables(read(doc_name), heading_level)
+    by_display = {item["display"]: key for key, item in items.items()}
+    documented = set()
+    for display, rows in tables.items():
+        key = by_display.get(display)
+        if key is None:
+            findings.append(f"{doc_name} option table under '{display}' has no {block} with that display name")
+            continue
+        for path_id, tier, options in rows:
+            path = next((p for p in items[key]["paths"] if p["id"] == path_id), None)
+            where = f"{block}.{key} {path_id} T{tier}"
+            if path is None or tier not in (4, 5):
+                findings.append(f"{where}: {doc_name} option row names no tier-4/5 slot on the sheet")
+                continue
+            sheet = slot_options(path, tier)
+            for letter in sorted(set(options) | set(sheet)):
+                documented.add((key, path_id, tier, letter))
+                if letter not in sheet:
+                    findings.append(f"{where}{letter}: in {doc_name}, not on the sheet")
+                elif letter not in options:
+                    findings.append(f"{where}{letter}: on the sheet ('{sheet[letter][0]}'), not in {doc_name}")
+                elif options[letter] != sheet[letter]:
+                    findings.append(f"{where}{letter}: {doc_name} '{' — '.join(options[letter])}', sheet '{' — '.join(sheet[letter])}'")
+    blank, slots = 0, 0
+    for key, item in items.items():
+        for path in item["paths"]:
+            for tier in (4, 5):
+                sheet = slot_options(path, tier)
+                slots += 1
+                blank += sum(1 for _, blurb in sheet.values() if not blurb)
+                if "B" in sheet and "C" not in sheet:
+                    findings.append(f"{block}.{key} {path['id']} T{tier}: has option B but not C (DECISIONS #280)")
+                for letter in sheet:
+                    if letter != "A" and (key, path["id"], tier, letter) not in documented:
+                        findings.append(f"{block}.{key} {path['id']} T{tier}{letter}: no {doc_name} option table row")
+    notes.append(f"{block}: {slots} tier-4/5 slots; {blank} option row(s) without a Blurb yet (the pick card's line)")
+
+
+def slot_options(path, tier):
+    """{letter: (name, blurb)} of a path's tier-4 or tier-5 options on the sheet."""
+    out = {}
+    for label, row in export_constants.option_rows(path):
+        if label[0] == str(tier) and len(label) == 2:
+            out[label[1]] = (row["name"], row.get("blurb", ""))
+    return out
 
 
 def check_names(findings, block, items, doc_name, heading_level, compared):
@@ -141,7 +236,7 @@ def check_names(findings, block, items, doc_name, heading_level, compared):
             where = f"{block}.{key} path {p}"
             if doc_id != path["id"]:
                 findings.append(f"{where}: {doc_name} path '{doc_id}', sheet '{path['id']}'")
-            tiers = path["tiers"]
+            tiers = export_constants.line(path)  # option A at tiers 4 and 5
             if len(doc_tiers) != len(tiers):
                 findings.append(f"{where} ({path['id']}): {doc_name} has {len(doc_tiers)} tiers, the sheet {len(tiers)}")
             for t, (doc_tier, tier) in enumerate(zip(doc_tiers, tiers), start=1):
@@ -157,7 +252,7 @@ def check_names(findings, block, items, doc_name, heading_level, compared):
         seen = {}
         for key, item in items.items():
             names = [(item["display"], "name")] + [(tier.get("name") or "", f"{path['id']} T{t}")
-                                                   for path in item["paths"] for t, tier in enumerate(path["tiers"], start=1)]
+                                                   for path in item["paths"] for t, tier in export_constants.option_rows(path)]
             for name, where in names:
                 words = re.findall(r"[a-z]+", name.lower())
                 for bad in BANNED_NAME_WORDS:
@@ -266,7 +361,7 @@ def config_fields(data):
             note(block, item, key)
             for p, path in enumerate(item["paths"], start=1):
                 note(f"{block} paths", path, f"{key} path {p}")
-                for t, tier in enumerate(path["tiers"], start=1):
+                for t, tier in export_constants.all_rows(path):
                     note(f"{block} tiers", tier, f"{key} path {p} T{t}")
     for key, enemy in data["Enemies"].items():
         note("Enemies", enemy, key)
@@ -438,7 +533,7 @@ def taken_names(data):
     for block in ("Towers", "Heroes"):
         for key, item in data[block].items():
             for path in item["paths"]:
-                for t, tier in enumerate(path["tiers"], start=1):
+                for t, tier in export_constants.option_rows(path):
                     name = str(tier.get("name") or "").strip()
                     if name:
                         taken.setdefault(name.lower(), f"{block}.{key} {path['id']} tier {t}")
@@ -552,6 +647,8 @@ def main():
     checks = [
         ("names", lambda f, n: (check_names(f, "Towers", data["Towers"], "UPGRADES.md", "##", compared),
                              check_names(f, "Heroes", data["Heroes"], "HEROES.md", "###", compared))),
+        ("options", lambda f, n: (check_options(f, n, "Towers", data["Towers"], "UPGRADES.md", "##"),
+                               check_options(f, n, "Heroes", data["Heroes"], "HEROES.md", "###"))),
         ("unlocks", lambda f, n: check_unlocks(f, data)),
         ("dead columns", lambda f, n: check_dead(f, data, n)),
         ("species", lambda f, n: check_species(f, data)),

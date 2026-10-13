@@ -22,6 +22,8 @@
 	  tick       a repeating timer (Eruption every s): fires once each time it fills.
 ]]
 
+local Upgrades = require(script.Parent.Upgrades)
+
 local TarPit = {}
 
 export type Pool = { at: number, length: number }
@@ -45,8 +47,8 @@ function TarPit.strength(def, pathTiers: { number }): number
 	local cash = def.baseCost or 0
 	for pathIndex, tier in pathTiers do
 		local path = def.paths[pathIndex]
-		for t = 1, math.min(tier, if path then #path.tiers else 0) do
-			cash += path.tiers[t].cost or 0
+		for t = 1, math.min(tier, if path then Upgrades.tierCount(path) else 0) do
+			cash += Upgrades.row(path, t).cost or 0
 		end
 	end
 	return cash

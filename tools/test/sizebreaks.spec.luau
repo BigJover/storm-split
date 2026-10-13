@@ -7,6 +7,7 @@
 	(a pop), overflow is lost and the next size starts full; emptying size 1 kills.
 ]]
 
+local Upgrades = require(src.shared.Upgrades)
 local Config = require(src.shared.Config)
 local SizeBreaks = require(src.shared.SizeBreaks)
 
@@ -231,7 +232,7 @@ test("Size breaks per tier are PLAN's seeds and reach the tower and hero stats",
 	for key, def in Config.Towers do
 		for i, path in def.paths do
 			local seeds = want[`{def.display}/{path.id}`]
-			for tier, step in path.tiers do
+			for tier, step in Upgrades.line(path) do
 				eq(step.sizeBreaks, if seeds then seeds[tier] else 1, `{def.display} {path.id} T{tier}`)
 				local tiers = { 0, 0, 0 }
 				tiers[i] = tier
@@ -257,7 +258,7 @@ test("Size breaks per tier are PLAN's seeds and reach the tower and hero stats",
 	local heroTiers = {}
 	for key, hero in Config.Heroes do
 		for pathIndex, path in hero.paths do
-			for tier, step in path.tiers do
+			for tier, step in Upgrades.line(path) do
 				local name = `{hero.display} {path.id} {tier}`
 				eq(step.sizeBreaks, if twos[name] then 2 else 1, `{name}: Size breaks`)
 				if twos[name] then

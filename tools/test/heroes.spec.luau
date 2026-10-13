@@ -5,13 +5,14 @@
 	fire mode the most-upgraded path wins, ties to the earlier path.
 ]]
 
+local Upgrades = require(src.shared.Upgrades)
 local Config = require(src.shared.Config)
 local HeroStats = require(src.shared.HeroStats)
 local Combat = require(src.shared.Combat)
 
 local function at(key: string, path: number, tier: number, name: string)
 	local hero = Config.Heroes[key]
-	eq(hero.paths[path].tiers[tier].name, name, `{key} path {path} T{tier} name`)
+	eq(Upgrades.row(hero.paths[path], tier).name, name, `{key} path {path} T{tier} name`)
 	local tiers = { 0, 0, 0 }
 	tiers[path] = tier
 	return (HeroStats.compute(key, tiers) :: any)
@@ -137,7 +138,7 @@ test("damage per shot is conserved across pellet counts (every hero, every legal
 			local mult = 1
 			for p, t in tiers do
 				if t > 0 then
-					mult *= hero.paths[p].tiers[t].damageMult
+					mult *= Upgrades.row(hero.paths[p], t).damageMult
 				end
 			end
 			near(s.shotDamage, hero.damage * hero.pellets * mult, `{where} shot damage`, 1e-9)
@@ -147,7 +148,7 @@ end)
 
 test("pellets: the most-upgraded path wins, ties to the earlier path", function()
 	-- Brush Beater: Slug (path 1) sets 1 pellet, Buckshot (path 2) sets 9 from Extra Pellets.
-	eq(Config.Heroes.SHOTGUN.paths[2].tiers[2].name, "Extra Pellets")
+	eq(Upgrades.row(Config.Heroes.SHOTGUN.paths[2], 2).name, "Extra Pellets")
 	eq((HeroStats.compute("SHOTGUN", { 1, 2, 0 }) :: any).pellets, 9, "Buckshot 2 beats Slug 1")
 	eq((HeroStats.compute("SHOTGUN", { 3, 2, 0 }) :: any).pellets, 1, "Slug 3 beats Buckshot 2")
 	eq((HeroStats.compute("SHOTGUN", { 2, 2, 0 }) :: any).pellets, 1, "tie 2/2 goes to Slug (earlier)")
@@ -508,8 +509,8 @@ test("mastery 15: both perks (and nothing more at 20); perks never touch the gun
 end)
 
 test("mastery perks add to the base before path multipliers: Stocked Kit x Clean Bandages, Far Reach x Triage Tent", function()
-	eq(Config.Heroes.MEDIC.paths[1].tiers[1].name, "Clean Bandages")
-	eq(Config.Heroes.MEDIC.paths[1].tiers[4].name, "Triage Tent")
+	eq(Upgrades.row(Config.Heroes.MEDIC.paths[1], 1).name, "Clean Bandages")
+	eq(Upgrades.row(Config.Heroes.MEDIC.paths[1], 4).name, "Triage Tent")
 	near(mastered("MEDIC", 15, { 1, 0, 0 }).heal, 54 * 1.25, "Stocked Kit + Clean Bandages = 54 x 1.25")
 	near(mastered("MEDIC", 10, { 1, 0, 0 }).heal, 40 * 1.25, "no Stocked Kit at 10")
 	near(mastered("MEDIC", 10, { 4, 0, 0 }).healRadius, 25 * 1.5, "Far Reach + Triage Tent = 25 x 1.5")
