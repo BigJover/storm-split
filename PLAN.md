@@ -8,6 +8,7 @@ old value or empty cell first; append Tuning rows, never insert; pure rules firs
 specs re-run every task; no publish, no DataStore writes from an agent).
 
 **Status (2026-10-09): 2a + 2b done (29720d9, 4548d14, e9aab47, 76d1e04 T103, 717942e T104; 662 specs; review #263–#264). Next: T105 done (e7f8cb1), T106 done (Dino Round 18), T103b running → T106b → Tester Run 7 (the Run 6 steps below; joiner step via `latestandin`).**
+**Status (2026-10-12): Run 7 done (27 pass, F8 major, N13, N14). Rulings #266–#270. Next: T103c + T105b (one Builder commit, below) → Tester Run 7b → batch 2 signed off → T97.**
 
 ## Target timelines (model: `Round pace` 0.4, 30 s build, 5 s breaks; Normal)
 | Mode | Rounds played | Round 40 reached at | After round 40 | Hard cap |
@@ -181,6 +182,44 @@ Exact strings (display only; keys unchanged):
 - `Hud.luau:386` "Clock 14:00" → **"Time left 14:00"** (format "Time left m:ss").
 - `BattleFlow.luau:327` literal "Bones" → `{Theme.Bones}`-driven text.
 - **Accept:** specs/strings updated; check/export/test green; no Config diff.
+
+### T103c + T105b (#266–#269) — Run 7 fixes (ONE Builder commit), then Tester Run 7b
+**T103c (F8 proof, N13 drain):**
+1. Spec (`SpawnQueue`): 10 sides, cap 130, side 1 at 13 live with 50 queued; every other
+   side with 1 queued takes it at once; side 1 takes nothing; total never > 130. Same with
+   `setSeated(10)` of 12 sides.
+2. `Enemies`: each dino model gets attribute `Side` (number) at spawn. Battle's "Round N over"
+   log adds per-side peaks (`peak by side 13/12/…`, share 13) and also prints at the match
+   end when a match ends mid-round.
+3. `tools/value.py` live-cap section: a per-side line, keeps-up peak per side vs
+   `floor(130 / seats)` (Bone Rush 10 seats: ~12.1 vs 13), `ok`/`MISS`.
+4. New Tuning row 185 `Battle Fence drain` = 4 (assert A185/B185 empty; append, export,
+   exporter guard 1 ≤ x ≤ 40). Pure rule (e.g. `BattleRules.drain(pending, fence, rate, dt)`
+   → loss, pending) + per-side pending in Battle: a leak adds `Battle.leakCost(...)` to
+   pending; each Heartbeat Fence −= min(pending, 4 × dt); side out → pending 0; flush all
+   pending before every match-end ranking (clock, round 40, last camp standing, Final
+   Stampede end). Battles only; co-op leak path untouched. Stand-ins hold still caps at 1.
+- **Accept:** check/export/test green; Config diff = row 185 only; specs: two sides each get
+  60 pending at t=0 with Fence 40 and 10 → fall at 2.5 s and 10 s (1st = later); total
+  loss = sum of leaks exactly; out side's pending cleared; clock flush ranks after the
+  loss; co-op leak specs unchanged.
+
+**T105b (joiner Fence, N14):**
+5. `BattleFlow.lateSeat` (Bone Rush spare plot): Fence = min(full, highest Fence among
+   players still standing). Camp Clash unchanged.
+6. `Hud.client.luau` `feedList.Position` `UDim2.new(1, -16, 0, 64)` → `UDim2.new(1, -16, 0, 88)`.
+- **Accept:** lateSeat specs (standing Fences 40/22/9 → 40; 22/9 → 22); Studio probe at
+  1280×720 and 1920×1080: BattleFeed's AbsolutePosition/Size box doesn't intersect the XP
+  row's, nor any other top-right HUD element.
+
+**Tester Run 7b (short):** (a) Bone Rush casual, Seats 10, stand-ins, Start at round 13
+(stand-ins hold it), own plot undefended: every 1 s log `Enemies` children by `Side` and
+each side's queue; pass = own side ≤ 13, every other side's spawn times match its paced gap
+(±0.5 s, no waits), total ≤ 130; then rerun R7-25 (round 37) and report per-side peaks
+(130 total there is OK if every side is at its share). (b) Start at round 31 Bone Rush: falls
+spread over seconds (log fall times), results line; Fence HUD drains, no jump. (c) Late
+stand-in into Bone Rush: its Fence = best standing Fence; toast no longer over the XP text
+(screenshot). (d) Co-op Normal round 1–2 leaks cost as before. (e) Console clean.
 
 ### Tester Run 6 (after 2c)
 Studio, stand-ins: (1) co-op Normal solo rounds 1–3 with a timer: paced spawn gaps, kill
