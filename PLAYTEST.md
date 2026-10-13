@@ -526,3 +526,122 @@ Read-only server watcher: round start times vs when each side's dinos reached 0.
 | R6-3 | Same, reached in Final Stampede | NOT TESTABLE BY AGENT | Still needs my camp alive through round 40 (R5-20); both releases verified pre-overtime only. The end check is the same per-leak/side-out path, so overtime should behave the same. |
 
 Console: no script errors or warnings in either match. Studio left in Edit mode.
+
+# Run 7 — 2026-10-12 (Tester, agent) — Phase 8 batch 2 (T103–T106b: pace, clock, tie-break, joiners)
+
+- **Code tested:** Studio synced to 856065f: `script_grep` "for skipped round" → Shared.BattleFlow:12 ("+N cash for skipped rounds X–Y"); "Time left" → Client.Hud:360 (`Time left {clockText}`).
+- **Start state:** Studio in Edit mode. Work files: `~/.claude/jobs/2a8d6f9c/tmp/tester8/`.
+- **Conveniences (disclosed):** J first in each Play session (no saves), K cash, home-screen clicks, keyboard/mouse input, read-only `execute_luau` (probes/watchers labelled), Studio-only Lobby remotes (`standins`, `mode`, `sides`, `startround`, `standinshold`, `clockcap`, `latestandin`, `play`, `ready`). Anything else is noted where used.
+
+(Results are written step by step below.)
+
+## Step 1 — Paced co-op (Normal, solo, Tracker, 3 base Mortar Pits)
+Setup (disclosed): J; K ×3 for the Mortars (so the Cash attribute isn't a pure kill-cash trace from Building; round-to-round deltas are). Expected numbers from a read-only `require(Shared.Pace)` in the Server context (pure module).
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R7-1 | HUD round counter "Round N / 40" | PASS | Status "Round 1 / 40 · Normal · Cash 1800 · Fence 30 · Dinos 6". `coop.png` |
+| R7-2 | Fewer, tougher dinos | PASS | `Pace.plan` Normal r1 = HUSK 9 + BRUTE 4 (unpaced 22 + 9 = 31), hpX 1.38; r2 10+4, r3 12+5, r4 14+5. Console peaks: r1 13, r2 14, r3 16, r4 17 (= the paced counts, not 31+). |
+| R7-3 | A few rounds clear normally | PASS | "Round 1/2/3/4 cleared \| Normal, 1 player(s) \| lives 30 \| cash 1886/1973/2074/2180 \| peak enemies 13/14/16/17 \| script cost avg 0.20–0.23 ms"; no leaks, next round started by itself. |
+| R7-4 | Kill cash per round unchanged | PASS | Cash per round +86 / +87 / +101 / +106 vs `Pace.expectedIncome` (unpaced income, 1 hunter) 83 / 89 / 98 / 106 (within promotion noise). |
+| R7-5 | Ability cooldowns faster | PASS (code) / not measured live | `Tuning.AbilityTempo = 2`; `Pace.abilityCooldown(45) = 22.5`; Server.Hero:263 applies it to every ability cooldown. I couldn't land a Tracking Dart with agent input ("No dino there to dart": F/button + mouse on the dino's screen point didn't register a hit), so the live 22.5 s wasn't timed. |
+
+Tooling note: `execute_luau` gets its own `require` cache, so server modules with state (Enemies.getLive) read empty; probes count `workspace.StormSplitMap.Enemies` models instead.
+
+## Step 2 — Casual Camp Clash pacing, late stand-in, short clock (2 camps, Easy, stand-ins)
+Setup (disclosed): K cash, `character_navigation` to (−45, 3, 0) (Red's spawn at x −100 is ~40 studs from the lanes; my first two tries with Mortars near the spawn were out of range and Red fell in round 1, then round 13), 6 base Mortar Pits. A client watcher printed round/state changes and new feed/results texts to Output (`[W]` lines). Third match: `("clockcap",150)`.
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R7-6 | Played rounds 1, 4, 7, 10, 13 … | PASS | Console "Round 1 over … Round 4 over … Round 7 over … Round 10 over" (no 2, 3, 5 …); `Pace.playedRounds("TEAM", casual)` = 1,4,7…40. Status "Round 7 / 40". |
+| R7-7 | Skipped-round cash line | PASS | Feed "+168 cash for skipped rounds 2–3" at R4, "+201 … 5–6" at R7, "+307 … 8–9" at R10; `Pace.skippedIncome` = 169 / 201 / 308 (floor vs round). |
+| R7-8 | Clock shows "Time left m:ss" (casual 15:00) | PASS | Status "… Fence 40 · Time left 14:55" in Building (no Studio cap); "Time left 13:38" at R7. `late1.png` |
+| R7-9 | Studio short clock | PASS | `("clockcap",150)` → status "Time left 1:36" at R4; match ended ~150 s after Building. |
+| R7-10 | "One minute left on the clock!" | PASS | `ClockWarning` visible between 60.97 s (hidden) and 56.8 s left (polled every 4 s); TextLabel, Active=false, GUI (93, 352) 520×30, below the camps board. `clockwarn.png` |
+| R7-11 | "Time's up!" + tie-break "Decided by …" (non-trivial decider) | PASS | Both camps standing at the clock, Fence 40 / 40 → Bones decided: console "Camp Clash over on round 10 at the clock, decided by bones: 1. Red Camp (71 Bones) \| 2. Blue Camp (67 Bones)"; card "Camp Clash — Your camp wins the hunt! / 1. Red Camp · 71 Bones / 2. Blue Camp · 67 Bones / Time's up! Decided by Bones / Amber +50". `clockres.png` |
+| R7-12 | "Last camp standing" (a camp falls) | PASS | Earlier match: card "Camp Clash — 2nd place / Last camp standing"; console "… over on round 1, decided by standing". |
+| R7-13 | Casual late stand-in (Camp Clash) → fewest-hunter camp, toast | PASS | `("latestandin")` in R7: console "Late join (stand-in): Joined Blue Camp at round 7: +1174 cash to catch up", same toast on my HUD (`late1.png`). Blue (stand-in camp, 0 real hunters) < Red (me, 1). Clock match, R4: "+821". Both = `Pace.catchUpCash(joinRound(true, r), 0, Easy)` (1174 / 821). See N11. |
+| R7-14 | Same-step fall → tie-break past "standing" | PASS | Start at round 22, no hold, 4 base Mortars: both camps lost Fence 40 → 0 within ~1.5 s of round 25 starting (left-over round-22 dinos reaching the exit together; same seeded dinos on both sides; server probe: no stall, dinos walking z −50 → −20 → 10 → 40 rows). Console "Camp Clash over on round 25, decided by bones: 1. Red Camp (39 Bones) \| 2. Blue Camp (31 Bones)"; card "Decided by Bones". Reproduced 3× with identical Bones (seeded). |
+| R7-15 | Final Stampede running until the clock, then "Time's up!" | NOT TESTABLE BY AGENT | Needs my camp alive past round 40 (held stand-in camps auto-release when no real camp stands, R6-1). Try: Start at round 40 + hold + 200-s clock + 7 base Mortars + K cash → Red fell in round 40 (50 s). Same wall as R5-20. Banner stacking checked instead: `FinalStampede` (order 2) and `ClockWarning` (order 1) share the `battleBanners` list (Hud:1016–1018), so both visible would stack, not overlap. |
+| R7-16 | Studio "Start at round N" pays skipped rounds before it | NOTE | Start at round 40: "+34141 cash for skipped rounds 38–39"; Start at 22: "+3503 … 20–21" (only the step before the first played round; rounds 1..N−3 aren't paid — fine for a test aid). |
+| R7-17 | Casual Camp Clash late join closed after round 30 | PASS | Start at round 31: `("latestandin")` in round 31 (Playing) → console "Late stand-in refused: closed". (In Building before round 31 it was accepted: "Joined Blue Camp at round 31: +450 cash" — the joiner arrives before any round is played, so only start cash; see N12.) |
+
+## Step 3 — Casual Bone Rush (4 seats + 2 spare plots, Easy, stand-ins, no defence)
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R7-18 | Spare plots exist | PASS | `Sides=6` with 4 seats (Bone Rush spare plots 2). |
+| R7-19 | Late stand-in → spare plot, Bones = lowest standing, toast | PASS | Round 4: "Late join (stand-in): Joined the hunt at round 4: +782 cash and 0 Bones to catch up" (toast on my HUD, `brlate.png`); plot 5 opened at Fence 40. Lowest standing Bones at that moment = my plot (still up, Fence 17, 0 Bones) → 0. Second one after I was out: plot 6, "0 Bones" again — lowest standing was plot 5 (0 Bones; its dinos start next round). Floor rule correct but trivial both times; a non-trivial floor below. |
+| R7-20 | Third late stand-in with no spare plot | PASS | "Late stand-in refused: full". |
+| R7-21 | Bone Rush played rounds 1, 4, 7, 10 | PASS | Console "Round 1 over \| Bone Rush, 4 sides …", "Round 4 over \| Bone Rush, 6 sides (5 alive)", "Round 7 over …"; state Round=10 next. |
+| R7-22 | Non-trivial Bones floor | PASS | Start at round 28, my plot out: standing Bones 23 / 22 / 23 → "Late join (stand-in): Joined the hunt at round 28: +21359 cash and 22 Bones to catch up"; plot 5 `CampBones5=22`, Fence 40. |
+| R7-23 | Bone Rush late join closed after round 30 | PASS | Start at round 31, Playing: "Late stand-in refused: closed". (In the round-28 match a round-31 try got "refused: over": the match had ended at round 31's start.) |
+| R7-24 | Bone Rush result line | PASS | "Bone Rush over on round 31, decided by bones: 1. Stand-in 5's Camp (26 Bones) \| 2. Stand-in 2's Camp (23) \| 3. Stand-in 4's Camp (23) \| 4. Stand-in 3's Camp (22) \| 5. Jover_428's Camp (0)". See N13 (the late joiner won). |
+
+## Step 4 — Live-cap probe: Bone Rush, 10 seats (9 stand-ins), Start at round 37
+**Probe (read-only, Server context):** every 0.5 s, the number of dino models in `workspace.StormSplitMap.Enemies` (Enemies.luau:232 destroys a model the moment its dino dies, so models = live dinos), plus Fences. My plot undefended (no towers) — a weak player is a normal case; the 9 stand-in plots have their base towers.
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R7-25 | Peak live dinos stay under 130 | **FAIL (major)** F8 | Easy: 10 → 54 → 103 → **130** at ~57 s into round 37, flat at 130 until ~73 s. Normal: 20 → 93 → **130** at 46 s, flat at 130 for ~23 s (to 69.5 s), then the plots fell. `MaxConcurrentEnemies` = 130 is a hard cap (SpawnQueue), so spawns were being queued. |
+| R7-26 | Same-step fall, deepest tie-break | PASS (rules) | All 9 stand-in plots lost Fence 30/40 → 0 together (left-over dinos from the capped round); Easy: "Bone Rush over on round 37, decided by damage: 1. Stand-in 8's Camp (19 Bones) \| 2. Stand-in 10's Camp (19) …"; Normal: "… decided by coinFlip: 1. Stand-in 2's Camp (17 Bones) \| 2. Stand-in 9's Camp (17) …". Identical stand-ins → identical Bones/survival/Fence/damage/clear time → coin flip, as designed. |
+
+### F8. Bone Rush at max seats saturates the 130 live-dino cap — major (pacing/perf target)
+- **Repro:** Studio, Bone Rush, Casual, Seats 10, Fill with stand-ins, Start at round 37 (Easy or Normal), don't build on your plot. Probe the `Enemies` folder's child count during round 37.
+- **Seen:** 130 live dinos (the cap) from ~46 s (Normal) / ~57 s (Easy) to the end of the round; ~20 s pinned at the cap. T103b's accept was "value.py peaks at max players Bone Rush ≤ 122". The model seems to assume every side kills its dinos; an undefended or weak plot keeps its share alive for the whole walk.
+- **Console:** no errors; the match ended in round 37 before a "Round 37 over … peak enemies N/130" line could print (all plots fell in one step).
+- **Severity:** major — the cap queues spawns (no crash), but the busiest battle runs at the ceiling the live cap was meant to stay under; spawn timing on every plot is then distorted.
+- **Suspected:** `tools/value.py` live-cap model and `Config` Tuning `BattleCrowdX` (0.7) / Bone Rush round counts (Director's call per #250/#264, report-only).
+| R7-27 | Bone Rush ends at round 40 | PARTIAL | Start at round 40, 4 seats: "Bone Rush over on round 40, decided by damage: 1. Stand-in 2's Camp (18 Bones) \| 2. Stand-in 3's Camp (18) \| 3. Stand-in 4's Camp (18) \| 4. Jover_428's Camp (0)" — but every plot fell inside round 40, so "ends at 40 with plots still standing" wasn't isolated (needs a plot that survives round 40). |
+
+## Step 5 — Ranked (Practice Hunt): seats lock, round step, clock
+Setup: Camp Clash, 2 camps, stand-ins, "Ranked" home button, `("ready", true)` (Amber 115 → 100 at PLAY), `("play")`.
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R7-28 | Late stand-in refused in Ranked | PASS | `("latestandin")` in Building and again in Playing → "Late stand-in refused: ranked" ×2; Sides stayed 2. |
+| R7-29 | Ranked rounds 2, 4 … and 30:00 clock | PASS | Status "Red Camp · Round 2 / 40 · Normal · Cash 532 · Fence 30 · Dinos 13 · Time left 29:19" (`ranked.png`). Settled "Battle settled (Practice Hunt): pot 15, sink 15" after Red fell in round 2 ("decided by standing"). Single-round wording "+N cash for skipped round X" confirmed in code (BattleFlow:124); the toast itself was gone before I read it. |
+
+## Step 6 — No-trap and console
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R7-30 | New HUD elements don't trap input | PASS | `ClockWarning` / `FinalStampede` are TextLabels, Active=false (probe); `battleLabel` sets `Active = false` (Hud:952); toasts and results lines are TextLabels; the only `Active = true` in client code are the Hunt Board and Profile boards (older, intended). Clicks/keys kept working through every banner. |
+| R7-31 | Console errors | PASS | Last Play session scanned (error/warn/infinite/Stack): only Studio Assistant `VirtualInput … hits CoreGUI` traces and an Assistant camera-reset note. Spot reads of Output in the co-op and Camp Clash sessions showed no script errors either. |
+
+## Not testable here / NEEDS JOVAN
+| # | Item | Result | Why |
+|---|---|---|---|
+| R7-32 | A real second client joining late (Camp Clash, Bone Rush, Ranked waiting banner) | NEEDS JOVAN | Clients and Servers; the stand-in path (R7-13, 19, 22, 28) covers the rules. |
+| R7-33 | Full-length 15:00 casual / 30:00 Ranked match for feel | NEEDS JOVAN | Agent can't hold a camp past ~round 25. |
+| R7-34 | Ranked stakes/Trophies at a clock end (published) | NEEDS JOVAN | T95. |
+
+## Notes for the Director / Jovan (not failures)
+- **N11.** A late stand-in into a stand-in camp counts that camp as 0 hunters, so it gets the own-plot catch-up (1-hunter start cash + whole income: +1174 at round 7 vs +308 for a camp with 1 hunter). Real camps always have ≥1 hunter, so this is Studio-only.
+- **N12.** A late joiner in Building after a Studio "Start at round 31" is accepted (+450, start cash only), then refused once round 31 plays. Live this can't happen (round 31 is never the first). Fine.
+- **N13 (balance watch).** A leak now costs species EHP × leakX (~3×), so 2–4 left-over dinos take a full 40 Fence in about a second. In 5 of my battles every camp/plot that fell went down at the start of the next played round, all in the same step (left-overs from the 60-s round reaching the exit together), so ties past "standing" are common (Bones, damage, even a coin flip among 9 stand-ins). In one Bone Rush the late joiner (seated at round 28 with fresh Fence and no left-overs) won when the 3 original stand-ins fell together at round 31.
+- **N14 (cosmetic, existing feed).** The two-line late-join toast sits top-right over the XP bar's "400 / 500 XP" text for a few seconds (`late1.png`).
+- **Tooling.** `execute_luau` has its own `require` cache (stateful server modules read empty); count `workspace.StormSplitMap.Enemies` instead. Long `execute_luau` calls run in the background lose their reply when other calls interleave: print to Output and read it with `get_console_output`. Red's spawn (−100, 0) is ~40 studs from its lanes; Mortars at (−48, 0), (−20…−56, −30) cover them.
+
+## Run 7 summary
+
+| Area | Result | Evidence |
+|---|---|---|
+| Sync to 856065f | PASS | header |
+| Paced co-op: "Round N / 40", fewer/tougher dinos, rounds clear, kill cash | PASS ×4 (R7-1…4) | console, `coop.png` |
+| Ability tempo ×2 | PASS (code; not timed live) (R7-5) | Pace 22.5 s |
+| Casual Camp Clash: rounds 1,4,7…, "+N cash for skipped rounds X–Y" | PASS ×2 (R7-6, 7) | `[W]` log |
+| Match clock: "Time left m:ss", Studio short clock, "One minute left…", "Time's up! Decided by Bones" | PASS ×4 (R7-8…11) | `clockwarn.png`, `clockres.png` |
+| Decided-by: standing, Bones (same-step), damage, coin flip | PASS ×3 (R7-12, 14, 26) | console |
+| Final Stampede until the clock | NOT TESTABLE BY AGENT (R7-15) | — |
+| Late stand-in: Camp Clash fewest-hunter camp + toast; closed after 30 | PASS ×2 (R7-13, 17) | `late1.png` |
+| Bone Rush rounds 1,4,7…; late stand-in: spare plot, Bones floor, full, closed after 30 | PASS ×6 (R7-18…23) | `brlate.png` |
+| Bone Rush result / end at 40 | PASS (R7-24) / PARTIAL (R7-27) | console |
+| Live cap < 130 (probe) | **FAIL (major) F8** (R7-25) | probe log |
+| Ranked: seats lock, rounds 2,4…, 30:00 | PASS ×2 (R7-28, 29) | `ranked.png` |
+| No-trap, console | PASS ×2 (R7-30, 31) | probe, scan |
+| Multi-client / full-length / published | NEEDS JOVAN ×3 (R7-32…34) | — |
+
+**Counts:** PASS 27 · FAIL 1 (F8, major) · NOT TESTABLE BY AGENT 1 (R7-15) · PARTIAL 1 (R7-27) · NEEDS JOVAN 3 · NOT RUN 0 · notes 1 (R7-16).
+
+## Studio state at the end
+- Play stopped. `get_studio_state`: **Current Studio Mode: Edit**, DataModels: Edit. Nothing edited in Edit, nothing published, `SaveStatus=offline` in every session (J first). Remote disclosure: one `("difficulty","NORMAL")` was fired by mistake while a match was running — the handler ignores it outside the Lobby (State ≠ Lobby), so it had no effect; Normal for the probe was picked with the home button. Screenshots in `~/.claude/jobs/2a8d6f9c/tmp/tester8/`: `coop.png`, `late1.png`, `clockwarn.png`, `clockres.png`, `brlate.png`, `ranked.png`.
