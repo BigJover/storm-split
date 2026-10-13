@@ -653,3 +653,138 @@ Read: DIRECTION, Rounds 16–17, PLAN T106, DECISIONS #249–#264. Grepped src/c
 | src/shared/PanelRules.luau:183 | "Decided by Fence left" | "Decided by most Fence left" | Reads as a full phrase. |
 | src/client/Hud.client.luau:386 | "Clock 14:00" | "Time left 14:00" | Says it counts down; matches "One minute left". |
 | src/shared/BattleFlow.luau:327 | literal "Bones" | `{Theme.Bones}` | Same word source as PanelRules:184. |
+
+## Round 19 — the seven 4× towers, every path, tier and A/B/C option (before 9g)
+
+Read: DIRECTION, Rounds 12 and 16, TOWERS_LATER.md (approved), DECISIONS #274–#291. Every name below was grepped (whole word) against UPGRADES.md, HEROES.md, TOWERS_NEXT.md, PLAN.md (incl. the 9c options) and Config.luau (tower, upgrade, cosmetic-title and arena names): zero clashes, and no twin inside the seven. No pop / split / balloon / Storm-as-mode; "Trophy" is gone from the batch.
+
+**Tower names: keep all seven** (Meteor Beacon, Amber Resin Cannon, Ranger Station, Spotter Blimp, Raptor Pen, Bone Totem, Volcano Vent): plain, on theme, each says what it is.
+**Paths: keep 20 of 21.** Only Meteor Beacon's Shower → **Sky Rocks** ("Shower" reads as a bath; Rockfall is taken by Mortar Pit's 9c Concussive C).
+**Renamed: 35 names** (31 T4/T5 options + the Shower path + 3 tier-1–3 names: Rock Chunks, Fireball Flurry, Snap Traps). Everything not marked ✎ is kept as the working name.
+
+### Must-fix (clashes and banned words)
+| Was | Now | Why |
+|---|---|---|
+| Split Rock (Meteor T1) | **Rock Chunks** | "split" is banned. |
+| Meteor Shower (Meteor T3) | **Fireball Flurry** | #291: Mortar Pit Cluster T5-A is Meteor Shower. |
+| Shell Cracker (Meteor T4-B) | **Plate Cracker** | A cosmetic title in Config. |
+| Trophy Wall (Totem T5-B) | **Bounty Wall** | "Trophy" = ranked only (#8), and it's a bounty effect. |
+| Last Stand (Ranger T5-A) | **Hold the Line** | Field Hospital Tonic T5. |
+| Hunting Party (Raptor T4-A) | **Hide Rippers** | Falcon Roost Falconer T5. |
+| Apex (Raptor T5-C) | **Hungry Alpha** | Near-twin of Apex Predator (Tranq T5). |
+| Eye in the Storm (Blimp T5-A) | **All-Seeing Eye** | "Storm" + near-twin of Longshot's Eye in the Sky. |
+| Ranger Corps (Ranger T5-A) | **Ranger Troop** | Kids read "Corps" as "corpse". |
+
+### Meteor Beacon — Impact · **Sky Rocks** ✎ · Aftermath
+| Path | T1 | T2 | T3 |
+|---|---|---|---|
+| Impact | Heavier Rock | Iron Core | *Ground Zero* |
+| Sky Rocks ✎ | Rock Chunks ✎ | Twin Fall | *Fireball Flurry* ✎ — 5 small meteors in 2 s |
+| Aftermath | Hot Crater | Ash Cloud | *Shockwave Ring* |
+
+| Slot | A | B | C |
+|---|---|---|---|
+| Impact T4 | Planet Killer ✎ (was …Core) — centre breaks 3, ×2 on bosses | Plate Cracker ✎ — the centre cuts through armour | Quick Call ✎ (was Short Fuse; twin of Vent's Shorter Fuse) — a meteor every 8 s |
+| Impact T5 | **Extinction Event** — one giant meteor a round, fires itself | **Dino Killer** — breaks the biggest dino it hits 2 extra sizes | **Impact Winter** — every dino on your side slowed after each hit |
+| Sky Rocks T4 | Endless Rain — a small meteor every 4 s | Scatter Field — meteors land all along the track | Cinder Trail — small meteors leave a burning streak |
+| Sky Rocks T5 | **Starfall** — 20 meteors across your side | **Comet Tail** — a comet sweeps the whole track once a round | **Shooting Stars** — meteors can hit flyers |
+| Aftermath T4 | Long Burn ✎ (was Smoke Plume; twin of Ash Cloud) — craters last 8 s | Glass Crater — craters strip armour | Scorch Marks — dinos crossing a crater take +15% |
+| Aftermath T5 | **Fire Line** — craters join into one burning strip | **Blinding Dust** ✎ (was Dust Storm) — dinos in the ash can't bite or throw | **New Ice Age** — craters freeze dinos solid for 2 s |
+
+### Amber Resin Cannon — Entomb · Fossilize · Resin Shell
+| Path | T1 | T2 | T3 |
+|---|---|---|---|
+| Entomb | Thick Resin | Quick Set | *Amber Tomb* |
+| Fossilize | Collector's Eye | Rare Find | *Fossil Record* |
+| Resin Shell | Coat of Resin | Sticky Armour | *Amber Shield* |
+
+| Slot | A | B | C |
+|---|---|---|---|
+| Entomb T4 | Hardened Amber — stuck dinos take +30% | Spreading Amber ✎ (was Chain Tomb; too many "Chain"s) — the amber jumps to the next dino | Sticky Bed — dinos walking past a stuck one slow down |
+| Entomb T5 | **Amber Age** — every 20 s, everything in range is stuck | **Living Amber** — can trap a boss for 3 s | **Time Capsule** — the stuck dino is sent back up the track |
+| Fossilize T4 | Museum Piece — fossils pay double cash | Dig Crew — a fossil drops a cash chest | Bone Dust — fossils mark nearby dinos +15% |
+| Fossilize T5 | **Fossil Fuel** — each fossil speeds up nearby towers | **Prize Fossils** ✎ (was Jurassic Archive; "archive" is hard) — fossils count double for bounties | **Amber Heart** — every 10th fossil freezes your whole side 1 s |
+| Resin Shell T4 | Self-Sealing — sealed towers heal when the shell breaks | Raider Glue — raiders and biters near your towers slow down | Sticky Thorns ✎ (was Amber Coat; twin of Coat of Resin) — biters get slowed and stung |
+| Resin Shell T5 | **Amber Fortress** — nearby towers can't be knocked out | **Resin Wall** — once a round, an amber wall holds every dino 3 s | **Amber Mirror** — throws at your towers bounce back |
+
+### Ranger Station — Riflemen · Trackers · Wardens
+| Path | T1 | T2 | T3 |
+|---|---|---|---|
+| Riflemen | Recruit | Sharpshooter | *Squad* |
+| Trackers | Snare Kit | Bait | *Snap Traps* ✎ (was Bear Traps; no bears, as with whales in Round 12) |
+| Wardens | Leather Coats | Medic Bag | *Shield Wall* |
+
+| Slot | A | B | C |
+|---|---|---|---|
+| Riflemen T4 | Elite Squad — rangers shoot through armour | Heavy Rifle ✎ (was Big Bore Ranger; Big Bore is Longshot's) — one ranger, breaks 3 | Flare Rounds — rangers can hit low flyers |
+| Riflemen T5 | **Ranger Troop** ✎ — 5 rangers in formation | **Legend Ranger** ✎ (was Legend of the Park) — one hero-strong ranger | **Patrol Jeep** — rangers drive the track, firing |
+| Trackers T4 | Pit Traps — traps hold a dino 1 s | Decoy Calls ✎ (was Lure Calls; Falcon Roost has Lure) — dinos stop to fight rangers | Tripwire — traps knock dinos back |
+| Trackers T5 | **Master Trapper** — traps along your whole track | **Net Launchers** — rangers net a boss for 2 s | **Head Ranger** ✎ (was Game Warden; twin of the Wardens path) — ranger take-downs mark nearby dinos |
+| Wardens T4 | Field Rations — rangers heal between rounds | Rally Point — rangers come back 2× faster | Sandbags — towers near a post get more HP |
+| Wardens T5 | **Hold the Line** ✎ — rangers can't fall in a boss round | **Bodyguards** — rangers take bites for towers | **Hunter's Lodge** — hunters come back twice as fast |
+
+### Spotter Blimp — Door Gun · Searchlight · Cargo
+| Path | T1 | T2 | T3 |
+|---|---|---|---|
+| Door Gun | Belt Gun | Twin Mount | *Strafing Run* |
+| Searchlight | Spotlight | Wide Beam | *Night Hunt* |
+| Cargo | Supply Crates | Ammo Drop | *Med Drop* |
+
+| Slot | A | B | C |
+|---|---|---|---|
+| Door Gun T4 | Heavy Mount — shoots through armour, breaks 2 | Rocket Pods — rockets that splash | Tracer Belt — hit dinos are marked |
+| Door Gun T5 | **Gunship** — faster, two guns and rockets | **Bombing Run** — bombs the whole track once a round | **Sky Hook** — snatches the smallest dino off the track |
+| Searchlight T4 | Floodlights — lights the whole circle | Tracking Beam — the light follows the biggest dino | Blinding Glare — dinos in the light miss throws |
+| Searchlight T5 | **All-Seeing Eye** ✎ — every dino under the blimp marked +30% | **Lighthouse** — all your towers +10% while it passes | **Spotter's Map** — see every dino through walls |
+| Cargo T4 | Heavy Cargo — bigger crates | Rebuild Kits — fixes a Trampled tower each lap | Spare Parts — a crate heals the closest tower |
+| Cargo T5 | **Cargo Run** ✎ (was Supply Chain; "chain" + Supply Camp) — a crate every lap | **Paratroopers** — drops 2 rangers a round | **Airlift** — carries a Trampled tower away, fixed |
+
+### Raptor Pen — Pack · Alpha · Trainer
+| Path | T1 | T2 | T3 |
+|---|---|---|---|
+| Pack | Second Raptor | Quick Whistle | *Pack of Five* |
+| Alpha | Sharp Claws | Thick Hide | *Alpha Raptor* |
+| Trainer | Tracking Nose | Herding Call | *Pack Howl* |
+
+| Slot | A | B | C |
+|---|---|---|---|
+| Pack T4 | Hide Rippers ✎ — raptors bite through armour | Flanking — each raptor picks a different dino | Ambush — each raptor's first pounce hits double |
+| Pack T5 | **Raptor Swarm** — 10 small raptors flood the track | **Clever Girls** — raptors dodge bites and never get trampled | **Sky Leap** ✎ (was Night Raid; said nothing about flyers) — raptors jump at low flyers |
+| Alpha T4 | Sickle Claw ✎ (was Killing Claw; the real raptor claw, softer) — ×3 on its target, breaks 3 | Boss Hunter — can hold a boss for a moment | Scent Trail — its target is marked +15% |
+| Alpha T5 | **King of the Pack** — a giant raptor, half damage taken | **Rex Tamer** — a tamed T. rex whose roar stuns | **Hungry Alpha** ✎ — stronger with every take-down |
+| Trainer T4 | Treat Bag — raptors heal and return faster | Guard Raptors ✎ (was Guard Dogs; they're raptors) — a raptor guards each tower | Whistle Drill — raptors run 30% faster |
+| Trainer T5 | **Raptor Charge** ✎ (was Stampede Call; keeps "Stampede" for Final Stampede) — every raptor charges the track | **Pack Bond** — hunters nearby +20% with 3+ raptors out | **Raider Hounds** — raptors chase raiders (or the dino that hurt a tower) |
+
+### Bone Totem — Roar · Ancestors · Bone Pile
+| Path | T1 | T2 | T3 |
+|---|---|---|---|
+| Roar | Louder Roar | Quick Charge | *Thunder Roar* |
+| Ancestors | Old Bones | Shared Charge | *Spirit Guard* |
+| Bone Pile | Bone Collector | Trade Post | *Bone Market* |
+
+| Slot | A | B | C |
+|---|---|---|---|
+| Roar T4 | Echo Roar ✎ (was Echo) — the roar hits twice | Fear — the roar scares small dinos back | Shatter Roar — the roar strips armour |
+| Roar T5 | **Ancient Roar** — reaches your whole track | **Skull Storm** — flying skulls hunt dinos | **Finishing Roar** ✎ (was Last Breath; says what it does) — free roar at a weak boss |
+| Ancestors T4 | War Paint — hunters nearby +15% when full | Bone Armour — nearby towers get more HP | Ancestor's Eye — nearby towers see further |
+| Ancestors T5 | **Spirit Hunters** — 3 ghost hunters fire for 6 s | **Totem Pole** — buffs reach every tower, half strength | **Elder Wisdom** ✎ (was Old Ways) — hero abilities recharge faster |
+| Bone Pile T4 | Rare Bones — bosses fill half the charge | Bone Bank — leftover charge pays interest | Bone Bonus ✎ (was Bone Tithe; "tithe" is hard) — each full charge pays 40 cash |
+| Bone Pile T5 | **Camp Payday** ✎ (was Bone Hoard; twin of Amber Hoard) — every hunter in your camp gets paid | **Bounty Wall** ✎ — Bones nearby count +25% for bounties | **Ancient Treasure** — one big treasure chest a match |
+
+### Volcano Vent — Magma · Pressure · Obsidian
+| Path | T1 | T2 | T3 |
+|---|---|---|---|
+| Magma | Hot Rock | Searing Flow | *Lava Lake* |
+| Pressure | Shorter Fuse | Twin Vents | *Geyser* |
+| Obsidian | Cooling Crust | Sharp Glass | *Obsidian Wall* |
+
+| Slot | A | B | C |
+|---|---|---|---|
+| Magma T4 | White Hot — lava melts armour | Rivers of Fire — the lava runs further down | Ember Rain — embers hit low flyers |
+| Magma T5 | **Supervolcano** — floods the whole track once a round | **Lava Bombs** ✎ (was Pyroclast; too hard) — throws 6 lava bombs at big dinos | **Fire Mountain** — eruptions twice as big |
+| Pressure T4 | Steam Burst — eruptions knock small dinos back | Rumble — dinos nearby stumble | Pressure Valve — erupts early when a boss comes |
+| Pressure T5 | **Ring of Fire** — 3 small vents erupt in turn | **Old Faithful** — erupts every 8 s, smaller | **Ash Blanket** ✎ (was Ash Plume; twin of Ash Cloud) — ash makes dinos miss throws |
+| Obsidian T4 | Jagged Crust ✎ (was Glass Shards; twin of Sharp Glass) — the crust cuts dinos | Black Glass — nearby towers see further | Heat Shimmer — dinos on the crust can't throw |
+| Obsidian T5 | **Glass Maze** — the crust makes dinos walk further | **Obsidian Armour** — nearby towers take less from throws | **Frozen Fire** — the whole flow hardens: 2 s stop |
+
+Also update the TOWERS_LATER Ranger text "5 at Ranger Corps" → "5 at Ranger Troop" when 9g writes the sheet. Kept on purpose: Clever Girls (fun, kid-readable), Skull Storm (a word, not the old mode), Dino Killer, Geyser (Tar Pit only says "geyser" in a blurb).
