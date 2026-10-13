@@ -126,6 +126,13 @@ stays. Next scope: **Phase 8 batch 2 — match length and joiners** (`PLAN.md` t
 DECISIONS #249–#257; Builder batches 2a/2b/2c, Dino review T106, Tester Run 6). Then the
 4×-Amber picks (T97).
 
+**Status (2026-10-13):** batch 2 built (T100–T106b, T103b, T103c + T105b; 682 specs) and
+playtested in Studio (Run 7: 27 pass, F8 fixed; Run 7b: 9 pass, 0 fail); signed off
+(#271–#273), recap in `RECAP.md` "Phase 8 batch 2". N15 (log wording) rides along with the
+next `Battle` commit. Next: T97 — Jovan picks from the refreshed `TOWERS_LATER.md`, the
+Dino agent names the picks, then the round-4 tower pattern. Still his: multi-client script
+(incl. a real late joiner), private publish, lobby place.
+
 ## Rules
 
 - **Verify every step:** `tools/check.sh` clean; `python3 tools/export_constants.py` clean;

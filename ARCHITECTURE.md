@@ -209,7 +209,7 @@ dinosaur reskin, enemies split into children and one Barge cascaded into 244; di
 **shrink in place** instead — same species, smaller size, HP shared across sizes — so a
 round's live count is just its spawns.)
 Phase 7 (T75): `Enemies.enqueue(side, key, hpMult)` queues per side (`Shared/SpawnQueue`); the
-cap stays shared, each side up to its even share, and every dino carries its `side`. Co-op is
+cap stays shared, each side up to its even share (§5.8), and every dino carries its `side`. Co-op is
 one side, so the queue behaves exactly as before.
 
 **5.2 Leaks cost effective HP, not one life.** The design doc said one life per leak. That makes
@@ -222,6 +222,45 @@ and deducts in one step. Four players clicking at once must not all pass the sam
 
 **5.4 Towers never charge money.** `Towers.upgrade()` applies an upgrade and nothing else. The
 caller pays first. Keeps money logic in exactly one place.
+
+**5.5 Match length: `Shared/Pace` (Phase 8 batch 2, #249–#270).** Jovan's ceilings: co-op
+30–40 min, casual battles 15 min, Ranked 30 min with overtime.
+- **Fewer, tougher dinos, same gaps.** A round's counts × `Round pace` 0.4 (battles also ×
+  `Battle crowd x` 0.7, which also divides the spawn gap; half up, min 1, bosses kept); dino
+  HP, kill cash and leak cost × the count ratio, so a round's effective HP, required DPS, cash
+  and Fence at stake are unchanged (#258, #263). Co-op plays all 40 rounds (~34 min measured,
+  no clock).
+- **Battle round lists** always end at 40: casual every 3rd round (1, 4 … 40), Ranked every
+  2nd (2, 4 … 40). A skipped round's expected income is paid once when the next played round
+  starts (`Pace`, driven by `Shared/BattleLoop`).
+- **Match clock** (`Casual match cap` 900 s, `Ranked match cap` 1800 s, from Building) in
+  `BattleLoop`; banner at 60 s left; at the cap the match ends at once and the tie-break
+  chain ranks everyone. Camp Clash plays Final Stampede after round 40 until a camp falls or
+  the clock; Bone Rush ends at round 40 (the clock is its backstop). Studio-only `clockcap`
+  shortens it for tests (refused live).
+- **Ability tempo** 2.0: hero ability cooldowns ÷ 2, Field Hospital heal/revive × 2 (#259).
+
+**5.6 No result is ever a tie (`Shared/BattleRules`, #253, #261).** Camp Clash: standing /
+fell later → more Fence → more Bones → more damage to its own dinos (capped at each dino's HP)
+→ lower total round-clear time → a coin flip seeded by `matchId`. Bone Rush: final Bones →
+survived longer → Fence → damage → clear time → seeded flip. The results line names the
+deciding step ("Decided by most Fence left"). `BattleRules` errors on a nil seed.
+
+**5.7 Joiners (`Server/Battle`, `Pace`, #254, #262, #265, #268).** Ranked: seats lock at
+Building; joiners wait on the home screen; leavers aren't refilled. Casual battles seat
+joiners until round 30 (`Late join last round`): Camp Clash → the standing camp with the
+fewest hunters; Bone Rush → one of 2 spare plots, Bones = the lowest standing, Fence = the
+highest standing (never above full). Co-op keeps drop-in. Catch-up cash is additive: own
+plot = 1-hunter starting cash, camp/co-op = 200, plus 1.1 × the income missed. Dino scale
+grows from the next round. Joiners are never staked, ranked or escrowed.
+
+**5.8 Live cap per side and the Fence drain (#266, #267).** `SpawnQueue.take` gives each
+seated side `Sides.sideCap(130, seated)` (13 at 10 seats), round robin, so an undefended
+side holds only its own share and delays only its own spawns; out sides despawn. "Round N
+over" logs the per-side peaks. In battles a leak adds its cost to the side's pending loss,
+which comes off the Fence at most `Battle Fence drain` 4/s; pending is flushed before any
+ranking (clock, round 40, last camp) and dropped when a side is out. Co-op leaks stay
+instant.
 
 ---
 
@@ -272,7 +311,7 @@ second test client.
 | **Round 3** — mastery ability perks, hero XP | `Mastery Perks` sheet (one row per hero and mastery level) and Tuning HERO XP / MASTERY PERKS levers, with exporter rules (level 15 worth more than level 10, worth cap, no extra stun) and audit checks; perks merged by `HeroStats.compute(…, masteryLevel)`; Spare Dart and Smoulder in `Hero`; `Combat.mergeMark`; `Shared/HeroXp`, per-hunter XP and level in `Hero`, towers on the round level; HUD XP bar and banners; `value.py` and the hero-vs-tower guard use the level in play (`PLAN.md` round 3, `DECISIONS.md` #97–#117) | **Written 2026-10-02, statically checked + headless tests** (245 specs), not yet playtested |
 | **Round 4** — Jovan's answers (`DIRECTION.md` 2026-10-02) | Renames (Bones, Fence, Big Bore); Linebreaker ×2; per-difficulty `Starting cash` (Hard 850); home-screen rows (`HomeLayout`); softer boss throws; one health pool + pierce-through (`SizeBreaks`) and the boss notched bar; Chaos = gun skill (towers ×0.6, hero ×1.5); mastery small perks (`SmallPerks`); hero tier 6 (`GunRules`); saved player level (`PlayerLevel`), cosmetics and titles (`Cosmetics`, `Wardrobe`, `Looks.client`), Profile screen (`ProfileScreen`, `Profile.client`), level leaderboard (`LevelBoard`, This-server fallback); four new towers (`StormCoil`, `Falcon`, `Ballista`, `TarPit`; can't-be-damaged and on-track placement in `Combat`/`Placement`); `value.py` worth bars and Tar Pit control line (`PLAN.md` round 4, `DECISIONS.md` #118–#206) | **Written 2026-10-02 → 10-06, statically checked + 406 headless specs**, not yet playtested (`RECAP.md`, "Round 4"); Studio playtests T31/T38/T60/T70 open |
 | **7** — battle modes | Camp Clash (team battle) and Bone Rush (battle royale): `Sides` (track copies, zones, crossing strip), per-side `Economy` (`Ledger`) and spawn queue (`SpawnQueue`), `BattleRules` (damage permission per source, PvP levers, Camo Cover, lockstep, results), `BattleFlow` + `Server/Battle` (seating, Studio stand-ins, elimination, Final Stampede), `Matchmaking` (one server, snake draft by Trophies), `Stakes` (Entry fee, escrow, Amber Hoard, Practice Hunt) and `Trophies` (arenas) applied by `Progression`, `TrophyBoard` (shared + server), `RoundFlow` (F4), home/HUD/results/Profile Trophies screens, value.py perk-parity bar (`PLAN.md` phase 7, `DECISIONS.md` #208–#243) | **Written 2026-10-06 → 10-08, 587 headless specs, playtested solo in Studio** (PLAYTEST Runs 2–3 with stand-in camps; Run 4 re-checks T86b). Multi-client steps: Jovan's script (`RECAP.md` "Phase 7"); real stakes, saved Trophies, world boards: need publishing |
-| **8** — ready to publish | Batch 1 (done): publish checklist + multi-client guide (`SETUP.md`); `StudioOnly` gate for every Studio cheat; `SaveStore` + session lock with a fake-store spec; `value.py --battle`; `Tuning!B143` battle rounds 60 → 120 s; Tectonic Slam ×34; Studio stand-in hunter (`StandInHunter`, `Server/StandInHunters`), Start at round N, Stand-ins hold. Waiting on Jovan: private publish + published smoke (T94–T95), lobby place with TeleportService + MemoryStore by Trophies (T96), the 4×-Amber towers (T97), battle length (T98) (`PLAN.md` "Phase 8", #238–#248) | **Batch 1 built 2026-10-08, 619 headless specs, playtested in Studio** (Run 5: 23 pass, 0 fail; N7 test aid open). Live saves, the lock and cross-server boards need the place published |
+| **8** — ready to publish | Batch 1 (done): publish checklist + multi-client guide (`SETUP.md`); `StudioOnly` gate for every Studio cheat; `SaveStore` + session lock with a fake-store spec; `value.py --battle`; `Tuning!B143` battle rounds 60 → 120 s; Tectonic Slam ×34; Studio stand-in hunter (`StandInHunter`, `Server/StandInHunters`), Start at round N, Stand-ins hold. Batch 2 (done, replaces T98): match length and joiners — `Shared/Pace`, `Shared/BattleLoop`, paced co-op (fewer, tougher dinos), battle round lists (casual every 3rd, Ranked every 2nd), match clock 15:00 / 30:00, tie-break chain, casual late joiners with catch-up cash, Ranked seat lock, Ability tempo ×2, per-side live cap, battle Fence drain 4/s (§5.5–5.8, #249–#270). Waiting on Jovan: the 4×-Amber towers (T97, next), private publish + published smoke (T94–T95), lobby place with TeleportService + MemoryStore by Trophies (T96) (`PLAN.md` "Phase 8") | **Batch 1 built 2026-10-08 (619 specs; Run 5: 23 pass, 0 fail). Batch 2 built 2026-10-12 (682 specs; Run 7: 27 pass, F8 fixed; Run 7b: 9 pass, 0 fail).** Live saves, the lock, cross-server boards and a real late-joining client need Jovan / a published place |
 
 ---
 

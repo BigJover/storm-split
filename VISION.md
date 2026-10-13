@@ -34,7 +34,6 @@ system**: the word **Trophies** is reserved for it (take-downs are **Bones**).
   crossing strip; build only in your camp; same dinos per camp, rounds in lockstep. Hunters
   raid by shooting rival towers to Trampled (×0.35) and shoot rival hunters (×0.5, Camo Cover
   3 s on respawn). A camp is out at Fence 0. Last camp wins; Final Stampede after round 40.
-  Rounds may run up to 120 s (#245), so a full battle can last ~60–80 min (Jovan to confirm).
 - **Bone Rush (battle royale):** a camp each (2–10); most Bones wins; ends at ≤1 alive or
   round 40; the last alive gets +10% Bones.
 - **Casual / Ranked** in one server (Ready on the home screen). Ranked: Entry fee 15 Amber
@@ -43,6 +42,28 @@ system**: the word **Trophies** is reserved for it (take-downs are **Bones**).
   cosmetic, a Trophy board. Unpublished it runs as Practice Hunt.
 - **Fairness:** perk parity between heroes within 15% (exporter); the maxed-vs-new edge is a
   report, not a cap (#235).
+
+**Match length, joiners, strength gap (Jovan, 2026-10-09; built in Phase 8 batch 2, #249–#270).**
+- **How long a match lasts.** Every round has fewer, tougher dinos (same fight, less time).
+  | Mode | Rounds | Round 40 at | Then | Hard ceiling |
+  |---|---|---|---|---|
+  | Solo / co-op | all 40 | ~34 min | victory | 30–40 min (no clock) |
+  | Casual Camp Clash | every 3rd (1, 4 … 40) | ~12 min | Final Stampede | 15:00 clock |
+  | Casual Bone Rush | every 3rd | ~12 min | match ends | 15:00 clock |
+  | Ranked Camp Clash | every 2nd (2, 4 … 40) | ~17.4 min | Final Stampede | 30:00 clock, overtime included |
+  | Ranked Bone Rush | every 2nd | ~17.4 min | match ends | 30:00 clock |
+  Skipped rounds still pay the cash you'd have earned. Hero abilities recharge twice as fast.
+- **No ties.** Every queue uses one tie-break chain (Fence, Bones, damage, clear time, then a
+  coin flip seeded by the match), and the results say what decided it.
+- **Joiners.** Ranked seats lock when the match starts; nobody joins mid-match. Casual
+  battles seat late joiners up to round 30 (Camp Clash: the camp with the fewest hunters;
+  Bone Rush: a spare plot with the lowest standing Bones and the best standing Fence). Co-op
+  keeps drop-in. Every joiner gets catch-up cash (what they missed × 1.1) so they help their
+  camp and can still fight for a placing; they're never staked or ranked.
+- **The strength gap is intended.** Competitive is for maxed players, like Clash Royale's
+  level-based trophy road. Quick play keeps the gap on purpose: a new player who meets a
+  maxed hunter of another class should think "I need to unlock that one". Power is never
+  levelled in either queue; only perk parity *between heroes* is kept.
 - **Needs publishing:** real Entry fees and saved Trophies, the world boards, 10 real players'
   load. A lobby place with cross-server matchmaking by Trophies comes after publishing
   (phase 8, #240).

@@ -9,6 +9,7 @@ specs re-run every task; no publish, no DataStore writes from an agent).
 
 **Status (2026-10-09): 2a + 2b done (29720d9, 4548d14, e9aab47, 76d1e04 T103, 717942e T104; 662 specs; review #263–#264). Next: T105 done (e7f8cb1), T106 done (Dino Round 18), T103b running → T106b → Tester Run 7 (the Run 6 steps below; joiner step via `latestandin`).**
 **Status (2026-10-12): Run 7 done (27 pass, F8 major, N13, N14). Rulings #266–#270. Next: T103c + T105b (one Builder commit, below) → Tester Run 7b → batch 2 signed off → T97.**
+**Status (2026-10-13): BATCH 2 DONE and signed off (#271). T103c + T105b at 3664152 (682 specs); Run 7b 9 pass / 0 fail. N15 (log wording) accepted, rides the next `Battle` commit (#272). Recap: `RECAP.md` "Phase 8 batch 2". Next: T97 — Jovan picks from the refreshed `TOWERS_LATER.md` (#273), then 🦖 names.**
 
 ## Target timelines (model: `Round pace` 0.4, 30 s build, 5 s breaks; Normal)
 | Mode | Rounds played | Round 40 reached at | After round 40 | Hard cap |
@@ -183,7 +184,7 @@ Exact strings (display only; keys unchanged):
 - `BattleFlow.luau:327` literal "Bones" → `{Theme.Bones}`-driven text.
 - **Accept:** specs/strings updated; check/export/test green; no Config diff.
 
-### T103c + T105b (#266–#269) — Run 7 fixes (ONE Builder commit), then Tester Run 7b
+### T103c + T105b (#266–#269) — Run 7 fixes (ONE Builder commit), then Tester Run 7b — DONE (3664152; Run 7b 9/9 pass, 3d27f32)
 **T103c (F8 proof, N13 drain):**
 1. Spec (`SpawnQueue`): 10 sides, cap 130, side 1 at 13 live with 50 queued; every other
    side with 1 queued takes it at once; side 1 takes nothing; total never > 130. Same with
@@ -400,11 +401,11 @@ Design first (Director, DECISIONS): lobby place, MemoryStore queue by mode and T
 TeleportService to a reserved match server, `Shared/Matchmaking` reused, session lock (T90)
 required. Testable only published.
 
-### T97 — The 4×-Amber towers (needs ask 1)
+### T97 — The 4×-Amber towers (needs ask 1) — NEXT (2026-10-13): proposal refreshed with 7 concepts (#273); waiting on Jovan's picks
 Same pattern as round 4's T62–T69: names (🦖), sheet rows, pure rules module per tower, server
 behaviour, panel, value.py bars, Tester steps.
 
-### T98 — Battle difficulty/length (needs ask 3; T91b already moved rounds to 120 s) · T99 — Phase 8 docs + recap (Director) — DONE for batch 1
+### T98 — Battle difficulty/length — REPLACED by Phase 8 batch 2 (DONE, #249, #271) · T99 — Phase 8 docs + recap (Director) — DONE for batch 1
 
 # Plan — Phase 7: the battle modes (Director, 2026-10-06)
 

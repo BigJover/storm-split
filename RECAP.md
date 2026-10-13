@@ -676,3 +676,104 @@ Rush); a competent one reaches round 40 and Final Stampede. Co-op is unchanged.
    session lock is already in for it).
 3. Your tower picks become the content batch (T97); your battle-length answer becomes T98.
 4. No Phase 9 proposed yet: the rest of phase 8 comes first.
+
+# Phase 8 recap for Jovan: match length and joiners, batch 2 (2026-10-09 → 10-13)
+
+**Your words (2026-10-09, short):** "15 min max for pvp modes that arent competitive then
+30 min max with overtime included for competitive … tie breakers so you cant tie in comp …
+co-op pve … 30-40min max … no mid round joining for comp … late joiners … some extra cash …
+that strength difference is good … lets do the 4x picks after all of this is dealt with".
+
+**Honest status:** built, 682 headless specs green, and **played in Studio by the Tester**
+(Run 7: 27 pass, 1 major fail F8 → fixed; Run 7b: 9 pass, 0 fail). Real second players
+joining late and full-length matches with real people still need you. Calls:
+`DECISIONS.md` #249–#273.
+
+## What was built
+
+- **Shorter rounds, same fight.** Each round now has **fewer but tougher dinos** (same total
+  HP, same cash, same Fence at stake), so it plays in about half the time and nothing about
+  the balance moved.
+- **How long each mode lasts (measured by the model, Normal):**
+  - **Solo / co-op:** all 40 rounds in **~34 min** (your 30–40). No clock.
+  - **Casual Camp Clash / Bone Rush:** plays every 3rd round (1, 4, 7 … 40), so round 40
+    comes at **~12 min**; Camp Clash then goes into **Final Stampede until the 15:00 clock**;
+    Bone Rush ends at round 40.
+  - **Ranked:** every 2nd round (2, 4 … 40), round 40 at **~17.4 min**, then Final Stampede
+    until the **30:00 clock** (overtime included).
+  - Skipped rounds still pay the cash you'd have earned, so your camp isn't poorer.
+  - "Time left m:ss" on the HUD, a "One minute left" banner, and "Time's up!" at the cap.
+- **No ties, ever.** Camp Clash: still standing / fell later → more Fence → more Bones → more
+  damage to your own dinos → faster round clears → a coin flip seeded by the match.
+  Bone Rush: Bones → survived longer → Fence → damage → clear time → coin flip. The results
+  say what decided it ("Decided by most Fence left").
+- **Joiners.** Ranked: seats lock at the start, nobody joins mid-match. Casual battles: a late
+  joiner is seated up to round 30 (Camp Clash → the camp with the fewest hunters; Bone Rush →
+  a spare plot with the lowest standing Bones and the best standing Fence, so they can
+  compete but never start ahead). Co-op keeps drop-in. Everyone who joins late gets
+  **catch-up cash** (what they missed × 1.1), with a toast "+N cash for skipped rounds".
+  Joiners are never staked or ranked.
+- **Abilities recharge twice as fast** (and the Field Hospital heals twice as fast), so
+  heroes still get to use them as often per round as before.
+- **Fairer big lobbies:** each camp gets its own share of the 130-dino limit (13 each with
+  10 players), so one empty plot can't slow everyone else down.
+- **Fence drains at most 4 per second in battles**, so two camps that leak in the same moment
+  no longer drop together; the one with more Fence lasts longer and wins the tie.
+- **The strength gap stays**, on purpose (Ranked like Clash Royale's trophy road; quick play
+  shows new players what a maxed hunter can do).
+
+## How it was verified
+
+- **Headless:** 682 specs (pace maths, round lists, skipped income, the clock with a fake
+  timer, every tie-break step, joiner seating and cash, per-side cap, Fence drain).
+- **Studio Run 7: 27 pass.** Paced co-op, casual round jumps with the supplies line, the
+  clock and its banners, "Decided by …" (standing, Bones, damage, coin flip), late stand-ins
+  in both modes (seated, cash, closed after round 30), Ranked seats lock and rounds 2, 4 ….
+  One major fail (F8: 10-seat Bone Rush hit 130 dinos), which turned out to be every plot
+  at its fair share; the Builder added proof and the Fence drain.
+- **Studio Run 7b: 9 pass, 0 fail.** Own plot capped at 13 while others weren't delayed;
+  drain ≤ 4/s; Fence settled before results; co-op leaks unchanged; joiner Fence = best
+  standing; the joiner toast sits below the XP bar. One note (N15: a side that's out shows
+  "out" in a log line instead of its peak): accepted, tidied with the next battle commit.
+
+## What needs you
+
+1. **A real late joiner** (Studio → Test → Clients and Servers, 2–3 players): start a casual
+   battle, join with a second client around round 10–20. Do they land in the right camp with
+   the cash toast, and does it feel fair? Try joining a Ranked match: they should wait.
+2. **Final Stampede until the clock with real players.** The Tester can't build a defence
+   that survives past round 40. Does a casual Camp Clash feel right at 15 min, and Ranked at
+   30?
+3. **Amber per hour about doubles** (Normal ~92 → ~175 an hour; unlocking everything ~19 h →
+   ~10 h) because your per-clear rewards stayed the same and co-op got shorter. Fine, or
+   lower the clear rewards?
+4. **Your 4×-Amber towers:** the refreshed `TOWERS_LATER.md` (below).
+
+## Decisions you may want to overturn
+
+1. **#251 Battles skip rounds** (casual every 3rd, Ranked every 2nd) instead of ending early,
+   so every battle still reaches round 40 and its bosses.
+2. **#252 Bone Rush ends at round 40; only Camp Clash plays Final Stampede** until the clock.
+3. **#253 The tie-break order** (Fence before Bones in Camp Clash; a seeded coin flip last).
+4. **#258 Fewer, tougher dinos** rather than the same dinos arriving faster (keeps the server
+   under the 130 limit with 10 players).
+5. **#262 / #268 Late-joiner deal:** cash = starting cash + 1.1 × missed income; Bone Rush
+   joiners start with the lowest Bones and the best Fence still standing.
+6. **#259 Abilities recharge ×2** to make up for shorter rounds.
+
+## 4×-Amber tower ideas (you asked)
+
+`TOWERS_LATER.md` now has **7 concepts**, updated for one-health-pool breaks, per-side
+battles/PvP, shorter matches and the 2× towers (no copies of Storm Coil, Falcon Roost, Tar
+Pit or Harpoon Ballista). The original four are kept and fixed (Meteor Beacon, Amber Resin
+Cannon, Ranger Station, Spotter Blimp) and three are new: **Raptor Pen** (tamed raptors hunt
+your dinos), **Bone Totem** (charges from take-downs, then roars/buffs/pays) and **Volcano
+Vent** (big eruptions that flood a stretch of track with lava). Each has three paths and
+2–3 choices per tier 4 and tier 5. Pick 4 (our suggestion: Resin Cannon, Raptor Pen, Spotter
+Blimp, Bone Totem) and the Dino agent names them.
+
+## What's next
+
+1. Your tower picks → T97 (built in the round-4 tower pattern, then a Tester run).
+2. Your multi-client script (now with a late joiner) and a private publish (`SETUP.md`).
+3. Then the lobby place with cross-server matchmaking (T96).

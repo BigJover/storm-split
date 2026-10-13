@@ -235,17 +235,29 @@ through `Shared/SaveStore` with retries and a **session lock** (`Shared/Profile`
 against a fake store; `value.py --battle` pacing report; **battle rounds 60 → 120 s** (battles
 reached only round 9–11; now ~60–80 min, Jovan to confirm); Tectonic Slam damage ×24.76 → 34;
 a Studio-only **stand-in hunter** for solo PvP tests, plus "Start at round N" and "Stand-ins
-hold". Calls: `DECISIONS.md` #244–#248. Open for agents: N7 (release "Stand-ins hold"
-mid-battle).
+hold". Calls: `DECISIONS.md` #244–#248. N7 (release "Stand-ins hold" mid-battle) done.
 
-Next (all need Jovan, `RECAP.md` "Phase 8"): his multi-client script, a private publish per
-`SETUP.md`'s checklist (then the published smoke T95), the 4×-Amber tower picks
-(`TOWERS_LATER.md`), battle length, then the lobby place + teleport matchmaking (T96).
+Phase 8 batch 2, match length and joiners (2026-10-09 → 10-12, Jovan's 2026-10-09 answer in
+`DIRECTION.md`): built and headless-tested (682 specs) and **playtested in Studio** (Run 7:
+27 pass, F8 fixed; Run 7b: 9 pass, 0 fail). `Shared/Pace` + `Shared/BattleLoop`: every
+round has fewer, tougher dinos (same effective HP, cash and Fence at stake), so co-op's 40
+rounds take ~34 min; battles play every 3rd round (casual, round 40 at ~12 min) or every 2nd
+(Ranked, ~17.4 min) with skipped income paid, then Final Stampede in Camp Clash until a hard
+clock (15:00 casual, 30:00 Ranked); a tie-break chain so no result is a tie; Ranked seats
+lock at the start, casual battles seat late joiners until round 30 with catch-up cash;
+Ability tempo ×2; per-side live cap; battle Fence drains at most 4/s. Calls: `DECISIONS.md`
+#249–#270; summary `RECAP.md` "Phase 8 batch 2". N15 (an out side logs "out" instead of its
+peak) is accepted as a log-only tidy-up for the next Builder commit that touches `Battle`.
+
+Next: the 4×-Amber tower picks (T97, `TOWERS_LATER.md`), then (all need Jovan, `RECAP.md`
+"Phase 8") his multi-client script incl. a real late joiner, a private publish per
+`SETUP.md`'s checklist (then the published smoke T95), then the lobby place + teleport
+matchmaking (T96).
 
 ## Open issues
 
 - Leak cost is effective HP (BTD6-style), so 40 starting lives is likely too few in co-op.
-  Battles ending by round 9–11 was the 60 s round cap, fixed by 120 s (#245); battle length
-  (~60–80 min) is an ask-Jovan.
+  Battle length is settled (batch 2): ≤ 15 min casual, ≤ 30 min Ranked, ~34 min co-op.
+- Shorter co-op about doubles Amber per hour (Normal ~92 → ~175/h, #256): Jovan to confirm.
 - Scout Range path has range *and* its old damage/rate boosts — likely too strong; trim.
 - Folder is still named `~/Fortnite`.
