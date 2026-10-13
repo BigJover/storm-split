@@ -208,13 +208,13 @@ test("HUD: clock text, the warning banner in the last minute, never over a resul
 end)
 
 test("results: the 'Decided by' line names the step; 'Time's up!' at the clock", function()
-	eq(PanelRules.decidedLine("fence", true), "Time's up! Decided by Fence left")
+	eq(PanelRules.decidedLine("fence", true), "Time's up! Decided by most Fence left")
 	eq(PanelRules.decidedLine("bones"), "Decided by Bones")
 	eq(PanelRules.decidedLine("standing"), "Last camp standing")
 	eq(PanelRules.decidedLine("survived"), "Decided by who lasted longer")
 	eq(PanelRules.decidedLine("damage"), "Decided by damage dealt to dinos")
 	eq(PanelRules.decidedLine("clearTime"), "Decided by faster round clears")
-	eq(PanelRules.decidedLine("coinFlip"), "Decided by a coin flip (seeded by the match)")
+	eq(PanelRules.decidedLine("coinFlip"), "Decided by a coin flip")
 	eq(PanelRules.decidedLine(nil, true), "Time's up!")
 	eq(PanelRules.decidedLine(nil), nil)
 	local out = PanelRules.battleResults({
@@ -226,7 +226,7 @@ test("results: the 'Decided by' line names the step; 'Time's up!' at the clock",
 		decidedBy = "fence",
 		atClock = true,
 	})
-	eq(out.lines[1], "Time's up! Decided by Fence left", "first line of the results")
+	eq(out.lines[1], "Time's up! Decided by most Fence left", "first line of the results")
 end)
 
 test("Studio short clock: shorter caps in Studio only; live always the real cap", function()
@@ -247,6 +247,8 @@ test("wiring: matchId always the seed; per-side damage and clear time feed the c
 	ok(main:find("local matchId: string = HttpService:GenerateGUID(false)", 1, true) ~= nil, "every battle has an id")
 	ok(main:find("matchId = matchId, -- always: the tie-break seed (#261)", 1, true) ~= nil, "passed to Battle")
 	ok(main:find('action == "clockcap" and typeof(key) == "number" and StudioOnly.allowed(RunService:IsStudio(), "clockCap")', 1, true) ~= nil, "short clock gated")
+	local hud = read("src/client/Hud.client.luau")
+	ok(hud:find("`  ·  Time left {PanelRules.clockText(left)}`", 1, true) ~= nil, "HUD clock reads 'Time left m:ss' (#265)")
 	local battle = read("src/server/Battle.luau")
 	ok(battle:find("seed = ctx.matchId })", 1, true) ~= nil, "teamResult / atClock seeded")
 	ok(battle:find("BattleRules.royaleResult(seats, roundsDone, ctx.matchId)", 1, true) ~= nil, "royaleResult seeded")

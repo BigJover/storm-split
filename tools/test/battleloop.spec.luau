@@ -183,8 +183,8 @@ test("Ability tempo (#259): cooldowns / 2, hospital heal x 2, wired in Hero and 
 	ok(towers:find("heal = math.max(heal, Pace.healRate(s.healPerSecond))", 1, true) ~= nil, "Field Hospital heal")
 end)
 
-test("the supplies feed line (T103): '+N supplies for rounds X–Y', one round named alone", function()
+test("the supplies feed line (T103): '+N cash for skipped rounds X–Y', one round named alone", function()
 	local BattleFlow = require(src.shared.BattleFlow)
-	eq(BattleFlow.suppliesLine(1234.9, 2, 3), "+1234 supplies for rounds 2–3")
-	eq(BattleFlow.suppliesLine(77, 1, 1), "+77 supplies for round 1")
+	eq(BattleFlow.suppliesLine(1234.9, 2, 3), "+1234 cash for skipped rounds 2–3")
+	eq(BattleFlow.suppliesLine(77, 1, 1), "+77 cash for skipped round 1")
 end)

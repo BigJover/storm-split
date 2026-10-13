@@ -180,12 +180,12 @@ end
 -- it starts "Time's up!". Nil when there's nothing to say (one camp, no clock).
 local DECIDED = {
 	standing = "Last camp standing",
-	fence = `Decided by {Theme.Fence} left`,
+	fence = `Decided by most {Theme.Fence} left`,
 	bones = `Decided by {Theme.Bones}`,
 	survived = "Decided by who lasted longer",
 	damage = "Decided by damage dealt to dinos",
 	clearTime = "Decided by faster round clears",
-	coinFlip = "Decided by a coin flip (seeded by the match)",
+	coinFlip = "Decided by a coin flip",
 }
 function PanelRules.decidedLine(decidedBy: string?, atClock: boolean?): string?
 	local line = if decidedBy then DECIDED[decidedBy] else nil

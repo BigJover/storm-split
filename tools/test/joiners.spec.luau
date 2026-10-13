@@ -96,6 +96,7 @@ end)
 test("lateJoinLine: the toast names the camp, round and cash (T106 reviews the words)", function()
 	eq(BattleFlow.lateJoinLine("TEAM", "Red Camp", 17, 1234.7, nil), "Joined Red Camp at round 17: +1234 cash to catch up")
 	eq(BattleFlow.lateJoinLine("ROYALE", "Ann's Camp", 22, 900, 45), "Joined the hunt at round 22: +900 cash and 45 Bones to catch up")
+	ok(require("@lune/fs").readFile("src/shared/BattleFlow.luau"):find("{math.floor(bones or 0)} {Theme.Bones} to catch up", 1, true) ~= nil, "Bones from Theme (#265)")
 end)
 
 test("SpawnQueue.setSeated: spare plots take no share of the live cap until seated", function()

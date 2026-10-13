@@ -383,7 +383,7 @@ local function refresh()
 	local battle = attr("BattleMode", nil)
 	local camp = if battle then attr(Sides.attr("Camp", side), "") else ""
 	local left = clockLeft()
-	local clock = if battle and left then `  ·  Clock {PanelRules.clockText(left)}` else "" -- T104
+	local clock = if battle and left then `  ·  Time left {PanelRules.clockText(left)}` else "" -- T104
 	startButton.Visible = state == "Building" and battle == nil
 	label.Visible = state ~= "Lobby" -- the home screen has its own layout
 	results.Visible = state == "GameOver" or state == "Victory"

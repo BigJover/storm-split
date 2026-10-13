@@ -10,7 +10,7 @@
 	  outLine(camp)                    "<Camp>'s Fence is down! They're out."
 	  tranqLine(name)                  "Tranqed by <name>!" (a hunter down, T78)
 	  raidLine(name, camp, tower)      "<name> trampled <Camp>'s <tower>" (a raid knock-out)
-	  suppliesLine(amount, from, to)   "+N supplies for rounds X–Y" ("for round X" when one):
+	  suppliesLine(amount, from, to)   "+N cash for skipped rounds X–Y" ("…skipped round X" when one):
 	                                   the skipped rounds' income, paid as a played round
 	                                   starts (T103, #251)
 	  resultTitle(mode, place)         the winner's results title: "Camp Clash — Your camp
@@ -77,6 +77,7 @@ local Placement = require(script.Parent.Placement)
 local Pricing = require(script.Parent.Pricing)
 local ShopRules = require(script.Parent.ShopRules)
 local Sides = require(script.Parent.Sides)
+local Theme = require(script.Parent.Theme)
 
 local BattleFlow = {}
 
@@ -121,7 +122,7 @@ end
 
 function BattleFlow.suppliesLine(amount: number, from: number, to: number): string
 	local rounds = if from == to then `round {from}` else `rounds {from}–{to}`
-	return `+{math.floor(amount)} supplies for {rounds}`
+	return `+{math.floor(amount)} cash for skipped {rounds}`
 end
 
 function BattleFlow.raidLine(name: string, camp: string, tower: string): string
@@ -324,7 +325,7 @@ end
 
 function BattleFlow.lateJoinLine(modeKey: string, camp: string, round: number, cash: number, bones: number?): string
 	if modeKey == "ROYALE" then
-		return `Joined the hunt at round {round}: +{math.floor(cash)} cash and {math.floor(bones or 0)} Bones to catch up`
+		return `Joined the hunt at round {round}: +{math.floor(cash)} cash and {math.floor(bones or 0)} {Theme.Bones} to catch up`
 	end
 	return `Joined {camp} at round {round}: +{math.floor(cash)} cash to catch up`
 end
