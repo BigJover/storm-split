@@ -249,21 +249,32 @@ header.Parent = panel
 
 local title = Instance.new("TextLabel")
 title.Name = "Title"
-title.Size = UDim2.new(1, -36, 1, 0)
+title.Size = UDim2.new(1, OptionPick.header(false).titleRight, 1, 0)
 title.BackgroundTransparency = 1
 title.Font = Enum.Font.GothamBold
-title.TextSize = 18
+title.TextSize = OptionPick.TITLE_MAX
+-- A long title shrinks to fit its box (which ends before Back and the X, OptionPick.header),
+-- then is cut with "…" — never under the buttons (Run 8 F9).
+title.TextScaled = true
+title.TextWrapped = false
+title.TextTruncate = Enum.TextTruncate.AtEnd
 title.TextColor3 = TEXT
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
+do
+	local fit = Instance.new("UITextSizeConstraint")
+	fit.MaxTextSize = OptionPick.TITLE_MAX
+	fit.MinTextSize = OptionPick.TITLE_MIN
+	fit.Parent = title
+end
 
 -- Back from the A/B/C pick to the panel (PLAN T112): in the header beside the X, outside
 -- the scroll, shown only while a pick is open.
 local backButton = Instance.new("TextButton")
 backButton.Name = "Back"
 backButton.AnchorPoint = Vector2.new(1, 0)
-backButton.Position = UDim2.new(1, -34, 0, 0)
-backButton.Size = UDim2.fromOffset(60, 28)
+backButton.Position = UDim2.new(1, OptionPick.header(true).backRight, 0, 0)
+backButton.Size = UDim2.fromOffset(OptionPick.BACK_W, OptionPick.HEADER)
 backButton.BackgroundColor3 = LOCKED_COLOR
 backButton.Font = Enum.Font.GothamBold
 backButton.TextSize = 14
@@ -277,7 +288,7 @@ local closeButton = Instance.new("TextButton")
 closeButton.Name = "Close"
 closeButton.AnchorPoint = Vector2.new(1, 0)
 closeButton.Position = UDim2.new(1, 0, 0, 0)
-closeButton.Size = UDim2.fromOffset(28, 28)
+closeButton.Size = UDim2.fromOffset(OptionPick.CLOSE_W, OptionPick.HEADER)
 closeButton.BackgroundColor3 = LOCKED_COLOR
 closeButton.Font = Enum.Font.GothamBold
 closeButton.TextSize = 16
@@ -1283,7 +1294,7 @@ render = function()
 	-- The pick's own controls: Back, the cards and the confirm button (PLAN T112).
 	local picking = pick ~= nil and mode ~= "closed"
 	backButton.Visible = picking
-	title.Size = UDim2.new(1, if picking then -100 else -36, 1, 0)
+	title.Size = UDim2.new(1, OptionPick.header(picking).titleRight, 1, 0)
 	cardsFrame.Visible = picking
 	confirmButton.Visible = picking
 	if not picking then

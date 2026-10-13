@@ -56,6 +56,21 @@ OptionPick.BOTTOM = 24 -- the panel sits this far above the window's bottom
 OptionPick.TOP = 44 -- Roblox's top bar
 OptionPick.LIST_MAX_SCREEN = 0.55 -- the scroll box never takes more of the window than this
 OptionPick.MIN_SCALE = 0.4
+OptionPick.CLOSE_W = 28 -- the X, at the header's right edge
+OptionPick.BACK_W = 60 -- Back, left of the X
+OptionPick.HEADER_GAP = 6 -- clear space between the title, Back and the X
+OptionPick.TITLE_MAX = 18 -- the title's text size, shrunk to fit (never below TITLE_MIN,
+OptionPick.TITLE_MIN = 11 -- then cut with "…")
+
+-- The header's title box ends before Back and the X (Run 8 F9: it ran under Back).
+-- Offsets from the header's right edge; `titleRight` is the title's (negative) width offset.
+function OptionPick.header(picking: boolean): { titleRight: number, backRight: number, closeRight: number }
+	local backRight = OptionPick.CLOSE_W + OptionPick.HEADER_GAP
+	local titleRight = if picking
+		then backRight + OptionPick.BACK_W + OptionPick.HEADER_GAP
+		else OptionPick.CLOSE_W + OptionPick.HEADER_GAP
+	return { titleRight = -titleRight, backRight = -backRight, closeRight = 0 }
+end
 
 OptionPick.BACK = "Back"
 OptionPick.CHOOSE = "Tap a card"

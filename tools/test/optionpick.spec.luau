@@ -145,6 +145,23 @@ test("the pick fits every window: header, cards and confirm on screen", function
 	end
 end)
 
+test("the header title ends before Back and the X (Run 8 F9)", function()
+	-- Spans as offsets from the header's right edge: [left, right], left more negative.
+	local function spans(picking: boolean)
+		local h = OptionPick.header(picking)
+		local close = { -OptionPick.CLOSE_W, h.closeRight }
+		local back = { h.backRight - OptionPick.BACK_W, h.backRight }
+		return h, close, back
+	end
+	local h, close, back = spans(true)
+	ok(back[2] <= close[1] - OptionPick.HEADER_GAP, `picking: Back ends {back[2]} before the X at {close[1]}`)
+	ok(h.titleRight <= back[1] - OptionPick.HEADER_GAP, `picking: title ends {h.titleRight}, Back starts {back[1]}`)
+	local shut = OptionPick.header(false)
+	ok(shut.titleRight <= close[1] - OptionPick.HEADER_GAP, `no pick: title ends {shut.titleRight} before the X`)
+	ok(shut.titleRight > h.titleRight, "without Back the title gets the room back")
+	ok(OptionPick.TITLE_MIN < OptionPick.TITLE_MAX, "the title can shrink")
+end)
+
 test("full window: three cards in a row, nothing scaled or scrolled", function()
 	local shape = OptionPick.layout(FULL[1], FULL[2], 3)
 	eq(shape.scale, 1, "scale")
