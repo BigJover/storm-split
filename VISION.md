@@ -172,3 +172,23 @@ Some of this is cheap now and expensive later, so it's built early:
 | Cash per team / per player instead of one pot | ✅ phase 7 (`Economy` per side, `Shared/Ledger`) |
 | Map sides: build zones per team, several tracks | ✅ phase 7 (`Shared/Sides`, zone check in `Placement`) |
 | Network scale for 10 players (ARCHITECTURE.md §7): clients move enemy copies locally | measure first with Studio's multi-client test |
+
+## Future ideas — brainstorm only (Jovan, 2026-10-13)
+
+Not planned or scheduled yet; Jovan wants "some if not all of this" later. Keep code from
+blocking it.
+
+- **Pets** as support for hunters. A pet **dies with its hunter**, so in PvP nobody has to
+  shoot two targets. Pets have **rarities**, can be **fused**, and can be **shown off**.
+- **Eggs**: pets hatch from eggs; **Amber can speed up hatching**.
+- **Base camp / social hub** where players "flex": towers set up as **decoration**, a
+  **pet pen**, cosmetics on show.
+- **AFK farming**: a stat system players can AFK-farm, or AFK-farm Amber (popular on Roblox).
+- **Bigger Amber numbers**: raise Amber prices and payouts into huge "cash numbers" (also
+  popular). Would mean rescaling every Amber price and reward together (the spreadsheet
+  holds them all, and the exporter's "logging in never beats playing" checks must scale too).
+
+Notes for whoever plans it: the hub is most likely its own place reached by teleport, which
+only works once the game is published (like the lobby place in Phase 8); pets would be one
+more saved collection in `Progression`/`Profile`; anything that affects combat must respect
+PvP parity rules (pets support, never out-damage a hunter).
