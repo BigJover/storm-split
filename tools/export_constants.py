@@ -233,6 +233,11 @@ def read_towers(ws):
 OPTIONS = ("A", "B", "C")
 TOWER_OPTION_COLUMN, TOWER_BLURB_COLUMN = 87, 88  # Tower Upgrades CI, CJ
 HERO_OPTION_COLUMN, HERO_BLURB_COLUMN = 54, 55  # Hero Upgrades BB, BC
+# A Raider option (DECISIONS #284) touches enemy hunters in battles: "yes" in Tower Upgrades
+# `PvP effect` (CK), on a tier-4/5 option row only, at most one per tower. Written into that
+# option's rows as pvpEffect = true (absent otherwise); value.py --options holds its dino part
+# to the Raider floor (PLAN T113).
+TOWER_PVP_COLUMN = 89
 BLURB_MAX = 60  # the pick card's line (#275)
 # Composed numbers are rounded here, so a step written as a ratio (1.6 / 1.3) composes
 # back to exactly 1.6; the snapshot spec (tools/test/optiona.spec.luau) holds option A to it.
@@ -494,6 +499,10 @@ def attach_paths(ws, towers):
         row = read_tower_row(ws, r)
         if option:
             row["own"]["blurb"] = blurb
+        if yes(v(ws, r, TOWER_PVP_COLUMN)):
+            if not option:
+                sys.exit(f"Tower Upgrades row {r}: PvP effect is only for tier-4/5 option rows (DECISIONS #284)")
+            row["own"]["pvpEffect"] = True
         grouped[(key, pid)][(tier, option)] = row
         r += 1
     for (key, pid), rows in grouped.items():
@@ -1881,8 +1890,41 @@ def validate(data):
     validate_cosmetics(data, problems, notes)
     validate_battle(data, problems, notes)
     validate_pace(data, problems, notes)
+    validate_options(data, problems, notes)
 
     return problems, notes
+
+
+def raider_problems(towers):
+    """At most one Raider option (`PvP effect`) per tower (DECISIONS #284 rule 5).
+
+    >>> t = {"paths": [{"id": "P", "t4": {"A": {}, "B": {"pvpEffect": True}}, "t5": {"AA": {}, "BC": {"pvpEffect": True}}}]}
+    >>> raider_problems({"X": {"display": "Demo", **t}})
+    ['Tower Upgrades Demo: 2 Raider options (P 4B, P 5C); at most one per tower (DECISIONS #284)']
+    >>> raider_problems({"X": {"display": "Demo", "paths": [{"id": "P", "t4": {"B": {"pvpEffect": True}}, "t5": {}}]}})
+    []
+    """
+    out = []
+    for t in towers.values():
+        found = []
+        for path in t["paths"]:
+            found += [f"{path['id']} 4{o}" for o, row in path["t4"].items() if row.get("pvpEffect")]
+            found += sorted({f"{path['id']} 5{k[1]}" for k, row in path["t5"].items() if row.get("pvpEffect")})
+        if len(found) > 1:
+            out.append(f"Tower Upgrades {t['display']}: {len(found)} Raider options ({', '.join(found)}); at most one per tower (DECISIONS #284)")
+    return out
+
+
+def validate_options(data, problems, notes):
+    """The A/B/C option bars (PLAN T113, DECISIONS #280, #284), enforced on every slot that has
+    B or C, and one Raider option per tower: tools/value.py --options computes them (imported
+    here, as it imports this module)."""
+    import value  # noqa: E402 (tools/ is on the path: this file's own folder)
+    enforced = value.option_problems(data)
+    problems += enforced
+    slots = sum(1 for t in [*data["Towers"].values(), *data["Heroes"].values()] for p in t["paths"]
+                for counts in ([len(p["t4"])], [len({k[1] for k in p["t5"] if k[0] == o4}) for o4 in p["t4"]]) for n in counts if n > 1)
+    notes.append(f"A/B/C option bars (value.py --options): {slots} slot(s) with a choice, {len(enforced)} problem(s)")
 
 
 # ---------------------------------------------------------------- Luau emitter

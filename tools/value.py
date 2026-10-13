@@ -99,6 +99,11 @@ Usage:
     python3 tools/value.py --breaks1   Z / B1 (every break forced to 1) / S per raw-damage tier
                                      and the three break bars (PLAN T48 final, #160, #164-#166);
                                      exits 1 if a bar fails (tools/test.sh runs it)
+    python3 tools/value.py --options [copy.xlsx]  the A/B/C option bars (PLAN T113, #280, #284):
+                                     every slot's options vs its median, Raider floor, worth
+                                     caps on all 9 builds, hero T6 build parity; exits 1 if a
+                                     bar fails on a slot / path with B or C (the exporter
+                                     refuses those too)
     python3 tools/value.py --pacing  the pacing model (PLAN T19): the Balance Check's
                                      affordability per difficulty x 1/4/10 hunters (asserts
                                      it reproduces the sheet's Easy-solo column exactly),
@@ -174,9 +179,9 @@ SMALL_WEIGHT = 0.25
 EDGE_ROUND = 20
 
 
-def load():
+def load(xlsx=None):
     with contextlib.redirect_stdout(io.StringIO()):
-        data = export_constants.read_data(export_constants.DEFAULT_XLSX)
+        data = export_constants.read_data(xlsx or export_constants.DEFAULT_XLSX)
     TUNING.update(data["Tuning"])
     return data
 
@@ -200,16 +205,18 @@ BASE_SPEED = float(re.search(r"BaseEnemySpeed\s*=\s*([\d.]+)",
                              open(os.path.join(ROOT, "src", "shared", "Track.luau"), encoding="utf-8").read()).group(1))
 
 
-def tower_stats(t, tiers):
-    """Shared/TowerStats.compute: `tiers` is the tier bought on each path (0 = none)."""
+def tower_stats(t, tiers, picks=None):
+    """Shared/TowerStats.compute: `tiers` is the tier bought on each path (0 = none); `picks`
+    each path's A/B/C letters (None = option A, as the stand-ins and every report but
+    --options build)."""
     mult = {f: 1 for f in MULTIPLIERS}
     high = {"shots": 1, "lineHits": 1, "sizeBreaks": 1}
     flag = {}
     freeze_every = 0
     sink_seconds = 0
-    for path, tier in zip(t["paths"], tiers):
+    for i, (path, tier) in enumerate(zip(t["paths"], tiers)):
         if tier > 0:
-            step = export_constants.line(path)[tier - 1]
+            step = export_constants.line(path, (picks[i] if picks else "") + "AA")[tier - 1]
             for f in MULTIPLIERS:
                 mult[f] *= step.get(f, 1)
             for f in HIGHEST:
@@ -321,11 +328,13 @@ def harpoon_pieces(s):
     return [((s["shots"] // 2) * CHAIN_DINOS / s["shots"], 1.0)]
 
 
-def path_stats(t, path_index, tier):
+def path_stats(t, path_index, tier, picks=""):
     tiers = [0] * len(t["paths"])
     if tier:
         tiers[path_index] = tier
-    return tower_stats(t, tiers)
+    letters = [""] * len(t["paths"])
+    letters[path_index] = picks
+    return tower_stats(t, tiers, letters)
 
 
 def cumulative_cost(t, path_index, tier):
@@ -897,13 +906,14 @@ def top_tier(h, path_index):
     return len(export_constants.line(h["paths"][path_index]))
 
 
-def hero_dps(h, path_index, tier):
+def hero_dps(h, path_index, tier, picks=""):
     """(peak, sustained) per-trigger-held DPS. Peak is the exporter guard's formula; sustained
-    also pays for reloads (belt-fed never reloads). Burn, marks and bounces aren't counted."""
+    also pays for reloads (belt-fed never reloads). Burn, marks and bounces aren't counted.
+    `picks`: the path's A/B/C letters (blank = option A)."""
     if tier == 0:
         step = None
     else:
-        step = export_constants.line(h["paths"][path_index])[tier - 1]
+        step = export_constants.line(h["paths"][path_index], picks + "AA")[tier - 1]
 
     def g(field, default):
         return step[field] if step and step[field] else default
@@ -987,6 +997,242 @@ def hero_lines(data, rows, mixes):
     else:
         out.append("  the ceiling level passes no T5 tower path that the floor level doesn't")
     return out, findings
+
+
+# ---------------------------------------------------------------- A/B/C options (PLAN T113)
+# DECISIONS #280, #284. At every tier-4/5 slot (T4; T5 after each T4 letter), each option's
+# worth on its path's metric sits within OPTION_LO-OPTION_HI x the slot's median option (no
+# dead option, no must-pick). Worth is measured on the cumulative build, r31-40 (the band T4-5
+# are bought in); options at a slot cost the same (#277), so eDPS ranks them as eDPS/cash does.
+# Path metrics (stated assumptions; the 9c-9f tune tasks may refine them):
+#   attack towers (damage and aura paths)  eDPS + aura credit (value_table's number)
+#   Tranq Station Knockout                 share of time dinos in range are knocked out
+#   Tranq Station Sedate                   slow % x (1 + linger / SLOW_DWELL) x (1 + boss
+#                                          share of r31-40 EHP if it slows bosses)
+#   Supply Camp Yield / Airdrop            cash a round (economy_lines: chests collected,
+#                                          interest at its cap); Logistics: discount % +
+#                                          refund points over the base + aura rate %
+#   Field Hospital Ward / Rescue / Tonic   heal/s (x REVIVE_X if it revives) / kit HP a round
+#                                          x range / tower HP % + aura rate %
+#   Armory Plating / Gunsmith / Outfitter  resist % + thorns / aura credit / hunter handling
+#                                          (range x, reload, spread, recoil, rate)
+#   Tar Pit Deep Tar / Bubbling / Dig Site seconds a ground dino loses / share of ground HP
+#                                          removed / cash a round from sinks (tar_lines)
+#   heroes                                 sustained hero_dps (pays for reloads)
+# Raider options (`PvP effect`, #284): the model only counts dinos, so an option's worth IS
+# its dino part; it must reach RAIDER_FLOOR x the median of the slot's other options.
+# Every one of a path's 9 T5 builds stays under the tower's worth caps (#193/#200: the
+# round-4 batch's damage paths; damageable: its best build <= WORTH_HI x M; can't be damaged:
+# every build WORTH_HI-UNTOUCHABLE_HI x M). Heroes: a path's 9 T6 builds (6/2/0's main path)
+# stay within HERO_PARITY of each other (max / min, #280, #235).
+# The exporter enforces every bar on slots / paths that have B or C (9b on); with option A
+# alone each slot's median is A itself, so every bar passes.
+OPTION_LO, OPTION_HI = 0.8, 1.25
+RAIDER_FLOOR = 0.8
+HERO_PARITY = 1.15
+SLOW_DWELL = 2.0  # s a dino is assumed to stay in a Tranq Station's range (linger adds to it)
+REVIVE_X = 1.25  # a Ward that revives trampled towers, against one that doesn't
+
+
+def option_bar(worths, raiders=()):
+    """The #280 / #284 bars on one slot: [(letter, why)] for each option that fails.
+
+    >>> option_bar({"A": 10.0})
+    []
+    >>> option_bar({"A": 10.0, "B": 5.0, "C": 20.0})
+    [('B', '0.50x the slot median (10): a dead option (bar 0.8-1.25x)'), ('C', '2.00x the slot median (10): a must-pick (bar 0.8-1.25x)')]
+    >>> option_bar({"A": 9.0, "B": 7.4, "C": 11.0}, raiders={"B"})
+    [('B', 'Raider option: its dino part 7.4 < 0.8x the other options (median 10 -> 8.0)')]
+    """
+    out = []
+    median = statistics.median(worths.values())
+    for letter, worth in sorted(worths.items()):
+        x = worth / median if median > 1e-9 else (1.0 if worth <= 1e-9 else math.inf)
+        if x < OPTION_LO - 1e-9:
+            out.append((letter, f"{x:.2f}x the slot median ({fmt(median)}): a dead option (bar {OPTION_LO:g}-{OPTION_HI:g}x)"))
+        elif x > OPTION_HI + 1e-9:
+            out.append((letter, f"{x:.2f}x the slot median ({fmt(median)}): a must-pick (bar {OPTION_LO:g}-{OPTION_HI:g}x)"))
+    others = [w for letter, w in worths.items() if letter not in raiders]
+    if others:
+        floor = RAIDER_FLOOR * statistics.median(others)
+        for letter in sorted(set(raiders) & set(worths)):
+            if worths[letter] < floor - 1e-9:
+                out.append((letter, f"Raider option: its dino part {fmt(worths[letter])} < {RAIDER_FLOOR:g}x the other options"
+                                    f" (median {fmt(statistics.median(others))} -> {fmt(floor)})"))
+    return out
+
+
+def parity_bar(builds, bar=HERO_PARITY):
+    """None if max / min of the builds' worth is within `bar`, else why.
+
+    >>> parity_bar({"AA": 10.0}) is None, parity_bar({"AA": 10.0, "BC": 11.5}) is None
+    (True, True)
+    >>> parity_bar({"AA": 10.0, "BC": 12.0})
+    'BC 12 / AA 10 = 1.20 > 1.15'
+    """
+    top, low = max(builds, key=builds.get), min(builds, key=builds.get)
+    if builds[low] <= 1e-9:
+        return None if builds[top] <= 1e-9 else f"{low} is worth 0"
+    ratio_ = builds[top] / builds[low]
+    return None if ratio_ <= bar + 1e-9 else f"{top} {fmt(builds[top])} / {low} {fmt(builds[low])} = {ratio_:.2f} > {bar:g}"
+
+
+def option_slots(path):
+    """(label, letters before, tier) for each slot: T4, then T5 after each T4 letter."""
+    yield "T4", "", 4
+    for o4 in path["t4"]:
+        yield f"T5 after {o4}", o4, 5
+
+
+def slot_letters(path, tier, before):
+    return [o for o in export_constants.OPTIONS if (o in path["t4"] if tier == 4 else before + o in path["t5"])]
+
+
+def raider_letters(path, tier):
+    """The options at a tier marked `PvP effect` (the written row's flag)."""
+    rows = path["t4"] if tier == 4 else {k[1]: r for k, r in path["t5"].items()}
+    return {o for o, r in rows.items() if r.get("pvpEffect")}
+
+
+def tower_worth(data, key, pi, s, late):
+    """One tower build's worth on its path's metric (see the block comment)."""
+    t, tuning = data["Towers"][key], data["Tuning"]
+    pid = t["paths"][pi]["id"]
+    g = (lambda f, d=0: s.get(f) or d)
+    if key == "QUARTERMASTER":
+        if pid == "Logistics":
+            return g("discountPercent") + 100 * max(0, g("sellRefund") - tuning["SellRefund"]) + g("auraRatePercent")
+        income = t["incomePerRound"]
+        return income * g("incomeMult", 1) + g("interestCap") * (g("interestPercent") > 0) + g("chests") * g("chestCash")
+    if key == "HOSPITAL":
+        if pid == "Ward":
+            return g("healPerSecond") * (REVIVE_X if g("revives") else 1)
+        if pid == "Rescue":
+            return (g("medKits") * g("medKitHeal") + 1) * g("rangeMult", 1) / g("rescueRespawnMult", 1)
+        return g("auraHpPercent") + g("auraRatePercent")
+    if key == "ARMORY":
+        if pid == "Plating":
+            return g("resistPercent") + g("thornsDamage")
+        if pid == "Outfitter":
+            return (g("rangeMult", 1) * (1 + g("hunterRatePercent") / 100)
+                    / (g("hunterReloadMult", 1) * g("hunterSpreadMult", 1) * g("hunterRecoilMult", 1)))
+        return aura_credit(data, s, late)
+    if key == "TARPIT":
+        rounds = BANDS[3][1] - BANDS[3][0] + 1
+        removed, hp, sinks = tar_removed(s, late, tuning)
+        if pid == "Bubbling":
+            return removed / hp if hp else 0
+        if pid == "Dig Site":
+            return sinks / rounds * (g("sinkCash") + g("sinkChestCash")) + aura_credit(data, s, late)
+        ground = [(n, sp) for n, kind, _, _, sp in late["dinos"] if kind != "flying"]
+        return sum(n * (tar_seconds(s, tuning, sp) - tar_seconds({**s, "slowPercent": 0}, tuning, sp)
+                        + g("slowLinger") * g("slowPercent") / 100) for n, sp in ground) / max(1, sum(n for n, _ in ground))
+    if key == "CHILLER" and pid == "Knockout":
+        return g("freezeSeconds") / g("freezeEvery") if g("freezeEvery") else 0
+    if key == "CHILLER" and pid == "Sedate":
+        return g("slowPercent") * (1 + g("slowLinger") / SLOW_DWELL) * (1 + (late["boss"] if g("slowsBosses") else 0))
+    path = t["paths"][pi]
+    return edps(s, late, tuning) + aura_credit(data, s, late, brittle=is_support(key, path))
+
+
+def option_report(data):
+    """(lines, findings, enforced): the --options report. `enforced` are the findings on
+    slots / paths that have B or C (the exporter refuses those)."""
+    mixes = band_mix(data)
+    late = mixes[BOUGHT_BAND[5]]
+    lines, findings, enforced = [], [], []
+
+    def note(why, has_choice):
+        findings.append(why)
+        if has_choice:
+            enforced.append(why)
+
+    # The worth caps' M, as worth_lines: released damage-path T5s outside the round-4 batch (option A).
+    rows = value_table(data, mixes)
+    judge(data, rows)
+    m = statistics.median(r["cpd"][BOUGHT_BAND[5]] for (k, p, t), r in rows.items()
+                          if t == 5 and not r["support"] and r["released"] and k not in ROUND4_BATCH)
+    slots = choice = 0
+    for why in export_constants.raider_problems(data["Towers"]):
+        note(f"RAIDER: {why}", True)
+    for key in modelled(data):
+        t = data["Towers"][key]
+        bits, tower_choice, best = [], False, []
+        for pi, path in enumerate(t["paths"]):
+            path_choice = len(path["t4"]) > 1 or len({k[1] for k in path["t5"]}) > 1
+            tower_choice |= path_choice
+            cells = []
+            for label, before, tier in option_slots(path):
+                letters = slot_letters(path, tier, before)
+                worths = {o: tower_worth(data, key, pi, path_stats(t, pi, tier, before + o), late) for o in letters}
+                slots += 1
+                choice += len(letters) > 1
+                cells.append(f"{tier}{before}:" + "/".join(f"{o} {fmt(w)}" for o, w in worths.items()))
+                for o, why in option_bar(worths, raider_letters(path, tier)):
+                    name = (path["t4"][o] if tier == 4 else path["t5"][before + o])["name"]
+                    note(f"OPTIONS: {t['display']} {path['id']} {label} {o} {name}: {why} (#280)", len(letters) > 1)
+            if key in ROUND4_BATCH and key not in SUPPORT_TOWERS and not is_support(key, path):
+                cost = cumulative_cost(t, pi, 5)
+                for picks in path["t5"]:
+                    s = path_stats(t, pi, 5, picks)
+                    cpd = ratio(cost, edps(s, late, data["Tuning"]) + aura_credit(data, s, late))
+                    best.append((cpd, f"{path['id']} {picks}"))
+                    if t.get("untouchable"):
+                        why = worth_bar(cpd, m, True)
+                        if why:
+                            note(f"WORTH: {t['display']} {path['id']} build {picks}: {why} (#193, #280)", path_choice)
+            bits.append(f"{path['id'][:12]} " + " ".join(cells))
+        if best and not t.get("untouchable"):
+            cpd, where = min(best)
+            why = worth_bar(cpd, m, False)
+            if why:
+                note(f"WORTH: {t['display']} best build {where}: {why} (#193, #280)", tower_choice)
+        lines.append(f"  {t['display'][:16]:<16} " + "; ".join(bits))
+    for key in data["HeroOrder"]:
+        h = data["Heroes"][key]
+        bits = []
+        for pi, path in enumerate(h["paths"]):
+            path_choice = len(path["t4"]) > 1 or len({k[1] for k in path["t5"]}) > 1
+            cells = []
+            for label, before, tier in option_slots(path):
+                letters = slot_letters(path, tier, before)
+                worths = {o: hero_dps(h, pi, tier, before + o)[1] for o in letters}
+                slots += 1
+                choice += len(letters) > 1
+                cells.append(f"{tier}{before}:" + "/".join(f"{o} {fmt(w)}" for o, w in worths.items()))
+                for o, why in option_bar(worths):
+                    name = (path["t4"][o] if tier == 4 else path["t5"][before + o])["name"]
+                    note(f"OPTIONS: {h['display']} {path['id']} {label} {o} {name}: {why} (#280)", len(letters) > 1)
+            top = top_tier(h, pi)
+            builds = {picks: hero_dps(h, pi, top, picks)[1] for picks in path["t6"]}
+            why = parity_bar(builds)
+            if why:
+                note(f"PARITY: {h['display']} {path['id']} T{top} builds: {why} (#280, #235)", path_choice)
+            cells.append(f"T{top} x{max(builds.values()) / max(1e-9, min(builds.values())):.2f}")
+            bits.append(f"{path['id'][:12]} " + " ".join(cells))
+        lines.append(f"  {h['display'][:16]:<16} " + "; ".join(bits))
+    head = [f"A/B/C options (PLAN T113, #280, #284): {slots} slots, {choice} with a choice (bars enforced there);"
+            f" each option {OPTION_LO:g}-{OPTION_HI:g}x its slot median, Raider dino part >= {RAIDER_FLOOR:g}x the others,"
+            f" worth caps M = {fmt(m)}, hero T6 builds within {HERO_PARITY:g}",
+            "  worth on each path's metric, r31-40 (towers) / sustained DPS (heroes): <tier><letters before>: <option> <worth>"]
+    return head + lines, findings, enforced
+
+
+def options_report(data):
+    lines, findings, enforced = option_report(data)
+    for line in lines:
+        print(line)
+    print()
+    for f in findings:
+        print(f"  {'!' if f in enforced else '-'} {f}")
+    print(f"options: {len(findings)} finding(s), {len(enforced)} on slots with a choice (enforced)")
+    return enforced
+
+
+def option_problems(data):
+    """The exporter's hook (PLAN T113): the enforced --options findings."""
+    TUNING.update(data["Tuning"])
+    return option_report(data)[2]
 
 
 # ---------------------------------------------------------------- PvP edge (report only)
@@ -1959,7 +2205,9 @@ def battle_report(data, difficulty="NORMAL"):
 
 def main():
     args = sys.argv[1:]
-    data = load()
+    # --options may name a sheet copy (the fixture that proves the bars can fail).
+    sheet = next((a for a in args if a.endswith(".xlsx")), None)
+    data = load(sheet)
     if "--battle" in args:
         sys.exit(1 if battle_report(data) else 0)
     elif "--pacing" in args:
@@ -1972,6 +2220,8 @@ def main():
         edge_report(data)
     elif "--breaks1" in args:
         sys.exit(1 if breaks_report(data) else 0)
+    elif "--options" in args:
+        sys.exit(1 if options_report(data) else 0)
     else:
         value_report(data, "--full" in args)
 
