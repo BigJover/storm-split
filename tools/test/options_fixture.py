@@ -2,7 +2,7 @@
 """
 PLAN T113: prove every A/B/C option bar can fail. Builds a doctored COPY of the balance sheet
 in a temp folder (the real sheet and Config.luau are never touched), appends B/C option rows
-that should break each bar, and checks that tools/value.py --options exits 1 naming each one
+that should break each bar (after dropping the copy's real B/C rows), and checks that tools/value.py --options exits 1 naming each one
 and that the exporter's validation refuses each one. Run by tools/test.sh.
 
   dead option        Hunting Blind Trigger Happy T4 B: no step over tier 3
@@ -81,9 +81,22 @@ def append(ws, source, option, name, name_col, blank=False, raider=False, **step
         ws.cell(r, h[head]).value = value
 
 
+def a_only(ws):
+    """Drop the copy's B/C option rows (appended at the bottom, PLAN 9c on), so the fixture's
+    rows land in empty slots whatever the real sheet's B/C content is."""
+    col = headers(ws)["Option"]
+    rows = [r for r in range(5, ws.max_row + 1) if ws.cell(r, col).value in ("B", "C")]
+    if rows:
+        last = max(r for r in range(5, ws.max_row + 1) if ws.cell(r, 1).value not in (None, ""))
+        assert rows == list(range(rows[0], last + 1)), f"{ws.title}: B/C rows aren't the sheet's tail"
+        ws.delete_rows(rows[0], len(rows))
+
+
 def doctor(path):
     wb = openpyxl.load_workbook(path)
     tu, hu = wb["Tower Upgrades"], wb["Hero Upgrades"]
+    a_only(tu)
+    a_only(hu)
     name = headers(tu)["Name"]
     a = find(tu, "Hunting Blind", "Trigger Happy", 4)
     append(tu, a, "B", "Fixture Dead", name, blank=True)
