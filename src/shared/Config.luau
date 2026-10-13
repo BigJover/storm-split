@@ -145,7 +145,7 @@ return table.freeze({
 		LateJoinLastRound = 30,
 		BoneRushSparePlots = 2,
 		CoOpLengthMax = 2100,
-		BattleCrowdX = 0.75,
+		BattleCrowdX = 0.7,
 		AbilityTempo = 2,
 	},
 	Towers = {

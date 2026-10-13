@@ -251,12 +251,12 @@ local function each(key: string, p: number): number
 end
 
 test("the #258/#259 seeds", function()
-	eq(T.BattleCrowdX, 0.75, "Battle crowd x (#258)")
+	eq(T.BattleCrowdX, 0.7, "Battle crowd x (#258, #264)")
 	eq(T.AbilityTempo, 2, "Ability tempo (#259)")
 	eq(T.MaxConcurrentEnemies, 130, "the live cap stays")
 	eq(Pace.crowd("COOP"), 1, "co-op: no crowd")
-	eq(Pace.crowd("TEAM"), 0.75)
-	eq(Pace.crowd("ROYALE"), 0.75)
+	eq(Pace.crowd("TEAM"), 0.7)
+	eq(Pace.crowd("ROYALE"), 0.7)
 end)
 
 test("plan: counts x pace (x crowd) half up, min 1, bosses kept", function()
@@ -264,7 +264,7 @@ test("plan: counts x pace (x crowd) half up, min 1, bosses kept", function()
 	local bosses = 0
 	for round = 1, LAST do
 		for _, cm in { 1, 1.35, 2.2 * 0.6 } do
-			for _, crowd in { 1, 0.75 } do
+			for _, crowd in { 1, 0.7 } do
 				local plan = Pace.plan(round, cm, 0, d, crowd)
 				for key, n in Config.Rounds[round].counts do
 					if n > 0 then
@@ -291,7 +291,7 @@ test("plan: round EHP = unpaced x hpX, kill cash = unpaced, Fence at stake = unp
 		local d = D[key]
 		for round = 1, LAST + 2 do
 			local rd = Config.Rounds[math.min(round, LAST)]
-			for _, crowd in { 1, 0.75 } do
+			for _, crowd in { 1, 0.7 } do
 				local cm, p = d.countMult * 1.35, d.promoteChance
 				local plan = Pace.plan(round, cm, p, d, crowd)
 				local base, hp, cash, leak = 0, 0, 0, 0
