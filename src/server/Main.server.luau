@@ -150,6 +150,10 @@ local over = false -- this match has been lost
 
 Enemies.init(map.paths, map.enemyFolder, {
 	onLeak = function(enemy)
+		if Battle.active() then
+			Battle.queueLeak(enemy.side, Enemies.leakCost(enemy)) -- drained at Tuning BattleFenceDrain per second (#267)
+			return
+		end
 		Economy.loseFor(enemy.side, Battle.leakCost(enemy.side, Enemies.leakCost(enemy))) -- only that side's Fence (T76)
 	end,
 	-- Each split layer pays for its own HP, so a full cascade pays the round's

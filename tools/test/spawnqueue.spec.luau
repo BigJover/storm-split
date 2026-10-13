@@ -129,6 +129,59 @@ test("the total never passes the cap", function()
 	eq((SpawnQueue.take(q, 130, live, 130)), nil, "full: nothing")
 end)
 
+-- F8 (#266, T103c): an undefended side at its share with a long backlog never delays any
+-- other side, and the total never passes 130.
+local function starvation(sides: number, seated: number?)
+	local q = SpawnQueue.new(sides)
+	if seated then
+		SpawnQueue.setSeated(q, seated)
+	end
+	local n = seated or sides
+	local share = Sides.sideCap(130, n)
+	eq(share, 13, "130 over 10 seats")
+	local live = {}
+	for side = 1, sides do
+		live[side] = if side == 1 then share elseif side <= n then share - 1 else 0
+	end
+	for i = 1, 50 do
+		SpawnQueue.push(q, 1, `1-{i}`)
+	end
+	for side = 2, n do
+		SpawnQueue.push(q, side, `{side}-1`)
+	end
+	-- One take per call, as Enemies.step does each frame: every other side at once.
+	local total = 0
+	for _, c in live do
+		total += c
+	end
+	local got = {}
+	while true do
+		local item, side = SpawnQueue.take(q, total, live, 130)
+		if not item or not side then
+			break
+		end
+		ok(side ~= 1, "side 1 takes nothing while at its share")
+		live[side] += 1
+		total += 1
+		ok(total <= 130, `total {total} never over 130`)
+		got[side] = (got[side] or 0) + 1
+	end
+	for side = 2, n do
+		eq(got[side], 1, `side {side} takes its dino at once`)
+	end
+	eq(live[1], share, "side 1 held at its share")
+	eq(SpawnQueue.size(q, 1), 50, "side 1's backlog waits")
+	eq(total, 130)
+end
+
+test("F8: an undefended side never delays other sides (10 sides, cap 130)", function()
+	starvation(10)
+end)
+
+test("F8: same with setSeated(10) of 12 sides", function()
+	starvation(12, 10)
+end)
+
 test("an unknown side is refused", function()
 	local q = SpawnQueue.new(2)
 	eq(SpawnQueue.push(q, 3, "x"), false)

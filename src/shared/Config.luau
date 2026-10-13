@@ -147,6 +147,7 @@ return table.freeze({
 		CoOpLengthMax = 2100,
 		BattleCrowdX = 0.7,
 		AbilityTempo = 2,
+		BattleFenceDrain = 4,
 	},
 	Towers = {
 		SCOUT = {

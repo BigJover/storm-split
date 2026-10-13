@@ -51,13 +51,18 @@
 	  sparePlots(mode, competitive, seats) the empty plots a casual Bone Rush lays out for
 	                                 joiners: Tuning BoneRushSparePlots, within Battle max
 	                                 players; 0 in Camp Clash and Ranked
-	  lateSeat(mode, camps, spare?)    where a late joiner goes. camps: { side, hunters, fence,
-	                                 bones, out }. Camp Clash: the standing camp with the
+	  lateSeat(mode, camps, spare?, full?) where a late joiner goes. camps: { side, hunters,
+	                                 fence, bones, out }. Camp Clash: the standing camp with the
 	                                 fewest hunters, then lower Fence, then lower side (nil,
-	                                 "noCamp" when none stands). Bone Rush: the spare plot
-	                                 `spare` (nil, "full" when there is none) with Bones =
-	                                 bonesFloor(camps). Returns { side, newPlot, hunters (the
-	                                 side's before the join, for Pace.catchUpCash), bones }
+	                                 "noCamp" when none stands); the joiner shares its Fence.
+	                                 Bone Rush: the spare plot `spare` (nil, "full" when there
+	                                 is none) with Bones = bonesFloor(camps) and Fence =
+	                                 fenceCap(camps, full) (#268). Returns { side, newPlot,
+	                                 hunters (the side's before the join, for
+	                                 Pace.catchUpCash), bones, fence? (Bone Rush only) }
+	  fenceCap(camps, full)            the highest Fence among the camps still standing, never
+	                                 above `full` (the difficulty's starting Fence); `full`
+	                                 when none stands: a Bone Rush joiner's starting Fence
 	  bonesFloor(camps)                the lowest Bones among the camps still standing (0 if
 	                                 none): a Bone Rush joiner's starting Bones
 	  lateJoinLine(mode, camp, round, cash, bones?) the joiner's toast: "Joined Red Camp at
@@ -285,7 +290,18 @@ function BattleFlow.sparePlots(modeKey: string, competitive: boolean?, seats: nu
 end
 
 export type LateCamp = { side: number, hunters: number, fence: number, bones: number, out: boolean }
-export type LateSeat = { side: number, newPlot: boolean, hunters: number, bones: number }
+export type LateSeat = { side: number, newPlot: boolean, hunters: number, bones: number, fence: number? }
+
+-- #268: like the Bones floor, a joiner can compete but never starts ahead of the best still in.
+function BattleFlow.fenceCap(camps: { LateCamp }, full: number): number
+	local best: number? = nil
+	for _, camp in camps do
+		if not camp.out and (best == nil or camp.fence > best) then
+			best = camp.fence
+		end
+	end
+	return if best then math.min(full, best) else full
+end
 
 function BattleFlow.bonesFloor(camps: { LateCamp }): number
 	local floor: number? = nil
@@ -297,12 +313,13 @@ function BattleFlow.bonesFloor(camps: { LateCamp }): number
 	return floor or 0
 end
 
-function BattleFlow.lateSeat(modeKey: string, camps: { LateCamp }, spare: number?): (LateSeat?, string?)
+function BattleFlow.lateSeat(modeKey: string, camps: { LateCamp }, spare: number?, full: number?): (LateSeat?, string?)
 	if modeKey == "ROYALE" then
 		if not spare then
 			return nil, "full"
 		end
-		return { side = spare, newPlot = true, hunters = 0, bones = BattleFlow.bonesFloor(camps) }, nil
+		local fence = BattleFlow.fenceCap(camps, full or math.huge)
+		return { side = spare, newPlot = true, hunters = 0, bones = BattleFlow.bonesFloor(camps), fence = if fence < math.huge then fence else nil }, nil
 	elseif modeKey ~= "TEAM" then
 		return nil, "notBattle"
 	end

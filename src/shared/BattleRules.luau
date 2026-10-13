@@ -43,6 +43,16 @@
 	      (`sidesCleared`: live side -> cleared?) or Tuning BattleRoundTime seconds after
 	      round N started, whichever comes first
 	  sideOut(fence)              a side is out at Fence 0
+	  drain(pending, fence, rate, dt) -> (loss, pending)
+	      the Fence drain (#267, T103c): a battle leak adds its cost to the side's pending
+	      loss, and each step takes min(pending, rate x dt, fence) off the Fence (rate =
+	      Tuning BattleFenceDrain, Fence per second). Total loss = the sum of the leaks.
+	  flush(pending, fence) -> (loss, 0)
+	      all of it at once (min(pending, fence)): before any match-end ranking
+	  drainAll(pending, fences, out, rate, dt?) -> losses
+	      every side's step: `pending` and `fences` are side -> number, `out` side -> true;
+	      an out side's pending is dropped; dt nil = flush. Updates `pending` in place and
+	      returns side -> loss (only sides that lose something)
 	  overtimeRepeat(round)       0 up to the last round of the table; then 1, 2, ...
 	  overtimeHpMult(n)           Tuning OvertimeHPStep ^ n (1 when n <= 0)
 	  teamResult(eliminationOrder, bones, stats)
@@ -178,6 +188,44 @@ end
 
 function BattleRules.sideOut(fence: number): boolean
 	return fence <= 0
+end
+
+function BattleRules.drain(pending: number, fence: number, rate: number, dt: number): (number, number)
+	if pending <= 0 then
+		return 0, 0
+	end
+	local loss = math.max(0, math.min(pending, rate * dt, fence))
+	if fence <= 0 then
+		return 0, 0 -- the side is out: nothing left to take
+	end
+	return loss, pending - loss
+end
+
+function BattleRules.flush(pending: number, fence: number): (number, number)
+	if pending <= 0 or fence <= 0 then
+		return 0, 0
+	end
+	return math.min(pending, fence), 0
+end
+
+function BattleRules.drainAll(pending: { [Side]: number }, fences: { [Side]: number }, out: { [Side]: boolean }, rate: number, dt: number?): { [Side]: number }
+	local losses = {}
+	for side, owed in pending do
+		local fence = fences[side] or 0
+		local loss, left
+		if out[side] then
+			loss, left = 0, 0
+		elseif dt then
+			loss, left = BattleRules.drain(owed, fence, rate, dt)
+		else
+			loss, left = BattleRules.flush(owed, fence)
+		end
+		pending[side] = if left > 0 then left else nil
+		if loss > 0 then
+			losses[side] = loss
+		end
+	end
+	return losses
 end
 
 function BattleRules.overtimeRepeat(round: number): number

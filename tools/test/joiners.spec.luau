@@ -81,6 +81,25 @@ test("lateSeat Bone Rush: the spare plot, Bones = the lowest still standing", fu
 	eq(BattleFlow.lateSeat("COOP", camps, 5), nil, "not a battle")
 end)
 
+test("lateSeat Bone Rush: Fence = the best still standing, never above full (#268)", function()
+	local full = 40
+	local function fenceOf(camps)
+		local seat = BattleFlow.lateSeat("ROYALE", camps, 9, full)
+		return seat and seat.fence
+	end
+	eq(fenceOf({ camp(1, 1, 40), camp(2, 1, 22), camp(3, 1, 9) }), 40, "standing 40/22/9 -> 40")
+	eq(fenceOf({ camp(1, 1, 22), camp(2, 1, 9) }), 22, "standing 22/9 -> 22")
+	eq(fenceOf({ camp(1, 1, 0, 0, true), camp(2, 1, 22), camp(3, 1, 9) }), 22, "a fallen camp doesn't count")
+	eq(fenceOf({ camp(1, 1, 55), camp(2, 1, 9) }), 40, "never above full")
+	eq(fenceOf({ camp(1, 1, 0, 0, true) }), 40, "nobody standing: full")
+	eq(BattleFlow.fenceCap({ camp(1, 1, 22), camp(2, 1, 9) }, full), 22)
+	local seat = BattleFlow.lateSeat("TEAM", { camp(1, 1, 12), camp(2, 2, 40) }, nil, full)
+	eq(seat and seat.fence, nil, "Camp Clash: the joiner shares its camp's Fence (unchanged)")
+	local battle = require("@lune/fs").readFile("src/server/Battle.luau")
+	ok(battle:find("BattleFlow.lateSeat(modeKey, camps, if sides < layout.sides then sides + 1 else nil, chosen.startingLives)", 1, true) ~= nil, "full = the starting Fence")
+	ok(battle:find("Economy.setLivesFor(side, seat.fence or chosen.startingLives)", 1, true) ~= nil, "the new plot gets that Fence")
+end)
+
 test("sparePlots: casual Bone Rush only, within Battle max players", function()
 	eq(BattleFlow.sparePlots("ROYALE", false, 4), 2)
 	eq(BattleFlow.sparePlots("ROYALE", false, 8), 2)

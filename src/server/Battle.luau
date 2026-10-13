@@ -37,7 +37,17 @@
 	Progression.endBattle (payouts, stakes, Trophies, XP; T80). Battle itself never calls
 	Progression.
 
-	Every round prints the peak live enemies and the script cost, as co-op does.
+	Fence drain (#267, T103c): a leak doesn't take Fence at once. Battle.queueLeak adds its
+	cost to the side's pending loss, which comes off the Fence at most Tuning BattleFenceDrain
+	per second (BattleRules.drainAll, every Heartbeat); it carries across rounds and breaks,
+	is dropped when the side is out, and is flushed in full before any match-end ranking
+	(the clock, the last round, the last camp standing, Final Stampede), so the camp with
+	more Fence falls later and pending loss never saves a camp at the clock. Co-op never
+	comes here (Main's leak path is unchanged).
+
+	Every round prints the peak live enemies, each side's peak against its share of the cap
+	(T103c; also at the match end when a match ends mid-round) and the script cost, as
+	co-op does.
 ]]
 
 local Players = game:GetService("Players")
@@ -86,6 +96,7 @@ local campTeams: { Team } = {} -- one per camp this match (the player list's gro
 -- Seats a late joiner in the match under way (T105); nil between matches. (player, host):
 -- a real player, or (nil, host) for the Studio-only late stand-in.
 local lateJoiner: ((Player?, Player?) -> (boolean, string?))? = nil
+local pendingLeak: { [number]: number } = {} -- side -> Fence still to drain (#267)
 
 ------------------------------------------------------------------ public helpers
 
@@ -136,13 +147,35 @@ function Battle.dinoPopped(side: number)
 	end
 end
 
--- Between matches: no battle attributes left behind (co-op reads "Out" for side 1).
 -- The Fence a leak takes on `side` (PLAN T91b): Studio "Stand-ins hold" keeps a stand-in
 -- camp at 1, so the Tester can reach round 40 and Final Stampede; real camps pay in full.
 -- Once every real hunter's camp is out the hold lets go (PLAYTEST N7), so the match ends.
 function Battle.leakCost(side: number, cost: number): number
 	local hold = ReplicatedStorage:GetAttribute("StandInsHold")
 	return StudioOnly.heldLoss(RunService:IsStudio(), hold, standInSeats[side] == true, Economy.livesOf(side), cost, realCampIn)
+end
+
+-- A dino leaked on `side` in a battle (Main's onLeak): its cost joins the side's pending
+-- loss, drained at most Tuning BattleFenceDrain per second (#267). Co-op never calls this.
+function Battle.queueLeak(side: number, cost: number)
+	if active and cost > 0 then
+		pendingLeak[side] = (pendingLeak[side] or 0) + cost
+	end
+end
+
+-- Take this step's (dt) or, with dt nil, all pending Fence off every side still in. The
+-- Studio "Stand-ins hold" still caps a stand-in camp at 1 (leakCost, applied as it lands).
+local function drainFences(out: { [number]: boolean }, dt: number?)
+	if next(pendingLeak) == nil then
+		return
+	end
+	local fences = {}
+	for side in pendingLeak do
+		fences[side] = Economy.livesOf(side)
+	end
+	for side, loss in BattleRules.drainAll(pendingLeak, fences, out, Config.Tuning.BattleFenceDrain, dt) do
+		Economy.loseFor(side, Battle.leakCost(side, loss))
+	end
 end
 
 -- A player arrived mid-battle (Main's PlayerAdded) or the Studio host asked for a late
@@ -157,9 +190,11 @@ function Battle.lateJoin(player: Player?, host: Player?): (boolean, string?)
 	return lateJoiner(player, host)
 end
 
+-- Between matches: no battle attributes left behind (co-op reads "Out" for side 1).
 function Battle.reset()
 	active = false
 	lateJoiner = nil
+	table.clear(pendingLeak)
 	for side = 1, math.max(MAX_SIDES, seatedSides) do
 		for _, name in { "Camp", "Out", "Place", "CampBones" } do
 			ReplicatedStorage:SetAttribute(Sides.attr(name, side), nil)
@@ -355,7 +390,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 
 	-- Late joiners (T105, #254, #262): open in casual through Late join last round; Ranked
 	-- never seats one. Camp Clash: the standing camp with the fewest hunters; Bone Rush: a
-	-- spare plot with full Fence and the Bones floor. Catch-up cash on the seat; the dino
+	-- spare plot with the best standing Fence (#268) and the Bones floor. Catch-up cash on the seat; the dino
 	-- scale grows from the next round. Never staked or ranked (Battle never calls
 	-- Progression); a seated joiner is in the Outcome like anyone (casual payouts).
 	lateJoiner = function(player: Player?, host: Player?): (boolean, string?)
@@ -370,7 +405,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		for side = 1, sides do
 			table.insert(camps, { side = side, hunters = hunterCount(side), fence = Economy.livesOf(side), bones = sideBones(side), out = out[side] == true })
 		end
-		local seat, refused = BattleFlow.lateSeat(modeKey, camps, if sides < layout.sides then sides + 1 else nil)
+		local seat, refused = BattleFlow.lateSeat(modeKey, camps, if sides < layout.sides then sides + 1 else nil, chosen.startingLives)
 		if not seat then
 			return false, refused
 		end
@@ -382,6 +417,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 			Enemies.setSeatedSides(sides)
 			seating.teams[side] = {}
 			bonesStart[side] = seat.bones
+			Economy.setLivesFor(side, seat.fence or chosen.startingLives) -- the best Fence still in, never above full (#268)
 			openCamp(side, if player then player.DisplayName else nil)
 			if not player then
 				seating.standIn[side] = true -- Studio: a stand-in seat, towers and all
@@ -445,6 +481,13 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 	end
 	print(`[DinoHunters] {display} on {chosen.display}: {sides} sides, {#roster} player(s), {standInCount} stand-in(s)`)
 
+	-- The Fence drain (#267): every Heartbeat until the match is over.
+	local drainConn = RunService.Heartbeat:Connect(function(dt)
+		if not finished then
+			drainFences(out, dt)
+		end
+	end)
+
 	local elimination: { { number } } = {}
 	local spawnedRound: { [number]: number } = {} -- side -> the last round whose spawning finished
 	local matchSeed = math.random(1, 2 ^ 30)
@@ -491,8 +534,23 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		end
 	end
 
+	-- Each side's peak live dinos this round against its share of the cap (T103c, #266).
+	local function peakLine(): string
+		local peaks = Enemies.peakBySide()
+		local list = {}
+		for side = 1, sides do
+			table.insert(list, if out[side] then "out" else tostring(peaks[side] or 0))
+		end
+		return `peak by side {table.concat(list, "/")}, share {Sides.sideCap(Config.Tuning.MaxConcurrentEnemies, sides)}`
+	end
+	local function fenceText(side: number): string
+		return if out[side] then "out" else tostring(math.floor(Economy.livesOf(side) * 10 + 0.5) / 10)
+	end
+	local lastEnded = 0 -- the last round endRound logged (a match ending mid-round logs its peaks too)
+
 	-- A round is over for everyone: each living side gets its round pay and heals.
 	local function endRound(r: number)
+		lastEnded = r
 		local index = math.min(r, #Config.Rounds)
 		local clearedBy: { [Player]: boolean } = {}
 		-- Only sides still in with Fence left cleared it (PLAYTEST F4).
@@ -514,10 +572,10 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		end
 		local fences = {}
 		for side = 1, sides do
-			table.insert(fences, if out[side] then "out" else tostring(Economy.livesOf(side)))
+			table.insert(fences, fenceText(side))
 		end
 		print(string.format(
-			"[DinoHunters] Round %d over | %s, %d sides (%d alive) | Fences %s | peak enemies %d/%d | %s",
+			"[DinoHunters] Round %d over | %s, %d sides (%d alive) | Fences %s | peak enemies %d/%d (%s) | %s",
 			r,
 			display,
 			sides,
@@ -525,6 +583,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 			table.concat(fences, " / "),
 			Enemies.peak(),
 			Config.Tuning.MaxConcurrentEnemies,
+			peakLine(),
 			ctx.costLine()
 		))
 	end
@@ -545,6 +604,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		table.insert(elimination, step)
 		for _, side in step do
 			outAt[side] = #elimination
+			pendingLeak[side] = nil -- an out side's pending loss is dropped (#267)
 			frozenBones[side] = sideBones(side) -- an out side's Bones freeze (#214)
 			ReplicatedStorage:SetAttribute(Sides.attr("Out", side), true)
 			Towers.removeSide(side)
@@ -577,8 +637,23 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		return bones, fence, damage, clear, seats
 	end
 
-	-- Is the match over? Returns the result once it is.
-	local function verdict(roundsDone: boolean): any?
+	-- Before any match-end ranking: every pending Fence loss lands, and the sides it takes
+	-- to 0 fall (one step, after anyone who fell earlier). True if any Fence changed.
+	local function flushFences(): boolean
+		if next(pendingLeak) == nil then
+			return false
+		end
+		drainFences(out, nil)
+		if #pendingOut > 0 then
+			local fallen = pendingOut
+			pendingOut = {}
+			eliminate(fallen)
+		end
+		return true
+	end
+
+	-- Is the match over? Returns the result once it is (pending Fence flushed first, #267).
+	local function judge(roundsDone: boolean): any?
 		local bones, fence, damage, clear, seats = standings()
 		if modeKey == "TEAM" then
 			local result = BattleRules.teamResult(elimination, bones, { fence = fence, damage = damage, clearTime = clear, seed = ctx.matchId })
@@ -587,10 +662,19 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		local result = BattleRules.royaleResult(seats, roundsDone, ctx.matchId)
 		return if result.over then result else nil
 	end
+	local function verdict(roundsDone: boolean): any?
+		local result = judge(roundsDone)
+		if result and flushFences() then
+			result = judge(roundsDone) -- ranked on the true Fence
+		end
+		return result
+	end
 
-	-- The clock ran out (#252): over at once, everyone standing ranked by the chain.
+	-- The clock ran out (#252): over at once, everyone standing ranked by the chain on the
+	-- true Fence (pending flushed first, #267).
 	local function clockEnd(): any
 		atClock = true
+		flushFences()
 		local bones, fence, damage, clear, seats = standings()
 		if modeKey == "TEAM" then
 			return BattleRules.atClock({ modeKey = "TEAM", eliminationOrder = elimination, bones = bones, fence = fence, damage = damage, clearTime = clear, seed = ctx.matchId })
@@ -662,6 +746,10 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 		clearTime = clearTime,
 	})
 	finished = true
+	drainConn:Disconnect()
+	if round > lastEnded then -- the match ended mid-round: its peaks still get logged (T103c)
+		print(`[DinoHunters] Round {round} at the match end | peak enemies {Enemies.peak()}/{Config.Tuning.MaxConcurrentEnemies} ({peakLine()})`)
+	end
 	if result == empty then
 		return true
 	end

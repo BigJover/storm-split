@@ -1177,7 +1177,7 @@ def validate_battle(data, problems, notes):
 PACE_LEVERS = [
     "RoundPace", "TrackWalkSeconds", "CasualRoundStep", "RankedRoundStep", "CasualMatchCap", "RankedMatchCap",
     "ClockWarning", "LateJoinCashX", "LateJoinLastRound", "BoneRushSparePlots", "CoOpLengthMax",
-    "BattleCrowdX", "AbilityTempo",
+    "BattleCrowdX", "AbilityTempo", "BattleFenceDrain",
 ]
 CASUAL_CAP_MAX, RANKED_CAP_MAX = 900, 1800  # DIRECTION 2026-10-09: casual <= 15 min, Ranked <= 30 min (#249, #252)
 
@@ -1276,6 +1276,8 @@ def validate_pace(data, problems, notes):
         problems.append("Tuning Co-op length max must be above 0")
     if not 0 < t["BattleCrowdX"] <= 1:
         problems.append(f"Tuning Battle crowd x ({t['BattleCrowdX']:g}) must be above 0 and at most 1 (DECISIONS #258)")
+    if not 1 <= t["BattleFenceDrain"] <= 40:
+        problems.append(f"Tuning Battle Fence drain ({t['BattleFenceDrain']:g}) must be from 1 to 40 Fence per second (DECISIONS #267)")
     if 0 < t["RoundPace"] <= 1 and not 1 <= t["AbilityTempo"] <= 1 / t["RoundPace"] + 1e-9:
         problems.append(f"Tuning Ability tempo ({t['AbilityTempo']:g}) must be from 1 to 1 / Round pace ({1 / t['RoundPace']:g}) (DECISIONS #259)")
     for key in ("NORMAL", "CHAOS"):

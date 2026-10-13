@@ -104,6 +104,7 @@ local live: { [number]: Enemy } = {}
 local liveCount = 0
 local liveBySide: { [number]: number } = {}
 local peakLive = 0
+local peakBySide: { [number]: number } = {} -- T103c: each side's own peak since resetPeak
 -- Battle tie-break (#253 step 4, T104): HP taken off each side's own dinos, so overkill never
 -- counts (a hit past the pool, or past a size's share, adds only what came off).
 local damageBySide: { [number]: number } = {}
@@ -153,6 +154,7 @@ local function dress(enemy: Enemy)
 	enemy.model = model
 	enemy.part = model.PrimaryPart :: BasePart
 	enemy.part.CFrame = cframeAt(paths[enemy.side], enemy.distance, enemy.height)
+	model:SetAttribute("Side", enemy.side) -- whose track it walks (T103c: per-side counts in Studio)
 	model.Parent = enemyFolder
 	if old then
 		old:Destroy()
@@ -218,6 +220,9 @@ local function spawnNow(item: Pending, side: number)
 	liveBySide[side] = (liveBySide[side] or 0) + 1
 	if liveCount > peakLive then
 		peakLive = liveCount
+	end
+	if liveBySide[side] > (peakBySide[side] or 0) then
+		peakBySide[side] = liveBySide[side]
 	end
 end
 
@@ -639,8 +644,17 @@ function Enemies.resetDamage()
 	table.clear(damageBySide)
 end
 
+-- Each side's peak live count since the last resetPeak (T103c: the per-side cap's proof).
+function Enemies.peakBySide(): { [number]: number }
+	return table.clone(peakBySide)
+end
+
 function Enemies.resetPeak()
 	peakLive = liveCount
+	table.clear(peakBySide)
+	for side, n in liveBySide do
+		peakBySide[side] = n
+	end
 end
 
 -- A battle side is out (PLAN T77): its dinos despawn and its queue empties. No leak, no pay.

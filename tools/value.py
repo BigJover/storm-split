@@ -1822,7 +1822,7 @@ def track_length():
     return sum(math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(points, points[1:]))
 
 
-def peak_live(data, difficulty, modeKey, hunters_per_side, paced, keeps_up=False):
+def peak_live(data, difficulty, modeKey, hunters_per_side, paced, keeps_up=False, per_side=False):
     """Most dinos alive at once across every side's track, spawned as Server/Waves does:
     EnemyOrder blocks, one every spawn gap / count x (not x pace, #258; / Battle crowd x in
     battles when `paced`, which thins a round like density); `paced`: the
@@ -1830,7 +1830,9 @@ def peak_live(data, difficulty, modeKey, hunters_per_side, paced, keeps_up=False
     max(1, round(n x count x)) each (unpaced).
     Each dino lives: worst case, its whole walk (nothing is killed; track length / speed);
     `keeps_up`, the Rounds sheet's W = Track walk seconds / difficulty speed (a defence that
-    meets Required DPS clears the round W after the last spawn). Returns (peak, round)."""
+    meets Required DPS clears the round W after the last spawn). Returns (peak, round);
+    `per_side`: the most any one side's track holds at once (T103c, #266: the per-side cap's
+    share is floor(MaxConcurrentEnemies / seats), Shared/Sides.sideCap)."""
     tuning, enemies = data["Tuning"], data["Enemies"]
     d = data["Difficulties"][difficulty]
     walk = track_length() / (BASE_SPEED * tuning.get("GlobalSpeedScalar", 1) * d["speedMult"])
@@ -1838,8 +1840,9 @@ def peak_live(data, difficulty, modeKey, hunters_per_side, paced, keeps_up=False
     density = 1 if sides <= 1 else tuning["BattleSideDensity"] if (modeKey == "ROYALE" or sides >= 3) else 1
     best = (0, 0)
     for index, rd in enumerate(data["Rounds"], start=1):
-        events = []
+        events, side_peak = [], 0
         for hunters in hunters_per_side:
+            mine = []
             count_x = d["countMult"] * (1 + tuning["ExtraEnemiesPerPlayer"] * (hunters - 1)) * density
             crowd = tuning["BattleCrowdX"] if paced and modeKey != "COOP" else 1
             gap = rd["spawnGap"] / max(count_x * crowd, 0.01)  # not x pace; / crowd like density (#258)
@@ -1851,10 +1854,19 @@ def peak_live(data, difficulty, modeKey, hunters_per_side, paced, keeps_up=False
             for key in data["EnemyOrder"]:
                 if counts.get(key, 0) > 0:
                     for _ in range(counts[key]):
-                        events.append((t, 1))
+                        mine.append((t, 1))
                         life = tuning["TrackWalkSeconds"] / d["speedMult"] if keeps_up else walk / enemies[key]["speedMult"]
-                        events.append((t + life, -1))
+                        mine.append((t + life, -1))
                         t += gap
+            events += mine
+            live = own = 0
+            for _, step in sorted(mine, key=lambda e: (e[0], e[1])):
+                live += step
+                own = max(own, live)
+            side_peak = max(side_peak, own)
+        if per_side:
+            best = max(best, (side_peak, index))
+            continue
         live = peak = 0
         for _, step in sorted(events, key=lambda e: (e[0], e[1])):
             live += step
@@ -1938,6 +1950,10 @@ def battle_report(data, difficulty="NORMAL"):
             worst = max(worst, after) if keeps_up else worst
             cells.append(f"{'keeps up' if keeps_up else 'worst case'} {before:>4} -> {after:>4} (round {at})")
         print(f"    {'ok  ' if worst <= cap else 'MISS'} {name:<27} unpaced -> paced: " + "; ".join(cells))
+        if len(layout) > 1:  # the per-side cap (T103c, #266): each side's share of the shared cap
+            share = math.floor(cap / len(layout))
+            side, at = peak_live(data, difficulty, modeKey, layout, True, True, per_side=True)
+            print(f"    {'ok  ' if side <= share else 'MISS'}   per side: keeps-up peak {side} (round {at}) vs share floor({cap:g} / {len(layout)} seats) = {share}")
     return missed
 
 
