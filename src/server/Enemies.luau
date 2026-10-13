@@ -82,6 +82,7 @@ export type Enemy = {
 	slowPercent: number,
 	brittlePercent: number,
 	armorStripped: boolean,
+	strippedUntil: number, -- bare after a Strips-armour hit (PLAN 9c)
 	sleepUntil: number, -- knocked out by a Tranq Station pulse (a stun; visuals only)
 	sedatedShown: boolean, -- what the model currently shows
 	asleepShown: boolean,
@@ -204,6 +205,7 @@ local function spawnNow(item: Pending, side: number)
 		slowPercent = 0,
 		brittlePercent = 0,
 		armorStripped = false,
+		strippedUntil = 0,
 		sleepUntil = 0,
 		sedatedShown = false,
 		asleepShown = false,
@@ -281,7 +283,16 @@ end
 
 -- Whether a hit with these properties can hurt this enemy at all.
 function Enemies.canHurt(enemy: Enemy, piercesArmor: boolean): boolean
-	return piercesArmor or not enemy.def.armored or (enemy.armorStripped and chilled(enemy))
+	return Combat.canHurt(enemy.def.armored == true, piercesArmor, enemy.armorStripped and chilled(enemy), enemy.strippedUntil, os.clock())
+end
+
+-- A Strips-armour hit (PLAN 9c, #290): the dino loses its armour for `seconds`, so any
+-- tower or hunter can hurt it meanwhile.
+function Enemies.strip(enemy: Enemy, seconds: number)
+	if not enemy.alive or not enemy.def.armored then
+		return
+	end
+	enemy.strippedUntil = Combat.stripUntil(enemy.strippedUntil, os.clock(), seconds)
 end
 
 -- Apply damage. Returns true if this hit crossed a threshold (a pop: it shrank

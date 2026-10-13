@@ -22,9 +22,13 @@
 	  armoredMult/bossMult  extra damage against those enemies
 	  splashMult         scales the tower's splash radius
 	  markPercent        its target takes +% from every source for a while
-	  stunSeconds, knockback  on every enemy it damages
+	  stunSeconds, knockback  on every enemy it damages (bomblets too)
+	  stripsArmor        on a shooting tower: every dino it damages loses its armour for
+	                     Tuning Strip (s), for every tower (PLAN 9c); on a Tranq Station
+	                     it's the chill's strip instead
 	  burnDps/burnSeconds    leaves a burning patch on the track
-	  bomblets           each shell throws this many smaller blasts
+	  bomblets           each shell throws this many smaller blasts; a bomblet path that
+	                     burns (Fire Bomblets) leaves a small fire under each one
 	  aura*              buffs OTHER towers inside this tower's range
 	                     (strongest aura wins; auras don't stack)
 
@@ -733,6 +737,9 @@ local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: n
 	Enemies.knockback(enemy, stats.knockback)
 	local b = if breaks and breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
 	credit(tower.owner, Enemies.damage(enemy, damage, pierce, b))
+	if stats.stripsOnHit then
+		Enemies.strip(enemy, Config.Tuning.StripS or 0) -- PLAN 9c: bare for every tower a while
+	end
 end
 
 -- Bomblets land along the track (side `trackSide`'s) around `distance`, alternating behind
@@ -752,6 +759,10 @@ local function bomblets(tower: Tower, trackSide: number, distance: number, damag
 			if enemy.side == trackSide and canTarget(tower, enemy) and math.abs(enemy.distance - centre) <= spread / 2 then
 				hit(tower, enemy, blastDamage)
 			end
+		end
+		-- Fire Bomblets (PLAN 9c): each bomblet leaves a small fire as wide as its blast.
+		if stats.bombletBurnDps > 0 then
+			Hazards.burn(centre, spread / 2, stats.bombletBurnDps * levelScale, stats.bombletBurnSeconds, piercing(tower), tower.owner, trackSide)
 		end
 		Effects.part(Vector3.one * 2, CFrame.new(Enemies.pointAt(centre, trackSide) + Vector3.new(0, 1, 0)), BOMBLET_COLOR, 0.15, Enum.PartType.Ball)
 		bomblets(tower, trackSide, centre, blastDamage, generation + 1, live)

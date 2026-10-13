@@ -192,6 +192,22 @@ function Combat.nearestWithin(point: Vector3, positions: { Vector3 }, reach: num
 	return nearest
 end
 
+-- Whether a hit can hurt a dino at all: it pierces armour, the dino isn't armoured, or
+-- its armour is open right now, through a Tranq chill that strips it (`chillStripped`)
+-- or a Strips-armour hit (PLAN 9c, #290) that left it bare until `strippedUntil`.
+function Combat.canHurt(armored: boolean, piercesArmor: boolean, chillStripped: boolean, strippedUntil: number, now: number): boolean
+	return piercesArmor or not armored or chillStripped or now < strippedUntil
+end
+
+-- A Strips-armour hit (PLAN 9c): the dino stays bare for `seconds` (Tuning Strip (s))
+-- from now; a later strip only ever extends it, never cuts it short.
+function Combat.stripUntil(strippedUntil: number, now: number, seconds: number): number
+	if seconds <= 0 then
+		return strippedUntil
+	end
+	return math.max(strippedUntil, now + seconds)
+end
+
 -- How far a burning ground patch reaches either side of where it lands: the splash,
 -- or a tier's own Burn patch reach (Wildfire Drum, DECISIONS #132), never below the
 -- Tuning floor.

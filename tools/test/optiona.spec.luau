@@ -41,6 +41,9 @@ local function picksFor(tiers: { number }): { string }
 	return picks
 end
 
+-- Stats fields added after the snapshot (PLAN 9c), with the value every option-A build has.
+local AFTER_SNAPSHOT: { [string]: any } = { bombletBurnDps = 0, bombletBurnSeconds = 0, stripsOnHit = false }
+
 local function same(actual: { [string]: any }, expected: { [string]: any }, where: string): number
 	local bad = 0
 	for field, value in expected do
@@ -51,8 +54,13 @@ local function same(actual: { [string]: any }, expected: { [string]: any }, wher
 	end
 	for field, value in actual do
 		if expected[field] == nil then
-			bad += 1
-			eq(value, nil, `{where} {field} is new`)
+			-- Fields added after the snapshot hold their "does nothing" value on every
+			-- option-A build, so option A plays exactly as before (PLAN 9c wirings).
+			local idle = AFTER_SNAPSHOT[field]
+			if idle == nil or value ~= idle then
+				bad += 1
+				eq(value, idle, `{where} {field} is new`)
+			end
 		end
 	end
 	return bad

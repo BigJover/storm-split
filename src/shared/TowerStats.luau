@@ -34,6 +34,13 @@ export type Stats = {
 	burnSeconds: number,
 	bomblets: number,
 	bombletGenerations: number,
+	-- Fire Bomblets (PLAN 9c): a path's own burn rides its own bomblets, so only a path
+	-- that throws bomblets and burns lights them (a Blast burn never reaches Cluster's).
+	bombletBurnDps: number,
+	bombletBurnSeconds: number,
+	-- Strips armour on a hit (PLAN 9c, #290): the dino it hits loses its armour for
+	-- Tuning Strip (s). A chilling tower (Tranq Station) strips through its chill instead.
+	stripsOnHit: boolean,
 	auraRatePercent: number,
 	auraDamagePercent: number,
 	auraPiercesArmor: boolean,
@@ -194,6 +201,7 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 	local flag: { [string]: boolean } = {}
 	local freezeEvery = 0 -- shortest pulse interval any path gives
 	local sinkSeconds = 0 -- shortest sink time any path gives
+	local bombletBurnDps, bombletBurnSeconds = 0, 0
 
 	for pathIndex, tier in pathTiers do
 		if tier > 0 then
@@ -211,6 +219,10 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 			local every = step.freezeEvery or 0
 			if every > 0 and (freezeEvery == 0 or every < freezeEvery) then
 				freezeEvery = every
+			end
+			if (step.bomblets or 0) > 0 and (step.burnDps or 0) > 0 then
+				bombletBurnDps = math.max(bombletBurnDps, step.burnDps)
+				bombletBurnSeconds = math.max(bombletBurnSeconds, step.burnSeconds or 0)
 			end
 			local sink = step.sinkSeconds or 0
 			if sink > 0 and (sinkSeconds == 0 or sink < sinkSeconds) then
@@ -238,6 +250,9 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		burnSeconds = high.burnSeconds or 0,
 		bomblets = math.floor(high.bomblets or 0),
 		bombletGenerations = math.floor(high.bombletGenerations or 0),
+		bombletBurnDps = bombletBurnDps,
+		bombletBurnSeconds = bombletBurnSeconds,
+		stripsOnHit = flag.stripsArmor == true and (high.slowPercent or 0) <= 0 and (def.slowPercent or 0) <= 0 and freezeEvery <= 0,
 		auraRatePercent = high.auraRatePercent or 0,
 		auraDamagePercent = high.auraDamagePercent or 0,
 		auraPiercesArmor = flag.auraPiercesArmor == true,
