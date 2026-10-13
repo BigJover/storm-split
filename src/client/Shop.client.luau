@@ -58,6 +58,7 @@ local TarPit = require(Shared:WaitForChild("TarPit"))
 local Path = require(Shared:WaitForChild("Path"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
+local OptionPick = require(Shared:WaitForChild("OptionPick"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local request = remotes:WaitForChild("ShopRequest") :: RemoteFunction
@@ -256,6 +257,22 @@ title.TextColor3 = TEXT
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 
+-- Back from the A/B/C pick to the panel (PLAN T112): in the header beside the X, outside
+-- the scroll, shown only while a pick is open.
+local backButton = Instance.new("TextButton")
+backButton.Name = "Back"
+backButton.AnchorPoint = Vector2.new(1, 0)
+backButton.Position = UDim2.new(1, -34, 0, 0)
+backButton.Size = UDim2.fromOffset(60, 28)
+backButton.BackgroundColor3 = LOCKED_COLOR
+backButton.Font = Enum.Font.GothamBold
+backButton.TextSize = 14
+backButton.TextColor3 = TEXT
+backButton.Text = OptionPick.BACK
+backButton.Visible = false
+backButton.Parent = header
+corner(backButton, 6)
+
 local closeButton = Instance.new("TextButton")
 closeButton.Name = "Close"
 closeButton.AnchorPoint = Vector2.new(1, 0)
@@ -290,24 +307,110 @@ list.CanvasSize = UDim2.new()
 list.LayoutOrder = 2
 list.Parent = panel
 
-do
-	local layout = Instance.new("UIListLayout")
-	layout.Padding = UDim.new(0, 6)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Parent = list
+-- The whole panel scales down only for an A/B/C pick on a short window (OptionPick.layout).
+local panelScale = Instance.new("UIScale")
+panelScale.Parent = panel
 
-	local function fit()
-		local viewport = workspace.CurrentCamera.ViewportSize
-		local content = layout.AbsoluteContentSize.Y
-		local cap = math.floor(viewport.Y * LIST_MAX_SCREEN)
-		list.Size = UDim2.new(1, 0, 0, math.min(content, cap))
-		-- Narrow screens (a phone held upright): keep the X on screen too.
-		panel.Size = UDim2.fromOffset(math.min(PANEL_WIDTH, viewport.X - PANEL_EDGE * 2), 0)
-	end
-	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fit)
-	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
-	fit()
+local listLayout = Instance.new("UIListLayout")
+listLayout.Padding = UDim.new(0, 6)
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+listLayout.Parent = list
+
+-- The A/B/C cards (PLAN T112): kept across renders like the rows (PLAYTEST F3), so a
+-- tap during a cash re-render still lands. A grid: three across, or one per row when
+-- OptionPick.layout stacks them.
+local cardsFrame = Instance.new("Frame")
+cardsFrame.Name = "Cards"
+cardsFrame.BackgroundTransparency = 1
+cardsFrame.Size = UDim2.new(1, 0, 0, 0)
+cardsFrame.LayoutOrder = -100
+cardsFrame.Visible = false
+cardsFrame.Parent = list
+local cardsGrid = Instance.new("UIGridLayout")
+cardsGrid.CellPadding = UDim2.fromOffset(OptionPick.CARD_GAP, OptionPick.CARD_GAP)
+cardsGrid.SortOrder = Enum.SortOrder.LayoutOrder
+cardsGrid.Parent = cardsFrame
+local cardButtons: { TextButton } = {}
+local cardHandlers: { [TextButton]: (() -> ())? } = {}
+for i = 1, #Upgrades.LETTERS do
+	local card = Instance.new("TextButton")
+	card.Name = `Card{i}`
+	card.LayoutOrder = i
+	card.RichText = true
+	card.Font = Enum.Font.Gotham
+	card.TextSize = 15
+	card.TextColor3 = TEXT
+	card.TextWrapped = true
+	card.TextXAlignment = Enum.TextXAlignment.Left
+	card.TextYAlignment = Enum.TextYAlignment.Top
+	card.Visible = false
+	corner(card, 8)
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0, 8)
+	padding.PaddingRight = UDim.new(0, 8)
+	padding.PaddingTop = UDim.new(0, 6)
+	padding.PaddingBottom = UDim.new(0, 6)
+	padding.Parent = card
+	local stroke = Instance.new("UIStroke")
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Thickness = 3
+	stroke.Color = TEXT
+	stroke.Enabled = false
+	stroke.Parent = card
+	card.Activated:Connect(function()
+		local handler = cardHandlers[card]
+		if handler then
+			handler()
+		end
+	end)
+	card.Parent = cardsFrame
+	cardButtons[i] = card
 end
+
+-- The confirm button sits under the scroll, so it's always in reach (PLAN T112).
+local confirmButton = Instance.new("TextButton")
+confirmButton.Name = "Confirm"
+confirmButton.Size = UDim2.new(1, 0, 0, OptionPick.CONFIRM)
+confirmButton.Font = Enum.Font.GothamBold
+confirmButton.TextSize = 17
+confirmButton.TextColor3 = TEXT
+confirmButton.BackgroundColor3 = BUY_COLOR
+confirmButton.LayoutOrder = 3
+confirmButton.Visible = false
+confirmButton.Parent = panel
+corner(confirmButton, 8)
+local confirmHandler: (() -> ())? = nil
+confirmButton.Activated:Connect(function()
+	if confirmHandler then
+		confirmHandler()
+	end
+end)
+
+-- The open A/B/C pick, if any (`pickCount` cards). Every setMode closes it.
+local pick: OptionPick.Pick? = nil
+local pickCount = 0
+
+local function fit()
+	local viewport = workspace.CurrentCamera.ViewportSize
+	if pick then
+		local shape = OptionPick.layout(viewport.X, viewport.Y, pickCount)
+		panelScale.Scale = shape.scale
+		panel.Size = UDim2.fromOffset(shape.width, 0)
+		list.Size = UDim2.new(1, 0, 0, shape.listHeight)
+		cardsFrame.Size = UDim2.new(1, 0, 0, shape.content)
+		cardsGrid.CellSize = UDim2.fromOffset(shape.cardWidth, shape.cardHeight)
+		return
+	end
+	panelScale.Scale = 1
+	local content = listLayout.AbsoluteContentSize.Y
+	local cap = math.floor(viewport.Y * LIST_MAX_SCREEN)
+	list.Size = UDim2.new(1, 0, 0, math.min(content, cap))
+	-- Narrow screens (a phone held upright): keep the X on screen too.
+	panel.Size = UDim2.fromOffset(math.min(PANEL_WIDTH, viewport.X - PANEL_EDGE * 2), 0)
+end
+listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fit)
+workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
+fit()
 
 local message = Instance.new("TextLabel")
 message.Name = "Message"
@@ -318,7 +421,7 @@ message.TextSize = 15
 message.TextColor3 = TEXT_DIM
 message.TextXAlignment = Enum.TextXAlignment.Left
 message.Text = ""
-message.LayoutOrder = 3
+message.LayoutOrder = 4
 message.Parent = panel
 
 ------------------------------------------------------------------ state
@@ -680,14 +783,6 @@ local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?
 	if changed("lastStand", false) then
 		table.insert(parts, "once a round, a tower in range that would be trampled stays at 1 HP")
 	end
-end
-
--- The option a path's next step is bought with until the 3-card pick lands (PLAN T112):
--- the only letter on offer (option A while B/C don't exist), nil at tiers 1-3 and 6. With
--- more than one on offer it's nil and the server asks for a pick.
-local function soleOption(path, current: number, picks: string): string?
-	local options = Upgrades.options(path, current + 1, picks)
-	return if #options == 1 then options[1] else nil
 end
 
 -- "+30% damage · +15% rate · 2 shots per trigger" for going from `current`
@@ -1109,6 +1204,7 @@ local function setMode(newMode: Mode)
 		managed, managedPrompt = nil, nil
 	end
 	mode = newMode
+	pick = nil -- every state change closes an A/B/C pick (#279)
 	list.CanvasPosition = Vector2.zero -- a new panel starts scrolled to the top
 	-- Hero.client: first person always, third person only while placing.
 	player:SetAttribute("PanelOpen", newMode ~= "closed")
@@ -1170,17 +1266,73 @@ render = function()
 	-- Every row is stale until this render's addRow reuses it; the rest go at the end.
 	table.clear(staleRows)
 	for _, child in list:GetChildren() do
-		if child:IsA("TextButton") and staleRows[child.LayoutOrder] == nil then
+		if child == cardsFrame then
+			continue -- the A/B/C cards are kept (shown by renderPick)
+		elseif child:IsA("TextButton") and staleRows[child.LayoutOrder] == nil then
 			staleRows[child.LayoutOrder] = child
 		elseif child:IsA("GuiObject") then
 			child:Destroy()
 		end
 	end
+	local hadPick = pick ~= nil
 	renderRows()
 	for _, row in staleRows do
 		row:Destroy()
 	end
 	table.clear(staleRows)
+	-- The pick's own controls: Back, the cards and the confirm button (PLAN T112).
+	local picking = pick ~= nil and mode ~= "closed"
+	backButton.Visible = picking
+	title.Size = UDim2.new(1, if picking then -100 else -36, 1, 0)
+	cardsFrame.Visible = picking
+	confirmButton.Visible = picking
+	if not picking then
+		pick = nil
+		confirmHandler = nil
+		table.clear(cardHandlers)
+	end
+	if hadPick ~= picking then
+		list.CanvasPosition = Vector2.zero
+	end
+	fit()
+end
+
+-- Draw an open pick: one card per option, the chosen one outlined, and the confirm
+-- button. `buy(letter)` asks the server; on success the pick closes (the attribute
+-- change re-renders the panel).
+local function renderPick(cards: { OptionPick.Card }, cost: number, cash: number, free: boolean, buy: (string) -> ())
+	local open = pick :: OptionPick.Pick
+	pickCount = #cards
+	for i, card in cardButtons do
+		local info = cards[i]
+		card.Visible = info ~= nil
+		if info then
+			local chosen = open.chosen == info.letter
+			card.BackgroundColor3 = if chosen then BUY_COLOR else LOCKED_COLOR
+			local stroke = card:FindFirstChildOfClass("UIStroke")
+			if stroke then
+				stroke.Enabled = chosen
+			end
+			local blurb = if info.blurb ~= "" then `\n<font size="13">{escape(info.blurb)}</font>` else ""
+			card.Text = `<b>{info.letter} · {escape(info.name)}</b>{blurb}`
+			cardHandlers[card] = function()
+				open.chosen = info.letter
+				render()
+			end
+		else
+			cardHandlers[card] = nil
+		end
+	end
+	local text, enabled = OptionPick.confirm(open.chosen, cost, cash, free)
+	confirmButton.Text = text
+	confirmButton.BackgroundColor3 = if enabled then BUY_COLOR else LOCKED_COLOR
+	confirmButton.BackgroundTransparency = if enabled then 0 else 0.5
+	confirmButton.AutoButtonColor = enabled
+	confirmButton.TextColor3 = if enabled then TEXT else TEXT_DIM
+	local letter = open.chosen
+	confirmHandler = if enabled and letter then function()
+		buy(letter)
+	end else nil
 end
 
 renderRows = function()
@@ -1257,9 +1409,38 @@ renderRows = function()
 				tiers[i] = player:GetAttribute(`HeroPath{i}`) or 0
 				picks[i] = player:GetAttribute(`HeroPicks{i}`) or ""
 			end
+			local function priceOf(step): number
+				return if free then 0 else math.floor(step.cost * (1 - discount / 100) + 0.5)
+			end
+			-- An open A/B/C pick replaces the rows until it's bought, backed out of or
+			-- overtaken by a change to its path (OptionPick.stays).
+			local heroKey = tostring(player:GetAttribute("Hero") or "")
+			local open = pick
+			if open then
+				local path = hero.paths[open.pathIndex]
+				local blocked = path == nil
+					or Upgrades.check(tiers, open.pathIndex, Upgrades.tierCount(path), if rewards then rewards.crossoverCap else nil) ~= "ok"
+				if path and OptionPick.stays(open, { owner = heroKey, tier = tiers[open.pathIndex], picks = picks[open.pathIndex], blocked = blocked }) then
+					local nextTier = open.tier + 1
+					local cards = OptionPick.cards(path, nextTier, open.picks)
+					if #cards > 0 then
+						for _, card in cards do
+							if card.blurb == "" then
+								card.blurb = describeHeroStep(path, open.tier, open.picks, card.letter)
+							end
+						end
+						title.Text = `{path.id} {nextTier}  ·  pick one  ·  Cash {cash}`
+						local cost = priceOf(Upgrades.row(path, nextTier, open.picks .. cards[1].letter))
+						renderPick(cards, cost, cash, free, function(letter)
+							send("upgrade", open.pathIndex, letter, heroRequest)
+						end)
+						return
+					end
+				end
+				pick = nil
+			end
 			for pathIndex, path in hero.paths do
 				local current = tiers[pathIndex]
-				local option = soleOption(path, current, picks[pathIndex])
 				local name = escape(path.id)
 				local why = Upgrades.check(tiers, pathIndex, Upgrades.tierCount(path), if rewards then rewards.crossoverCap else nil)
 				-- All six tiers on one line per path (PLAN T53), so the panel never grows.
@@ -1268,19 +1449,34 @@ renderRows = function()
 					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(Upgrades.row(path, current, picks[pathIndex]).name)}\n<font size="13">{ladder}</font>`, LOCKED_COLOR, false)
 				elseif why ~= "ok" then
 					addRow(pathIndex, `<b>{name}</b>  ·  {ladder}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
+				elseif OptionPick.opens(current + 1) then
+					-- Tiers 4 and 5: the row opens the A/B/C pick (PLAN T112).
+					local cards = OptionPick.cards(path, current + 1, picks[pathIndex])
+					local step = cards[1] and Upgrades.row(path, current + 1, picks[pathIndex] .. cards[1].letter)
+					if step then
+						local cost = priceOf(step)
+						local affordable = cash >= cost
+						local price = if free then "FREE" elseif discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
+						local text = `<b>{name} {current + 1}: pick one</b>  ·  {price}\n<font size="13">{ladder}  ·  {escape(OptionPick.rowLine(cards))}</font>`
+						addRow(pathIndex, text, if affordable then HERO_COLOR else LOCKED_COLOR, true, function()
+							pick = { owner = heroKey, pathIndex = pathIndex, tier = current, picks = picks[pathIndex], chosen = OptionPick.initial(cards) }
+							render()
+						end)
+					else
+						addRow(pathIndex, `<b>{name}</b>  ·  {ladder}\n<font size="13">locked</font>`, LOCKED_COLOR, false)
+					end
 				else
-					local step = Upgrades.row(path, current + 1, Upgrades.pickAfter(picks[pathIndex], current + 1, option or "A"))
-					local cost = if free then 0 else math.floor(step.cost * (1 - discount / 100) + 0.5)
+					local step = Upgrades.row(path, current + 1, picks[pathIndex])
+					local cost = priceOf(step)
 					local affordable = cash >= cost
 					local price = if free then "FREE" elseif discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
-					local text = `<b>{escape(step.name)}</b>  ·  {price}\n<font size="13">{name} {ladder}  ·  {escape(describeHeroStep(path, current, picks[pathIndex], option))}</font>`
+					local text = `<b>{escape(step.name)}</b>  ·  {price}\n<font size="13">{name} {ladder}  ·  {escape(describeHeroStep(path, current, picks[pathIndex], nil))}</font>`
 					addRow(pathIndex, text, if affordable then HERO_COLOR else LOCKED_COLOR, affordable, function()
-						send("upgrade", pathIndex, option, heroRequest)
+						send("upgrade", pathIndex, nil, heroRequest)
 					end)
 				end
 			end
 			-- Mastery perks this hunter has for the ability: one line, only if any.
-			local heroKey = player:GetAttribute("Hero") or ""
 			local perks = ownedPerkLine(heroKey, player:GetAttribute(`Mastery_{heroKey}`) or 0)
 			if perks then
 				addRow(#hero.paths + 1, perks, PANEL_COLOR, false)
@@ -1389,9 +1585,39 @@ renderRows = function()
 			title.Text = `Trampled — repair it  ·  {if def then def.display else "Tower"}`
 			title.TextColor3 = TRAMPLED_COLOR
 		else
-			title.Text = `{if def then def.display else "Tower"}  ·  {tiers[1]} · {tiers[2]} · {tiers[3]}`
+			-- The tiers, and the picked letters once there are any (#279).
+			local label = OptionPick.tierLabel(tiers, picks)
+			local plain = `{tiers[1]} · {tiers[2]} · {tiers[3]}`
+			title.Text = `{if def then def.display else "Tower"}  ·  {plain}{if label ~= plain then `  ·  {label}` else ""}`
 		end
 
+		-- Mirrors Server/Shop: a Supply Camp's Logistics discount (Shared/Pricing).
+		local discount = managed:GetAttribute("Discount") or 0
+		-- An open A/B/C pick replaces the rows until it's bought, backed out of or overtaken
+		-- by a change to its path, a trampling or another tower (OptionPick.stays).
+		local open = pick
+		if open and def then
+			local path = def.paths[open.pathIndex]
+			local blocked = path == nil or trampled or Upgrades.check(tiers, open.pathIndex, Upgrades.tierCount(path)) ~= "ok"
+			if path and OptionPick.stays(open, { owner = tostring(towerId), tier = tiers[open.pathIndex], picks = picks[open.pathIndex], blocked = blocked }) then
+				local nextTier = open.tier + 1
+				local cards = OptionPick.cards(path, nextTier, open.picks)
+				if #cards > 0 then
+					for _, card in cards do
+						if card.blurb == "" then
+							card.blurb = describeStep(path, open.tier, open.picks, card.letter)
+						end
+					end
+					title.Text = `{def.display}  ·  {path.id} {nextTier}: pick one`
+					local cost = Pricing.upgradeCost(Upgrades.row(path, nextTier, open.picks .. cards[1].letter), discount)
+					renderPick(cards, cost, cash, false, function(letter)
+						send("upgrade", towerId, open.pathIndex, nil, letter)
+					end)
+					return
+				end
+			end
+			pick = nil
+		end
 		-- Health, and a repair row that keeps its slot (greyed at full HP, PLAYTEST F2). Mirrors Server/Shop:
 		-- Shared/Combat's price with the Logistics discount.
 		-- The tower level (DECISIONS #112): every tower shares it, so it's the match's
@@ -1413,7 +1639,6 @@ renderRows = function()
 		if repairRow == "full" then
 			addRow(0, `<b>Repair</b>  ·  full HP`, LOCKED_COLOR, false)
 		elseif repairRow == "needed" then
-			local discount = managed:GetAttribute("Discount") or 0
 			local cost = Combat.repairCost((managed:GetAttribute("Spent") or 0) :: number, hp, maxHp, discount, SmallPerks.ofPlayer(player).repairCostMult)
 			local affordable = cash >= cost
 			local price = if discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
@@ -1425,7 +1650,6 @@ renderRows = function()
 		if def then
 			for pathIndex, path in def.paths do
 				local current = tiers[pathIndex]
-				local option = soleOption(path, current, picks[pathIndex])
 				local name = escape(path.id)
 				local why = Upgrades.check(tiers, pathIndex, Upgrades.tierCount(path))
 				if trampled and why ~= "maxed" then
@@ -1435,16 +1659,30 @@ renderRows = function()
 					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(Upgrades.row(path, current, picks[pathIndex]).name or "")}`, LOCKED_COLOR, false)
 				elseif why ~= "ok" then
 					addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
+				elseif OptionPick.opens(current + 1) then
+					-- Tiers 4 and 5: the row opens the A/B/C pick (PLAN T112).
+					local cards = OptionPick.cards(path, current + 1, picks[pathIndex])
+					local step = cards[1] and Upgrades.row(path, current + 1, picks[pathIndex] .. cards[1].letter)
+					if step then
+						local cost = Pricing.upgradeCost(step, discount)
+						local affordable = cash >= cost
+						local price = if discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
+						local text = `<b>{name} {current + 1}: pick one</b>  ·  {price}\n<font size="13">{escape(OptionPick.rowLine(cards))}</font>`
+						addRow(pathIndex, text, if affordable then BUY_COLOR else LOCKED_COLOR, true, function()
+							pick = { owner = tostring(towerId), pathIndex = pathIndex, tier = current, picks = picks[pathIndex], chosen = OptionPick.initial(cards) }
+							render()
+						end)
+					else
+						addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">locked</font>`, LOCKED_COLOR, false)
+					end
 				else
-					local step = Upgrades.row(path, current + 1, Upgrades.pickAfter(picks[pathIndex], current + 1, option or "A"))
-					-- Mirrors Server/Shop: a Supply Camp's Logistics discount (Shared/Pricing).
-					local discount = managed:GetAttribute("Discount") or 0
+					local step = Upgrades.row(path, current + 1, picks[pathIndex])
 					local cost = Pricing.upgradeCost(step, discount)
 					local affordable = cash >= cost
 					local price = if discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
-					local text = `<b>{escape(step.name or path.id)}</b>  ·  {price}\n<font size="13">{name} {current + 1}  ·  {escape(describeStep(path, current, picks[pathIndex], option))}</font>`
+					local text = `<b>{escape(step.name or path.id)}</b>  ·  {price}\n<font size="13">{name} {current + 1}  ·  {escape(describeStep(path, current, picks[pathIndex], nil))}</font>`
 					addRow(pathIndex, text, if affordable then BUY_COLOR else LOCKED_COLOR, affordable, function()
-						send("upgrade", towerId, pathIndex, nil, option)
+						send("upgrade", towerId, pathIndex)
 					end)
 				end
 			end
@@ -1478,7 +1716,7 @@ end
 local function openManage(body: BasePart, prompt: ProximityPrompt)
 	setMode("manage")
 	managed, managedPrompt = body, prompt
-	for _, name in { "Spent", "Tower", "Path1", "Path2", "Path3", "Discount", "RefundRate", "HP", "MaxHP", "KO" } do
+	for _, name in { "Spent", "Tower", "Path1", "Path2", "Path3", "Picks1", "Picks2", "Picks3", "Discount", "RefundRate", "HP", "MaxHP", "KO" } do
 		table.insert(managedConnections, body:GetAttributeChangedSignal(name):Connect(render))
 	end
 	table.insert(managedConnections, body.AncestryChanged:Connect(function()
@@ -1551,6 +1789,10 @@ local function toggleProfile()
 end
 closeButton.Activated:Connect(function()
 	setMode("closed")
+end)
+backButton.Activated:Connect(function()
+	pick = nil -- back to the panel it was opened from
+	render()
 end)
 
 UserInputService.InputBegan:Connect(function(input, processed)
@@ -1696,6 +1938,7 @@ player.AttributeChanged:Connect(function(name)
 		or name == "Cores"
 		or name == "FreeUpgrade"
 		or string.sub(name, 1, 8) == "HeroPath"
+		or string.sub(name, 1, 9) == "HeroPicks"
 		or string.sub(name, 1, 8) == "Mastery_"
 		or string.sub(name, 1, 4) == "Owns"
 	then

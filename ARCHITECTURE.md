@@ -35,6 +35,8 @@ src/
 │   ├── Upgrades.luau        The crossover rule, shared so the client greys out what the server refuses;
 │   │                        A/B/C picks: a path's composed row for its picks (`row`, `line`, `tierCount`),
 │   │                        the options on offer and `stepFor`'s refusals (Phase 9, T110-T111)
+│   ├── OptionPick.luau      The A/B/C pick inside the tower and hero U panels (T112, #279): cards, confirm
+│   │                        text, when an open pick closes, the "4B · 5A" tier label, window layout
 │   ├── HeroStats.luau       A hero's gun and ability right now (base + mastery perks + upgrades), shared by
 │   │                        server and client; which mastery perks a mastery level has (`Config.MasteryPerks`)
 │   ├── GunRules.luau        Hero tier-6 gun rules: spread cone (still/scoped), Hot Swap reloads, Trick Reload,

@@ -1,0 +1,191 @@
+--[[
+	The A/B/C pick (Shared/OptionPick, PLAN T112, DECISIONS #279): when it opens, its
+	cards, the confirm button, when it closes, the tier label, and that it fits every
+	window with Back, X and the confirm button on screen (DIRECTION: no pop-up may ever
+	trap a player).
+]]
+local Config = require(src.shared.Config)
+local OptionPick = require(src.shared.OptionPick)
+local Upgrades = require(src.shared.Upgrades)
+
+-- A made-up path with all three options at tier 4 (B/C don't exist in Config yet).
+local function threeWay()
+	local function row(name, blurb)
+		return { name = name, cost = 2400, blurb = blurb }
+	end
+	return {
+		id = "Test",
+		tiers = { row("One", ""), row("Two", ""), row("Three", "") },
+		t4 = { A = row("Alpha", "Shoots faster"), B = row("Bravo", "Hits harder"), C = row("Charlie", "Reaches further") },
+		t5 = { AA = row("Top", "The top") },
+	}
+end
+
+local function everyPath(visit: (string, any, number) -> ())
+	for key, def in Config.Towers do
+		for i, path in def.paths do
+			visit(`{key} path {i}`, def, i)
+		end
+	end
+	for key, def in Config.Heroes do
+		for i, path in def.paths do
+			visit(`hero {key} path {i}`, def, i)
+		end
+	end
+end
+
+test("only tier-4 and tier-5 steps open the pick", function()
+	for tier = 1, 6 do
+		eq(OptionPick.opens(tier), tier == 4 or tier == 5, `tier {tier}`)
+	end
+end)
+
+test("with only option A, every tier-4/5 pick shows one card, already chosen, that the server takes", function()
+	local slots = 0
+	everyPath(function(where, def, i)
+		local path = def.paths[i]
+		for _, step in { { 4, "" }, { 5, "A" } } do
+			local nextTier, picks = step[1], step[2]
+			local cards = OptionPick.cards(path, nextTier, picks)
+			eq(#cards, 1, `{where} T{nextTier}: one card`)
+			local row = Upgrades.row(path, nextTier, picks .. "A")
+			eq(cards[1].letter, "A", `{where} T{nextTier}: letter`)
+			eq(cards[1].name, row.name, `{where} T{nextTier}: name`)
+			eq(cards[1].blurb, row.blurb, `{where} T{nextTier}: blurb`)
+			eq(OptionPick.initial(cards), "A", `{where} T{nextTier}: the one card is chosen`)
+			-- The server's check (Shared/Upgrades.stepFor) accepts every card offered...
+			local tiers = { 0, 0, 0 }
+			tiers[i] = nextTier - 1
+			local allPicks = { "", "", "" }
+			allPicks[i] = picks
+			local got, why = Upgrades.stepFor(def, tiers, allPicks, i, cards[1].letter)
+			eq(why, "ok", `{where} T{nextTier}: the server takes A`)
+			eq(got, row, `{where} T{nextTier}: the row it buys`)
+			-- ...and refuses a letter with no card.
+			local _, refused = Upgrades.stepFor(def, tiers, allPicks, i, "B")
+			eq(refused, "no such option", `{where} T{nextTier}: B is refused`)
+			slots += 1
+		end
+	end)
+	ok(slots >= 90, `every slot seen ({slots})`)
+end)
+
+test("three options: three cards in order, none chosen until one is tapped", function()
+	local cards = OptionPick.cards(threeWay(), 4, "")
+	eq(#cards, 3, "three cards")
+	eq(cards[1].letter .. cards[2].letter .. cards[3].letter, "ABC", "in order")
+	eq(cards[2].name, "Bravo", "name")
+	eq(cards[2].blurb, "Hits harder", "blurb")
+	eq(OptionPick.initial(cards), nil, "no card chosen")
+	eq(OptionPick.rowLine(cards), "one of: A Alpha / B Bravo / C Charlie", "the path row")
+	eq(OptionPick.rowLine({ cards[1] }), "A Alpha", "one card")
+	eq(#OptionPick.cards(threeWay(), 5, "B"), 0, "no T5 row after B: no cards")
+end)
+
+test("the confirm button: tap a card first, can't-afford says so, then Buy B — price", function()
+	local text, enabled = OptionPick.confirm(nil, 2400, 5000)
+	eq(text, "Tap a card  ·  2,400", "nothing chosen")
+	eq(enabled, false, "nothing chosen")
+	text, enabled = OptionPick.confirm("B", 2400, 2399)
+	eq(text, "Need 2,400 cash for B", "short")
+	eq(enabled, false, "short")
+	text, enabled = OptionPick.confirm("B", 2400, 2400)
+	eq(text, "Buy B — 2,400", "enough")
+	eq(enabled, true, "enough")
+	text, enabled = OptionPick.confirm("A", 1300, 0, true)
+	eq(text, "Buy A — FREE", "mastery free upgrade")
+	eq(enabled, true, "free")
+	eq(OptionPick.grouped(1234567), "1,234,567", "grouping")
+end)
+
+test("a pick closes on any change to its path, owner or block, not on cash", function()
+	local pick = { owner = "7", pathIndex = 1, tier = 3, picks = "", chosen = "A" }
+	local same = { owner = "7", tier = 3, picks = "", blocked = false }
+	eq(OptionPick.stays(pick, same), true, "nothing changed")
+	eq(OptionPick.stays(nil, same), false, "no pick")
+	eq(OptionPick.stays(pick, { owner = "7", tier = 4, picks = "B", blocked = false }), false, "a teammate bought it")
+	eq(OptionPick.stays(pick, { owner = "7", tier = 3, picks = "A", blocked = false }), false, "letters changed")
+	eq(OptionPick.stays(pick, { owner = "8", tier = 3, picks = "", blocked = false }), false, "another tower")
+	eq(OptionPick.stays(pick, { owner = "7", tier = 3, picks = "", blocked = true }), false, "trampled or blocked")
+end)
+
+test("the tower's tier label shows the picked letters", function()
+	eq(OptionPick.tierLabel({ 2, 1, 0 }, { "", "", "" }), "2 · 1 · 0", "no picks")
+	eq(OptionPick.tierLabel({ 2, 1, 0 }, nil), "2 · 1 · 0", "no picks table")
+	eq(OptionPick.tierLabel({ 0, 4, 2 }, { "", "B", "" }), "4B", "tier 4")
+	eq(OptionPick.tierLabel({ 5, 0, 2 }, { "BA", "", "" }), "4B · 5A", "tier 5")
+end)
+
+-- The 3 window sizes PLAN T112 names, and a spread of others.
+local PHONE, SMALL, FULL = { 375, 667 }, { 800, 600 }, { 1920, 1080 }
+local WINDOWS = {
+	FULL, SMALL, PHONE, { 2560, 1440 }, { 1366, 768 }, { 1024, 768 }, { 812, 375 }, { 667, 375 },
+	{ 568, 320 }, { 375, 812 }, { 360, 640 }, { 320, 568 }, { 480, 320 }, { 400, 300 },
+}
+
+test("the pick fits every window: header, cards and confirm on screen", function()
+	for _, window in WINDOWS do
+		for count = 1, 3 do
+			local x, y = window[1], window[2]
+			local where = `{x}x{y}, {count} card(s)`
+			local shape = OptionPick.layout(x, y, count)
+			ok(shape.scale >= OptionPick.MIN_SCALE and shape.scale <= 1, `{where}: scale {shape.scale}`)
+			ok(shape.width <= OptionPick.WIDTH, `{where}: never wider than the panel`)
+			ok(shape.width * shape.scale <= x - OptionPick.EDGE * 2 + 1e-6, `{where}: width {shape.width} x {shape.scale}`)
+			ok(shape.height * shape.scale <= y - OptionPick.TOP - OptionPick.BOTTOM + 1e-6, `{where}: height {shape.height} x {shape.scale}`)
+			ok(shape.listHeight >= shape.cardHeight - 1e-6, `{where}: at least one whole card shows ({shape.listHeight})`)
+			ok(shape.listHeight <= shape.content + 1e-6, `{where}: the list never outgrows the cards`)
+			local inner = shape.width - OptionPick.PAD * 2
+			ok(shape.cardWidth <= inner + 1e-6, `{where}: a card fits across`)
+			if not shape.stacked and count > 1 then
+				ok(count * shape.cardWidth + (count - 1) * OptionPick.CARD_GAP <= inner + 1e-6, `{where}: a row of cards fits`)
+				ok(shape.cardWidth >= OptionPick.STACK_BELOW, `{where}: cards in a row are wide enough`)
+			end
+		end
+	end
+end)
+
+test("full window: three cards in a row, nothing scaled or scrolled", function()
+	local shape = OptionPick.layout(FULL[1], FULL[2], 3)
+	eq(shape.scale, 1, "scale")
+	eq(shape.width, OptionPick.WIDTH, "full panel")
+	eq(shape.stacked, false, "a row")
+	eq(shape.listHeight, shape.content, "everything shows")
+end)
+
+test("small window: three cards still in a row, nothing scaled", function()
+	local shape = OptionPick.layout(SMALL[1], SMALL[2], 3)
+	eq(shape.scale, 1, "scale")
+	eq(shape.stacked, false, "a row")
+	eq(shape.listHeight, shape.content, "everything shows")
+end)
+
+test("phone-ish window: the cards stack, full width, and the panel isn't scaled", function()
+	local shape = OptionPick.layout(PHONE[1], PHONE[2], 3)
+	eq(shape.scale, 1, "scale")
+	eq(shape.stacked, true, "stacked")
+	eq(shape.cardWidth, shape.width - OptionPick.PAD * 2, "full width")
+	eq(shape.cardHeight, OptionPick.CARD_FLAT, "flat cards")
+end)
+
+test("a short window scrolls the cards before it scales the panel", function()
+	-- Room for the fixed parts and one card but not three stacked: it scrolls, no scale.
+	local fixed = OptionPick.PAD * 2 + OptionPick.HEADER + OptionPick.CONFIRM + OptionPick.MESSAGE + OptionPick.GAP * 3
+	local y = OptionPick.TOP + OptionPick.BOTTOM + fixed + OptionPick.CARD_FLAT + 20
+	local shape = OptionPick.layout(375, y, 3)
+	eq(shape.stacked, true, "stacked")
+	eq(shape.scale, 1, "not scaled yet")
+	ok(shape.listHeight < shape.content, "it scrolls")
+	-- Too short for even one card: now it scales.
+	local tiny = OptionPick.layout(375, OptionPick.TOP + OptionPick.BOTTOM + fixed, 3)
+	ok(tiny.scale < 1, `scaled ({tiny.scale})`)
+end)
+
+test("a single card is one full-width card, never a tall one", function()
+	for _, window in { PHONE, SMALL, FULL } do
+		local shape = OptionPick.layout(window[1], window[2], 1)
+		eq(shape.cardWidth, shape.width - OptionPick.PAD * 2, `{window[1]}: full width`)
+		eq(shape.cardHeight, OptionPick.CARD_FLAT, `{window[1]}: flat`)
+		eq(shape.content, OptionPick.CARD_FLAT, `{window[1]}: one card high`)
+	end
+end)

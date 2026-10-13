@@ -342,7 +342,9 @@ local function setRing(model: Model, range: number)
 	ring.Color = body.Color
 end
 
-local function setTierLabel(model: Model, tiers: { number })
+-- `text` is the label (Shared/OptionPick.tierLabel: "2 · 1 · 0", or "4B · 5A" once a
+-- path has A/B/C picks); the plain tiers when it's nil.
+local function setTierLabel(model: Model, tiers: { number }, text: string?)
 	local body = model.PrimaryPart
 	if not body then
 		return
@@ -362,24 +364,24 @@ local function setTierLabel(model: Model, tiers: { number })
 		gui.StudsOffset = Vector3.new(0, body.Size.Y / 2 + 2, 0)
 		gui.AlwaysOnTop = true
 		gui.MaxDistance = 80
-		local text = Instance.new("TextLabel")
-		text.Name = "Text"
-		text.Size = UDim2.fromScale(1, 1)
-		text.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
-		text.BackgroundTransparency = 0.3
-		text.TextColor3 = Color3.fromRGB(240, 236, 250)
-		text.Font = Enum.Font.GothamBold
-		text.TextSize = 16
-		text.Parent = gui
+		local face = Instance.new("TextLabel")
+		face.Name = "Text"
+		face.Size = UDim2.fromScale(1, 1)
+		face.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
+		face.BackgroundTransparency = 0.3
+		face.TextColor3 = Color3.fromRGB(240, 236, 250)
+		face.Font = Enum.Font.GothamBold
+		face.TextSize = 16
+		face.Parent = gui
 		local c = Instance.new("UICorner")
 		c.CornerRadius = UDim.new(0, 6)
-		c.Parent = text
+		c.Parent = face
 		gui.Parent = body
 		label = gui
 	end
 	assert(label)
-	local text = label:FindFirstChild("Text") :: TextLabel
-	text.Text = `{tiers[1]} · {tiers[2]} · {tiers[3]}`
+	local textLabel = label:FindFirstChild("Text") :: TextLabel
+	textLabel.Text = text or `{tiers[1]} · {tiers[2]} · {tiers[3]}`
 end
 
 -- `stage` counts model swaps reached: 0 plain, 1 crowned, 2 crowned and glowing.
@@ -810,9 +812,9 @@ function TowerLook.setPool(model: Model, points: { Vector3 })
 	pool.Parent = model
 end
 
-function TowerLook.refresh(model: Model, range: number, tiers: { number }, stage: number)
+function TowerLook.refresh(model: Model, range: number, tiers: { number }, stage: number, label: string?)
 	setRing(model, range)
-	setTierLabel(model, tiers)
+	setTierLabel(model, tiers, label)
 	setStage(model, stage)
 end
 

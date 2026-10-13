@@ -117,6 +117,7 @@ local TowerLook = require(Shared:WaitForChild("TowerLook"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 local TowerStats = require(Shared:WaitForChild("TowerStats"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
+local OptionPick = require(Shared:WaitForChild("OptionPick"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local BattleRules = require(Shared:WaitForChild("BattleRules"))
 
@@ -625,7 +626,7 @@ function Towers.upgrade(tower: Tower, pathIndex: number, option: string?): boole
 	local maxHp = Combat.towerMaxHp(tower.def, tower.pathTiers, tower.buff.hpPercent)
 	tower.hp = math.min(maxHp, tower.hp + (maxHp - tower.maxHp))
 	tower.maxHp = maxHp
-	TowerLook.refresh(tower.model, ringRange(tower.def, tower.stats), tower.pathTiers, swapStage(tower))
+	TowerLook.refresh(tower.model, ringRange(tower.def, tower.stats), tower.pathTiers, swapStage(tower), OptionPick.tierLabel(tower.pathTiers, tower.pathPicks))
 	showPool(tower) -- Wide Pool / Tar Lake lengthen it
 	TowerLook.setLantern(tower.model, tower.stats.rescueRespawnMult > 0) -- Rescue Beacon
 	showHealth(tower)
