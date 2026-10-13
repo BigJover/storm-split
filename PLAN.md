@@ -7,7 +7,7 @@ pushed; check/export/test green; Config diff after any sheet change; openpyxl, a
 old value or empty cell first; append Tuning rows, never insert; pure rules first; co-op
 specs re-run every task; no publish, no DataStore writes from an agent).
 
-**Status (2026-10-09): 2a + 2b done (29720d9, 4548d14, e9aab47, 76d1e04 T103, 717942e T104; 662 specs; review #263–#264). Next: T105 (running) → T103b (one cell) → T106 🦖 → Tester Run 6.**
+**Status (2026-10-09): 2a + 2b done (29720d9, 4548d14, e9aab47, 76d1e04 T103, 717942e T104; 662 specs; review #263–#264). Next: T105 done (e7f8cb1), T106 done (Dino Round 18), T103b running → T106b → Tester Run 7 (the Run 6 steps below; joiner step via `latestandin`).**
 
 ## Target timelines (model: `Round pace` 0.4, 30 s build, 5 s breaks; Normal)
 | Mode | Rounds played | Round 40 reached at | After round 40 | Hard cap |
@@ -171,6 +171,16 @@ affordability unchanged.
 Every batch-2 string (T103/T104 list in #263: supplies lines, "Round 22 / 40", "Final Stampede N", "Clock m:ss", "One minute left on the clock!", "Time's up!", "Last camp standing", the six "Decided by …" lines, plus T105's), clock label, last-minute banner, "Decided by …" lines (six per mode), coin-flip wording,
 supplies feed line, late-join toast ("Joined Red Camp at round 17: +N cash to catch up"),
 Ranked waiting text. Player text says **Bones**/take-downs.
+
+### T106b (#265) — Dino Round 18 string fixes (one small Builder commit, before Tester Run 7)
+Exact strings (display only; keys unchanged):
+- `BattleFlow.luau:124` "+N supplies for rounds X–Y" → **"+N cash for skipped rounds X–Y"**;
+  single round → **"+N cash for skipped round X"**.
+- `PanelRules.luau:188` → **"Decided by a coin flip"**.
+- `PanelRules.luau:183` → **"Decided by most Fence left"**.
+- `Hud.luau:386` "Clock 14:00" → **"Time left 14:00"** (format "Time left m:ss").
+- `BattleFlow.luau:327` literal "Bones" → `{Theme.Bones}`-driven text.
+- **Accept:** specs/strings updated; check/export/test green; no Config diff.
 
 ### Tester Run 6 (after 2c)
 Studio, stand-ins: (1) co-op Normal solo rounds 1–3 with a timer: paced spawn gaps, kill

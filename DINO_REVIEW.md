@@ -636,3 +636,20 @@ Read: DIRECTION, Round 16, PLAN T85, DECISIONS #229/#230/#233/#234. Grepped ever
 | BattleFlow.standInName | "Stand-in 2" → "Stand-in 2's Camp" | keep; kid-plain. |
 
 Comments only: BattleFlow.luau:18/117 say "a pop" — not shown to players.
+
+## Round 18 — Phase 8 batch 2 strings (T106)
+
+Read: DIRECTION, Rounds 16–17, PLAN T106, DECISIONS #249–#264. Grepped src/client + src/shared for every batch-2 string. No banned words (pop / split / balloon / Storm). Fine as is: "Round 22 / 40", "Final Stampede N", "One minute left on the clock!", "Time's up!", "Last camp standing", "Decided by Bones", "Decided by who lasted longer", "Decided by damage dealt to dinos", "Decided by faster round clears", both "Joined … to catch up" toasts (Camp, Bones, cash all match).
+
+**Must-fix**
+| File | Current | Proposed | Why |
+|---|---|---|---|
+| src/shared/BattleFlow.luau:124 (suppliesLine) | "+N supplies for rounds X–Y" / "for round X" | "+N cash for skipped rounds X–Y" / "for skipped round X" | It pays cash; a third money word (cash / Amber / supplies) confuses kids, and "skipped" explains why the round number jumps. |
+| src/shared/PanelRules.luau:188 | "Decided by a coin flip (seeded by the match)" | "Decided by a coin flip" | "Seeded" is dev talk; kids don't need it. Fairness detail stays in code comments. |
+
+**Nice-to-have**
+| File | Current | Proposed | Why |
+|---|---|---|---|
+| src/shared/PanelRules.luau:183 | "Decided by Fence left" | "Decided by most Fence left" | Reads as a full phrase. |
+| src/client/Hud.client.luau:386 | "Clock 14:00" | "Time left 14:00" | Says it counts down; matches "One minute left". |
+| src/shared/BattleFlow.luau:327 | literal "Bones" | `{Theme.Bones}` | Same word source as PanelRules:184. |
