@@ -645,3 +645,26 @@ Setup: Camp Clash, 2 camps, stand-ins, "Ranked" home button, `("ready", true)` (
 
 ## Studio state at the end
 - Play stopped. `get_studio_state`: **Current Studio Mode: Edit**, DataModels: Edit. Nothing edited in Edit, nothing published, `SaveStatus=offline` in every session (J first). Remote disclosure: one `("difficulty","NORMAL")` was fired by mistake while a match was running — the handler ignores it outside the Lobby (State ≠ Lobby), so it had no effect; Normal for the probe was picked with the home button. Screenshots in `~/.claude/jobs/2a8d6f9c/tmp/tester8/`: `coop.png`, `late1.png`, `clockwarn.png`, `clockres.png`, `brlate.png`, `ranked.png`.
+
+# Run 7b — 2026-10-12 (Tester, agent) — re-check F8, N13, #268, N14 after T103c + T105b
+
+- **Code tested:** Studio synced to 3664152: `script_grep` "BattleFenceDrain" → Shared.Config:148 (`BattleFenceDrain = 4`), Server.Battle:155 (`drainAll`); "peak by side" → Server.Battle:500; Hud:763 `feedList.Position = UDim2.new(1, -16, 0, 88)`.
+- **Start state:** Edit mode. Work files `~/.claude/jobs/2a8d6f9c/tmp/tester9/`. Conveniences as Run 7 (J first, Studio-only Lobby remotes `mode/sides/standins/startround/difficulty/standinshold/latestandin/play`, read-only Server probe `side.lua`: every 0.5 s dino models in `Enemies` by `Side` attribute, each model's first-seen time per side, Fence (`Lives*`) changes at 0.1 s).
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R7b-1 | F8: Bone Rush, Seats 10 (9 stand-ins), Easy, Start at round 37, my plot (side 1) undefended — own side ≤ share 13 | PASS | Probe (2 runs, identical): side 1 spawns every ~1.6 s (29.2 … 48.9) until 13 live, then nothing until 65.6 (after its first leak). Per-side peaks 13 ×10; total ≤ 130 (130 reached at ~62 s with every side at 13). |
+| R7b-2 | F8: other sides not delayed by mine | PASS | Sides 2–10 spawn times identical to each other (max diff 0.00 s, 36 spawns each) and kept the paced gap while side 1 was held (50.5, 52.1, 53.6 … 61.8); they waited only at their own 13 (61.8 → 80.0). Samples: 44 s `10/6/6/…` total 64, 53 s `13/10/…` 103, 57 s `13/12/…` 121, 62–80 s `13/13/…` 130. (Side 2's extra entries vs side 1 are split pieces from the stand-ins' hits.) |
+| R7b-3 | F8: "Round N over" per-side peaks | PASS (see N15) | "Round 37 over \| Bone Rush, 10 sides (9 alive) \| Fences out / 2.9 / … \| peak enemies 130/130 (peak by side out/13/13/13/13/13/13/13/13/13, share 13)"; match-end line also prints: "Round 40 at the match end \| peak enemies 117/130 (peak by side out/…/out, share 13)". |
+| R7b-4 | N13: battle leak drain ≤ 4/s | PASS | Max Fence loss in any 1 s window = 4.01 on every side (0.1 s sampling); stand-in Fence 14.06 → 0 in steps of ~0.4–0.47 per 0.1 s; 40 → 0 over 10 s (80.0 → 90.0, all 9 together). My plot: first below full 65.6, out at 83.2. HUD Fence drains, no jumps. |
+| R7b-5 | N13: result uses final applied Fence (clock flush) | PASS | Bone Rush 4 seats, Hard, Start 28, `("clockcap",76)`: stand-ins draining at 9.80 when the clock hit → all three jumped 9.80 → 0.00 at 75.7 s (state Victory = pending flushed), then "Bone Rush over on round 28 at the clock, decided by damage: 1. Stand-in 4's Camp (17 Bones) \| 2. Stand-in 2's … \| 4. Jover_428's Camp (0 Bones)". |
+| R7b-6 | N13: co-op leaks unchanged | PASS | Co-op Normal solo round 1, no towers (started with the `StartGame` remote, the Start button's own remote — my click landed on CoreGUI): Fence 30 → 27 → 19 → 16 → 8 → 5 → 0, one instant step per leak (~0.45 s apart), GameOver. No drain in co-op. |
+| R7b-7 | #268: late stand-in Fence = best standing | PASS | Bone Rush 4 seats, Hard (full 20), Start 28, my plot out; fired `("latestandin")` when standing Fences were 18.3/18.3/18.3 → plot 5 at 18.2 0.3 s later (the others had drained on to 17.1); unused spare plot 6 stayed 20. Console "Joined the hunt at round 28: +50087 cash and 16 Bones". (First try fired at full Fence 20 → 20, trivial.) |
+| R7b-8 | N14: feed no longer over XP text | PASS | `late7b.png`: toast "Joined the hunt at round 28 …" sits below the "200 / 500 XP" row. Probe (viewport 707×620): HeroXp.Numbers y 59–76, BattleFeed starts y 88 — no overlap. |
+| R7b-9 | Console | PASS | Scanned all sessions for error/warn/attempt/infinite: only "Stack Begin/End" pairs from Studio Assistant VirtualInput (as Run 7) and the Assistant camera-reset note; no script errors. |
+
+- **N15 (minor, log).** A side that's out by round end shows `out` in "peak by side", so the undefended side under test (which did peak at 13) loses its peak in the very log meant to show it. Printing the peak with an "(out)" mark would keep it.
+- **End state:** Play stopped, Studio in Edit mode. Nothing published, no saves touched (J each session).
+
+## Run 7b summary
+F8 PASS (own side capped at 13, others undelayed, total ≤ 130, per-side peaks logged), N13 PASS (≤ 4/s drain, clock flush before ranking, co-op instant leaks unchanged), #268 PASS, N14 PASS, console clean. New: N15 (minor log wording).
