@@ -181,12 +181,18 @@ test("T111: row reads the composed build for the picks; tierCount is 5 for tower
 	eq(table.concat(Upgrades.line(path, "BC"), ","), "t1,t2,t3,4B,5BC,6BC")
 end)
 
-test("T111: every real path offers exactly option A at tiers 4 and 5 (batch 9a)", function()
-	for _, group in { Config.Towers, Config.Heroes } do
+test("T111: every real path offers option A at tiers 4 and 5; the starters A, B and C (9c)", function()
+	local withBC = { SCOUT = true, SNIPER = true, GRENADIER = true }
+	for g, group in { Config.Towers, Config.Heroes } do
 		for key, def in group :: any do
+			local want = if g == 1 and withBC[key] then "A,B,C" else "A"
 			for _, path in def.paths do
-				eq(table.concat(Upgrades.options(path, 4, ""), ","), "A", `{key} {path.id} tier 4`)
-				eq(table.concat(Upgrades.options(path, 5, "A"), ","), "A", `{key} {path.id} tier 5`)
+				eq(table.concat(Upgrades.options(path, 4, ""), ","), want, `{key} {path.id} tier 4`)
+				for _, o4 in { "A", "B", "C" } do
+					if path.t4[o4] then
+						eq(table.concat(Upgrades.options(path, 5, o4), ","), want, `{key} {path.id} tier 5 after {o4}`)
+					end
+				end
 			end
 		end
 	end

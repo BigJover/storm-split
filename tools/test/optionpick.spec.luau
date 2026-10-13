@@ -40,34 +40,48 @@ test("only tier-4 and tier-5 steps open the pick", function()
 	end
 end)
 
-test("with only option A, every tier-4/5 pick shows one card, already chosen, that the server takes", function()
-	local slots = 0
+-- Paths whose B/C options are in (PLAN 9c: the starters); every other path is still A only.
+local WITH_BC = { SCOUT = true, SNIPER = true, GRENADIER = true }
+
+test("every tier-4/5 pick shows its options' cards (A only, or A/B/C for 9c), each one the server takes", function()
+	local slots, threeWay = 0, 0
 	everyPath(function(where, def, i)
 		local path = def.paths[i]
+		local tower = string.match(where, "^(%u[%u_]*) path") -- nil for a hero
+		local letters = if tower and WITH_BC[tower] then "ABC" else "A"
 		for _, step in { { 4, "" }, { 5, "A" } } do
 			local nextTier, picks = step[1], step[2]
 			local cards = OptionPick.cards(path, nextTier, picks)
-			eq(#cards, 1, `{where} T{nextTier}: one card`)
-			local row = Upgrades.row(path, nextTier, picks .. "A")
-			eq(cards[1].letter, "A", `{where} T{nextTier}: letter`)
-			eq(cards[1].name, row.name, `{where} T{nextTier}: name`)
-			eq(cards[1].blurb, row.blurb, `{where} T{nextTier}: blurb`)
-			eq(OptionPick.initial(cards), "A", `{where} T{nextTier}: the one card is chosen`)
-			-- The server's check (Shared/Upgrades.stepFor) accepts every card offered...
+			eq(#cards, #letters, `{where} T{nextTier}: card count`)
 			local tiers = { 0, 0, 0 }
 			tiers[i] = nextTier - 1
 			local allPicks = { "", "", "" }
 			allPicks[i] = picks
-			local got, why = Upgrades.stepFor(def, tiers, allPicks, i, cards[1].letter)
-			eq(why, "ok", `{where} T{nextTier}: the server takes A`)
-			eq(got, row, `{where} T{nextTier}: the row it buys`)
-			-- ...and refuses a letter with no card.
-			local _, refused = Upgrades.stepFor(def, tiers, allPicks, i, "B")
-			eq(refused, "no such option", `{where} T{nextTier}: B is refused`)
+			for c, card in cards do
+				local letter = string.sub(letters, c, c)
+				local row = Upgrades.row(path, nextTier, picks .. letter)
+				eq(card.letter, letter, `{where} T{nextTier}: letter {c}`)
+				eq(card.name, row.name, `{where} T{nextTier}{letter}: name`)
+				eq(card.blurb, row.blurb, `{where} T{nextTier}{letter}: blurb`)
+				-- The server's check (Shared/Upgrades.stepFor) accepts every card offered.
+				local got, why = Upgrades.stepFor(def, tiers, allPicks, i, letter)
+				eq(why, "ok", `{where} T{nextTier}: the server takes {letter}`)
+				eq(got, row, `{where} T{nextTier}{letter}: the row it buys`)
+			end
+			if #letters == 1 then
+				eq(OptionPick.initial(cards), "A", `{where} T{nextTier}: the one card is chosen`)
+				-- ...and refuses a letter with no card.
+				local _, refused = Upgrades.stepFor(def, tiers, allPicks, i, "B")
+				eq(refused, "no such option", `{where} T{nextTier}: B is refused`)
+			else
+				eq(OptionPick.initial(cards), nil, `{where} T{nextTier}: no card chosen yet`)
+				threeWay += 1
+			end
 			slots += 1
 		end
 	end)
 	ok(slots >= 90, `every slot seen ({slots})`)
+	eq(threeWay, 18, "the 9 starter paths' 18 slots offer A/B/C")
 end)
 
 test("three options: three cards in order, none chosen until one is tapped", function()

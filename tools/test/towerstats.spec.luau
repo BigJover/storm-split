@@ -70,6 +70,15 @@ local function expected(def, tiers: { number })
 	end
 	e.slowPercent = math.max(def.slowPercent, highest("slowPercent"))
 	e.resistPercent = math.max(def.resistPercent, highest("resistPercent"))
+	-- PLAN 9c: only a path that both throws bomblets and burns lights its bomblets; a
+	-- shooting tower's Strips armour strips on its hits, a chilling tower's is its chill.
+	e.bombletBurnDps, e.bombletBurnSeconds = 0, 0
+	for _, row in rows do
+		if row.bomblets > 0 and row.burnDps > 0 then
+			e.bombletBurnDps = math.max(e.bombletBurnDps, row.burnDps)
+			e.bombletBurnSeconds = math.max(e.bombletBurnSeconds, row.burnSeconds)
+		end
+	end
 	for _, field in TowerStats.FLAGS do
 		e[field] = any(field)
 	end
@@ -80,6 +89,7 @@ local function expected(def, tiers: { number })
 		end
 	end
 	e.freezeEvery = every
+	e.stripsOnHit = e.stripsArmor and e.slowPercent <= 0 and every <= 0
 	-- The chain (PLAN T64): a tower that chains gets Tuning's arcs and reach unless a tier
 	-- sets them, and at least 1 dino per hop; on any other tower the chain fields are off.
 	local chain = { "arcs", "arcReach", "arcForks", "staticPercent", "arcJumps", "powerGrid", "judgementBolt" }
@@ -243,5 +253,6 @@ test("T111: a tier with no row for its picks is an error, never a silent option 
 	local def = withB()
 	ok(not pcall(TowerStats.compute, def, { 4, 0, 0 }, { "", "", "" }), "tier 4 with no pick")
 	ok(not pcall(TowerStats.compute, def, { 4, 0, 0 }, { "C", "", "" }), "tier 4 with a pick that has no row")
-	ok(not pcall(TowerStats.compute, Config.Towers.SCOUT, { 5, 0, 0 }, { "AB", "", "" }), "a real path has no B yet")
+	ok(not pcall(TowerStats.compute, Config.Towers.COIL, { 5, 0, 0 }, { "AB", "", "" }), "a real path with no B yet")
+	ok(pcall(TowerStats.compute, Config.Towers.SCOUT, { 5, 0, 0 }, { "AB", "", "" }), "a starter path has B (9c)")
 end)

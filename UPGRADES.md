@@ -25,6 +25,17 @@ built). Change a name there, not in code.
 - Double Tap: two shots per trigger pull. Lead Rain: fastest fire in the game.
 - Armor Breaker: can damage armoured dinos (Ankylosaurus). Hollow Points: ×2 vs armoured. Railshot: bullet passes through 3 dinos. Hide Buster: ×4 vs armoured and bosses.
 
+A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 / T5; names are working names until the Dino pass):
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Lookout** | 4 | Watch Post — Sees further, and shoots faster and harder | Signal Mirror — Towers in range fire 18% faster | Spotter's Call — Its target takes +15% from every tower |
+| **Lookout** | 5 | Signal Tower — Towers in range hit harder and can hurt armour | Beacon Fire — Towers in range fire 35% faster | Trophy Spotter — Bosses in range take +40% from everything |
+| **Trigger Happy** | 4 | Bullet Hose — Fires much faster and hits harder | Belt Feed — Never stops to reload: fires 45% faster | Long Burst — Fires faster from further away |
+| **Trigger Happy** | 5 | Lead Rain — The fastest fire in the game | Bullet Storm — Lighter bullets go through 4 dinos | Shredder — The hail of bullets strips armour |
+| **Hardliner** | 4 | Railshot — Each bullet goes through 3 dinos | Cracking Shot — Goes through 2 dinos and strips their armour | Heavy Slug — Goes through 2 dinos, shrinking each 3 sizes |
+| **Hardliner** | 5 | Hide Buster — Hits armoured dinos and bosses 4 times as hard | Jolt Rounds — Hits jolt dinos still for a moment | Rail Lance — Each bullet goes through 6 dinos |
+
 ## Longshot Perch (Sniper) — global range, slow
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
@@ -37,6 +48,17 @@ built). Change a name there, not in code.
 - Marked Target: its target takes +25% from every tower. Eye in the Sky: mark +60%, towers in range +15% attack speed.
 - Bone Breaker: ×3 vs bosses. Concussion Round: stun on hit. Extinction Round: ×10 vs bosses, stuns bosses.
 
+A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 / T5; names are working names until the Dino pass):
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Deadeye** | 4 | Tungsten Core — Shots go through more dinos, shrinking each 2 sizes | Wind Shear — Shots shove the whole line 3 studs back | Fast Bolt — Fires much faster through 5 dinos |
+| **Deadeye** | 5 | Linebreaker — Each shot hits 10 dinos in a line, double damage | Piercing Gale — Fast shots through 8 dinos | Shatterline — Every dino in the line loses its armour |
+| **Spotter** | 4 | Game Spotter — Fires faster, and its mark hits harder | Painted Target — Bosses in range take +25% too | Quick Spot — Fires much faster, marks more often |
+| **Spotter** | 5 | Eye in the Sky — A bigger mark, and towers in range shoot faster | Spotter Network — Towers in range hit 15% harder | Kill Order — Every boss in range takes +40% |
+| **Big Bore** | 4 | Punt Gun — Huge shots that stun and shrink a dino 3 sizes | Elephant Gun — Twice the damage against bosses | Knockdown Round — Knocks the hit dino 4 studs back |
+| **Big Bore** | 5 | Extinction Round — 10 times damage to bosses, and stuns them | Bone Splitter — Each shot shrinks a dino 5 sizes | Hammer Shot — Stuns 1.2 s and knocks 6 studs back |
+
 ## Mortar Pit (Grenadier) — area damage, ground only
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
@@ -48,6 +70,17 @@ built). Change a name there, not in code.
 - Napalm: leaves a burning patch on the track. Scorched Earth: long burning stretch.
 - Cluster Shell: each shell splits into 3 blasts. Chain Reaction: the bomblets burst again.
 - Shockwave: knocks dinos back along the track. Armor Crack: damages armour, ×2 vs armoured. Stun Grenade: brief stun. Tectonic Slam: everything hit is stunned 1s.
+
+A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 / T5; names are working names until the Dino pass):
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Blast** | 4 | Firestorm — Bigger blasts that leave dinos burning | Big Shell — Much bigger blasts | White Phosphorus — A short, very hot burning patch |
+| **Blast** | 5 | Scorched Earth — Leaves a long burning stretch of track | Blast Furnace — Huge blasts that hit harder | Inferno Shell — Patches burn twice as hot |
+| **Cluster** | 4 | Carpet Shelling — More bomblets and harder blasts | Fire Bomblets — Bomblets leave small fires | Wide Scatter — Bomblets spread over a wider area |
+| **Cluster** | 5 | Meteor Shower — Even more bomblets rain down | Firecracker Rain — Bomblets burst a third time | Thumper Shells — Bomblets knock small dinos back |
+| **Concussive** | 4 | Earthshaker — Hits much harder and knocks dinos further back | Aftershock — Stuns hit dinos for half a second | Armour Splitter — Hit dinos lose their armour |
+| **Concussive** | 5 | Tectonic Slam — Stuns every dino it hits for a second | Seismic Charge — Throws dinos 10 studs back | Rockfall — A short stun that holds bosses too |
 
 ## Tranq Station (Chiller) — tranquilizer darts: slow and knockout ✅ phase 5 · unlock 100 Amber
 
