@@ -11,6 +11,7 @@ append rows, never insert; pure rules first; co-op specs re-run every task; no p
 DataStore writes from an agent). N15 rides any `Battle` commit (#272).
 
 **Status (2026-10-13): planned. Next: batch 9a (T110 + T111).**
+**Status (2026-10-13, later): 9a + 9b done (c1a7c5a, 0f82bb7, 929b66a, cd6a413, cd749d2; 706 specs); Tester Run 8 running. 9c designed below (#290). Next: 🦖 names 9c → Builder T114 + T115.**
 
 ## Size of the job
 | | Slots (T4+T5) | Options to build | New options to design |
@@ -88,8 +89,78 @@ its Builder starts; 🦖 names them; the Builder copies them into `UPGRADES.md`/
   pick + switch-refund before Start; a co-op round and a Camp Clash round with picked towers.
 
 **9c — B/C for the starters** (Hunting Blind, Longshot Perch, Mortar Pit: 9 paths, **36 options**).
-Director design table → 🦖 names → **T114** sheet rows + mechanics + specs, **T115** tune with
-`--options` + docs tables. Tester: one B and one C per tower in a match; each fires as written.
+**DESIGNED (Director, 2026-10-13, #290) — enter as written** (🦖 names first; working names
+here). Append one `Tower Upgrades` row per option at the bottom: Tower / Path / Path focus /
+Tier copied from that slot's A row; `Upgrade cost` `=E<A row>`, `Cumulative cost`
+`=F<A row>` (same price, #277); `Damage x`, `Rate x`, `Targets x`, `Range x` = 1 unless
+listed; every other cell blank unless listed; `PvP effect` blank (no Raider option in 9c).
+Checked on a sheet copy: `python3 tools/value.py --options copy.xlsx` gives **no OPTIONS or
+WORTH finding** for these three towers (all 27 starter T5 cells, all 9 builds per path).
+Model blind spots (credited at 0 by `tower_worth`, so these options carry damage to clear the
+bar; re-check feel in the Tester run, tune in 9k): stun, knockback, Strips armour, Boss mark %.
+New wirings on these towers (the Builder makes each column work for a tower that didn't use
+it; keep it generic in `TowerStats`/`Towers`): **Strips armour** on a hit (Blind, Perch,
+Mortar — today a Tranq zone effect; on a hit = that dino loses armour for 3 s, `Strip (s)`
+Tuning row seed 3), **Boss mark %** (Falcon's Hooded Scout aura) on Blind/Perch, **Knockback**
+on Perch shots, **Stun / Knockback / Burn** carried by Mortar bomblets. "Amounts take the
+higher" (#275) is why T5 line-hit options are tuned against their T4 siblings.
+
+**Hunting Blind**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; unset = 1 / blank) |
+|---|---|---|---|---|---|
+| Lookout | 4 | B | Signal Mirror | Towers in range fire 18% faster | Damage x 1.15, Aura rate % 18 |
+| Lookout | 4 | C | Spotter's Call | Its target takes +15% from every tower | Damage x 1.2, Range x 1.1, Mark % 15 |
+| Lookout | 5 | B | Beacon Fire | Towers in range fire 35% faster | Damage x 1.4, Range x 1.15, Aura rate % 35 |
+| Lookout | 5 | C | Trophy Spotter | Bosses in range take +40% from everything | Damage x 1.55, Range x 1.1, Boss mark % 40 |
+| Trigger Happy | 4 | B | Belt Feed | Never stops to reload: fires 45% faster | Damage x 1.05, Rate x 1.45 |
+| Trigger Happy | 4 | C | Long Burst | Fires faster from further away | Damage x 1.2, Rate x 1.55, Range x 1.25 |
+| Trigger Happy | 5 | B | Bullet Storm | Lighter bullets go through 4 dinos | Damage x 0.8, Rate x 1, Line hits 4 |
+| Trigger Happy | 5 | C | Shredder | The hail of bullets strips armour | Damage x 1.7, Rate x 1.35, Strips armour Yes |
+| Hardliner | 4 | B | Cracking Shot | Goes through 2 dinos and strips their armour | Damage x 2.7, Line hits 2, Strips armour Yes |
+| Hardliner | 4 | C | Heavy Slug | Goes through 2 dinos, shrinking each 3 sizes | Damage x 2.6, Line hits 2, Size breaks 3 |
+| Hardliner | 5 | B | Jolt Rounds | Hits jolt dinos still for a moment | Damage x 4.6, Armoured x 2, Stun (s) 0.3 |
+| Hardliner | 5 | C | Rail Lance | Each bullet goes through 6 dinos | Damage x 1.5, Armoured x 1.5, Line hits 6 |
+
+**Longshot Perch**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; unset = 1 / blank) |
+|---|---|---|---|---|---|
+| Deadeye | 4 | B | Wind Shear | Shots shove the whole line 3 studs back | Damage x 1.45, Targets x 1.2, Line hits 5, Knockback (studs) 3 |
+| Deadeye | 4 | C | Fast Bolt | Fires much faster through 5 dinos | Damage x 1.1, Rate x 1.45, Line hits 5 |
+| Deadeye | 5 | B | Piercing Gale | Fast shots through 8 dinos | Damage x 1.55, Rate x 1.6, Targets x 1.2, Line hits 8 |
+| Deadeye | 5 | C | Shatterline | Every dino in the line loses its armour | Damage x 2.4, Targets x 1.2, Line hits 8, Strips armour Yes |
+| Spotter | 4 | B | Painted Target | Bosses in range take +25% too | Damage x 1.3, Rate x 1.3, Mark % 30, Boss mark % 25 |
+| Spotter | 4 | C | Quick Spot | Fires much faster, marks more often | Damage x 1.2, Rate x 1.65 |
+| Spotter | 5 | B | Spotter Network | Towers in range hit 15% harder | Damage x 1.3, Rate x 1.35, Mark % 45, Aura damage % 15 |
+| Spotter | 5 | C | Kill Order | Every boss in range takes +40% | Damage x 1.35, Rate x 1.4, Mark % 50, Boss mark % 40 |
+| Big Bore | 4 | B | Elephant Gun | Twice the damage against bosses | Damage x 1.7, Boss x 2 |
+| Big Bore | 4 | C | Knockdown Round | Knocks the hit dino 4 studs back | Damage x 2.8, Knockback (studs) 4, Size breaks 3 |
+| Big Bore | 5 | B | Bone Splitter | Each shot shrinks a dino 5 sizes | Damage x 1.9, Boss x 1.6, Size breaks 5 |
+| Big Bore | 5 | C | Hammer Shot | Stuns 1.2 s and knocks 6 studs back | Damage x 2.3, Stun (s) 1.2, Knockback (studs) 6 |
+
+**Mortar Pit**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; unset = 1 / blank) |
+|---|---|---|---|---|---|
+| Blast | 4 | B | Big Shell | Much bigger blasts | Damage x 1.3, Targets x 1.4, Splash x 1.3 |
+| Blast | 4 | C | White Phosphorus | A short, very hot burning patch | Damage x 1.4, Targets x 1.3, Burn DPS 3, Burn (s) 2 |
+| Blast | 5 | B | Blast Furnace | Huge blasts that hit harder | Damage x 1.5, Targets x 1.4, Splash x 1.3 |
+| Blast | 5 | C | Inferno Shell | Patches burn twice as hot | Damage x 1.45, Targets x 1.3, Burn DPS 6, Burn (s) 4 |
+| Cluster | 4 | B | Fire Bomblets | Bomblets leave small fires | Damage x 1.4, Targets x 1.3, Burn DPS 2, Burn (s) 2 |
+| Cluster | 4 | C | Wide Scatter | Bomblets spread over a wider area | Damage x 1.3, Targets x 1.45, Splash x 1.3 |
+| Cluster | 5 | B | Firecracker Rain | Bomblets burst a third time | Damage x 1.4, Targets x 1.35, Bomblet generations 3 |
+| Cluster | 5 | C | Thumper Shells | Bomblets knock small dinos back | Damage x 1.45, Targets x 1.3, Knockback (studs) 2, Stun (s) 0.2 |
+| Concussive | 4 | B | Aftershock | Stuns hit dinos for half a second | Damage x 1.8, Stun (s) 0.5 |
+| Concussive | 4 | C | Armour Splitter | Hit dinos lose their armour | Damage x 1.8, Armoured x 1.5, Strips armour Yes |
+| Concussive | 5 | B | Seismic Charge | Throws dinos 10 studs back | Damage x 2.4, Knockback (studs) 10 |
+| Concussive | 5 | C | Rockfall | A short stun that holds bosses too | Damage x 2.3, Stun (s) 0.5, Stuns bosses Yes |
+
+- **T114** (Blind + Perch rows, wirings, specs: each option's composed stats; a strip / boss
+  mark / knockback spec) · **T115** (Mortar rows + bomblet effects, `UPGRADES.md` option
+  tables, audit clean, `--options` clean). Tester: one B and one C per tower in a match; each
+  card text matches what happens; a stripped Ankylosaurus takes damage from a non-piercing
+  tower; Seismic Charge never moves a boss; Rockfall stuns a boss 0.5 s.
 
 **9d — B/C for Tranq Station, Supply Camp, Field Hospital, Armory** (12 paths, **48**).
 Same shape: **T116** (Tranq + Supply), **T117** (Hospital + Armory), **T118** tune + docs.
