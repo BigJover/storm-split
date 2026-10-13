@@ -668,3 +668,46 @@ Setup: Camp Clash, 2 camps, stand-ins, "Ranked" home button, `("ready", true)` (
 
 ## Run 7b summary
 F8 PASS (own side capped at 13, others undelayed, total ≤ 130, per-side peaks logged), N13 PASS (≤ 4/s drain, clock flush before ranking, co-op instant leaks unchanged), #268 PASS, N14 PASS, console clean. New: N15 (minor log wording).
+
+# Run 8 — 2026-10-13 (Tester, agent) — Phase 9b: the A/B/C pick panel, option A only
+
+- **Code tested:** Studio synced to cd749d2: `script_grep` "OptionPick" → Client.Shop:52 (`require(Shared:WaitForChild("OptionPick"))`); "pick one" → Client.Shop:1337 / 1365 / 1511 / 1569.
+- **Start state:** Edit mode. Work files `~/.claude/jobs/2a8d6f9c/tmp/tester10/`.
+- **Conveniences (disclosed):** J first every session (`SaveStatus=offline`), K cash, L (trample), keyboard/mouse input (B/E/U/H/M, clicks), `character_navigation`, read-only `execute_luau` (panel/label/attribute probes; pure `TowerStats.compute` / `HeroStats.compute` / `OptionPick.layout` calls), `StartGame` remote (the Start button's own remote; my click on it hit CoreGUI, as in Run 7b), Studio Lobby remotes `mode` TEAM / `standins` / `sides` 2. **Also:** unlocked Big Game Hunter for 75 Amber in the M panel (offline session, nothing saved) to test the hero switch-refund. Old values compared against `git show fad6140:src/shared/Config.luau` (pre-T110).
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R8-1 | Co-op, Hunting Blind Lookout to tier 3 → tier-4 row | PASS | Row "Lookout 4: pick one · 5597 / A Watch Post" (Hardliner: "… / A Railshot"; Trigger Happy: "… / A Bullet Hose"). |
+| R8-2 | Tap the row → card(s) with letter, name, blurb | PASS | One card "A · Watch Post / Sees further, and shoots faster and harder", pre-chosen (only card); header "Hunting Blind · Lookout 4: pick one", Back + X. `pick_need.png` |
+| R8-3 | Confirm text: can't afford | PASS | "Need 5,597 cash for A", disabled; clicking it bought nothing (battle T5: "Need 12,873 cash for A"). |
+| R8-4 | Confirm text: "Tap a card" | NOT TESTABLE (option A only) | With one card it's pre-chosen (`OptionPick.initial`); reachable only with B/C. |
+| R8-5 | Cash changes keep the pick open, text updates | PASS | K ×2 with the pick open: 4299 → 5299 (still "Need …") → 6299 "Buy A — 5,597", pick stayed. |
+| R8-6 | Buy A works | PASS | "Buy A — 5,597" → Path1=4, Picks1=A, Spent 4151 → 9748, toast "Watch Post!", back to the tower panel. |
+| R8-7 | Tower label "4A", then "4A · 5A" | PASS | World label `4A`, panel title "Hunting Blind · 4 · 0 · 0 · 4A"; after 5A (12,873): label `4A · 5A`, title "5 · 0 · 0 · 4A · 5A", row "Lookout · maxed · Signal Tower". |
+| R8-8 | Back and X work and stay visible | PASS | Back → tower panel, same rows; X on an open pick (battle, Playing) closes the panel. Both at the header (y 360) on screen in every pick opened. |
+| R8-9 | Closes on trampling (L) | PASS | Pick open on T5: L once (HP drop) kept it; L again (HP 0) → panel "Trampled · repair it", rows "Repair it first". |
+| R8-10 | Closes on selecting another tower | PASS (via prompt) / PARTIAL | With the pick open on tower 2, moving toward tower 1 hides tower 2's prompt and the panel closes; E on tower 1 opens its normal panel. A direct E-switch with both prompts live wasn't reproducible by agent input (OnePerButton). |
+| R8-11 | Closes on a state change | NOTE (N16) | Pick open in Building, `StartGame` → State Playing: the pick stayed open (buy then worked mid-round). Code reads "state change" as a panel-mode/path change. |
+| R8-12 | Crossover still blocks | PASS | 5A on Lookout, Trigger Happy 1–2 bought, then "Trigger Happy · tier 2 / locked · only one path past tier 2"; "Hardliner · tier 0 / locked · only two paths per tower". |
+| R8-13 | Sell refund as before | PASS | 0.7 × Spent every time: 2905 (4151), 6823 (9748), 15834 (22621), 16897 (24139); selling the 5A tower: cash 1236 → 18133. |
+| R8-14 | Stats after A = pre-change | PASS | Range ring 70 at 4A, 80 at 5A (= 20 × 1.75 / × 2 old rows, ring = diameter). `TowerStats.compute(SCOUT,{4,0,0},{"A"})` dmg 2.86, rate 5.25, range 35; `(5,"AA")` 3.71 / 6.03 / 40 = old cumulative T4/T5 (×2.86/1.75/1.75, ×3.71/2.01/2). |
+| R8-15 | Hero U panel: T4 pick, 5A, T6 | PASS | Tracker Gunslinger 3 → "Gunslinger 4: pick one · 1600 / … 3/6 · A Fan the Hammer"; pick "Gunslinger 4 · pick one · Cash 16733", card "A · Fan the Hammer / Fires faster and reloads quicker", "Buy A — 1,600" → HeroPath1=4, HeroPicks1=A; T5 card "A · Akimbo Frenzy / Both guns go full-auto" "Buy A — 3,200"; T6 "Hot Swap · 6400" is a plain row (no pick) → "Gunslinger · maxed · Hot Swap". `hero_pick.png` |
+| R8-16 | Hero stats after A = pre-change | PASS | `HeroStats.compute(PISTOL,{6,0,0},…,{"AA"})`: rate 8, reload 0.672, magazine 36, guns 2, staggeredReload = base 4 / 1.2 / 12 × old Hot Swap row (2, 0.56, 1.5). |
+| R8-17 | Hero switch-refund before Start | PASS | Spent 12,600 on Tracker (cash 5533) → switch to Big Game Hunter → cash 18133, HeroPath1=0, HeroPicks1 cleared. |
+| R8-18 | Small window | NOT TESTABLE BY AGENT | No viewport resize in the MCP tools (fixed 707×620). Read-only `OptionPick.layout`: 320×240 n1 → width 342, scale 0.84; 360×640 n3 → stacked, list 204. |
+| R8-19 | Co-op rounds with picked towers | PASS | 4A Railshot bought mid-round 1; "Round 1 cleared … lives 40", "Round 2 cleared … lives 40". |
+| R8-20 | Camp Clash (stand-ins) upgrade per side | PASS | My Blind (Side 1) → 4A in Building, 5A mid-round: Picks1=AA on my tower only; Blue's stand-in towers 0·0·0, no picks. "Round 1 over \| Camp Clash … Fences 40 / 40", "Round 4 over … 40 / 40". (First try: Blind at Red's spawn, out of lane range, Red fell in round 1 — placement, not the pick; same as Run 7's note.) Path 2 to 4A/5A ("Bullet Hose", "Lead Rain") in that first match also bought fine. |
+| R8-21 | Console | PASS | Only Studio Assistant VirtualInput "hits CoreGUI" Stack traces and one error from my own probe (wrong child name); no game script errors. |
+| R8-22 | Pick header readable | **FAIL (minor)** F9 | See below. |
+
+### F9. The pick header's title runs under the Back button — minor (cosmetic)
+- **Repro:** any tower or hero path at tier 3 → tap the "… 4: pick one" row (viewport 707×620).
+- **Seen:** "Hunting Blind · Lookout 4: pick on" (the "e" under Back); hero: "Gunslinger 4 · pick one · Cash 167" (cash cut). Longer tower/path names (e.g. "Harpoon Ballista · Trigger Happy …") will lose more. `pick_need.png`, `hero_pick.png`
+- **Suspected:** `src/client/Shop.client.luau` header (Title size vs Back/X, ~L244–280): title needs to end left of Back (or TextScaled/truncate with "…"), or drop "Cash N" from the hero pick title.
+
+- **N16 (Director call).** #279 says "every state change closes the pick"; the build keeps it open across Building → Playing (only path/tower/panel changes and trampling close it). Harmless (the buy is still valid), but not what the wording suggests.
+- **N17 (cosmetic).** The pick panel sits lower (header y 360) than the tower panel (y 135); its right edge goes under the "Upgrades (U)" button by a few px, and the message line sits beside the HP bar. `pick_need.png`
+- **N18.** Row prices are ungrouped ("5597", "12873") while the confirm shows "5,597" — same as the rest of the panel (Sell "2905"), so only a consistency note.
+
+## Run 8 summary
+**Counts:** PASS 18 (R8-1–3, 5–10*, 12–17, 19–21; *R8-10 via prompt, direct switch partial) · FAIL 1 (F9 minor) · NOT TESTABLE 2 (R8-4 "Tap a card" until B/C; R8-18 small window) · NOTE 1 (R8-11 → N16). Studio left in **Edit mode** (Play stopped, `get_studio_state`: Edit); nothing edited in Edit, nothing published, saves offline every session. Screenshots: `pick_need.png`, `hero_pick.png`, `hsel.png` in tester10.
