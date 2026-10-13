@@ -341,7 +341,28 @@ def _ordered(row, order):
 
 
 def _build_path(path, kinds, rows, max_tier, where, extra=None, order=()):
-    """Turn the (tier, option) -> parsed row map into path.tiers[1..3], t4, t5 (and t6)."""
+    """Turn the (tier, option) -> parsed row map into path.tiers[1..3], t4, t5 (and t6).
+
+    The T5 pick is independent of the T4 pick (#276) and T6 is composed on every T5 (#278):
+    >>> K = {"damageMult": "mult", "shots": "max"}
+    >>> def r(cost, full=None, **steps):
+    ...     return {"full": full or {}, "steps": {k: steps.get(k) for k in K}, "own": {"name": "", "cost": cost}}
+    >>> rows = {(t, ""): r(t, {"damageMult": 1.0 + t / 10, "shots": 1}) for t in (1, 2, 3)}
+    >>> rows.update({(4, "A"): r(40, damageMult=2), (4, "B"): r(40, shots=3),
+    ...              (5, "A"): r(50, damageMult=1.5), (5, "C"): r(50, shots=5), (6, ""): r(60, damageMult=2)})
+    >>> p = {"tiers": []}; _build_path(p, K, rows, 6, "demo")
+    >>> sorted(p["t5"]), sorted(p["t6"])
+    (['AA', 'AC', 'BA', 'BC'], ['AA', 'AC', 'BA', 'BC'])
+    >>> [(p["t6"][k]["damageMult"], p["t6"][k]["shots"]) for k in ("AA", "AC", "BA", "BC")]
+    [(7.8, 1), (5.2, 5), (3.9, 3), (2.6, 5)]
+    >>> rows[(5, "C")]["own"]["cost"] = 55; _build_path({"tiers": []}, K, rows, 6, "demo")
+    Traceback (most recent call last):
+    SystemExit: demo T5: every option at a tier costs the same (#277); found [50, 55]
+    """
+    for tier in (4, 5):
+        costs = sorted({rows[(tier, o)]["own"]["cost"] for o in OPTIONS if (tier, o) in rows})
+        if len(costs) > 1:
+            sys.exit(f"{where} T{tier}: every option at a tier costs the same (#277); found {costs}")
     for tier in (1, 2, 3):
         if (tier, "") not in rows:
             sys.exit(f"{where}: no tier {tier} row")

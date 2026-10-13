@@ -60,13 +60,14 @@ local function currentStats(): HeroStats.Stats?
 	if not key then
 		return nil
 	end
-	local tiers = {}
+	local tiers, picks = {}, {}
 	for i = 1, 3 do
 		tiers[i] = player:GetAttribute(`HeroPath{i}`) or 0
+		picks[i] = player:GetAttribute(`HeroPicks{i}`) or ""
 	end
 	-- Outfitter buffs and mastery perks agree with the server.
 	local mastery = player:GetAttribute(`Mastery_{key}`)
-	return HeroStats.compute(key, tiers, HeroStats.gearOf(player), if typeof(mastery) == "number" then mastery else 0)
+	return HeroStats.compute(key, tiers, HeroStats.gearOf(player), if typeof(mastery) == "number" then mastery else 0, picks)
 end
 
 local function equippedGun(): Tool?

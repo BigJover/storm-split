@@ -192,7 +192,9 @@ function HeroStats.hasPerk(perk: Perk, masteryLevel: number?): boolean
 	return perk.level <= (masteryLevel or 0)
 end
 
-function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?, masteryLevel: number?): Stats?
+-- `picks` is each path's A/B/C letters ("", "B", "BA"; Shared/Upgrades); nil means option
+-- A everywhere.
+function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?, masteryLevel: number?, picks: { string }?): Stats?
 	local g = gear or HeroStats.NO_GEAR
 	local hero = Config.Heroes[heroKey]
 	if not hero then
@@ -239,7 +241,8 @@ function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?, mast
 	for _, pathIndex in order do
 		local tier = tiers[pathIndex] or 0
 		if tier > 0 then
-			local step = Upgrades.row(hero.paths[pathIndex], tier)
+			local step = Upgrades.row(hero.paths[pathIndex], tier, if picks then picks[pathIndex] or "" else nil)
+			assert(step, "no Config row for this tier and pick")
 			for _, field in MULTIPLY do
 				mult[field] *= step[field] or 1
 			end

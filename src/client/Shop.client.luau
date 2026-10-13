@@ -682,11 +682,19 @@ local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?
 	end
 end
 
+-- The option a path's next step is bought with until the 3-card pick lands (PLAN T112):
+-- the only letter on offer (option A while B/C don't exist), nil at tiers 1-3 and 6. With
+-- more than one on offer it's nil and the server asks for a pick.
+local function soleOption(path, current: number, picks: string): string?
+	local options = Upgrades.options(path, current + 1, picks)
+	return if #options == 1 then options[1] else nil
+end
+
 -- "+30% damage · +15% rate · 2 shots per trigger" for going from `current`
--- to `current + 1` on a path.
-local function describeStep(path, current: number): string
-	local now = Upgrades.row(path, current)
-	local nextStep = Upgrades.row(path, current + 1)
+-- to `current + 1` on a path, with the path's picks so far and the option bought.
+local function describeStep(path, current: number, picks: string, option: string?): string
+	local now = Upgrades.row(path, current, picks)
+	local nextStep = Upgrades.row(path, current + 1, Upgrades.pickAfter(picks, current + 1, option or "A"))
 	local parts = {}
 	local tar = TAR_PATHS[path] == true
 	describeAbilities(now, nextStep, parts, tar)
@@ -703,9 +711,9 @@ end
 
 -- What a hero upgrade tier changes, in words (HEROES.md). Only fields that
 -- differ from the previous tier are mentioned.
-local function describeHeroStep(path, current: number): string
-	local now = Upgrades.row(path, current)
-	local nextStep = Upgrades.row(path, current + 1)
+local function describeHeroStep(path, current: number, picks: string, option: string?): string
+	local now = Upgrades.row(path, current, picks)
+	local nextStep = Upgrades.row(path, current + 1, Upgrades.pickAfter(picks, current + 1, option or "A"))
 	local parts = {}
 	local function before(field: string, default: any): any
 		return if now and now[field] ~= nil then now[field] else default
@@ -1111,14 +1119,14 @@ local function setMode(newMode: Mode)
 	render()
 end
 
-local function send(action: string, a: any, b: any, remote: RemoteFunction?): boolean
+local function send(action: string, a: any, b: any, remote: RemoteFunction?, c: any?): boolean
 	if busy then
 		return false
 	end
 	busy = true
 	say("…")
 	local ok, success, text = pcall(function()
-		return (remote or request):InvokeServer(action, a, b)
+		return (remote or request):InvokeServer(action, a, b, c)
 	end)
 	busy = false
 	if not ok then
@@ -1244,28 +1252,30 @@ renderRows = function()
 			local rewards = myMastery()
 			local discount = if rewards then rewards.upgradeDiscountPercent else 0
 			local free = player:GetAttribute("FreeUpgrade") == true
-			local tiers = {}
+			local tiers, picks = {}, {}
 			for i = 1, 3 do
 				tiers[i] = player:GetAttribute(`HeroPath{i}`) or 0
+				picks[i] = player:GetAttribute(`HeroPicks{i}`) or ""
 			end
 			for pathIndex, path in hero.paths do
 				local current = tiers[pathIndex]
+				local option = soleOption(path, current, picks[pathIndex])
 				local name = escape(path.id)
 				local why = Upgrades.check(tiers, pathIndex, Upgrades.tierCount(path), if rewards then rewards.crossoverCap else nil)
 				-- All six tiers on one line per path (PLAN T53), so the panel never grows.
 				local ladder = PanelRules.tierLadder(current, Upgrades.tierCount(path))
 				if why == "maxed" then
-					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(Upgrades.row(path, current).name)}\n<font size="13">{ladder}</font>`, LOCKED_COLOR, false)
+					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(Upgrades.row(path, current, picks[pathIndex]).name)}\n<font size="13">{ladder}</font>`, LOCKED_COLOR, false)
 				elseif why ~= "ok" then
 					addRow(pathIndex, `<b>{name}</b>  ·  {ladder}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
 				else
-					local step = Upgrades.row(path, current + 1)
+					local step = Upgrades.row(path, current + 1, Upgrades.pickAfter(picks[pathIndex], current + 1, option or "A"))
 					local cost = if free then 0 else math.floor(step.cost * (1 - discount / 100) + 0.5)
 					local affordable = cash >= cost
 					local price = if free then "FREE" elseif discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
-					local text = `<b>{escape(step.name)}</b>  ·  {price}\n<font size="13">{name} {ladder}  ·  {escape(describeHeroStep(path, current))}</font>`
+					local text = `<b>{escape(step.name)}</b>  ·  {price}\n<font size="13">{name} {ladder}  ·  {escape(describeHeroStep(path, current, picks[pathIndex], option))}</font>`
 					addRow(pathIndex, text, if affordable then HERO_COLOR else LOCKED_COLOR, affordable, function()
-						send("upgrade", pathIndex, nil, heroRequest)
+						send("upgrade", pathIndex, option, heroRequest)
 					end)
 				end
 			end
@@ -1347,9 +1357,10 @@ renderRows = function()
 		local key = managed:GetAttribute("Tower") :: string
 		local def = Config.Towers[key]
 		local towerId = managed:GetAttribute("TowerId")
-		local tiers = {}
+		local tiers, picks = {}, {}
 		for pathIndex = 1, 3 do
 			tiers[pathIndex] = managed:GetAttribute(`Path{pathIndex}`) or 0
+			picks[pathIndex] = managed:GetAttribute(`Picks{pathIndex}`) or ""
 		end
 		local hp = (managed:GetAttribute("HP") or 0) :: number
 		local maxHp = (managed:GetAttribute("MaxHP") or 0) :: number
@@ -1414,25 +1425,26 @@ renderRows = function()
 		if def then
 			for pathIndex, path in def.paths do
 				local current = tiers[pathIndex]
+				local option = soleOption(path, current, picks[pathIndex])
 				local name = escape(path.id)
 				local why = Upgrades.check(tiers, pathIndex, Upgrades.tierCount(path))
 				if trampled and why ~= "maxed" then
 					-- Mirrors Server/Shop: no upgrades until it's repaired.
 					addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">Repair it first</font>`, LOCKED_COLOR, false)
 				elseif why == "maxed" then
-					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(Upgrades.row(path, current).name or "")}`, LOCKED_COLOR, false)
+					addRow(pathIndex, `<b>{name}</b>  ·  maxed  ·  {escape(Upgrades.row(path, current, picks[pathIndex]).name or "")}`, LOCKED_COLOR, false)
 				elseif why ~= "ok" then
 					addRow(pathIndex, `<b>{name}</b>  ·  tier {current}\n<font size="13">{LOCK_REASONS[why] or "locked"}</font>`, LOCKED_COLOR, false)
 				else
-					local step = Upgrades.row(path, current + 1)
+					local step = Upgrades.row(path, current + 1, Upgrades.pickAfter(picks[pathIndex], current + 1, option or "A"))
 					-- Mirrors Server/Shop: a Supply Camp's Logistics discount (Shared/Pricing).
 					local discount = managed:GetAttribute("Discount") or 0
 					local cost = Pricing.upgradeCost(step, discount)
 					local affordable = cash >= cost
 					local price = if discount > 0 then `{cost} <font size="13">(-{discount}%)</font>` else tostring(cost)
-					local text = `<b>{escape(step.name or path.id)}</b>  ·  {price}\n<font size="13">{name} {current + 1}  ·  {escape(describeStep(path, current))}</font>`
+					local text = `<b>{escape(step.name or path.id)}</b>  ·  {price}\n<font size="13">{name} {current + 1}  ·  {escape(describeStep(path, current, picks[pathIndex], option))}</font>`
 					addRow(pathIndex, text, if affordable then BUY_COLOR else LOCKED_COLOR, affordable, function()
-						send("upgrade", towerId, pathIndex)
+						send("upgrade", towerId, pathIndex, nil, option)
 					end)
 				end
 			end

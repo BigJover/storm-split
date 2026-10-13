@@ -32,7 +32,9 @@ src/
 │   ├── Placement.luau       Where a tower may stand (off track, no overlap) — client ghost + server
 │   ├── TowerLook.luau       Tower models, shared by real towers and the placement ghost;
 │   │                        upgrade visuals (ring size, tier label, crown/glow swaps)
-│   ├── Upgrades.luau        The crossover rule, shared so the client greys out what the server refuses
+│   ├── Upgrades.luau        The crossover rule, shared so the client greys out what the server refuses;
+│   │                        A/B/C picks: a path's composed row for its picks (`row`, `line`, `tierCount`),
+│   │                        the options on offer and `stepFor`'s refusals (Phase 9, T110-T111)
 │   ├── HeroStats.luau       A hero's gun and ability right now (base + mastery perks + upgrades), shared by
 │   │                        server and client; which mastery perks a mastery level has (`Config.MasteryPerks`)
 │   ├── GunRules.luau        Hero tier-6 gun rules: spread cone (still/scoped), Hot Swap reloads, Trick Reload,
@@ -172,7 +174,7 @@ This dissolves most of the problems the UEFN plan was built around:
 |---|---|---|
 | Enemies (create / move / damage / remove; stun, disarm, chill, tar) | `Enemies` | Read `getLive()` and `isStunned` / `isDisarmed` / `slowFraction` / `isSlowed`, call `damage()`; a Tar Pit tars (`tar()`), sinks (`sink()`) and erupts (`dropSizes()`) through it, never by touching a dino |
 | Dino attack timers and projectiles in flight (and the Storm Coil's Grounding Spike timers, which strike throws down) | `DinoAttacks` | — (it hurts towers and players only through `Towers.damage` / `Health.damage`; towers that can't be damaged are never in `Towers.targets()`) |
-| A tower's tiers and stats | `Towers` | Call `upgrade()` after paying |
+| A tower's tiers, A/B/C picks (`pathPicks`, match only, #287) and stats | `Towers` | Call `upgrade(tower, path, option)` after paying; clients read the body's `Path<n>` / `Picks<n>` attributes |
 | A tower's HP and trampled state | `Towers` | Call `damage()` / `heal()` / `repair()` (after paying); dinos pick from `targets()`; clients read the body's `HP` / `MaxHP` / `KO` attributes |
 | Cash and lives (the Fence), one pot per side (co-op = side 1; arithmetic in the pure `Shared/Ledger`) | `Economy` | Call `trySpendFor(side)` / `earnFor(side)` / `loseFor(side)` (the side-less `trySpend()` / `earn()` / `lose()` are side 1); clients read their side's `Cash` / `Lives` attributes (`Shared/Sides.attr`: side 1 `Cash`, side n `Cash<n>`) |
 | Player HP (the Humanoid's Health / MaxHealth) | `Health` | Call `damage()` / `heal()` / `healAll()`; an enemy hunter's shot goes through `pvpHit()` (Hero, after `Shared/BattleRules.pvpDamage`, which is 0 under Camo Cover: `camoCover()`); clients read the Humanoid |
@@ -183,7 +185,7 @@ This dissolves most of the problems the UEFN plan was built around:
 | Tower level (the round level) and rounds cleared | `Main` | Main calls `Towers.setLevel(HeroXp.roundLevel(...))`; clients read the `Level` and `RoundsCleared` attributes on ReplicatedStorage |
 | Match state (`State`), mode, track, difficulty, host | `Main` | Clients read the attributes; the host changes mode/track/difficulty through the `Lobby` remote, in the Lobby only |
 | A battle's sides: each hunter's `Side`, camp names, who is out, placements | `Battle` (rules in the pure `Shared/BattleFlow` / `Shared/BattleRules`) | Clients read `Side` / `Out` / `BattlePlace` / `BattleBones` player attributes and `Camp<n>` / `Out<n>` / `Place<n>` / `BattleMode` / `Overtime` / `MatchEndsAt` / `BattleDecidedBy` / `BattleAtClock` (T104) on ReplicatedStorage (`Shared/Sides.attr`); Shop and Hero refuse a hunter whose side is out |
-| A player's hero, upgrades, ammo, recoil, cooldown, Overdrive | `Hero` | Clients read `Hero`, `HeroPath1-3`, `Ammo`, `Magazine`, `ReloadUntil`, `AbilityReadyAt` player attributes; Towers ask `Hero.towerRateBoost` |
+| A player's hero, upgrades and A/B/C picks, ammo, recoil, cooldown, Overdrive | `Hero` | Clients read `Hero`, `HeroPath1-3`, `HeroPicks1-3`, `Ammo`, `Magazine`, `ReloadUntil`, `AbilityReadyAt` player attributes; Towers ask `Hero.towerRateBoost` |
 | Burning patches | `Hazards` | Towers and Hero call `Hazards.burn()` |
 | Current round | `Waves` | Read the `Round` attribute |
 | Saved progression: Cores, owned heroes/towers, mastery, highest round, player XP and equipped cosmetics (`Shared/PlayerLevel`, `Shared/Cosmetics`; read/written only through `Shared/SaveStore` under a session lock `{session, at}` in the record: a server loads a save only if it's free, its own or stale (`Profile.LOCK_STALE` 600 s), writes only while it holds it, refreshes every 120 s, releases on leave/BindToClose (T90); Main reports each hunter's match XP through `addPlayerXp` at match end; XP for a save still loading is held and added once it loads, dropped if it fails) | `Progression` | Hero asks `ownsHero` and reads mastery; Shop asks `ownsTower` (placing only); buying only outside a match; equipping through `ProgressRequest` ("equip", slot, id), checked against the level, any time; everyone reads the `Equip_<slot>` and `PlayerXp` player attributes |

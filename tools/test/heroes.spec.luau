@@ -554,3 +554,15 @@ test("the mastery perks carry their reviewed names and texts", function()
 	eq(Config.Mastery[10].unlock, "Start every match with your first upgrade free, plus this hero's mastery-10 ability perk", "mastery 10")
 	eq(Config.Mastery[15].unlock, "Ability cooldown -30%, plus this hero's mastery-15 ability perk", "mastery 15")
 end)
+
+test("T111: hero stats read each path's picks; a pick with no row is an error", function()
+	for key, hero in Config.Heroes do
+		local a = HeroStats.compute(key, { 6, 2, 0 }, nil, nil, { "AA", "", "" }) :: any
+		local none = HeroStats.compute(key, { 6, 2, 0 }) :: any
+		eq(a.damage, none.damage, `{key} 6/2/0 picks AA = no picks`)
+		eq(a.rate, none.rate, `{key} 6/2/0 rate`)
+		ok(not pcall(HeroStats.compute, key, { 6, 2, 0 }, nil, nil, { "AB", "", "" }), `{key}: no B/C rows yet`)
+		ok(not pcall(HeroStats.compute, key, { 4, 0, 0 }, nil, nil, { "", "", "" }), `{key}: tier 4 needs a pick`)
+		ok(hero.paths[1].t6.AA ~= nil, `{key} tier 6 composed on 5AA`)
+	end
+end)

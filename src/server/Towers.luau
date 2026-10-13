@@ -153,6 +153,7 @@ export type Tower = {
 	position: Vector3,
 	muzzle: Vector3,
 	pathTiers: { number },
+	pathPicks: { string }, -- each path's A/B/C letters: "", "B", "BA" (PLAN T111, #287; match only)
 	stats: Stats,
 	buff: Buff,
 	cooldown: number,
@@ -462,7 +463,7 @@ local function swapStage(tower: Tower): number
 	for pathIndex, tier in tower.pathTiers do
 		local reached = 0
 		for t = 1, tier do
-			if Upgrades.row(tower.def.paths[pathIndex], t).swapsModel then
+			if Upgrades.row(tower.def.paths[pathIndex], t, tower.pathPicks[pathIndex]).swapsModel then
 				reached += 1
 			end
 		end
@@ -578,6 +579,7 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 		position = base + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0),
 		muzzle = base + Vector3.new(0, TowerLook.BODY_HEIGHT - 0.5, 0),
 		pathTiers = pathTiers,
+		pathPicks = { "", "", "" },
 		stats = stats,
 		buff = NO_BUFF,
 		cooldown = 0,
@@ -604,13 +606,21 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 end
 
 -- Returns true if the upgrade was applied. Does NOT charge cash — the caller
--- (Shop) must Economy.trySpend first. Keeps this module free of money.
-function Towers.upgrade(tower: Tower, pathIndex: number): boolean
+-- (Shop) must Economy.trySpend first. Keeps this module free of money. `option` is the
+-- A/B/C pick a tier-4 or tier-5 step needs (none at other tiers; Shared/Upgrades.stepFor);
+-- a pick is final until the tower is sold (#277).
+function Towers.upgrade(tower: Tower, pathIndex: number, option: string?): boolean
 	if not Towers.canUpgrade(tower, pathIndex) then
 		return false
 	end
-	tower.pathTiers[pathIndex] += 1
-	tower.stats = TowerStats.compute(tower.def, tower.pathTiers)
+	local _, why = Upgrades.stepFor(tower.def, tower.pathTiers, tower.pathPicks, pathIndex, option)
+	if why ~= "ok" then
+		return false
+	end
+	local nextTier = tower.pathTiers[pathIndex] + 1
+	tower.pathPicks[pathIndex] = Upgrades.pickAfter(tower.pathPicks[pathIndex], nextTier, option)
+	tower.pathTiers[pathIndex] = nextTier
+	tower.stats = TowerStats.compute(tower.def, tower.pathTiers, tower.pathPicks)
 	-- The HP an upgrade adds to the max is added to current HP too.
 	local maxHp = Combat.towerMaxHp(tower.def, tower.pathTiers, tower.buff.hpPercent)
 	tower.hp = math.min(maxHp, tower.hp + (maxHp - tower.maxHp))

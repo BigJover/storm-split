@@ -88,6 +88,7 @@ local Hero = {}
 type State = {
 	hero: string?,
 	tiers: { number },
+	picks: { string }, -- each path's A/B/C letters: "", "B", "BA" (PLAN T111; match only, never saved)
 	spent: number, -- cash put into upgrades (refunded if the hero is switched in the build phase)
 	stats: HeroStats.Stats?,
 	ammo: number,
@@ -168,6 +169,7 @@ local function stateOf(player: Player): State
 		state = {
 			hero = nil,
 			tiers = { 0, 0, 0 },
+			picks = { "", "", "" },
 			spent = 0,
 			stats = nil,
 			ammo = 0,
@@ -274,6 +276,7 @@ local function publish(player: Player)
 	player:SetAttribute("FreeUpgrade", s.freeUpgrade)
 	for i = 1, 3 do
 		player:SetAttribute(`HeroPath{i}`, s.tiers[i])
+		player:SetAttribute(`HeroPicks{i}`, s.picks[i])
 	end
 	player:SetAttribute("Ammo", s.ammo)
 	player:SetAttribute("Magazine", if s.stats then s.stats.magazine else 0)
@@ -356,7 +359,7 @@ local function refresh(player: Player, refill: boolean)
 	local s = stateOf(player)
 	-- Mastery perks ride on the saved mastery level (the client computes the same
 	-- stats from its Mastery_{hero} attribute).
-	s.stats = if s.hero then HeroStats.compute(s.hero, s.tiers, s.gear, Progression.masteryLevel(player, s.hero)) else nil
+	s.stats = if s.hero then HeroStats.compute(s.hero, s.tiers, s.gear, Progression.masteryLevel(player, s.hero), s.picks) else nil
 	if s.stats and refill then
 		s.ammo = s.stats.magazine
 		s.reloadUntil = 0
@@ -389,6 +392,7 @@ local function pick(player: Player, key: unknown): (boolean, string)
 	end
 	s.hero = key
 	s.tiers = { 0, 0, 0 }
+	s.picks = { "", "", "" }
 	s.spent = 0
 	local rewards = Progression.masteryRewards(Progression.masteryLevel(player, key))
 	s.freeUpgrade = rewards ~= nil and rewards.freeFirstUpgrade == true
@@ -402,9 +406,14 @@ local REFUSALS = {
 	maxed = "That path is maxed",
 	["third path"] = "Only two paths can be opened",
 	crossover = "Only one path can go past tier 2",
+	-- Shared/Upgrades.stepFor (PLAN T111): an A/B/C pick at tiers 4 and 5 only.
+	["pick an option"] = "Pick an option first",
+	["no option here"] = "That tier has no options",
+	["unknown option"] = "That option doesn't exist",
+	["no such option"] = "That option doesn't exist",
 }
 
-local function upgrade(player: Player, pathIndex: unknown): (boolean, string)
+local function upgrade(player: Player, pathIndex: unknown, option: unknown): (boolean, string)
 	-- In a match only. Hero upgrades reset before the home screen, so anything
 	-- bought there (with the last match's leftover cash) would carry into the
 	-- next match.
@@ -428,7 +437,10 @@ local function upgrade(player: Player, pathIndex: unknown): (boolean, string)
 	if why ~= "ok" then
 		return false, REFUSALS[why] or "Can't upgrade that"
 	end
-	local step = Upgrades.row(path, s.tiers[pathIndex] + 1)
+	local step, stepWhy = Upgrades.stepFor(Config.Heroes[s.hero], s.tiers, s.picks, pathIndex, option)
+	if stepWhy ~= "ok" then
+		return false, REFUSALS[stepWhy] or "Can't upgrade that"
+	end
 	-- Mastery: a discount on every upgrade, and possibly the first one free.
 	local discount = if rewards then rewards.upgradeDiscountPercent else 0
 	local cost = if s.freeUpgrade then 0 else math.floor(step.cost * (1 - discount / 100) + 0.5)
@@ -436,6 +448,7 @@ local function upgrade(player: Player, pathIndex: unknown): (boolean, string)
 		return false, Sides.cashRefusal(Sides.fromAttributes(ReplicatedStorage:GetAttribute("Sides"), nil).sides)
 	end
 	s.freeUpgrade = false
+	s.picks[pathIndex] = Upgrades.pickAfter(s.picks[pathIndex], s.tiers[pathIndex] + 1, option :: string?)
 	s.tiers[pathIndex] += 1
 	s.spent += cost
 	refresh(player, true) -- a fresh magazine with every upgrade
@@ -990,6 +1003,7 @@ function Hero.resetMatch()
 	teamPops = 0
 	for player, s in states do
 		s.tiers = { 0, 0, 0 }
+		s.picks = { "", "", "" }
 		s.spent = 0
 		s.bloom = 0
 		s.xp = 0
@@ -1156,7 +1170,7 @@ function Hero.init(remotes: Folder, hooks: Hooks?)
 
 	local request = Instance.new("RemoteFunction")
 	request.Name = "HeroRequest"
-	-- ("pick", heroKey), ("upgrade", pathIndex), ("reload"), ("ability", rayOrigin, rayDirection)
+	-- ("pick", heroKey), ("upgrade", pathIndex, option?), ("reload"), ("ability", rayOrigin, rayDirection)
 	request.OnServerInvoke = function(player: Player, action: unknown, a: unknown, b: unknown)
 		local ok, success, message = pcall(function()
 			if gameOver() then
@@ -1165,7 +1179,7 @@ function Hero.init(remotes: Folder, hooks: Hooks?)
 			if action == "pick" then
 				return pick(player, a)
 			elseif action == "upgrade" then
-				return upgrade(player, a)
+				return upgrade(player, a, b)
 			elseif action == "reload" then
 				startReload(player, stateOf(player))
 				return true, "Reloading"

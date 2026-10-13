@@ -208,3 +208,40 @@ test("a known crossover: Hunting Blind Lookout 3 + Trigger Happy 2", function()
 	eq(stats.shots, math.max(1, math.floor(math.max(a.shots, b.shots))), "shots")
 	eq(stats.piercesArmor, a.piercesArmor or b.piercesArmor, "piercesArmor")
 end)
+
+-- A/B/C picks (PLAN T111, DECISIONS #276, #287): compute reads the composed row of each
+-- path's picks. A copy of the Hunting Blind whose Lookout tier 4 has a B (double A's
+-- damage x) and whose tier 5 has B after A and after B.
+local function withB()
+	local real = Config.Towers.SCOUT
+	local def = table.clone(real) :: any
+	local path = table.clone(real.paths[1]) :: any
+	local a4, a5 = path.t4.A, path.t5.AA
+	local b4 = table.clone(a4)
+	b4.damageMult = a4.damageMult * 2
+	local ab5, bb5 = table.clone(a5), table.clone(a5)
+	ab5.rateMult = a5.rateMult * 3
+	bb5.damageMult = b4.damageMult
+	path.t4 = { A = a4, B = b4 }
+	path.t5 = { AA = a5, AB = ab5, BA = table.clone(a5), BB = bb5 }
+	def.paths = { path, real.paths[2], real.paths[3] }
+	return def, a4, a5
+end
+
+test("T111: compute reads each path's picks; nil picks = option A", function()
+	local def, a4, a5 = withB()
+	local base = def.baseDamage
+	near(TowerStats.compute(def, { 4, 0, 0 }, { "A", "", "" }).damage, base * a4.damageMult, "4A")
+	near(TowerStats.compute(def, { 4, 0, 0 }, { "B", "", "" }).damage, base * a4.damageMult * 2, "4B")
+	near(TowerStats.compute(def, { 4, 0, 0 }).damage, base * a4.damageMult, "no picks = A")
+	near(TowerStats.compute(def, { 5, 0, 0 }, { "AB", "", "" }).rate, def.baseRate * a5.rateMult * 3, "5 AB")
+	near(TowerStats.compute(def, { 5, 0, 0 }, { "BB", "", "" }).damage, base * a4.damageMult * 2, "5 BB")
+	near(TowerStats.compute(def, { 5, 2, 0 }, { "BB", "", "" }).damage, base * a4.damageMult * 2 * Upgrades.row(def.paths[2], 2).damageMult, "5 BB with path 2 at 2")
+end)
+
+test("T111: a tier with no row for its picks is an error, never a silent option A", function()
+	local def = withB()
+	ok(not pcall(TowerStats.compute, def, { 4, 0, 0 }, { "", "", "" }), "tier 4 with no pick")
+	ok(not pcall(TowerStats.compute, def, { 4, 0, 0 }, { "C", "", "" }), "tier 4 with a pick that has no row")
+	ok(not pcall(TowerStats.compute, Config.Towers.SCOUT, { 5, 0, 0 }, { "AB", "", "" }), "a real path has no B yet")
+end)

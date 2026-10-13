@@ -72,6 +72,7 @@ local function decorate(tower: Towers.Tower)
 	body:SetAttribute("Side", tower.side) -- whose camp (the panel is read-only on another camp's, T78)
 	for pathIndex, tier in tower.pathTiers do
 		body:SetAttribute(`Path{pathIndex}`, tier)
+		body:SetAttribute(`Picks{pathIndex}`, tower.pathPicks[pathIndex]) -- "", "B", "BA" (T111)
 	end
 
 	local prompt = body:FindFirstChildOfClass("ProximityPrompt")
@@ -169,7 +170,16 @@ local UPGRADE_REFUSALS = {
 	crossover = "Only one path can go past tier 2",
 }
 
-local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (boolean, string)
+-- Shared/Upgrades.stepFor's refusals (PLAN T111): an A/B/C pick at tiers 4 and 5 only.
+local STEP_REFUSALS = {
+	maxed = "That path is maxed",
+	["pick an option"] = "Pick an option first",
+	["no option here"] = "That tier has no options",
+	["unknown option"] = "That option doesn't exist",
+	["no such option"] = "That option doesn't exist",
+}
+
+local function upgrade(player: Player, towerId: unknown, pathIndex: unknown, option: unknown): (boolean, string)
 	if typeof(towerId) ~= "number" or typeof(pathIndex) ~= "number" then
 		return false, "Unknown upgrade"
 	end
@@ -197,9 +207,9 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 	if why ~= "ok" then
 		return false, UPGRADE_REFUSALS[why] or "Can't upgrade that"
 	end
-	local step = Upgrades.nextStep(tower.def, tower.pathTiers, pathIndex)
-	if not step then
-		return false, "That path is maxed"
+	local step, stepWhy = Upgrades.stepFor(tower.def, tower.pathTiers, tower.pathPicks, pathIndex, option)
+	if stepWhy ~= "ok" then
+		return false, STEP_REFUSALS[stepWhy] or "Can't upgrade that"
 	end
 	-- A Quartermaster's Logistics aura discounts upgrades on towers in its range.
 	local cost = Pricing.upgradeCost(step, tower.buff.discountPercent)
@@ -207,7 +217,7 @@ local function upgrade(player: Player, towerId: unknown, pathIndex: unknown): (b
 		return false, Sides.cashRefusal(layout.sides)
 	end
 
-	if not Towers.upgrade(tower, pathIndex) then
+	if not Towers.upgrade(tower, pathIndex, option :: string?) then
 		Economy.earnFor(side, cost) -- give it back; upgrade() refused
 		return false, "Can't upgrade that"
 	end
@@ -288,7 +298,7 @@ local function sell(player: Player, towerId: unknown): (boolean, string)
 	return true, `Sold for {refund}`
 end
 
-local function handle(player: Player, action: unknown, a: unknown, b: unknown): (boolean, string)
+local function handle(player: Player, action: unknown, a: unknown, b: unknown, c: unknown): (boolean, string)
 	local now = os.clock()
 	if now - (lastRequest[player] or 0) < MIN_REQUEST_GAP then
 		return false, "Slow down"
@@ -307,7 +317,7 @@ local function handle(player: Player, action: unknown, a: unknown, b: unknown): 
 	if action == "build" then
 		return build(player, a, b)
 	elseif action == "upgrade" then
-		return upgrade(player, a, b)
+		return upgrade(player, a, b, c)
 	elseif action == "repair" then
 		return repair(player, a)
 	elseif action == "sell" then
@@ -343,9 +353,9 @@ function Shop.init(remotes: Folder, hooks: { onBounty: ((Player, string) -> ())?
 	onBounty = hooks and hooks.onBounty
 	local request = Instance.new("RemoteFunction")
 	request.Name = "ShopRequest"
-	-- ("build", towerKey, position), ("upgrade", towerId, pathIndex), ("repair", towerId) or ("sell", towerId)
-	request.OnServerInvoke = function(player: Player, action: unknown, a: unknown, b: unknown)
-		local ok, success, message = pcall(handle, player, action, a, b)
+	-- ("build", towerKey, position), ("upgrade", towerId, pathIndex, option?), ("repair", towerId) or ("sell", towerId)
+	request.OnServerInvoke = function(player: Player, action: unknown, a: unknown, b: unknown, c: unknown)
+		local ok, success, message = pcall(handle, player, action, a, b, c)
 		if not ok then
 			warn(`[Shop] request from {player.Name} failed: {success}`)
 			return false, "Something went wrong"

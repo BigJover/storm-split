@@ -183,7 +183,9 @@ local FLAGS = {
 	"eruption",
 }
 
-function TowerStats.compute(def, pathTiers: { number }): Stats
+-- `pathPicks` is each path's A/B/C letters ("", "B", "BA"; Shared/Upgrades); nil means
+-- option A everywhere (scripted builds, #287).
+function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?): Stats
 	local mult: { [string]: number } = {}
 	for _, field in MULTIPLIERS do
 		mult[field] = 1
@@ -195,7 +197,8 @@ function TowerStats.compute(def, pathTiers: { number }): Stats
 
 	for pathIndex, tier in pathTiers do
 		if tier > 0 then
-			local step = Upgrades.row(def.paths[pathIndex], tier)
+			local step = Upgrades.row(def.paths[pathIndex], tier, if pathPicks then pathPicks[pathIndex] or "" else nil)
+			assert(step, "no Config row for this tier and pick")
 			for _, field in MULTIPLIERS do
 				mult[field] *= step[field] or 1
 			end

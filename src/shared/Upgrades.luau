@@ -49,6 +49,8 @@ end
 -- 4, "BA" at tier 5 and 6. A missing `picks` means option A (stand-ins and scripted
 -- builds take A, #287).
 
+Upgrades.LETTERS = { "A", "B", "C" }
+
 -- How many tiers a path has: 5 on towers, 6 on hero paths.
 function Upgrades.tierCount(path): number
 	return #path.tiers + (if path.t4 then 1 else 0) + (if path.t5 then 1 else 0) + (if path.t6 then 1 else 0)
@@ -82,14 +84,56 @@ function Upgrades.line(path, picks: string?): { any }
 	return out
 end
 
--- The next tier's Config row for a path with option A at tiers 4 and 5, or nil if it's
--- maxed.
-function Upgrades.nextStep(def, tiers: { number }, pathIndex: number): any?
+-- The letters a path offers for its step up to `nextTier` after these picks: the options
+-- with a Config row at tier 4 or 5 (A, B, C in order); empty at every other tier.
+function Upgrades.options(path, nextTier: number, picks: string?): { string }
+	local out = {}
+	if nextTier == 4 or nextTier == 5 then
+		for _, letter in Upgrades.LETTERS do
+			if Upgrades.row(path, nextTier, (picks or "") .. letter) ~= nil then
+				table.insert(out, letter)
+			end
+		end
+	end
+	return out
+end
+
+export type StepWhy = "ok" | "unknown path" | "maxed" | "pick an option" | "no option here" | "unknown option" | "no such option"
+
+-- The row a path's next step buys with `option`, and why not (PLAN T111, #276-#278). A
+-- tier-4 or tier-5 step needs an option whose row exists; every other step (tiers 1-3,
+-- hero tier 6) takes none. Tier 6 works after any tier-5 pick (its rows are composed on
+-- every one). The crossover rule is Upgrades.check's, apart from this.
+function Upgrades.stepFor(def, tiers: { number }, picks: { string }?, pathIndex: number, option: unknown): (any, StepWhy)
 	local path = def.paths[pathIndex]
 	if not path then
-		return nil
+		return nil, "unknown path"
 	end
-	return Upgrades.row(path, (tiers[pathIndex] or 0) + 1)
+	local nextTier = (tiers[pathIndex] or 0) + 1
+	if nextTier > Upgrades.tierCount(path) then
+		return nil, "maxed"
+	end
+	local have = if picks then picks[pathIndex] or "" else nil
+	if nextTier ~= 4 and nextTier ~= 5 then
+		if option ~= nil then
+			return nil, "no option here"
+		end
+		local row = Upgrades.row(path, nextTier, have)
+		return row, if row then "ok" else "no such option"
+	end
+	if option == nil then
+		return nil, "pick an option"
+	end
+	if typeof(option) ~= "string" or not table.find(Upgrades.LETTERS, option) then
+		return nil, "unknown option"
+	end
+	local row = Upgrades.row(path, nextTier, (have or string.rep("A", nextTier - 4)) .. option)
+	return row, if row then "ok" else "no such option"
+end
+
+-- A path's picks after buying its next tier with `option` (letters only at tiers 4, 5).
+function Upgrades.pickAfter(picks: string, nextTier: number, option: string?): string
+	return if (nextTier == 4 or nextTier == 5) and option then picks .. option else picks
 end
 
 return Upgrades
