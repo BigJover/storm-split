@@ -153,6 +153,13 @@ return table.freeze({
 		ChainStunCapS = 0.3,
 		BombletFiresPerShell = 6,
 		PoolStingReachStuds = 12,
+		BossHardStopX = 0.5,
+		SmallSize = 2,
+		WallMinBunch = 6,
+		WallReachStuds = 10,
+		TakeDownMarkRadius = 6,
+		RoundSecondsModel = 50,
+		WalkerCapPerSide = 24,
 	},
 	Towers = {
 		SCOUT = {

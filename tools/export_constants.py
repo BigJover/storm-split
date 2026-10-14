@@ -184,7 +184,7 @@ HERO_BREAK_PATHS = {("Tracker", "Marksman"), ("Brush Beater", "Slug")}
 
 def read_tuning(ws):
     out = {}
-    for r in range(5, 200):
+    for r in range(5, 400):
         name, val = v(ws, r, 1), v(ws, r, 2)
         if name and isinstance(val, (int, float)):
             out[ident(name)] = val

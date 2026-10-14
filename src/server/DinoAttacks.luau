@@ -46,6 +46,7 @@ local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
 local Health = require(script.Parent.Health)
 local Towers = require(script.Parent.Towers)
+local Walkers = require(script.Parent.Walkers)
 
 local DinoAttacks = {}
 
@@ -336,6 +337,11 @@ function DinoAttacks.step(dt: number)
 
 		if bites then
 			local left = tick(biteIn, id, def.meleeEvery, dt, slow)
+			if left <= 0 and Walkers.biteOn(enemy, Combat.attackDamage(def.meleeDamage, enemy.size, enemy.sizes, damageMult())) then
+				-- A walker on this dino takes the bite instead of a tower (PLAN 9g, #315).
+				biteLook(enemy, enemy.part.Position + Vector3.new(0, 1, 0))
+				left += def.meleeEvery
+			end
 			if left <= 0 then
 				targets = targets or candidates()
 				local target = Combat.pickTarget(enemy.part.Position, targets :: { Combat.Target }, def.meleeReach)

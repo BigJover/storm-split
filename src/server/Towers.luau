@@ -130,6 +130,7 @@ local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
 local Hazards = require(script.Parent.Hazards)
 local Health = require(script.Parent.Health)
+local Walkers = require(script.Parent.Walkers)
 
 local Towers = {}
 
@@ -625,6 +626,10 @@ export type Hooks = {
 
 function Towers.init(folder: Instance, hooks: Hooks?)
 	towerFolder = folder
+	local walkerFolder = Instance.new("Folder")
+	walkerFolder.Name = "Walkers"
+	walkerFolder.Parent = folder
+	Walkers.init(walkerFolder) -- raptors and other walkers (PLAN 9g, #315)
 	onPop = hooks and hooks.onPop
 	extraRatePercent = hooks and hooks.extraRatePercent
 	resistOf = hooks and hooks.resistOf
@@ -1707,6 +1712,7 @@ function Towers.newRound()
 	for _, tower in towers do
 		tower.lastStandUsed = false
 	end
+	Walkers.roundEnd() -- Heals between rounds (PLAN 9g)
 end
 
 local NO_DINOS = table.freeze({})
@@ -1732,6 +1738,7 @@ function Towers.step(dt: number)
 	end
 	stepGrid(dt, live)
 	stepTar(dt, live)
+	Walkers.step(dt) -- walkers land their hits through their towers (PLAN 9g)
 	local parties = huntingParties()
 
 	for _, tower in towers do
@@ -1789,6 +1796,7 @@ function Towers.remove(tower: Tower)
 	for _, sortie in tower.sorties do
 		sortie.part:Destroy()
 	end
+	Walkers.clear(tower) -- a sold tower's walkers go with it (#315)
 	tower.model:Destroy()
 	refreshAuras()
 end
@@ -1844,6 +1852,7 @@ function Towers.clearAll()
 	towerLevel = 1
 	table.clear(gridTimers)
 	table.clear(stungAt)
+	Walkers.clearAll()
 end
 
 -- A battle side is out (PLAN T77, DECISIONS #213): its towers come off the map.
