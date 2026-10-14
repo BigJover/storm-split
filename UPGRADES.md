@@ -270,6 +270,17 @@ it — so slow, damage, sinking and Eruption never stack (#189). Rules: `Shared/
 - Warm Tar / Simmer: the tar deals damage per second to every dino in it (8, 22). Boiling Pit: burning tar (80/s); its ticks break 1 (#127). Tar Fire: dinos walk out burning — one tick of 2s of the tar's damage, kept as they shrink. Eruption: every 10s (#201, T68b; its tar burns 80/s, like Tar Fire) a geyser drops every dino in the pool 2 sizes outright, bosses included, Break resist ignored; each size pays (#150).
 - Pick and Shovel / Fossil Hunter: +2 / +6 cash per sunk dino (#203, T68b). Lucky Finds: each sink also leaves a chest worth 10 where the dino went under (collected like an airdrop). Tar Tracks: after a dino walks out, the next 12 studs of track slow 15% for 3s. Tar Totem: towers in range +15% damage against slowed dinos (tar or tranq).
 
+A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; names are working names until the Dino pass). La Brea: the smallest dinos sink at once (0.05 s). Pitch Coat: a dino in the pool loses its armour while in it and for Strip (s) after (9c's strip), so the tar's burn hurts it. Bog Boots is the Raider option: in battles it also slows an enemy hunter who shoots a tower near the pit (slow 30 % for 2 s, once per 3 s per hunter, never through Camo Cover; "near" = within the pool's length of the pit, as Tar Totem's aura); in co-op it is a longer pool that slows 45 %. Bog Boots' Range x 1.5 multiplies with Tar Lake (×3 → 81 studs), fine by the pool-overlap rule (#189), playtest watch:
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Deep Tar** | 4 | Clinging Tar — Dinos stay slowed for a while after they leave | Thick Mire — Thicker tar: dinos wade much slower | Bog Boots — A longer pool that also slows raiders |
+| **Deep Tar** | 5 | Tar Lake — The pool covers three times as much track | La Brea — Smallest dinos sink at once; the rest crawl | Black Glue — Dinos stay slowed 5 s after they climb out |
+| **Bubbling** | 4 | Tar Fire — Dinos walk out of the tar still burning | Boiling Splash — A bigger pool of boiling tar | Pitch Coat — Sticky tar strips armour; dinos leave burning |
+| **Bubbling** | 5 | Eruption — A geyser shrinks every dino in the pool 2 sizes | Ever-Burn — Dinos keep burning 2.75 s after they leave | Tar Inferno — The tar boils 50% hotter |
+| **Dig Site** | 4 | Tar Tracks — Dinos leaving the tar leave a slowing trail | Bone Yard — Every sunk dino pays more cash | Fossil Finder — Bigger chests where dinos go under |
+| **Dig Site** | 5 | Tar Totem — Towers in range hit slowed dinos harder | Preserved Specimens — Every sunk dino pays 36 cash | Amber Seep — Chests where dinos sink are worth 60 |
+
 ## Harpoon Ballista (BALLISTA) — the heaviest single hit, pierce-through ✅ round 4 (PLAN T66; sold from T68) · unlock 300 Amber
 
 A heavy crossbow on a turntable: slow (one bolt every 2.5s), very heavy bolts (12, the
@@ -285,6 +296,17 @@ furthest along first. Rules: `Shared/Ballista`.
 - Crusher Bolt: breaks 2. Great Harpoon: pierces armour, breaks 3. Skewer: the bolt flies on through every dino in its line out to the tower's range (within Bolt width 3 studs), each breaks 3.
 - Pin Down: the hit dino is held 1s (not bosses). Reel In: drags the hit dino 6 studs back (not bosses). Tow Line: every 15s pulls the boss furthest along in range 10 studs back (the only knockback that moves a boss; waits while no boss is in range).
 - Twin Bolts: 2 bolts. Spread Volley: 3 bolts. Steam Crank: fires twice as fast. Chain Harpoons: 4 bolts in 2 linked pairs; each pair lands on the k-th dino from the front and from the back of the crowd in range, and its chain hits every other dino within Bolt width of the line between them (breaks 1).
+
+A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; names are working names until the Dino pass). Heartseeker (Targets biggest): bolts aim at the dino with the most HP in range instead of the furthest along. Bolts mark what they hit (Serrated Head), slow it (Anchor Line, bosses too) and leave a burning patch under the target (Fire Bolts, Firestorm Volley). Snag Line is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (12 damage x0.5, slow 30 % for 3 s, once per 3 s per hunter, never through Camo Cover); in co-op it holds dinos 1.75 s:
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Spearhead** | 4 | Great Harpoon — Pierces armour and shrinks a dino 3 sizes | Serrated Head — Hit dinos take +20% from every tower | Whale Lance — Bolts hit bosses 40% harder |
+| **Spearhead** | 5 | Skewer — The bolt flies on through every dino in its line | Leviathan Bolt — Bolts break 4 sizes and hit bosses 3x | Heartseeker — Always aims for the biggest dino in range |
+| **Reel** | 4 | Reel In — Drags the hit dino back along the track (not bosses) | Tether — Pinned dinos stay held 2 s | Snag Line — Harpoons raiders too; holds dinos 1.75 s |
+| **Reel** | 5 | Tow Line — Every 15 seconds, pulls a boss back along the track | Anchor Line — Bolts slow bosses too: 30% for 2 s | Winch Haul — Drags hit dinos 7.5 studs back |
+| **Volley** | 4 | Steam Crank — Fires twice as fast | Wide Volley — Five bolts per volley | Fire Bolts — Bolts set dinos on fire |
+| **Volley** | 5 | Chain Harpoons — Chained bolt pairs hit every dino between them | Siege Battery — Six bolts per volley | Firestorm Volley — Faster volleys of burning bolts |
 
 ---
 

@@ -1292,15 +1292,22 @@ end
 -- on it, Chain Harpoons' chain between each linked pair. Returns true if it fired.
 local function fireBallista(tower: Tower, live): boolean
 	local stats = tower.stats
-	local list, distances, points = {}, {}, {}
+	local list, distances, points, hps = {}, {}, {}, {}
 	for _, enemy in live do
 		if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= stats.range then
 			table.insert(list, enemy)
 			table.insert(distances, enemy.distance)
 			table.insert(points, enemy.part.Position)
+			table.insert(hps, enemy.hp)
 		end
 	end
-	local picks = Ballista.volley(distances, stats.shots, stats.chainHarpoons)
+	-- Heartseeker (PLAN 9e): Targets biggest ranks by HP left, not distance.
+	local picks = Ballista.volley(Ballista.aimKeys(distances, hps, stats.targetsBiggest), stats.shots, stats.chainHarpoons)
+	-- PLAN 9e wirings: bolts mark (Serrated Head), slow (Anchor Line: bosses too) and burn
+	-- (Fire Bolts, Firestorm Volley: a burning patch under the target, like a shooter's).
+	local slow: Enemies.Chill? = if stats.slowPercent > 0
+		then { slowPercent = stats.slowPercent, seconds = stats.slowLinger, affectsBosses = stats.slowsBosses, brittlePercent = 0, stripsArmor = false }
+		else nil
 	if #picks == 0 then
 		return false
 	end
@@ -1321,8 +1328,15 @@ local function fireBallista(tower: Tower, live): boolean
 		else
 			Effects.tracer(tower.muzzle, points[pick], HARPOON_COLOR)
 		end
+		addBurn(tower, target)
 		for _, enemy in struck do
+			if stats.markPercent > 0 and ownSide(tower, enemy) then
+				Enemies.mark(enemy, stats.markPercent, Config.Tuning.MarkDuration or 0)
+			end
 			hit(tower, enemy, damage, stats.sizeBreaks)
+			if slow and enemy.alive and ownSide(tower, enemy) then
+				Enemies.chill(enemy, slow)
+			end
 		end
 		rodeoArc(tower, target, struck, damage, live)
 	end
@@ -1382,8 +1396,10 @@ local function stepChill(tower: Tower, dt: number, live)
 	if tower.knockedOut or (stats.slowPercent <= 0 and stats.freezeEvery <= 0) then
 		return
 	end
-	if tower.def.chains or tower.def.harpoons then
-		return -- their Slow % rides their hits (Supercell, Anchor Line; PLAN 9e), not a ring
+	if tower.def.chains or tower.def.harpoons or tower.def.onTrack then
+		-- Coil / Ballista Slow % rides their hits (Supercell, Anchor Line; PLAN 9e); a Tar Pit's
+		-- is its pool's (stepTar: ground dinos in the pool only), never a ring
+		return
 	end
 	local range = stats.range
 	local chill: Enemies.Chill = {
@@ -1511,6 +1527,9 @@ local function stepTar(dt: number, live)
 		lastPool[enemy] = pit
 		local stats = pit.stats
 		Enemies.tar(enemy, stats.slowPercent, TAR_REFRESH)
+		if stats.stripsArmor then
+			Enemies.strip(enemy, tuning.StripS or 0) -- Pitch Coat (PLAN 9e): bare while in it, then Strip (s)
+		end
 		if stats.burnDps > 0 then
 			local damage = stats.burnDps * dt * (1 + pit.buff.damagePercent / 100) * levelScale
 			credit(pit.owner, Enemies.damage(enemy, damage, piercing(pit)))

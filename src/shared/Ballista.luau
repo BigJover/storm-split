@@ -17,6 +17,9 @@
 	              pull stays ready)
 	  movesBoss    whether a knockback may move this dino: never a boss, except Tow Line's
 	              pull (the explicit exception, PLAN T66)
+	  aimKeys      what a volley ranks by: distance along the track, or with Targets
+	              biggest (Heartseeker, PLAN 9e) each dino's HP left, so bolt 1 flies at
+	              the biggest dino in range (Judgement Bolt's pick, made generic)
 ]]
 
 local Config = require(script.Parent.Config)
@@ -57,6 +60,11 @@ function Ballista.volley(distances: { number }, bolts: number, chained: boolean?
 		end
 	end
 	return out
+end
+
+-- Targets biggest (PLAN 9e, #297): rank by HP left instead of distance (Ballista.volley).
+function Ballista.aimKeys(distances: { number }, hps: { number }, biggest: boolean): { number }
+	return if biggest then hps else distances
 end
 
 -- Bolt index pairs linked by a chain: {1, 2}, {3, 4}, ...

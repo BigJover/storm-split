@@ -5,7 +5,9 @@
 	flags add, Freeze every / Sink seconds / Grounding every / Field strike every are set), on every one of the 9 builds per path; and
 	the new mechanics: Field strike (Storm Front, Shared/StormCoil), Chain effects (Supercell,
 	Superconductor; arc stun capped), the Falcon dive's extra hits (Raking Strike, Strafing
-	Run, Shared/Falcon), and the Raider sting on Rod Strike / Guard Falcons.
+	Run, Shared/Falcon), Targets biggest (Heartseeker, Shared/Ballista), the T120 wirings (La
+	Brea's sink, Pitch Coat's strip, bolts' mark / slow / burn) and the Raider sting on Rod
+	Strike, Guard Falcons, Bog Boots and Snag Line.
 ]]
 
 local Config = require(src.shared.Config)
@@ -13,6 +15,9 @@ local TowerStats = require(src.shared.TowerStats)
 local TowerPerks = require(src.shared.TowerPerks)
 local Upgrades = require(src.shared.Upgrades)
 local StormCoil = require(src.shared.StormCoil)
+local Ballista = require(src.shared.Ballista)
+local TarPit = require(src.shared.TarPit)
+local Combat = require(src.shared.Combat)
 local Falcon = require(src.shared.Falcon)
 
 -- PLAN 9e, cell by cell: tower key, path, tier, letter, name, cells (own step), Raider?
@@ -46,8 +51,32 @@ local OPTIONS = {
 	{ "FALCON", "Falconer", 4, "C", "Guard Falcons", { damageMult = 1.3, bossMarkPercent = 40, raiderSlowPercent = 20, raiderSlowSeconds = 1, raiderDamage = 6 }, true },
 	{ "FALCON", "Falconer", 5, "B", "Royal Hood", { damageMult = 1.3, bossMarkPercent = 60 } },
 	{ "FALCON", "Falconer", 5, "C", "Bell Chorus", { damageMult = 1.3, markPercent = 40 } },
+	{ "TARPIT", "Deep Tar", 4, "B", "Thick Mire", { slowPercent = 55 } },
+	{ "TARPIT", "Deep Tar", 4, "C", "Bog Boots", { rangeMult = 1.5, slowPercent = 45, raiderSlowPercent = 30, raiderSlowSeconds = 2 }, true },
+	{ "TARPIT", "Deep Tar", 5, "B", "La Brea", { sinkSeconds = 0.05, slowPercent = 62, rangeMult = 1.15, slowLinger = 3 } },
+	{ "TARPIT", "Deep Tar", 5, "C", "Black Glue", { slowPercent = 50, slowLinger = 5 } },
+	{ "TARPIT", "Bubbling", 4, "B", "Boiling Splash", { rangeMult = 1.3 } },
+	{ "TARPIT", "Bubbling", 4, "C", "Pitch Coat", { stripsArmor = true, burnDps = 85, burnSeconds = 1 } },
+	{ "TARPIT", "Bubbling", 5, "B", "Ever-Burn", { burnSeconds = 2.75 } },
+	{ "TARPIT", "Bubbling", 5, "C", "Tar Inferno", { burnDps = 120 } },
+	{ "TARPIT", "Dig Site", 4, "B", "Bone Yard", { sinkCash = 28, sinkChestCash = 36 } },
+	{ "TARPIT", "Dig Site", 4, "C", "Fossil Finder", { sinkCash = 15, sinkChestCash = 55 } },
+	{ "TARPIT", "Dig Site", 5, "B", "Preserved Specimens", { sinkCash = 36, sinkChestCash = 40 } },
+	{ "TARPIT", "Dig Site", 5, "C", "Amber Seep", { sinkCash = 25, sinkChestCash = 60 } },
+	{ "BALLISTA", "Spearhead", 4, "B", "Serrated Head", { damageMult = 1.7, piercesArmor = true, markPercent = 20 } },
+	{ "BALLISTA", "Spearhead", 4, "C", "Whale Lance", { damageMult = 1.6, piercesArmor = true, bossMult = 1.4 } },
+	{ "BALLISTA", "Spearhead", 5, "B", "Leviathan Bolt", { damageMult = 2.5, rateMult = 1.4, sizeBreaks = 4, bossMult = 3 } },
+	{ "BALLISTA", "Spearhead", 5, "C", "Heartseeker", { damageMult = 3, rateMult = 2.1, sizeBreaks = 3, targetsBiggest = true } },
+	{ "BALLISTA", "Reel", 4, "B", "Tether", { damageMult = 1.3, stunSeconds = 2 } },
+	{ "BALLISTA", "Reel", 4, "C", "Snag Line", { damageMult = 1.3, stunSeconds = 1.75, raiderSlowPercent = 30, raiderSlowSeconds = 3, raiderDamage = 12 }, true },
+	{ "BALLISTA", "Reel", 5, "B", "Anchor Line", { damageMult = 1.3, slowPercent = 30, slowLinger = 2, slowsBosses = true } },
+	{ "BALLISTA", "Reel", 5, "C", "Winch Haul", { damageMult = 1.3, knockback = 7.5 } },
+	{ "BALLISTA", "Volley", 4, "B", "Wide Volley", { damageMult = 1.15, shots = 5 } },
+	{ "BALLISTA", "Volley", 4, "C", "Fire Bolts", { rateMult = 1.6, burnDps = 6, burnSeconds = 3 } },
+	{ "BALLISTA", "Volley", 5, "B", "Siege Battery", { damageMult = 2.4, shots = 6 } },
+	{ "BALLISTA", "Volley", 5, "C", "Firestorm Volley", { damageMult = 2, rateMult = 1.8, burnDps = 12, burnSeconds = 3 } },
 }
-local TOWERS = { "COIL", "FALCON" }
+local TOWERS = { "COIL", "FALCON", "TARPIT", "BALLISTA" }
 
 local function pathOf(key: string, id: string): (any, number)
 	for i, path in Config.Towers[key].paths do
@@ -214,8 +243,8 @@ local function source(side: number, s): TowerPerks.Source
 	return { side = side, standing = true, covers = true, stats = s }
 end
 
-test("Rod Strike / Guard Falcons: sting enemy hunters at x0.5 in battles; their dino part carries co-op", function()
-	for _, r in { { "COIL", "Lightning Rod", 8, 20, 1 }, { "FALCON", "Falconer", 6, 20, 1 } } do
+test("Rod Strike / Guard Falcons / Bog Boots / Snag Line: sting enemy hunters at x0.5 in battles; their dino part carries co-op", function()
+	for _, r in { { "COIL", "Lightning Rod", 8, 20, 1 }, { "FALCON", "Falconer", 6, 20, 1 }, { "TARPIT", "Deep Tar", 0, 30, 2 }, { "BALLISTA", "Reel", 12, 30, 3 } } do
 		local key, id, damage, slow, seconds = r[1], r[2], r[3], r[4], r[5]
 		local s = stats(key, id, 4, "C")
 		local sting = TowerPerks.sting({ source(1, s) }, 1, 2, false, nil, 100)
@@ -231,6 +260,10 @@ test("Rod Strike / Guard Falcons: sting enemy hunters at x0.5 in battles; their 
 	for _, picks in { "C", "CA", "CB", "CC" } do
 		ok(stats("COIL", "Lightning Rod", if #picks == 1 then 4 else 5, picks).auraRatePercent >= 15, `Rod Strike {picks}: towers in range fire faster`)
 		ok(stats("FALCON", "Falconer", if #picks == 1 then 4 else 5, picks).bossMarkPercent >= 40, `Guard Falcons {picks}: bosses marked`)
+		local tier = if #picks == 1 then 4 else 5
+		local bog = stats("TARPIT", "Deep Tar", tier, picks)
+		ok(bog.slowPercent >= 45 and bog.range >= stats("TARPIT", "Deep Tar", 3, "").range * 1.5 - 1e-6, `Bog Boots {picks}: a longer, slower pool`)
+		ok(stats("BALLISTA", "Reel", tier, picks).stunSeconds >= 1.75, `Snag Line {picks}: holds dinos 1.75 s`)
 	end
 	local stinging = 0
 	for _, key in TOWERS do
@@ -243,5 +276,48 @@ test("Rod Strike / Guard Falcons: sting enemy hunters at x0.5 in battles; their 
 			end
 		end
 	end
-	eq(stinging, 2, "Rod Strike and Guard Falcons are these towers' only T4 stings")
+	eq(stinging, 4, "Rod Strike, Guard Falcons, Bog Boots and Snag Line are these towers' only T4 stings")
+end)
+
+test("T120 wirings reach the stats: Heartseeker, La Brea, Pitch Coat, Anchor Line, Winch Haul, Serrated Head, Fire Bolts", function()
+	for _, before in { "A", "B", "C" } do
+		ok(stats("BALLISTA", "Spearhead", 5, before .. "C").targetsBiggest, `Heartseeker after {before}: targets biggest`)
+		ok(not stats("BALLISTA", "Spearhead", 5, before .. "B").targetsBiggest, `Leviathan Bolt after {before}: furthest along`)
+		eq(stats("TARPIT", "Deep Tar", 5, before .. "B").sinkSeconds, 0.05, `La Brea after {before}: sinks at once`)
+		local anchor = stats("BALLISTA", "Reel", 5, before .. "B")
+		ok(anchor.slowPercent == 30 and anchor.slowLinger == 2 and anchor.slowsBosses, `Anchor Line after {before}: 30% for 2 s, bosses too`)
+		eq(stats("BALLISTA", "Reel", 5, before .. "C").knockback, 7.5, `Winch Haul after {before}: 7.5 studs`)
+	end
+	eq(stats("TARPIT", "Deep Tar", 3, "").sinkSeconds, 0.5, "Fast Sink 0.5 s")
+	ok(stats("TARPIT", "Bubbling", 4, "C").stripsArmor, "Pitch Coat strips armour")
+	eq(stats("BALLISTA", "Spearhead", 4, "B").markPercent, 20, "Serrated Head marks 20%")
+	local fire = stats("BALLISTA", "Volley", 4, "C")
+	ok(fire.burnDps == 6 and fire.burnSeconds == 3, "Fire Bolts burn 6/s for 3 s")
+end)
+
+test("Targets biggest: Heartseeker's bolt flies at the dino with the most HP in range", function()
+	local distances = { 50, 90, 70 } -- the second is furthest along
+	local hps = { 400, 20, 900 } -- the third is biggest
+	eq(Ballista.volley(Ballista.aimKeys(distances, hps, false), 1)[1], 2, "plain: the furthest along")
+	eq(Ballista.volley(Ballista.aimKeys(distances, hps, true), 1)[1], 3, "Targets biggest: the most HP")
+	eq(table.concat(Ballista.volley(Ballista.aimKeys(distances, hps, true), 3), ","), "3,1,2", "a volley: biggest first")
+	local towers = require("@lune/fs").readFile("src/server/Towers.luau")
+	ok(towers:find("Ballista.volley(Ballista.aimKeys(distances, hps, stats.targetsBiggest)", 1, true) ~= nil, "fireBallista aims by aimKeys")
+end)
+
+test("La Brea sinks a last-size dino at once; Pitch Coat strips armour in the pool; bolts mark, slow and burn", function()
+	local frame = 1 / 60
+	ok(TarPit.sinks(1, false, false, frame * 3, 0.05), "La Brea: a last-size dino sinks within a few frames")
+	ok(not TarPit.sinks(1, false, false, frame * 3, 0.5), "Fast Sink alone: not yet")
+	ok(not TarPit.sinks(1, true, false, 5, 0.05), "never a boss")
+	-- A stripped armoured dino can be hurt by anyone for Strip (s) (9c's generic strip).
+	ok(Combat.canHurt(true, false, false, 10 + (Config.Tuning.StripS or 0), 10.5), "stripped: hurt without pierce")
+	local towers = require("@lune/fs").readFile("src/server/Towers.luau")
+	ok(towers:find("if stats.stripsArmor then\n%s*Enemies.strip%(enemy, tuning.StripS or 0%)") ~= nil, "stepTar strips a dino in a Pitch Coat pool")
+	ok(towers:find("affectsBosses = stats.slowsBosses", towers:find("local function fireBallista", 1, true), true) ~= nil, "bolts slow bosses only with Slows bosses")
+	local ballista = towers:sub(towers:find("local function fireBallista", 1, true), towers:find("local function stepTow", 1, true))
+	ok(ballista:find("Enemies.mark(enemy, stats.markPercent", 1, true) ~= nil, "bolts mark what they hit")
+	ok(ballista:find("Enemies.chill(enemy, slow)", 1, true) ~= nil, "bolts slow what they hit")
+	ok(ballista:find("addBurn(tower, target)", 1, true) ~= nil, "bolts leave a burning patch")
+	ok(towers:find("tower.def.chains or tower.def.harpoons or tower.def.onTrack", 1, true) ~= nil, "a pit, coil or ballista never chills in a ring")
 end)

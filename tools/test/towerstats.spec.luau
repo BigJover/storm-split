@@ -253,6 +253,6 @@ test("T111: a tier with no row for its picks is an error, never a silent option 
 	local def = withB()
 	ok(not pcall(TowerStats.compute, def, { 4, 0, 0 }, { "", "", "" }), "tier 4 with no pick")
 	ok(not pcall(TowerStats.compute, def, { 4, 0, 0 }, { "C", "", "" }), "tier 4 with a pick that has no row")
-	ok(not pcall(TowerStats.compute, Config.Towers.TARPIT, { 5, 0, 0 }, { "AB", "", "" }), "a real path with no B yet")
+	ok(not pcall(TowerStats.compute, def, { 5, 0, 0 }, { "AC", "", "" }), "tier 5 with a pick that has no row (every real tower has B/C since 9e)")
 	ok(pcall(TowerStats.compute, Config.Towers.SCOUT, { 5, 0, 0 }, { "AB", "", "" }), "a starter path has B (9c)")
 end)

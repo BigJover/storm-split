@@ -1043,6 +1043,8 @@ def hero_lines(data, rows, mixes):
 #   Storm Coil Arc / Charge                eDPS + aura + field_strike_credit (Storm Front)
 #   Storm Coil Lightning Rod               eDPS + aura + GROUNDING_CREDIT / Grounding every s
 #   Falcon Roost Falconer                  eDPS + aura, Boss mark % x boss as aura damage
+#   Tar Pit Deep Tar                       slow-seconds x (1 + sinks / ground dinos)
+#   Harpoon Ballista Reel                  hold-seconds per second (reel_hold)
 #   heroes                                sustained hero_dps (pays for reloads)
 # Raider options (`PvP effect`, #284): the model only counts dinos, so an option's worth IS
 # its dino part; it must reach RAIDER_FLOOR x the median of the slot's other options.
@@ -1059,6 +1061,8 @@ SLOW_DWELL = 2.0  # s a dino is assumed to stay in a Tranq Station's range (ling
 LAST_STAND = 10  # Hospital Tonic (PLAN 9d, #292): Last stand's credit in HP-% points
 FIELD_STRIKE_DINOS = 20  # Storm Coil Storm Front (PLAN 9e, #296): dinos on the field a strike reaches
 GROUNDING_CREDIT = 20  # Storm Coil Lightning Rod (#296): + this / Grounding every (s)
+REEL_PULL_SPEED = 8  # Ballista Reel (#296): studs/s a dragged dino walks back (knockback as hold-seconds)
+TOW_LINE_STUDS, TOW_LINE_EVERY = 10, 15  # Ballista Reel (#296): Tow Line's pull and interval in the metric
 BOUNTY_TAKEDOWNS = 30  # Supply Yield (PLAN 9d, #292): in-range take-downs a round, r31-40 (a quarter of the round's dinos)
 
 
@@ -1155,8 +1159,10 @@ def tower_worth(data, key, pi, s, late):
         if pid == "Dig Site":
             return sinks / rounds * (g("sinkCash") + g("sinkChestCash")) + aura_credit(data, s, late)
         ground = [(n, sp) for n, kind, _, _, sp in late["dinos"] if kind != "flying"]
-        return sum(n * (tar_seconds(s, tuning, sp) - tar_seconds({**s, "slowPercent": 0}, tuning, sp)
-                        + g("slowLinger") * g("slowPercent") / 100) for n, sp in ground) / max(1, sum(n for n, _ in ground))
+        count = max(1, sum(n for n, _ in ground))
+        slowed = sum(n * (tar_seconds(s, tuning, sp) - tar_seconds({**s, "slowPercent": 0}, tuning, sp)
+                          + g("slowLinger") * g("slowPercent") / 100) for n, sp in ground) / count
+        return slowed * (1 + sinks / count)  # PLAN 9e (#296): x (1 + sinks / ground dinos)
     if key == "CHILLER" and pid == "Knockout":
         duty = g("freezeSeconds") / g("freezeEvery") if g("freezeEvery") else 0
         return duty * g("rangeMult", 1) * (1 + (late["boss"] if g("freezeHoldsBosses") else 0))
@@ -1167,11 +1173,36 @@ def tower_worth(data, key, pi, s, late):
     # #292 / #296: Boss mark % x boss share as aura damage (Tranq Weak Spot, Falcon Falconer)
     boss_mark = (key, pid) in (("CHILLER", "Weak Spot"), ("FALCON", "Falconer"))
     worth = edps(s, late, tuning) + aura_credit(data, s, late, brittle=is_support(key, path), boss_mark=boss_mark)
+    if key == "BALLISTA" and pid == "Reel":  # PLAN 9e (#296): control, judged on hold
+        return reel_hold(s, late)
     if key == "COIL":  # PLAN 9e (#296)
         if pid == "Lightning Rod":
             return worth + (GROUNDING_CREDIT / g("groundingEvery") if g("groundingEvery") else 0)
         return worth + field_strike_credit(s, late)
     return worth
+
+
+def reel_hold(s, mix):
+    """Ballista Reel (PLAN 9e, #296): hold-seconds per second. Non-bosses: rate x max(1, Line
+    hits) x (the stun, capped by the shot gap, + Knockback / REEL_PULL_SPEED); bosses (if it
+    slows bosses): rate x Slow % x the linger, capped by the shot gap; Tow Line: TOW_LINE_STUDS
+    / REEL_PULL_SPEED every Tow Line every s, on bosses.
+
+    >>> round(reel_hold({"rate": 0.5, "lineHits": 1, "stunSeconds": 1, "knockback": 0, "slowPercent": 0,
+    ...                  "slowLinger": 0, "slowsBosses": False, "towLine": False}, {"boss": 0.2}), 3)
+    0.4
+    >>> round(reel_hold({"rate": 0.5, "lineHits": 1, "stunSeconds": 4, "knockback": 8, "slowPercent": 30,
+    ...                  "slowLinger": 2, "slowsBosses": True, "towLine": True}, {"boss": 0.2}), 3)
+    1.277
+    """
+    rate, boss = s["rate"], mix["boss"]
+    gap = 1 / rate if rate > 0 else 0
+    hold = rate * max(1, s["lineHits"]) * (min(gap, s["stunSeconds"]) + s["knockback"] / REEL_PULL_SPEED) * (1 - boss)
+    if s["slowsBosses"]:
+        hold += rate * s["slowPercent"] / 100 * min(gap, s["slowLinger"]) * boss
+    if s["towLine"]:
+        hold += TOW_LINE_STUDS / REEL_PULL_SPEED / TOW_LINE_EVERY * boss
+    return hold
 
 
 def field_strike_credit(s, mix):
