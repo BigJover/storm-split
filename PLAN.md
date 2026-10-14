@@ -14,6 +14,7 @@ DataStore writes from an agent). N15 rides any `Battle` commit (#272).
 **Status (2026-10-13, later): 9a + 9b done (c1a7c5a, 0f82bb7, 929b66a, cd6a413, cd749d2; 706 specs); Tester Run 8 running. 9c designed below (#290). Next: 🦖 names 9c → Builder T114 + T115.**
 **Status (2026-10-13, Director): 9d + 9e designed below (#292–#297; 96 options, metrics, 6 new mechanics). Next after 9c: 🦖 names 9d → T116–T118, then 9e → T119–T120.**
 **Status (2026-10-13, Director): 9f designed below (#298–#302; 48 hero options, per-path metrics, 1 new mechanic). Next after 9e: 🦖 names 9f → T121–T122.**
+**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.**
 
 ## Size of the job
 | | Slots (T4+T5) | Options to build | New options to design |
@@ -590,30 +591,835 @@ spreads within 9 studs".
 **🦖 naming point:** the 7 tower names (and look notes) once before 9g, then each batch's
 option names (all 126 working names in `TOWERS_LATER.md` are drafts).
 
-**9g — Amber Resin Cannon + Raptor Pen** (new "walker" module for raptors: track movement, HP,
-pounce/hold, return; Raider Hounds). **T123** Resin Cannon (entomb, fossils, Resin Shell incl.
-Raider Glue), **T124** Raptor Pen; each: pure rules → sheet (tiers 1–3 + 9 option rows per
-path) → Towers/look/unlock → value.py bars. Unlock 500/500 Amber, cash 800/850.
+### 9g–9j — the seven 4× towers: common groundwork (DESIGNED, Director 2026-10-14, #312–#320)
+Names = `DINO_REVIEW.md` Round 19 (final; the 🦖 pass for 9g–9j is done). Designs = the approved
+`TOWERS_LATER.md` effects; numbers below are **seeds the batch's release task tunes** (as T68).
+Every rule of 9c–9f holds (append only; assert each cell empty or the old value; Config diff
+accounted for; pure rules first; one task = one commit, pushed; co-op specs re-run).
+1. **Towers rows (append after Harpoon Ballista):** keys `RESIN`, `RAPTOR` (9g), `BLIMP`, `TOTEM`
+   (9h), `METEOR`, `VENT` (9i), `RANGER` (9j); the cells in each tower's "Towers row" line;
+   `Base DPS` `=D×E×F` like row 15. New `Towers` column after `Chains`: **`Near track (studs)`**
+   (Vent only; `Shared/Placement`: such a tower must have a track point within that distance).
+2. **Tower Upgrades rows:** per path 3 tier rows (Option blank, cumulative as today) + the A
+   rows (T4, T5; own step, #275) with the Coil-row formulas (`Upgrade cost`
+   `=ROUND('Towers'!$C$<row>*POWER('Tuning'!$B$12,D<n>),0)`, `Cumulative cost`
+   `='Towers'!$C$<row>+E<n>` at T1 then `=F<prev>+E<n>`; `Resulting DPS` / `Cost per DPS` as
+   the Coil rows) + the B/C rows (`=E<A row>`, `=F<A row>`). `Damage x`/`Rate x`/`Targets x`/
+   `Range x` = 1 unless listed; every other cell blank unless listed. Options of a slot share
+   the path focus. A T5 row's own step must work after any T4 (#276; checked per slot below).
+3. **New columns:** appended after the last `Tower Upgrades` header (today `Targets biggest`,
+   CU), each in the exporter's column registry with the kind given in its tower's "New
+   columns" line (`mult` / `add` / `max` / `flag` / `set`), audit allowed list, and a spec.
+   Base levers go in a new Tuning block per tower (append after the last Tuning row; assert
+   empty), plus one shared block **`4× TOWERS`** (9g): `Boss hard stop x` 0.5, `Small size` 2,
+   `Wall min bunch` 6, `Wall reach (studs)` 10, `Take-down mark radius` 6, `Round seconds
+   (model)` 50.
+4. **Shared rules (9g builds them generic; later batches reuse):**
+   - **Auto trigger** (`Shared/AutoFire`, pure; #283 made generic): every "once per round
+     played" effect fires itself the first moment a boss or `Wall min bunch` dinos are inside
+     its area, else when that round's last dino has spawned (on the densest bunch / its area
+     then); never on an empty track; per tower, per side; resets each round played. Users:
+     Resin Wall, Raptor Charge, Raptor Swarm, Bombing Run, Comet Tail, Extinction Event,
+     Supervolcano, Obsidian Wall, Master Trapper.
+   - **Hard stops** (entomb, walls, nets, freeze craters, Frozen Fire): a dino can't move,
+     bite or throw; it still takes damage. **Bosses: duration × `Boss hard stop x`** unless the
+     option says otherwise. Hard stops don't stack: the longer remaining wins.
+   - **"Small dinos"** = not a boss, at its last `Small size` sizes. **Whole track / your side**
+     = the own side's track only (BattleRules); nothing reaches another camp.
+   - **Take-down mark** (`Take-down mark %`): when this tower (or its walkers) takes a dino
+     down, dinos within `Take-down mark radius` are marked (Mark duration 3 s; marks don't
+     stack, stronger wins).
+   - **Hunter damage auras** (`Hunter damage %`): own side's hunters in range deal +x% **to
+     dinos only** — never to hunters or towers in PvP (#301's spirit, #319).
+5. **Unreleased until its batch's release task** (`ShopRules.Unreleased`, as T63): placeable
+   only through the Studio J unlock + K cash path once the release task lands; `value.py`
+   leaves them out of every median. **New set `ROUND9_BATCH`** (the seven keys): never part of
+   M; **M stays 142** (frozen, #200).
+6. **Release rule: per pair (#312).** Each batch ends with a release + balance task (like T68):
+   both towers sold, Amber unlock live, Tester buys them in that batch's run. 9k re-checks all
+   seven together. **Bars (per tower):** damage paths — best damage T5 c/e (r31–40) **≤ 1.25 ×
+   M (178)** and every damage T5 ≤ 2 × M (284); the Blimp (untouchable) — every damage T5 in
+   **1.25–2 × M**; no DOMINANT finding (marginal < 0.5 × the tier median); **"matters by round
+   20"**: the tower's best T2 c/e (r11–20, damage path, or its control/economy line for Resin)
+   ≤ 1.5 × the released T2 median; control/support/economy paths — out of the medians, judged
+   by their metric line and the option bars. **Guaranteed exit (as T68 step 7):** if a damage
+   bar fails, C = C × (target ÷ measured), rounded to 25, target 150 (damageable) / 230 (Blimp);
+   floors 600 / ceilings 1,200 cash; at a floor, base Damage +1 and repeat (≤ +3). Amber
+   prices never move (Jovan approved them).
+7. **Option bars (#280, #284):** each slot's options within 0.8–1.25× of the slot median on the
+   path metric (T4; T5 after each T4), all 9 builds under the bars above. Director's checks
+   below are arithmetic on the stated metric (the mechanics don't exist yet); the Builder
+   confirms in `value.py --options`. **Exit:** if a slot fails, step the option's **lever**
+   (marked ⚙ in its cells) 10% toward the median, at most 3 steps, then report it to the
+   Director (no other cell moves).
+8. **Exchange rates for mixed metrics (#313; stated assumptions in `value.py`, 9k revisits):**
+   1 hold-second per second (a non-boss dino stopped) = **120 eDPS** (≈ the r31–40 team damage
+   one held dino takes a second); a slow of S % for t s = S/100 × t hold-seconds; knockback k
+   studs = k ÷ 8 hold-seconds; +x % damage taken by a dino for t s = x/100 × 120 × t;
+   **1 eDPS = 14 cash a round** (M ÷ 10 rounds); hunter damage +x % = x/100 × 30 eDPS per
+   hunter in range (1 assumed). Stand-ins: dinos in a tower's range 4, on the side's track 10,
+   in a bunch 6; a fighting walker's uptime 0.7.
+9. **Studio test aids** (`Shared/StudioOnly`, refused live, spec each): **`firenow <tower>`**
+   — the nearest tower of that key fires its once-a-round / timed effect now (ignores
+   AutoFire and timers); **`charge <n>`** — sets the nearest Bone Totem's charge; **`fossils
+   <n>`** — sets the nearest Resin Cannon's match fossil count; **`walkers`** — prints every
+   walker (tower, state, HP, target) to Output. `standinpick` (#310) works on every new key.
+10. **Tester (every 9g–9j batch, after its release task):** buy (K), unlock (J), place, upgrade
+    each path to a T4 and a T5 pick once (two B and two C at least per tower), Trampled + repair
+    (not the Blimp), a co-op round and a Camp Clash round (own dinos only, nothing crosses
+    camps); every `firenow` effect seen once; Raider options: the Tester raids a `standinpick`
+    stand-in and is stung at ×0.5, not through Camo Cover; the same option in co-op still does
+    its dino part. Card text matches what happens.
 
-**9h — Spotter Blimp + Bone Totem.** **T125** Blimp (untouchable, 1.25–2 × M; circling
-coverage; Paratroopers reuse the walker with a ranger look), **T126** Bone Totem (charge from
-in-range Bones; never adds to Bone Rush score or Ranked; no Amber). 400 / 450 Amber.
+**9g — Amber Resin Cannon + Raptor Pen** (T123 Resin, T124 Walker + Raptor, T124b release).
 
-**9i — Meteor Beacon + Volcano Vent.** **T127** Meteor (densest-bunch targeting, craters;
-Extinction Event automatic #283 with `Extinction min bunch` Tuning row), **T128** Vent (lava
-flow on a stretch, sideways shove, crust). 600 / 600 Amber, cash 1,000 each.
+#### Amber Resin Cannon (`RESIN`) — a control tower (Tar Pit-like judging, #314)
+**Towers row:** Cost 800 · Damage 2 · Fire rate 1 · Targets 1 · Range 18 · Hits air No ·
+Income 0 · Splash 0 · Slow % 0 · Unlock 500 · Key `RESIN` · Max HP 150 · Heal/Resist 0 ·
+Untouchable/On track/Chains blank · note "Resin globs: slows, entombs (hard stop), fossils.
+TOWERS_LATER.md." `value.py`: `RESIN` in `SUPPORT_TOWERS` (out of the medians, like `TARPIT`).
+**Tuning block `AMBER RESIN CANNON`:** Resin hits to entomb 6 · Entomb base (s) 0.8 · Resin
+hit slow % 20 · Resin hit slow (s) 1 · Boss entomb every (s) 10 · Spread reach (studs) 6 ·
+Sticky bed reach (studs) 6 · Fossil Fuel cap % 30.
+**Mechanics (pure `Shared/Resin`):**
+1. **Entomb.** Each hit slows the dino (Resin hit slow % for Resin hit slow s) and adds 1
+   resin. It is entombed when resin ≥ max(1, ceil(Resin hits to entomb × `Entomb hits x` ×
+   its HP-left share)) — "the more HP is gone, the faster it sets" — for `Entomb (s)` (blank =
+   Entomb base), a hard stop; resin resets. Bosses: at most once per Boss entomb every (s) per
+   boss, × Boss hard stop x (`Boss entomb (s)` overrides: that length, full). Ground only.
+   `Entomb amp %`: an entombed dino takes +x % from everything. `Entomb spread` n: the
+   entomb also takes the n nearest dinos within Spread reach (same length). `Entomb slow %`:
+   dinos within Sticky bed reach of an entombed dino are slowed x %. `Entomb all every (s)`:
+   on that timer every dino in range is entombed (`Entomb (s)`; bosses × Boss hard stop x).
+   `Send back (studs)`: an entombed non-boss is moved that far back up the track (the
+   knockback rule).
+2. **Fossils.** A dino entombed at or below `Fossil below %` of its HP (not bosses) is a
+   **fossil**: taken down at once, every remaining size pays its normal cash and counts as a
+   pop for the cannon's owner (Bones as usual), plus `Sink cash` (per fossil; reuses the Tar
+   Pit column, scaled by the difficulty cash multiplier #309) and a `Sink chest cash` chest
+   (Tar Pit's chest drop). The cannon counts its fossils this match. `Fossil rate %`: each
+   fossil gives towers in range +x % attack speed for the rest of the round (cap Fossil Fuel
+   cap %). `Bounty fossils x`: a fossil counts that many take-downs for the owner's Bounties.
+   `Heart every (fossils)` n: every n-th fossil this match entombs every dino on the side for
+   1 s (bosses × Boss hard stop x).
+3. **Seal (towers).** `Seal (s)`: when a tower in range would be Trampled it is instead left at
+   1 HP and sealed (no damage) for that long — once a round per cannon, or once per `Seal every
+   (s)` per tower if set. `Seal heal %`: the tower heals that share of its max HP when the seal
+   breaks. Plus existing columns: `Aura HP %`, `Resist %`, `Thorns damage`, `Biter slow %/(s)`,
+   Raider sting (9d), `Grounding every (s)` (Storm Coil's rule: catches one throw at a tower in
+   range per interval) with `Reflect damage` (the caught throw hits its thrower for that,
+   × tower level), and **Track wall** (`Wall (s)`; AutoFire; a wall at the furthest-along track
+   point in range: every dino reaching it stops until it breaks after Wall (s); bosses pass
+   after Wall (s) × Boss hard stop x).
+**New columns (kind):** Entomb (s) max · Entomb hits x mult · Entomb amp % max · Entomb spread
+max · Entomb slow % max · Entomb all every (s) min-positive (a shorter timer wins; blank = off)
+· Boss entomb (s) max · Send back (studs) max · Fossil below % max · Fossil rate % max ·
+Bounty fossils x max · Heart every (fossils) min-positive · Seal (s) max · Seal every (s)
+min-positive · Seal heal % max · Reflect damage max · Wall (s) max. (`min-positive` is a new
+registry kind: the smaller non-blank value wins.)
 
-**9j — Ranger Station** (heaviest; rangers at chosen posts, 3 max / 5 at Ranger Corps; walker
-reuse). **T129** rules + sheet + tower, **T130** posts UI + value.py. 500 Amber / 900 cash.
+| Path | Tier | Opt | Name | Blurb (card) | Cells (T1–3 cumulative; T4/T5 own step) |
+|---|---|---|---|---|---|
+| Entomb | 1 | | Thick Resin | — | Damage x 1.4, Rate x 1.2, Entomb hits x 0.85 |
+| Entomb | 2 | | Quick Set | — | Damage x 2, Rate x 1.45, Entomb hits x 0.7 |
+| Entomb | 3 | | Amber Tomb | — | Damage x 3, Rate x 1.8, Entomb hits x 0.5, Entomb (s) 2 |
+| Entomb | 4 | A | Hardened Amber | Stuck dinos take +30% from everything | Damage x 1.6, Entomb amp % 30 ⚙ |
+| Entomb | 4 | B | Spreading Amber | The amber jumps to the next dino | Damage x 1.5, Entomb spread 1 (⚙ Rate x) |
+| Entomb | 4 | C | Sticky Bed | Dinos walking past a stuck one slow 30% | Damage x 1.6, Entomb slow % 30 ⚙ |
+| Entomb | 5 | A | Amber Age | Every 12 s, everything in range is stuck | Damage x 1.8, Entomb all every (s) 12 ⚙ |
+| Entomb | 5 | B | Living Amber | Traps a boss 3 s; others stay stuck longer | Damage x 1.8, Rate x 1.15, Entomb (s) 2.5 ⚙, Boss entomb (s) 3 |
+| Entomb | 5 | C | Time Capsule | Stuck dinos are sent 12 studs back | Damage x 1.8, Send back (studs) 12 ⚙ |
+| Fossilize | 1 | | Collector's Eye | — | Damage x 1.3, Range x 1.15, Fossil below % 10, Sink cash 4 |
+| Fossilize | 2 | | Rare Find | — | Damage x 1.8, Rate x 1.3, Range x 1.15, Fossil below % 12, Sink cash 10 |
+| Fossilize | 3 | | Fossil Record | — | Damage x 2.6, Rate x 1.5, Range x 1.15, Entomb hits x 0.7, Fossil below % 20, Sink cash 16 |
+| Fossilize | 4 | A | Museum Piece | Fossils pay double cash | Sink cash 32 ⚙ |
+| Fossilize | 4 | B | Dig Crew | A fossil drops a cash chest | Sink chest cash 25 ⚙ |
+| Fossilize | 4 | C | Bone Dust | Fossils mark nearby dinos +15% | Take-down mark % 15 (⚙ Rate x) |
+| Fossilize | 5 | A | Fossil Fuel | Each fossil speeds up nearby towers | Fossil below % 25, Fossil rate % 5 ⚙ |
+| Fossilize | 5 | B | Prize Fossils | More fossils; each counts double for bounties | Fossil below % 30 ⚙, Bounty fossils x 2 |
+| Fossilize | 5 | C | Amber Heart | Every 15th fossil freezes your whole side 1 s | Heart every (fossils) 15 ⚙ |
+| Resin Shell | 1 | | Coat of Resin | — | Aura HP % 15 |
+| Resin Shell | 2 | | Sticky Armour | — | Aura HP % 15, Resist % 20 |
+| Resin Shell | 3 | | Amber Shield | — | Aura HP % 15, Resist % 20, Seal (s) 3 |
+| Resin Shell | 4 | A | Self-Sealing | Sealed towers heal 30% when the shell breaks | Seal heal % 30 ⚙ |
+| Resin Shell | 4 | B | Raider Glue | Raiders and biters near your towers slow down | Biter slow % 25 ⚙, Biter slow (s) 2, Raider slow % 20, Raider slow (s) 2, **PvP effect yes** |
+| Resin Shell | 4 | C | Sticky Thorns | Biters get slowed and take 5 damage | Thorns damage 5 ⚙, Biter slow % 15, Biter slow (s) 1.5 |
+| Resin Shell | 5 | A | Amber Fortress | Nearby towers can't be knocked out (20 s each) | Seal every (s) 20 ⚙ |
+| Resin Shell | 5 | B | Resin Wall | Once a round, an amber wall holds every dino 3 s | Wall (s) 3 ⚙ |
+| Resin Shell | 5 | C | Amber Mirror | Throws at your towers bounce back | Grounding every (s) 1, Reflect damage 60 ⚙ |
 
-**Every new-tower batch, Tester:** buy, unlock, place, upgrade to a T4 and T5 pick on each
-path once (Studio K/J keys), Trampled + repair (not the Blimp), a battle round (own dinos
-only); for Raider options, the Studio stand-in hunter raids and the effect lands at ×0.5,
-Camo Cover blocks it; co-op round with the Raider option still doing its dino part.
+Round-19 card lines changed for numbers only (🦖 text kept): Amber Age "every 12 s"
+(seed 20 s scored 0.6× its slot), Sticky Thorns "5 damage", Amber Heart "every 15th" (10th
+scored 1.4×), Amber Fortress "(20 s each)".
+**Worth metrics (#314):** **Entomb** = 120 × H + eDPS + amp, H = hold-seconds/s: E = rate ÷
+max(1, 6 × hits x × 0.6) × (1 + 0.5 × spread) entombs/s; H = E × Entomb s × (1 − boss) +
+min(E, 1/10) × (Boss entomb s or Entomb s × 0.5) × boss + 4 × Entomb s × (1 − boss/2) ÷ Entomb
+all every + E × Send back ÷ 8 × (1 − boss) + 1.5 × Entomb slow %/100 × E × Entomb s + min(1,
+rate) × 0.2; amp = Entomb amp %/100 × 120 × (the entomb part of H). **Fossilize** = cash a round:
+F × (Sink cash + 0.8 × Sink chest cash) + 14 × (mark credit 1.5 dinos × 3 s × Take-down mark %
+× 120 ÷ 50 per fossil + Fossil Fuel aura credit at the round-average stack + Heart: 10 dinos ×
+1 s × 120 ÷ 50 per trigger), F = E × 50 × min(1, 2 × Fossil below %/100) fossils a round;
+Bounty fossils score 0 (meta only). **Resin Shell** = points (Armory/Tonic style, #292): Aura
+HP % + Resist % + 2 × Thorns + Biter slow % × s ÷ 4 + 10 × Seal s × seals a round (1; Fortress
+3) + Seal heal % ÷ 2 + 20 × Wall s + Reflect damage ÷ 3 ÷ Grounding every + 20 ÷ Grounding
+every. Raider Glue scored without its Raider columns (#284).
+**Director check (these metrics):** Entomb T4 A/B/C 210/235/275 (0.89–1.17×); T5 after A4
+291/300/313, after B4 298/336/390, after C4 337/391/378 (all 0.89–1.16×). Fossilize T4
+384/432/464, T5 after A4 572/576/608, B4 632/648/656, C4 672/697/688 (0.89–1.07×). Resin
+Shell T4 80/77.5/80.6; T5 after A4 140/140/120 (0.86–1.0×); Raider Glue's dino part 0.97×.
+**Release line (#314; like Tar Pit #198):** `value.py` prints per path, r21–30 and r31–40:
+entombs and hold-seconds a round, fossils and fossil cash a round, payback rounds per
+Fossilize tier (**bar: T1–T3 each pays back in 8–15 rounds**, #203's rule; lever `Sink cash`
+of that tier), and the Resin Shell points. **Round-20 bar:** the Entomb T2 cannon holds ≥ 10
+hold-seconds a round in r11–20 (lever: Tuning `Entomb base (s)`, +0.1 at a time, ≤ 1.2).
+**Studio aids:** `fossils <n>`, `firenow RESIN` (Amber Age / Resin Wall now).
+**T123 (Builder):** `Shared/Resin` + `Shared/AutoFire` + the `4× TOWERS` Tuning block (pure,
+specs: entomb threshold at 100 %/50 %/10 % HP; boss cooldown + half time; Living Amber full 3 s;
+spread; Sticky Bed; Send back never moves a boss; fossil pays every size + Sink cash scaled
+(Hard); Heart every 15th; seal at 1 HP once a round / Fortress per tower 20 s; wall holds and
+releases bosses at half; AutoFire's three triggers + never empty) → sheet rows + columns +
+registry kinds → `Towers` behaviour, look (amber cannon; entombed dino glows orange; fossil
+turns to stone and crumbles), unreleased → value.py metrics + release line. Accept: specs,
+audit clean, Config diff accounted for, `--options` clean for `RESIN`.
+
+#### The walker module (`Shared/Walker`, pure; 9g builds it, Paratroopers 9h and rangers 9j reuse it, #315)
+A walker is an NPC unit on its own side's track, owned by one tower. Server module **`Walkers`**
+owns walker state (ARCHITECTURE §4: add the row); damage to dinos goes through `Enemies`
+(rule 4), bites on walkers are decided by `Walker` + `Combat`'s dino-attack rules.
+- **Data:** per-kind base in the tower's Tuning block (HP, speed studs/s, reach, retreat HP
+  share, respawn s, home heal HP/s, leash x); per-build columns `Walkers` (max) · `Walker HP x`
+  (mult) · `Walker speed x` (mult) · `Walker resist %` (max) · `Walker respawn x` (mult) ·
+  `Hold (s)` (max) · `Boss hold (s)` (max) · flags `Flanking`, `Targets first`, `Hits air`
+  (generic: the tower can hit flyers), `Heals between rounds`, `Dodge`. Bite / shot = the
+  tower's composed Damage, every 1 ÷ rate s, with its Size breaks, Pierces armour, Mark %,
+  Boss x, Slow % / linger (the generic hit rules). Walker HP = base × Walker HP x × (1 + Tower
+  HP per tier × tiers bought), as towers.
+- **States:** `home` (at the tower; heals home heal/s; leaves when HP ≥ 80 % and a target is
+  in range) → `out` (runs along the track from the track point nearest home toward its target)
+  → `fight` (in reach: the first contact is a **pounce**: × `First dive x` on the first pounce
+  after leaving home, and a hard stop of `Hold (s)` on non-bosses, `Boss hold (s)` once per
+  boss; then bites/shots every 1 ÷ rate s; follows the target) → `back` (target gone, target
+  beyond range × leash x, or HP ≤ retreat share; runs home at speed × 1.5) → `home`. **`down`**
+  at 0 HP: vanishes, back at home after respawn s × Walker respawn x. `post` (9j rangers: stand
+  at a set track point, shoot in range, never chase). Targeting: dinos on its side within the
+  tower's range, ground only unless `Hits air`; default nearest to home; `Targets first` =
+  furthest along; `Flanking` = no two walkers of a tower on one dino while another is free.
+- **Dinos fight back:** a dino with a walker on it bites the walker (its melee damage × size
+  share × difficulty, as vs a tower, × (1 − Walker resist %)) instead of a tower; it keeps
+  walking unless held (the walker follows). **Trample:** a walker in the path of a dino with ≥
+  `Trample size` sizes left (not the one it fights) takes Trample share × its max HP, once per
+  dino. `Dodge`: ignores one bite per Dodge every (s) and never takes trample from small dinos.
+- **Limits:** `Walker cap per side` (4× TOWERS block, seed 24) — walkers past the cap aren't
+  spawned (Swarm raptors last); hunters can't hit walkers and walkers never touch hunters
+  (Raider Hounds use the generic Raider sting; the run at the hunter is visual only); walkers
+  never leave their side's track or block hunters; a Trampled home tower keeps its walkers
+  out but sends none until repaired; selling removes them.
+- **Model (`value.py`, #314):** walker eDPS = Walkers × uptime (0.7 × Walker speed x^0.3; 0.8
+  with Heals between rounds or Walker respawn x < 1; 0.85 with Dodge) × the honest-hits bite
+  DPS (+ first pounce: (First dive x − 1) ÷ 6 bites per pounce). Holds count 0 on damage paths
+  (blind spot, like stun, 9c) and as hold-seconds on the Trainer path.
+- **Specs:** the state machine (each transition), leash, retreat + heal + respawn, Flanking,
+  Targets first, bite-back with resist, trample (and Dodge), boss hold once per boss, cap,
+  never off its side, a sold tower clears its walkers.
+
+#### Raptor Pen (`RAPTOR`) — damage (Pack, Alpha) + support (Trainer)
+**Towers row:** Cost 850 · Damage 10 (per bite) · Fire rate 1.5 (bites/s per raptor) · Targets 1 ·
+Range 22 (the hunting ground) · Hits air No · Unlock 500 · Key `RAPTOR` · Max HP 150 · note
+"Tamed raptors sprint out, pounce, bite and come back; they can be bitten. TOWERS_LATER.md."
+1 raptor at tier 0.
+**Tuning block `RAPTOR PEN`:** Raptor HP 60 · Raptor speed 30 · Raptor reach 4 · Pounce hold (s)
+0.5 (the `Hold (s)` when blank) · Retreat HP share 0.3 · Raptor respawn (s) 8 · Pen heal (HP/s)
+15 · Leash x 1.5 · Trample size 3 · Trample share 0.25 · Dodge every (s) 3 · Swarm raptors 10 ·
+Swarm share 0.4 · Swarm (s) 15 · Charge knockback (studs) 6 · Guard reach (studs) 10 · Roar
+reach (studs) 10 · Hungry Alpha cap % 50.
+**Raptor-only rules:** `Alpha` (flag): one big raptor (look; Walkers stays 1). `Swarm` (flag;
+AutoFire): Swarm raptors small raptors (Swarm share × HP and bite) pour out and hunt anywhere
+on the side's track for Swarm s, then vanish. `Charge` (flag; AutoFire): every standing raptor
+runs the whole side's track at ×2 speed from the exit end back, biting each dino it passes
+once and knocking small dinos back Charge knockback studs (not bosses), then returns. `Guard`
+(flag): each raptor is posted beside a tower in range (most damaged first); a dino within
+Guard reach that bites or throws at that tower is attacked, then the raptor returns to its
+post. `Stun roar every (s)` (min-positive): the alpha roars; small dinos within Roar reach are
+stunned `Stun (s)`. `Take-down stack %` (max): each take-down by this tower's walkers adds x %
+damage for the round (cap Hungry Alpha cap %). `Avenger x` (max): with no raider stung in the
+last 3 s, raptors target the last dino that damaged a tower in range, bites × x. `Dive aura
+rate %` (Falcon's column) = towers in range attack faster while a raptor is in `fight`.
+`Hunter damage %` while ≥ 3 raptors are out (common rule 4).
+**New columns (kind):** Walkers max · Walker HP x mult · Walker speed x mult · Walker resist %
+max · Walker respawn x mult · Hold (s) max · Boss hold (s) max · Flanking flag · Targets first
+flag · Hits air flag · Heals between rounds flag · Dodge flag · Alpha flag · Swarm flag ·
+Charge flag · Guard flag · Stun roar every (s) min-positive · Take-down stack % max · Avenger
+x max · Hunter damage % max.
+
+| Path | Tier | Opt | Name | Blurb (card) | Cells (T1–3 cumulative; T4/T5 own step) |
+|---|---|---|---|---|---|
+| Pack | 1 | | Second Raptor | — | Walkers 2 |
+| Pack | 2 | | Quick Whistle | — | Walkers 2, Damage x 1.4, Walker speed x 1.3, Walker respawn x 0.7 |
+| Pack | 3 | | Pack of Five | — | Walkers 5, Damage x 1.4, Walker speed x 1.3, Walker respawn x 0.7 |
+| Pack | 4 | A | Hide Rippers | Raptors bite through armour | Damage x 1.75 ⚙, Pierces armour Yes |
+| Pack | 4 | B | Flanking | Each raptor picks a different dino | Damage x 1.85 ⚙, Flanking Yes |
+| Pack | 4 | C | Ambush | Each raptor's first pounce hits double | Damage x 1.75 ⚙, First dive x 2 |
+| Pack | 5 | A | Raptor Swarm | 10 small raptors flood the track once a round | Damage x 1.7 ⚙, Swarm Yes |
+| Pack | 5 | B | Clever Girls | Raptors dodge bites and never get trampled | Damage x 1.75 ⚙, Dodge Yes |
+| Pack | 5 | C | Sky Leap | Raptors jump at low flyers | Damage x 1.95 ⚙, Hits air Yes |
+| Alpha | 1 | | Sharp Claws | — | Damage x 1.9 |
+| Alpha | 2 | | Thick Hide | — | Damage x 3.6, Walker HP x 1.6, Walker resist % 25 |
+| Alpha | 3 | | Alpha Raptor | — | Damage x 7, Walker HP x 3, Walker resist % 25, Size breaks 2, Hold (s) 1, Alpha Yes |
+| Alpha | 4 | A | Sickle Claw | ×3 on its target, breaks 3 | Damage x 1.8 ⚙, Size breaks 3 |
+| Alpha | 4 | B | Boss Hunter | Can hold a boss for a moment | Damage x 1.6 ⚙, Boss x 1.6, Boss hold (s) 0.5 |
+| Alpha | 4 | C | Scent Trail | Its target is marked +15% | Damage x 1.7 ⚙, Mark % 15 |
+| Alpha | 5 | A | King of the Pack | A giant raptor, half damage taken | Damage x 1.9 ⚙, Size breaks 4, Walker resist % 50, Walker HP x 1.5 |
+| Alpha | 5 | B | Rex Tamer | A tamed T. rex whose roar stuns | Damage x 2 ⚙, Walker HP x 1.4, Stun roar every (s) 15, Stun (s) 1 |
+| Alpha | 5 | C | Hungry Alpha | Stronger with every take-down | Damage x 1.75 ⚙, Take-down stack % 10 |
+| Trainer | 1 | | Tracking Nose | — | Damage x 1.3, Range x 1.15, Targets first Yes |
+| Trainer | 2 | | Herding Call | — | Damage x 1.6, Range x 1.15, Targets first Yes, Slow % 20, Slow linger (s) 1 |
+| Trainer | 3 | | Pack Howl | — | Walkers 2, Damage x 2.2, Range x 1.15, Targets first Yes, Slow % 20, Slow linger (s) 1, Dive aura rate % 15 |
+| Trainer | 4 | A | Treat Bag | Raptors heal and return faster | Damage x 1.4 ⚙, Heals between rounds Yes, Walker respawn x 0.5 |
+| Trainer | 4 | B | Guard Raptors | A raptor guards each tower | Damage x 1.3 ⚙, Guard Yes |
+| Trainer | 4 | C | Whistle Drill | Raptors run 30% faster | Damage x 1.3, Walker speed x 1.3, Dive aura rate % 20 ⚙ |
+| Trainer | 5 | A | Raptor Charge | Every raptor charges the track once a round | Damage x 1.5 ⚙, Charge Yes |
+| Trainer | 5 | B | Pack Bond | Hunters nearby +20% with 3+ raptors out | Damage x 1.1 ⚙, Walkers 3, Hunter damage % 20 |
+| Trainer | 5 | C | Raider Hounds | Raptors chase raiders (or the dino that hurt a tower) | Damage x 1.5, Avenger x 2 ⚙, Size breaks 2, Raider damage 10, Raider slow % 20, Raider slow (s) 1, **PvP effect yes** |
+
+Card line changed for a number: Sickle Claw's "×3 on its target" is Damage x 1.8 over Alpha
+Raptor (the alpha has one target; 🦖 may reword to "much harder bites, breaks 3").
+**Worth metrics (#314):** **Pack, Alpha** = walker eDPS (above) + aura; Swarm adds Swarm
+raptors × Swarm share × one raptor's DPS × Swarm s ÷ 50; Hungry Alpha × (1 + cap ÷ 200); Rex
+roar and holds 0 (blind spots, they carry damage). **Trainer** = walker eDPS + aura credit
+(Dive aura rate % × 0.7 uptime) + 120 × H (H = Walkers × uptime × Slow %/100 + Charge: 6
+dinos × Charge knockback ÷ 8 ÷ 50) + 0.2 × own eDPS for Guard + Hunter damage credit × 0.6 (3+
+out share) + Avenger: own eDPS × 0.3 × (Avenger x − 1). Raider Hounds scored without its
+Raider columns.
+**Director check:** Pack T4 (bite-multiplier equivalents) 1.98/1.85/2.04, T5 2.1/2.12/2.1;
+Alpha T4 1.98/2.01/1.96, T5 ~2.2/2.0/2.19 (all inside 0.9–1.1×). Trainer T4 78/72/72.5; T5
+after A4 107/125/113 (0.95–1.1×); Raider Hounds' dino part 1.0×.
+**Seeds vs bars:** T0 r31–40 c/e ≈ 37 like Mortar Pit; the Pack/Alpha T5 cumulative eDPS gain
+≈ ×28 (Mortar Blast's), so best T5 c/e ≈ 150 expected; T124b tunes by the exit rule.
+**Studio aids:** `walkers`, `firenow RAPTOR` (Raptor Swarm / Raptor Charge now).
+**T124 (Builder):** `Shared/Walker` + server `Walkers` + the `RAPTOR PEN` block (pure first, the
+specs above + Swarm / Charge / Guard / roar / stack / Avenger specs, Pack Bond only with 3+
+out and only vs dinos) → rows + columns → `Towers` behaviour, raptor look (🦖: tamed raptors
+with a collar and stripe in the camp colour; Rex Tamer = a small tamed T. rex) → value.py
+walker model + metrics. Accept: specs, audit clean, Config diff accounted for, `--options`
+clean for `RAPTOR`; perf: 10 players × a Raptor Swarm each stays under the walker cap.
+**T124b — 9g release + balance (#312):** both towers sold; bars of common rule 6 (Raptor: damage
+bars + round-20; Resin: its release line, Fossil payback, round-20 hold); exit rules; commit
+message = a table of every new T5 (c/e, × M) and each tuned cell. **Then Tester Run 9g**
+(common rule 10, plus: a dino entombed at low HP becomes a fossil and pays; Amber Shield seals
+a tower at 1 HP once a round; Resin Wall fires itself on a bunch; a raptor bitten to low HP runs
+home and heals; Raptor Swarm fires itself; Raider Glue and Raider Hounds sting the Tester at
+×0.5 with no sting through Camo Cover, and in co-op Glue slows a biter and Hounds hunt the
+dino that bit a tower).
+
+**9h — Spotter Blimp + Bone Totem** (T125 Blimp, T126 Totem, T126b release).
+
+#### Spotter Blimp (`BLIMP`) — untouchable; damage (Door Gun), support (Searchlight), drops (Cargo)
+**Towers row:** Cost 750 · Damage 3 · Fire rate 2 · Targets 1 · Range 14 (the gun's reach below
+the blimp) · Hits air Yes · Unlock 400 · Key `BLIMP` · Max HP 0 · **Untouchable Yes** · note
+"Its mooring mast is placed like any tower; the blimp flies your track there and back. Can't be
+damaged (#148)." Untouchable rules as T63 (no HP, never targeted, never repaired, skipped by
+Armory/Hospital auras). Mast placement: normal off-track rules.
+**Tuning block `SPOTTER BLIMP`:** Blimp speed (studs/s) 40 (a lap ≈ 30 s on the 610-stud track) ·
+Paratrooper HP 80 · Paratrooper damage 8 · Paratrooper rate 1 · Paratrooper reach 14 ·
+Paratrooper speed 14 · Hook max sizes 2 (Sky Hook takes only dinos at ≤ 2 sizes left).
+**Mechanics (pure `Shared/Blimp`):**
+1. **Flight.** The blimp flies along its side's track from the spawn end to the exit end and
+   back (a **lap**), `Blimp speed` × `Blimp speed x`, 30 studs up; everything it does is
+   centred on the track point below it (range = a circle there). Several blimps fly
+   independently. Hits flyers. Model: coverage = min(1, 10 × 2 × Range ÷ track length).
+2. **Lap drops.** Cargo uses Supply Camp's crate rules (`Chests`, `Chest cash`; a crate lands
+   on the ground below the blimp and lasts Chest lifetime): `Chests` = crates a round (Air
+   Drop timing), or one every lap with `Lap chests`. `Med kits` / `Med kit heal` (Hospital
+   Rescue's kits) drop one per lap below it. `Lap repairs` n: each lap repairs up to n
+   Trampled towers within range of its path (free, as a full repair). `Crate heal %`: a crate
+   heals the tower nearest where it lands by that share of max HP. `Paratroopers` n: once per
+   round played (round start, after 10 s), n walkers (ranger look, kind `PARATROOPER`, the
+   9g walker in `fight` mode with their Tuning stats, hunting dinos within Paratrooper reach of
+   where they land, ground only) drop below the blimp and stay until the round ends.
+   `Airlift` (flag): the first tower on its side Trampled each round is lifted and set back
+   down repaired after 3 s (automatic, #283; no "you choose" button, #318).
+3. **Light.** `Brittle %` (Tranq's column; dinos in range take +x %) is the searchlight under
+   the blimp. `Aura range %` (new): towers in range +x % range. `Throw miss %` (new): dinos in
+   range miss x % of their throws (a missed throw lands short). `Targets biggest` (9e): the
+   light (and gun) centre on the biggest dino on the side instead of below the blimp, moving at
+   Blimp speed. `Aura reach x` (new): the blimp's aura damage reaches towers within Range × x
+   of its point. `Dino outlines` (flag): own-side hunters see every dino on their side through
+   walls (a client highlight; **never players**, never another side's dinos).
+4. **Gun extras.** Mortar's `Bomblets` (rockets), `Mark %`, `Size breaks`, `Line hits`
+   (Strafing Run = a line along the track). `Bombing run` (flag; AutoFire): once per round
+   played, every dino on the side's track takes `Field strike x` × the gun's damage (9e Field
+   strike rules: air too, armour only if it pierces, breaks 1). `Hook every (s)`: every N s
+   the smallest non-boss dino in range with ≤ Hook max sizes left is lifted off the track (a
+   take-down: each size pays, pops to the owner).
+**New columns (kind):** Blimp speed x mult · Lap chests flag · Lap repairs max · Crate heal % max
+· Paratroopers max · Airlift flag · Aura range % max · Throw miss % max · Aura reach x max ·
+Dino outlines flag · Bombing run flag · Hook every (s) min-positive. (Reused: Shots, Line
+hits, Bomblets, Mark %, Size breaks, Pierces armour, Brittle %, Targets biggest, Field strike
+x, Chests, Chest cash, Med kits, Med kit heal, Hunter reload x, Aura damage %.)
+
+| Path | Tier | Opt | Name | Blurb (card) | Cells (T1–3 cumulative; T4/T5 own step) |
+|---|---|---|---|---|---|
+| Door Gun | 1 | | Belt Gun | — | Damage x 1.5, Rate x 1.2 |
+| Door Gun | 2 | | Twin Mount | — | Damage x 1.5, Rate x 1.2, Shots 2 |
+| Door Gun | 3 | | Strafing Run | — | Damage x 2.6, Rate x 1.2, Shots 2, Line hits 3 |
+| Door Gun | 4 | A | Heavy Mount | Shoots through armour, breaks 2 | Damage x 1.7 ⚙, Pierces armour Yes, Size breaks 2 |
+| Door Gun | 4 | B | Rocket Pods | Rockets that splash | Damage x 1.3 ⚙, Bomblets 3 |
+| Door Gun | 4 | C | Tracer Belt | Hit dinos are marked +15% | Damage x 1.75 ⚙, Mark % 15 |
+| Door Gun | 5 | A | Gunship | Faster, four guns and rockets | Damage x 1.05 ⚙, Shots 4, Bomblets 2, Blimp speed x 1.5 |
+| Door Gun | 5 | B | Bombing Run | Bombs the whole track once a round | Damage x 1.6, Bombing run Yes, Field strike x 12 ⚙ |
+| Door Gun | 5 | C | Sky Hook | Snatches the smallest dino every 5 s | Damage x 1.7 ⚙, Hook every (s) 5 |
+| Searchlight | 1 | | Spotlight | — | Brittle % 10 |
+| Searchlight | 2 | | Wide Beam | — | Brittle % 10, Range x 1.3 |
+| Searchlight | 3 | | Night Hunt | — | Brittle % 10, Range x 1.3, Aura range % 15 |
+| Searchlight | 4 | A | Floodlights | Lights a much wider circle | Range x 1.6 ⚙ |
+| Searchlight | 4 | B | Tracking Beam | The light follows the biggest dino | Targets biggest Yes, Brittle % 20 ⚙ |
+| Searchlight | 4 | C | Blinding Glare | Dinos in the light miss throws | Throw miss % 25, Brittle % 15 ⚙ |
+| Searchlight | 5 | A | All-Seeing Eye | Every dino under the blimp marked +30% | Brittle % 30 ⚙ |
+| Searchlight | 5 | B | Lighthouse | Towers near its path +10% damage | Aura damage % 10 ⚙, Aura reach x 2 |
+| Searchlight | 5 | C | Spotter's Map | See every dino through walls | Dino outlines Yes, Brittle % 20 ⚙ |
+| Cargo | 1 | | Supply Crates | — | Chests 1, Chest cash 60 |
+| Cargo | 2 | | Ammo Drop | — | Chests 1, Chest cash 60, Hunter reload x 0.8 |
+| Cargo | 3 | | Med Drop | — | Chests 1, Chest cash 60, Hunter reload x 0.8, Med kits 1, Med kit heal 40 |
+| Cargo | 4 | A | Heavy Cargo | Bigger crates | Chest cash 150 ⚙ |
+| Cargo | 4 | B | Rebuild Kits | Fixes a Trampled tower each lap | Lap repairs 1 ⚙ |
+| Cargo | 4 | C | Spare Parts | A crate heals the closest tower | Chest cash 90, Crate heal % 20 ⚙ |
+| Cargo | 5 | A | Cargo Run | A big crate every lap | Lap chests Yes, Chest cash 300 ⚙ |
+| Cargo | 5 | B | Paratroopers | Drops 2 rangers a round | Paratroopers 2 ⚙ |
+| Cargo | 5 | C | Airlift | Fixes the first Trampled tower each round | Airlift Yes ⚙ (Chest cash) |
+
+Card lines changed: Gunship "four guns" (Shots 4: two twin mounts); Lighthouse "towers near
+its path" (Round-19 "all your towers … while it passes" — a whole-side aura from one tower broke
+the aura rules); Airlift (no "somewhere you choose": a button, #283/#318). 🦖 may reword.
+**Worth metrics (#314):** **Door Gun** = eDPS × coverage + Bombing run (Field strike x ×
+damage × 10 dinos ÷ 50) + Sky Hook (one small dino's HP — the band's average last-two-sizes
+HP — ÷ Hook every) + aura; untouchable band 1.25–2 × M on every T5 build. **Searchlight** =
+120 × lit × Brittle %/100 (lit = 10 × coverage; with Targets biggest: 1 + boss) + aura_credit
+(Aura range % counted as rate % ÷ 2; Aura damage % on 3 × Aura reach x neighbours × coverage)
++ 0.5 × Throw miss % + Dino outlines 0 (meta-ish; it carries Brittle). **Cargo** = cash a
+round: crates × Chest cash × 0.8 (laps a round = 50 ÷ lap s) + Lap repairs × laps × 0.3 ×
+0.3 × 6,000 (a Trampled tower below 30 % of laps; repair = 0.3 × an average 6,000 tower) +
+Crate heal % × 150 HP × crates × 2 cash/HP + 14 × (Hunter reload credit: 30 × (1/x − 1) × 0.3
++ Paratroopers' walker eDPS × 0.8) + med kits × heal × 0.5 + Airlift 0.2 × 0.3 × 6,000 × 2.
+**Director check (rough, these metrics):** Door Gun T4 1.92/1.95/2.01×, T5 ~2.1/2.05/~2.0
+(Sky Hook's credit is the Builder's number; lever Damage x). Searchlight T4 ×1.6/×1.7/×1.6 of
+T3's light credit. Cargo T5 after A4 408/480/480 (0.85–1.0×). Tight spots the Builder must
+confirm: Sky Hook, Paratroopers, Airlift (all ⚙).
+**Studio aids:** `firenow BLIMP` (Bombing Run / Paratroopers / Airlift now), `walkers`.
+**T125 (Builder):** `Shared/Blimp` (pure: lap position over time, coverage circle, crate/kit/
+repair drops per lap, Tracking Beam point, hook choice, AutoFire bombing, Airlift once a round)
++ `SPOTTER BLIMP` block → rows + columns → behaviour (blimp model 30 studs up, door gunner,
+searchlight cone; mast footprint) + Paratroopers via `Walker` → value.py. Accept: specs (lap
+timing, a dino under the blimp is hit and one far away isn't, untouchable, Dino outlines shows
+own-side dinos only and never a player), audit, Config diff, `--options` clean for `BLIMP`.
+
+#### Bone Totem (`TOTEM`) — charge from Bones: damage (Roar), buffs (Ancestors), cash (Bone Pile)
+**Towers row:** Cost 800 · Damage 60 (per roar hit) · Fire rate 0 · Targets 1 · Range 24 · Hits
+air Yes · Unlock 450 · Key `TOTEM` · Max HP 200 · note "Bones taken near it charge it; full =
+Spirit Roar (area, breaks 2). Never adds Bones to any score. TOWERS_LATER.md."
+**Tuning block `BONE TOTEM`:** Totem charge (Bones) 8 · Roar breaks 2 · Fear knockback (studs) 8
+· Shatter strip (s) 4 · Skull x 0.6 · Spirit hunters 3 · Spirit hunter damage 10 · Spirit
+hunter rate 2 · Spirit (s) 6 · Full buff (s) 6 · Finisher % 25 · Treasure cash 1,500.
+**Mechanics (pure `Shared/Totem`):**
+1. **Charge.** Every pop (a dino losing a size) inside the totem's range on its side, made by
+   anyone on its side (towers, walkers, hunters), adds 1 × `Charge x` (hunter pops × `Hunter
+   charge x`; a boss's pop adds Totem charge × `Boss charge %` / 100 instead, if set). **Pops
+   made by any Bone Totem's roar, skulls or spirit hunters never charge a totem** (no loop).
+   Full = Totem charge × `Charge needed x`; on full the path's effect fires and the charge
+   restarts (overflow kept). Charge carries over between rounds (battles too); reset at match
+   start. **It only reads pops:** Bones, Bone Rush score, Ranked results, Hunt Board counts
+   are untouched (`Bounty charge x` only changes the owner's Bounties progress); no Amber.
+2. **On full:** Roar path and Ancestors — the **Spirit Roar** (every dino in range takes
+   Damage × Damage x, breaks Roar breaks or `Size breaks`, armour only with Pierces armour;
+   `Roar echoes` 1 = a second roar 1 s later; `Roar whole track` = every dino on the side;
+   `Skulls` n = instead n skulls each hit a different dino anywhere on the side for Skull x ×
+   damage, breaks 1; `Knockback (studs)` on small dinos (not bosses); `Strips armour` for
+   Shatter strip s) — plus Ancestors' `Full guard (s)` (towers in range take no damage that
+   long), `Hunter damage %` and `Spirit hunters` (Tuning count, 6 s, fire at dinos in range)
+   for Full buff s / Spirit s. Bone Pile from T3 — **no roar**; pays `Full cash` to the side
+   (+ `Payday cash` × hunters on the side; `Treasure` flag: the first full of the match also
+   drops a Treasure cash chest).
+3. **Continuous:** `Charge aura damage %` (towers in range + x % × charge share; Old Bones),
+   `Aura HP %`, `Aura range %` (9h), `Hunter ability cooldown x` (new; own hunters in range),
+   `Side aura half` (flag; Totem Pole: its auras reach every tower on the side at half
+   strength), `Bone cash` (cash to the side per pop in range), `Bank cash per charge` (at each
+   round end, × the charge held), `Finisher %` (flag `Finishing roar`: a boss in range
+   dropping below 25 % HP triggers one free roar at it, once per boss; doesn't use charge).
+**New columns (kind):** Charge x mult · Hunter charge x max · Boss charge % max · Bounty charge x
+max · Charge needed x mult · Roar echoes max · Roar whole track flag · Skulls max · Full guard
+(s) max · Spirit hunters flag · Full cash max · Payday cash max · Treasure flag · Charge aura
+damage % max · Hunter ability cooldown x mult · Side aura half flag · Bone cash max · Bank cash
+per charge max · Finishing roar flag. (Reused: Knockback, Strips armour, Size breaks, Pierces
+armour, Aura HP %, Aura range %, Hunter damage %.)
+
+| Path | Tier | Opt | Name | Blurb (card) | Cells (T1–3 cumulative; T4/T5 own step) |
+|---|---|---|---|---|---|
+| Roar | 1 | | Louder Roar | — | Damage x 1.6 |
+| Roar | 2 | | Quick Charge | — | Damage x 2.2, Charge needed x 0.8 |
+| Roar | 3 | | Thunder Roar | — | Damage x 4.2, Charge needed x 0.8, Size breaks 3, Pierces armour Yes |
+| Roar | 4 | A | Echo Roar | The roar hits twice | Damage x 1 ⚙, Roar echoes 1 |
+| Roar | 4 | B | Fear | The roar scares small dinos 8 studs back | Damage x 1.85 ⚙, Knockback (studs) 8 |
+| Roar | 4 | C | Shatter Roar | The roar strips armour for 4 s | Damage x 1.8 ⚙, Strips armour Yes |
+| Roar | 5 | A | Ancient Roar | The roar reaches your whole track | Damage x 0.8 ⚙, Roar whole track Yes |
+| Roar | 5 | B | Skull Storm | 8 flying skulls hunt dinos | Damage x 1.6 ⚙, Skulls 8 |
+| Roar | 5 | C | Finishing Roar | A free roar at a weak boss | Damage x 1.8 ⚙, Finishing roar Yes |
+| Ancestors | 1 | | Old Bones | — | Charge aura damage % 20 |
+| Ancestors | 2 | | Shared Charge | — | Charge aura damage % 20, Hunter charge x 2 |
+| Ancestors | 3 | | Spirit Guard | — | Charge aura damage % 20, Hunter charge x 2, Full guard (s) 4 |
+| Ancestors | 4 | A | War Paint | Hunters nearby +15% for 6 s when full | Hunter damage % 15 ⚙ |
+| Ancestors | 4 | B | Bone Armour | Nearby towers get 20% more HP | Aura HP % 20 ⚙ |
+| Ancestors | 4 | C | Ancestor's Eye | Nearby towers see 10% further | Aura range % 10 ⚙ |
+| Ancestors | 5 | A | Spirit Hunters | 3 ghost hunters fire for 6 s when full | Spirit hunters Yes ⚙ (Tuning Spirit hunter damage) |
+| Ancestors | 5 | B | Totem Pole | Buffs reach every tower, half strength | Side aura half Yes, Charge aura damage % 30 ⚙ |
+| Ancestors | 5 | C | Elder Wisdom | Hero abilities nearby recharge 25% faster | Hunter ability cooldown x 0.75 ⚙ |
+| Bone Pile | 1 | | Bone Collector | — | Bone cash 6 |
+| Bone Pile | 2 | | Trade Post | — | Bone cash 14 |
+| Bone Pile | 3 | | Bone Market | — | Bone cash 14, Full cash 400 |
+| Bone Pile | 4 | A | Rare Bones | Bosses fill half the charge | Boss charge % 50 ⚙ |
+| Bone Pile | 4 | B | Bone Bank | Leftover charge pays at round end | Bank cash per charge 25 ⚙ |
+| Bone Pile | 4 | C | Bone Bonus | Each full charge pays 40% more | Full cash 560 ⚙ |
+| Bone Pile | 5 | A | Camp Payday | Every hunter in your camp gets paid | Payday cash 30 ⚙ |
+| Bone Pile | 5 | B | Bounty Wall | Bones nearby charge 25% faster and count +25% for bounties | Charge x 1.25 ⚙, Bounty charge x 1.25 |
+| Bone Pile | 5 | C | Ancient Treasure | One big treasure chest a match | Treasure Yes ⚙ (Tuning Treasure cash) |
+
+Seeds moved from the proposal (fewer, tougher dinos, #273): charge 8 Bones (not ~20: a 24-stud
+totem sees ~18 pops a round in r31–40), Bone cash 6/14 (not 1), Full cash 400 (not 150), Bone
+Bonus = +40 % of a full charge, not +40 cash. Card lines changed for that: Bone Bonus, Bounty
+Wall (gains an in-match part, #318), War Paint "for 6 s".
+**Worth metrics (#314):** fills/s = pops in range/s ÷ (Totem charge × Charge needed x) × Charge x
+(× 1.3 with Hunter charge x 2: hunters make ~30 % of pops; Boss charge: + 0.5 fill per boss
+round); pops in range a round = the band's pops × 2.5 × Range ÷ track length (stated; a
+winding track). **Roar** = fills/s × honest hits on 4 dinos (10 whole track; Skulls × Skull x
+dino-hits; × 2 with an echo) + Finisher: one roar per boss round ÷ 50 + aura; Fear/Shatter
+carry damage (blind spots). **Ancestors** = aura credit (Charge aura damage % × 0.5 average
+charge; × 3 side neighbours at half with Side aura half) + hunter credit (Hunter damage % × 30
+× Full buff s × fills/s) + Spirit hunters (3 × 10 × 2 × 6 s × fills/s) + Elder Wisdom (30 ×
+(1/x − 1) × 0.3) + points ÷ 2 for Aura HP % and Full guard s × 10 × fills a round. **Bone
+Pile** = cash a round (Bone cash × pops in range + Full cash × fills + Payday × 2 hunters ×
+fills + Bank × average charge 4 + Treasure × 0.8 ÷ 15 rounds); **bar: T1–T3 each pays back in
+8–15 rounds** (#203; levers Bone cash, Full cash).
+**Director check (rough):** Roar T4 2.0/1.85/1.8× of T3 (blind spots carried), T5 2.0/1.9/≈1.9
+(Finisher's credit is the Builder's number). Bone Pile T5 after A4 575/519/505 (0.97–1.1×).
+Ancestors: the Builder's numbers (four unlike credits) — ⚙ levers listed.
+**Round-20 bar:** the Roar T2 totem's c/e in r11–20 ≤ 1.5 × the released T2 median (lever:
+Tuning `Totem charge`, −1 at a time, ≥ 5).
+**Studio aids:** `charge <n>`, `firenow TOTEM` (fills it now).
+**T126 (Builder):** `Shared/Totem` (pure: charge from in-range pops by side, hunter ×2, boss
+share, no self-charge from any totem's pops, overflow, carry-over, reset at match start, the
+on-full effects per path, finisher once per boss, bank at round end; **specs that Bones / Bone
+Rush score / Ranked / Hunt Board numbers are identical with and without a totem**) + `BONE
+TOTEM` block → rows + columns → behaviour (skull totem; charge glow ring; roar shockwave; ghost
+hunters) → value.py. Accept as T125.
+**T126b — 9h release + balance (#312):** as T124b (Blimp untouchable band; Totem damage bars,
+round-20 bar, Bone Pile payback). **Tester Run 9h:** common rule 10, plus: the blimp's crate
+lands below it each lap (Cargo Run), Paratroopers drop and fight, a Trampled tower is lifted
+and fixed (Airlift); a full totem roars, Bone Market pays instead, `charge` + kills near it fill
+it, the Bones column is the same as a match without a totem.
+
+**9i — Meteor Beacon + Volcano Vent** (T127 Meteor, T128 Vent, T128b release). Meteor = strikes
+on the densest bunch anywhere on your side; Vent = owns one stretch (#282).
+
+#### Meteor Beacon (`METEOR`) — damage (Impact, Sky Rocks), crater control (Aftermath)
+**Towers row:** Cost 1000 · Damage 40 (per meteor) · Fire rate 0.0833 (one per 12 s) · Targets 5
+(average caught; the densest bunch) · Range 999 (your side's whole track) · Hits air No ·
+Splash radius 8 · Unlock 600 · Key `METEOR` · Max HP 150 · note "Calls a meteor on the
+biggest bunch of dinos on your side: area hit + burning crater. Ground only."
+**Tuning block `METEOR BEACON`:** Bunch radius (studs) 8 · Strike warning (s) 1 · Crater radius 6 ·
+Crater (s) 5 · Crater burn DPS 10 · Small meteor x 0.6 · Small splash x 0.7 · **Extinction min
+bunch 6** (the #283 row) · Extinction x 2.5 · Extinction breaks 4 · Starfall meteors 20 ·
+Fire line gap (studs) 30 · Streak length (studs) 10.
+**Mechanics (pure `Shared/Meteor`):**
+1. **Densest bunch.** Aim = the point on the side's track (ground dinos) with the most dinos
+   within Bunch radius (a boss counts 3; ties → furthest along); after Strike warning s (a red
+   ring) every ground dino within Splash radius takes the hit, breaks 1; dinos within 2 studs
+   of the centre break `Size breaks` (pierce-through). `Meteors` n: each strike is n small
+   meteors (Small meteor x damage, Small splash x radius) on the n densest points, over 2 s;
+   `Scatter` = the n points are the densest of n equal track segments; `Meteor every (s)`
+   adds one small meteor on that timer; `Starfall every (s)` replaces the normal strike with
+   Starfall meteors small meteors on the densest points across the side.
+2. **Craters.** Each (big) meteor leaves a crater (Crater radius) for `Crater (s)` (blank =
+   Tuning): dinos in it burn `Burn DPS` (blank = Crater burn DPS) × the tower level; `Strips
+   armour` there (Glass Crater); `Crater amp %` (a dino that crosses takes +x % for 3 s);
+   `Throw miss %` / `Bite miss %` (dinos in it miss that share); `Knockback (studs)` at impact
+   (not bosses); `Crater freeze (s)` (a dino entering is hard-stopped once per crater; no burn
+   if the row's Burn DPS is 0); `Fire line` (craters ≤ Fire line gap apart along the track join
+   into one burning strip while both last); `Burn streak` (each small meteor leaves a Streak
+   length burning strip for 3 s).
+3. **Big moments (AutoFire):** `Extinction` (flag) — once per round played a giant meteor:
+   every dino on the side takes Extinction x × the meteor's damage (breaks 1), the densest
+   bunch's dinos break Extinction breaks; trigger = a boss or Extinction min bunch dinos in the
+   bunch, else the last spawn. `Bombing run` + `Field strike x` (9h) = Comet Tail. `Side slow %`
+   / `Side slow (s)` (new): after each meteor every dino on the side is slowed. `Biggest
+   breaks +` (new): the biggest dino a meteor hits breaks that many extra sizes.
+**New columns (kind):** Meteors max · Scatter flag · Meteor every (s) min-positive · Starfall
+every (s) min-positive · Crater (s) max · Crater amp % max · Bite miss % max · Crater freeze
+(s) max · Fire line flag · Burn streak flag · Extinction flag · Side slow % max · Side slow (s)
+max · Biggest breaks + max. (Reused: Size breaks, Boss x, Pierces armour, Burn DPS, Strips
+armour, Knockback, Throw miss % (9h), Hits air (9g), Bombing run, Field strike x (9h).)
+
+| Path | Tier | Opt | Name | Blurb (card) | Cells (T1–3 cumulative; T4/T5 own step) |
+|---|---|---|---|---|---|
+| Impact | 1 | | Heavier Rock | — | Damage x 1.7 |
+| Impact | 2 | | Iron Core | — | Damage x 3.3 |
+| Impact | 3 | | Ground Zero | — | Damage x 6, Size breaks 2 |
+| Impact | 4 | A | Planet Killer | Centre breaks 3, ×2 on bosses | Damage x 1.3 ⚙, Size breaks 3, Boss x 2 |
+| Impact | 4 | B | Plate Cracker | Meteors cut through armour | Damage x 1.7 ⚙, Pierces armour Yes |
+| Impact | 4 | C | Quick Call | A meteor every 8 s | Damage x 1.25 ⚙, Rate x 1.5 |
+| Impact | 5 | A | **Extinction Event** | One giant meteor a round, fires itself | Damage x 1 , Extinction Yes (⚙ Tuning Extinction x) |
+| Impact | 5 | B | Dino Killer | Breaks the biggest dino it hits 2 extra sizes | Damage x 1.9 ⚙, Biggest breaks + 2 |
+| Impact | 5 | C | Impact Winter | Every dino on your side slowed after each hit | Damage x 1.9 ⚙, Side slow % 30, Side slow (s) 3 |
+| Sky Rocks | 1 | | Rock Chunks | — | Damage x 1.4, Meteors 2 |
+| Sky Rocks | 2 | | Twin Fall | — | Damage x 2.1, Meteors 3 |
+| Sky Rocks | 3 | | Fireball Flurry | — | Damage x 2.6, Meteors 5 |
+| Sky Rocks | 4 | A | Endless Rain | A small meteor every 4 s | Damage x 1.25 ⚙, Meteor every (s) 4 |
+| Sky Rocks | 4 | B | Scatter Field | Meteors land all along the track | Damage x 1.5 ⚙, Scatter Yes |
+| Sky Rocks | 4 | C | Cinder Trail | Small meteors leave a burning streak | Damage x 1.6 ⚙, Burn streak Yes, Burn DPS 20 |
+| Sky Rocks | 5 | A | Starfall | 20 meteors across your side every 15 s | Damage x 0.65 ⚙, Starfall every (s) 15 |
+| Sky Rocks | 5 | B | Comet Tail | A comet sweeps the whole track once a round | Damage x 1.7, Bombing run Yes, Field strike x 6 ⚙ |
+| Sky Rocks | 5 | C | Shooting Stars | Meteors can hit flyers | Damage x 1.95 ⚙, Hits air Yes |
+| Aftermath | 1 | | Hot Crater | — | Damage x 1.3, Burn DPS 20 |
+| Aftermath | 2 | | Ash Cloud | — | Damage x 1.6, Burn DPS 20, Throw miss % 30, Bite miss % 30 |
+| Aftermath | 3 | | Shockwave Ring | — | Damage x 2.4, Burn DPS 30, Throw miss % 30, Bite miss % 30, Knockback (studs) 6 |
+| Aftermath | 4 | A | Long Burn | Craters last 8 s, hotter | Crater (s) 8, Burn DPS 45 ⚙ |
+| Aftermath | 4 | B | Glass Crater | Craters strip armour | Strips armour Yes, Burn DPS 40 ⚙ |
+| Aftermath | 4 | C | Scorch Marks | Dinos crossing a crater take +15% | Crater amp % 15, Burn DPS 40 ⚙ |
+| Aftermath | 5 | A | Fire Line | Craters join into one burning strip | Fire line Yes, Burn DPS 60 ⚙ |
+| Aftermath | 5 | B | Blinding Dust | Dinos in the ash can't bite or throw | Throw miss % 100, Bite miss % 100, Burn DPS 55 ⚙ |
+| Aftermath | 5 | C | New Ice Age | Craters freeze dinos solid for 2 s | Crater freeze (s) 2, Damage x 1.6 ⚙ |
+
+Changed from the proposal: Extinction ×20 → **×2.5** (×20 on every dino scored ~10× the whole
+path; ×2.5 makes the T5 ≈ 2× T4 like its siblings — still the biggest single hit in the game);
+card "one giant meteor a round, fires itself" kept. Plate Cracker cuts armour on the whole
+meteor (a centre-only pierce has no model and reads the same); Long Burn "hotter";
+Starfall replaces the 12 s strike (added on top it scored 4×).
+**Worth metrics (#314):** **Impact, Sky Rocks** = eDPS (meteors × hits, honest; Extinction:
+10 dinos × Extinction x × damage + bunch breaks, once per 50 s; Bombing run as 9h; Meteor every
+and Starfall per s; Burn streak = Burn DPS × 3 s × 1 dino per small meteor; Side slow and Biggest
+breaks carry damage, blind spots). **Aftermath** = control path (`SUPPORT_PATHS`; option bars
+only): eDPS (meteor + crater burn × crater s × 3 crossing dinos ÷ every; × 2 with Fire line) +
+120 × H (knockback 6/8 × 5 dinos; Crater freeze s × 3 crossing dinos; per strike) + 0.5 ×
+(Throw miss % + Bite miss %) + amp credit (Crater amp % × 120 × 3 s × 3 dinos per strike).
+**Director check (rough):** Impact T4 1.95/1.92/1.88× T3, T5 2.2/≈2.1/1.9 (Extinction's
+×2.5 is the lever); Sky Rocks T4 2.0/1.95/≈2.0, T5 2.1/≈2.0/2.1; Aftermath: Builder's number
+(⚙ Burn DPS per option). **Expected:** best T5 c/e (Extinction or Starfall) ≈ 140–170.
+**Studio aids:** `firenow METEOR` (a strike now; Extinction Event / Comet Tail now, ignoring
+the trigger).
+**T127 (Builder):** `Shared/Meteor` (pure: densest point with boss weight and ties; n-meteor
+points; scatter segments; crater lifetimes, joins, amp, freeze once per crater; Extinction
+via AutoFire incl. "never on an empty track"; side slow; biggest breaks) + `METEOR BEACON`
+block → rows + columns → behaviour (radio mast, red flare, warning ring, falling rock, crater
+glow / ice / ash) → value.py. Accept: specs (a 6-dino bunch beats 2 single dinos; a boss counts
+3; ground only unless Shooting Stars; Extinction fires on a boss, else at the last spawn, once
+per round played, own side only), audit, Config diff, `--options` clean.
+
+#### Volcano Vent (`VENT`) — damage (Magma, Pressure), control (Obsidian)
+**Towers row:** Cost 1000 · Damage 30 (eruption hit) · Fire rate 0.05 (one per 20 s) · Targets 4
+· Range 20 · Hits air No · Unlock 600 · Key `VENT` · Max HP 200 · **Near track (studs) 8**
+(new Towers column; the vent must be placed within 8 studs of the track) · note "Erupts every
+20 s: lava floods its stretch of track for 6 s; dinos burn and are shoved aside."
+**Tuning block `VOLCANO VENT`:** Flow length (studs) 24 · Flow (s) 6 · Flow burn DPS 8 · Flow shove
+(studs/s) 3 · Shove max (studs) 4 · Geyser x 0.3 · Crust (s) 6 · Crust slow % 30 · Lava bomb x
+0.5 · Lava bombs 6 · Extra vent x 0.5 · Supervolcano (s) 4 · Ash (s) 5.
+**Mechanics (pure `Shared/Vent`):**
+1. **Eruption + flow.** The stretch = `Flow length` × `Flow length x` of track centred on the
+   track point nearest the vent. Each eruption hits Targets dinos on the stretch for Damage
+   (breaks 1) and lays a **lava flow** for `Flow (s)` (blank = Tuning): dinos in it burn Flow
+   burn DPS × Damage x × tower level (`Burn breaks`: ticks break 1, Tar Pit's Boiling Pit
+   rule) and are **shoved** sideways Flow shove studs/s up to Shove max (not a slow); after the
+   flow they walk back to the path (extra time = offset ÷ speed). Bosses aren't shoved.
+   Overlapping flows of two vents: strongest only (Tar Pit #189 rule).
+2. **Extras:** `Geyser every (s)` (between eruptions a burst hits the stretch for Geyser x ×
+   damage); `Extra vents` n (n small vents in a ring erupt in turn between the main eruptions,
+   each Extra vent x size); `Lava bombs` (flag: each eruption also throws Lava bombs bombs at
+   the biggest dinos in range, Lava bomb x damage, `Size breaks`); `Boss erupt` (flag: erupts
+   at once when a boss enters range, once per boss); `Side throw miss %` (new: each eruption,
+   every dino on the side misses that share of throws for Ash s); `Supervolcano` (flag;
+   AutoFire): once per round played every dino on the side is in a lava flow for Supervolcano s.
+   `Slow %` = Rumble (dinos in range while no flow is down). `Knockback (studs)` at the
+   eruption (small dinos).
+3. **Crust (Obsidian):** after each flow its stretch is **crust** for `Crust (s)`: dinos on it
+   slowed `Crust slow %` (Tuning; T1 turns it on: `Crust` flag), `Strips armour` there,
+   `Crust DPS` (new; × tower level), `Throw miss %` on it, `Maze (studs)` (new: a dino crossing
+   it walks that much further, a detour drawn on the crust), `Freeze flow (s)` (new: when the
+   flow ends every dino on it is hard-stopped that long, once per flow). `Wall (s)` (9g Track
+   wall, AutoFire) = Obsidian Wall at the stretch's far end. `Aura range %` (9h) and `Throw
+   resist %` (new: towers in range take x % less from throws).
+**New columns (kind):** Flow (s) max · Flow length x mult · Burn breaks flag · Geyser every (s)
+min-positive · Extra vents max · Lava bombs flag · Boss erupt flag · Side throw miss % max ·
+Supervolcano flag · Crust flag · Crust DPS max · Maze (studs) max · Freeze flow (s) max · Throw
+resist % max. (Reused: Slow %, Knockback, Strips armour, Throw miss %, Wall (s), Aura range %,
+Hits air, Pierces armour, Size breaks, Targets x.)
+
+| Path | Tier | Opt | Name | Blurb (card) | Cells (T1–3 cumulative; T4/T5 own step) |
+|---|---|---|---|---|---|
+| Magma | 1 | | Hot Rock | — | Damage x 1.6 |
+| Magma | 2 | | Searing Flow | — | Damage x 3 |
+| Magma | 3 | | Lava Lake | — | Damage x 5.4, Flow (s) 10, Burn breaks Yes |
+| Magma | 4 | A | White Hot | Lava melts armour | Damage x 1.75 ⚙, Pierces armour Yes |
+| Magma | 4 | B | Rivers of Fire | The lava runs 20 studs further | Damage x 1.4 ⚙, Flow length x 1.8 |
+| Magma | 4 | C | Ember Rain | Embers hit low flyers | Damage x 1.85 ⚙, Hits air Yes |
+| Magma | 5 | A | Supervolcano | Floods the whole track once a round | Damage x 1.5 ⚙, Supervolcano Yes |
+| Magma | 5 | B | Lava Bombs | Throws 6 lava bombs at big dinos | Damage x 1.25 ⚙, Lava bombs Yes, Size breaks 2 |
+| Magma | 5 | C | Fire Mountain | Eruptions twice as big | Damage x 1 ⚙, Flow length x 2, Targets x 2 |
+| Pressure | 1 | | Shorter Fuse | — | Damage x 1.2, Rate x 1.33 |
+| Pressure | 2 | | Twin Vents | — | Damage x 1.5, Rate x 2 |
+| Pressure | 3 | | Geyser | — | Damage x 2.5, Rate x 2, Geyser every (s) 5 |
+| Pressure | 4 | A | Steam Burst | Eruptions knock small dinos back | Damage x 1.75 ⚙, Knockback (studs) 6 |
+| Pressure | 4 | B | Rumble | Dinos nearby stumble: −20% speed | Damage x 1.75 ⚙, Slow % 20 |
+| Pressure | 4 | C | Pressure Valve | Erupts early when a boss comes | Damage x 1.85 ⚙, Boss erupt Yes |
+| Pressure | 5 | A | Ring of Fire | 3 small vents erupt in turn | Damage x 1.2 ⚙, Extra vents 3 |
+| Pressure | 5 | B | Old Faithful | Erupts every 4 s, smaller | Damage x 0.8 ⚙, Rate x 2.5 |
+| Pressure | 5 | C | Ash Blanket | Ash makes dinos miss 30% of throws | Damage x 1.9 ⚙, Side throw miss % 30 |
+| Obsidian | 1 | | Cooling Crust | — | Crust Yes |
+| Obsidian | 2 | | Sharp Glass | — | Crust Yes, Strips armour Yes |
+| Obsidian | 3 | | Obsidian Wall | — | Crust Yes, Strips armour Yes, Wall (s) 2 |
+| Obsidian | 4 | A | Jagged Crust | The crust cuts dinos | Crust DPS 25 ⚙ |
+| Obsidian | 4 | B | Black Glass | Nearby towers see 15% further | Aura range % 15 ⚙ |
+| Obsidian | 4 | C | Heat Shimmer | Dinos on the crust can't throw | Throw miss % 100, Crust DPS 10 ⚙ |
+| Obsidian | 5 | A | Glass Maze | The crust makes dinos walk 12 studs further | Maze (studs) 12 ⚙ |
+| Obsidian | 5 | B | Obsidian Armour | Nearby towers take 30% less from throws | Throw resist % 30, Crust DPS 15 ⚙ |
+| Obsidian | 5 | C | Frozen Fire | The whole flow hardens: 2 s stop | Freeze flow (s) 2 ⚙ |
+
+Changed: Old Faithful "every 4 s" (Pressure T3 already erupts every 10 s); Heat Shimmer and
+Obsidian Armour carry a little crust damage so their dino part clears the bar.
+**Worth metrics (#314):** **Magma, Pressure** = eDPS: per eruption (Targets hits + flow burn:
+Flow burn × Damage x × 2 dinos in the flow × Flow s × Flow length x + geyser/extra vents/lava
+bombs) ÷ every + Supervolcano (10 dinos × burn × Supervolcano s ÷ 50) + Boss erupt (one extra
+eruption per boss round ÷ 50); shove, Rumble slow, knockback, ash carry damage (blind spots).
+**Obsidian** = control path (option bars only): 120 × H (crust: 2 dinos × Crust slow % ×
+Crust s per eruption; Maze ÷ 8 per crossing dino (2 per flow); Freeze flow s × 2 dinos per
+eruption; Wall s × 6 dinos per round) + Crust DPS × 2 dinos × Crust s per eruption + aura
+credit (Aura range % as rate ÷ 2) + 0.5 × Throw miss % + 0.3 × Throw resist % (points as eq).
+**Director check (rough):** Magma T4 1.98/≈1.9/1.98, T5 ≈2.0/≈1.9/2.0; Pressure T4 1.75 +
+blind spots ×3 (equal by construction), T5 2.1/2.0/1.9; Obsidian: the Builder's number.
+**Studio aids:** `firenow VENT` (an eruption now; Supervolcano now).
+**T128 (Builder):** `Shared/Vent` (pure: stretch from the nearest track point, flow timing,
+shove + rejoin, crust after flow, maze detour, freeze at flow end once, overlap strongest-only,
+boss erupt once per boss, AutoFire Supervolcano) + `Near track` placement rule in
+`Shared/Placement` (+ ghost) + `VOLCANO VENT` block → rows + columns → behaviour (smoking
+crack, lava flow decal, crust, cone for Fire Mountain) → value.py. Accept as T127 + a placement
+spec (8 studs from the track yes, 12 no).
+**T128b — 9i release + balance (#312):** as T124b (both damage towers: best T5 ≤ 1.25 × M,
+round-20 bar). **Tester Run 9i:** common rule 10, plus: a meteor lands on the biggest bunch
+after its warning ring; Extinction Event fires itself once a round (and on a boss); lava floods
+the stretch and shoves dinos; crust slows; Frozen Fire stops the flow's dinos 2 s (a boss 1 s).
+
+**9j — Ranger Station** (alone: the heaviest; T129 rules + sheet + tower, T130 posts UI +
+value.py, T130b release). TOWERS_LATER's "5 at Ranger Corps" → "5 at Ranger Troop" (Round 19).
+
+#### Ranger Station (`RANGER`) — damage (Riflemen), traps (Trackers), tougher rangers (Wardens)
+**Towers row:** Cost 900 · Damage 8 (per ranger shot) · Fire rate 1.2 · Targets 1 · Range 30 (how
+far from the cabin a post may be) · Hits air No · Unlock 500 · Key `RANGER` · Max HP 200 (the
+cabin) · note "Trains rangers who stand at posts on the track and shoot; bitten too much, they
+go back to the cabin to patch up."
+**Tuning block `RANGER STATION`:** Ranger HP 100 · Ranger speed 16 · Ranger reach 14 · Retreat HP
+share 0.3 · Ranger respawn (s) 10 · Cabin heal (HP/s) 20 · Leash x 1 · Max posts 3 · Trap every
+(s) 8 · Trap slow % 40 · Trap slow (s) 2 · Trap reach (studs) 3 · Trap line traps 6 · Heavy x 3 ·
+Legend x 3 · Legend HP x 3 · Legend dart every (s) 12 · Legend dart mark % 25 · Legend dart (s)
+8 · Jeep speed 20 · Ranger guard reach (studs) 10.
+**Mechanics (pure `Shared/Ranger`, on `Shared/Walker`'s `post` state):**
+1. **Posts.** A station has up to Max posts **posts** (track points within its Range). Each
+   ranger walks from the cabin to its post (rangers share posts round-robin; Ranger Troop's 5
+   stand in formation on 3), shoots dinos within Ranger reach (ground only unless `Hits air`;
+   furthest along first), never chases. Dinos walking past bite it (the walker bite-back
+   rule; no trample at a post — they bite instead); at Retreat HP share it walks home, heals,
+   returns; at 0 HP `down` for Ranger respawn × `Walker respawn x`. `Walker regen` (new): HP/s
+   at the post.
+2. **Squad options:** `Heavy ranger` (flag): the first ranger shoots × Heavy x, breaks 3.
+   `Legend` (flag): one ranger is the Legend (× Legend x damage, × Legend HP x HP, its own
+   Tracking Dart every Legend dart s: its target marked Legend dart mark % for Legend dart s,
+   Tracker dart rules). `Jeep` (flag): the squad rides a jeep that drives the side's track
+   there and back at Jeep speed (shooting in reach as it passes; dinos can't bite a moving
+   jeep; posts unused).
+3. **Traps** (`Trap` flag from Trackers T1): each post has a trap at its track point: the
+   first ground dino within Trap reach every `Trap every (s)` (blank = Tuning) is slowed Trap
+   slow % for Trap slow s, plus `Trap stun (s)` (new; hard stop, not bosses), `Knockback`
+   (not bosses). `Trap line` (flag; at each round played's start): Trap line traps one-shot
+   traps spread evenly along the side's track, same effect. `Decoy (s)` (new): a dino entering
+   a ranger's reach stops that long, once per dino per post. `Boss hold (s)` (9g): the first
+   boss within a ranger's reach is netted (hard stop, full length) once per boss.
+   `Take-down mark %` (9g) on ranger take-downs.
+4. **Wardens:** `Walker HP x`, `Walker resist %`, `Heals between rounds`, `Walker respawn x`
+   (9g); `Post aura` (new flag: the station's `Aura HP %` applies to towers within Ranger guard reach
+   of a post); `Boss round guard` (new flag: while a boss is alive on the side, rangers can't
+   drop below 1 HP); `Guard` (9g: rangers stand beside towers within Range instead of posts and
+   take the bites aimed at them); `Rescue beacon (respawn x)` (Hospital's column): own side's
+   hunters respawn at the cabin in that × the time (battles: own camp only).
+**New columns (kind):** Walker regen max · Heavy ranger flag · Legend flag · Jeep flag · Trap
+flag · Trap every (s) min-positive · Trap stun (s) max · Trap line flag · Decoy (s) max · Post
+aura flag · Boss round guard flag. (Reused: Walkers, Walker HP x / resist % / respawn x, Heals
+between rounds, Guard, Boss hold (s), Hits air, Take-down mark %, Knockback, Pierces armour,
+Size breaks, Aura HP %, Rescue beacon (respawn x).)
+
+| Path | Tier | Opt | Name | Blurb (card) | Cells (T1–3 cumulative; T4/T5 own step) |
+|---|---|---|---|---|---|
+| Riflemen | 1 | | Recruit | — | Walkers 2 |
+| Riflemen | 2 | | Sharpshooter | — | Walkers 2, Damage x 1.8, Range x 1.2 |
+| Riflemen | 3 | | Squad | — | Walkers 3, Damage x 2.8, Range x 1.2 |
+| Riflemen | 4 | A | Elite Squad | Rangers shoot through armour | Damage x 1.75 ⚙, Pierces armour Yes |
+| Riflemen | 4 | B | Heavy Rifle | One ranger gets a heavy rifle: ×3, breaks 3 | Damage x 1.1 ⚙, Heavy ranger Yes |
+| Riflemen | 4 | C | Flare Rounds | Rangers can hit low flyers | Damage x 1.9 ⚙, Hits air Yes |
+| Riflemen | 5 | A | **Ranger Troop** | 5 rangers in formation | Damage x 1.2 ⚙, Walkers 5 |
+| Riflemen | 5 | B | Legend Ranger | One hero-strong ranger with its own dart | Damage x 1.2 ⚙, Legend Yes |
+| Riflemen | 5 | C | Patrol Jeep | Rangers drive the track, firing | Damage x 1.4 ⚙, Jeep Yes |
+| Trackers | 1 | | Snare Kit | — | Trap Yes |
+| Trackers | 2 | | Bait | — | Trap Yes, Trap every (s) 5, Damage x 1.3 |
+| Trackers | 3 | | Snap Traps | — | Trap Yes, Trap every (s) 5, Damage x 1.6, Trap stun (s) 0.6, Walkers 2 |
+| Trackers | 4 | A | Pit Traps | Traps hold a dino 1.5 s | Trap stun (s) 1.5 ⚙ |
+| Trackers | 4 | B | Decoy Calls | Dinos stop to fight rangers | Decoy (s) 1 ⚙ |
+| Trackers | 4 | C | Tripwire | Traps knock dinos 4 studs back | Knockback (studs) 4 ⚙ |
+| Trackers | 5 | A | Master Trapper | Traps along your whole track each round | Trap line Yes ⚙ (Tuning Trap line traps) |
+| Trackers | 5 | B | Net Launchers | Rangers net a boss for 2 s | Boss hold (s) 2, Damage x 1.3 ⚙ |
+| Trackers | 5 | C | Head Ranger | Ranger take-downs mark nearby dinos +20% | Take-down mark % 20, Damage x 1.2 ⚙ |
+| Wardens | 1 | | Leather Coats | — | Damage x 1.3, Walker HP x 1.5 |
+| Wardens | 2 | | Medic Bag | — | Walkers 2, Damage x 1.5, Walker HP x 1.5, Walker regen 5 |
+| Wardens | 3 | | Shield Wall | — | Walkers 2, Damage x 2, Walker HP x 1.5, Walker regen 5, Walker resist % 40 |
+| Wardens | 4 | A | Field Rations | Rangers heal fully between rounds | Heals between rounds Yes, Walker HP x 1.3 ⚙ |
+| Wardens | 4 | B | Rally Point | Rangers come back 2× faster | Walker respawn x 0.5 ⚙ |
+| Wardens | 4 | C | Sandbags | Towers near a post get 10% more HP | Post aura Yes, Aura HP % 10 ⚙ |
+| Wardens | 5 | A | Hold the Line | Rangers can't fall while a boss is out | Boss round guard Yes ⚙ (Damage x) |
+| Wardens | 5 | B | Bodyguards | Rangers take bites for towers | Guard Yes ⚙ (Walker HP x) |
+| Wardens | 5 | C | Hunter's Lodge | Hunters come back twice as fast | Rescue beacon (respawn x) 0.5 ⚙ |
+
+Changed: Heavy Rifle is one heavy ranger **in** the squad (a "one ranger" T4 broke every T5
+that adds rangers, #276); Pit Traps 1.5 s (Snap Traps holds 0.6 s first); Hold the Line "while
+a boss is out" (a "boss round" isn't a game state).
+**Worth metrics (#314):** **Riflemen** = walker eDPS (uptime at a post 0.7; Jeep: coverage ×
+1.3, no bite downtime) + Heavy (one ranger × Heavy x, breaks 3) + Legend (× Legend x + dart: 25
+% mark × 8 s ÷ 12 s on its target × 120 / its own share) + aura. **Trackers** = control (option
+bars only): squad eDPS + 120 × H, H per post per s = (Trap slow % /100 × Trap slow s + Trap stun
+s + Knockback ÷ 8) ÷ Trap every + Decoy s × 2 dinos per post per 10 s + Trap line: 6 × effect
+÷ 50 + net: Boss hold s × 1 boss round ÷ 50 (bosses full) + mark credit (Take-down mark % ×
+120 × 3 s × 1.5 dinos per ranger take-down). **Wardens** = squad eDPS × uptime (0.7; + 0.1
+with Heals between rounds; respawn x 0.5 → + 0.08; Boss round guard → + 0.08) + 0.5 × points
+(Aura HP % × posts; Guard: rangers × Walker HP x × 100 HP ÷ 100 soaked; Hunter's Lodge 20 × (2
+− respawn x)).
+**Director check (rough):** Riflemen T4 1.98/1.85/2.04, T5 2.0/2.0/≈2.1 (Jeep's coverage is the
+Builder's number). Trackers / Wardens: the Builder's numbers (⚙ levers listed).
+**Studio aids:** `walkers`, `firenow RANGER` (Trap line now; the Legend's dart now).
+**T129 (Builder):** `Shared/Ranger` on `Shared/Walker` (`post` state, round-robin posts,
+formation, Heavy/Legend/Jeep, traps per post, trap line at round start, decoy once per dino per
+post, boss net once per boss, boss-out guard, guard by towers, cabin respawn for own hunters
+only) + `RANGER STATION` block → rows + columns → behaviour + look (cabin; rangers in khaki with
+the camp colour; jeep). Default posts = the nearest track points (so it works before T130).
+**T130 (Builder):** posts UI — after placing a station, a post ghost on the track within Range
+(up to Max posts, one per ranger); "Move posts" in the tower panel (Back + X, no trap, #279);
+server validates (on the track, within Range, not on a Tar Pit pool); stand-ins use default
+posts; value.py metrics. Accept: specs + layout spec at 3 window sizes.
+**T130b — 9j release + balance (#312):** as T124b. **Tester Run 9j:** common rule 10, plus: place
+posts and move one; a ranger bitten low walks home, heals and returns; traps slow/stun the first
+dino; Net Launchers nets a boss once; Patrol Jeep drives the track; Hunter's Lodge halves the
+Tester's respawn in co-op and only for its own camp in Camp Clash.
+
+**Every new-tower batch, Tester:** common rule 10 above (the Tester is the raider, #310).
+**Every new-tower task, docs:** the Builder adds the tower's `UPGRADES.md` section (paths, tier
+names, the A/B/C table with Blurbs) in the same commit as its rows, so the audit's option-table
+check covers it; `ARCHITECTURE.md` §4 gains `Walkers` (T124).
 
 **9k — balance pass.** `value.py --options` + `--battle`, `threat.py`, per-hero parity;
 `audit.py --strict` with full A/B/C everywhere; co-op ~34 min and battle clocks unchanged
-(a new tower must matter by round ~20). **T131** tune, **T132** fixes from Run 9. Tester Run 9:
+(a new tower must matter by round ~20; the seven re-checked together on the 9g–9j bars, the
+#313 exchange rates and stand-ins reviewed against Runs 9g–9j; walker count at 10 players).
+**T131** tune, **T132** fixes from Run 9. Tester Run 9:
 a full co-op match on Normal with new towers + a casual Camp Clash with stand-ins.
 
 **9l — docs + recap.** **T133** `UPGRADES.md` / `HEROES.md` option tables complete, Mechanics
