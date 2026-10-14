@@ -14,7 +14,7 @@ DataStore writes from an agent). N15 rides any `Battle` commit (#272).
 **Status (2026-10-13, later): 9a + 9b done (c1a7c5a, 0f82bb7, 929b66a, cd6a413, cd749d2; 706 specs); Tester Run 8 running. 9c designed below (#290). Next: 🦖 names 9c → Builder T114 + T115.**
 **Status (2026-10-13, Director): 9d + 9e designed below (#292–#297; 96 options, metrics, 6 new mechanics). Next after 9c: 🦖 names 9d → T116–T118, then 9e → T119–T120.**
 **Status (2026-10-13, Director): 9f designed below (#298–#302; 48 hero options, per-path metrics, 1 new mechanic). Next after 9e: 🦖 names 9f → T121–T122.**
-**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.**
+**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.** **Update (2026-10-14): 9g built; next = T124c (finishes T124b, #325–#328), then Tester Run 9g.**
 
 ## Size of the job
 | | Slots (T4+T5) | Options to build | New options to design |
@@ -657,7 +657,9 @@ accounted for; pure rules first; one task = one commit, pushed; co-op specs re-r
    ≤ 1.5 × the released T2 median; control/support/economy paths — out of the medians, judged
    by their metric line and the option bars. **Guaranteed exit (as T68 step 7):** if a damage
    bar fails, C = C × (target ÷ measured), rounded to 25, target 150 (damageable) / 230 (Blimp);
-   floors 600 / ceilings 1,200 cash; at a floor, base Damage +1 and repeat (≤ +3). Amber
+   floors 600 / ceilings 1,200 cash; at a floor, base Damage +1 and repeat (≤ +3) — **for walker
+   towers (Raptor, Paratroopers, rangers) and any tower where +1 Damage trips a break bar: base
+   Fire rate × (measured ÷ target) instead, to 0.05, ≤ ×1.6 (#326)**. Amber
    prices never move (Jovan approved them).
 7. **Option bars (#280, #284):** each slot's options within 0.8–1.25× of the slot median on the
    path metric (T4; T5 after each T4), all 9 builds under the bars above. Director's checks
@@ -923,6 +925,29 @@ a tower at 1 HP once a round; Resin Wall fires itself on a bunch; a raptor bitte
 home and heals; Raptor Swarm fires itself; Raider Glue and Raider Hounds sting the Tester at
 ×0.5 with no sting through Camo Cover, and in co-op Glue slows a biter and Hounds hunt the
 dino that bit a tower).
+**T124c — finishes T124b (Director 2026-10-14, #325–#328; ONE Builder commit, then Tester Run
+9g).** Checked on a copy (`value.py`, `--options`, `--breaks1`: all exit 0, no Raptor DEAD).
+1. **Raptor lever = bite rate, not Damage (#325, #326).** `Towers!D20` (Damage) 11 → **10**
+   (assert 11; Damage 11 failed break bar 1 on Alpha Raptor T3, S/B1 1.09); `Towers!E20` (Fire
+   rate) 1.5 → **2.3** (assert 1.5); `C20` stays 600. Result: Pack T5 c/e 147–184, Alpha T5
+   168–230 (best 147 ≤ 177; worst 230 ≤ 284); best T2 (Pack Quick Whistle) 331 ≤ 386; King of
+   the Pack bar 3 S 295 ≥ 291; options clean. Pack/Alpha stay damage paths on eDPS; holds and
+   bite-soaking stay uncredited (playtest watches below).
+2. **Museum Piece (#327):** `Tower Upgrades!CD310` (Sink cash) 32 → **150** (assert 32); card
+   "Fossils pay 50% more cash". Slot T4 A 1,786 / B 1,429 / C 1,460 (A 1.22×); T5 after A4
+   2,288 / 2,679 / 2,052 (0.90–1.17×). Fossilize T1–T3 (50/100/100) untouched.
+3. **Clever Girls (#328):** the rule changes, not the card: `Dodge` = ignores one bite per
+   Dodge every (s) **and is never trampled by any dino** (bosses too). Fix `Shared/Walker` +
+   its spec (a 3-size dino passes a Dodge raptor: no trample). No cell moves.
+4. **Docs:** `UPGRADES.md` Raptor Pen line: "600 cash, 10 per bite, 2.3 bites a second";
+   Museum Piece card; this section's Towers row seeds → 600 / 10 / 2.3.
+5. **Release:** remove `RESIN` and `RAPTOR` from `ShopRules.Unreleased` (and value.py's
+   unreleased set); Amber unlock 500 live; `ROUND9_BATCH` stays out of M (142). Export,
+   Config diff = the 3 cells + the two keys sold; `tools/test.sh` green. Commit message: the
+   T5 table above (c/e, × M) + each tuned cell.
+6. **Tester Run 9g** as T124b, plus watches (report, not bars): a pounced dino visibly stops
+   (0.5 s; alpha 1 s); dinos bite raptors instead of the pen's neighbours; a Clever Girls
+   raptor in a big dino's path is not trampled; a Museum Piece fossil pays 150 Sink cash.
 
 **9h — Spotter Blimp + Bone Totem** (T125 Blimp, T126 Totem, T126b release).
 
