@@ -449,6 +449,11 @@ by the pool-overlap rule (#189), playtest watch.
   off-track Raider tower keeps its range. Specs: a raider 10 studs beside a Tar Lake pool is
   stung, one 20 studs away but within 81 studs along the track is not; co-op unchanged. Config
   diff = the one row. Tester: rides 9g's run (Bog Boots stings only near the tar).
+  Also in T120b (#322–#323): (a) Brush Beater Buckshot 5B Flame Choke `Blurb` → **"Dragon's
+  Breath bursts for 90% of a shot"** (the cell 0.9 stays; `HEROES.md` too). (b) **Twin Slug
+  (Slug 5C) uses 1 round per pump** (2 slugs from one shell, as the 9f design and the #298
+  metric say); Double Barrel keeps 2 rounds per pump. Spec: a Twin Slug pump spends 1 round and
+  fires 2 slugs. `--options` must stay clean (if not: Twin Slug `Magazine x` 1.5 → 1.3).
 
 **9f — B/C for the heroes** (4 heroes × 3 paths: **48 options**, handling only; no Raider
 options, #301). **DESIGNED (Director, 2026-10-13, #298–#302) — enter as written** (🦖 names
