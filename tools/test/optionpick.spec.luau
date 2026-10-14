@@ -42,7 +42,7 @@ end)
 
 -- Paths whose B/C options are in (PLAN 9c: the starters; 9d: Tranq, Supply, Hospital, Armory; 9e: the round-4 four);
 -- every other path is still A only.
-local HERO_BC = { PISTOL = true } -- 9f, hero by hero
+local HERO_BC = { PISTOL = true, RIFLE = true } -- 9f, hero by hero
 local WITH_BC = { SCOUT = true, SNIPER = true, GRENADIER = true, CHILLER = true, QUARTERMASTER = true, HOSPITAL = true, ARMORY = true, COIL = true, FALCON = true, TARPIT = true, BALLISTA = true }
 
 test("every tier-4/5 pick shows its options' cards (A only, or A/B/C for 9c), each one the server takes", function()

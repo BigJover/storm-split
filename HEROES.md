@@ -144,9 +144,20 @@ A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table
 Burst Fire: 3-round bursts, tight grouping. Belt Fed: no reloading during Rally Cry. Bipod:
 much less recoil while standing still. Spin-Up: fire rate climbs while you hold. Tracer
 Rounds: hits briefly mark. Incendiary: burning ground. AP Rounds: pierce armour. Explosive
-Tips: small splash. Tier 6: Big Five: bursts of 5 with Precision Burst's grouping;
-recoil resets between bursts. Endless Belt: no reloading while fully spun up. Dynamite Rounds:
-Explosive Tips' splash 1.5x wider; the splash pierces armour.
+Tips: small splash. Tier 6: Big Five: bursts of 5; recoil resets between bursts. Endless
+Belt: once fully spun up (2 s of holding), no reloading. Dynamite Rounds: the blast grows to
+6 m and pierces armour.
+
+A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table's T4 / T5; names are working names until the Dino pass; every T6 works after any T5: every Heavy T5 spins up, every Special Ammo T5 has a blast). Marking Burst / Bright Tracers: hits mark dinos. War Drum: Rally Cry twice as often.
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Stalker** | 4 | Trigger Discipline — Less kick and longer reach | Snap Bursts — Bursts come 20% faster | Quick Mag — Reload 25% faster |
+| **Stalker** | 5 | Precision Burst — 4-round bursts with a much tighter grouping | Marking Burst — 4-round bursts that mark: +25% from everything | Rapid Volley — Bursts 35% faster, half the kick, bigger mag |
+| **Heavy** | 4 | Bipod — Much less kick while you stand still | Steady Sling — 35% less kick, moving or not | Quick Belt — Belt changes 30% faster; 20% less kick |
+| **Heavy** | 5 | Spin-Up — Fire rate climbs while you hold the trigger | Hot Barrel — 50% faster at once, spins up to +60% more | War Drum — Rally Cry twice as often; spins up to +130% |
+| **Special Ammo** | 4 | Hot Load — Hits harder and reaches further | Phosphor Rounds — Fires burn 10% hotter and 50% longer | Bright Tracers — Hits mark dinos: +30% from everything |
+| **Special Ammo** | 5 | Explosive Tips — Shots burst with a small splash | Fire Tips — Small blasts; dinos burn 25% longer | Flat Tips — Small blasts; rounds fly 25% further |
 
 ### Brush Beater (shotgun) — Close range · ability **Flare Strike** (delayed strike on the track: damage + stun)
 

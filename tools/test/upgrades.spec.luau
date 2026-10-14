@@ -183,7 +183,7 @@ end)
 
 test("T111: every real path offers option A at tiers 4 and 5; the starters A, B and C (9c)", function()
 	local withBC = { SCOUT = true, SNIPER = true, GRENADIER = true, CHILLER = true, QUARTERMASTER = true, HOSPITAL = true, ARMORY = true, COIL = true, FALCON = true, TARPIT = true, BALLISTA = true } -- 9c, 9d, 9e
-	local heroBC = { PISTOL = true } -- 9f
+	local heroBC = { PISTOL = true, RIFLE = true } -- 9f
 	for g, group in { Config.Towers, Config.Heroes } do
 		for key, def in group :: any do
 			local want = if (g == 1 and withBC[key]) or (g == 2 and heroBC[key]) then "A,B,C" else "A"

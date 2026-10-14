@@ -9,10 +9,11 @@
 
 local Config = require(src.shared.Config)
 local HeroStats = require(src.shared.HeroStats)
+local GunRules = require(src.shared.GunRules)
 local Upgrades = require(src.shared.Upgrades)
 
 -- Heroes whose B/C rows are in (9f lands hero by hero).
-local DONE = { PISTOL = true }
+local DONE = { PISTOL = true, RIFLE = true }
 
 -- PLAN 9f, cell by cell: path, tier, letter, name, cells (own step).
 local OPTIONS = {
@@ -189,4 +190,26 @@ test("9f Tracker: Twin Burst fires 3-round bursts from two guns; Hot Swap still 
 	eq(stats("PISTOL", "Marksman", 5, "AC").markPercent, 35, "Hunter's Mark: Mark % 35")
 	ok(close(stats("PISTOL", "Trick Shot", 5, "AC").abilityCooldown, stats("PISTOL", "Trick Shot", 4, "A").abilityCooldown * 0.75), "Dart Storm: Tracking Dart sooner")
 	eq(stats("PISTOL", "Trick Shot", 6, "BB").bounces, 3, "Bounce Back after Pinball keeps 3 bounces")
+end)
+
+test("9f Big Game Hunter: Big Five bursts 5 and Endless Belt stops reloading after any T5; marks, Rally, blasts", function()
+	for _, picks in { "AA", "AB", "AC", "BB", "CC" } do
+		local five = stats("RIFLE", "Stalker", 6, picks)
+		ok(five.fireMode == "burst" and five.burstCount == 5 and five.burstRecoilReset, `Big Five after {picks}: bursts of 5, recoil reset`)
+		local belt = stats("RIFLE", "Heavy", 6, picks)
+		ok(belt.spunUpBelt and belt.spinUp > 1, `Endless Belt after {picks}: spins up ({belt.spinUp})`)
+		ok(not GunRules.usesRounds(belt, false, 1), `Endless Belt after {picks}: no rounds once fully spun up`)
+		ok(GunRules.usesRounds(belt, false, 0.5), `Endless Belt after {picks}: uses rounds while spinning up`)
+		local dyn = stats("RIFLE", "Special Ammo", 6, picks)
+		ok(dyn.splashRadius == 6 and dyn.piercesArmor, `Dynamite Rounds after {picks}: 6 m, pierces armour`)
+	end
+	ok(close(stats("RIFLE", "Heavy", 5, "AB").spinUp, 1.6) and close(stats("RIFLE", "Heavy", 5, "AC").spinUp, 2.3), "Hot Barrel 1.6, War Drum 2.3")
+	ok(close(stats("RIFLE", "Heavy", 5, "AC").abilityCooldown, Config.Heroes.RIFLE.abilityCooldown * 0.5), "War Drum: Rally Cry twice as often")
+	local marking = stats("RIFLE", "Stalker", 5, "AB")
+	ok(marking.burstCount == 4 and marking.markPercent == 25, "Marking Burst: 4-round bursts that mark 25%")
+	eq(stats("RIFLE", "Special Ammo", 4, "C").markPercent, 30, "Bright Tracers: Mark % 30")
+	local phosphor = stats("RIFLE", "Special Ammo", 4, "B")
+	ok(close(phosphor.burnDps, 1.1) and phosphor.burnSeconds == 3, "Phosphor Rounds: burn 1.1/s for 3 s")
+	eq(stats("RIFLE", "Special Ammo", 5, "AB").splashRadius, 3, "Fire Tips: 3 m blasts")
+	ok(close(stats("RIFLE", "Special Ammo", 5, "AC").range, stats("RIFLE", "Special Ammo", 4, "A").range * 1.25), "Flat Tips: 25% further")
 end)
