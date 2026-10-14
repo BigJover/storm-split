@@ -56,6 +56,8 @@ local AFTER_SNAPSHOT: { [string]: any } = {
 	targetsBiggest = false, -- 9e Targets biggest
 	biterSlowPercent = 0, -- 9d Biter slow
 	biterSlowSeconds = 0,
+	healRegen = 0, -- 9f Heal regen (Mending Salve)
+	healRegenSeconds = 0,
 }
 
 local function same(actual: { [string]: any }, expected: { [string]: any }, where: string): number

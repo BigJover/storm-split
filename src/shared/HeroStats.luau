@@ -79,6 +79,8 @@ export type Stats = {
 	slowSeconds: number,
 	jawLockSeconds: number, -- a hit dino can't bite or shoot
 	jawLockSpread: number, -- the lock also reaches dinos this close to the hit one
+	healRegen: number, -- Heal regen (PLAN 9f, Mending Salve): HP/s everything healed regains
+	healRegenSeconds: number, -- ... for this long (Server/Hero, Combat.regenAfter)
 	-- Mastery perks (0 without the perk).
 	markExtra: number, -- MARK: how many other dinos near the target are marked too
 	markExtraPowerMult: number, -- ... at this share of abilityPower
@@ -145,6 +147,8 @@ local HIGHEST = {
 	"slowSeconds",
 	"jawLockSeconds",
 	"jawLockSpread",
+	"healRegen",
+	"healRegenSeconds",
 	"sizeBreaks",
 	"burnPatchReach",
 	"ricochetReload",
@@ -308,6 +312,8 @@ function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?, mast
 		slowSeconds = high.slowSeconds or 0,
 		jawLockSeconds = high.jawLockSeconds or 0,
 		jawLockSpread = high.jawLockSpread or 0,
+		healRegen = high.healRegen or 0,
+		healRegenSeconds = high.healRegenSeconds or 0,
 		markExtra = math.floor(markExtra),
 		markExtraPowerMult = markExtraPowerMult,
 		markExtraReach = markExtraReach,

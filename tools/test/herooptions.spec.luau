@@ -10,10 +10,12 @@
 local Config = require(src.shared.Config)
 local HeroStats = require(src.shared.HeroStats)
 local GunRules = require(src.shared.GunRules)
+local Combat = require(src.shared.Combat)
+local fs = require("@lune/fs")
 local Upgrades = require(src.shared.Upgrades)
 
 -- Heroes whose B/C rows are in (9f lands hero by hero).
-local DONE = { PISTOL = true, RIFLE = true, SHOTGUN = true }
+local DONE = { PISTOL = true, RIFLE = true, SHOTGUN = true, MEDIC = true }
 
 -- PLAN 9f, cell by cell: path, tier, letter, name, cells (own step).
 local OPTIONS = {
@@ -229,4 +231,34 @@ test("9f Brush Beater: Twin Slug, Slam Fire (+ Quad Barrel), Bird Shot, Hot Shel
 	ok(close(hot.burnDps, 2.3) and hot.burnSeconds == 3, "Hot Shells: burn 2.3/s")
 	ok(close(stats("SHOTGUN", "Buckshot", 5, "AB").igniteShare, 0.9), "Flame Choke: ignite tick 0.9 of a shot")
 	ok(close(twin.shotDamage, stats("SHOTGUN", "Slug", 4, "A").shotDamage), "Twin Slug keeps the slug's damage per shot")
+end)
+
+test("9f Field Medic: Mending Salve's Heal regen (strongest wins, a recast refreshes, towers too); Muzzle and Lever options", function()
+	local salve = stats("MEDIC", "Triage", 5, "AB")
+	ok(salve.healRegen == 2 and salve.healRegenSeconds == 8, "Mending Salve: 2 HP/s for 8 s")
+	ok(salve.healRepairsTowers, "with Patch Up, standing towers are healed too")
+	eq(stats("MEDIC", "Triage", 5, "AA").healRegen, 0, "Second Wind: no regen")
+	eq(stats("MEDIC", "Triage", 6, "BB").healRegen, 2, "Rapid Response after Mending Salve keeps it")
+	-- the rule: flat HP/s for the time; no stacking; a recast refreshes
+	local r = Combat.regenAfter(nil, 10, 2, 8) :: Combat.Regen
+	ok(r.hps == 2 and r.untilTime == 18, "a fresh regen: 2 HP/s until 18")
+	eq(Combat.regenHeal(r, 11, 1), 2, "one second: 2 HP")
+	eq(Combat.regenHeal(r, 18.5, 1), 1, "the last half second only")
+	eq(Combat.regenHeal(r, 20, 1), 0, "run out")
+	local again = Combat.regenAfter(r, 12, 2, 8) :: Combat.Regen
+	ok(again.hps == 2 and again.untilTime == 20, "a recast refreshes the time, doesn't stack the HP/s")
+	local weaker = Combat.regenAfter(again, 13, 1, 4) :: Combat.Regen
+	ok(weaker.hps == 2 and weaker.untilTime == 20, "a weaker one never lowers or shortens it")
+	eq(Combat.regenAfter(nil, 10, 0, 0), nil, "no regen on the build: none")
+	local hero = fs.readFile("src/server/Hero.luau")
+	ok(hero:find("playerRegens[other] = Combat.regenAfter(playerRegens[other], os.clock(), stats.healRegen, stats.healRegenSeconds)", 1, true) ~= nil, "every healed hunter (own team) gets it")
+	ok(hero:find("towerRegens[tower] = Combat.regenAfter(towerRegens[tower], os.clock(), stats.healRegen, stats.healRegenSeconds)", 1, true) ~= nil, "every healed standing tower gets it")
+	ok(hero:find("Towers.heal(tower, Combat.regenHeal(r, now, dt))", 1, true) ~= nil and hero:find("Health.heal(player, Combat.regenHeal(r, now, dt))", 1, true) ~= nil, "ticked each frame")
+	-- Muzzle and Lever
+	local cloud = stats("MEDIC", "Muzzle", 5, "AC")
+	ok(cloud.jawLockSpread == 4 and cloud.jawLockSeconds == 3 and cloud.slowPercent == 40 and cloud.slowSeconds == 2, "Drowsy Cloud after Long Dose: lock 3 s spreads 4 studs, slow 40% for 2 s")
+	local lights = stats("MEDIC", "Muzzle", 6, "BB")
+	ok(lights.jawLockSeconds >= 4 and lights.jawLockSpread == 9, "Lights Out after Heavy Lids: at least 4 s, 9 studs")
+	local triple = stats("MEDIC", "Lever Action", 5, "AB")
+	ok(triple.fireMode == "burst" and triple.burstCount == 3, "Triple Cycle: 3-round bursts")
 end)

@@ -578,6 +578,9 @@ HERO_UPGRADE_COLUMNS = [
     ("stillSpreadMult", 51, "mult", 1),  # Thunder Slug: spread while standing still
     ("scopedSpreadMult", 52, "mult", 1),  # Heart Shot: spread while scoped
     ("abilityCharges", 53, "num", 0),  # Rapid Response; blank = 1 charge
+    # Heal regen (PLAN 9f, DECISIONS #302): after Option / Blurb (BB, BC). Mending Salve.
+    ("healRegen", 56, "num", 0),  # Heal regen HP/s: everything the Triage Kit heals regains this
+    ("healRegenSeconds", 57, "num", 0),  # Heal regen (s)
 ]
 
 # Every hero path has this many tiers (DECISIONS #133: "the same amount of upgrades on

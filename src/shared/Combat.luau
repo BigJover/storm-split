@@ -199,6 +199,31 @@ function Combat.canHurt(armored: boolean, piercesArmor: boolean, chillStripped: 
 	return piercesArmor or not armored or chillStripped or now < strippedUntil
 end
 
+-- Heal regen (PLAN 9f, #302; Mending Salve): everything a Triage Kit heals regains `hps`
+-- HP a second for `seconds`. Flat (no hero levels); doesn't stack: the strongest HP/s
+-- wins and a recast refreshes the time (it never cuts a longer one short).
+export type Regen = { hps: number, untilTime: number }
+
+function Combat.regenAfter(old: Regen?, now: number, hps: number, seconds: number): Regen?
+	local active = old ~= nil and now < old.untilTime
+	if hps <= 0 or seconds <= 0 then
+		return if active then old else nil
+	end
+	if active and old then
+		return { hps = math.max(old.hps, hps), untilTime = math.max(old.untilTime, now + seconds) }
+	end
+	return { hps = hps, untilTime = now + seconds }
+end
+
+-- The HP a regen gives over the `dt` seconds up to `now` (0 once it has run out).
+function Combat.regenHeal(r: Regen?, now: number, dt: number): number
+	if not r or dt <= 0 then
+		return 0
+	end
+	local active = math.max(0, math.min(dt, r.untilTime - (now - dt)))
+	return r.hps * active
+end
+
 -- Fire Bomblets cap (#306): how many of each generation's bomblets light a fire, first
 -- generation first, at most `cap` (Tuning Bomblet fires per shell) per shell. Generation g
 -- throws bomblets^g; the bomblets past the cap still hit, they just don't burn.

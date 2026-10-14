@@ -155,6 +155,9 @@ local fireEvent: RemoteEvent
 type Guard = { percent: number, untilTime: number }
 local playerGuards: { [Player]: Guard } = {}
 local towerGuards: { [any]: Guard } = setmetatable({}, { __mode = "k" }) :: any
+-- Heal regen (PLAN 9f, #302, Mending Salve): who regains HP over time after a Triage Kit.
+local playerRegens: { [Player]: Combat.Regen } = {}
+local towerRegens: { [any]: Combat.Regen } = setmetatable({}, { __mode = "k" }) :: any
 
 ------------------------------------------------------------------ state
 
@@ -957,6 +960,7 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 			if otherBody and BattleRules.canSupport(mySide, sideOf(other)) and (otherBody.Position - body.Position).Magnitude <= radius then
 				Health.heal(other, stats.heal)
 				guard(playerGuards, other, stats.guardPercent, stats.guardSeconds)
+				playerRegens[other] = Combat.regenAfter(playerRegens[other], os.clock(), stats.healRegen, stats.healRegenSeconds)
 			end
 		end
 		if stats.healRepairsTowers then
@@ -964,6 +968,7 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 				if BattleRules.canSupport(mySide, tower.side) and (tower.position - body.Position).Magnitude <= radius then
 					Towers.heal(tower, stats.heal)
 					guard(towerGuards, tower, stats.guardPercent, stats.guardSeconds)
+					towerRegens[tower] = Combat.regenAfter(towerRegens[tower], os.clock(), stats.healRegen, stats.healRegenSeconds)
 				end
 			end
 		end
@@ -1019,6 +1024,8 @@ function Hero.resetMatch()
 	end
 	table.clear(playerGuards)
 	table.clear(towerGuards)
+	table.clear(playerRegens)
+	table.clear(towerRegens)
 end
 
 -- Mastery was just bought: apply a new free first upgrade (if nothing has
@@ -1141,6 +1148,24 @@ function Hero.init(remotes: Folder, hooks: Hooks?)
 	onRaid = hooks and hooks.onRaid
 	onTranq = hooks and hooks.onTranq
 
+	-- Heal regen (Mending Salve): healed hunters and standing towers regain HP each frame
+	-- while it lasts (Towers.heal skips trampled ones); then it's dropped.
+	RunService.Heartbeat:Connect(function(dt)
+		local now = os.clock()
+		for player, r in playerRegens do
+			Health.heal(player, Combat.regenHeal(r, now, dt))
+			if now >= r.untilTime then
+				playerRegens[player] = nil
+			end
+		end
+		for tower, r in towerRegens do
+			Towers.heal(tower, Combat.regenHeal(r, now, dt))
+			if now >= r.untilTime then
+				towerRegens[tower] = nil
+			end
+		end
+	end)
+
 	-- Outfitter Armory buffs follow the hunter around: a few times a second,
 	-- re-read what covers where they stand; publish it (Gear* attributes, so
 	-- the client's fire loop agrees) and recompute the gun when it changes.
@@ -1228,6 +1253,7 @@ function Hero.init(remotes: Folder, hooks: Hooks?)
 		end
 		states[player] = nil
 		playerGuards[player] = nil
+		playerRegens[player] = nil
 		for other, state in states do
 			other:SetAttribute("HeroXpPending", HeroXp.popXp(state.pops, teamPops))
 		end

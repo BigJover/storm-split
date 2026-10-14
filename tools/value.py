@@ -963,6 +963,8 @@ def hero_dps(h, path_index, tier, picks=""):
 
 HERO_ABILITY_BASE_CD = 45  # s, the Tracking Dart / Rally Cry cooldown the #298 uptimes assume
 TRACKER_DART_S, RALLY_S = 8, 10  # s each ability lasts (#298)
+TRIAGE_GUARD_HPS = 10  # Triage: Second Wind's resist counted as this many HP/s saved (#298)
+MUZZLE_REACH_DINOS = 6  # Muzzle: about this many dinos in reach caps the lock-seconds (#298)
 
 
 def hero_gun_worth(h, s, mix, dart=0.0, rally=0.0):
@@ -1012,12 +1014,27 @@ def hero_gun_worth(h, s, mix, dart=0.0, rally=0.0):
 def hero_worth(h, path_index, tier, picks, mix):
     """PLAN 9f / DECISIONS #298: one build's worth on its path's metric (the --options bars
     and the #288 T6 parity for heroes). Gun paths: hero_gun_worth (Tracker x (1 + Dart
-    uptime)); Field Medic Triage / Muzzle: hero_dps until their #298 metrics land."""
+    uptime)); Field Medic Triage: heal per minute x radius (regen, tower repair x1.5, Second
+    Wind's resist as HP saved, 2 charges x1.1); Muzzle: lock-seconds + slow-seconds a minute
+    (lock spread counted, ~6 dinos in reach, bosses locked half)."""
     path = h["paths"][path_index]
-    if h["display"] == "Field Medic" and path["id"] in ("Triage", "Muzzle"):
-        return hero_dps(h, path_index, tier, picks)[1]
     s = export_constants.line(path, picks + "AA")[tier - 1]
     cdx = s.get("abilityCooldownMult") or 1
+    if path["id"] == "Triage" and h["abilityKind"] == "HEAL":
+        def g(f, d):
+            return s[f] if s.get(f) not in (None, "", 0, False) else d
+        casts = 60 / (h["abilityCooldown"] * cdx)
+        heal = h["abilityPower"] * g("healMult", 1) + g("healRegen", 0) * g("healRegenSeconds", 0)
+        guard = g("guardPercent", 0) / 100 * min(g("guardSeconds", 0), h["abilityCooldown"] * cdx) * TRIAGE_GUARD_HPS
+        towers = 1.5 if s.get("healRepairsTowers") else 1
+        charges = 1.1 if g("abilityCharges", 1) > 1 else 1
+        return casts * (heal * towers + guard) * g("healRadiusMult", 1) * charges
+    if path["id"] == "Muzzle" and h["abilityKind"] == "HEAL":
+        _, hits = hero_gun_worth(h, s, mix)
+        lock = (s.get("jawLockSeconds") or 0) * (1 + 0.15 * (s.get("jawLockSpread") or 0)) * (1 - mix["boss"] / 2)
+        locked = hits * lock / (1 + hits * lock / MUZZLE_REACH_DINOS)
+        slowed = hits * (s.get("slowPercent") or 0) / 100 * (s.get("slowSeconds") or 0) * (1 - mix["boss"])
+        return 60 * (locked + slowed)
     dart = min(1, TRACKER_DART_S / (HERO_ABILITY_BASE_CD * cdx)) if h["display"] == "Tracker" else 0
     rally = min(1, RALLY_S / (HERO_ABILITY_BASE_CD * cdx)) if h["display"] == "Big Game Hunter" else 0
     worth, _ = hero_gun_worth(h, s, mix, dart, rally)

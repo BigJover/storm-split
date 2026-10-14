@@ -555,7 +555,7 @@ test("the mastery perks carry their reviewed names and texts", function()
 	eq(Config.Mastery[15].unlock, "Ability cooldown -30%, plus this hero's mastery-15 ability perk", "mastery 15")
 end)
 
-local HERO_BC = { PISTOL = true, RIFLE = true, SHOTGUN = true } -- 9f, hero by hero
+local HERO_BC = { PISTOL = true, RIFLE = true, SHOTGUN = true, MEDIC = true } -- 9f, hero by hero
 
 test("T111: hero stats read each path's picks; a pick with no row is an error", function()
 	for key, hero in Config.Heroes do

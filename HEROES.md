@@ -208,8 +208,19 @@ Lever: full auto. Tranq Tips: hits slow dinos 20% for 1s. Double Dose: 30% for 1
 Lock: a hit dino can't bite or shoot for 2s (a dark strap across its snout). Long Dose:
 locked 3s. Lullaby Rounds: the lock spreads to dinos within 6 studs. Bosses ignore the slow
 and are locked for half as long. Tier 6: Rapid Response: the Triage Kit holds 2 charges.
-Bottomless Tube: magazine +50%, reload x0.5. Lights Out: Jaw Lock lasts 4s and spreads within 9
-studs; bosses still half.
+Bottomless Tube: magazine +50%, reload x0.5. Lights Out: Jaw Lock lasts at least 4 s and
+spreads within 9 studs; bosses still half.
+
+A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table's T4 / T5; names are working names until the Dino pass; every T6 works after any T5). Mending Salve (**Heal regen**, #302): everything the Triage Kit heals (hunters and, with Patch Up, standing towers) regains 2 HP/s for 8 s; flat, no hero levels; doesn't stack (the strongest wins, a recast refreshes it); own team only. Triple Cycle: 3-round bursts.
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Triage** | 4 | Triage Tent — Your Triage Kit heals a wider area | Thick Gauze — Triage Kit heals 55% more | Quick Kit — Triage Kit is ready a third sooner |
+| **Triage** | 5 | Second Wind — Everyone you heal takes less damage for a while | Mending Salve — Everything healed regains 2 HP/s for 8 s | Field Surgeon — Triage Kit is ready 22% sooner |
+| **Lever Action** | 4 | Smooth Action — Half the kick | Long Tube — Holds 80% more rounds | Snap Lever — Cycles 14% faster |
+| **Lever Action** | 5 | Runaway Lever — Goes full auto | Triple Cycle — 3-round bursts, cycling 33% faster | Steady Lever — 10% faster, half the kick, tighter aim |
+| **Muzzle** | 4 | Long Dose — Jaw Lock keeps a dino's jaws shut for longer | Quick Dose — Fire 12% faster; jaws locked 2.6 s | Strap Toss — Lock jumps 2 studs; hits slow dinos 40% |
+| **Muzzle** | 5 | Lullaby Rounds — Jaw Lock spreads to nearby dinos | Heavy Lids — Locked jaws stay shut 4.2 s | Drowsy Cloud — Lock spreads 4 studs; hits slow 40% for 2 s |
 
 ## Where the numbers live
 
