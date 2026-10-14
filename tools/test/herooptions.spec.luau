@@ -1,0 +1,192 @@
+--[[
+	Batch 9f (PLAN Phase 9, DECISIONS #298-#302): the hero B/C options. Each option's
+	composed row is the build under it plus exactly the cells PLAN gives (x columns
+	multiply, Fire mode / Burst count / Pellets replace, amounts take the higher, flags add);
+	no option touches Damage x; every tier 6 still works after any tier-5 pick (#300); and
+	the wirings PLAN lists (Twin Burst with dual guns, Slam Fire auto with 2 per pull, Twin
+	Slug, Bird Shot, Mending Salve's Heal regen).
+]]
+
+local Config = require(src.shared.Config)
+local HeroStats = require(src.shared.HeroStats)
+local Upgrades = require(src.shared.Upgrades)
+
+-- Heroes whose B/C rows are in (9f lands hero by hero).
+local DONE = { PISTOL = true }
+
+-- PLAN 9f, cell by cell: path, tier, letter, name, cells (own step).
+local OPTIONS = {
+	PISTOL = {
+		{ "Gunslinger", 4, "B", "Deep Cylinders", { rateMult = 1.15, magazineMult = 1.5 } },
+		{ "Gunslinger", 4, "C", "Crossdraw", { rateMult = 1.15, reloadMult = 0.65 } },
+		{ "Gunslinger", 5, "B", "Twin Burst", { rateMult = 1.3, fireMode = "burst", burstCount = 3, magazineMult = 1.3 } },
+		{ "Gunslinger", 5, "C", "Steady Pair", { rateMult = 1.1, recoilMult = 0.5, spreadMult = 0.8 } },
+		{ "Marksman", 4, "B", "Quick Cock", { rateMult = 1.2 } },
+		{ "Marksman", 4, "C", "Breath Control", { rangeMult = 1.35, recoilMult = 0.5 } },
+		{ "Marksman", 5, "B", "Quick Scope", { rateMult = 1.7, recoilMult = 0.7 } },
+		{ "Marksman", 5, "C", "Hunter's Mark", { markPercent = 35, spreadMult = 0.8 } },
+		{ "Trick Shot", 4, "B", "Bank Shot", { bounces = 2 } },
+		{ "Trick Shot", 4, "C", "Quick Fingers", { rateMult = 1.07, reloadMult = 0.7 } },
+		{ "Trick Shot", 5, "B", "Pinball", { rateMult = 1.17, bounces = 3, magazineMult = 1.5 } },
+		{ "Trick Shot", 5, "C", "Dart Storm", { rateMult = 1.15, abilityCooldownMult = 0.75, bounces = 3 } },
+	},
+	RIFLE = {
+		{ "Stalker", 4, "B", "Snap Bursts", { rateMult = 1.2 } },
+		{ "Stalker", 4, "C", "Quick Mag", { reloadMult = 0.75 } },
+		{ "Stalker", 5, "B", "Marking Burst", { rateMult = 1.1, burstCount = 4, markPercent = 25, magazineMult = 1.3 } },
+		{ "Stalker", 5, "C", "Rapid Volley", { rateMult = 1.35, recoilMult = 0.5, magazineMult = 1.5 } },
+		{ "Heavy", 4, "B", "Steady Sling", { recoilMult = 0.65 } },
+		{ "Heavy", 4, "C", "Quick Belt", { recoilMult = 0.8, reloadMult = 0.7 } },
+		{ "Heavy", 5, "B", "Hot Barrel", { rateMult = 1.5, spinUp = 1.6, magazineMult = 1.3 } },
+		{ "Heavy", 5, "C", "War Drum", { spinUp = 2.3, abilityCooldownMult = 0.5 } },
+		{ "Special Ammo", 4, "B", "Phosphor Rounds", { burnDps = 1.1, burnSeconds = 3 } },
+		{ "Special Ammo", 4, "C", "Bright Tracers", { markPercent = 30 } },
+		{ "Special Ammo", 5, "B", "Fire Tips", { splashRadius = 3, burnSeconds = 2.5 } },
+		{ "Special Ammo", 5, "C", "Flat Tips", { splashRadius = 3, rangeMult = 1.25 } },
+	},
+	SHOTGUN = {
+		{ "Slug", 4, "B", "Quick Pump", { rateMult = 1.25 } },
+		{ "Slug", 4, "C", "Side Saddle", { reloadMult = 0.8, magazineMult = 1.5 } },
+		{ "Slug", 5, "B", "Express Slug", { rateMult = 1.6, magazineMult = 1.5, pierce = 6 } },
+		{ "Slug", 5, "C", "Twin Slug", { shotsPerTrigger = 2, pierce = 4, magazineMult = 1.5 } },
+		{ "Buckshot", 4, "B", "Hot Shells", { burnDps = 2.3, burnSeconds = 3 } },
+		{ "Buckshot", 4, "C", "Shell Belt", { rateMult = 1.5, magazineMult = 1.5 } },
+		{ "Buckshot", 5, "B", "Flame Choke", { igniteShare = 0.9, rateMult = 1.2 } },
+		{ "Buckshot", 5, "C", "Pump Storm", { rateMult = 1.5, magazineMult = 1.5 } },
+		{ "Point Blank", 4, "B", "Quick Breech", { rateMult = 1.2, reloadMult = 0.65 } },
+		{ "Point Blank", 4, "C", "Bird Shot", { rateMult = 1.15, hitsAir = true } },
+		{ "Point Blank", 5, "B", "Breech Loader", { rateMult = 1.45, reloadMult = 0.6, magazineMult = 1.5 } },
+		{ "Point Blank", 5, "C", "Slam Fire", { rateMult = 1.7, fireMode = "auto" } },
+	},
+	MEDIC = {
+		{ "Triage", 4, "B", "Thick Gauze", { healMult = 1.55 } },
+		{ "Triage", 4, "C", "Quick Kit", { abilityCooldownMult = 0.67 } },
+		{ "Triage", 5, "B", "Mending Salve", { healRegen = 2, healRegenSeconds = 8 } },
+		{ "Triage", 5, "C", "Field Surgeon", { abilityCooldownMult = 0.78 } },
+		{ "Lever Action", 4, "B", "Long Tube", { magazineMult = 1.8 } },
+		{ "Lever Action", 4, "C", "Snap Lever", { rateMult = 1.14 } },
+		{ "Lever Action", 5, "B", "Triple Cycle", { burstCount = 3, rateMult = 1.33 } },
+		{ "Lever Action", 5, "C", "Steady Lever", { rateMult = 1.1, recoilMult = 0.5, spreadMult = 0.6 } },
+		{ "Muzzle", 4, "B", "Quick Dose", { jawLockSeconds = 2.6, rateMult = 1.12 } },
+		{ "Muzzle", 4, "C", "Strap Toss", { slowPercent = 40, jawLockSpread = 2 } },
+		{ "Muzzle", 5, "B", "Heavy Lids", { jawLockSeconds = 4.2 } },
+		{ "Muzzle", 5, "C", "Drowsy Cloud", { slowPercent = 40, slowSeconds = 2, jawLockSpread = 4 } },
+	},
+}
+
+local MULT = {
+	rateMult = true, magazineMult = true, reloadMult = true, spreadMult = true, recoilMult = true,
+	rangeMult = true, damageMult = true, markedDamageMult = true, abilityCooldownMult = true,
+	stillRecoilMult = true, spinUp = true, healMult = true, healRadiusMult = true,
+	stillSpreadMult = true, scopedSpreadMult = true,
+}
+local SET = { fireMode = true, burstCount = true, pellets = true }
+
+local function pathOf(key: string, id: string): (any, number)
+	for i, path in Config.Heroes[key].paths do
+		if path.id == id then
+			return path, i
+		end
+	end
+	error(`{key} has no path {id}`)
+end
+
+local function close(a: number, b: number, tolerance: number?): boolean
+	return math.abs(a - b) <= (tolerance or 1e-5) * math.max(1, math.abs(b))
+end
+
+local function stats(key: string, id: string, tier: number, picks: string): HeroStats.Stats
+	local _, i = pathOf(key, id)
+	local tiers, all = { 0, 0, 0 }, { "", "", "" }
+	tiers[i], all[i] = tier, picks
+	return HeroStats.compute(key, tiers, nil, nil, all) :: HeroStats.Stats
+end
+
+test("9f options: each row is the build under it plus PLAN's cells, nothing else; never Damage x", function()
+	local seen = 0
+	for key in DONE do
+		for _, o in OPTIONS[key] do
+			local id, tier, letter, name, cells = o[1], o[2], o[3], o[4], o[5]
+			local path = pathOf(key, id)
+			local row = Upgrades.row(path, tier, if tier == 4 then letter else "A" .. letter)
+			local below = if tier == 4 then Upgrades.row(path, 3) else Upgrades.row(path, 4, "A")
+			local where = `{key} {id} {tier}{letter}`
+			ok(row ~= nil, `{where}: has a row`)
+			eq(row.name, name, `{where}: name`)
+			eq(row.option, letter, `{where}: letter`)
+			eq(row.cost, Upgrades.row(path, tier, if tier == 4 then "A" else "AA").cost, `{where}: same price as A (#277)`)
+			eq(cells.damageMult, nil, `{where}: no Damage x (DIRECTION)`)
+			eq(row.damageMult, below.damageMult, `{where}: Damage x unchanged`)
+			for field, value in below do
+				local cell = cells[field]
+				if type(value) == "number" and field ~= "cost" then
+					local want = if MULT[field] then value * (cell or 1) elseif SET[field] then (cell or value) elseif cell then math.max(value, cell) else value
+					ok(close(row[field], want), `{where}: {field} {row[field]} ~= {want}`)
+				elseif type(value) == "boolean" and field ~= "swapsModel" then
+					eq(row[field], value or cells[field] == true, `{where}: {field}`)
+				elseif field == "fireMode" then
+					eq(row[field], cell or value, `{where}: fire mode`)
+				end
+			end
+			for field in cells do
+				ok(below[field] ~= nil, `{where}: {field} is a Hero Upgrades column`)
+			end
+			seen += 1
+		end
+		for _, path in Config.Heroes[key].paths do
+			eq(table.concat(Upgrades.options(path, 4, ""), ""), "ABC", `{key} {path.id} T4`)
+			for _, o4 in { "A", "B", "C" } do
+				eq(table.concat(Upgrades.options(path, 5, o4), ""), "ABC", `{key} {path.id} T5 after {o4}`)
+			end
+		end
+	end
+	ok(seen >= 12, `options checked ({seen})`)
+end)
+
+test("9f: every tier 6 still works after any tier-5 pick, its own step on top (#300)", function()
+	for key in DONE do
+		for _, path in Config.Heroes[key].paths do
+			local five, six = Upgrades.row(path, 5, "AA"), Upgrades.row(path, 6, "AA")
+			for _, a in { "A", "B", "C" } do
+				for _, b in { "A", "B", "C" } do
+					local picks = a .. b
+					local where = `{key} {path.id} 6{picks}`
+					local r5, r6 = Upgrades.row(path, 5, picks), Upgrades.row(path, 6, picks)
+					ok(r5 ~= nil and r6 ~= nil, `{where}: composes`)
+					eq(r6.name, six.name, `{where}: the T6`)
+					for field, v6 in six do
+						local v5 = five[field]
+						if field ~= "cost" and field ~= "name" and v6 ~= v5 then
+							if type(v6) == "boolean" then
+								eq(r6[field], true, `{where}: {field}`)
+							elseif MULT[field] then
+								ok(close(r6[field], r5[field] * v6 / v5, 1e-3), `{where}: {field} x{v6 / v5}`) -- Config keeps 4 decimals
+							elseif SET[field] or type(v6) == "string" then
+								eq(r6[field], v6, `{where}: {field}`)
+							else
+								ok(close(r6[field], math.max(r5[field], v6)), `{where}: {field} >= {v6}`)
+							end
+						end
+					end
+					local _, i = pathOf(key, path.id)
+					local tiers, all = { 0, 0, 0 }, { "", "", "" }
+					tiers[i], all[i] = 6, picks
+					ok(HeroStats.compute(key, tiers, nil, nil, all) ~= nil, `{where}: hero stats`)
+				end
+			end
+		end
+	end
+end)
+
+test("9f Tracker: Twin Burst fires 3-round bursts from two guns; Hot Swap still staggers; Hunter's Mark marks", function()
+	local twin = stats("PISTOL", "Gunslinger", 5, "AB")
+	eq(twin.fireMode, "burst", "Twin Burst is burst fire")
+	eq(twin.burstCount, 3, "3 rounds a click")
+	eq(twin.guns, 2, "both guns (Dual Pistols)")
+	local swap = stats("PISTOL", "Gunslinger", 6, "AB")
+	ok(swap.staggeredReload and swap.fireMode == "burst" and swap.burstCount == 3, "Hot Swap after Twin Burst: staggered, still 3-round bursts")
+	eq(stats("PISTOL", "Gunslinger", 6, "CC").fireMode, "semi", "Hot Swap after Steady Pair: semi, as the base")
+	eq(stats("PISTOL", "Marksman", 5, "AC").markPercent, 35, "Hunter's Mark: Mark % 35")
+	ok(close(stats("PISTOL", "Trick Shot", 5, "AC").abilityCooldown, stats("PISTOL", "Trick Shot", 4, "A").abilityCooldown * 0.75), "Dart Storm: Tracking Dart sooner")
+	eq(stats("PISTOL", "Trick Shot", 6, "BB").bounces, 3, "Bounce Back after Pinball keeps 3 bounces")
+end)

@@ -42,6 +42,7 @@ end)
 
 -- Paths whose B/C options are in (PLAN 9c: the starters; 9d: Tranq, Supply, Hospital, Armory; 9e: the round-4 four);
 -- every other path is still A only.
+local HERO_BC = { PISTOL = true } -- 9f, hero by hero
 local WITH_BC = { SCOUT = true, SNIPER = true, GRENADIER = true, CHILLER = true, QUARTERMASTER = true, HOSPITAL = true, ARMORY = true, COIL = true, FALCON = true, TARPIT = true, BALLISTA = true }
 
 test("every tier-4/5 pick shows its options' cards (A only, or A/B/C for 9c), each one the server takes", function()
@@ -49,7 +50,8 @@ test("every tier-4/5 pick shows its options' cards (A only, or A/B/C for 9c), ea
 	everyPath(function(where, def, i)
 		local path = def.paths[i]
 		local tower = string.match(where, "^(%u[%u_]*) path") -- nil for a hero
-		local letters = if tower and WITH_BC[tower] then "ABC" else "A"
+		local hero = string.match(where, "^hero (%u+) path")
+		local letters = if (tower and WITH_BC[tower]) or (hero and HERO_BC[hero]) then "ABC" else "A"
 		for _, step in { { 4, "" }, { 5, "A" } } do
 			local nextTier, picks = step[1], step[2]
 			local cards = OptionPick.cards(path, nextTier, picks)
@@ -82,7 +84,11 @@ test("every tier-4/5 pick shows its options' cards (A only, or A/B/C for 9c), ea
 		end
 	end)
 	ok(slots >= 90, `every slot seen ({slots})`)
-	eq(threeWay, 66, "the 33 tower paths with B/C (9 starter, 12 of 9d, 12 of 9e) offer A/B/C at their 66 slots")
+	local heroes = 0
+	for _ in HERO_BC do
+		heroes += 1
+	end
+	eq(threeWay, 66 + 6 * heroes, "the 33 tower paths with B/C (9 starter, 12 of 9d, 12 of 9e) and 3 per 9f hero offer A/B/C at their slots")
 end)
 
 test("three options: three cards in order, none chosen until one is tapped", function()

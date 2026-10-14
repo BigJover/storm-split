@@ -122,6 +122,17 @@ Tier 6 (final names, DECISIONS #133, #174–#175): Hot Swap: the two guns reload
 never stops; reload x0.8. Heart Shot: scoped shots have no spread and shrink a dino 2 sizes. Bounce
 Back: each ricochet take-down puts a round back in the cylinder.
 
+A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table's T4 / T5; names are working names until the Dino pass; every T6 works after any T5). Twin Burst: each click is 3 rounds, alternating the two guns (Hot Swap still staggers). Hunter's Mark: hits mark dinos (+35% from everything).
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Gunslinger** | 4 | Fan the Hammer — Fires faster and reloads quicker | Deep Cylinders — Both guns hold 50% more and fire 15% faster | Crossdraw — Reload 35% faster, fire 15% faster |
+| **Gunslinger** | 5 | Akimbo Frenzy — Both guns go full-auto | Twin Burst — Each click fires a 3-round burst, 30% faster | Steady Pair — Half the kick, tighter aim, 10% faster |
+| **Marksman** | 4 | Hollow Tips — Shots pierce armour | Quick Cock — Fire 20% faster, scope and all | Breath Control — Half the kick; the scope reaches 35% further |
+| **Marksman** | 5 | Deadshot — Triple damage to marked dinos | Quick Scope — Fire 70% faster with 30% less kick | Hunter's Mark — Hits mark dinos: +35% from everything |
+| **Trick Shot** | 4 | Quick Dart — Your Tracking Dart is ready again sooner | Bank Shot — Ricochets bounce twice | Quick Fingers — Reload 30% faster, fire a bit faster |
+| **Trick Shot** | 5 | Chain Shot — Shots bounce 4 times | Pinball — 3 bounces, a bigger cylinder, faster shots | Dart Storm — 3 bounces, faster shots, Tracking Dart sooner |
+
 ### Big Game Hunter (hunting rifle) — Sustained · ability **Rally Cry** (your fire rate up, nearby towers faster)
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 | T6 |

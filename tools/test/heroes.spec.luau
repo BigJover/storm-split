@@ -555,13 +555,21 @@ test("the mastery perks carry their reviewed names and texts", function()
 	eq(Config.Mastery[15].unlock, "Ability cooldown -30%, plus this hero's mastery-15 ability perk", "mastery 15")
 end)
 
+local HERO_BC = { PISTOL = true } -- 9f, hero by hero
+
 test("T111: hero stats read each path's picks; a pick with no row is an error", function()
 	for key, hero in Config.Heroes do
 		local a = HeroStats.compute(key, { 6, 2, 0 }, nil, nil, { "AA", "", "" }) :: any
 		local none = HeroStats.compute(key, { 6, 2, 0 }) :: any
 		eq(a.damage, none.damage, `{key} 6/2/0 picks AA = no picks`)
 		eq(a.rate, none.rate, `{key} 6/2/0 rate`)
-		ok(not pcall(HeroStats.compute, key, { 6, 2, 0 }, nil, nil, { "AB", "", "" }), `{key}: no B/C rows yet`)
+		if HERO_BC[key] then
+			local bc = HeroStats.compute(key, { 6, 2, 0 }, nil, nil, { "BC", "", "" })
+			ok(bc ~= nil, `{key}: 6BC composes (9f)`)
+		else
+			ok(not pcall(HeroStats.compute, key, { 6, 2, 0 }, nil, nil, { "AB", "", "" }), `{key}: no B/C rows yet`)
+		end
+		ok(not pcall(HeroStats.compute, key, { 6, 2, 0 }, nil, nil, { "AD", "", "" }), `{key}: a pick with no row`)
 		ok(not pcall(HeroStats.compute, key, { 4, 0, 0 }, nil, nil, { "", "", "" }), `{key}: tier 4 needs a pick`)
 		ok(hero.paths[1].t6.AA ~= nil, `{key} tier 6 composed on 5AA`)
 	end

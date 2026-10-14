@@ -961,6 +961,69 @@ def hero_dps(h, path_index, tier, picks=""):
     return peak, peak * empty / (empty + reload)
 
 
+HERO_ABILITY_BASE_CD = 45  # s, the Tracking Dart / Rally Cry cooldown the #298 uptimes assume
+TRACKER_DART_S, RALLY_S = 8, 10  # s each ability lasts (#298)
+
+
+def hero_gun_worth(h, s, mix, dart=0.0, rally=0.0):
+    """PLAN 9f / DECISIONS #298, a gun path's worth on one composed build `s` (r31-40 mix):
+    (DPS x Hit + Burn) x Targets x Hurt x Reach x Amp x Hold x Breaks. Returns (worth, hits/s).
+    Burst count is rounds per click, never extra rounds (hero_dps counted it twice)."""
+    def g(f, d):
+        return s[f] if s.get(f) not in (None, "", 0, False) else d
+    guns = max(1, g("guns", 1))
+    spin = g("spinUp", 1)
+    mag = max(1, math.floor(h["magazine"] * g("magazineMult", 1) * guns + 0.5))
+    reload = h["reload"] * g("reloadMult", 1)
+    rps0 = h["rate"] * g("rateMult", 1) * guns * (1 + 0.4 * rally)
+    e_full = 10 if s.get("spunUpBelt") else mag / (rps0 * spin)
+    rps = rps0 * (1 + (spin - 1) * e_full / (e_full + 1))
+    empty = mag / rps
+    if s.get("spunUpBelt"):
+        f = 1.0
+    elif s.get("staggeredReload") and guns >= 2:
+        share = (mag // guns) / rps
+        f = share / max(share, reload)
+    else:
+        f = empty / (empty + reload)
+    if s.get("beltFed"):
+        f = rally + (1 - rally) * f
+    dps = h["damage"] * g("damageMult", 1) * h["pellets"] * max(1, g("shotsPerTrigger", 1)) * rps * f
+    spread = g("spreadMult", 1) * (0.5 + 0.5 * s["stillSpreadMult"] if s.get("stillSpreadMult") not in (None, 1) else 1)
+    if s.get("scope") and s.get("scopedSpreadMult") not in (None, 1):
+        spread *= 0.5 + 0.5 * s["scopedSpreadMult"]
+    recoil = g("recoilMult", 1) * (0.5 + 0.5 * s["stillRecoilMult"] if s.get("stillRecoilMult") not in (None, 1) else 1)
+    if s.get("burstRecoilReset"):
+        recoil *= 0.7
+    hit = max(0.4, 1 - 0.3 * math.sqrt(spread * recoil))
+    burn = g("burnDps", 0) * g("burnSeconds", 0) + (g("igniteShare", 0) * dps * 0.6 if g("igniteSeconds", 0) else 0)
+    targets = (1 + 0.5 * (max(1, g("pierce", 1)) - 1)) * (1 + 0.5 * g("bounces", 0)) * (1 + 0.12 * g("splashRadius", 0))
+    hurt = 1 - mix["armoured"] * (not (s.get("piercesArmor") or h["piercesArmor"])) - mix["flying"] * (not (s.get("hitsAir") or h["hitsAir"]))
+    reach = g("rangeMult", 1) ** 0.3
+    marked = min(1, dart + (0.3 if g("markPercent", 0) else 0))
+    amp = (1 + g("markPercent", 0) / 100) * (1 + (g("markedDamageMult", 1) - 1) * marked)
+    hits = rps * f * hit
+    burst = g("burstCount", 1) if s.get("fireMode") == "burst" else 1
+    hold = 1 + hits / max(1, burst) * g("knockback", 0) / 8 * (1 - mix["boss"])
+    breaks = 1 + 0.2 * (max(1, g("sizeBreaks", 1)) - 1)
+    return (dps * hit + burn) * targets * hurt * reach * amp * hold * breaks, hits
+
+
+def hero_worth(h, path_index, tier, picks, mix):
+    """PLAN 9f / DECISIONS #298: one build's worth on its path's metric (the --options bars
+    and the #288 T6 parity for heroes). Gun paths: hero_gun_worth (Tracker x (1 + Dart
+    uptime)); Field Medic Triage / Muzzle: hero_dps until their #298 metrics land."""
+    path = h["paths"][path_index]
+    if h["display"] == "Field Medic" and path["id"] in ("Triage", "Muzzle"):
+        return hero_dps(h, path_index, tier, picks)[1]
+    s = export_constants.line(path, picks + "AA")[tier - 1]
+    cdx = s.get("abilityCooldownMult") or 1
+    dart = min(1, TRACKER_DART_S / (HERO_ABILITY_BASE_CD * cdx)) if h["display"] == "Tracker" else 0
+    rally = min(1, RALLY_S / (HERO_ABILITY_BASE_CD * cdx)) if h["display"] == "Big Game Hunter" else 0
+    worth, _ = hero_gun_worth(h, s, mix, dart, rally)
+    return worth * (1 + dart)
+
+
 def hero_lines(data, rows, mixes):
     tuning = data["Tuning"]
     per = int(tuning.get("RoundsPerLevel", 5))
@@ -1294,7 +1357,7 @@ def option_report(data):
             cells = []
             for label, before, tier in option_slots(path):
                 letters = slot_letters(path, tier, before)
-                worths = {o: hero_dps(h, pi, tier, before + o)[1] for o in letters}
+                worths = {o: hero_worth(h, pi, tier, before + o, late) for o in letters}
                 slots += 1
                 choice += len(letters) > 1
                 cells.append(f"{tier}{before}:" + "/".join(f"{o} {fmt(w)}" for o, w in worths.items()))
@@ -1302,7 +1365,7 @@ def option_report(data):
                     name = (path["t4"][o] if tier == 4 else path["t5"][before + o])["name"]
                     note(f"OPTIONS: {h['display']} {path['id']} {label} {o} {name}: {why} (#280)", len(letters) > 1)
             top = top_tier(h, pi)
-            builds = {picks: hero_dps(h, pi, top, picks)[1] for picks in path["t6"]}
+            builds = {picks: hero_worth(h, pi, top, picks, late) for picks in path["t6"]}
             why = parity_bar(builds)
             if why:
                 note(f"PARITY: {h['display']} {path['id']} T{top} builds: {why} (#280, #235)", path_choice)
@@ -1312,7 +1375,7 @@ def option_report(data):
     head = [f"A/B/C options (PLAN T113, #280, #284): {slots} slots, {choice} with a choice (bars enforced there);"
             f" each option {OPTION_LO:g}-{OPTION_HI:g}x its slot median, Raider dino part >= {RAIDER_FLOOR:g}x the others,"
             f" worth caps M = {fmt(m)}, hero T6 builds within {HERO_PARITY:g}",
-            "  worth on each path's metric, r31-40 (towers) / sustained DPS (heroes): <tier><letters before>: <option> <worth>"]
+            "  worth on each path's metric, r31-40 (towers and heroes, #298): <tier><letters before>: <option> <worth>"]
     return head + lines, findings, enforced
 
 
