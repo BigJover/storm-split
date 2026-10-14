@@ -96,6 +96,7 @@ export type Stats = {
 	stillSpreadMult: number, -- Thunder Slug: spread x while standing still
 	scopedSpreadMult: number, -- Heart Shot: spread x while scoped
 	abilityCharges: number, -- Rapid Response
+	oneRoundPerTrigger: boolean, -- Twin Slug (T120b, #323): every shot of a trigger from one round
 }
 
 export type Perk = {
@@ -154,7 +155,7 @@ local HIGHEST = {
 	"ricochetReload",
 	"abilityCharges",
 }
-local FLAGS = { "piercesArmor", "hitsAir", "beltFed", "scope", "healRepairsTowers", "staggeredReload", "burstRecoilReset", "spunUpBelt" }
+local FLAGS = { "piercesArmor", "hitsAir", "beltFed", "scope", "healRepairsTowers", "staggeredReload", "burstRecoilReset", "spunUpBelt", "oneRoundPerTrigger" }
 
 export type Gear = { recoilMult: number, reloadMult: number, spreadMult: number, ratePercent: number }
 
@@ -327,6 +328,7 @@ function HeroStats.compute(heroKey: string, tiers: { number }, gear: Gear?, mast
 		stillSpreadMult = mult.stillSpreadMult,
 		scopedSpreadMult = mult.scopedSpreadMult,
 		abilityCharges = math.max(1, math.floor(high.abilityCharges or 1)),
+		oneRoundPerTrigger = flag.oneRoundPerTrigger == true,
 	}
 end
 

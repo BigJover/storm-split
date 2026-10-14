@@ -581,6 +581,8 @@ HERO_UPGRADE_COLUMNS = [
     # Heal regen (PLAN 9f, DECISIONS #302): after Option / Blurb (BB, BC). Mending Salve.
     ("healRegen", 56, "num", 0),  # Heal regen HP/s: everything the Triage Kit heals regains this
     ("healRegenSeconds", 57, "num", 0),  # Heal regen (s)
+    # Twin Slug (PLAN T120b, DECISIONS #323): every shot of a trigger comes from one round.
+    ("oneRoundPerTrigger", 58, "bool", False),
 ]
 
 # Every hero path has this many tiers (DECISIONS #133: "the same amount of upgrades on

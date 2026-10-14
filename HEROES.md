@@ -177,14 +177,14 @@ Shells: explode on impact. Tier 6: Thunder Slug: slugs shrink a dino 2 sizes; no
 standing still. Wildfire Drum: Dragon's Breath's burning ground 4 studs wide (from 3); holds
 +50% shells. Quad Barrel: four blasts per trigger (from two); reload 1.25x longer.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table's T4 / T5; names are working names until the Dino pass; every T6 works after any T5). Twin Slug: two slugs per pump, each through 4 (rounds per pump as Double Barrel). Slam Fire: full-auto, both barrels each pull (four with Quad Barrel). Bird Shot: blasts hit flying dinos.
+A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table's T4 / T5; names are working names until the Dino pass; every T6 works after any T5). Twin Slug: two slugs per pump, each through 4, both from one round (a pump spends 1 round; Double Barrel spends 2; T120b, #323). Slam Fire: full-auto, both barrels each pull (four with Quad Barrel). Bird Shot: blasts hit flying dinos.
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
 | **Slug** | 4 | Long Barrel — Tighter, longer slugs that go through 3 dinos | Quick Pump — Pump 25% faster | Side Saddle — Holds 50% more slugs, loads 20% faster |
 | **Slug** | 5 | Railslug — Slugs go through 6 dinos | Express Slug — Slugs through 6, 60% faster, bigger tube | Twin Slug — Two slugs per pump, each through 4 |
 | **Buckshot** | 4 | Auto-Loader — Fires faster and reloads quicker | Hot Shells — Fires burn more than twice as hot | Shell Belt — Pump 50% faster; holds 50% more |
-| **Buckshot** | 5 | Thicket Sweeper — A full-auto drum | Flame Choke — Dragon's Breath bursts for 70% of a shot | Pump Storm — Pump 50% faster, bigger tube |
+| **Buckshot** | 5 | Thicket Sweeper — A full-auto drum | Flame Choke — Dragon's Breath bursts for 90% of a shot | Pump Storm — Pump 50% faster, bigger tube |
 | **Point Blank** | 4 | Kickback — Blasts knock dinos back | Quick Breech — Reload 35% faster, fire 20% faster | Bird Shot — Blasts hit flying dinos; fire 15% faster |
 | **Point Blank** | 5 | Frag Shells — Shells explode on impact | Breech Loader — 45% faster, bigger tube, quick reload | Slam Fire — Hold to keep both barrels firing, 70% faster |
 

@@ -300,11 +300,10 @@ closeButton.Modal = true
 closeButton.Parent = header
 corner(closeButton, 6)
 
--- The rows scroll inside a box capped at LIST_MAX_SCREEN of the screen height,
+-- The rows scroll inside a box capped at OptionPick.LIST_MAX_SCREEN of the screen height,
 -- so however many rows a panel has (Unlocks & Mastery has a dozen), its header
 -- and the X button always stay on screen. A panel you can't close leaves the
 -- mouse unlocked and the game unplayable.
-local LIST_MAX_SCREEN = 0.55
 
 local list = Instance.new("ScrollingFrame")
 list.Name = "List"
@@ -401,10 +400,15 @@ end)
 local pick: OptionPick.Pick? = nil
 local pickCount = 0
 
+-- The build-phase buttons are up: a panel keeps its top under them (PLAYTEST N20).
+local function buildHud(): boolean
+	return heroButton.Visible or masteryButton.Visible
+end
+
 local function fit()
 	local viewport = workspace.CurrentCamera.ViewportSize
 	if pick then
-		local shape = OptionPick.layout(viewport.X, viewport.Y, pickCount)
+		local shape = OptionPick.layout(viewport.X, viewport.Y, pickCount, buildHud())
 		panelScale.Scale = shape.scale
 		panel.Size = UDim2.fromOffset(shape.width, 0)
 		list.Size = UDim2.new(1, 0, 0, shape.listHeight)
@@ -413,14 +417,15 @@ local function fit()
 		return
 	end
 	panelScale.Scale = 1
-	local content = listLayout.AbsoluteContentSize.Y
-	local cap = math.floor(viewport.Y * LIST_MAX_SCREEN)
-	list.Size = UDim2.new(1, 0, 0, math.min(content, cap))
+	-- Capped at LIST_MAX_SCREEN of the window and kept under Choose hero / Unlocks (N20).
+	list.Size = UDim2.new(1, 0, 0, OptionPick.listHeight(viewport.Y, listLayout.AbsoluteContentSize.Y, buildHud()))
 	-- Narrow screens (a phone held upright): keep the X on screen too.
 	panel.Size = UDim2.fromOffset(math.min(PANEL_WIDTH, viewport.X - PANEL_EDGE * 2), 0)
 end
 listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fit)
 workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
+heroButton:GetPropertyChangedSignal("Visible"):Connect(fit)
+masteryButton:GetPropertyChangedSignal("Visible"):Connect(fit)
 fit()
 
 local message = Instance.new("TextLabel")

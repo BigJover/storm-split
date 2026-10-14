@@ -351,8 +351,25 @@ end
 
 local stungAt: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any -- last Raider sting, per hunter
 
+local POOL_STEP = 3 -- studs between a pool's drawn (and sting-measured) points
+
+-- A Raider tower's sting reach (#321): its range, but an on-track tower (Bog Boots) stings
+-- only within Pool sting reach of the nearest point of its pool (current length).
+local function stingCovers(source: Tower, point: Vector3): boolean
+	if not source.def.onTrack then
+		return covers(source, point)
+	end
+	local points = {}
+	for _, d in TarPit.samples(source.poolAt, source.stats.range, POOL_STEP) do
+		table.insert(points, Enemies.pointAt(d, source.side))
+	end
+	return TarPit.nearPool(point, points, Config.Tuning.PoolStingReachStuds)
+end
+
 -- The towers with any of `fields` > 0, as Shared/TowerPerks sees them from `point`.
-local function perkSources(point: Vector3, fields: { string }): { TowerPerks.Source }
+-- `reach`: how a source covers the point (default its range, `covers`).
+local function perkSources(point: Vector3, fields: { string }, reach: ((Tower, Vector3) -> boolean)?): { TowerPerks.Source }
+	local covered = reach or covers
 	local out = {}
 	for _, source in towers do
 		local has = false
@@ -360,7 +377,7 @@ local function perkSources(point: Vector3, fields: { string }): { TowerPerks.Sou
 			has = has or ((source.stats :: any)[field] or 0) > 0
 		end
 		if has then
-			table.insert(out, { side = source.side, standing = not source.knockedOut, covers = covers(source, point), stats = source.stats })
+			table.insert(out, { side = source.side, standing = not source.knockedOut, covers = covered(source, point), stats = source.stats })
 		end
 	end
 	return out
@@ -377,7 +394,7 @@ local function stingRaider(tower: Tower, hunter: Player)
 	if not (root and root:IsA("BasePart")) then
 		return
 	end
-	local sources = perkSources(root.Position, RAIDER_FIELDS)
+	local sources = perkSources(root.Position, RAIDER_FIELDS, stingCovers)
 	if #sources == 0 then
 		return
 	end
@@ -547,7 +564,6 @@ end
 
 ------------------------------------------------------------------ Tar Pit pool
 
-local POOL_STEP = 3 -- visuals only: studs between the pool's drawn points
 
 -- The range ring: a Tar Pit's range is its pool's length of track, drawn as the pool
 -- itself, so it only gets a ring when it has an aura (Tar Totem).
@@ -720,6 +736,15 @@ function Towers.setPicksForStandIn(tower: Tower, pathIndex: number, letters: str
 	end
 	for i = 1, #letters do
 		done = done and Towers.upgrade(tower, pathIndex, string.sub(letters, i, i))
+	end
+	-- Publish the build as Shop does on a purchase (F10): the panel, the tier label and
+	-- Inspect read the body's Path<n> / Picks<n>.
+	local body = tower.model.PrimaryPart
+	if body then
+		for i, tier in tower.pathTiers do
+			body:SetAttribute(`Path{i}`, tier)
+			body:SetAttribute(`Picks{i}`, tower.pathPicks[i])
+		end
 	end
 	return done
 end

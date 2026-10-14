@@ -101,6 +101,25 @@ function TarPit.tick(timer: number, dt: number, every: number): (number, boolean
 	return timer, false
 end
 
+-- Raider sting reach of an on-track tower (PLAN T120b, DECISIONS #321): is `point` within
+-- `reach` studs (flat, X/Z) of the nearest point of the pool drawn through `points` (the
+-- pool's track points in order, its current length)? Measured to the polyline, not the
+-- pool's length along the track.
+function TarPit.nearPool(point: Vector3, points: { Vector3 }, reach: number): boolean
+	local px, pz = point.X, point.Z
+	for i, a in points do
+		local b = points[i + 1] or a
+		local dx, dz = b.X - a.X, b.Z - a.Z
+		local len2 = dx * dx + dz * dz
+		local t = if len2 > 0 then math.clamp(((px - a.X) * dx + (pz - a.Z) * dz) / len2, 0, 1) else 0
+		local ox, oz = px - (a.X + dx * t), pz - (a.Z + dz * t)
+		if ox * ox + oz * oz <= reach * reach then
+			return true
+		end
+	end
+	return false
+end
+
 -- Distances along the track to draw a pool at, about `step` studs apart, both ends included.
 function TarPit.samples(at: number, length: number, step: number): { number }
 	local n = math.max(1, math.ceil(length / math.max(0.5, step)))

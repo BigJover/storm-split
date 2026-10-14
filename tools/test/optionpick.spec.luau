@@ -227,3 +227,41 @@ test("a single card is one full-width card, never a tall one", function()
 		eq(shape.content, OptionPick.CARD_FLAT, `{window[1]}: one card high`)
 	end
 end)
+
+test("N20 (T120b, no-trap rule): with Choose hero / Unlocks & Mastery up, the panel stays under them on every window that can fit it", function()
+	-- The buttons' bottoms as Shop.client places them (top-anchored, centred).
+	local shop = require("@lune/fs").readFile("src/client/Shop.client.luau")
+	local function bottom(name: string): number
+		local at = shop:find(`{name}.Position = UDim2.new(0.5, 0, 0, `, 1, true)
+		assert(at, name)
+		local y = tonumber(shop:match("UDim2%.new%(0%.5, 0, 0, (%d+)%)", at))
+		local h = tonumber(shop:match("UDim2%.fromOffset%(%d+, (%d+)%)", at))
+		return (y :: number) + (h :: number)
+	end
+	local lowest = math.max(bottom("heroButton"), bottom("masteryButton"))
+	ok(OptionPick.BUILD_HUD_BOTTOM >= lowest, `the reserve {OptionPick.BUILD_HUD_BOTTOM} clears the buttons ({lowest})`)
+	for _, window in WINDOWS do
+		local x, y = window[1], window[2]
+		local top = OptionPick.top(y, true)
+		-- The plain panel (no pick), with far more rows than fit.
+		local list = OptionPick.listHeight(y, 5000, true)
+		local panelTop = y - OptionPick.BOTTOM - OptionPick.CHROME - list
+		ok(panelTop >= top - 1e-6, `{x}x{y}: panel top {panelTop} under {top}`)
+		ok(list <= math.floor(y * OptionPick.LIST_MAX_SCREEN), `{x}x{y}: list capped`)
+		if top == OptionPick.BUILD_HUD_BOTTOM then
+			ok(panelTop >= lowest, `{x}x{y}: clear of the buttons`)
+			ok(list >= OptionPick.LIST_ROOM_MIN, `{x}x{y}: at least {OptionPick.LIST_ROOM_MIN} px of rows`)
+			for count = 1, 3 do
+				local shape = OptionPick.layout(x, y, count, true)
+				ok(y - OptionPick.BOTTOM - shape.height * shape.scale >= lowest - 1e-6, `{x}x{y}, {count} card(s): the pick clears the buttons`)
+				ok(shape.listHeight >= shape.cardHeight - 1e-6, `{x}x{y}, {count}: a whole card shows`)
+			end
+		else
+			ok(y - OptionPick.BUILD_HUD_BOTTOM - OptionPick.BOTTOM - OptionPick.CHROME < OptionPick.LIST_ROOM_MIN, `{x}x{y}: whole window only when too short`)
+		end
+	end
+	eq(OptionPick.listHeight(1080, 200, true), 200, "a short panel keeps its own height")
+	eq(OptionPick.top(1080, false), OptionPick.TOP, "no buttons: the whole window as before")
+	eq(OptionPick.listHeight(720, 5000, false), math.floor(720 * OptionPick.LIST_MAX_SCREEN), "no buttons: the old cap")
+	ok(OptionPick.listHeight(720, 5000, true) < OptionPick.listHeight(720, 5000, false), "720 high: the list shrinks under the buttons (the Run 9 overlap)")
+end)

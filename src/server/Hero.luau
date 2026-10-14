@@ -156,8 +156,8 @@ type Guard = { percent: number, untilTime: number }
 local playerGuards: { [Player]: Guard } = {}
 local towerGuards: { [any]: Guard } = setmetatable({}, { __mode = "k" }) :: any
 -- Heal regen (PLAN 9f, #302, Mending Salve): who regains HP over time after a Triage Kit.
-local playerRegens: { [Player]: Combat.Regen } = {}
-local towerRegens: { [any]: Combat.Regen } = setmetatable({}, { __mode = "k" }) :: any
+local playerRegens: { [Player]: Combat.Regen? } = {}
+local towerRegens: { [any]: Combat.Regen? } = setmetatable({}, { __mode = "k" }) :: any
 
 ------------------------------------------------------------------ state
 
@@ -845,7 +845,7 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 	s.bloom = math.min(stats.recoilMax, s.bloom + recoil)
 
 	if GunRules.usesRounds(stats, overdrive, spinProgress) then
-		s.ammo = math.max(0, s.ammo - stats.shotsPerTrigger)
+		s.ammo = math.max(0, s.ammo - GunRules.roundsPerTrigger(stats))
 	end
 	s.ammo = GunRules.ricochetRefill(stats, s.ammo, ricochetTakeDowns)
 	publish(player)

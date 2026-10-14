@@ -56,6 +56,13 @@ OptionPick.BOTTOM = 24 -- the panel sits this far above the window's bottom
 OptionPick.TOP = 44 -- Roblox's top bar
 OptionPick.LIST_MAX_SCREEN = 0.55 -- the scroll box never takes more of the window than this
 OptionPick.MIN_SCALE = 0.4
+-- PLAYTEST Run 9 N20 (no-trap rule): in a match's build phase Choose hero (H) and Unlocks &
+-- Mastery (M) sit top centre (Shop.client: 156 + 44 and 206 + 40 px); while they show, the
+-- panel's top stays below them. On a window too short for LIST_ROOM_MIN of list under
+-- them, the panel takes the whole window again (it can't fit otherwise; H and M still work).
+OptionPick.BUILD_HUD_BOTTOM = 254 -- the lower button's bottom (246) + 8 clear
+OptionPick.LIST_ROOM_MIN = 120 -- px of list (about 3 rows) the panel keeps under them
+OptionPick.CHROME = OptionPick.PAD * 2 + OptionPick.HEADER + OptionPick.MESSAGE + OptionPick.GAP * 2 -- the panel without its list (no pick)
 OptionPick.CLOSE_W = 28 -- the X, at the header's right edge
 OptionPick.BACK_W = 60 -- Back, left of the X
 OptionPick.HEADER_GAP = 6 -- clear space between the title, Back and the X
@@ -164,13 +171,31 @@ function OptionPick.stays(pick: Pick?, now: Now): boolean
 		and now.picks == pick.picks
 end
 
--- Fit the pick on a `viewportX` × `viewportY` window with `count` cards. Like the Hunt
+-- Where a panel's top may start on a `viewportY` window: under the build-phase buttons
+-- while they show (`buildHud`, N20), else under Roblox's top bar.
+function OptionPick.top(viewportY: number, buildHud: boolean?): number
+	if buildHud and viewportY - OptionPick.BUILD_HUD_BOTTOM - OptionPick.BOTTOM - OptionPick.CHROME >= OptionPick.LIST_ROOM_MIN then
+		return OptionPick.BUILD_HUD_BOTTOM
+	end
+	return OptionPick.TOP
+end
+
+-- The scroll box's height for a panel (no pick) whose rows are `content` px tall: all of
+-- them, capped at LIST_MAX_SCREEN of the window and at the room under `top` (N20).
+function OptionPick.listHeight(viewportY: number, content: number, buildHud: boolean?): number
+	local cap = math.floor(viewportY * OptionPick.LIST_MAX_SCREEN)
+	local room = viewportY - OptionPick.top(viewportY, buildHud) - OptionPick.BOTTOM - OptionPick.CHROME
+	return math.max(0, math.min(content, cap, room))
+end
+
+-- Fit the pick on a `viewportX` × `viewportY` window with `count` cards (`buildHud`: the
+-- build-phase buttons show, so it stays under them, N20). Like the Hunt
 -- Board (#87): the cards scroll first, down to one card's height, then the whole panel
 -- scales (never below MIN_SCALE). Header, confirm and message never scroll.
-function OptionPick.layout(viewportX: number, viewportY: number, count: number): Layout
+function OptionPick.layout(viewportX: number, viewportY: number, count: number, buildHud: boolean?): Layout
 	local fixed = OptionPick.PAD * 2 + OptionPick.HEADER + OptionPick.CONFIRM + OptionPick.MESSAGE + OptionPick.GAP * 3
 	local availX = math.max(viewportX - OptionPick.EDGE * 2, 1)
-	local availY = math.max(viewportY - OptionPick.TOP - OptionPick.BOTTOM, 1)
+	local availY = math.max(viewportY - OptionPick.top(viewportY, buildHud) - OptionPick.BOTTOM, 1)
 	local n = math.max(count, 1)
 
 	local function shape(width: number)

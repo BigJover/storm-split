@@ -42,6 +42,8 @@ export type GunStats = {
 	fireMode: string,
 	burstCount: number,
 	burstRecoilReset: boolean,
+	shotsPerTrigger: number,
+	oneRoundPerTrigger: boolean,
 }
 
 -- The cone (degrees) a pellet scatters in. `scoped` only counts on a gun with a scope.
@@ -93,6 +95,12 @@ end
 -- Hot Swap: the rounds once that gun's reload is done.
 function GunRules.swapRefill(stats: GunStats, rounds: number): number
 	return math.min(stats.magazine, rounds + GunRules.gunShare(stats))
+end
+
+-- Rounds one trigger pull spends: one per shot (Double Barrel spends 2), but Twin Slug's two
+-- slugs come from one shell (PLAN T120b, DECISIONS #323).
+function GunRules.roundsPerTrigger(stats: GunStats): number
+	return if stats.oneRoundPerTrigger then 1 else math.max(1, stats.shotsPerTrigger)
 end
 
 -- Bounce Back: the rounds after `takeDowns` ricochet take-downs.

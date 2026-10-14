@@ -252,3 +252,34 @@ test("the pool is drawn end to end", function()
 	near(points[1], 94)
 	near(points[#points], 106)
 end)
+
+test("T120b (#321): Bog Boots stings only near the tar (Pool sting reach of the pool's nearest point), not along the whole pool", function()
+	local TowerPerks = require(src.shared.TowerPerks)
+	eq(T.PoolStingReachStuds, 12)
+	local deep
+	for i, path in PIT.paths do
+		if path.id == "Deep Tar" then
+			deep = i
+		end
+	end
+	local tiers, picks = { 0, 0, 0 }, { "", "", "" }
+	tiers[deep], picks[deep] = 5, "CA" -- Bog Boots, then Tar Lake
+	local s = TowerStats.compute(PIT, tiers, picks)
+	ok(s.raiderSlowPercent > 0 and s.range >= 80, `Bog Boots + Tar Lake: a stinging pool {s.range} studs long`)
+	-- A straight stretch of track along X, the pool centred on 0 at its full length.
+	local points = {}
+	for _, d in TarPit.samples(0, s.range, 3) do
+		table.insert(points, Vector3.new(d, 0, 0))
+	end
+	ok(TarPit.nearPool(Vector3.new(0, 3, 10), points, T.PoolStingReachStuds), "a raider 10 studs beside the pool is in reach")
+	ok(TarPit.nearPool(Vector3.new(s.range / 2 + 8, 0, 0), points, T.PoolStingReachStuds), "8 studs past the pool's end: in reach")
+	local far = Vector3.new(30, 0, 20)
+	ok(far.Magnitude <= s.range, "the far raider is inside the pool's length (the old reach)")
+	ok(not TarPit.nearPool(far, points, T.PoolStingReachStuds), "a raider 20 studs from the pool is not")
+	local function source(covers: boolean): any
+		return { side = 1, standing = true, covers = covers, stats = s }
+	end
+	ok(TowerPerks.sting({ source(TarPit.nearPool(Vector3.new(0, 0, 10), points, T.PoolStingReachStuds)) }, 1, 2, false, nil, 100) ~= nil, "near: stung")
+	eq(TowerPerks.sting({ source(TarPit.nearPool(far, points, T.PoolStingReachStuds)) }, 1, 2, false, nil, 100), nil, "far: not stung")
+	eq(TowerPerks.sting({ source(true) }, 1, 1, false, nil, 100), nil, "co-op unchanged: nothing")
+end)

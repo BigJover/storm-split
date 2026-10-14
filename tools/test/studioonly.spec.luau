@@ -185,3 +185,15 @@ test("T115b: standinpick parses <tower> <path> <letters> in Studio and is refuse
 	local battle = fs.readFile("src/server/Battle.luau")
 	ok(battle:find('if not StudioOnly.allowed(RunService:IsStudio(), "standInPick") then', 1, true) ~= nil, "Battle asks again")
 end)
+
+test("F10 (T120b): standinpick publishes the stand-in tower's Path<n> / Picks<n>, as Shop does on a purchase", function()
+	local towers = fs.readFile("src/server/Towers.luau")
+	local from = towers:find("function Towers.setPicksForStandIn", 1, true)
+	ok(from ~= nil, "setPicksForStandIn exists")
+	local stop = towers:find("\nend\n", from :: number, true) or #towers
+	local body = towers:sub(from :: number, stop)
+	ok(body:find("SetAttribute(`Path{i}`, tier)", 1, true) ~= nil, "Path<n> published")
+	ok(body:find("SetAttribute(`Picks{i}`, tower.pathPicks[i])", 1, true) ~= nil, "Picks<n> published")
+	local last = body:find("Towers.upgrade(tower, pathIndex, string.sub", 1, true)
+	ok(last ~= nil and last < (body:find("SetAttribute(`Path{i}`", 1, true) or 0), "after the last upgrade")
+end)

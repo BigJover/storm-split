@@ -58,6 +58,7 @@ local AFTER_SNAPSHOT: { [string]: any } = {
 	biterSlowSeconds = 0,
 	healRegen = 0, -- 9f Heal regen (Mending Salve)
 	healRegenSeconds = 0,
+	oneRoundPerTrigger = false, -- T120b Twin Slug (#323)
 }
 
 local function same(actual: { [string]: any }, expected: { [string]: any }, where: string): number

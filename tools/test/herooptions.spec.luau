@@ -51,7 +51,7 @@ local OPTIONS = {
 		{ "Slug", 4, "B", "Quick Pump", { rateMult = 1.25 } },
 		{ "Slug", 4, "C", "Side Saddle", { reloadMult = 0.8, magazineMult = 1.5 } },
 		{ "Slug", 5, "B", "Express Slug", { rateMult = 1.6, magazineMult = 1.5, pierce = 6 } },
-		{ "Slug", 5, "C", "Twin Slug", { shotsPerTrigger = 2, pierce = 4, magazineMult = 1.5 } },
+		{ "Slug", 5, "C", "Twin Slug", { shotsPerTrigger = 2, pierce = 4, magazineMult = 1.5, oneRoundPerTrigger = true } },
 		{ "Buckshot", 4, "B", "Hot Shells", { burnDps = 2.3, burnSeconds = 3 } },
 		{ "Buckshot", 4, "C", "Shell Belt", { rateMult = 1.5, magazineMult = 1.5 } },
 		{ "Buckshot", 5, "B", "Flame Choke", { igniteShare = 0.9, rateMult = 1.2 } },
@@ -231,6 +231,13 @@ test("9f Brush Beater: Twin Slug, Slam Fire (+ Quad Barrel), Bird Shot, Hot Shel
 	ok(close(hot.burnDps, 2.3) and hot.burnSeconds == 3, "Hot Shells: burn 2.3/s")
 	ok(close(stats("SHOTGUN", "Buckshot", 5, "AB").igniteShare, 0.9), "Flame Choke: ignite tick 0.9 of a shot")
 	ok(close(twin.shotDamage, stats("SHOTGUN", "Slug", 4, "A").shotDamage), "Twin Slug keeps the slug's damage per shot")
+	-- T120b (#323): a Twin Slug pump fires 2 slugs from ONE round; Double Barrel spends 2.
+	eq(GunRules.roundsPerTrigger(twin), 1, "Twin Slug: a pump spends 1 round")
+	eq(GunRules.roundsPerTrigger(stats("SHOTGUN", "Slug", 6, "AC")), 1, "Thunder Slug after Twin Slug: still 1 round")
+	local double = stats("SHOTGUN", "Point Blank", 3, "")
+	ok(double.shotsPerTrigger == 2 and GunRules.roundsPerTrigger(double) == 2, "Double Barrel: 2 shots, 2 rounds")
+	eq(GunRules.roundsPerTrigger(slam), 2, "Slam Fire: 2 blasts, 2 rounds")
+	eq((pathOf("SHOTGUN", "Buckshot")).t5.AB.blurb, "Dragon's Breath bursts for 90% of a shot", "Flame Choke card says the 0.9 tick (T120b, #322)")
 end)
 
 test("9f Field Medic: Mending Salve's Heal regen (strongest wins, a recast refreshes, towers too); Muzzle and Lever options", function()
