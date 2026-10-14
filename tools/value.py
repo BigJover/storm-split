@@ -142,7 +142,7 @@ CONTROL_TIERS = {("SNIPER", "Big Bore", 3)}
 BOSS_SPECIALIST = {("SNIPER", "Big Bore", 5)}
 # Tar Pit is a control tower (#198): judged on its own line (slow, HP removed, Dig Site payback),
 # out of the medians and of the DEAD and "worth it" bars.
-SUPPORT_TOWERS = {"QUARTERMASTER", "HOSPITAL", "ARMORY", "TARPIT"}
+SUPPORT_TOWERS = {"QUARTERMASTER", "HOSPITAL", "ARMORY", "TARPIT", "RESIN"}  # RESIN: a control tower (PLAN 9g, #314)
 # Towers on the sheet whose behaviour isn't modelled yet: left out of every table and median.
 PENDING_TOWERS = set()
 # Power Grid is credited as if this many Storm Coils stand (x1.0 damage, range x1.15; a
@@ -164,6 +164,9 @@ DEAD_X, DOMINANT_X = 2.0, 0.5
 # between WORTH_HI x M and UNTOUCHABLE_HI x M. M = the released damage-path T5 median of the
 # towers outside the batch, so the batch can't move its own bar (#190's reason).
 ROUND4_BATCH = {"COIL", "FALCON", "BALLISTA", "TARPIT"}
+# The seven 4x towers (PLAN 9g-9j, DECISIONS #312): never part of M (M stays 142, frozen #200), so an
+# early pair can't move a later pair's bar; each is judged on the same worth bars once released.
+ROUND9_BATCH = {"RESIN", "RAPTOR", "BLIMP", "TOTEM", "METEOR", "VENT", "RANGER"}
 WORTH_HI, UNTOUCHABLE_HI = 1.25, 2.0
 # Tar Pit's one gated bar (#199): one Eruption pit removes at most this share of r31-40 ground HP.
 ERUPTION_SHARE_MAX = 0.50
@@ -194,7 +197,7 @@ def _luau_list(text, name):
 
 
 _TS = open(os.path.join(ROOT, "src", "shared", "TowerStats.luau"), encoding="utf-8").read()
-MULTIPLIERS, HIGHEST, FLAGS = (_luau_list(_TS, n) for n in ("MULTIPLIERS", "HIGHEST", "FLAGS"))
+MULTIPLIERS, HIGHEST, FLAGS, MIN_POSITIVE = (_luau_list(_TS, n) for n in ("MULTIPLIERS", "HIGHEST", "FLAGS", "MIN_POSITIVE"))
 # Shared/ShopRules.Unreleased: towers in Config but not sold yet. Medians count released towers
 # only (DECISIONS #190/#196), so an unreleased row can't loosen a bar.
 UNRELEASED = set(re.findall(r"(\w+)\s*=\s*true", re.search(
@@ -212,6 +215,7 @@ def tower_stats(t, tiers, picks=None):
     mult = {f: 1 for f in MULTIPLIERS}
     high = {"shots": 1, "lineHits": 1, "sizeBreaks": 1}
     flag = {}
+    shortest = {}  # MIN_POSITIVE timers (PLAN 9g): the shortest non-zero any path gives
     freeze_every = 0
     sink_seconds = 0
     bomblet_burn = (0, 0)  # Fire Bomblets: (Burn DPS, Burn s) of a path that throws bomblets and burns
@@ -224,6 +228,9 @@ def tower_stats(t, tiers, picks=None):
                 high[f] = max(high.get(f, 0), step.get(f, 0))
             for f in FLAGS:
                 flag[f] = flag.get(f, False) or step.get(f) is True
+            for f in MIN_POSITIVE:
+                if step.get(f, 0) > 0 and (not shortest.get(f) or step[f] < shortest[f]):
+                    shortest[f] = step[f]
             every = step.get("freezeEvery", 0)
             if every > 0 and (freeze_every == 0 or every < freeze_every):
                 freeze_every = every
@@ -287,8 +294,8 @@ def tower_stats(t, tiers, picks=None):
         "onTrack": t.get("onTrack", False),
         "sinkSeconds": (sink_seconds or TUNING["TarSinkSeconds"]) if t.get("onTrack") else 0,
         "eruption": bool(t.get("onTrack") and flag.get("eruption", False)),
-        "sinkCash": high.get("sinkCash", 0) if t.get("onTrack") else 0,
-        "sinkChestCash": high.get("sinkChestCash", 0) if t.get("onTrack") else 0,
+        "sinkCash": high.get("sinkCash", 0) if t.get("onTrack") or t.get("resin") else 0,
+        "sinkChestCash": high.get("sinkChestCash", 0) if t.get("onTrack") or t.get("resin") else 0,
         "tracksSlowPercent": high.get("tracksSlowPercent", 0) if t.get("onTrack") else 0,
         "auraSlowedPercent": high.get("auraSlowedPercent", 0),
         # Read by the support paths' worth metrics (PLAN 9d, #292): the composed build's own.
@@ -302,6 +309,15 @@ def tower_stats(t, tiers, picks=None):
         "fieldStrikeX": high.get("fieldStrikeX", 0) if t.get("chains") else 0,
         "chainEffects": bool(t.get("chains") and flag.get("chainEffects", False)),
         "targetsBiggest": flag.get("targetsBiggest", False),
+        # Amber Resin Cannon (PLAN 9g T123; Shared/TowerStats: a Resin tower only)
+        **{f: (high.get(f, 0) if t.get("resin") else 0)
+           for f in ("entombAmpPercent", "entombSpread", "entombSlowPercent", "bossEntombSeconds", "sendBack",
+                     "fossilBelowPercent", "fossilRatePercent", "bountyFossilsX", "sealSeconds", "sealHealPercent",
+                     "wallSeconds")},
+        **{f: (shortest.get(f, 0) if t.get("resin") else 0) for f in ("entombAllEvery", "heartEvery", "sealEvery")},
+        "entombSeconds": (high.get("entombSeconds", 0) or TUNING["EntombBaseS"]) if t.get("resin") else 0,
+        "entombHitsMult": mult["entombHitsMult"],
+        "reflectDamage": high.get("reflectDamage", 0), "takeDownMarkPercent": high.get("takeDownMarkPercent", 0),
     }
 
 
@@ -722,13 +738,13 @@ def worth_lines(data, rows):
     """The "worth it" bars on the round-4 batch's damage T5s (r31-40). Returns (lines, findings)."""
     late = BOUGHT_BAND[5]
     m = statistics.median(r["cpd"][late] for (k, p, t), r in rows.items()
-                          if t == 5 and not r["support"] and r["released"] and k not in ROUND4_BATCH)
+                          if t == 5 and not r["support"] and r["released"] and k not in ROUND4_BATCH | ROUND9_BATCH)
     lines = [f"  M = {fmt(m)} (released damage-path T5s outside the batch, r31-40); damageable best T5 <= {fmt(WORTH_HI * m)};"
              f" can't be damaged: every damage T5 {fmt(WORTH_HI * m)}-{fmt(UNTOUCHABLE_HI * m)}"]
     findings = []
     for key in modelled(data):
         t = data["Towers"][key]
-        if key not in ROUND4_BATCH or key in SUPPORT_TOWERS:
+        if key not in ROUND4_BATCH | ROUND9_BATCH or key in SUPPORT_TOWERS or key in UNRELEASED:
             continue
         untouchable = t.get("untouchable", False)
         t5 = [(export_constants.line(t["paths"][pi])[4]["name"], r["cpd"][late]) for (k, pi, tier), r in rows.items()
@@ -793,6 +809,59 @@ def tar_lines(data, mixes):
                                                                   "report": f"over, at the {ERUPTION_EVERY_CAP} s cap: reported, passes"}[gate])
             if gate == "raise":
                 findings.append(f"ERUPTION: one pit removes {removed / hp:.0%} of r31-40 ground HP at {every:g}s (bar {ERUPTION_SHARE_MAX:.0%}; PLAN T68 step 6)")
+    return out, findings
+
+
+# Amber Resin Cannon's round-20 bar (PLAN 9g, #313): an Entomb T2 cannon holds at least this many
+# hold-seconds a round in rounds 11-20 (lever: Tuning Entomb base (s), +0.1 at a time, <= 1.2).
+RESIN_ROUND20_HOLD = 10
+
+
+def resin_lines(data, mixes):
+    """Amber Resin Cannon judged as a control tower (PLAN 9g release line, #314), like the Tar
+    Pit: per path, r21-30 and r31-40, entombs and hold-seconds a round (Entomb), fossils and
+    fossil cash a round and each Fossilize tier's payback (T1-T3 bar DIG_PAYBACK rounds, #203;
+    lever: that tier's Sink cash), Resin Shell's points; and the round-20 bar (Entomb T2,
+    r11-20). Bars are findings once it is released (T124b). Returns (lines, findings)."""
+    if "RESIN" not in data["Towers"]:
+        return [], []
+    t, tuning = data["Towers"]["RESIN"], data["Tuning"]
+    secs = tuning["RoundSecondsModel"]
+    out, findings = [], []
+    judged = "RESIN" not in UNRELEASED
+    for pi, path in enumerate(t["paths"]):
+        bits, prev_cash = [], 0.0
+        for tier in range(1, len(export_constants.line(path)) + 1):
+            s = path_stats(t, pi, tier)
+            if path["id"] == "Entomb":
+                cells = []
+                for band in (2, 3):
+                    h, _ = resin_hold(s, mixes[band], tuning)
+                    cells.append(f"{resin_entombs(s, tuning) * secs:.0f} entombs / {h * secs:.0f} hold-s")
+                bits.append(f"T{tier} " + " | ".join(cells))
+            elif path["id"] == "Fossilize":
+                f = resin_fossils(s, tuning)
+                cash = f * (s["sinkCash"] + 0.8 * s["sinkChestCash"])
+                gain = cash - prev_cash
+                step = export_constants.line(path)[tier - 1]["cost"]
+                payback = step / gain if gain > 0 else math.inf
+                bits.append(f"T{tier} {f:.1f} fossils, +{cash:.0f}/round" + (f" = {fmt(payback)}r" if gain > 0 else ""))
+                if judged and tier <= DIG_TIERS and not dig_payback_ok(payback):
+                    findings.append(f"FOSSILS: Fossilize T{tier} pays back in {fmt(payback)} rounds (bar {DIG_PAYBACK[0]}-{DIG_PAYBACK[1]}; lever: its Sink cash; PLAN 9g, #203)")
+                prev_cash = cash
+            else:
+                bits.append(f"T{tier} {fmt(resin_worth(data, path['id'], s, mixes[3]))} pts")
+        head = {"Entomb": "a round, r21-30 | r31-40", "Fossilize": f"r31-40, payback (T1-T{DIG_TIERS} bar {DIG_PAYBACK[0]}-{DIG_PAYBACK[1]}r)",
+                "Resin Shell": "points (#292 style)"}.get(path["id"], "")
+        out.append(f"  Amber Resin {path['id']:<11} {head}: " + "; ".join(bits))
+    entomb = next((pi for pi, p in enumerate(t["paths"]) if p["id"] == "Entomb"), None)
+    if entomb is not None:
+        h, _ = resin_hold(path_stats(t, entomb, 2), mixes[1], tuning)
+        ok = h * secs >= RESIN_ROUND20_HOLD
+        out.append(f"  Amber Resin round-20 bar: Entomb T2 holds {h * secs:.1f} hold-s a round in r11-20 (bar >= {RESIN_ROUND20_HOLD})"
+                   + ("" if ok else " FAIL") + ("" if judged else " (unreleased: judged at its release, T124b)"))
+        if judged and not ok:
+            findings.append(f"RESIN: Entomb T2 holds {h * secs:.1f} hold-s a round in r11-20 (bar {RESIN_ROUND20_HOLD}; lever Tuning Entomb base (s) +0.1, <= 1.2)")
     return out, findings
 
 
@@ -1217,11 +1286,75 @@ def raider_letters(path, tier):
     return {o for o, r in rows.items() if r.get("pvpEffect")}
 
 
+# The 4x towers' exchange rates (PLAN 9g common rule 8, DECISIONS #313; 9k revisits them):
+HOLD_EDPS = 120  # 1 hold-second a second (a non-boss dino stopped) = this much eDPS
+EDPS_CASH = 14  # 1 eDPS = this much cash a round (M / 10 rounds)
+HUNTER_EDPS = 30  # hunter damage +x % = x / 100 x this eDPS per hunter in range (1 assumed)
+DINOS_IN_RANGE, DINOS_ON_SIDE, DINOS_IN_BUNCH = 4, 10, 6  # stand-ins
+WALKER_UPTIME = 0.7  # a fighting walker's uptime
+# Amber Resin Cannon (#314): the share of HP a dino has left when its resin is counted, the
+# fossil bunch a Take-down mark covers and the dinos an Amber Heart holds.
+RESIN_HP_SHARE = 0.6
+FOSSIL_MARK_DINOS = 1.5
+HEART_DINOS = 10
+
+
+def resin_entombs(s, tuning):
+    """Amber Resin Cannon (PLAN 9g, #314): entombs a second, E = rate / max(1, Resin hits to
+    entomb x Entomb hits x x RESIN_HP_SHARE) x (1 + 0.5 x Entomb spread)."""
+    hits = max(1, tuning["ResinHitsToEntomb"] * s["entombHitsMult"] * RESIN_HP_SHARE)
+    return s["rate"] / hits * (1 + 0.5 * s["entombSpread"])
+
+
+def resin_hold(s, mix, tuning):
+    """Entomb's hold-seconds a second (#314): (H, the entomb part of H)."""
+    e, boss = resin_entombs(s, tuning), mix["boss"]
+    secs = s["entombSeconds"] or tuning["EntombBaseS"]
+    boss_secs = s["bossEntombSeconds"] or secs * tuning["BossHardStopX"]
+    entomb = e * secs * (1 - boss) + min(e, 1 / tuning["BossEntombEveryS"]) * boss_secs * boss
+    if s["entombAllEvery"]:
+        entomb += DINOS_IN_RANGE * secs * (1 - boss / 2) / s["entombAllEvery"]
+    h = (entomb + e * s["sendBack"] / 8 * (1 - boss) + 1.5 * s["entombSlowPercent"] / 100 * e * secs
+         + min(1, s["rate"]) * 0.2)
+    return h, entomb
+
+
+def resin_fossils(s, tuning):
+    """Fossils a round (#314): F = E x Round seconds (model) x min(1, 2 x Fossil below %)."""
+    return resin_entombs(s, tuning) * tuning["RoundSecondsModel"] * min(1, 2 * s["fossilBelowPercent"] / 100)
+
+
+def resin_worth(data, pid, s, mix):
+    """Amber Resin Cannon's path metrics (PLAN 9g, #314). Entomb: HOLD_EDPS x H + eDPS + amp.
+    Fossilize: cash a round. Resin Shell: points (Armory / Tonic style), Raider columns ignored."""
+    tuning = data["Tuning"]
+    g = (lambda f, d=0: s.get(f) or d)
+    if pid == "Entomb":
+        h, entomb = resin_hold(s, mix, tuning)
+        return HOLD_EDPS * h + edps(s, mix, tuning) + g("entombAmpPercent") / 100 * HOLD_EDPS * entomb
+    if pid == "Fossilize":
+        f, secs = resin_fossils(s, tuning), tuning["RoundSecondsModel"]
+        per = FOSSIL_MARK_DINOS * tuning["MarkDuration"] * g("takeDownMarkPercent") / 100 * HOLD_EDPS / secs
+        fuel = 0.0
+        if g("fossilRatePercent"):  # the stack climbs over the round: its average is half the top
+            top = min(tuning["FossilFuelCap"], f * g("fossilRatePercent"))
+            fuel = aura_credit(data, {**s, "auraRatePercent": top / 2}, mix)
+        heart = f / g("heartEvery") * HEART_DINOS * 1 * HOLD_EDPS / secs if g("heartEvery") else 0
+        return f * (g("sinkCash") + 0.8 * g("sinkChestCash")) + EDPS_CASH * (f * per + fuel + heart)
+    seals = 3 if g("sealEvery") else 1
+    ground = g("groundingEvery")
+    return (g("auraHpPercent") + g("resistPercent") + 2 * g("thornsDamage") + g("biterSlowPercent") * g("biterSlowSeconds") / 4
+            + 10 * g("sealSeconds") * seals + g("sealHealPercent") / 2 + 20 * g("wallSeconds")
+            + (g("reflectDamage") / 3 / ground + 20 / ground if ground else 0))
+
+
 def tower_worth(data, key, pi, s, late):
     """One tower build's worth on its path's metric (see the block comment)."""
     t, tuning = data["Towers"][key], data["Tuning"]
     pid = t["paths"][pi]["id"]
     g = (lambda f, d=0: s.get(f) or d)
+    if key == "RESIN":
+        return resin_worth(data, pid, s, late)
     if key == "QUARTERMASTER":
         if pid == "Logistics":
             return g("discountPercent") + 100 * max(0, g("sellRefund") - tuning["SellRefund"]) + g("auraRatePercent")
@@ -1329,7 +1462,7 @@ def option_report(data):
     rows = value_table(data, mixes)
     judge(data, rows)
     m = statistics.median(r["cpd"][BOUGHT_BAND[5]] for (k, p, t), r in rows.items()
-                          if t == 5 and not r["support"] and r["released"] and k not in ROUND4_BATCH)
+                          if t == 5 and not r["support"] and r["released"] and k not in ROUND4_BATCH | ROUND9_BATCH)
     slots = choice = 0
     for why in export_constants.raider_problems(data["Towers"]):
         note(f"RAIDER: {why}", True)
@@ -1349,7 +1482,7 @@ def option_report(data):
                 for o, why in option_bar(worths, raider_letters(path, tier)):
                     name = (path["t4"][o] if tier == 4 else path["t5"][before + o])["name"]
                     note(f"OPTIONS: {t['display']} {path['id']} {label} {o} {name}: {why} (#280)", len(letters) > 1)
-            if key in ROUND4_BATCH and key not in SUPPORT_TOWERS and not is_support(key, path):
+            if key in ROUND4_BATCH | ROUND9_BATCH and key not in SUPPORT_TOWERS and not is_support(key, path):
                 cost = cumulative_cost(t, pi, 5)
                 for picks in path["t5"]:
                     s = path_stats(t, pi, 5, picks)
@@ -1556,6 +1689,10 @@ def value_report(data, full=False):
     for line in lines:
         print(line)
     findings += tar
+    lines, resin = resin_lines(data, mixes)  # PLAN 9g: the Amber Resin Cannon's release line
+    for line in lines:
+        print(line)
+    findings += resin
     print('"worth it" (PLAN T68, #193; round-4 batch T5 cost/eDPS in rounds 31-40):')
     lines, worth = worth_lines(data, rows)
     for line in lines:

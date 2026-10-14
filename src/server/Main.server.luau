@@ -44,6 +44,7 @@ local Pace = require(Shared:WaitForChild("Pace"))
 local MapBuilder = require(script.Parent.MapBuilder)
 local Enemies = require(script.Parent.Enemies)
 local Towers = require(script.Parent.Towers)
+local Walkers = require(script.Parent.Walkers)
 local Waves = require(script.Parent.Waves)
 local Economy = require(script.Parent.Economy)
 local Shop = require(script.Parent.Shop)
@@ -220,6 +221,9 @@ Towers.init(map.towerFolder, {
 	end,
 	-- A Tar Pit sank a dino: Dig Site's cash per sink (scaled like kill pay) and Lucky
 	-- Finds' chest where it went under.
+	onBountyExtra = function(hunter, gone, extra)
+		Progression.bountyEvent(hunter, "pop", gone, extra, CREDITED) -- Prize Fossils (PLAN 9g)
+	end,
 	onSink = function(cash, chestCash, position, side)
 		if cash > 0 then
 			Economy.earnScaledFor(side, cash, difficulty().cashMult) -- the pit's side (T77)
@@ -312,6 +316,27 @@ lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
 			local towerKey, pathIndex, letters = StudioOnly.standInPick(RunService:IsStudio(), key, Config.Towers)
 			local set = if towerKey and pathIndex and letters then Battle.standInPick(towerKey, pathIndex, letters) else 0
 			print(`[DinoHunters] standinpick {tostring(key)}: {set} stand-in tower(s) set`)
+		end
+		return
+	end
+	-- Studio test aids for the 4x towers (PLAN 9g common rule 9): firenow, fossils, walkers.
+	if (action == "firenow" or action == "fossils" or action == "walkers") and isHost(player) then
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		local at = if root and root:IsA("BasePart") then root.Position else Vector3.zero
+		if action == "firenow" then
+			local towerKey = StudioOnly.fireNow(RunService:IsStudio(), key, Config.Towers)
+			if towerKey then
+				print(`[DinoHunters] firenow {towerKey}: {Towers.fireNow(towerKey, at)}`)
+			end
+		elseif action == "fossils" then
+			local n = StudioOnly.fossils(RunService:IsStudio(), key)
+			if n then
+				print(`[DinoHunters] fossils {n}: {if Towers.setFossils(n, at) then "set" else "no Resin Cannon"}`)
+			end
+		elseif StudioOnly.allowed(RunService:IsStudio(), "walkers") then
+			for _, line in Walkers.describe() do
+				print(`[DinoHunters] {line}`)
+			end
 		end
 		return
 	end

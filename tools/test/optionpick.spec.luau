@@ -43,7 +43,7 @@ end)
 -- Paths whose B/C options are in (PLAN 9c: the starters; 9d: Tranq, Supply, Hospital, Armory; 9e: the round-4 four);
 -- every other path is still A only.
 local HERO_BC = { PISTOL = true, RIFLE = true, SHOTGUN = true, MEDIC = true } -- 9f, hero by hero
-local WITH_BC = { SCOUT = true, SNIPER = true, GRENADIER = true, CHILLER = true, QUARTERMASTER = true, HOSPITAL = true, ARMORY = true, COIL = true, FALCON = true, TARPIT = true, BALLISTA = true }
+local WITH_BC = { SCOUT = true, SNIPER = true, GRENADIER = true, CHILLER = true, QUARTERMASTER = true, HOSPITAL = true, ARMORY = true, COIL = true, FALCON = true, TARPIT = true, BALLISTA = true, RESIN = true }
 
 test("every tier-4/5 pick shows its options' cards (A only, or A/B/C for 9c), each one the server takes", function()
 	local slots, threeWay = 0, 0
@@ -84,11 +84,14 @@ test("every tier-4/5 pick shows its options' cards (A only, or A/B/C for 9c), ea
 		end
 	end)
 	ok(slots >= 90, `every slot seen ({slots})`)
-	local heroes = 0
+	local heroes, towers = 0, 0
 	for _ in HERO_BC do
 		heroes += 1
 	end
-	eq(threeWay, 66 + 6 * heroes, "the 33 tower paths with B/C (9 starter, 12 of 9d, 12 of 9e) and 3 per 9f hero offer A/B/C at their slots")
+	for _ in WITH_BC do
+		towers += 1
+	end
+	eq(threeWay, 6 * towers + 6 * heroes, "3 paths per tower with B/C (the 11 built, 9c-9e; the 4x towers from 9g) and 3 per 9f hero offer A/B/C at their 2 slots")
 end)
 
 test("three options: three cards in order, none chosen until one is tapped", function()

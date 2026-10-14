@@ -308,6 +308,40 @@ A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; names are working 
 | **Volley** | 4 | Steam Crank — Fires twice as fast | Wide Volley — Five bolts per volley | Fire Bolts — Bolts set dinos on fire |
 | **Volley** | 5 | Chain Harpoons — Chained bolt pairs hit every dino between them | Siege Battery — Six bolts per volley | Firestorm Volley — Faster volleys of burning bolts |
 
+
+---
+
+## Amber Resin Cannon (RESIN) — control: resin slows, entombs and fossilizes · built (PLAN 9g T123; unreleased until T124b) · unlock 500 Amber
+
+A stubby cannon on a cart that lobs amber resin (2 damage, 1 glob a second, 18 studs, ground
+only, 800 cash). Every glob slows the dino 20 % for 1 s (not bosses) and adds 1 resin; at
+max(1, ⌈6 × Entomb hits x × its HP-left share⌉) resin the dino is **entombed** (a hard stop:
+it can't move, bite or throw, and still takes damage) for Entomb (s) (0.8 s base) and glows
+amber: the more HP is gone, the faster it sets. Bosses: at most once every 10 s per boss, for
+half the time. A control tower (judged like the Tar Pit, #314): out of the damage medians.
+Rules: `Shared/Resin`, `Shared/FourX`, `Shared/AutoFire`.
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Entomb** | control | Thick Resin | Quick Set | *Amber Tomb* | *Hardened Amber* | *Amber Age* |
+| **Fossilize** | economy | Collector's Eye | Rare Find | *Fossil Record* | *Museum Piece* | *Fossil Fuel* |
+| **Resin Shell** | support | Coat of Resin | Sticky Armour | *Amber Shield* | *Self-Sealing* | *Amber Fortress* |
+
+- Thick Resin / Quick Set / Amber Tomb: faster, heavier globs and fewer hits to set (x0.85 / x0.7 / x0.5); Amber Tomb entombs for 2 s.
+- Fossilize: a dino entombed at or below Fossil below % of its HP (10 / 12 / 20 %; not bosses) is a **fossil**: it turns to stone and crumbles, every size it had left pays as a take-down (pops to the cannon's owner), plus Sink cash per fossil (4 / 10 / 16, scaled by the difficulty like Tar Pit sinks, #309). Fossil Record also sets faster (x0.7).
+- Resin Shell: towers in range +15 % max HP; Sticky Armour adds 20 % damage resistance; Amber Shield **seals** a tower in range that would be Trampled: it stays at 1 HP and takes no damage for 3 s (once a round per cannon).
+
+A/B/C picks at tiers 4 and 5 (PLAN 9g, DECISIONS #312–#320; names = DINO_REVIEW Round 19). Hardened Amber: an entombed dino takes +30 % from everything while it is stuck. Spreading Amber: an entomb also takes the nearest other dino within 6 studs. Sticky Bed: dinos within 6 studs of a stuck one walk 30 % slower. Amber Age: every 12 s every dino in range is entombed (bosses half). Living Amber: entombs last 2.5 s, a boss's the full 3 s. Time Capsule: an entombed dino is sent 12 studs back (never a boss). Museum Piece: 32 cash a fossil. Dig Crew: a fossil drops a 25-cash chest. Bone Dust: a fossil (or any take-down by the cannon) marks dinos within 6 studs +15 % for 3 s. Fossil Fuel: fossils at 25 %; each fossil gives towers in range +5 % attack speed for the rest of the round (cap 30 %). Prize Fossils: fossils at 30 %; each counts as 2 take-downs for the owner's Bounties. Amber Heart: every 15th fossil this match entombs every dino on your side 1 s (bosses half). Self-Sealing: a sealed tower heals 30 % of its max HP when the seal breaks. Raider Glue is the Raider option: in battles an enemy hunter who shoots a tower in range is slowed 20 % for 2 s (generic Raider sting, ×0.5 rules, never through Camo Cover); its dino part (co-op too): a dino biting a tower in range is slowed 25 % for 2 s (not bosses). Sticky Thorns: biters take 5 damage and are slowed 15 % for 1.5 s. Amber Fortress: each tower in range can be sealed once every 20 s (instead of once a round per cannon). Resin Wall: once a round (fires itself: a boss or 6 dinos in range, else the round's last spawn; never on an empty track) an amber wall rises at the furthest point of the track in range and holds every dino reaching it 3 s (bosses 1.5 s). Amber Mirror: catches a throw at a tower in range every 1 s and bounces it back at the thrower for 60 (× the team's level).
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Entomb** | 4 | Hardened Amber — Stuck dinos take +30% from everything | Spreading Amber — The amber jumps to the next dino | Sticky Bed — Dinos walking past a stuck one slow 30% |
+| **Entomb** | 5 | Amber Age — Every 12 s, everything in range is stuck | Living Amber — Traps a boss 3 s; others stay stuck longer | Time Capsule — Stuck dinos are sent 12 studs back |
+| **Fossilize** | 4 | Museum Piece — Fossils pay double cash | Dig Crew — A fossil drops a cash chest | Bone Dust — Fossils mark nearby dinos +15% |
+| **Fossilize** | 5 | Fossil Fuel — Each fossil speeds up nearby towers | Prize Fossils — More fossils; each counts double for bounties | Amber Heart — Every 15th fossil freezes your whole side 1 s |
+| **Resin Shell** | 4 | Self-Sealing — Sealed towers heal 30% when the shell breaks | Raider Glue — Raiders and biters near your towers slow down | Sticky Thorns — Biters get slowed and take 5 damage |
+| **Resin Shell** | 5 | Amber Fortress — Nearby towers can't be knocked out (20 s each) | Resin Wall — Once a round, an amber wall holds every dino 3 s | Amber Mirror — Throws at your towers bounce back |
+
 ---
 
 ## Mechanics and when they're built

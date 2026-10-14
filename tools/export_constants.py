@@ -159,6 +159,27 @@ ABILITY_COLUMNS = [
     ("chainEffects", 98, "bool", False),  # CT
     # Targets biggest (Heartseeker): aims at the biggest dino in range, not the furthest along.
     ("targetsBiggest", 99, "bool", False),  # CU
+    # PLAN 9g (T123): the Amber Resin Cannon (Shared/Resin). Entomb: resin builds up on each hit
+    # until the dino is entombed (a hard stop); Fossilize: a dino entombed low on HP is taken down
+    # whole; Resin Shell: towers in range are sealed instead of Trampled. Kinds in RESIN_KINDS.
+    ("entombSeconds", 100, "num", 0),  # CV: s an entomb holds (blank = Tuning Entomb base)
+    ("entombHitsMult", 101, "num", 1),  # CW: x the resin hits to entomb
+    ("entombAmpPercent", 102, "num", 0),  # CX: an entombed dino takes +% from everything
+    ("entombSpread", 103, "num", 0),  # CY: the entomb also takes the n nearest dinos in Spread reach
+    ("entombSlowPercent", 104, "num", 0),  # CZ: dinos near an entombed one are slowed this %
+    ("entombAllEvery", 105, "num", 0),  # DA: every N s everything in range is entombed (0 = off)
+    ("bossEntombSeconds", 106, "num", 0),  # DB: a boss's entomb: this long, full (no Boss hard stop x)
+    ("sendBack", 107, "num", 0),  # DC: an entombed non-boss is sent this many studs back
+    ("fossilBelowPercent", 108, "num", 0),  # DD: entombed at or below this % of its HP: a fossil
+    ("fossilRatePercent", 109, "num", 0),  # DE: each fossil: towers in range +% rate this round
+    ("bountyFossilsX", 110, "num", 0),  # DF: a fossil counts this many take-downs for Bounties
+    ("heartEvery", 111, "num", 0),  # DG: every N-th fossil this match entombs the whole side 1 s
+    ("sealSeconds", 112, "num", 0),  # DH: a tower in range that would be Trampled is sealed at 1 HP
+    ("sealEvery", 113, "num", 0),  # DI: ... once per N s per tower instead of once a round
+    ("sealHealPercent", 114, "num", 0),  # DJ: a sealed tower heals this % of max HP when it breaks
+    ("reflectDamage", 115, "num", 0),  # DK: a throw caught by Grounding hits its thrower for this
+    ("wallSeconds", 116, "num", 0),  # DL: once a round (AutoFire) a track wall holds dinos this long
+    ("takeDownMarkPercent", 117, "num", 0),  # DM: a take-down marks dinos within Take-down mark radius
 ]
 
 # Columns only a tower that chains (Towers column Chains) can use.
@@ -169,7 +190,13 @@ BIRD_ONLY = ("birds", "eagle", "murmuration", "diveAuraRatePercent")
 # Columns only a tower with harpoons (Towers column Harpoons) can use.
 HARPOON_ONLY = ("skewer", "towLine", "chainHarpoons")
 # Columns only a tower placed on the track (Towers column On track: the Tar Pit) can use.
-TAR_ONLY = ("sinkSeconds", "sinkCash", "sinkChestCash", "eruption", "tracksSlowPercent", "auraSlowedPercent")
+TAR_ONLY = ("sinkSeconds", "eruption", "tracksSlowPercent", "auraSlowedPercent")
+# Sink cash and its chest: a Tar Pit's sinks (on the track) or a Resin Cannon's fossils (PLAN 9g).
+SINK_CASH = ("sinkCash", "sinkChestCash")
+# Columns only a Resin tower (Towers column Resin) can use (PLAN 9g, T123).
+RESIN_ONLY = ("entombSeconds", "entombHitsMult", "entombAmpPercent", "entombSpread", "entombSlowPercent",
+              "entombAllEvery", "bossEntombSeconds", "sendBack", "fossilBelowPercent", "fossilRatePercent",
+              "bountyFossilsX", "heartEvery", "sealSeconds", "sealEvery", "sealHealPercent", "wallSeconds")
 
 # Paths allowed a Size breaks above 1 (DECISIONS #127, #134). A new one is a
 # Director call: add it here and to PLAN's design table together.
@@ -230,6 +257,8 @@ def read_towers(ws):
             "birds": num(v(ws, r, 23)),
             # Harpoons: heavy bolts with Skewer / Tow Line / Chain Harpoons (Ballista, PLAN T66).
             "harpoons": yes(v(ws, r, 24)),
+            # Resin: its hits build up resin and entomb (Amber Resin Cannon, PLAN 9g T123).
+            "resin": yes(v(ws, r, 25)),
             "paths": [],
         }
         order.append(key)
@@ -273,6 +302,9 @@ TOWER_STEP_KINDS = {
     "freezeEvery": "set", "sinkSeconds": "set",
     # PLAN 9e: intervals, so a step sets them (Ground Wire's 2 s beats Grounding Spike's 4 s)
     "groundingEvery": "set", "fieldStrikeEvery": "set",
+    # PLAN 9g (#316): timers where the shorter wins; a blank (0) is "off", never the minimum
+    "entombAllEvery": "minpos", "heartEvery": "minpos", "sealEvery": "minpos",
+    "entombHitsMult": "mult",
 }
 for _key, _col, _kind, _default in ABILITY_COLUMNS:
     TOWER_STEP_KINDS.setdefault(_key, "flag" if _kind == "bool" else "max")
@@ -294,6 +326,8 @@ def compose_value(kind, below, step):
     (1.6, 3, 3)
     >>> compose_value("flag", False, True), compose_value("set", "auto", "burst"), compose_value("set", "auto", None)
     (True, 'burst', 'auto')
+    >>> compose_value("minpos", 0, 12), compose_value("minpos", 20, 12), compose_value("minpos", 12, 20), compose_value("minpos", 12, 0)
+    (12, 12, 12, 12)
     """
     if step is None:
         return below
@@ -307,6 +341,8 @@ def compose_value(kind, below, step):
         return below or step
     if kind == "set":
         return step
+    if kind == "minpos":  # PLAN 9g: the smaller non-blank value wins
+        return step if not below or (step and step < below) else below
     raise ValueError(f"unknown step kind {kind}")
 
 
@@ -1704,6 +1740,12 @@ def validate(data):
                 for field in TAR_ONLY:
                     if step[field] and not t["onTrack"]:
                         problems.append(f"{key} {p['id']} tier {i}: {field} needs a tower placed on the track (Towers column U)")
+                for field in SINK_CASH:
+                    if step[field] and not (t["onTrack"] or t["resin"]):
+                        problems.append(f"{key} {p['id']} tier {i}: {field} needs a Tar Pit or a Resin tower (Towers column U or Y)")
+                for field in RESIN_ONLY:
+                    if step[field] != (1 if field == "entombHitsMult" else 0) and not t["resin"]:
+                        problems.append(f"{key} {p['id']} tier {i}: {field} needs a Resin tower (Towers column Y)")
                 if step["tracksSlowPercent"] > 100 or (t["onTrack"] and step["slowPercent"] > 100):
                     problems.append(f"{key} {p['id']} tier {i}: Slow % and Tracks slow % must be 0-100")
                 if step["birds"] != int(step["birds"]):

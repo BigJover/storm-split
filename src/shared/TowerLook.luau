@@ -34,6 +34,7 @@ TowerLook.COLORS = table.freeze({
 	FALCON = Color3.fromRGB(150, 105, 60), -- Falcon Roost: falcon brown
 	BALLISTA = Color3.fromRGB(125, 90, 55), -- Harpoon Ballista: oiled oak
 	TARPIT = Color3.fromRGB(35, 28, 24), -- Tar Pit: tar black
+	RESIN = Color3.fromRGB(240, 150, 40), -- Amber Resin Cannon: amber (PLAN 9g)
 })
 
 TowerLook.BODY_HEIGHT = 5
@@ -231,6 +232,19 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 			block("BoneKnob", Vector3.new(0.45, 0.35, 0.35), at(0.85, 1.4, 0.75), bone, Enum.Material.Limestone),
 			block("Stake", Vector3.new(0.2, 2.6, 0.2), at(-1.0, 1.3, -1.2), WOOD, Enum.Material.Wood),
 			block("Sign", Vector3.new(0.9, 0.6, 0.08), at(-1.0, 2.3, -1.12), SAND, Enum.Material.Wood),
+		}
+	end,
+	-- Amber Resin Cannon (PLAN 9g): a stubby wooden mortar-cannon on a cart, a glowing
+	-- amber glob in the barrel and a resin barrel strapped behind.
+	RESIN = function(color)
+		return {
+			block("Cart", Vector3.new(2.6, 0.5, 2.2), at(0, 0.45, 0), DARK_WOOD, Enum.Material.Wood),
+			block("WheelL", Vector3.new(0.3, 1.1, 1.1), at(-1.35, 0.55, 0), WOOD, Enum.Material.Wood, CYLINDER),
+			block("WheelR", Vector3.new(0.3, 1.1, 1.1), at(1.35, 0.55, 0), WOOD, Enum.Material.Wood, CYLINDER),
+			block("Barrel", Vector3.new(1.8, 1, 1), at(0, 1.6, -0.2) * CFrame.Angles(0, math.rad(90), 0) * CFrame.Angles(0, 0, math.rad(35)), STEEL, Enum.Material.Metal, CYLINDER),
+			block("Glob", Vector3.new(0.8, 0.8, 0.8), at(0, 2.2, -0.9), color, Enum.Material.Neon, Enum.PartType.Ball),
+			block("Keg", Vector3.new(1.0, 0.8, 0.8), at(0, 1.1, 0.85) * CFrame.Angles(0, 0, math.rad(90)), WOOD, Enum.Material.Wood, CYLINDER),
+			block("Drip", Vector3.new(0.35, 0.5, 0.35), at(0.3, 0.85, 0.85), color, Enum.Material.Glass, Enum.PartType.Ball),
 		}
 	end,
 	-- Supply Camp: stacked crates under an orange tarp, a flag on a pole.

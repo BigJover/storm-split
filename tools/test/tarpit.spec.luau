@@ -109,7 +109,8 @@ test("tar abilities only on a tower placed on the track", function()
 					local s = TowerStats.compute(def, tiers)
 					eq(s.sinkSeconds, 0, `{key} sink`)
 					eq(s.eruption, false, `{key} eruption`)
-					eq(s.sinkCash + s.sinkChestCash + s.tracksSlowPercent + s.auraSlowedPercent, 0, `{key} tar fields`)
+					-- A Resin Cannon's fossils pay Sink cash too (PLAN 9g); nothing else of the tar.
+					eq((if def.resin then 0 else s.sinkCash + s.sinkChestCash) + s.tracksSlowPercent + s.auraSlowedPercent, 0, `{key} tar fields`)
 				end
 			end
 		end

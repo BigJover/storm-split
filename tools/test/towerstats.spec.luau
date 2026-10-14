@@ -60,6 +60,7 @@ local function expected(def, tiers: { number })
 		hunterReloadMult = product("hunterReloadMult"),
 		hunterSpreadMult = product("hunterSpreadMult"),
 		healPerSecond = def.healPerSecond * product("healMult"),
+		entombHitsMult = product("entombHitsMult"),
 	}
 	for _, field in TowerStats.HIGHEST do
 		local value = highest(field)
@@ -126,7 +127,29 @@ local function expected(def, tiers: { number })
 	if def.onTrack then
 		e.sinkSeconds = if sink > 0 then sink else Config.Tuning.TarSinkSeconds
 	else
-		e.sinkSeconds, e.sinkCash, e.sinkChestCash, e.eruption, e.tracksSlowPercent = 0, 0, 0, false, 0
+		e.sinkSeconds, e.eruption, e.tracksSlowPercent = 0, false, 0
+		if not def.resin then -- a Resin Cannon's fossils pay Sink cash too (PLAN 9g)
+			e.sinkCash, e.sinkChestCash = 0, 0
+		end
+	end
+	-- Timers where the shortest non-zero wins (PLAN 9g); the Resin fields only on a Resin tower.
+	for _, field in TowerStats.MIN_POSITIVE do
+		local value = 0
+		for _, row in rows do
+			if (row[field] or 0) > 0 and (value == 0 or row[field] < value) then
+				value = row[field]
+			end
+		end
+		e[field] = value
+	end
+	if def.resin then
+		e.entombSeconds = if e.entombSeconds > 0 then e.entombSeconds else Config.Tuning.EntombBaseS
+		e.entombSpread = math.floor(e.entombSpread)
+		e.heartEvery = math.floor(e.heartEvery)
+	else
+		for _, field in { "entombSeconds", "entombAmpPercent", "entombSpread", "entombSlowPercent", "entombAllEvery", "bossEntombSeconds", "sendBack", "fossilBelowPercent", "fossilRatePercent", "bountyFossilsX", "heartEvery", "sealSeconds", "sealEvery", "sealHealPercent", "wallSeconds" } do
+			e[field] = 0
+		end
 	end
 	return e
 end

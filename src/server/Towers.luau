@@ -125,6 +125,9 @@ local OptionPick = require(Shared:WaitForChild("OptionPick"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local BattleRules = require(Shared:WaitForChild("BattleRules"))
 local TowerPerks = require(Shared:WaitForChild("TowerPerks"))
+local Resin = require(Shared:WaitForChild("Resin"))
+local FourX = require(Shared:WaitForChild("FourX"))
+local AutoFire = require(Shared:WaitForChild("AutoFire"))
 
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
@@ -178,7 +181,24 @@ export type Tower = {
 	poolAt: number, -- Tar Pit: distance along the track of the pool's centre
 	eruptTimer: number, -- Tar Pit: seconds toward its next Eruption
 	tracksUntil: number, -- Tar Pit: Tar Tracks' footprints last until then (os.clock)
+	sealedUntil: number, -- an Amber Shield seal: no damage until then (os.clock; PLAN 9g)
+	sealHealPercent: number, -- ... and Self-Sealing's heal when it breaks (0 = none)
+	resin: ResinState?, -- Amber Resin Cannon (PLAN 9g T123); nil on every other tower
 	model: Model,
+}
+
+-- An Amber Resin Cannon's own state (Shared/Resin rules).
+type ResinState = {
+	dinos: { [any]: Resin.Dino }, -- resin on each dino it hit (weak keys)
+	entombed: { [any]: number }, -- dinos it entombed and until when (weak keys; Sticky Bed)
+	allTimer: number, -- Amber Age: seconds toward the next entomb-all
+	fossils: number, -- this match (Amber Heart, the Studio `fossils` aid)
+	fossilsRound: number, -- this round (Fossil Fuel)
+	fuelPercent: number, -- Fossil Fuel's rate aura now
+	sealUsed: boolean, -- its once-a-round seal is spent
+	sealedAt: { [any]: number }, -- Amber Fortress: when it last sealed each tower (weak keys)
+	auto: AutoFire.State, -- Resin Wall's once-a-round trigger
+	wall: { at: number, raisedAt: number, part: BasePart? }?, -- a raised Resin Wall
 }
 
 -- One bird out of a Falcon Roost: it lands on `enemy` when `out` runs down, and is home
@@ -199,6 +219,7 @@ local towerFolder: Instance
 local nextId = 0
 local onPop: ((Player?, string?) -> ())? = nil
 local onSink: ((cash: number, chestCash: number, position: Vector3, side: number) -> ())? = nil -- Dig Site pay
+local onBountyExtra: ((Player, string, number) -> ())? = nil -- Prize Fossils (PLAN 9g)
 local levelScale = 1 -- damage multiplier from the team's level
 local towerLevel = 1 -- the team's level itself (pierce-through's level bonus)
 local extraRatePercent: ((Tower) -> number)? = nil -- boosts from outside towers (hero Rally Cry)
@@ -255,14 +276,15 @@ local function refreshAuras()
 		local rate, damage, pierce, discount, refund, resist, hpBonus, arc, slowed = 0, 0, false, 0, 0, 0, 0, 0, 0
 		for _, source in towers do
 			local s = source.stats
-			if not source.knockedOut and hasAura(s) and covers(source, tower.base) and BattleRules.canSupport(source.side, tower.side) then
+			local fuel = if source.resin then source.resin.fuelPercent else 0 -- Fossil Fuel (PLAN 9g)
+			if not source.knockedOut and (hasAura(s) or fuel > 0) and covers(source, tower.base) and BattleRules.canSupport(source.side, tower.side) then
 				-- An Armory's resistance covers itself too; the other auras are for others.
 				-- Armory and Field Hospital auras skip a tower that can't be damaged (#148).
 				if not tower.def.untouchable then
 					resist = math.max(resist, s.resistPercent)
 				end
 				if source ~= tower then
-					rate = math.max(rate, s.auraRatePercent)
+					rate = math.max(rate, s.auraRatePercent, fuel)
 					damage = math.max(damage, s.auraDamagePercent)
 					pierce = pierce or s.auraPiercesArmor
 					discount = math.max(discount, s.discountPercent)
@@ -348,6 +370,32 @@ local function lastStand(tower: Tower): Tower?
 	return nil
 end
 
+-- Amber Shield (PLAN 9g): a tower in a standing own-side cannon's range that would be
+-- Trampled is left at 1 HP and sealed for Seal (s) instead (once a round per cannon, or
+-- Amber Fortress: once per Seal every (s) per tower). Returns true if it was sealed.
+local function seal(tower: Tower): boolean
+	local now = os.clock()
+	for _, source in towers do
+		local s, state = source.stats, source.resin
+		if state and not source.knockedOut and s.sealSeconds > 0 and covers(source, tower.base) and BattleRules.canSupport(source.side, tower.side)
+			and Resin.canSeal(s.sealSeconds, s.sealEvery, state.sealUsed, state.sealedAt[tower], now) then
+			if s.sealEvery > 0 then
+				state.sealedAt[tower] = now
+			else
+				state.sealUsed = true
+			end
+			tower.hp = 1
+			tower.sealedUntil = now + s.sealSeconds
+			tower.sealHealPercent = s.sealHealPercent
+			local shell = Effects.part(Vector3.new(4.5, TowerLook.BODY_HEIGHT + 1, 4.5), CFrame.new(tower.position), Color3.fromRGB(255, 160, 40), s.sealSeconds)
+			shell.Transparency = 0.5
+			shell.Material = Enum.Material.Glass
+			return true
+		end
+	end
+	return false
+end
+
 ------------------------------------------------------------------ PLAN 9d perks (Shared/TowerPerks)
 
 local stungAt: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any -- last Raider sting, per hunter
@@ -427,6 +475,9 @@ function Towers.damage(tower: Tower, amount: number, source: any?): number
 	if not Combat.canBeHit(tower.def, tower.knockedOut) or amount <= 0 or not table.find(towers, tower) then
 		return 0
 	end
+	if os.clock() < tower.sealedUntil then
+		return 0 -- sealed in amber (PLAN 9g): no damage until the seal breaks
+	end
 	local sources = if resistOf then table.clone(resistOf(tower)) else {}
 	table.insert(sources, tower.buff.resistPercent) -- an Armory in range
 	local resist = Combat.combineResist(sources)
@@ -435,6 +486,10 @@ function Towers.damage(tower: Tower, amount: number, source: any?): number
 		stingRaider(tower, source) -- before the hit lands: a Raider tower trampled by it still stings
 	end
 	tower.hp -= dealt
+	if tower.hp <= 0 and seal(tower) then
+		showHealth(tower)
+		return dealt
+	end
 	local saver = if tower.hp <= 0 then lastStand(tower) else nil
 	local outcome = Combat.hitOutcome(tower.hp, dealt, saver ~= nil)
 	if outcome == "saved" then
@@ -514,6 +569,15 @@ function Towers.bitten(enemy: Enemies.Enemy, position: Vector3, onTower: boolean
 	end
 	if thorns > 0 then
 		credit(thornsOwner, Enemies.damage(enemy, thorns * levelScale, true))
+	end
+end
+
+-- Amber Mirror (PLAN 9g): a throw this tower's Grounding caught hits its thrower for
+-- Reflect damage, x the team's level like thorns (pierces armour; the owner gets the pop).
+function Towers.reflect(tower: Tower, thrower: Enemies.Enemy)
+	local amount = tower.stats.reflectDamage
+	if amount > 0 and thrower.alive and ownSide(tower, thrower) then
+		credit(tower.owner, Enemies.damage(thrower, amount * levelScale, true))
 	end
 end
 
@@ -622,6 +686,9 @@ export type Hooks = {
 	-- A Tar Pit sank a dino: its Dig Site cash and Lucky Finds chest (Main pays; Towers never
 	-- touches cash).
 	onSink: ((cash: number, chestCash: number, position: Vector3, side: number) -> ())?,
+	-- Prize Fossils (PLAN 9g): a fossil counts `extra` more take-downs of `gone` for this
+	-- hunter's Bounties (Main reports them; meta only).
+	onBountyExtra: ((Player, string, number) -> ())?,
 }
 
 function Towers.init(folder: Instance, hooks: Hooks?)
@@ -634,6 +701,7 @@ function Towers.init(folder: Instance, hooks: Hooks?)
 	extraRatePercent = hooks and hooks.extraRatePercent
 	resistOf = hooks and hooks.resistOf
 	onSink = hooks and hooks.onSink
+	onBountyExtra = hooks and hooks.onBountyExtra
 end
 
 -- Callers check Placement first (Shop does); this only builds. `side`: the builder's side
@@ -691,6 +759,22 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 		poolAt = if def.onTrack then Enemies.trackDistanceNear(base, side) else 0,
 		eruptTimer = 0,
 		tracksUntil = 0,
+		sealedUntil = 0,
+		sealHealPercent = 0,
+		resin = if def.resin
+			then {
+				dinos = setmetatable({}, { __mode = "k" }) :: any,
+				entombed = setmetatable({}, { __mode = "k" }) :: any,
+				allTimer = 0,
+				fossils = 0,
+				fossilsRound = 0,
+				fuelPercent = 0,
+				sealUsed = false,
+				sealedAt = setmetatable({}, { __mode = "k" }) :: any,
+				auto = AutoFire.new(),
+				wall = nil,
+			}
+			else nil,
 		model = model,
 	}
 	table.insert(towers, tower)
@@ -834,6 +918,138 @@ end
 
 -- `breaks` is the tier's Size breaks for a direct hit (line pierce gives every dino
 -- in the line the shot's); splash and bomblets pass nothing (1, DECISIONS #127).
+------------------------------------------------------------------ Amber Resin Cannon (PLAN 9g T123)
+
+-- Visuals only.
+local AMBER_COLOR = Color3.fromRGB(255, 160, 40)
+local STONE_COLOR = Color3.fromRGB(150, 145, 135)
+local STICKY_REFRESH = 0.25 -- s a Sticky Bed slow lasts after the last frame near the tomb
+
+-- Take-down mark % (4x common rule 4): a take-down at `at` by this tower marks the dinos near it.
+local function takeDownMark(tower: Tower, at: Vector3)
+	local percent = tower.stats.takeDownMarkPercent
+	if percent <= 0 then
+		return
+	end
+	local list, points = {}, {}
+	for _, other in Enemies.getLive() do
+		if other.alive and ownSide(tower, other) then
+			table.insert(list, other)
+			table.insert(points, other.part.Position)
+		end
+	end
+	for _, i in FourX.markNear(at, points) do
+		Enemies.mark(list[i], percent, FourX.takeDownMarkSeconds())
+	end
+end
+
+local entomb: (Tower, Enemies.Enemy, number, boolean) -> ()
+
+-- A fossil: taken down whole (every size pays and is a pop for the owner), plus Sink cash
+-- and Dig Crew's chest; then Bone Dust's mark, Fossil Fuel and Amber Heart.
+local function fossilize(tower: Tower, enemy: Enemies.Enemy)
+	local state = tower.resin :: ResinState
+	local stats = tower.stats
+	local at = enemy.part.Position
+	local size = enemy.part.Size
+	local killed, gone, dropped = Enemies.dropSizes(enemy, enemy.size)
+	if not killed then
+		return
+	end
+	credit(tower.owner, killed, gone, dropped)
+	-- Turns to stone and crumbles (a look only).
+	local stone = Effects.part(size * 1.1, CFrame.new(at), STONE_COLOR, 0.6)
+	stone.Material = Enum.Material.Slate
+	for i = 1, 4 do
+		Effects.part(Vector3.one * 0.6, CFrame.new(at + Vector3.new(math.cos(i * 1.6) * 1.2, -0.5, math.sin(i * 1.6) * 1.2)), STONE_COLOR, 0.9)
+	end
+	if onSink and (stats.sinkCash > 0 or stats.sinkChestCash > 0) then
+		onSink(stats.sinkCash, stats.sinkChestCash, at, tower.side)
+	end
+	if gone and stats.bountyFossilsX > 1 and onBountyExtra and tower.owner and tower.owner.Parent then
+		onBountyExtra(tower.owner, gone, math.floor(stats.bountyFossilsX) - 1)
+	end
+	takeDownMark(tower, at)
+	state.fossils += 1
+	state.fossilsRound += 1
+	if stats.fossilRatePercent > 0 then
+		local fuel = Resin.fuel(state.fossilsRound, stats.fossilRatePercent)
+		if fuel ~= state.fuelPercent then
+			state.fuelPercent = fuel
+			refreshAuras()
+		end
+	end
+	if Resin.heart(state.fossils, stats.heartEvery) then
+		-- Amber Heart: every dino on the side entombed 1 s (bosses x Boss hard stop x).
+		for _, other in Enemies.getLive() do
+			if other.alive and ownSide(tower, other) then
+				entomb(tower, other, FourX.hardStop(1, other.def.boss == true), false)
+			end
+		end
+	end
+end
+
+-- Entombs `enemy` for `seconds` (already halved for a boss): a hard stop that glows amber;
+-- Hardened Amber's amp, a fossil if it is low enough, else Time Capsule's send back; and
+-- Spreading Amber takes the nearest dinos too (`spread`: not for the ones it spreads to).
+entomb = function(tower: Tower, enemy: Enemies.Enemy, seconds: number, spread: boolean)
+	local state = tower.resin
+	if not state or not enemy.alive or seconds <= 0 then
+		return
+	end
+	local stats = tower.stats
+	local boss = enemy.def.boss == true
+	Enemies.stun(enemy, seconds, true)
+	state.entombed[enemy] = os.clock() + seconds
+	local glow = Effects.part(enemy.part.Size * 1.25, enemy.part.CFrame, AMBER_COLOR, seconds)
+	glow.Transparency = 0.45
+	glow.Material = Enum.Material.Glass
+	if stats.entombAmpPercent > 0 then
+		Enemies.mark(enemy, stats.entombAmpPercent, seconds)
+	end
+	local share = Resin.hpShare(enemy.hp, enemy.share, enemy.sizes)
+	if Resin.isFossil(stats.fossilBelowPercent, share, boss, enemy.def.flying == true) then
+		fossilize(tower, enemy)
+		return
+	end
+	local back = Resin.sendBack(stats.sendBack, boss) -- Time Capsule (0 for a boss)
+	Enemies.knockback(enemy, back)
+	if spread and stats.entombSpread > 0 then
+		local list, distances = {}, {}
+		for _, other in Enemies.getLive() do
+			if other ~= enemy and other.alive and ownSide(tower, other) and not other.def.flying then
+				table.insert(list, other)
+				table.insert(distances, (other.part.Position - enemy.part.Position).Magnitude)
+			end
+		end
+		for _, i in Resin.spreadTo(distances, stats.entombSpread) do
+			local other = list[i]
+			local dino = state.dinos[other] or { resin = 0, bossNextAt = 0 }
+			state.dinos[other] = dino
+			if not (other.def.boss and os.clock() < dino.bossNextAt) then
+				entomb(tower, other, Resin.entombFor(stats, other.def.boss == true, os.clock(), dino), false)
+			end
+		end
+	end
+end
+
+-- A resin glob lands: the hit slow (not bosses) and 1 resin; entombed at the threshold.
+local function resinHit(tower: Tower, enemy: Enemies.Enemy)
+	local state = tower.resin
+	if not state or not enemy.alive then
+		return
+	end
+	local tuning = Config.Tuning
+	Enemies.chill(enemy, { slowPercent = tuning.ResinHitSlow, seconds = tuning.ResinHitSlowS, affectsBosses = false, brittlePercent = 0, stripsArmor = false })
+	local dino = state.dinos[enemy] or { resin = 0, bossNextAt = 0 }
+	state.dinos[enemy] = dino
+	local share = Resin.hpShare(enemy.hp, enemy.share, enemy.sizes)
+	local seconds = Resin.hit(dino, tower.stats, share, enemy.def.boss == true, enemy.def.flying == true, os.clock())
+	if seconds > 0 then
+		entomb(tower, enemy, seconds, true)
+	end
+end
+
 local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number?)
 	local stats = tower.stats
 	local pierce = piercing(tower)
@@ -852,9 +1068,17 @@ local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: n
 	Enemies.stun(enemy, stats.stunSeconds, stats.stunsBosses)
 	Enemies.knockback(enemy, stats.knockback)
 	local b = if breaks and breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
-	credit(tower.owner, Enemies.damage(enemy, damage, pierce, b))
+	local at = enemy.part.Position
+	local killed, gone, dropped = Enemies.damage(enemy, damage, pierce, b)
+	credit(tower.owner, killed, gone, dropped)
+	if gone then
+		takeDownMark(tower, at) -- 4x common rule 4 (Take-down mark %)
+	end
 	if stats.stripsOnHit then
 		Enemies.strip(enemy, Config.Tuning.StripS or 0) -- PLAN 9c: bare for every tower a while
+	end
+	if tower.resin and enemy.alive then
+		resinHit(tower, enemy) -- Amber Resin Cannon: slow + resin + entomb (PLAN 9g)
 	end
 end
 
@@ -1707,10 +1931,145 @@ function Towers.rescueBeacon(side: number?): (Vector3?, number)
 	return best, mult
 end
 
+------------------------------------------------------------------ Amber Resin Cannon, per frame
+
+local WALL_STEP = 2 -- studs: how finely the wall's spot is searched along the track
+local WALL_CATCH = 1.5 -- studs before the wall where a dino stops
+
+-- The furthest-along point of the side's track still inside the cannon's range.
+local function wallSpot(tower: Tower): number
+	local d = Enemies.trackDistanceNear(tower.base, tower.side)
+	local range = tower.stats.range
+	for _ = 1, 400 do
+		local p = Enemies.pointAt(d + WALL_STEP, tower.side)
+		local flat = Vector2.new(p.X - tower.base.X, p.Z - tower.base.Z).Magnitude
+		if flat > range or (p - Enemies.pointAt(d, tower.side)).Magnitude < 1e-3 then
+			break
+		end
+		d += WALL_STEP
+	end
+	return d
+end
+
+-- Raises Resin Wall now (AutoFire, or the Studio `firenow`).
+local function raiseWall(tower: Tower)
+	local state = tower.resin
+	if not state or tower.stats.wallSeconds <= 0 then
+		return
+	end
+	local at = wallSpot(tower)
+	local point = Enemies.pointAt(at, tower.side)
+	local ahead = Enemies.pointAt(at + 1, tower.side)
+	local facing = if (ahead - point).Magnitude > 1e-3 then CFrame.lookAt(point, Vector3.new(ahead.X, point.Y, ahead.Z)) else CFrame.new(point)
+	local part = Effects.part(Vector3.new(10, 6, 1.5), facing + Vector3.new(0, 3, 0), AMBER_COLOR, tower.stats.wallSeconds)
+	part.Transparency = 0.3
+	part.Material = Enum.Material.Glass
+	state.wall = { at = at, raisedAt = os.clock(), part = part }
+end
+
+-- Amber Age: entombs everything in range now.
+local function entombAll(tower: Tower, own)
+	local stats = tower.stats
+	for _, enemy in own do
+		if enemy.alive and not enemy.def.flying and (enemy.part.Position - tower.position).Magnitude <= stats.range then
+			entomb(tower, enemy, FourX.hardStop(stats.entombSeconds, enemy.def.boss == true), false)
+		end
+	end
+end
+
+local function stepResin(tower: Tower, dt: number, own)
+	local state = tower.resin
+	if not state then
+		return
+	end
+	local stats, now = tower.stats, os.clock()
+	if tower.knockedOut then
+		state.wall = nil
+		return
+	end
+	-- Amber Age: every Entomb all every (s).
+	if stats.entombAllEvery > 0 then
+		state.allTimer += dt
+		if state.allTimer >= stats.entombAllEvery then
+			state.allTimer -= stats.entombAllEvery
+			entombAll(tower, own)
+		end
+	end
+	-- Sticky Bed: dinos near one it entombed walk slower.
+	if stats.entombSlowPercent > 0 then
+		for tomb, untilTime in state.entombed do
+			if now >= untilTime or not tomb.alive then
+				state.entombed[tomb] = nil
+				continue
+			end
+			for _, enemy in own do
+				if enemy ~= tomb and enemy.alive and Resin.inStickyBed((enemy.part.Position - tomb.part.Position).Magnitude) then
+					Enemies.chill(enemy, { slowPercent = stats.entombSlowPercent, seconds = STICKY_REFRESH, affectsBosses = false, brittlePercent = 0, stripsArmor = false })
+				end
+			end
+		end
+	end
+	-- Resin Wall: once a round, fired by Shared/AutoFire; it holds every dino reaching it.
+	if stats.wallSeconds > 0 then
+		if not state.wall then
+			local inArea, boss = 0, false
+			for _, enemy in own do
+				if enemy.alive and (enemy.part.Position - tower.position).Magnitude <= stats.range then
+					inArea += 1
+					boss = boss or enemy.def.boss == true
+				end
+			end
+			if AutoFire.check(state.auto, boss, inArea, Enemies.allSpawned(tower.side), #own) then
+				raiseWall(tower)
+			end
+		end
+		local wall = state.wall
+		if wall then
+			local since = now - wall.raisedAt
+			if since >= stats.wallSeconds then
+				state.wall = nil
+			else
+				for _, enemy in own do
+					local boss = enemy.def.boss == true
+					if enemy.alive and enemy.distance >= wall.at - WALL_CATCH and enemy.distance <= wall.at + 0.5 and Resin.wallHolds(stats.wallSeconds, since, boss) then
+						Enemies.stun(enemy, FourX.hardStop(stats.wallSeconds, boss) - since, true)
+					end
+				end
+			end
+		end
+	end
+end
+
+-- An Amber Shield seal broke: Self-Sealing's heal.
+local function stepSeals()
+	local now = os.clock()
+	for _, tower in towers do
+		if tower.sealedUntil > 0 and now >= tower.sealedUntil then
+			tower.sealedUntil = 0
+			if tower.sealHealPercent > 0 and not tower.knockedOut then
+				Towers.heal(tower, Resin.sealHeal(tower.maxHp, tower.sealHealPercent))
+			end
+			tower.sealHealPercent = 0
+		end
+	end
+end
+
 -- A new round: every Last Stand is ready again.
 function Towers.newRound()
+	local fuel = false
 	for _, tower in towers do
 		tower.lastStandUsed = false
+		local state = tower.resin
+		if state then -- once a round: the seal, Resin Wall; Fossil Fuel's stack is per round
+			state.sealUsed = false
+			state.fossilsRound = 0
+			fuel = fuel or state.fuelPercent > 0
+			state.fuelPercent = 0
+			AutoFire.reset(state.auto)
+		end
+	end
+	if fuel then
+		refreshAuras()
 	end
 	Walkers.roundEnd() -- Heals between rounds (PLAN 9g)
 end
@@ -1735,7 +2094,9 @@ function Towers.step(dt: number)
 		stepField(tower, dt, own)
 		stepHood(tower, own)
 		stepTow(tower, dt, own)
+		stepResin(tower, dt, own)
 	end
+	stepSeals()
 	stepGrid(dt, live)
 	stepTar(dt, live)
 	Walkers.step(dt) -- walkers land their hits through their towers (PLAN 9g)
@@ -1862,6 +2223,50 @@ function Towers.removeSide(side: number)
 			Towers.remove(towers[i])
 		end
 	end
+end
+
+-- The nearest tower of `key` to `position` (Studio aids, PLAN 9g).
+local function nearestOf(key: string, position: Vector3): Tower?
+	local best, bestD = nil, math.huge
+	for _, tower in towers do
+		local d = (tower.base - position).Magnitude
+		if tower.key == key and d < bestD then
+			best, bestD = tower, d
+		end
+	end
+	return best
+end
+
+-- Studio `firenow <tower>` (Shared/StudioOnly, PLAN 9g): the nearest tower of `key` fires
+-- its once-a-round / timed effects now. Returns what it fired ("" = nothing).
+function Towers.fireNow(key: string, position: Vector3): string
+	local tower = nearestOf(key, position)
+	if not tower then
+		return ""
+	end
+	local fired = {}
+	local own = BattleRules.ownDinos(Enemies.getLive(), tower.side, "tower")
+	if tower.resin then
+		if tower.stats.entombAllEvery > 0 then
+			entombAll(tower, own)
+			table.insert(fired, "Amber Age")
+		end
+		if tower.stats.wallSeconds > 0 then
+			raiseWall(tower)
+			table.insert(fired, "Resin Wall")
+		end
+	end
+	return table.concat(fired, ", ")
+end
+
+-- Studio `fossils <n>`: the nearest Amber Resin Cannon's match fossil count.
+function Towers.setFossils(n: number, position: Vector3): boolean
+	local tower = nearestOf("RESIN", position)
+	if not (tower and tower.resin) then
+		return false
+	end
+	tower.resin.fossils = n
+	return true
 end
 
 function Towers.all(): { Tower }

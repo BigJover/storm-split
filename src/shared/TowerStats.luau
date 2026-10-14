@@ -8,6 +8,7 @@
 	  yes/no flags     OR (FLAGS)
 	  freezeEvery      the shortest pulse interval any path gives
 	  sinkSeconds      the shortest any path gives (Tuning Tar sink seconds when none)
+	  timers           (MIN_POSITIVE, PLAN 9g #316) the shortest non-zero any path gives
 ]]
 
 local Config = require(script.Parent.Config)
@@ -125,6 +126,26 @@ export type Stats = {
 	chainEffects: boolean,
 	-- Targets biggest (Heartseeker): aims at the biggest dino in range, not the furthest along.
 	targetsBiggest: boolean,
+	-- Amber Resin Cannon (PLAN 9g T123; rules in Shared/Resin). 0 on a tower without resin
+	-- (Towers column Resin), except the shared Take-down mark %.
+	entombSeconds: number, -- s an entomb holds (Tuning Entomb base when the build sets none)
+	entombHitsMult: number, -- x the resin hits to entomb
+	entombAmpPercent: number, -- an entombed dino takes +% from everything
+	entombSpread: number, -- the entomb also takes the n nearest dinos within Spread reach
+	entombSlowPercent: number, -- Sticky Bed: dinos near an entombed one slowed this %
+	entombAllEvery: number, -- Amber Age: every N s everything in range is entombed (0 = off)
+	bossEntombSeconds: number, -- Living Amber: a boss's entomb lasts this, full (0 = Entomb x Boss hard stop x)
+	sendBack: number, -- Time Capsule: an entombed non-boss goes this many studs back
+	fossilBelowPercent: number, -- entombed at or below this % of its HP: a fossil (not bosses)
+	fossilRatePercent: number, -- Fossil Fuel: each fossil, towers in range +% rate this round
+	bountyFossilsX: number, -- Prize Fossils: a fossil counts this many take-downs for Bounties
+	heartEvery: number, -- Amber Heart: every N-th fossil this match entombs the whole side 1 s
+	sealSeconds: number, -- Amber Shield: a tower in range that would be Trampled is sealed at 1 HP
+	sealEvery: number, -- Amber Fortress: per tower, once per N s (0 = once a round per cannon)
+	sealHealPercent: number, -- Self-Sealing: heals this % of max HP when the seal breaks
+	reflectDamage: number, -- Amber Mirror: a throw its Grounding catches hits the thrower for this
+	wallSeconds: number, -- Resin Wall: once a round (AutoFire) a track wall holds dinos this long
+	takeDownMarkPercent: number, -- 4x common rule: a take-down marks dinos near it +% (Bone Dust)
 }
 
 local MULTIPLIERS = {
@@ -140,6 +161,7 @@ local MULTIPLIERS = {
 	"hunterReloadMult",
 	"hunterSpreadMult",
 	"healMult",
+	"entombHitsMult",
 }
 local HIGHEST = {
 	"shots",
@@ -196,6 +218,27 @@ local HIGHEST = {
 	"biterSlowSeconds",
 	"fieldStrikeEvery",
 	"fieldStrikeX",
+	-- PLAN 9g (T123): the Amber Resin Cannon and the shared Take-down mark %
+	"entombSeconds",
+	"entombAmpPercent",
+	"entombSpread",
+	"entombSlowPercent",
+	"bossEntombSeconds",
+	"sendBack",
+	"fossilBelowPercent",
+	"fossilRatePercent",
+	"bountyFossilsX",
+	"sealSeconds",
+	"sealHealPercent",
+	"reflectDamage",
+	"wallSeconds",
+	"takeDownMarkPercent",
+}
+-- Timers where the shortest non-zero wins (PLAN 9g, the exporter's "minpos" kind).
+local MIN_POSITIVE = {
+	"entombAllEvery",
+	"heartEvery",
+	"sealEvery",
 }
 local FLAGS = {
 	"piercesArmor",
@@ -228,6 +271,7 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 	end
 	local high: { [string]: number } = { shots = 1, lineHits = 1 }
 	local flag: { [string]: boolean } = {}
+	local shortest: { [string]: number } = {}
 	local freezeEvery = 0 -- shortest pulse interval any path gives
 	local sinkSeconds = 0 -- shortest sink time any path gives
 	local bombletBurnDps, bombletBurnSeconds = 0, 0
@@ -244,6 +288,12 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 			end
 			for _, field in FLAGS do
 				flag[field] = flag[field] or step[field] == true
+			end
+			for _, field in MIN_POSITIVE do
+				local value = step[field] or 0
+				if value > 0 and ((shortest[field] or 0) == 0 or value < shortest[field]) then
+					shortest[field] = value
+				end
 			end
 			local every = step.freezeEvery or 0
 			if every > 0 and (freezeEvery == 0 or every < freezeEvery) then
@@ -336,8 +386,8 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		towLine = def.harpoons == true and flag.towLine == true,
 		chainHarpoons = def.harpoons == true and flag.chainHarpoons == true,
 		sinkSeconds = if def.onTrack then (if sinkSeconds > 0 then sinkSeconds else Config.Tuning.TarSinkSeconds) else 0,
-		sinkCash = if def.onTrack then high.sinkCash or 0 else 0,
-		sinkChestCash = if def.onTrack then high.sinkChestCash or 0 else 0,
+		sinkCash = if def.onTrack or def.resin then high.sinkCash or 0 else 0, -- a Resin Cannon's fossils too (PLAN 9g)
+		sinkChestCash = if def.onTrack or def.resin then high.sinkChestCash or 0 else 0,
 		eruption = def.onTrack == true and flag.eruption == true,
 		tracksSlowPercent = if def.onTrack then high.tracksSlowPercent or 0 else 0,
 		auraSlowedPercent = high.auraSlowedPercent or 0,
@@ -351,6 +401,24 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		fieldStrikeX = if def.chains then high.fieldStrikeX or 0 else 0,
 		chainEffects = def.chains == true and flag.chainEffects == true,
 		targetsBiggest = flag.targetsBiggest == true,
+		entombSeconds = if def.resin then (if (high.entombSeconds or 0) > 0 then high.entombSeconds else Config.Tuning.EntombBaseS) else 0,
+		entombHitsMult = mult.entombHitsMult,
+		entombAmpPercent = if def.resin then high.entombAmpPercent or 0 else 0,
+		entombSpread = if def.resin then math.floor(high.entombSpread or 0) else 0,
+		entombSlowPercent = if def.resin then high.entombSlowPercent or 0 else 0,
+		entombAllEvery = if def.resin then shortest.entombAllEvery or 0 else 0,
+		bossEntombSeconds = if def.resin then high.bossEntombSeconds or 0 else 0,
+		sendBack = if def.resin then high.sendBack or 0 else 0,
+		fossilBelowPercent = if def.resin then high.fossilBelowPercent or 0 else 0,
+		fossilRatePercent = if def.resin then high.fossilRatePercent or 0 else 0,
+		bountyFossilsX = if def.resin then high.bountyFossilsX or 0 else 0,
+		heartEvery = if def.resin then math.floor(shortest.heartEvery or 0) else 0,
+		sealSeconds = if def.resin then high.sealSeconds or 0 else 0,
+		sealEvery = if def.resin then shortest.sealEvery or 0 else 0,
+		sealHealPercent = if def.resin then high.sealHealPercent or 0 else 0,
+		reflectDamage = high.reflectDamage or 0,
+		wallSeconds = if def.resin then high.wallSeconds or 0 else 0,
+		takeDownMarkPercent = high.takeDownMarkPercent or 0,
 	}
 end
 
@@ -358,6 +426,7 @@ end
 TowerStats.MULTIPLIERS = MULTIPLIERS
 TowerStats.HIGHEST = HIGHEST
 TowerStats.FLAGS = FLAGS
+TowerStats.MIN_POSITIVE = MIN_POSITIVE
 
 -- Every tower's damage multiplier: the team's level (1 + TowerDamagePerLevel per level
 -- past 1) times the difficulty's Tower damage x (Chaos = gun skill, PLAN T50 final).

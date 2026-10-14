@@ -644,6 +644,18 @@ function Enemies.aliveCount(): number
 	return liveCount
 end
 
+-- Waves says when a side's round is still spawning (Shared/AutoFire's "the round's last
+-- dino has spawned", PLAN 9g).
+local spawning: { [number]: boolean? } = {}
+function Enemies.setSpawning(side: number, on: boolean)
+	spawning[side] = if on then true else nil
+end
+
+-- The round's last dino on `side` is out: Waves has enqueued them all and none wait in the queue.
+function Enemies.allSpawned(side: number): boolean
+	return not spawning[side] and SpawnQueue.size(spawnQueue, side) == 0
+end
+
 -- Everything still to deal with this round: on the field plus queued; for one side, or
 -- every side when none is given.
 function Enemies.remaining(side: number?): number

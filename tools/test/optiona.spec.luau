@@ -59,7 +59,28 @@ local AFTER_SNAPSHOT: { [string]: any } = {
 	healRegen = 0, -- 9f Heal regen (Mending Salve)
 	healRegenSeconds = 0,
 	oneRoundPerTrigger = false, -- T120b Twin Slug (#323)
+	-- PLAN 9g (T123): the Amber Resin Cannon's fields and the shared Take-down mark %
+	entombSeconds = 0,
+	entombHitsMult = 1,
+	entombAmpPercent = 0,
+	entombSpread = 0,
+	entombSlowPercent = 0,
+	entombAllEvery = 0,
+	bossEntombSeconds = 0,
+	sendBack = 0,
+	fossilBelowPercent = 0,
+	fossilRatePercent = 0,
+	bountyFossilsX = 0,
+	heartEvery = 0,
+	sealSeconds = 0,
+	sealEvery = 0,
+	sealHealPercent = 0,
+	reflectDamage = 0,
+	wallSeconds = 0,
+	takeDownMarkPercent = 0,
 }
+-- Towers added after the snapshot (the 4x towers, PLAN 9g-9j): no "before" to hold them to.
+local NEW_TOWERS = { RESIN = true, RAPTOR = true, BLIMP = true, TOTEM = true, METEOR = true, VENT = true, RANGER = true }
 
 local function same(actual: { [string]: any }, expected: { [string]: any }, where: string): number
 	local bad = 0
@@ -100,7 +121,7 @@ end
 
 test("the snapshot covers every tower and hero in Config, and nothing else", function()
 	for key in Config.Towers do
-		ok(SNAPSHOT.towers[key] ~= nil, `{key} in the snapshot`)
+		ok(SNAPSHOT.towers[key] ~= nil or NEW_TOWERS[key], `{key} in the snapshot`)
 	end
 	for key in SNAPSHOT.towers do
 		ok(Config.Towers[key] ~= nil, `{key} still in Config`)

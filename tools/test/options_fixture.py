@@ -24,6 +24,7 @@ import sys
 import tempfile
 
 import openpyxl
+from openpyxl.formula.translate import Translator
 from openpyxl.worksheet.formula import ArrayFormula
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -83,13 +84,28 @@ def append(ws, source, option, name, name_col, blank=False, raider=False, **step
 
 def a_only(ws):
     """Drop the copy's B/C option rows (appended at the bottom, PLAN 9c on), so the fixture's
-    rows land in empty slots whatever the real sheet's B/C content is."""
+    rows land in empty slots whatever the real sheet's B/C content is. A tower added after
+    them (the 4x towers, PLAN 9g) appends its tier and A rows below them: those move up over
+    the gap, formulas shifted with them (their references are to their own block)."""
     col = headers(ws)["Option"]
     rows = [r for r in range(5, ws.max_row + 1) if ws.cell(r, col).value in ("B", "C")]
-    if rows:
-        last = max(r for r in range(5, ws.max_row + 1) if ws.cell(r, 1).value not in (None, ""))
-        assert rows == list(range(rows[0], last + 1)), f"{ws.title}: B/C rows aren't the sheet's tail"
-        ws.delete_rows(rows[0], len(rows))
+    if not rows:
+        return
+    last = max(r for r in range(5, ws.max_row + 1) if ws.cell(r, 1).value not in (None, ""))
+    write = rows[0]
+    for r in range(rows[0], last + 1):
+        if ws.cell(r, col).value in ("B", "C"):
+            continue
+        if r != write:
+            for c in range(1, ws.max_column + 1):
+                value = ws.cell(r, c).value
+                if isinstance(value, ArrayFormula):
+                    value = value.text
+                if isinstance(value, str) and value.startswith("="):
+                    value = Translator(value, origin=f"A{r}").translate_formula(f"A{write}")
+                ws.cell(write, c).value = value
+        write += 1
+    ws.delete_rows(write, last - write + 1)
 
 
 def doctor(path):

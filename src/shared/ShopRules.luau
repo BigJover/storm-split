@@ -4,11 +4,11 @@
 ]]
 
 return table.freeze({
-	-- In Config but not sold (or unlockable) yet, because their behaviour isn't
-	-- built. Empty since PLAN T68 released the round-4 batch (Storm Coil, Falcon
-	-- Roost, Tar Pit, Harpoon Ballista). tools/value.py reads this list: medians
+	-- In Config but not sold (or unlockable) yet: a 4x tower until its batch's release
+	-- task (PLAN 9g-9j, DECISIONS #312; the Amber Resin Cannon until T124b). Placeable in
+	-- Studio through the J unlock + K cash path. tools/value.py reads this list: medians
 	-- count released towers only (DECISIONS #196).
-	Unreleased = table.freeze({} :: { [string]: boolean }),
+	Unreleased = table.freeze({ RESIN = true } :: { [string]: boolean }),
 
 	-- How far (studs) from your character you can place a tower. Keeps
 	-- placement walk-up: you go to where you want to build.

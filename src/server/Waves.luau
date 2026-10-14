@@ -95,11 +95,13 @@ function Waves.spawnRound(options: RoundOptions): boolean
 	local hpMult = round.hpMult * scale.hpMult * (options.hpMult or 1) * plan.hpX
 	local roll = options.random or random
 
+	Enemies.setSpawning(options.side, true)
 	for _, key in Config.EnemyOrder do
 		local count = plan.counts[key]
 		if count then
 			for _ = 1, count do
 				if options.isOver() then
+					Enemies.setSpawning(options.side, false)
 					return false
 				end
 				local spawnKey = key
@@ -111,6 +113,7 @@ function Waves.spawnRound(options: RoundOptions): boolean
 			end
 		end
 	end
+	Enemies.setSpawning(options.side, false)
 	return true
 end
 

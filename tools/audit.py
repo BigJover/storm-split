@@ -58,6 +58,9 @@ LADDER_EXTENSIONS = {
     ("tower", "FALCON"): ("Falcon Roost", 200, "DECISIONS #147"),
     ("tower", "TARPIT"): ("Tar Pit", 250, "DECISIONS #147"),
     ("tower", "BALLISTA"): ("Harpoon Ballista", 300, "DECISIONS #147"),
+    # The 4x towers at the proposed prices (DIRECTION "The 4x towers", PLAN 9g, TOWERS_LATER.md).
+    ("tower", "RESIN"): ("Amber Resin Cannon", 500, "PLAN 9g"),
+    ("tower", "RAPTOR"): ("Raptor Pen", 500, "PLAN 9g"),
 }
 
 

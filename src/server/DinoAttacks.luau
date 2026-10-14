@@ -71,6 +71,7 @@ type Projectile = {
 	attack: string,
 	boss: boolean, -- a Boss species: x Tuning Boss ranged vs towers x on a tower (#154)
 	atTower: boolean, -- thrown at a tower (a Grounding Spike can strike it down)
+	thrower: Enemies.Enemy, -- who threw it (Amber Mirror bounces a caught throw back, PLAN 9g)
 	model: Model,
 	ring: BasePart,
 }
@@ -199,6 +200,7 @@ local function throw(enemy: Enemies.Enemy, target: Combat.Target)
 		attack = def.rangedName,
 		boss = def.boss == true,
 		atTower = not (typeof(target.ref) == "Instance" and target.ref:IsA("Player")),
+		thrower = enemy,
 		model = model,
 		ring = ring,
 	}
@@ -288,6 +290,10 @@ local function stepGrounding(dt: number)
 			local at = p.model:GetPivot().Position
 			Effects.tracer(tower.muzzle, at, GROUNDING_COLOR)
 			Effects.part(Vector3.one * 1.5, CFrame.new(at), GROUNDING_COLOR, 0.2, Enum.PartType.Ball)
+			if tower.stats.reflectDamage > 0 and p.thrower.alive then
+				Effects.tracer(at, p.thrower.part.Position, GROUNDING_COLOR)
+				Towers.reflect(tower, p.thrower) -- Amber Mirror (PLAN 9g): the throw bounces back
+			end
 			destroy(p)
 			groundingIn[tower] = 0
 		end
