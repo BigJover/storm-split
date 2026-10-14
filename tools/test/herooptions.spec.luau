@@ -13,7 +13,7 @@ local GunRules = require(src.shared.GunRules)
 local Upgrades = require(src.shared.Upgrades)
 
 -- Heroes whose B/C rows are in (9f lands hero by hero).
-local DONE = { PISTOL = true, RIFLE = true }
+local DONE = { PISTOL = true, RIFLE = true, SHOTGUN = true }
 
 -- PLAN 9f, cell by cell: path, tier, letter, name, cells (own step).
 local OPTIONS = {
@@ -212,4 +212,21 @@ test("9f Big Game Hunter: Big Five bursts 5 and Endless Belt stops reloading aft
 	ok(close(phosphor.burnDps, 1.1) and phosphor.burnSeconds == 3, "Phosphor Rounds: burn 1.1/s for 3 s")
 	eq(stats("RIFLE", "Special Ammo", 5, "AB").splashRadius, 3, "Fire Tips: 3 m blasts")
 	ok(close(stats("RIFLE", "Special Ammo", 5, "AC").range, stats("RIFLE", "Special Ammo", 4, "A").range * 1.25), "Flat Tips: 25% further")
+end)
+
+test("9f Brush Beater: Twin Slug, Slam Fire (+ Quad Barrel), Bird Shot, Hot Shells, Flame Choke", function()
+	local twin = stats("SHOTGUN", "Slug", 5, "AC")
+	ok(twin.shotsPerTrigger == 2 and twin.pellets == 1 and twin.pierce == 4, "Twin Slug: 2 slugs per pump, each through 4")
+	eq(twin.fireMode, "semi", "Twin Slug: one pump per click")
+	eq(stats("SHOTGUN", "Slug", 6, "AC").shotsPerTrigger, 2, "Thunder Slug after Twin Slug: still 2 slugs")
+	local slam = stats("SHOTGUN", "Point Blank", 5, "AC")
+	ok(slam.fireMode == "auto" and slam.shotsPerTrigger == 2, "Slam Fire: full-auto, 2 blasts per pull")
+	local quad = stats("SHOTGUN", "Point Blank", 6, "AC")
+	ok(quad.fireMode == "auto" and quad.shotsPerTrigger == 4, "Quad Barrel after Slam Fire: 4 per pull, still auto")
+	ok(stats("SHOTGUN", "Point Blank", 4, "C").hitsAir, "Bird Shot hits flying dinos")
+	ok(not stats("SHOTGUN", "Point Blank", 4, "A").hitsAir, "Kickback doesn't")
+	local hot = stats("SHOTGUN", "Buckshot", 4, "B")
+	ok(close(hot.burnDps, 2.3) and hot.burnSeconds == 3, "Hot Shells: burn 2.3/s")
+	ok(close(stats("SHOTGUN", "Buckshot", 5, "AB").igniteShare, 0.9), "Flame Choke: ignite tick 0.9 of a shot")
+	ok(close(twin.shotDamage, stats("SHOTGUN", "Slug", 4, "A").shotDamage), "Twin Slug keeps the slug's damage per shot")
 end)
