@@ -82,6 +82,12 @@ function Economy.earnFor(side: number, amount: number)
 	end
 end
 
+-- A take-down payout scaled by the difficulty's cash multiplier (Ledger.scaled): Tar Pit
+-- sink cash and Supply Camp Bounty cash (#309) both pay through this.
+function Economy.earnScaledFor(side: number, amount: number, cashMult: number)
+	Economy.earnFor(side, Ledger.scaled(amount, cashMult))
+end
+
 -- Returns true and deducts if the side can afford it; otherwise changes nothing.
 function Economy.trySpendFor(side: number, amount: number): boolean
 	if unknown(side) then

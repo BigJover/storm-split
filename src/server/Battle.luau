@@ -90,6 +90,7 @@ local seatedSides = 0
 local layout: Sides.Layout = Sides.new(1)
 -- Studio stand-in seats and the Bones their own towers take (PLAN T79b): battle-local only.
 local standInSeats: { [number]: boolean } = {}
+local standInExtras: { [number]: number } = {} -- towers Studio "standinpick" added to a stand-in camp
 local realCampIn = false -- a real hunter's camp is still in (Studio "Stand-ins hold" needs one, N7)
 local standInBones: { [number]: number } = {}
 local campTeams: { Team } = {} -- one per camp this match (the player list's groups)
@@ -191,6 +192,40 @@ function Battle.lateJoin(player: Player?, host: Player?): (boolean, string?)
 end
 
 -- Between matches: no battle attributes left behind (co-op reads "Out" for side 1).
+-- Studio "standinpick" (PLAN T115b, #310): every stand-in camp's `key` tower goes to
+-- `pathIndex` tier 3 + `letters`; a camp without one gets one beside its fixed towers.
+-- Returns how many towers were set. Main asks StudioOnly before calling this.
+function Battle.standInPick(key: string, pathIndex: number, letters: string): number
+	if not StudioOnly.allowed(RunService:IsStudio(), "standInPick") then
+		return 0
+	end
+	local set = 0
+	for side in standInSeats do
+		local mine = {}
+		for _, tower in Shop.standInTowersOf(side) do
+			if tower.key == key then
+				table.insert(mine, tower)
+			end
+		end
+		if #mine == 0 then
+			local fixed = #BattleFlow.standInTowers()
+			local extra = (standInExtras[side] or 0) + 1
+			local spot = BattleFlow.standInSpots(layout, side, fixed + extra)[fixed + extra]
+			local tower = spot and Shop.placeStandIn(key, spot, side, BattleFlow.standInOwnerId(side), BattleFlow.standInName(side))
+			if tower then
+				standInExtras[side] = extra
+				table.insert(mine, tower)
+			end
+		end
+		for _, tower in mine do
+			if Towers.setPicksForStandIn(tower, pathIndex, letters) then
+				set += 1
+			end
+		end
+	end
+	return set
+end
+
 function Battle.reset()
 	active = false
 	lateJoiner = nil
@@ -203,6 +238,7 @@ function Battle.reset()
 	seatedSides = 0
 	table.clear(standInSeats)
 	table.clear(standInBones)
+	table.clear(standInExtras)
 	realCampIn = false
 	StandInHunters.clear()
 	for _, player in Players:GetPlayers() do

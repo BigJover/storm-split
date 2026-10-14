@@ -214,6 +214,7 @@ def tower_stats(t, tiers, picks=None):
     flag = {}
     freeze_every = 0
     sink_seconds = 0
+    bomblet_burn = (0, 0)  # Fire Bomblets: (Burn DPS, Burn s) of a path that throws bomblets and burns
     for i, (path, tier) in enumerate(zip(t["paths"], tiers)):
         if tier > 0:
             step = export_constants.line(path, (picks[i] if picks else "") + "AA")[tier - 1]
@@ -226,6 +227,8 @@ def tower_stats(t, tiers, picks=None):
             every = step.get("freezeEvery", 0)
             if every > 0 and (freeze_every == 0 or every < freeze_every):
                 freeze_every = every
+            if step.get("bomblets", 0) > 0 and step.get("burnDps", 0) > 0:
+                bomblet_burn = (max(bomblet_burn[0], step["burnDps"]), max(bomblet_burn[1], step.get("burnSeconds", 0)))
             sink = step.get("sinkSeconds", 0)
             if sink > 0 and (sink_seconds == 0 or sink < sink_seconds):
                 sink_seconds = sink
@@ -242,6 +245,7 @@ def tower_stats(t, tiers, picks=None):
         "markPercent": high.get("markPercent", 0), "brittlePercent": high.get("brittlePercent", 0),
         "burnDps": high.get("burnDps", 0), "burnSeconds": high.get("burnSeconds", 0),
         "bomblets": math.floor(high.get("bomblets", 0)), "bombletGenerations": math.floor(high.get("bombletGenerations", 0)),
+        "bombletBurnDps": bomblet_burn[0], "bombletBurnSeconds": bomblet_burn[1],
         "freezeEvery": freeze_every, "freezeDamage": high.get("freezeDamage", 0),
         "freezeSeconds": high.get("freezeSeconds", 0), "freezeHoldsBosses": flag.get("freezeHoldsBosses", False),
         "stripsArmor": flag.get("stripsArmor", False), "stunSeconds": high.get("stunSeconds", 0),
@@ -513,6 +517,13 @@ def edps(s, mix, tuning, buff=None, overkill=True, breaks1=False):
         uptime = min(1.0, rate * s["shots"] * s["burnSeconds"])
         ground = mix["plain"] + mix["boss"] + (mix["armoured"] if s["pierces"] else 0)
         burn = s["burnDps"] * uptime * hits * ground
+    if s.get("bombletBurnDps", 0) > 0 and s["bomblets"] > 0 and rate > 0:
+        # Fire Bomblets (#306): a shell lights min(its bomblets, Tuning Bomblet fires per
+        # shell) fires, each Burn DPS for Burn s on the ground dinos.
+        fires = min(sum(s["bomblets"] ** g for g in range(1, s["bombletGenerations"] + 1)),
+                    tuning.get("BombletFiresPerShell", 0))
+        ground = mix["plain"] + mix["boss"] + (mix["armoured"] if s["pierces"] else 0)
+        burn += rate * s["shots"] * fires * s["bombletBurnDps"] * s["bombletBurnSeconds"] * ground
     freeze = 0.0
     if s["freezeDamage"] > 0 and s["freezeEvery"] > 0:
         weight = mix["plain"] + mix["flying"] + mix["boss"] + (mix["armoured"] if s["pierces"] else 0)

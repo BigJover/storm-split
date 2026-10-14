@@ -17,7 +17,7 @@ built). Change a name there, not in code.
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
-| **Lookout** | range → support | Keen Eyes | Long Barrel | *Flare Gun* | Watch Post | *Signal Tower* |
+| **Lookout** | range → support | Keen Eyes | Spyglass | *Flare Gun* | Watch Post | *Signal Tower* |
 | **Trigger Happy** | attack speed | Quick Hands | Extended Mag | *Double Tap* | Bullet Hose | *Lead Rain* |
 | **Hardliner** | anti-armour | Heavy Slugs | *Armor Breaker* | Hollow Points | *Railshot* | *Hide Buster* |
 
@@ -30,9 +30,9 @@ A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 /
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
 | **Lookout** | 4 | Watch Post — Sees further, and shoots faster and harder | Signal Mirror — Towers in range fire 18% faster | Spotter's Call — Its target takes +15% from every tower |
-| **Lookout** | 5 | Signal Tower — Towers in range hit harder and can hurt armour | Beacon Fire — Towers in range fire 35% faster | Trophy Spotter — Bosses in range take +40% from everything |
+| **Lookout** | 5 | Signal Tower — Towers in range hit harder and can hurt armour | Beacon Fire — Towers in range fire 35% faster | Alpha Spotter — Bosses in range take +40% from everything |
 | **Trigger Happy** | 4 | Bullet Hose — Fires much faster and hits harder | Belt Feed — Never stops to reload: fires 45% faster | Long Burst — Fires faster from further away |
-| **Trigger Happy** | 5 | Lead Rain — The fastest fire in the game | Bullet Storm — Lighter bullets go through 4 dinos | Shredder — The hail of bullets strips armour |
+| **Trigger Happy** | 5 | Lead Rain — The fastest fire in the game | Bullet Storm — Lighter bullets go through 4 dinos | Shredder — Bullets punch through armour and strip it |
 | **Hardliner** | 4 | Railshot — Each bullet goes through 3 dinos | Cracking Shot — Goes through 2 dinos and strips their armour | Heavy Slug — Goes through 2 dinos, shrinking each 3 sizes |
 | **Hardliner** | 5 | Hide Buster — Hits armoured dinos and bosses 4 times as hard | Jolt Rounds — Hits jolt dinos still for a moment | Rail Lance — Each bullet goes through 6 dinos |
 
@@ -179,7 +179,7 @@ A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table
 | **Plating** | 5 | Bulwark — The best armour; biting dinos get stunned (not bosses) | Iron Fortress — Towers in range take 55% less damage | Spike Fortress — Biters take 18 damage back |
 | **Gunsmith** | 4 | Match Grade — Towers in range hit harder and shoot faster | Rapid Feed — Towers in range fire 20% faster | Heavy Loads — Towers in range hit 30% harder |
 | **Gunsmith** | 5 | Master Gunsmith — Towers in range hit much harder and faster | Machine Shop — Towers in range fire 30% faster | Magnum Loads — Towers in range hit 40% harder |
-| **Outfitter** | 4 | Steady Rests — Hunters in range shoot straighter | Speed Loader — Hunters in range reload 30% faster | Gun Braces — Hunters in range have 30% less recoil |
+| **Outfitter** | 4 | Steady Rests — Hunters in range shoot straighter | Loading Bench — Hunters in range reload 30% faster | Gun Braces — Hunters in range have 30% less recoil |
 | **Outfitter** | 5 | Full Kit — Wider reach, and hunters in range fire faster | Gun Oil — Wider ring; hunters in it reload 20% faster | Steady Aim — Wider ring; hunters in it aim 20% tighter |
 
 ---

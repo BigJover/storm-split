@@ -95,7 +95,7 @@ startGame.Name = "StartGame"
 startGame.Parent = remotes
 -- Home screen, host only: ("mode" | "track" | "difficulty", key), ("sides", n), ("standins",
 -- on), ("ranked", on) or ("play"); Studio only (PLAN T91b): ("startround", n) and
--- ("standinshold", on), which also works mid-match, and ("latestandin") mid-battle (T105). Every player: ("ready", on) for Ranked (PLAN T80; its
+-- ("standinshold", on), which also works mid-match, ("latestandin") mid-battle (T105) and ("standinpick", "<tower> <path> <letters>") mid-battle (T115b). Every player: ("ready", on) for Ranked (PLAN T80; its
 -- buttons are T82's)
 local lobby = Instance.new("RemoteEvent")
 lobby.Name = "Lobby"
@@ -167,7 +167,7 @@ Enemies.init(map.paths, map.enemyFolder, {
 	onTakenDown = function(enemy)
 		local cash = Towers.bountyAt(enemy.part.Position, enemy.side)
 		if cash > 0 then
-			Economy.earnFor(enemy.side, cash)
+			Economy.earnScaledFor(enemy.side, cash, difficulty().cashMult) -- scaled like sink cash (#309)
 		end
 	end,
 })
@@ -222,7 +222,7 @@ Towers.init(map.towerFolder, {
 	-- Finds' chest where it went under.
 	onSink = function(cash, chestCash, position, side)
 		if cash > 0 then
-			Economy.earnFor(side, cash * difficulty().cashMult) -- the pit's side (T77)
+			Economy.earnScaledFor(side, cash, difficulty().cashMult) -- the pit's side (T77)
 		end
 		Airdrops.chestAt(position, chestCash, side)
 	end,
@@ -302,6 +302,16 @@ lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
 			if not seated then
 				print(`[DinoHunters] Late stand-in refused: {why}`)
 			end
+		end
+		return
+	end
+	-- Studio "standinpick <tower> <path> <letters>" (PLAN T115b, #310): set a stand-in
+	-- camp tower's B/C picks mid-battle, so the Tester can raid it; refused live.
+	if action == "standinpick" and StudioOnly.allowed(RunService:IsStudio(), "standInPick") then
+		if isHost(player) then
+			local towerKey, pathIndex, letters = StudioOnly.standInPick(RunService:IsStudio(), key, Config.Towers)
+			local set = if towerKey and pathIndex and letters then Battle.standInPick(towerKey, pathIndex, letters) else 0
+			print(`[DinoHunters] standinpick {tostring(key)}: {set} stand-in tower(s) set`)
 		end
 		return
 	end

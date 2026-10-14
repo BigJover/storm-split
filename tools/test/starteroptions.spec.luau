@@ -18,11 +18,11 @@ local OPTIONS = {
 	{ "SCOUT", "Lookout", 4, "B", "Signal Mirror", { damageMult = 1.15, auraRatePercent = 18 } },
 	{ "SCOUT", "Lookout", 4, "C", "Spotter's Call", { damageMult = 1.2, rangeMult = 1.1, markPercent = 15 } },
 	{ "SCOUT", "Lookout", 5, "B", "Beacon Fire", { damageMult = 1.4, rangeMult = 1.15, auraRatePercent = 35 } },
-	{ "SCOUT", "Lookout", 5, "C", "Trophy Spotter", { damageMult = 1.55, rangeMult = 1.1, bossMarkPercent = 40 } },
+	{ "SCOUT", "Lookout", 5, "C", "Alpha Spotter", { damageMult = 1.55, rangeMult = 1.1, bossMarkPercent = 40 } },
 	{ "SCOUT", "Trigger Happy", 4, "B", "Belt Feed", { damageMult = 1.05, rateMult = 1.45 } },
 	{ "SCOUT", "Trigger Happy", 4, "C", "Long Burst", { damageMult = 1.2, rateMult = 1.55, rangeMult = 1.25 } },
 	{ "SCOUT", "Trigger Happy", 5, "B", "Bullet Storm", { damageMult = 0.8, lineHits = 4 } },
-	{ "SCOUT", "Trigger Happy", 5, "C", "Shredder", { damageMult = 1.7, rateMult = 1.35, stripsArmor = true } },
+	{ "SCOUT", "Trigger Happy", 5, "C", "Shredder", { damageMult = 1.55, rateMult = 1.35, piercesArmor = true, stripsArmor = true } },
 	{ "SCOUT", "Hardliner", 4, "B", "Cracking Shot", { damageMult = 2.7, lineHits = 2, stripsArmor = true } },
 	{ "SCOUT", "Hardliner", 4, "C", "Heavy Slug", { damageMult = 2.6, lineHits = 2, sizeBreaks = 3 } },
 	{ "SCOUT", "Hardliner", 5, "B", "Jolt Rounds", { damageMult = 4.6, armoredMult = 2, stunSeconds = 0.3 } },
@@ -151,7 +151,7 @@ test("Boss mark %, knockback and bomblet stun/knockback/burn reach the starter t
 	local function stats(key: string, tiers: { number }, picks: { string })
 		return TowerStats.compute(Config.Towers[key], tiers, picks)
 	end
-	eq(stats("SCOUT", { 5, 0, 0 }, { "AC", "", "" }).bossMarkPercent, 40, "Trophy Spotter boss mark")
+	eq(stats("SCOUT", { 5, 0, 0 }, { "AC", "", "" }).bossMarkPercent, 40, "Alpha Spotter boss mark")
 	eq(stats("SNIPER", { 0, 4, 0 }, { "", "B", "" }).bossMarkPercent, 25, "Painted Target boss mark")
 	eq(stats("SNIPER", { 0, 5, 0 }, { "", "BC", "" }).bossMarkPercent, 40, "Kill Order: the higher boss mark")
 	eq(stats("SNIPER", { 4, 0, 0 }, { "B", "", "" }).knockback, 3, "Wind Shear knockback")
@@ -175,4 +175,40 @@ test("Boss mark %, knockback and bomblet stun/knockback/burn reach the starter t
 	ok(not Ballista.movesBoss(true, nil) and Ballista.movesBoss(false, nil), "a knockback never moves a boss")
 	local rock = stats("GRENADIER", { 0, 0, 5 }, { "", "", "AC" })
 	ok(rock.stunsBosses and rock.stunSeconds >= 0.5, "Rockfall stuns bosses")
+end)
+
+-- T115b (#306, #307): the 9c review fixes' rules.
+local fs = require("@lune/fs")
+test("T115b: a shell lights at most Bomblet fires per shell fires, first generation first", function()
+	local cap = Config.Tuning.BombletFiresPerShell
+	eq(cap, 6, "Tuning Bomblet fires per shell")
+	local rain = Combat.bombletFires(3, 3, cap) -- Firecracker Rain: 3 + 9 + 27 = 39 bomblets
+	eq(rain[1], 3, "generation 1: all 3")
+	eq(rain[2], 3, "generation 2: the 3 left")
+	eq(rain[3], 0, "generation 3: none")
+	local fire = Combat.bombletFires(3, 1, cap) -- Fire Bomblets
+	eq(fire[1], 3, "Fire Bomblets: all 3")
+	eq(Combat.bombletFires(4, 2, cap)[2], 2, "4 + 16 bomblets: 4 then 2")
+	local towers = fs.readFile("src/server/Towers.luau")
+	ok(towers:find("Combat.bombletFires(stats.bomblets, stats.bombletGenerations, Config.Tuning.BombletFiresPerShell", 1, true) ~= nil, "Towers lights fires by the cap")
+end)
+
+test("T115b: a strip lasts half on bosses (1.5 s), the full Strip (s) on other dinos", function()
+	eq(Config.Tuning.StripS, 3, "Strip (s)")
+	eq(Combat.stripSeconds(Config.Tuning.StripS, true), 1.5, "a boss: 1.5 s")
+	eq(Combat.stripSeconds(Config.Tuning.StripS, false), 3, "a non-boss: 3 s")
+	local enemies = fs.readFile("src/server/Enemies.luau")
+	ok(enemies:find("Combat.stripSeconds(seconds, enemy.def.boss == true)", 1, true) ~= nil, "the generic strip rule uses it")
+end)
+
+test("T115b: Shredder pierces armour, so its strip lands on armoured dinos", function()
+	local _, i = pathOf("SCOUT", "Trigger Happy")
+	local function build(picks: string)
+		local tiers, all = { 0, 0, 0 }, { "", "", "" }
+		tiers[i], all[i] = 5, picks
+		return TowerStats.compute(Config.Towers.SCOUT, tiers, all)
+	end
+	local s = build("AC")
+	ok(s.piercesArmor and s.stripsOnHit, "Shredder pierces and strips")
+	ok(not build("AA").piercesArmor, "Lead Rain doesn't pierce")
 end)

@@ -36,6 +36,11 @@ function Ledger.has(l: Ledger, side: number): boolean
 	return l.pots[side] ~= nil
 end
 
+-- A payout scaled by the difficulty's cash multiplier (sink cash, Bounty cash #309).
+function Ledger.scaled(amount: number, cashMult: number): number
+	return amount * cashMult
+end
+
 function Ledger.earn(l: Ledger, side: number, amount: number): boolean
 	local pot = l.pots[side]
 	if not pot or amount <= 0 then

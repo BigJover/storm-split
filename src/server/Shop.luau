@@ -349,6 +349,17 @@ function Shop.placeStandIn(key: string, spot: Vector3, side: number, ownerId: nu
 	return tower
 end
 
+-- A stand-in camp's towers on `side` (Studio "standinpick", PLAN T115b).
+function Shop.standInTowersOf(side: number): { Towers.Tower }
+	local list = {}
+	for tower in standIns do
+		if tower.side == side then
+			table.insert(list, tower)
+		end
+	end
+	return list
+end
+
 function Shop.init(remotes: Folder, hooks: { onBounty: ((Player, string) -> ())? }?)
 	onBounty = hooks and hooks.onBounty
 	local request = Instance.new("RemoteFunction")

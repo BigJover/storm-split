@@ -707,6 +707,23 @@ function Towers.upgrade(tower: Tower, pathIndex: number, option: string?): boole
 	return true
 end
 
+-- Studio "standinpick" (PLAN T115b, #310; Battle asks StudioOnly first): a stand-in camp's
+-- tower is rebuilt to one path's tier 3 plus `letters` (its T4 / T5 options), every other
+-- path back to 0. Goes through Towers.upgrade, so every rule still holds.
+function Towers.setPicksForStandIn(tower: Tower, pathIndex: number, letters: string): boolean
+	tower.pathTiers = { 0, 0, 0 }
+	tower.pathPicks = { "", "", "" }
+	tower.stats = TowerStats.compute(tower.def, tower.pathTiers, tower.pathPicks)
+	local done = true
+	for _ = 1, 3 do
+		done = done and Towers.upgrade(tower, pathIndex)
+	end
+	for i = 1, #letters do
+		done = done and Towers.upgrade(tower, pathIndex, string.sub(letters, i, i))
+	end
+	return done
+end
+
 ------------------------------------------------------------------ targeting
 
 local function piercing(tower: Tower): boolean
@@ -812,29 +829,41 @@ local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: n
 end
 
 -- Bomblets land along the track (side `trackSide`'s) around `distance`, alternating behind
--- and ahead of it. Each generation throws the same number again, weaker.
-local function bomblets(tower: Tower, trackSide: number, distance: number, damage: number, generation: number, live)
+-- and ahead of it. Each generation throws the same number again around every bomblet of the
+-- one before, weaker. Generation by generation, so the fires (Fire Bomblets) go to the
+-- first generation first, at most Tuning Bomblet fires per shell (#306, Combat.bombletFires).
+local function bomblets(tower: Tower, trackSide: number, distance: number, damage: number, live)
 	local stats = tower.stats
-	if generation > stats.bombletGenerations or stats.bomblets <= 0 then
+	if stats.bombletGenerations <= 0 or stats.bomblets <= 0 then
 		return
 	end
 	local spread = Config.Tuning.BombletSpread or 0
 	local share = Config.Tuning.BombletDamage or 0
-	local blastDamage = damage * share
-	for i = 1, stats.bomblets do
-		local side = if i % 2 == 1 then -1 else 1
-		local centre = distance + side * spread * math.ceil(i / 2)
-		for _, enemy in live do
-			if enemy.side == trackSide and canTarget(tower, enemy) and math.abs(enemy.distance - centre) <= spread / 2 then
-				hit(tower, enemy, blastDamage)
+	local fires = Combat.bombletFires(stats.bomblets, stats.bombletGenerations, Config.Tuning.BombletFiresPerShell or 0)
+	local centres = { distance }
+	local blastDamage = damage
+	for generation = 1, stats.bombletGenerations do
+		blastDamage *= share
+		local nextCentres = {}
+		for _, parent in centres do
+			for i = 1, stats.bomblets do
+				local side = if i % 2 == 1 then -1 else 1
+				local centre = parent + side * spread * math.ceil(i / 2)
+				table.insert(nextCentres, centre)
+				for _, enemy in live do
+					if enemy.side == trackSide and canTarget(tower, enemy) and math.abs(enemy.distance - centre) <= spread / 2 then
+						hit(tower, enemy, blastDamage)
+					end
+				end
+				-- Fire Bomblets (PLAN 9c): a bomblet leaves a small fire as wide as its blast.
+				if stats.bombletBurnDps > 0 and fires[generation] > 0 then
+					fires[generation] -= 1
+					Hazards.burn(centre, spread / 2, stats.bombletBurnDps * levelScale, stats.bombletBurnSeconds, piercing(tower), tower.owner, trackSide)
+				end
+				Effects.part(Vector3.one * 2, CFrame.new(Enemies.pointAt(centre, trackSide) + Vector3.new(0, 1, 0)), BOMBLET_COLOR, 0.15, Enum.PartType.Ball)
 			end
 		end
-		-- Fire Bomblets (PLAN 9c): each bomblet leaves a small fire as wide as its blast.
-		if stats.bombletBurnDps > 0 then
-			Hazards.burn(centre, spread / 2, stats.bombletBurnDps * levelScale, stats.bombletBurnSeconds, piercing(tower), tower.owner, trackSide)
-		end
-		Effects.part(Vector3.one * 2, CFrame.new(Enemies.pointAt(centre, trackSide) + Vector3.new(0, 1, 0)), BOMBLET_COLOR, 0.15, Enum.PartType.Ball)
-		bomblets(tower, trackSide, centre, blastDamage, generation + 1, live)
+		centres = nextCentres
 	end
 end
 
@@ -905,7 +934,7 @@ local function fire(tower: Tower, live): boolean
 			hit(tower, enemy, damage, breaks)
 		end
 		rodeoArc(tower, target, hits, damage, live)
-		bomblets(tower, target.side, targetDistance, damage, 1, live)
+		bomblets(tower, target.side, targetDistance, damage, live)
 
 		Effects.tracer(tower.muzzle, targetPosition, TowerLook.COLORS[tower.key] or Color3.new(1, 1, 1))
 	end

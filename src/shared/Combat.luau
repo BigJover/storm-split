@@ -199,6 +199,26 @@ function Combat.canHurt(armored: boolean, piercesArmor: boolean, chillStripped: 
 	return piercesArmor or not armored or chillStripped or now < strippedUntil
 end
 
+-- Fire Bomblets cap (#306): how many of each generation's bomblets light a fire, first
+-- generation first, at most `cap` (Tuning Bomblet fires per shell) per shell. Generation g
+-- throws bomblets^g; the bomblets past the cap still hit, they just don't burn.
+function Combat.bombletFires(bomblets: number, generations: number, cap: number): { number }
+	local fires = {}
+	local left = math.max(0, cap)
+	for g = 1, generations do
+		local n = math.min(left, bomblets ^ g)
+		fires[g] = n
+		left -= n
+	end
+	return fires
+end
+
+-- How long a Strips-armour hit leaves this dino bare (#307): bosses half the time, by the
+-- same Tuning factor as Jaw Lock (Boss jaw lock x), so a boss is bare 1.5 s of Strip's 3.
+function Combat.stripSeconds(seconds: number, isBoss: boolean): number
+	return if isBoss then seconds * Config.Tuning.BossJawLockX else seconds
+end
+
 -- A Strips-armour hit (PLAN 9c): the dino stays bare for `seconds` (Tuning Strip (s))
 -- from now; a later strip only ever extends it, never cuts it short.
 function Combat.stripUntil(strippedUntil: number, now: number, seconds: number): number

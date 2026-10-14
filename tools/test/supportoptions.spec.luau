@@ -63,7 +63,7 @@ local OPTIONS = {
 	{ "ARMORY", "Gunsmith", 4, "C", "Heavy Loads", { auraRatePercent = 5, auraDamagePercent = 30 } },
 	{ "ARMORY", "Gunsmith", 5, "B", "Machine Shop", { auraRatePercent = 30, auraDamagePercent = 25 } },
 	{ "ARMORY", "Gunsmith", 5, "C", "Magnum Loads", { auraRatePercent = 15, auraDamagePercent = 40 } },
-	{ "ARMORY", "Outfitter", 4, "B", "Speed Loader", { hunterReloadMult = 0.7 } },
+	{ "ARMORY", "Outfitter", 4, "B", "Loading Bench", { hunterReloadMult = 0.7 } },
 	{ "ARMORY", "Outfitter", 4, "C", "Gun Braces", { hunterRecoilMult = 0.7 } },
 	{ "ARMORY", "Outfitter", 5, "B", "Gun Oil", { hunterReloadMult = 0.8, rangeMult = 1.15385 } },
 	{ "ARMORY", "Outfitter", 5, "C", "Steady Aim", { hunterSpreadMult = 0.8, rangeMult = 1.15385 } },
@@ -266,7 +266,21 @@ test("9d wirings on Hospital and Armory: Revive speed at T4, range, kits, respaw
 	ok(stats("HOSPITAL", "Ward", 4, "C").range > stats("HOSPITAL", "Ward", 4, "A").range, "Big Tent: a wider ring")
 	eq(stats("HOSPITAL", "Rescue", 5, "AC").rescueRespawnMult, 0.35, "Medevac: respawn x 0.35")
 	eq(stats("HOSPITAL", "Rescue", 4, "C").medKits, 4, "Kit Bags: four kits")
-	ok(close(stats("ARMORY", "Outfitter", 4, "B").hunterReloadMult, 0.65 * 0.7), "Speed Loader: reload x 0.7 on Ammo Crate's")
+	ok(close(stats("ARMORY", "Outfitter", 4, "B").hunterReloadMult, 0.65 * 0.7), "Loading Bench: reload x 0.7 on Ammo Crate's")
 	ok(close(stats("ARMORY", "Outfitter", 4, "C").hunterRecoilMult, 0.75 * 0.7), "Gun Braces: recoil x 0.7 on Recoil Pads'")
 	ok(math.abs(stats("ARMORY", "Outfitter", 5, "CC").hunterSpreadMult - 0.8) < 1e-9, "Steady Aim: spread x 0.8")
+end)
+
+-- T115b (#309): Bounty cash scales with the difficulty's cash multiplier, as sink cash does.
+test("T115b: Bounty cash is scaled by the difficulty's cash multiplier (Hard pays less), like sink cash", function()
+	local Ledger = require(src.shared.Ledger)
+	local hard = Config.Difficulties.HARD.cashMult
+	eq(hard, 0.8, "Hard cash multiplier")
+	eq(Ledger.scaled(25, hard), 20, "Bounty Hall on Hard: 25 x 0.8")
+	eq(Ledger.scaled(8, Config.Difficulties.EASY.cashMult), 8, "Bounty Board on Easy: 8")
+	local main = require("@lune/fs").readFile("src/server/Main.server.luau")
+	ok(main:find("Economy.earnScaledFor(enemy.side, cash, difficulty().cashMult)", 1, true) ~= nil, "Bounty cash pays scaled")
+	ok(main:find("Economy.earnScaledFor(side, cash, difficulty().cashMult)", 1, true) ~= nil, "sink cash pays through the same helper")
+	local economy = require("@lune/fs").readFile("src/server/Economy.luau")
+	ok(economy:find("Economy.earnFor(side, Ledger.scaled(amount, cashMult))", 1, true) ~= nil, "Economy.earnScaledFor scales through Ledger")
 end)

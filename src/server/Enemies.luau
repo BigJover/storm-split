@@ -300,7 +300,7 @@ function Enemies.strip(enemy: Enemy, seconds: number)
 	if not enemy.alive or not enemy.def.armored then
 		return
 	end
-	enemy.strippedUntil = Combat.stripUntil(enemy.strippedUntil, os.clock(), seconds)
+	enemy.strippedUntil = Combat.stripUntil(enemy.strippedUntil, os.clock(), Combat.stripSeconds(seconds, enemy.def.boss == true))
 end
 
 -- Apply damage. Returns true if this hit crossed a threshold (a pop: it shrank

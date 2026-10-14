@@ -18,7 +18,13 @@
 	                                          clock of `wanted` seconds (whole, above 0)
 	                                          when shorter than `cap`; `cap` otherwise and
 	                                          always live (nil cap = no clock, co-op)
-	  StudioOnly.FEATURES                     every Studio-only feature and what it does
+	  StudioOnly.standInPick(isStudio, text, towers)
+                                          "standinpick <tower> <path> <letters>" (PLAN
+                                          T115b, #310): the tower key (or its display
+                                          name), the path id and 1-2 option letters,
+                                          e.g. "Tranq Station Sedate C" -> "CHILLER", 1,
+                                          "C"; nil in a live server or on a bad text
+  StudioOnly.FEATURES                     every Studio-only feature and what it does
 
 	The server passes RunService:IsStudio(); a client is never asked (it could lie). The
 	Studio remotes are only created when this says yes, and each handler asks again, so a
@@ -37,6 +43,7 @@ StudioOnly.FEATURES = {
 	standInPierce = "Stand-in camps' fixed towers pierce armour, for test fidelity (Server/Shop, PLAN T91b)",
 	lateStandIn = 'Late stand-in joins now: the host\'s Lobby ("latestandin") mid-battle seats a stand-in as a late joiner (catch-up cash, toast), refused like a player in Ranked/Practice or after Late join last round (Server/Main, Server/Battle, PLAN T105)',
 	clockCap = 'Short match clock: the host\'s Lobby ("clockcap", seconds) for testing the clock end and its warning (Server/Main, Server/Battle, PLAN T104)',
+	standInPick = 'Stand-in picks: the host\'s Lobby ("standinpick", "<tower> <path> <letters>") mid-battle sets every stand-in camp\'s tower of that kind to that path\'s tier 3 + those options (placing one if the camp has none), so the Tester can raid a B/C option (Server/Main, Server/Battle, PLAN T115b, #310)',
 } :: { [string]: string }
 
 function StudioOnly.allowed(isStudio: boolean, feature: string): boolean
@@ -63,6 +70,38 @@ function StudioOnly.heldLoss(isStudio: boolean, hold: unknown, standIn: boolean,
 		return math.max(0, math.min(cost, fence - 1))
 	end
 	return cost
+end
+
+local function trim(text: string): string
+	return (string.gsub(string.gsub(text, "^%s+", ""), "%s+$", ""))
+end
+
+function StudioOnly.standInPick(isStudio: boolean, text: unknown, towers: { [string]: any }): (string?, number?, string?)
+	if not StudioOnly.allowed(isStudio, "standInPick") or type(text) ~= "string" then
+		return nil
+	end
+	local rest, letters = string.match(trim(text), "^(.-)%s+(%a+)$")
+	if not rest or not letters then
+		return nil
+	end
+	letters = string.upper(letters)
+	if #letters > 2 or string.find(letters, "[^ABC]") then
+		return nil
+	end
+	local lower = string.lower(trim(rest))
+	for key, def in towers do
+		for _, name in { string.lower(key), string.lower(def.display or key) } do
+			if string.sub(lower, 1, #name + 1) == name .. " " then
+				local pathName = trim(string.sub(lower, #name + 2))
+				for i, path in def.paths or {} do
+					if string.lower(path.id) == pathName then
+						return key, i, letters
+					end
+				end
+			end
+		end
+	end
+	return nil
 end
 
 return StudioOnly

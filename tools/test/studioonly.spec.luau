@@ -6,7 +6,7 @@
 local fs = require("@lune/fs")
 local StudioOnly = require(src.shared.StudioOnly)
 
-local EXPECTED = { "cash", "amber", "towerHit", "standIns", "startRound", "standInsHold", "standInPierce", "clockCap", "lateStandIn" }
+local EXPECTED = { "cash", "amber", "towerHit", "standIns", "startRound", "standInsHold", "standInPierce", "clockCap", "lateStandIn", "standInPick" }
 
 test("T89: each Studio-only feature is allowed in Studio and refused in a live server", function()
 	local count = 0
@@ -102,6 +102,7 @@ test("T89 grep: every IsStudio() on the server goes through StudioOnly (or is th
 					or string.find(line, "StudioOnly.startRound(RunService:IsStudio(),", 1, true)
 					or string.find(line, "StudioOnly.heldLoss(RunService:IsStudio(),", 1, true)
 					or string.find(line, "StudioOnly.matchCap(RunService:IsStudio(),", 1, true) -- T104
+					or string.find(line, "StudioOnly.standInPick(RunService:IsStudio(),", 1, true) -- T115b
 				-- "Studio or unpublished" only ever turns live features OFF (Practice, This-server boards)
 				local notLive = string.find(line, "RunService:IsStudio() or game.PlaceId == 0", 1, true)
 				ok(viaHelper or notLive, `{name}:{i} uses IsStudio() without Shared/StudioOnly`)
@@ -155,4 +156,32 @@ test("T89: the client only shows Studio buttons for remotes the server made", fu
 	ok(hud:find('remotes:FindFirstChild("StudioCash")', 1, true) ~= nil, "K button needs the remote")
 	ok(hud:find('remotes:FindFirstChild("StudioProgress")', 1, true) ~= nil, "J needs the remote")
 	ok(hud:find('remotes:FindFirstChild("StudioTowerHit")', 1, true) ~= nil, "L needs the remote")
+end)
+
+test("T115b: standinpick parses <tower> <path> <letters> in Studio and is refused live", function()
+	local Config = require(src.shared.Config)
+	local key, path, letters = StudioOnly.standInPick(true, "Tranq Station Sedate BC", Config.Towers)
+	eq(key, "CHILLER", "display name")
+	eq(path, 1, "Sedate is path 1")
+	eq(letters, "BC", "the letters")
+	key, path, letters = StudioOnly.standInPick(true, "armory outfitter c", Config.Towers)
+	eq(key, "ARMORY", "any case")
+	eq(letters, "C", "one letter = T4")
+	key = StudioOnly.standInPick(true, "CHILLER Weak Spot C", Config.Towers)
+	eq(key, "CHILLER", "the tower key and a two-word path")
+	eq(StudioOnly.standInPick(false, "Tranq Station Sedate BC", Config.Towers), nil, "refused on a live server")
+	eq(StudioOnly.standInPick(true, "Tranq Station Sedate BD", Config.Towers), nil, "not a letter")
+	eq(StudioOnly.standInPick(true, "Tranq Station Sedate ABC", Config.Towers), nil, "three letters")
+	eq(StudioOnly.standInPick(true, "Tranq Station Nap B", Config.Towers), nil, "no such path")
+	eq(StudioOnly.standInPick(true, 5, Config.Towers), nil, "not text")
+	local main = fs.readFile("src/server/Main.server.luau")
+	local handler = main:find("lobby.OnServerEvent:Connect(function", 1, true)
+	local pick = main:find('action == "standinpick"', handler, true)
+	local lobbyOnly = main:find('GetAttribute("State") ~= "Lobby"', handler, true)
+	ok(pick ~= nil and lobbyOnly ~= nil and pick < lobbyOnly, "standinpick works mid-battle")
+	local line = main:sub(pick, (main:find("\n", pick, true) or #main) - 1)
+	ok(line:find('StudioOnly.allowed(RunService:IsStudio(), "standInPick")', 1, true) ~= nil, "gated by StudioOnly")
+	ok(main:sub(pick, lobbyOnly):find("isHost(player)", 1, true) ~= nil, "host only")
+	local battle = fs.readFile("src/server/Battle.luau")
+	ok(battle:find('if not StudioOnly.allowed(RunService:IsStudio(), "standInPick") then', 1, true) ~= nil, "Battle asks again")
 end)
