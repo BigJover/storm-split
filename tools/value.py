@@ -293,6 +293,11 @@ def tower_stats(t, tiers, picks=None):
         "rescueRespawnMult": high.get("rescueRespawnMult", 0), "lastStand": flag.get("lastStand", False),
         "hunterSpreadMult": mult["hunterSpreadMult"], "hunterRecoilMult": mult["hunterRecoilMult"],
         "biterSlowPercent": high.get("biterSlowPercent", 0), "biterSlowSeconds": high.get("biterSlowSeconds", 0),
+        # PLAN 9e (#296): Field strike (a coil only), Chain effects, Targets biggest, and the Reel's control
+        "fieldStrikeEvery": high.get("fieldStrikeEvery", 0) if t.get("chains") else 0,
+        "fieldStrikeX": high.get("fieldStrikeX", 0) if t.get("chains") else 0,
+        "chainEffects": bool(t.get("chains") and flag.get("chainEffects", False)),
+        "targetsBiggest": flag.get("targetsBiggest", False),
     }
 
 
@@ -1034,7 +1039,11 @@ def hero_lines(data, rows, mixes):
 #                                          rate: the composed build's multipliers)
 #   Tar Pit Deep Tar / Bubbling / Dig Site seconds a ground dino loses / share of ground HP
 #                                          removed / cash a round from sinks (tar_lines)
-#   heroes                                 sustained hero_dps (pays for reloads)
+#   (PLAN 9e, #296)
+#   Storm Coil Arc / Charge                eDPS + aura + field_strike_credit (Storm Front)
+#   Storm Coil Lightning Rod               eDPS + aura + GROUNDING_CREDIT / Grounding every s
+#   Falcon Roost Falconer                  eDPS + aura, Boss mark % x boss as aura damage
+#   heroes                                sustained hero_dps (pays for reloads)
 # Raider options (`PvP effect`, #284): the model only counts dinos, so an option's worth IS
 # its dino part; it must reach RAIDER_FLOOR x the median of the slot's other options.
 # Every one of a path's 9 T5 builds stays under the tower's worth caps (#193/#200: the
@@ -1048,6 +1057,8 @@ RAIDER_FLOOR = 0.8
 HERO_PARITY = 1.15
 SLOW_DWELL = 2.0  # s a dino is assumed to stay in a Tranq Station's range (linger adds to it)
 LAST_STAND = 10  # Hospital Tonic (PLAN 9d, #292): Last stand's credit in HP-% points
+FIELD_STRIKE_DINOS = 20  # Storm Coil Storm Front (PLAN 9e, #296): dinos on the field a strike reaches
+GROUNDING_CREDIT = 20  # Storm Coil Lightning Rod (#296): + this / Grounding every (s)
 BOUNTY_TAKEDOWNS = 30  # Supply Yield (PLAN 9d, #292): in-range take-downs a round, r31-40 (a quarter of the round's dinos)
 
 
@@ -1153,8 +1164,31 @@ def tower_worth(data, key, pi, s, late):
         return (g("slowPercent") * (1 + g("slowLinger") / SLOW_DWELL) * g("rangeMult", 1)
                 * (1 + (late["boss"] if g("slowsBosses") else 0)))
     path = t["paths"][pi]
-    boss_mark = key == "CHILLER" and pid == "Weak Spot"  # #292: Boss mark % x boss share as aura damage
-    return edps(s, late, tuning) + aura_credit(data, s, late, brittle=is_support(key, path), boss_mark=boss_mark)
+    # #292 / #296: Boss mark % x boss share as aura damage (Tranq Weak Spot, Falcon Falconer)
+    boss_mark = (key, pid) in (("CHILLER", "Weak Spot"), ("FALCON", "Falconer"))
+    worth = edps(s, late, tuning) + aura_credit(data, s, late, brittle=is_support(key, path), boss_mark=boss_mark)
+    if key == "COIL":  # PLAN 9e (#296)
+        if pid == "Lightning Rod":
+            return worth + (GROUNDING_CREDIT / g("groundingEvery") if g("groundingEvery") else 0)
+        return worth + field_strike_credit(s, late)
+    return worth
+
+
+def field_strike_credit(s, mix):
+    """Storm Front (PLAN 9e, #296): FIELD_STRIKE_DINOS x the coil's damage x Field strike x per
+    Field strike every s, x the share of the band it can hurt (plain + boss + flying, + armoured
+    if it pierces). No overkill, no level: a credit, like the aura's.
+
+    >>> field_strike_credit({"fieldStrikeEvery": 8, "fieldStrikeX": 0.5, "damage": 10, "pierces": False},
+    ...                     {"plain": 0.5, "boss": 0.2, "flying": 0.1, "armoured": 0.2})
+    10.0
+    >>> field_strike_credit({"fieldStrikeEvery": 0, "fieldStrikeX": 0, "damage": 10, "pierces": True}, {})
+    0.0
+    """
+    if not s.get("fieldStrikeEvery") or not s.get("fieldStrikeX"):
+        return 0.0
+    share = mix["plain"] + mix["boss"] + mix["flying"] + (mix["armoured"] if s["pierces"] else 0)
+    return FIELD_STRIKE_DINOS * s["damage"] * s["fieldStrikeX"] / s["fieldStrikeEvery"] * share
 
 
 def option_report(data):

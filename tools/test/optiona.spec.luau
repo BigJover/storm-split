@@ -50,6 +50,10 @@ local AFTER_SNAPSHOT: { [string]: any } = {
 	raiderSlowSeconds = 0,
 	raiderDamage = 0,
 	bountyCash = 0, -- 9d Bounty cash
+	fieldStrikeEvery = 0, -- 9e Field strike
+	fieldStrikeX = 0,
+	chainEffects = false, -- 9e Chain effects
+	targetsBiggest = false, -- 9e Targets biggest
 	biterSlowPercent = 0, -- 9d Biter slow
 	biterSlowSeconds = 0,
 }

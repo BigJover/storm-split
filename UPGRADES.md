@@ -211,6 +211,17 @@ Voltage; breaks 1 size per hit. Short own range (14). Rules: `Shared/StormCoil`.
 - Battery Pack: +30% damage. Static Shock: a struck dino takes +10% from the next strike. Thunderclap: the first target is stunned 0.4s (not bosses). High Voltage: pierces armour, +40% damage. Judgement Bolt: every 10s one bolt on the biggest dino in range, ×8, breaks 3 sizes, stuns bosses 0.5s.
 - Tall Mast: range ×1.2. Charged Air: towers in range +10% attack speed. Grounding Spike: every 4s strikes down one dino throw aimed at a tower in range. Storm Warning: towers in range +15% damage. Lightning Rodeo: towers in range chain their own shots once (one more dino at 50%).
 
+A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; A = the path table's T4 / T5; names are working names until the Dino pass). Storm Front: every 8 s the coil strikes every dino on its side's field for ×0.5 its damage (air too; armour only if it pierces; breaks 1). Chain effects (Supercell, Superconductor): the strike's slow and stun land on every dino in the chain; an arc's stun is capped at 0.3 s (Tuning Chain stun cap), the first dino keeps its full stun; never bosses. Thunderstrike: the strike's first dino breaks 2 sizes (arcs 1). Rod Strike is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (8 damage x0.5, slow 20 % for 1 s, once per 3 s per hunter, never through Camo Cover); in co-op it is a 15 % rate aura:
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Arc** | 4 | Jump Spark — Arcs can jump from one coil's range to another's | Branching Bolt — Every arc forks three ways | Chain Surge — Three more arcs on every strike |
+| **Arc** | 5 | Power Grid — Strikes every dino near every coil; more coils, more power | Storm Front — Every 8 s a strike hits every dino on the field | Supercell — A 14-arc chain that slows every dino it hits |
+| **Charge** | 4 | High Voltage — Hurts armoured dinos, and hits harder | Overcharge — Stuns its first target for 0.8 s | Static Storm — Struck dinos take +30% from the next strike |
+| **Charge** | 5 | Judgement Bolt — A huge bolt shrinks the biggest dino 3 sizes | Superconductor — Every dino in the chain is stunned for a moment | Thunderstrike — Huge strikes that break 2 sizes |
+| **Lightning Rod** | 4 | Storm Warning — Towers in range hit harder | Ground Wire — Strikes down a dino throw every 2 s | Rod Strike — Zaps raiders; towers in range fire 15% faster |
+| **Lightning Rod** | 5 | Lightning Rodeo — Towers in range chain their shots to one more dino | Lightning Shield — Strikes down a throw at a tower every second | Thunder Drums — Towers in range fire 25% faster |
+
 ## Falcon Roost (FALCON) — birds of prey, can't be damaged ✅ round 4 (PLAN T65; sold from T68) · unlock 200 Amber
 
 A tall perch with a falconer's hut. Two falcons fly to the first dino within 40 studs (one
@@ -227,6 +238,17 @@ ground. No armour until Iron Talons. Rules: `Shared/Falcon`.
 - Power Dive: the first dive on a dino ×3, breaks 2. Iron Talons: pierces armour, breaks 3. Eagle of the Peak: one giant eagle replaces the flock, ×6 dives, stuns 0.5s (not bosses), breaks 3.
 - Second Pair: 4 birds. Flock of Six: 6 birds. Wide Circle: radius 60. Murmuration (pending Jovan: or Sky Swarm): 12 small birds peck every dino in range (no more dives or flights; breaks 1).
 - Long Leash: +10% range. Falcon Bells: a struck dino takes +10% for 2s. Hooded Scout: bosses in range marked +25%. Lure: struck dinos pulled 2 studs back (not bosses). Hunting Party: towers in range +15% attack speed while a bird dives.
+
+A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; names are working names until the Dino pass). Raking Strike: a dive also hits the dino nearest the struck one (breaks 1). Strafing Run: a dive also hits the 2 dinos right behind the struck one on the track, each with the dive's breaks. Guard Falcons is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (6 damage x0.5, slow 20 % for 1 s, once per 3 s per hunter, never through Camo Cover); in co-op bosses in range take +40 %:
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Talons** | 4 | Iron Talons — Hurts armoured dinos; dives shrink a dino 3 sizes | Raking Strike — Each dive also slashes the dino beside it | Stoop Strike — The first dive on a dino hits 6x |
+| **Talons** | 5 | Eagle of the Peak — One giant eagle dives, stuns and shrinks a dino 3 sizes | Harpy Strike — Dives break 4 sizes and hit bosses 2x | Hide Ripper — Talons shred armoured dinos |
+| **Flock** | 4 | Wide Circle — The birds hunt much further out | Swift Wings — Birds fly back much faster | Second Flock — Seven bigger birds hunt at once |
+| **Flock** | 5 | Murmuration — A swarm of small birds pecks every dino in range | Sky Hunters — Twelve birds hunt twice as far out | Strafing Run — Each dive cuts through 3 dinos in a line |
+| **Falconer** | 4 | Lure — Struck dinos get pulled back (not bosses) | Loud Bells — Struck dinos take +25% from every tower | Guard Falcons — Birds dive at raiders; bosses take +40% |
+| **Falconer** | 5 | Hunting Party — Towers in range shoot faster while a bird dives | Royal Hood — Bosses in range take +60% from everything | Bell Chorus — Struck dinos take +40% from every tower |
 
 ## Tar Pit (TARPIT) — on the track: slows and sinks, can't be damaged ✅ round 4 (PLAN T67; sold from T68) · unlock 250 Amber
 

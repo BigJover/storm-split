@@ -169,6 +169,7 @@ export type Tower = {
 	knockedOut: boolean, -- trampled at 0 HP until repaired
 	lastStandUsed: boolean, -- a Field Hospital's Last Stand has saved a tower this round
 	boltTimer: number, -- Storm Coil: seconds toward its next Judgement Bolt
+	fieldTimer: number, -- Storm Coil Storm Front: seconds toward its next field strike (PLAN 9e)
 	static: { [any]: boolean }, -- Storm Coil Static Shock: dinos its last strike charged (weak keys)
 	sorties: { Sortie }, -- Falcon Roost: birds out of the roost
 	dived: { [any]: boolean }, -- Falcon Roost Power Dive: dinos it has dived on (weak keys)
@@ -661,6 +662,7 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 		knockedOut = false,
 		lastStandUsed = false,
 		boltTimer = 0,
+		fieldTimer = 0,
 		static = setmetatable({}, { __mode = "k" }) :: any,
 		sorties = {},
 		dived = setmetatable({}, { __mode = "k" }) :: any,
@@ -993,14 +995,53 @@ local function fireChain(tower: Tower, live): boolean
 		tower.static[enemy] = was
 	end
 	local damage = coilDamage(tower)
-	Enemies.stun(target, stats.stunSeconds, false) -- Thunderclap: the first dino only
+	-- Supercell's slow (PLAN 9e): on the first dino, or the whole chain with Chain effects.
+	local slow: Enemies.Chill? = if stats.slowPercent > 0
+		then { slowPercent = stats.slowPercent, seconds = stats.slowLinger, affectsBosses = stats.slowsBosses, brittlePercent = 0, stripsArmor = false }
+		else nil
 	for _, link in links do
 		local enemy = list[link.index]
 		local from = if link.from then list[link.from].part.Position else tower.muzzle
 		Effects.tracer(from, enemy.part.Position, ARC_COLOR)
-		coilHit(tower, enemy, damage * link.x)
+		-- Thunderclap stuns the first dino; Chain effects (Superconductor) every arc, capped.
+		Enemies.stun(enemy, StormCoil.linkStun(link.hop, stats.stunSeconds, stats.chainEffects), stats.stunsBosses)
+		if slow and StormCoil.linkSlows(link.hop, stats.chainEffects) then
+			Enemies.chill(enemy, slow)
+		end
+		-- Thunderstrike (PLAN 9e): the strike's first dino gets the build's Size breaks; arcs 1.
+		coilHit(tower, enemy, damage * link.x, if link.hop == 0 then stats.sizeBreaks else nil)
 	end
 	return true
+end
+
+-- Storm Front (PLAN 9e, #297): every Field strike every s, every dino on this coil's side's
+-- field takes Field strike x its damage, wherever it is (fliers too; armour only if it
+-- pierces; breaks 1). Each Storm Front coil fires its own.
+local FIELD_COLOR = Color3.fromRGB(200, 230, 255) -- visuals only
+local function stepField(tower: Tower, dt: number, live)
+	local stats = tower.stats
+	if stats.fieldStrikeEvery <= 0 or tower.knockedOut then
+		tower.fieldTimer = 0
+		return
+	end
+	local fired
+	tower.fieldTimer, fired = StormCoil.fieldTick(tower.fieldTimer, dt, stats.fieldStrikeEvery)
+	if not fired then
+		return
+	end
+	local list, dinos = {}, {}
+	for _, enemy in live do
+		if enemy.alive and ownSide(tower, enemy) then
+			table.insert(list, enemy)
+			table.insert(dinos, { side = tower.side, flying = enemy.def.flying == true, armored = enemy.def.armored == true, bare = Enemies.canHurt(enemy, false) })
+		end
+	end
+	local damage = coilDamage(tower) * stats.fieldStrikeX
+	for _, i in StormCoil.fieldTargets(dinos, tower.side, piercing(tower)) do
+		local enemy = list[i]
+		Effects.tracer(enemy.part.Position + Vector3.new(0, 30, 0), enemy.part.Position, FIELD_COLOR)
+		coilHit(tower, enemy, damage)
+	end
 end
 
 -- Judgement Bolt: the dino with the most HP in the coil's range.
@@ -1163,7 +1204,7 @@ local function fireFalcon(tower: Tower, live): boolean
 end
 
 -- Birds in flight: a bird lands its dive when its travel time runs out, then flies home.
-local function stepSorties(tower: Tower, dt: number)
+local function stepSorties(tower: Tower, dt: number, live)
 	for i = #tower.sorties, 1, -1 do
 		local sortie = tower.sorties[i]
 		sortie.out -= dt
@@ -1180,8 +1221,30 @@ local function stepSorties(tower: Tower, dt: number)
 					tower.dived[enemy] = true
 					local stats = tower.stats
 					local damage = Falcon.diveDamage(falconDamage(tower), first, stats.firstDiveX, stats.eagle)
+					-- Raking Strike / Strafing Run (PLAN 9e): who else the dive hits, picked before
+					-- the dive lands (it may take the struck dino down).
+					local extra, line, list = {}, false, {}
+					if stats.targets > 1 or stats.lineHits > 1 then
+						local candidates, struck = {}, nil
+						for _, other in live do
+							if other == enemy or (other.alive and canTarget(tower, other) and (other.part.Position - tower.position).Magnitude <= stats.range) then
+								table.insert(list, other)
+								table.insert(candidates, { position = other.part.Position, distance = other.distance })
+								if other == enemy then
+									struck = #list
+								end
+							end
+						end
+						if struck then
+							extra, line = Falcon.extraHits(candidates, struck, stats.targets, stats.lineHits)
+						end
+					end
 					Effects.tracer(sortie.at + Vector3.new(0, 6, 0), sortie.at, BIRD_COLOR)
 					falconHit(tower, enemy, damage, stats.sizeBreaks)
+					for _, i in extra do
+						Effects.tracer(sortie.at, list[i].part.Position, BIRD_COLOR)
+						falconHit(tower, list[i], damage, if line then stats.sizeBreaks else 1)
+					end
 				end
 			end
 		end
@@ -1318,6 +1381,9 @@ local function stepChill(tower: Tower, dt: number, live)
 	local stats = tower.stats
 	if tower.knockedOut or (stats.slowPercent <= 0 and stats.freezeEvery <= 0) then
 		return
+	end
+	if tower.def.chains or tower.def.harpoons then
+		return -- their Slow % rides their hits (Supercell, Anchor Line; PLAN 9e), not a ring
 	end
 	local range = stats.range
 	local chill: Enemies.Chill = {
@@ -1586,7 +1652,8 @@ function Towers.step(dt: number)
 		local own = bySide[tower.side] or NO_DINOS
 		stepChill(tower, dt, own)
 		stepBolt(tower, dt, own)
-		stepSorties(tower, dt)
+		stepSorties(tower, dt, own)
+		stepField(tower, dt, own)
 		stepHood(tower, own)
 		stepTow(tower, dt, own)
 	end

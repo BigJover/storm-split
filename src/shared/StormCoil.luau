@@ -14,6 +14,16 @@
 	  biggest     Judgement Bolt's target: the dino with the most HP left
 	  groundingPick  Grounding Spike: the throw aimed at a tower that lands soonest,
 	              among those landing within the coil's range
+	  linkStun    Chain effects (PLAN 9e, #297; Supercell, Superconductor): the stun a link
+	              of the strike gets. The first dino keeps the strike's full stun; without
+	              Chain effects the arcs get none, with it each arc gets the stun capped at
+	              Tuning Chain stun cap (s)
+	  linkSlows   whether a link gets the strike's slow: the first dino, or every link with
+	              Chain effects
+	  fieldTick   Field strike (Storm Front): a repeating timer, every Field strike every s
+	  fieldTargets  the dinos one field strike hits: every dino on the coil's side's field,
+	              wherever it is (no range), fliers too; an armoured one only if the coil
+	              pierces or its armour is off
 ]]
 
 local Config = require(script.Parent.Config)
@@ -115,6 +125,49 @@ function StormCoil.groundingPick(throws: { Throw }, center: Vector3, range: numb
 		end
 	end
 	return best
+end
+
+-- `hop`: the link's hop (0 = the first dino).
+function StormCoil.linkStun(hop: number, stun: number, chainEffects: boolean): number
+	if stun <= 0 then
+		return 0
+	end
+	if hop == 0 then
+		return stun
+	end
+	if not chainEffects then
+		return 0
+	end
+	return math.min(stun, Config.Tuning.ChainStunCapS)
+end
+
+function StormCoil.linkSlows(hop: number, chainEffects: boolean): boolean
+	return hop == 0 or chainEffects
+end
+
+-- The time carried over and whether a field strike fires this step (0 every = never).
+function StormCoil.fieldTick(timer: number, dt: number, every: number): (number, boolean)
+	if every <= 0 then
+		return 0, false
+	end
+	timer += dt
+	if timer >= every then
+		return timer - every, true
+	end
+	return timer, false
+end
+
+export type FieldDino = { side: number, flying: boolean, armored: boolean, bare: boolean }
+
+-- `bare`: an armoured dino whose armour is off right now (stripped). Returns indices.
+function StormCoil.fieldTargets(dinos: { FieldDino }, side: number, piercesArmor: boolean): { number }
+	local out = {}
+	for i, dino in dinos do
+		if dino.side == side and (not dino.armored or piercesArmor or dino.bare) then
+			table.insert(out, i)
+		end
+	end
+	return out
 end
 
 return StormCoil

@@ -116,6 +116,15 @@ export type Stats = {
 	-- Biter slow (PLAN 9d, #294): a dino that bites a tower in range is slowed (not bosses).
 	biterSlowPercent: number,
 	biterSlowSeconds: number,
+	-- PLAN 9e (#297). Field strike (Storm Front; a coil only): every fieldStrikeEvery s, every dino
+	-- on its side's field takes fieldStrikeX x its damage. 0 = none.
+	fieldStrikeEvery: number,
+	fieldStrikeX: number,
+	-- Chain effects (Supercell, Superconductor; a coil only): the strike's slow and stun land on
+	-- every dino in the chain (an arc's stun capped at Tuning Chain stun cap (s)).
+	chainEffects: boolean,
+	-- Targets biggest (Heartseeker): aims at the biggest dino in range, not the furthest along.
+	targetsBiggest: boolean,
 }
 
 local MULTIPLIERS = {
@@ -185,6 +194,8 @@ local HIGHEST = {
 	"bountyCash",
 	"biterSlowPercent",
 	"biterSlowSeconds",
+	"fieldStrikeEvery",
+	"fieldStrikeX",
 }
 local FLAGS = {
 	"piercesArmor",
@@ -204,6 +215,8 @@ local FLAGS = {
 	"towLine",
 	"chainHarpoons",
 	"eruption",
+	"chainEffects",
+	"targetsBiggest",
 }
 
 -- `pathPicks` is each path's A/B/C letters ("", "B", "BA"; Shared/Upgrades); nil means
@@ -334,6 +347,10 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		bountyCash = high.bountyCash or 0,
 		biterSlowPercent = high.biterSlowPercent or 0,
 		biterSlowSeconds = high.biterSlowSeconds or 0,
+		fieldStrikeEvery = if def.chains then high.fieldStrikeEvery or 0 else 0,
+		fieldStrikeX = if def.chains then high.fieldStrikeX or 0 else 0,
+		chainEffects = def.chains == true and flag.chainEffects == true,
+		targetsBiggest = flag.targetsBiggest == true,
 	}
 end
 

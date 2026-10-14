@@ -150,10 +150,20 @@ ABILITY_COLUMNS = [
     # Biter slow (PLAN 9d, #294): a dino that bites a tower in range is slowed (not bosses).
     ("biterSlowPercent", 94, "num", 0),  # CP
     ("biterSlowSeconds", 95, "num", 0),  # CQ
+    # PLAN 9e (#297). Field strike (Storm Front): every N s the coil strikes every dino on its
+    # side's field for x its damage (air too; armour only if it pierces; breaks 1).
+    ("fieldStrikeEvery", 96, "num", 0),  # CR: 0 = no field strike
+    ("fieldStrikeX", 97, "num", 0),  # CS
+    # Chain effects (Supercell, Superconductor): the strike's slow and stun land on every dino in
+    # the chain; an arc's stun is capped at Tuning Chain stun cap (s).
+    ("chainEffects", 98, "bool", False),  # CT
+    # Targets biggest (Heartseeker): aims at the biggest dino in range, not the furthest along.
+    ("targetsBiggest", 99, "bool", False),  # CU
 ]
 
 # Columns only a tower that chains (Towers column Chains) can use.
-CHAIN_ONLY = ("arcs", "arcReach", "arcForks", "arcJumps", "powerGrid", "staticPercent", "judgementBolt")
+CHAIN_ONLY = ("arcs", "arcReach", "arcForks", "arcJumps", "powerGrid", "staticPercent", "judgementBolt",
+              "fieldStrikeEvery", "fieldStrikeX", "chainEffects")  # the last three: PLAN 9e
 # Columns only a tower with birds (Towers column Birds) can use.
 BIRD_ONLY = ("birds", "eagle", "murmuration", "diveAuraRatePercent")
 # Columns only a tower with harpoons (Towers column Harpoons) can use.
@@ -167,6 +177,7 @@ BREAK_PATHS = {
     ("Longshot Perch", "Deadeye"), ("Longshot Perch", "Big Bore"), ("Hunting Blind", "Hardliner"),
     ("Falcon Roost", "Talons"),  # PLAN T65: Power Dive 2, Iron Talons 3, Eagle of the Peak 3
     ("Harpoon Ballista", "Spearhead"),  # PLAN T66: Crusher Bolt 2, Great Harpoon 3, Skewer 3
+    ("Storm Coil", "Charge"),  # PLAN 9e (#297): Thunderstrike 2 (the strike's first dino; arcs break 1)
 }
 HERO_BREAK_PATHS = {("Tracker", "Marksman"), ("Brush Beater", "Slug")}
 
@@ -260,6 +271,8 @@ TOWER_STEP_KINDS = {
     "armoredMult": "mult", "bossMult": "mult", "splashMult": "mult", "incomeMult": "mult",
     "hunterRecoilMult": "mult", "hunterReloadMult": "mult", "hunterSpreadMult": "mult", "healMult": "mult",
     "freezeEvery": "set", "sinkSeconds": "set",
+    # PLAN 9e: intervals, so a step sets them (Ground Wire's 2 s beats Grounding Spike's 4 s)
+    "groundingEvery": "set", "fieldStrikeEvery": "set",
 }
 for _key, _col, _kind, _default in ABILITY_COLUMNS:
     TOWER_STEP_KINDS.setdefault(_key, "flag" if _kind == "bool" else "max")
@@ -1673,6 +1686,8 @@ def validate(data):
                 for field in CHAIN_ONLY:
                     if step[field] and not t["chains"]:
                         problems.append(f"{key} {p['id']} tier {i}: {field} needs a tower that chains (Towers column V)")
+                if bool(step["fieldStrikeEvery"]) != bool(step["fieldStrikeX"]):
+                    problems.append(f"{key} {p['id']} tier {i}: Field strike every (s) and Field strike x go together (PLAN 9e)")
                 if step["arcForks"] and step["arcForks"] != int(step["arcForks"]) or step["arcs"] != int(step["arcs"]):
                     problems.append(f"{key} {p['id']} tier {i}: Arcs and Arc forks must be whole numbers")
                 for field in BIRD_ONLY:

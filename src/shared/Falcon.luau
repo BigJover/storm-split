@@ -14,6 +14,11 @@
 	              and birds / round trip (the model's cap; the game gets it by waiting)
 	  huntingParty the strongest Hunting Party covering a point while one of its birds is
 	              out (auras don't stack), never the roost's own
+	  extraHits    who else a landed dive hits (PLAN 9e, #297). Line hits above 1 (Strafing
+	              Run): the dinos right behind the struck one on the track (within Tuning
+	              Line pierce reach), nearest first, Line hits - 1 of them, each with the
+	              dive's breaks. Else Targets above 1 (Raking Strike): the Targets - 1
+	              dinos nearest the struck one (breaks 1, a splash). Ties: the earlier
 ]]
 
 local Config = require(script.Parent.Config)
@@ -66,6 +71,41 @@ function Falcon.huntingParty(point: Vector3, parties: { Party }, self: any?): nu
 		end
 	end
 	return best
+end
+
+export type Candidate = { position: Vector3, distance: number }
+
+-- `candidates`: the dinos the roost could hit (its side, in range); `struck`: the dived one's
+-- index. Returns the extra indices and whether they're a line (the dive's breaks) or not (1).
+function Falcon.extraHits(candidates: { Candidate }, struck: number, targets: number, lineHits: number): ({ number }, boolean)
+	local out, line = {}, lineHits > 1
+	local want = if line then lineHits - 1 else targets - 1
+	local at = candidates[struck]
+	if want <= 0 or not at then
+		return out, line
+	end
+	local order = {}
+	for i, c in candidates do
+		local gap = at.distance - c.distance
+		if i ~= struck and (not line or (gap >= 0 and gap <= (Config.Tuning.LinePierceReach or 0))) then
+			table.insert(order, i)
+		end
+	end
+	local function key(i: number): number
+		local c = candidates[i]
+		return if line then at.distance - c.distance else (c.position - at.position).Magnitude
+	end
+	table.sort(order, function(a, b)
+		local ka, kb = key(a), key(b)
+		if ka ~= kb then
+			return ka < kb
+		end
+		return a < b
+	end)
+	for i = 1, math.min(want, #order) do
+		table.insert(out, order[i])
+	end
+	return out, line
 end
 
 return Falcon
