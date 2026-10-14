@@ -26,7 +26,7 @@
 	           Dodge ignores one bite per Dodge every (s)
 	  trample  a walker in the path of a dino with >= Trample size sizes left (not the one
 	           it fights) takes Trample share x its max HP, once per dino; Dodge: never
-	           from small dinos (at most Small size sizes left)
+	           trampled by any dino, bosses too (Clever Girls, DECISIONS #328)
 	  cap      walkers past the side's cap aren't spawned
 ]]
 
@@ -292,7 +292,7 @@ function Walker.trample(unit: Unit, dino: Dino, params: Params, now: number): nu
 	if dino.sizesLeft < params.trampleSize or unit.trampled[dino.id] or math.abs(dino.at - unit.at) > params.reach then
 		return 0
 	end
-	if params.dodge and dino.sizesLeft <= params.smallSize then
+	if params.dodge then -- Clever Girls (#328): never trampled by any dino, bosses too
 		return 0
 	end
 	unit.trampled[dino.id] = true

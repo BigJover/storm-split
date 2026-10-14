@@ -256,9 +256,9 @@ matchmaking (T96).
 
 Phase 9 batch 9g (2026-10-14): the shared walker module (`Shared/Walker` + `Walkers`),
 `Shared/AutoFire`, the Amber Resin Cannon and the Raptor Pen are built and headless-tested
-(782 specs) but **not playtested** and **still unreleased** (`ShopRules.Unreleased`): T124b's
-bars need the Director (Raptor c/e above 1.25 x M after the guaranteed exit; Museum Piece
-does nothing once Fossilize T1-T3 Sink cash is tuned for payback). Studio aids: `firenow`,
+(782 specs) but **not playtested** and **still unreleased** (`ShopRules.Unreleased`): T124c
+applied (Raptor 10 a bite x 2.3/s, Museum Piece 150, Clever Girls never trampled), but the
+release is held: once released, King of the Pack fails break bar 3 in r21-30 (S 151 < 182). Studio aids: `firenow`,
 `fossils`, `walkers` (host's Lobby remote).
 
 ## Open issues

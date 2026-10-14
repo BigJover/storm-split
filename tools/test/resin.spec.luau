@@ -50,7 +50,7 @@ test("the Towers row (PLAN 9g): 800 cash, 500 Amber, 2 x 1/s, 18 studs, ground o
 	eq(RESIN.maxHp, 150)
 	eq(RESIN.resin, true)
 	ok(not RESIN.untouchable and not RESIN.onTrack and not RESIN.chains and not RESIN.harpoons and RESIN.birds == 0, "no other kind flag")
-	eq(ShopRules.Unreleased.RESIN, true, "unreleased until T124b (#312)")
+	eq(ShopRules.Unreleased.RESIN, true, "unreleased: the 9g release is held (T124c, #312)")
 end)
 
 test("the AMBER RESIN CANNON Tuning block (seeds)", function()
@@ -79,7 +79,7 @@ local ROWS = {
 	{ "Fossilize", 1, "", "Collector's Eye", { damageMult = 1.3, rangeMult = 1.15, fossilBelowPercent = 10, sinkCash = 50 } },
 	{ "Fossilize", 2, "", "Rare Find", { damageMult = 1.8, rateMult = 1.3, rangeMult = 1.15, fossilBelowPercent = 12, sinkCash = 100 } },
 	{ "Fossilize", 3, "", "Fossil Record", { damageMult = 2.6, rateMult = 1.5, rangeMult = 1.15, entombHitsMult = 0.7, fossilBelowPercent = 20, sinkCash = 100 } },
-	{ "Fossilize", 4, "A", "Museum Piece", { sinkCash = 32 } },
+	{ "Fossilize", 4, "A", "Museum Piece", { sinkCash = 150 } },
 	{ "Fossilize", 4, "B", "Dig Crew", { sinkChestCash = 25 } },
 	{ "Fossilize", 4, "C", "Bone Dust", { takeDownMarkPercent = 15 } },
 	{ "Fossilize", 5, "A", "Fossil Fuel", { fossilBelowPercent = 25, fossilRatePercent = 5 } },

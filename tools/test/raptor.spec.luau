@@ -38,19 +38,19 @@ local function close(a: number, b: number): boolean
 	return math.abs(a - b) < 1e-6
 end
 
-test("the Towers row (PLAN 9g; T124b's guaranteed exit: cost at the 600 floor, Damage 10 + 1, stopped before tying the Ballista's heaviest hit #191): 500 Amber, 11 a bite x 1.5/s, 22 studs, ground, 150 HP, 1 raptor, unreleased", function()
+test("the Towers row (PLAN T124c, #326: cost at the 600 floor, Damage 10, the walker exit raises bite rate 1.5 -> 2.3): 500 Amber, 10 a bite x 2.3/s, 22 studs, ground, 150 HP, 1 raptor, unreleased", function()
 	eq(PEN.display, "Raptor Pen")
 	eq(PEN.baseCost, 600)
 	eq(PEN.unlockCost, 500, "Amber never moves (#313)")
-	eq(PEN.baseDamage, 11)
-	eq(PEN.baseRate, 1.5)
+	eq(PEN.baseDamage, 10)
+	eq(PEN.baseRate, 2.3)
 	eq(PEN.baseTargets, 1)
 	eq(PEN.range, 22)
 	eq(PEN.hitsAir, false)
 	eq(PEN.maxHp, 150)
 	eq(PEN.walkers, 1)
 	ok(not PEN.untouchable and not PEN.resin and PEN.birds == 0, "no other kind flag")
-	eq(ShopRules.Unreleased.RAPTOR, true, "unreleased until T124b (#312)")
+	eq(ShopRules.Unreleased.RAPTOR, true, "unreleased: the 9g release is held (T124c, #312)")
 end)
 
 test("the RAPTOR PEN Tuning block (seeds)", function()

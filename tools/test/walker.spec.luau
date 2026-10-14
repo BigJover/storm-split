@@ -166,7 +166,7 @@ test("bite-back with Walker resist %; Dodge ignores one bite per Dodge every (s)
 	eq(Walker.bitten(x, 10, d, 3), 0, "3 s later: dodged again")
 end)
 
-test("trample: big dinos (>= Trample size sizes left) in its path take Trample share of its max HP, once per dino; not its target; Dodge vs small", function()
+test("trample: big dinos (>= Trample size sizes left) in its path take Trample share of its max HP, once per dino; not its target; Dodge: never (#328)", function()
 	local p = params()
 	local w = Walker.new(1, p, HOME)
 	w.state = "out"
@@ -183,7 +183,9 @@ test("trample: big dinos (>= Trample size sizes left) in its path take Trample s
 	x.state = "out"
 	x.at = 120
 	eq(Walker.trample(x, dino("s", 120, 1, { sizesLeft = 2 }), d, 0), 0, "Dodge: never from small dinos")
-	eq(Walker.trample(x, dino("b", 120, 1, { sizesLeft = 3 }), d, 0), 60 * 0.25, "...but a big one still")
+	eq(Walker.trample(x, dino("b", 120, 1, { sizesLeft = 3 }), d, 0), 0, "Dodge: a 3-size dino passes, no trample (#328)")
+	eq(Walker.trample(x, dino("boss", 120, 1, { sizesLeft = 5, boss = true }), d, 0), 0, "Dodge: not even a boss")
+	eq(x.hp, 60, "untouched")
 end)
 
 test("boss hold: Boss hold (s) once per boss; no Hold on bosses otherwise", function()

@@ -5,7 +5,7 @@
 
 return table.freeze({
 	-- In Config but not sold (or unlockable) yet: a 4x tower until its batch's release
-	-- task (PLAN 9g-9j, DECISIONS #312; the Amber Resin Cannon and Raptor Pen until T124b). Placeable in
+	-- task (PLAN 9g-9j, DECISIONS #312; the Amber Resin Cannon and Raptor Pen until the 9g release, held at T124c). Placeable in
 	-- Studio through the J unlock + K cash path. tools/value.py reads this list: medians
 	-- count released towers only (DECISIONS #196).
 	Unreleased = table.freeze({ RESIN = true, RAPTOR = true } :: { [string]: boolean }),
