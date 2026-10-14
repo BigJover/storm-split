@@ -441,6 +441,14 @@ by the pool-overlap rule (#189), playtest watch.
   Superconductor stuns the chain briefly, never a boss; Heartseeker shoots the biggest dino;
   Bog Boots / Snag Line / Guard Falcons / Rod Strike sting the stand-in at ×0.5 in Camp Clash,
   never through Camo Cover, and still do their dino part in co-op.
+- **T120b — Bog Boots sting reach (#321; one small Builder commit after T115b + 9f's running
+  task; assert each old value / empty first):** new Tuning row (append) `Pool sting reach
+  (studs)` seed **12**. For an on-track tower (Tar Pit), the Raider sting's "inside this
+  tower's range" becomes "within Pool sting reach of the nearest point of its pool" (the pool's
+  current length, Tar Lake included), not the pool's whole length along the track; every
+  off-track Raider tower keeps its range. Specs: a raider 10 studs beside a Tar Lake pool is
+  stung, one 20 studs away but within 81 studs along the track is not; co-op unchanged. Config
+  diff = the one row. Tester: rides 9g's run (Bog Boots stings only near the tar).
 
 **9f — B/C for the heroes** (4 heroes × 3 paths: **48 options**, handling only; no Raider
 options, #301). **DESIGNED (Director, 2026-10-13, #298–#302) — enter as written** (🦖 names
