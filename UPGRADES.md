@@ -328,7 +328,7 @@ Rules: `Shared/Resin`, `Shared/FourX`, `Shared/AutoFire`.
 | **Resin Shell** | support | Coat of Resin | Sticky Armour | *Amber Shield* | *Self-Sealing* | *Amber Fortress* |
 
 - Thick Resin / Quick Set / Amber Tomb: faster, heavier globs and fewer hits to set (x0.85 / x0.7 / x0.5); Amber Tomb entombs for 2 s.
-- Fossilize: a dino entombed at or below Fossil below % of its HP (10 / 12 / 20 %; not bosses) is a **fossil**: it turns to stone and crumbles, every size it had left pays as a take-down (pops to the cannon's owner), plus Sink cash per fossil (4 / 10 / 16, scaled by the difficulty like Tar Pit sinks, #309). Fossil Record also sets faster (x0.7).
+- Fossilize: a dino entombed at or below Fossil below % of its HP (10 / 12 / 20 %; not bosses) is a **fossil**: it turns to stone and crumbles, every size it had left pays as a take-down (pops to the cannon's owner), plus Sink cash per fossil (50 / 100 / 100 after T124b's payback tuning, seeds 4 / 10 / 16; scaled by the difficulty like Tar Pit sinks, #309). Fossil Record also sets faster (x0.7).
 - Resin Shell: towers in range +15 % max HP; Sticky Armour adds 20 % damage resistance; Amber Shield **seals** a tower in range that would be Trampled: it stays at 1 HP and takes no damage for 3 s (once a round per cannon).
 
 A/B/C picks at tiers 4 and 5 (PLAN 9g, DECISIONS #312–#320; names = DINO_REVIEW Round 19). Hardened Amber: an entombed dino takes +30 % from everything while it is stuck. Spreading Amber: an entomb also takes the nearest other dino within 6 studs. Sticky Bed: dinos within 6 studs of a stuck one walk 30 % slower. Amber Age: every 12 s every dino in range is entombed (bosses half). Living Amber: entombs last 2.5 s, a boss's the full 3 s. Time Capsule: an entombed dino is sent 12 studs back (never a boss). Museum Piece: 32 cash a fossil. Dig Crew: a fossil drops a 25-cash chest. Bone Dust: a fossil (or any take-down by the cannon) marks dinos within 6 studs +15 % for 3 s. Fossil Fuel: fossils at 25 %; each fossil gives towers in range +5 % attack speed for the rest of the round (cap 30 %). Prize Fossils: fossils at 30 %; each counts as 2 take-downs for the owner's Bounties. Amber Heart: every 15th fossil this match entombs every dino on your side 1 s (bosses half). Self-Sealing: a sealed tower heals 30 % of its max HP when the seal breaks. Raider Glue is the Raider option: in battles an enemy hunter who shoots a tower in range is slowed 20 % for 2 s (generic Raider sting, ×0.5 rules, never through Camo Cover); its dino part (co-op too): a dino biting a tower in range is slowed 25 % for 2 s (not bosses). Sticky Thorns: biters take 5 damage and are slowed 15 % for 1.5 s. Amber Fortress: each tower in range can be sealed once every 20 s (instead of once a round per cannon). Resin Wall: once a round (fires itself: a boss or 6 dinos in range, else the round's last spawn; never on an empty track) an amber wall rises at the furthest point of the track in range and holds every dino reaching it 3 s (bosses 1.5 s). Amber Mirror: catches a throw at a tower in range every 1 s and bounces it back at the thrower for 60 (× the team's level).
@@ -347,9 +347,9 @@ A/B/C picks at tiers 4 and 5 (PLAN 9g, DECISIONS #312–#320; names = DINO_REVIE
 
 ## Raptor Pen (RAPTOR) — tamed raptors: pack damage, one big hunter, support · built (PLAN 9g T124; unreleased until T124b) · unlock 500 Amber
 
-A log pen (850 cash, 22-stud hunting ground, 150 HP) that never shoots: its tamed **raptors**
-(collar and stripe in the camp colour) sprint out along your own track, pounce, bite (10 a
-bite, 1.5 bites a second) and come back. A raptor has 60 HP (grows with tiers like towers),
+A log pen (600 cash, 22-stud hunting ground, 150 HP) that never shoots: its tamed **raptors**
+(collar and stripe in the camp colour) sprint out along your own track, pounce, bite (11 a
+bite, 1.5 bites a second; seeds 850 cash / 10, moved by T124b's guaranteed exit) and come back. A raptor has 60 HP (grows with tiers like towers),
 runs home at 30 % HP and heals 15 HP/s in the pen (it leaves again at 80 %), and is gone 8 s
 if bitten to 0. The dino it fights bites it instead of a tower; a big dino (3+ sizes left)
 walking through it tramples it for a quarter of its HP. A pounce holds a non-boss 0.5 s.

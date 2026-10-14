@@ -68040,7 +68040,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 4,
+							sinkCash = 50,
 							sinkChestCash = 0,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -68170,7 +68170,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 10,
+							sinkCash = 100,
 							sinkChestCash = 0,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -68300,7 +68300,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 16,
+							sinkCash = 100,
 							sinkChestCash = 0,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -68432,7 +68432,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 32,
+							sinkCash = 100,
 							sinkChestCash = 0,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -68564,7 +68564,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 16,
+							sinkCash = 100,
 							sinkChestCash = 25,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -68696,7 +68696,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 16,
+							sinkCash = 100,
 							sinkChestCash = 0,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -68830,7 +68830,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 32,
+							sinkCash = 100,
 							sinkChestCash = 0,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -68962,7 +68962,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 32,
+							sinkCash = 100,
 							sinkChestCash = 0,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -69094,7 +69094,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 32,
+							sinkCash = 100,
 							sinkChestCash = 0,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -69226,7 +69226,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 16,
+							sinkCash = 100,
 							sinkChestCash = 25,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -69358,7 +69358,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 16,
+							sinkCash = 100,
 							sinkChestCash = 25,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -69490,7 +69490,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 16,
+							sinkCash = 100,
 							sinkChestCash = 25,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -69622,7 +69622,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 16,
+							sinkCash = 100,
 							sinkChestCash = 0,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -69754,7 +69754,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 16,
+							sinkCash = 100,
 							sinkChestCash = 0,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -69886,7 +69886,7 @@ return table.freeze({
 							towLine = false,
 							chainHarpoons = false,
 							sinkSeconds = 0,
-							sinkCash = 16,
+							sinkCash = 100,
 							sinkChestCash = 0,
 							eruption = false,
 							tracksSlowPercent = 0,
@@ -71934,8 +71934,8 @@ return table.freeze({
 		RAPTOR = {
 			display = "Raptor Pen",
 			role = "Tamed raptors: they run out, bite and come back",
-			baseCost = 850,
-			baseDamage = 10,
+			baseCost = 600,
+			baseDamage = 11,
 			baseRate = 1.5,
 			baseTargets = 1,
 			range = 22,
@@ -71961,7 +71961,7 @@ return table.freeze({
 					tiers = {
 						{
 							name = "Second Raptor",
-							cost = 1955,
+							cost = 1380,
 							damageMult = 1,
 							rateMult = 1,
 							targetsMult = 1,
@@ -72091,7 +72091,7 @@ return table.freeze({
 						},
 						{
 							name = "Quick Whistle",
-							cost = 4496,
+							cost = 3174,
 							damageMult = 1.4,
 							rateMult = 1,
 							targetsMult = 1,
@@ -72221,7 +72221,7 @@ return table.freeze({
 						},
 						{
 							name = "Pack of Five",
-							cost = 10342,
+							cost = 7300,
 							damageMult = 1.4,
 							rateMult = 1,
 							targetsMult = 1,
@@ -72353,7 +72353,7 @@ return table.freeze({
 					t4 = {
 						A = {
 							name = "Hide Rippers",
-							cost = 23786,
+							cost = 16790,
 							damageMult = 2.45,
 							rateMult = 1,
 							targetsMult = 1,
@@ -72485,7 +72485,7 @@ return table.freeze({
 						},
 						B = {
 							name = "Flanking",
-							cost = 23786,
+							cost = 16790,
 							damageMult = 2.59,
 							rateMult = 1,
 							targetsMult = 1,
@@ -72617,7 +72617,7 @@ return table.freeze({
 						},
 						C = {
 							name = "Ambush",
-							cost = 23786,
+							cost = 16790,
 							damageMult = 2.45,
 							rateMult = 1,
 							targetsMult = 1,
@@ -72751,7 +72751,7 @@ return table.freeze({
 					t5 = {
 						AA = {
 							name = "Raptor Swarm",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.165,
 							rateMult = 1,
 							targetsMult = 1,
@@ -72883,7 +72883,7 @@ return table.freeze({
 						},
 						AB = {
 							name = "Clever Girls",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.2875,
 							rateMult = 1,
 							targetsMult = 1,
@@ -73015,7 +73015,7 @@ return table.freeze({
 						},
 						AC = {
 							name = "Sky Leap",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.7775,
 							rateMult = 1,
 							targetsMult = 1,
@@ -73147,7 +73147,7 @@ return table.freeze({
 						},
 						BA = {
 							name = "Raptor Swarm",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.403,
 							rateMult = 1,
 							targetsMult = 1,
@@ -73279,7 +73279,7 @@ return table.freeze({
 						},
 						BB = {
 							name = "Clever Girls",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.5325,
 							rateMult = 1,
 							targetsMult = 1,
@@ -73411,7 +73411,7 @@ return table.freeze({
 						},
 						BC = {
 							name = "Sky Leap",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 5.0505,
 							rateMult = 1,
 							targetsMult = 1,
@@ -73543,7 +73543,7 @@ return table.freeze({
 						},
 						CA = {
 							name = "Raptor Swarm",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.165,
 							rateMult = 1,
 							targetsMult = 1,
@@ -73675,7 +73675,7 @@ return table.freeze({
 						},
 						CB = {
 							name = "Clever Girls",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.2875,
 							rateMult = 1,
 							targetsMult = 1,
@@ -73807,7 +73807,7 @@ return table.freeze({
 						},
 						CC = {
 							name = "Sky Leap",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.7775,
 							rateMult = 1,
 							targetsMult = 1,
@@ -73945,7 +73945,7 @@ return table.freeze({
 					tiers = {
 						{
 							name = "Sharp Claws",
-							cost = 1955,
+							cost = 1380,
 							damageMult = 1.9,
 							rateMult = 1,
 							targetsMult = 1,
@@ -74075,7 +74075,7 @@ return table.freeze({
 						},
 						{
 							name = "Thick Hide",
-							cost = 4496,
+							cost = 3174,
 							damageMult = 3.6,
 							rateMult = 1,
 							targetsMult = 1,
@@ -74205,7 +74205,7 @@ return table.freeze({
 						},
 						{
 							name = "Alpha Raptor",
-							cost = 10342,
+							cost = 7300,
 							damageMult = 7,
 							rateMult = 1,
 							targetsMult = 1,
@@ -74337,7 +74337,7 @@ return table.freeze({
 					t4 = {
 						A = {
 							name = "Sickle Claw",
-							cost = 23786,
+							cost = 16790,
 							damageMult = 12.6,
 							rateMult = 1,
 							targetsMult = 1,
@@ -74469,7 +74469,7 @@ return table.freeze({
 						},
 						B = {
 							name = "Boss Hunter",
-							cost = 23786,
+							cost = 16790,
 							damageMult = 11.2,
 							rateMult = 1,
 							targetsMult = 1,
@@ -74601,7 +74601,7 @@ return table.freeze({
 						},
 						C = {
 							name = "Scent Trail",
-							cost = 23786,
+							cost = 16790,
 							damageMult = 11.9,
 							rateMult = 1,
 							targetsMult = 1,
@@ -74735,7 +74735,7 @@ return table.freeze({
 					t5 = {
 						AA = {
 							name = "King of the Pack",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 23.94,
 							rateMult = 1,
 							targetsMult = 1,
@@ -74867,7 +74867,7 @@ return table.freeze({
 						},
 						AB = {
 							name = "Rex Tamer",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 25.2,
 							rateMult = 1,
 							targetsMult = 1,
@@ -74999,7 +74999,7 @@ return table.freeze({
 						},
 						AC = {
 							name = "Hungry Alpha",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 22.05,
 							rateMult = 1,
 							targetsMult = 1,
@@ -75131,7 +75131,7 @@ return table.freeze({
 						},
 						BA = {
 							name = "King of the Pack",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 21.28,
 							rateMult = 1,
 							targetsMult = 1,
@@ -75263,7 +75263,7 @@ return table.freeze({
 						},
 						BB = {
 							name = "Rex Tamer",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 22.4,
 							rateMult = 1,
 							targetsMult = 1,
@@ -75395,7 +75395,7 @@ return table.freeze({
 						},
 						BC = {
 							name = "Hungry Alpha",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 19.6,
 							rateMult = 1,
 							targetsMult = 1,
@@ -75527,7 +75527,7 @@ return table.freeze({
 						},
 						CA = {
 							name = "King of the Pack",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 22.61,
 							rateMult = 1,
 							targetsMult = 1,
@@ -75659,7 +75659,7 @@ return table.freeze({
 						},
 						CB = {
 							name = "Rex Tamer",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 23.8,
 							rateMult = 1,
 							targetsMult = 1,
@@ -75791,7 +75791,7 @@ return table.freeze({
 						},
 						CC = {
 							name = "Hungry Alpha",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 20.825,
 							rateMult = 1,
 							targetsMult = 1,
@@ -75929,7 +75929,7 @@ return table.freeze({
 					tiers = {
 						{
 							name = "Tracking Nose",
-							cost = 1955,
+							cost = 1380,
 							damageMult = 1.3,
 							rateMult = 1,
 							targetsMult = 1,
@@ -76059,7 +76059,7 @@ return table.freeze({
 						},
 						{
 							name = "Herding Call",
-							cost = 4496,
+							cost = 3174,
 							damageMult = 1.6,
 							rateMult = 1,
 							targetsMult = 1,
@@ -76189,7 +76189,7 @@ return table.freeze({
 						},
 						{
 							name = "Pack Howl",
-							cost = 10342,
+							cost = 7300,
 							damageMult = 2.2,
 							rateMult = 1,
 							targetsMult = 1,
@@ -76321,7 +76321,7 @@ return table.freeze({
 					t4 = {
 						A = {
 							name = "Treat Bag",
-							cost = 23786,
+							cost = 16790,
 							damageMult = 3.08,
 							rateMult = 1,
 							targetsMult = 1,
@@ -76453,7 +76453,7 @@ return table.freeze({
 						},
 						B = {
 							name = "Guard Raptors",
-							cost = 23786,
+							cost = 16790,
 							damageMult = 2.86,
 							rateMult = 1,
 							targetsMult = 1,
@@ -76585,7 +76585,7 @@ return table.freeze({
 						},
 						C = {
 							name = "Whistle Drill",
-							cost = 23786,
+							cost = 16790,
 							damageMult = 2.86,
 							rateMult = 1,
 							targetsMult = 1,
@@ -76719,7 +76719,7 @@ return table.freeze({
 					t5 = {
 						AA = {
 							name = "Raptor Charge",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.62,
 							rateMult = 1,
 							targetsMult = 1,
@@ -76851,7 +76851,7 @@ return table.freeze({
 						},
 						AB = {
 							name = "Pack Bond",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 3.388,
 							rateMult = 1,
 							targetsMult = 1,
@@ -76983,7 +76983,7 @@ return table.freeze({
 						},
 						AC = {
 							name = "Raider Hounds",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.62,
 							rateMult = 1,
 							targetsMult = 1,
@@ -77116,7 +77116,7 @@ return table.freeze({
 						},
 						BA = {
 							name = "Raptor Charge",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.29,
 							rateMult = 1,
 							targetsMult = 1,
@@ -77248,7 +77248,7 @@ return table.freeze({
 						},
 						BB = {
 							name = "Pack Bond",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 3.146,
 							rateMult = 1,
 							targetsMult = 1,
@@ -77380,7 +77380,7 @@ return table.freeze({
 						},
 						BC = {
 							name = "Raider Hounds",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.29,
 							rateMult = 1,
 							targetsMult = 1,
@@ -77513,7 +77513,7 @@ return table.freeze({
 						},
 						CA = {
 							name = "Raptor Charge",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.29,
 							rateMult = 1,
 							targetsMult = 1,
@@ -77645,7 +77645,7 @@ return table.freeze({
 						},
 						CB = {
 							name = "Pack Bond",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 3.146,
 							rateMult = 1,
 							targetsMult = 1,
@@ -77777,7 +77777,7 @@ return table.freeze({
 						},
 						CC = {
 							name = "Raider Hounds",
-							cost = 54709,
+							cost = 38618,
 							damageMult = 4.29,
 							rateMult = 1,
 							targetsMult = 1,

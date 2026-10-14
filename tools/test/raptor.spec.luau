@@ -38,11 +38,11 @@ local function close(a: number, b: number): boolean
 	return math.abs(a - b) < 1e-6
 end
 
-test("the Towers row (PLAN 9g): 850 cash, 500 Amber, 10 per bite x 1.5/s, 22 studs, ground, 150 HP, 1 raptor, unreleased", function()
+test("the Towers row (PLAN 9g; T124b's guaranteed exit: cost at the 600 floor, Damage 10 + 1, stopped before tying the Ballista's heaviest hit #191): 500 Amber, 11 a bite x 1.5/s, 22 studs, ground, 150 HP, 1 raptor, unreleased", function()
 	eq(PEN.display, "Raptor Pen")
-	eq(PEN.baseCost, 850)
-	eq(PEN.unlockCost, 500)
-	eq(PEN.baseDamage, 10)
+	eq(PEN.baseCost, 600)
+	eq(PEN.unlockCost, 500, "Amber never moves (#313)")
+	eq(PEN.baseDamage, 11)
 	eq(PEN.baseRate, 1.5)
 	eq(PEN.baseTargets, 1)
 	eq(PEN.range, 22)

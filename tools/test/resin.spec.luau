@@ -75,9 +75,10 @@ local ROWS = {
 	{ "Entomb", 5, "A", "Amber Age", { damageMult = 1.8, entombAllEvery = 12 } },
 	{ "Entomb", 5, "B", "Living Amber", { damageMult = 1.8, rateMult = 1.15, entombSeconds = 2.5, bossEntombSeconds = 3 } },
 	{ "Entomb", 5, "C", "Time Capsule", { damageMult = 1.8, sendBack = 12 } },
-	{ "Fossilize", 1, "", "Collector's Eye", { damageMult = 1.3, rangeMult = 1.15, fossilBelowPercent = 10, sinkCash = 4 } },
-	{ "Fossilize", 2, "", "Rare Find", { damageMult = 1.8, rateMult = 1.3, rangeMult = 1.15, fossilBelowPercent = 12, sinkCash = 10 } },
-	{ "Fossilize", 3, "", "Fossil Record", { damageMult = 2.6, rateMult = 1.5, rangeMult = 1.15, entombHitsMult = 0.7, fossilBelowPercent = 20, sinkCash = 16 } },
+	-- Sink cash 4 / 10 / 16 -> 50 / 100 / 100: T124b's lever for the Fossilize payback bar (8-15 rounds, #203).
+	{ "Fossilize", 1, "", "Collector's Eye", { damageMult = 1.3, rangeMult = 1.15, fossilBelowPercent = 10, sinkCash = 50 } },
+	{ "Fossilize", 2, "", "Rare Find", { damageMult = 1.8, rateMult = 1.3, rangeMult = 1.15, fossilBelowPercent = 12, sinkCash = 100 } },
+	{ "Fossilize", 3, "", "Fossil Record", { damageMult = 2.6, rateMult = 1.5, rangeMult = 1.15, entombHitsMult = 0.7, fossilBelowPercent = 20, sinkCash = 100 } },
 	{ "Fossilize", 4, "A", "Museum Piece", { sinkCash = 32 } },
 	{ "Fossilize", 4, "B", "Dig Crew", { sinkChestCash = 25 } },
 	{ "Fossilize", 4, "C", "Bone Dust", { takeDownMarkPercent = 15 } },
@@ -153,7 +154,7 @@ test("composed builds: Amber Tomb 2 s; Entomb base 0.8 at tier 0; hits x multipl
 	eq(stats("Fossilize", 5, "CC").heartEvery, 15)
 	eq(stats("Resin Shell", 5, "AA").sealEvery, 20)
 	eq(stats("Resin Shell", 3).sealSeconds, 3)
-	eq(stats("Fossilize", 1).sinkCash, 4, "Sink cash works on a Resin tower")
+	eq(stats("Fossilize", 1).sinkCash, 50, "Sink cash works on a Resin tower")
 	eq(Config.Towers.SCOUT and TowerStats.compute(Config.Towers.SCOUT, { 0, 0, 0 }).entombSeconds, 0, "not on a tower without resin")
 end)
 

@@ -254,6 +254,13 @@ Next: the 4×-Amber tower picks (T97, `TOWERS_LATER.md`), then (all need Jovan, 
 `SETUP.md`'s checklist (then the published smoke T95), then the lobby place + teleport
 matchmaking (T96).
 
+Phase 9 batch 9g (2026-10-14): the shared walker module (`Shared/Walker` + `Walkers`),
+`Shared/AutoFire`, the Amber Resin Cannon and the Raptor Pen are built and headless-tested
+(782 specs) but **not playtested** and **still unreleased** (`ShopRules.Unreleased`): T124b's
+bars need the Director (Raptor c/e above 1.25 x M after the guaranteed exit; Museum Piece
+does nothing once Fossilize T1-T3 Sink cash is tuned for payback). Studio aids: `firenow`,
+`fossils`, `walkers` (host's Lobby remote).
+
 ## Open issues
 
 - Leak cost is effective HP (BTD6-style), so 40 starting lives is likely too few in co-op.
