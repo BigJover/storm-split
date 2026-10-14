@@ -13,14 +13,15 @@ DataStore writes from an agent). N15 rides any `Battle` commit (#272).
 **Status (2026-10-13): planned. Next: batch 9a (T110 + T111).**
 **Status (2026-10-13, later): 9a + 9b done (c1a7c5a, 0f82bb7, 929b66a, cd6a413, cd749d2; 706 specs); Tester Run 8 running. 9c designed below (#290). Next: 🦖 names 9c → Builder T114 + T115.**
 **Status (2026-10-13, Director): 9d + 9e designed below (#292–#297; 96 options, metrics, 6 new mechanics). Next after 9c: 🦖 names 9d → T116–T118, then 9e → T119–T120.**
+**Status (2026-10-13, Director): 9f designed below (#298–#302; 48 hero options, per-path metrics, 1 new mechanic). Next after 9e: 🦖 names 9f → T121–T122.**
 
 ## Size of the job
 | | Slots (T4+T5) | Options to build | New options to design |
 |---|---|---|---|
 | 11 built towers × 3 paths | 66 | 198 (66 A exist) | **132** B/C (Director, 9c–9e) |
-| 4 heroes × 3 paths | 24 | 72 (24 A exist) | **48** B/C (Director, 9f) + T6 rewording (#278) |
+| 4 heroes × 3 paths | 24 | 72 (24 A exist) | **48** B/C — **designed** (9f, #298–#302) |
 | 7 new towers × 3 paths | 42 | 126 | 20 T4 "C" — **done** in `TOWERS_LATER.md` (#285) |
-| **Total** | 132 | **396** (306 new rows) | **180 still to design** |
+| **Total** | 132 | **396** (306 new rows) | **all 180 designed** (9c–9f) |
 
 ## The A/B/C system (9a–9b)
 - **Sheet (#275).** `Tower Upgrades` and `Hero Upgrades`: new `Option` column (blank at
@@ -414,10 +415,151 @@ by the pool-overlap rule (#189), playtest watch.
   Bog Boots / Snag Line / Guard Falcons / Rod Strike sting the stand-in at ×0.5 in Camp Clash,
   never through Camo Cover, and still do their dino part in co-op.
 
-**9f — B/C for the heroes** (12 paths, **48**, handling only) + T6 works after any T5 (#278:
-Big Five, Endless Belt, Dynamite Rounds grant their T5-A mechanic). **T121** Tracker + Big Game
-Hunter, **T122** Brush Beater + Field Medic, parity check. Tester: one B/C per hero in first
-person, T6 after a B or C T5; Practice Hunt duel with stand-in still fair.
+**9f — B/C for the heroes** (4 heroes × 3 paths: **48 options**, handling only; no Raider
+options, #301). **DESIGNED (Director, 2026-10-13, #298–#302) — enter as written** (🦖 names
+first; working names here). Append one `Hero Upgrades` row per option at the bottom: Hero /
+Path / Focus / Tier copied from that slot's A row; `Cost` `=F<A row>` (same price, #277);
+`Option`, `Name`, `Blurb`; the cells listed; **every other cell blank** (blank = no change,
+per the sheet's header note). No `Damage x` anywhere (DIRECTION: never raw gun damage). No
+hero T6 *cell* changes: every T6 works after any T5 as built (#300); four T6 descriptions are
+reworded in `HEROES.md` only.
+
+**Worth metric (#298; replaces `hero_dps` in `value.py --options` for heroes — bars and the
+#288 T6 parity — in the same commit as each hero's rows).** Composed build, r31–40 HP shares
+(armoured 0.116, flying 0.07, boss 0.428):
+- **Gun paths (10):** worth = (DPS × Hit + Burn) × Targets × Hurt × Reach × Amp × Hold ×
+  Breaks, × (1 + Dart uptime) for the Tracker.
+  - rounds/s = rate × Fire rate x × guns × spin × (Big Game Hunter: 1 + 0.4 × Rally uptime);
+    spin = 1 + (Spin-up x − 1) × e ÷ (e + 1), e = seconds to empty the magazine at full spin
+    (10 with Endless Belt). **Burst count does not multiply rounds** (it's rounds per click;
+    today's `hero_dps` counts it twice and under-rates burst builds).
+  - DPS = damage × Pellets(base) × Shots per trigger × rounds/s × f; f = empty ÷ (empty +
+    reload) (Hot Swap: today's share rule; Belt Fed: f = 1 during Rally uptime; Endless Belt:
+    f = 1). Dart uptime = 8 ÷ (45 × Ability cooldown x); Rally uptime = 10 ÷ (45 × cd x).
+  - Hit = max(0.4, 1 − 0.3 × √(spread × recoil)); spread = Spread x × (0.5 + 0.5 × Still
+    spread x) × (scoped: 0.5 + 0.5 × Scoped spread x); recoil = Recoil x × (0.5 + 0.5 × Still
+    recoil x) × (0.7 with Burst recoil reset).
+  - Burn = Burn DPS × Burn (s) + Ignite tick × DPS × 0.6 (about one fresh dino a second).
+  - Targets = (1 + 0.5 × (Pierce − 1)) × (1 + 0.5 × Bounces) × (1 + 0.12 × Splash m).
+  - Hurt = 1 − armoured (unless it pierces armour) − flying (unless it hits air).
+  - Reach = Range x ^ 0.3. Amp = (1 + Mark % ÷ 100) × (1 + (Marked damage x − 1) × marked
+    share), marked share = Dart uptime + 0.3 if its hits mark.
+  - Hold = 1 + hits/s ÷ burst count × Knockback ÷ 8 studs/s × (1 − boss); hits/s = rounds/s ×
+    f × Hit. Breaks = 1 + 0.2 × (Size breaks − 1).
+- **Field Medic Triage:** casts/min (60 ÷ (35 × cd x)) × [(40 × Heal x + Heal regen HP/s ×
+  Heal regen s) × (1.5 if it repairs towers) + Guard % × Guard s × 10 HP/s] × Heal radius x ×
+  (1.1 with 2 charges). Heal per minute × radius, with Second Wind's resist as HP saved.
+- **Field Medic Muzzle:** lock-seconds + slow-seconds per minute = 60 × (L + S); L = hits/s ×
+  k ÷ (1 + hits/s × k ÷ 6) with k = Jaw lock s × (1 + 0.15 × Jaw lock spread studs) × (1 −
+  boss ÷ 2) (bosses locked half; ~6 dinos in reach caps it); S = hits/s × Slow % × Slow s ×
+  (1 − boss). Spread counted, so Lullaby / Lights Out / Strap Toss score.
+- Bars (#280, #288): each option 0.8–1.25× its slot median (T4; T5 after each T4); the 9 T6
+  builds per path within 1.15×.
+
+**Checked (Director scratch `h9f_fast.py` on a sheet copy, these metrics):** all 48 slots
+(12 paths × T4 + T5 after A/B/C) inside **0.87–1.22×**; T6 builds per path within **1.04–1.14×**
+(Stalker 1.04 … Point Blank 1.14). Peak-DPS guard (exporter, hero vs best tower): the
+highest new peak is 47 (Point Blank Slam Fire + Quad Barrel; Slug Express Slug 46) vs today's 34.6;
+the Chaos ceiling is 66.7, so it passes — a 9k watch line. Today's `--options` on `hero_dps`
+would flag the burn / mark / ability / lock options (scored 0): that's the metric gap.
+
+**New mechanic (9f, one):** **Heal regen** (`Heal regen HP/s`, `Heal regen (s)`; two new
+columns appended after `Blurb`, registry kind `max`): everything the Triage Kit heals (hunters
+and, with Patch Up, standing towers) regains HP/s for the time; flat, no hero levels; doesn't
+stack (strongest wins; a recast refreshes it); own team only. **Wirings to verify** (columns
+that exist but a path hasn't used): burst fire with dual guns (Twin Burst: each click = 3
+rounds alternating guns; Hot Swap still staggers); full-auto with Shots per trigger 2 (Slam
+Fire; Quad Barrel then 4 per pull); Shots per trigger on slugs (Twin Slug: 2 slugs, each pierces
+4, one round per pump as Double Barrel); Hits air on Point Blank; Mark % on Tracker and Stalker
+hits; Range x on Special Ammo; Ability cooldown x on Rally Cry (War Drum); Burn on Special Ammo
+T4 and Buckshot T4 (the existing burning-ground cells). **PvP (#301):** hero shots on a hunter
+stay damage-only (× 0.5, Camo Cover): no slow, lock, mark, knockback or burn on hunters.
+
+**T6 wording after any T5 (#300; `HEROES.md` only, no cells):** Big Five "bursts of 5; recoil
+resets between bursts" (drop "with Precision Burst's grouping"); Endless Belt "once fully spun
+up (2 s of holding), no reloading" (every Heavy T5 spins up: A 2.5, B 1.6, C 2.3); Dynamite
+Rounds "the blast grows to 6 m and pierces armour" (every Special Ammo T5 has a blast: A 4 m,
+B/C 3 m); Wildfire Drum "holds +50% shells"; Lights Out "Jaw Lock lasts at least 4 s and
+spreads within 9 studs".
+
+**Tracker**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; blank = no change) |
+|---|---|---|---|---|---|
+| Gunslinger | 4 | B | Deep Cylinders | Both guns hold 50% more and fire 15% faster | Fire rate x 1.15, Magazine x 1.5 |
+| Gunslinger | 4 | C | Crossdraw | Reload 35% faster, fire 15% faster | Fire rate x 1.15, Reload x 0.65 |
+| Gunslinger | 5 | B | Twin Burst | Each click fires a 3-round burst, 30% faster | Fire rate x 1.3, Fire mode `burst`, Burst count 3, Magazine x 1.3 |
+| Gunslinger | 5 | C | Steady Pair | Half the kick, tighter aim, 10% faster | Fire rate x 1.1, Recoil x 0.5, Spread x 0.8 |
+| Marksman | 4 | B | Quick Cock | Fire 20% faster, scope and all | Fire rate x 1.2 |
+| Marksman | 4 | C | Breath Control | Half the kick; the scope reaches 35% further | Range x 1.35, Recoil x 0.5 |
+| Marksman | 5 | B | Quick Scope | Fire 70% faster with 30% less kick | Fire rate x 1.7, Recoil x 0.7 |
+| Marksman | 5 | C | Hunter's Mark | Hits mark dinos: +35% from everything | Mark % 35, Spread x 0.8 |
+| Trick Shot | 4 | B | Bank Shot | Ricochets bounce twice | Bounces 2 |
+| Trick Shot | 4 | C | Quick Fingers | Reload 30% faster, fire a bit faster | Fire rate x 1.07, Reload x 0.7 |
+| Trick Shot | 5 | B | Pinball | 3 bounces, a bigger cylinder, faster shots | Fire rate x 1.17, Bounces 3, Magazine x 1.5 |
+| Trick Shot | 5 | C | Dart Storm | 3 bounces, faster shots, Tracking Dart sooner | Fire rate x 1.15, Ability cooldown x 0.75, Bounces 3 |
+
+**Big Game Hunter**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; blank = no change) |
+|---|---|---|---|---|---|
+| Stalker | 4 | B | Snap Bursts | Bursts come 20% faster | Fire rate x 1.2 |
+| Stalker | 4 | C | Quick Mag | Reload 25% faster | Reload x 0.75 |
+| Stalker | 5 | B | Marking Burst | 4-round bursts that mark: +25% from everything | Fire rate x 1.1, Burst count 4, Mark % 25, Magazine x 1.3 |
+| Stalker | 5 | C | Rapid Volley | Bursts 35% faster, half the kick, bigger mag | Fire rate x 1.35, Recoil x 0.5, Magazine x 1.5 |
+| Heavy | 4 | B | Steady Sling | 35% less kick, moving or not | Recoil x 0.65 |
+| Heavy | 4 | C | Quick Belt | Belt changes 30% faster; 20% less kick | Recoil x 0.8, Reload x 0.7 |
+| Heavy | 5 | B | Hot Barrel | 50% faster at once, spins up to +60% more | Fire rate x 1.5, Spin-up x 1.6, Magazine x 1.3 |
+| Heavy | 5 | C | War Drum | Rally Cry twice as often; spins up to +130% | Spin-up x 2.3, Ability cooldown x 0.5 |
+| Special Ammo | 4 | B | Phosphor Rounds | Fires burn 10% hotter and 50% longer | Burn DPS 1.1, Burn (s) 3 |
+| Special Ammo | 4 | C | Bright Tracers | Hits mark dinos: +30% from everything | Mark % 30 |
+| Special Ammo | 5 | B | Fire Tips | Small blasts; dinos burn 25% longer | Splash radius (m) 3, Burn (s) 2.5 |
+| Special Ammo | 5 | C | Flat Tips | Small blasts; rounds fly 25% further | Splash radius (m) 3, Range x 1.25 |
+
+**Brush Beater**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; blank = no change) |
+|---|---|---|---|---|---|
+| Slug | 4 | B | Quick Pump | Pump 25% faster | Fire rate x 1.25 |
+| Slug | 4 | C | Side Saddle | Holds 50% more slugs, loads 20% faster | Reload x 0.8, Magazine x 1.5 |
+| Slug | 5 | B | Express Slug | Slugs through 6, 60% faster, bigger tube | Fire rate x 1.6, Magazine x 1.5, Pierce 6 |
+| Slug | 5 | C | Twin Slug | Two slugs per pump, each through 4 | Shots per trigger 2, Pierce 4, Magazine x 1.5 |
+| Buckshot | 4 | B | Hot Shells | Fires burn more than twice as hot | Burn DPS 2.3, Burn (s) 3 |
+| Buckshot | 4 | C | Shell Belt | Pump 50% faster; holds 50% more | Fire rate x 1.5, Magazine x 1.5 |
+| Buckshot | 5 | B | Flame Choke | Dragon's Breath bursts for 70% of a shot | Ignite tick (x shot) 0.9, Fire rate x 1.2 |
+| Buckshot | 5 | C | Pump Storm | Pump 50% faster, bigger tube | Fire rate x 1.5, Magazine x 1.5 |
+| Point Blank | 4 | B | Quick Breech | Reload 35% faster, fire 20% faster | Fire rate x 1.2, Reload x 0.65 |
+| Point Blank | 4 | C | Bird Shot | Blasts hit flying dinos; fire 15% faster | Fire rate x 1.15, Hits air Yes |
+| Point Blank | 5 | B | Breech Loader | 45% faster, bigger tube, quick reload | Fire rate x 1.45, Reload x 0.6, Magazine x 1.5 |
+| Point Blank | 5 | C | Slam Fire | Hold to keep both barrels firing, 70% faster | Fire rate x 1.7, Fire mode `auto` |
+
+**Field Medic**
+
+| Path | Tier | Opt | Name (working) | Blurb (card) | Cells (own step; blank = no change) |
+|---|---|---|---|---|---|
+| Triage | 4 | B | Thick Gauze | Triage Kit heals 55% more | Heal x 1.55 |
+| Triage | 4 | C | Quick Kit | Triage Kit is ready a third sooner | Ability cooldown x 0.67 |
+| Triage | 5 | B | Mending Salve | Everything healed regains 2 HP/s for 8 s | Heal regen HP/s 2, Heal regen (s) 8 |
+| Triage | 5 | C | Field Surgeon | Triage Kit is ready 22% sooner | Ability cooldown x 0.78 |
+| Lever Action | 4 | B | Long Tube | Holds 80% more rounds | Magazine x 1.8 |
+| Lever Action | 4 | C | Snap Lever | Cycles 14% faster | Fire rate x 1.14 |
+| Lever Action | 5 | B | Triple Cycle | 3-round bursts, cycling 33% faster | Burst count 3, Fire rate x 1.33 |
+| Lever Action | 5 | C | Steady Lever | 10% faster, half the kick, tighter aim | Fire rate x 1.1, Recoil x 0.5, Spread x 0.6 |
+| Muzzle | 4 | B | Quick Dose | Fire 12% faster; jaws locked 2.6 s | Jaw lock (s) 2.6, Fire rate x 1.12 |
+| Muzzle | 4 | C | Strap Toss | Lock jumps 2 studs; hits slow dinos 40% | Slow on hit % 40, Jaw lock spread (studs) 2 |
+| Muzzle | 5 | B | Heavy Lids | Locked jaws stay shut 4.2 s | Jaw lock (s) 4.2 |
+| Muzzle | 5 | C | Drowsy Cloud | Lock spreads 4 studs; hits slow 40% for 2 s | Slow on hit % 40, Slow on hit (s) 2, Jaw lock spread (studs) 4 |
+
+- **T121** Tracker + Big Game Hunter rows; the #298 metric in `value.py` (gun paths) + exporter
+  bars on it; specs: each option's composed stats; all 9 (o4, o5) + T6 builds compose (Big
+  Five after 5B/5C bursts 5; Endless Belt after 5B/5C stops reloading once spun up); Twin Burst
+  fires 3 per click with two guns. **T122** Brush Beater + Field Medic rows, Heal regen, the
+  Triage and Muzzle metrics; specs: Twin Slug 2 slugs × pierce 4 per round; Slam Fire auto
+  with 2 blasts; Bird Shot hits a flyer; Mending Salve regen (strongest wins, towers too,
+  no stacking); Dynamite after 5B/5C = 6 m. Each task: `HEROES.md` option tables + the T6
+  rewording, audit clean (names unique), `--options` clean, Config diff accounted for.
+  Tester: one B and one C per hero in first person (cards match what happens), a T6 after a
+  B or C T5 on each hero, Practice Hunt duel with the stand-in still fair (damage only).
 
 **🦖 naming point:** the 7 tower names (and look notes) once before 9g, then each batch's
 option names (all 126 working names in `TOWERS_LATER.md` are drafts).
