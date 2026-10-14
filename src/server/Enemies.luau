@@ -123,6 +123,7 @@ local enemyFolder: Instance
 local callbacks: {
 	onLeak: ((Enemy) -> ())?,
 	onKilled: ((Enemy) -> ())?,
+	onTakenDown: ((Enemy) -> ())?, -- the whole dino is gone (its last size, a sink): Bounty cash (PLAN 9d)
 } = {}
 
 local cap = Config.Tuning.MaxConcurrentEnemies
@@ -228,6 +229,13 @@ local function spawnNow(item: Pending, side: number)
 	end
 end
 
+-- The whole dino is down (not a shrink): tell Main while it's still where it fell.
+local function takenDown(enemy: Enemy)
+	if callbacks.onTakenDown then
+		callbacks.onTakenDown(enemy)
+	end
+end
+
 local function remove(enemy: Enemy)
 	if not enemy.alive then
 		return
@@ -242,7 +250,7 @@ end
 ------------------------------------------------------------------ public
 
 -- `mapPaths`: one track per side (MapBuilder; co-op has one).
-function Enemies.init(mapPaths: { Path.Path }, folder: Instance, hooks: { onLeak: ((Enemy) -> ())?, onKilled: ((Enemy) -> ())? })
+function Enemies.init(mapPaths: { Path.Path }, folder: Instance, hooks: { onLeak: ((Enemy) -> ())?, onKilled: ((Enemy) -> ())?, onTakenDown: ((Enemy) -> ())? })
 	Enemies.setPaths(mapPaths)
 	enemyFolder = folder
 	callbacks = hooks
@@ -330,6 +338,7 @@ function Enemies.damage(enemy: Enemy, amount: number, piercesArmor: boolean?, br
 		dress(enemy) -- smaller, same species (one redress however many sizes dropped)
 		return true, nil, dropped
 	end
+	takenDown(enemy)
 	remove(enemy)
 	return true, enemy.key, dropped
 end
@@ -441,6 +450,7 @@ function Enemies.sink(enemy: Enemy): (boolean, string?)
 	if callbacks.onKilled then
 		callbacks.onKilled(enemy)
 	end
+	takenDown(enemy)
 	remove(enemy)
 	return true, enemy.key
 end
@@ -467,6 +477,7 @@ function Enemies.dropSizes(enemy: Enemy, sizes: number): (boolean, string?, numb
 		dress(enemy)
 		return true, nil, dropped
 	end
+	takenDown(enemy)
 	remove(enemy)
 	return true, enemy.key, dropped
 end

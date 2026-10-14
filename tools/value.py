@@ -287,6 +287,8 @@ def tower_stats(t, tiers, picks=None):
         "sinkChestCash": high.get("sinkChestCash", 0) if t.get("onTrack") else 0,
         "tracksSlowPercent": high.get("tracksSlowPercent", 0) if t.get("onTrack") else 0,
         "auraSlowedPercent": high.get("auraSlowedPercent", 0),
+        # Read by the support paths' worth metrics (PLAN 9d, #292): the composed build's own.
+        "bountyCash": high.get("bountyCash", 0),
     }
 
 
@@ -563,13 +565,15 @@ def honest_hits(s, mix, tuning, damage, hits, pierces, breaks1=False, arc=0):
     return total
 
 
-def aura_credit(data, s, mix, brittle=False):
+def aura_credit(data, s, mix, brittle=False, boss_mark=False):
     """What this tower's aura adds to 3 neighbour T2 Hunting Blinds, one per Blind path.
 
     `brittle` (support paths only, #74): the neighbours' shots also get the tower's Brittle %,
-    assuming the dinos they shoot are the sedated ones in its range."""
+    assuming the dinos they shoot are the sedated ones in its range. `boss_mark` (Tranq Weak
+    Spot, PLAN 9d #292): its Boss mark % x the band's boss share counts as aura damage %."""
     buff = {"rate": max(s["auraRatePercent"], s.get("diveAuraRatePercent", 0)),
-            "damage": s["auraDamagePercent"] + s.get("auraSlowedPercent", 0),  # Tar Totem: every target slowed (assumed)
+            "damage": s["auraDamagePercent"] + s.get("auraSlowedPercent", 0)  # Tar Totem: every target slowed (assumed)
+            + (s.get("bossMarkPercent", 0) * mix["boss"] if boss_mark else 0),
             "pierces": s["auraPiercesArmor"],
             "brittle": s["brittlePercent"] if brittle else 0, "arc": s.get("auraArcPercent", 0)}
     if not (buff["rate"] or buff["damage"] or buff["pierces"] or buff["brittle"] or buff["arc"]):
@@ -1006,11 +1010,16 @@ def hero_lines(data, rows, mixes):
 # are bought in); options at a slot cost the same (#277), so eDPS ranks them as eDPS/cash does.
 # Path metrics (stated assumptions; the 9c-9f tune tasks may refine them):
 #   attack towers (damage and aura paths)  eDPS + aura credit (value_table's number)
+#   (PLAN 9d, #292, replaces the branches for Tranq / Supply / Hospital / Armory; boss = the
+#   r31-40 boss share of EHP)
 #   Tranq Station Knockout                 share of time dinos in range are knocked out
-#   Tranq Station Sedate                   slow % x (1 + linger / SLOW_DWELL) x (1 + boss
-#                                          share of r31-40 EHP if it slows bosses)
+#                                          x range x (1 + boss if it holds bosses)
+#   Tranq Station Sedate                   slow % x (1 + linger / SLOW_DWELL) x range x (1 +
+#                                          boss if it slows bosses)
+#   Tranq Station Weak Spot                eDPS + brittle aura, Boss mark % x boss as aura damage
 #   Supply Camp Yield / Airdrop            cash a round (economy_lines: chests collected,
-#                                          interest at its cap); Logistics: discount % +
+#                                          interest at its cap, Bounty cash x BOUNTY_TAKEDOWNS);
+#                                          Logistics: discount % +
 #                                          refund points over the base + aura rate %
 #   Field Hospital Ward / Rescue / Tonic   heal/s (x REVIVE_X if it revives) / kit HP a round
 #                                          x range / tower HP % + aura rate %
@@ -1032,6 +1041,7 @@ RAIDER_FLOOR = 0.8
 HERO_PARITY = 1.15
 SLOW_DWELL = 2.0  # s a dino is assumed to stay in a Tranq Station's range (linger adds to it)
 REVIVE_X = 1.25  # a Ward that revives trampled towers, against one that doesn't
+BOUNTY_TAKEDOWNS = 30  # Supply Yield (PLAN 9d, #292): in-range take-downs a round, r31-40 (a quarter of the round's dinos)
 
 
 def option_bar(worths, raiders=()):
@@ -1103,7 +1113,8 @@ def tower_worth(data, key, pi, s, late):
         if pid == "Logistics":
             return g("discountPercent") + 100 * max(0, g("sellRefund") - tuning["SellRefund"]) + g("auraRatePercent")
         income = t["incomePerRound"]
-        return income * g("incomeMult", 1) + g("interestCap") * (g("interestPercent") > 0) + g("chests") * g("chestCash")
+        return (income * g("incomeMult", 1) + g("interestCap") * (g("interestPercent") > 0) + g("chests") * g("chestCash")
+                + g("bountyCash") * BOUNTY_TAKEDOWNS)
     if key == "HOSPITAL":
         if pid == "Ward":
             return g("healPerSecond") * (REVIVE_X if g("revives") else 1)
@@ -1128,11 +1139,14 @@ def tower_worth(data, key, pi, s, late):
         return sum(n * (tar_seconds(s, tuning, sp) - tar_seconds({**s, "slowPercent": 0}, tuning, sp)
                         + g("slowLinger") * g("slowPercent") / 100) for n, sp in ground) / max(1, sum(n for n, _ in ground))
     if key == "CHILLER" and pid == "Knockout":
-        return g("freezeSeconds") / g("freezeEvery") if g("freezeEvery") else 0
+        duty = g("freezeSeconds") / g("freezeEvery") if g("freezeEvery") else 0
+        return duty * g("rangeMult", 1) * (1 + (late["boss"] if g("freezeHoldsBosses") else 0))
     if key == "CHILLER" and pid == "Sedate":
-        return g("slowPercent") * (1 + g("slowLinger") / SLOW_DWELL) * (1 + (late["boss"] if g("slowsBosses") else 0))
+        return (g("slowPercent") * (1 + g("slowLinger") / SLOW_DWELL) * g("rangeMult", 1)
+                * (1 + (late["boss"] if g("slowsBosses") else 0)))
     path = t["paths"][pi]
-    return edps(s, late, tuning) + aura_credit(data, s, late, brittle=is_support(key, path))
+    boss_mark = key == "CHILLER" and pid == "Weak Spot"  # #292: Boss mark % x boss share as aura damage
+    return edps(s, late, tuning) + aura_credit(data, s, late, brittle=is_support(key, path), boss_mark=boss_mark)
 
 
 def option_report(data):

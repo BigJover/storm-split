@@ -41,8 +41,16 @@ local function picksFor(tiers: { number }): { string }
 	return picks
 end
 
--- Stats fields added after the snapshot (PLAN 9c), with the value every option-A build has.
-local AFTER_SNAPSHOT: { [string]: any } = { bombletBurnDps = 0, bombletBurnSeconds = 0, stripsOnHit = false }
+-- Stats fields added after the snapshot (PLAN 9c, 9d), with the value every option-A build has.
+local AFTER_SNAPSHOT: { [string]: any } = {
+	bombletBurnDps = 0,
+	bombletBurnSeconds = 0,
+	stripsOnHit = false,
+	raiderSlowPercent = 0, -- 9d Raider sting
+	raiderSlowSeconds = 0,
+	raiderDamage = 0,
+	bountyCash = 0, -- 9d Bounty cash
+}
 
 local function same(actual: { [string]: any }, expected: { [string]: any }, where: string): number
 	local bad = 0

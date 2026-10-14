@@ -72,6 +72,7 @@ DEAD_ALLOWED = {
     ("Tuning", "PerkParityBand"): "an exporter rule, not a game number: hero-vs-hero perk parity at mastery 10 and 15+ (PLAN T84, DECISIONS #235)",
     ("Tuning", "CompetitiveEdgeMax"): "a value.py watch threshold, not a game number or a bar: the PvP edge report's WATCH lines (PLAN T84, DECISIONS #235)",
     ("Tuning", "CoOpLengthMax"): "a model bar, not a game clock: value.py --pacing fails if Normal solo with breaks is longer (PLAN T101, DECISIONS #250)",
+    ("Towers tiers", "pvpEffect"): "a model / exporter flag (DECISIONS #284: value.py's Raider floor, one Raider option per tower); the game reads the Raider sting columns (PLAN 9d, #294)",
 }
 
 

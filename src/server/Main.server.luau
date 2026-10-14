@@ -162,6 +162,14 @@ Enemies.init(map.paths, map.enemyFolder, {
 		Economy.earnFor(enemy.side, enemy.share * enemy.cashX * Config.Tuning.CashPerEffectiveHP * difficulty().cashMult)
 		Battle.dinoPopped(enemy.side) -- a stand-in seat's Bone (Studio battles, T79b)
 	end,
+	-- Bounty cash (PLAN 9d, #294): a whole dino down (sinks too, not shrinks) inside a Supply
+	-- Camp's range pays its side the strongest covering camp's Bounty cash, once.
+	onTakenDown = function(enemy)
+		local cash = Towers.bountyAt(enemy.part.Position, enemy.side)
+		if cash > 0 then
+			Economy.earnFor(enemy.side, cash)
+		end
+	end,
 })
 
 Effects.init(map.effectFolder)

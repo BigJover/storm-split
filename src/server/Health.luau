@@ -18,6 +18,10 @@
 	damage already x PvP hunter damage, Shared/BattleRules.pvpDamage). Camo Cover: for
 	Tuning Spawn shield seconds after each (re)spawn a hunter takes no PvP damage
 	(camoCover(); the character's "CamoUntil" attribute, server time, in a battle).
+
+	Raider sting (PLAN 9d, #294; Shared/TowerPerks, applied by Towers): slow() holds a
+	hunter's walk speed down by a % for a few seconds (the strongest in effect wins; never a
+	stop: the exporter keeps it <= 30 %, <= 3 s), restoring it when it runs out.
 ]]
 
 local Players = game:GetService("Players")
@@ -34,6 +38,8 @@ local Health = {}
 local resistOf: ((Player) -> { number })? = nil
 local hurtEvent: RemoteEvent? = nil
 local spawnedAt: { [Player]: number } = {} -- os.clock() of each hunter's latest spawn (Camo Cover)
+type Slow = { humanoid: Humanoid, percent: number, untilAt: number, base: number }
+local slowed: { [Player]: Slow } = {} -- Raider sting slows in effect
 
 -- What hurt a hunter, for their private hit notice.
 export type Source = { species: string, attack: string }
@@ -59,6 +65,7 @@ function Health.init(remotes: Folder, hooks: Hooks?)
 	hurtEvent = hurt
 	Players.PlayerRemoving:Connect(function(player)
 		spawnedAt[player] = nil
+		slowed[player] = nil
 	end)
 end
 
@@ -116,6 +123,37 @@ function Health.pvpHit(player: Player, amount: number): (number, boolean)
 	end
 	local dealt = Health.damage(player, amount, nil)
 	return dealt, humanoid.Health <= 0
+end
+
+-- Raider sting: `percent` slower for `seconds` (a stronger slow in effect is kept; the
+-- longer end wins). A respawned character starts unslowed.
+function Health.slow(player: Player, percent: number, seconds: number)
+	local humanoid = humanoidOf(player)
+	if not humanoid or percent <= 0 or seconds <= 0 then
+		return
+	end
+	local now = os.clock()
+	local current = slowed[player]
+	if current and (current.humanoid ~= humanoid or now >= current.untilAt) then
+		if current.humanoid == humanoid then
+			humanoid.WalkSpeed = current.base
+		end
+		current = nil
+	end
+	local entry: Slow = {
+		humanoid = humanoid,
+		percent = if current then math.max(current.percent, percent) else percent,
+		untilAt = math.max(if current then current.untilAt else 0, now + seconds),
+		base = if current then current.base else humanoid.WalkSpeed,
+	}
+	slowed[player] = entry
+	humanoid.WalkSpeed = entry.base * (1 - entry.percent / 100)
+	task.delay(entry.untilAt - now, function()
+		if slowed[player] == entry then
+			slowed[player] = nil
+			humanoid.WalkSpeed = entry.base
+		end
+	end)
 end
 
 -- Heals a living player, never past max.

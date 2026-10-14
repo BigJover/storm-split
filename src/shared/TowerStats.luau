@@ -106,6 +106,13 @@ export type Stats = {
 	eruption: boolean, -- Eruption: every Tuning Eruption every s, every dino in the pool drops sizes
 	tracksSlowPercent: number, -- Tar Tracks: the track past the pool slows this % after a dino leaves
 	auraSlowedPercent: number, -- Tar Totem: towers in range +% damage against slowed dinos
+	-- Raider sting (PLAN 9d, #294; rules in Shared/RaiderSting): battles only. An enemy hunter who
+	-- damages a tower on this side inside this tower's range is stung. 0 = no sting.
+	raiderSlowPercent: number,
+	raiderSlowSeconds: number,
+	raiderDamage: number, -- before the PvP hunter lever (x0.5)
+	-- Bounty cash (PLAN 9d, #294): cash to this side for each of its dinos taken down in range.
+	bountyCash: number,
 }
 
 local MULTIPLIERS = {
@@ -169,6 +176,10 @@ local HIGHEST = {
 	"sinkChestCash",
 	"tracksSlowPercent",
 	"auraSlowedPercent",
+	"raiderSlowPercent",
+	"raiderSlowSeconds",
+	"raiderDamage",
+	"bountyCash",
 }
 local FLAGS = {
 	"piercesArmor",
@@ -312,6 +323,10 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		eruption = def.onTrack == true and flag.eruption == true,
 		tracksSlowPercent = if def.onTrack then high.tracksSlowPercent or 0 else 0,
 		auraSlowedPercent = high.auraSlowedPercent or 0,
+		raiderSlowPercent = high.raiderSlowPercent or 0,
+		raiderSlowSeconds = high.raiderSlowSeconds or 0,
+		raiderDamage = high.raiderDamage or 0,
+		bountyCash = high.bountyCash or 0,
 	}
 end
 

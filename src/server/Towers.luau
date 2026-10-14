@@ -124,6 +124,7 @@ local Upgrades = require(Shared:WaitForChild("Upgrades"))
 local OptionPick = require(Shared:WaitForChild("OptionPick"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local BattleRules = require(Shared:WaitForChild("BattleRules"))
+local TowerPerks = require(Shared:WaitForChild("TowerPerks"))
 
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
@@ -345,6 +346,60 @@ local function lastStand(tower: Tower): Tower?
 	return nil
 end
 
+------------------------------------------------------------------ PLAN 9d perks (Shared/TowerPerks)
+
+local stungAt: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any -- last Raider sting, per hunter
+
+-- The towers with any of `fields` > 0, as Shared/TowerPerks sees them from `point`.
+local function perkSources(point: Vector3, fields: { string }): { TowerPerks.Source }
+	local out = {}
+	for _, source in towers do
+		local has = false
+		for _, field in fields do
+			has = has or ((source.stats :: any)[field] or 0) > 0
+		end
+		if has then
+			table.insert(out, { side = source.side, standing = not source.knockedOut, covers = covers(source, point), stats = source.stats })
+		end
+	end
+	return out
+end
+
+-- Raider sting (#294): `hunter` just damaged `tower`. Sleeper Darts / Barbed Wire covering
+-- where the hunter stands, on the tower's side, sting them (battles only, enemies only).
+local RAIDER_FIELDS = { "raiderSlowPercent", "raiderDamage" }
+local BOUNTY_FIELDS = { "bountyCash" }
+local function stingRaider(tower: Tower, hunter: Player)
+	local character = hunter.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not (root and root:IsA("BasePart")) then
+		return
+	end
+	local sources = perkSources(root.Position, RAIDER_FIELDS)
+	if #sources == 0 then
+		return
+	end
+	local now = os.clock()
+	local hunterSide = Sides.playerSide(hunter:GetAttribute("Side"), ReplicatedStorage:GetAttribute("Sides"))
+	local sting = TowerPerks.sting(sources, tower.side, hunterSide, Health.camoCover(hunter), stungAt[hunter], now)
+	if not sting then
+		return
+	end
+	stungAt[hunter] = now
+	if sting.damage > 0 then
+		Health.pvpHit(hunter, sting.damage)
+	end
+	if sting.slowPercent > 0 then
+		Health.slow(hunter, sting.slowPercent, sting.slowSeconds)
+	end
+end
+
+-- Bounty cash (#294) for a dino of `side` taken down at `position`: the strongest standing
+-- own-side Supply Camp covering it (Main pays it through Economy).
+function Towers.bountyAt(position: Vector3, side: number): number
+	return TowerPerks.bounty(perkSources(position, BOUNTY_FIELDS), side)
+end
+
 -- Hurts a standing tower, less its resistance. At 0 HP it's trampled.
 -- `source` is who or what did it (kept for PvP later). Returns the damage dealt.
 -- A tower that can't be damaged (DECISIONS #148) takes nothing and shows nothing.
@@ -356,6 +411,9 @@ function Towers.damage(tower: Tower, amount: number, source: any?): number
 	table.insert(sources, tower.buff.resistPercent) -- an Armory in range
 	local resist = Combat.combineResist(sources)
 	local dealt = Combat.towerDealt(tower.def, tower.hp, amount, resist)
+	if dealt > 0 and typeof(source) == "Instance" and source:IsA("Player") then
+		stingRaider(tower, source) -- before the hit lands: a Raider tower trampled by it still stings
+	end
 	tower.hp -= dealt
 	local saver = if tower.hp <= 0 then lastStand(tower) else nil
 	local outcome = Combat.hitOutcome(tower.hp, dealt, saver ~= nil)
@@ -1636,6 +1694,7 @@ function Towers.clearAll()
 	levelScale = 1
 	towerLevel = 1
 	table.clear(gridTimers)
+	table.clear(stungAt)
 end
 
 -- A battle side is out (PLAN T77, DECISIONS #213): its towers come off the map.

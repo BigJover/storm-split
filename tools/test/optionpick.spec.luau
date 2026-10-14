@@ -40,8 +40,9 @@ test("only tier-4 and tier-5 steps open the pick", function()
 	end
 end)
 
--- Paths whose B/C options are in (PLAN 9c: the starters); every other path is still A only.
-local WITH_BC = { SCOUT = true, SNIPER = true, GRENADIER = true }
+-- Paths whose B/C options are in (PLAN 9c: the starters; 9d: Tranq Station, Supply Camp);
+-- every other path is still A only.
+local WITH_BC = { SCOUT = true, SNIPER = true, GRENADIER = true, CHILLER = true, QUARTERMASTER = true }
 
 test("every tier-4/5 pick shows its options' cards (A only, or A/B/C for 9c), each one the server takes", function()
 	local slots, threeWay = 0, 0
@@ -81,7 +82,7 @@ test("every tier-4/5 pick shows its options' cards (A only, or A/B/C for 9c), ea
 		end
 	end)
 	ok(slots >= 90, `every slot seen ({slots})`)
-	eq(threeWay, 18, "the 9 starter paths' 18 slots offer A/B/C")
+	eq(threeWay, 30, "the 15 paths with B/C (9 starter, 6 of 9d) offer A/B/C at their 30 slots")
 end)
 
 test("three options: three cards in order, none chosen until one is tapped", function()

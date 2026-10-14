@@ -141,6 +141,12 @@ ABILITY_COLUMNS = [
     ("eruption", 84, "bool", False),  # Eruption: Tuning Eruption every / Eruption sizes
     ("tracksSlowPercent", 85, "num", 0),  # Tar Tracks: footprints past the pool slow this %
     ("auraSlowedPercent", 86, "num", 0),  # Tar Totem: towers in range +% damage vs slowed dinos
+    # PLAN 9d (#294), after Option / Blurb / PvP effect (CI-CK). Raider sting: battles only, an
+    # enemy hunter who damages a tower on this side inside this tower's range (Shared/RaiderSting).
+    ("raiderSlowPercent", 90, "num", 0),  # CL: the sting's slow (<= RAIDER_SLOW_MAX)
+    ("raiderSlowSeconds", 91, "num", 0),  # CM: how long (<= RAIDER_SLOW_SECONDS_MAX)
+    ("raiderDamage", 92, "num", 0),  # CN: the sting's damage, before the PvP hunter lever (x0.5)
+    ("bountyCash", 93, "num", 0),  # CO: Supply Camp: cash per dino taken down in range (strongest camp pays)
 ]
 
 # Columns only a tower that chains (Towers column Chains) can use.
@@ -1895,14 +1901,25 @@ def validate(data):
     return problems, notes
 
 
+RAIDER_COLUMNS = ("raiderSlowPercent", "raiderSlowSeconds", "raiderDamage")
+RAIDER_SLOW_MAX, RAIDER_SLOW_SECONDS_MAX = 30, 3  # DECISIONS #284 rule 3: slows <= 30 %, <= 3 s
+
+
 def raider_problems(towers):
-    """At most one Raider option (`PvP effect`) per tower (DECISIONS #284 rule 5).
+    """At most one Raider option (`PvP effect`) per tower (DECISIONS #284 rule 5); the Raider
+    sting columns only on a build whose T4 or T5 pick is that Raider option, and its slow
+    within #284's limits (PLAN 9d, #294).
 
     >>> t = {"paths": [{"id": "P", "t4": {"A": {}, "B": {"pvpEffect": True}}, "t5": {"AA": {}, "BC": {"pvpEffect": True}}}]}
     >>> raider_problems({"X": {"display": "Demo", **t}})
     ['Tower Upgrades Demo: 2 Raider options (P 4B, P 5C); at most one per tower (DECISIONS #284)']
     >>> raider_problems({"X": {"display": "Demo", "paths": [{"id": "P", "t4": {"B": {"pvpEffect": True}}, "t5": {}}]}})
     []
+    >>> sting = {"pvpEffect": True, "raiderSlowPercent": 35, "raiderSlowSeconds": 2}
+    >>> raider_problems({"X": {"display": "Demo", "paths": [{"id": "P", "t4": {"C": sting}, "t5": {"CA": {**sting, "pvpEffect": None}}}]}})
+    ['Tower Upgrades Demo P 4C: Raider slow 35 % is over 30 % (DECISIONS #284)', 'Tower Upgrades Demo P 5CA: Raider slow 35 % is over 30 % (DECISIONS #284)']
+    >>> raider_problems({"X": {"display": "Demo", "paths": [{"id": "P", "t4": {"B": {"raiderDamage": 5}}, "t5": {}}]}})
+    ['Tower Upgrades Demo P 4B: Raider sting columns on a build without a Raider option (PvP effect, DECISIONS #284)']
     """
     out = []
     for t in towers.values():
@@ -1912,7 +1929,24 @@ def raider_problems(towers):
             found += sorted({f"{path['id']} 5{k[1]}" for k, row in path["t5"].items() if row.get("pvpEffect")})
         if len(found) > 1:
             out.append(f"Tower Upgrades {t['display']}: {len(found)} Raider options ({', '.join(found)}); at most one per tower (DECISIONS #284)")
+        for path in t["paths"]:
+            builds = [(str(i), row, False) for i, row in enumerate(path.get("tiers", []), start=1)]
+            builds += [(f"4{o}", row, bool(row.get("pvpEffect"))) for o, row in path["t4"].items()]
+            builds += [(f"5{k}", row, bool(row.get("pvpEffect") or path["t4"].get(k[0], {}).get("pvpEffect")))
+                       for k, row in path["t5"].items()]
+            for label, row, raider in builds:
+                where = f"Tower Upgrades {t['display']} {path['id']} {label}"
+                if any(row.get(f, 0) for f in RAIDER_COLUMNS) and not raider:
+                    out.append(f"{where}: Raider sting columns on a build without a Raider option (PvP effect, DECISIONS #284)")
+                if row.get("raiderSlowPercent", 0) > RAIDER_SLOW_MAX:
+                    out.append(f"{where}: Raider slow {fmt_num(row['raiderSlowPercent'])} % is over {RAIDER_SLOW_MAX} % (DECISIONS #284)")
+                if row.get("raiderSlowSeconds", 0) > RAIDER_SLOW_SECONDS_MAX:
+                    out.append(f"{where}: Raider slow {fmt_num(row['raiderSlowSeconds'])} s is over {RAIDER_SLOW_SECONDS_MAX} s (DECISIONS #284)")
     return out
+
+
+def fmt_num(x):
+    return f"{x:g}"
 
 
 def validate_options(data, problems, notes):

@@ -94,6 +94,17 @@ A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 /
 - Knockout Dart: knocks out every dino in range every few seconds. Barbed Darts: knockouts also deal damage. Big Game Tranq: a long knockout that holds bosses.
 - Exposed Hide: sedated dinos take +25% damage. Find the Gap: +35%, and sedated dinos lose their armour. Hunter's Call: towers in range +10% attack speed. Apex Predator: +75%, towers in range +20% damage.
 
+A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table's T4 / T5; names are working names until the Dino pass). Sleeper Darts is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (slow 30 % for 2 s, once per 3 s per hunter, never through Camo Cover); in co-op it is a 72 % slow:
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Sedate** | 4 | Sedative Cloud — A much stronger slow over a wider area | Drowsy Trail — Dinos stay slowed 4 s after they leave | Sleeper Darts — Also slows raiders who shoot your towers |
+| **Sedate** | 5 | Deep Sleep — Its slow works on bosses too | Fog Bank — A huge sleepy cloud slows a much wider ring | Long Nap — Dinos stay slowed 7 s after they leave |
+| **Knockout** | 4 | Quick Cycle — Knockouts come sooner and hurt more | Long Sleep — Knockouts hold dinos 1.8 s instead of 1 | Knockout Ring — Knocks out dinos in a much wider ring |
+| **Knockout** | 5 | Big Game Tranq — A long knockout that even holds bosses | Snooze Alarm — Knocks out every dino in range every 4 s | Sleep Wave — A giant knockout ring |
+| **Weak Spot** | 4 | Vital Points — Sedated dinos take even more damage | Pack Instinct — Towers in range fire 20% faster | Big Game Weakness — Bosses in range take +40% from everything |
+| **Weak Spot** | 5 | Apex Predator — Dinos take much more damage; towers in range hit harder | Feeding Frenzy — Towers in range fire 35% faster | Killing Ground — Bosses in range take +75% from everything |
+
 ## Supply Camp (Quartermaster) — economy, no attack ✅ phase 5 · unlock 150 Amber
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
@@ -107,6 +118,17 @@ A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 /
 - Yield: round income ×2.1 / ×3.85 / ×6.6 / ×11.1 / ×17.9 of the base 150; Amber Vault adds 5% interest (up to 500 a round).
 - Airdrop: 1 / 2 / 2 / 3 / 4 chests a round worth 200 / 260 / 515 / 615 / 790 cash each.
 - Bulk Order: towers in range −5% upgrade cost. Recycler: towers in range sell for 90%. Forward Camp: towers in range +10% attack speed. Base Camp: −20% costs, full refunds.
+
+A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table's T4 / T5; names are working names until the Dino pass). Bounty cash: a dino taken down (sinks count, shrinks don't) inside its range pays this side the bounty; the strongest camp covering it pays, once:
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Yield** | 4 | War Chest — Pays a lot more cash every round | Savings Jar — Less income, but 3% interest on banked cash | Bounty Board — +8 cash for each dino taken down in its range |
+| **Yield** | 5 | Amber Vault — Earns interest on your banked cash | Gold Reserve — Big interest: 8% on banked cash | Bounty Hall — +25 cash for each dino taken down in its range |
+| **Airdrop** | 4 | Supply Chain — More chests land each round, worth more | Heavy Crates — Two crates a round, worth more each | Extra Drop — Four crates a round |
+| **Airdrop** | 5 | Treasure Haul — The richest chests, and more of them | Supply Fleet — Five crates a round | Gold Crates — Four crates a round, worth 900 each |
+| **Logistics** | 4 | Forward Camp — Towers in range shoot faster | Bulk Buyer — Upgrades in range cost 18% less | Scrap Dealer — Towers in range sell for 97% |
+| **Logistics** | 5 | Base Camp — Towers in range cost less and sell for full price | Wholesale — Upgrades in range cost 32% less | Depot — Towers in range fire 20% faster, cost 15% less |
 
 ## Field Hospital (HOSPITAL) — heals towers and hunters, no attack ✅ Step 2 · unlock 100 Amber
 
