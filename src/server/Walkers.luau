@@ -31,6 +31,10 @@ export type Spec = {
 	healsBetweenRounds: boolean,
 	look: (index: number) -> Model, -- one walker's look (visual only)
 	onHit: (enemy: any, hit: Walker.Hit) -> (), -- the tower lands it (Enemies.damage etc.)
+	-- Optional, per walker: its own home (Guard Raptors: a post beside another tower) and
+	-- which of the side's dinos it may go for (Guard, Raider Hounds).
+	homeFor: ((index: number) -> (Vector3, number))?,
+	candidates: ((index: number, dinos: { Walker.Dino }) -> { Walker.Dino })?,
 }
 
 type Pack = {
@@ -38,6 +42,7 @@ type Pack = {
 	spec: Spec,
 	units: { Walker.Unit },
 	models: { Model },
+	override: number?, -- Raptor Charge: every standing walker runs with the sweep here
 }
 
 local packs: { [any]: Pack } = {}
@@ -140,13 +145,21 @@ local function asDino(enemy: any, base: Vector3): Walker.Dino
 	}
 end
 
+local function homeOf(pack: Pack, i: number): (Vector3, number)
+	if pack.spec.homeFor then
+		return pack.spec.homeFor(i)
+	end
+	return pack.spec.base, pack.spec.homeAt
+end
+
 local function place(pack: Pack, i: number, unit: Walker.Unit)
 	local model = pack.models[i]
 	if not model then
 		return
 	end
 	local visible = unit.state ~= "down"
-	local at = if unit.state == "home" then pack.spec.base + Vector3.new(1.5 * ((i % 3) - 1), 0, 2) else Enemies.pointAt(unit.at, pack.spec.side)
+	local base = homeOf(pack, i)
+	local at = if unit.state == "home" then base + Vector3.new(1.5 * ((i % 3) - 1), 0, 2) else Enemies.pointAt(unit.at, pack.spec.side)
 	local ahead = Enemies.pointAt(unit.at + 1, pack.spec.side)
 	local look = if (ahead - at).Magnitude > 1e-3 then CFrame.lookAt(at, Vector3.new(ahead.X, at.Y, ahead.Z)) else CFrame.new(at)
 	model:PivotTo(look + Vector3.new(0, if visible then 1.2 else -500, 0))
@@ -161,17 +174,40 @@ function Walkers.step(dt: number)
 	local live = Enemies.getLive()
 	for _, pack in packs do
 		local spec = pack.spec
-		local dinos = {}
+		local enemies = {}
 		for _, enemy in live do
 			if enemy.alive and enemy.side == spec.side then
-				table.insert(dinos, asDino(enemy, spec.base))
+				table.insert(enemies, enemy)
 			end
 		end
+		local shared = {}
+		for _, enemy in enemies do
+			table.insert(shared, asDino(enemy, spec.base))
+		end
 		for i, unit in pack.units do
+			local charging = pack.override ~= nil and unit.state ~= "down"
+			if charging then
+				unit.at = pack.override :: number -- Raptor Charge: it runs with the sweep
+				unit.state = "back"
+				unit.target = nil
+				place(pack, i, unit)
+				continue
+			end
 			if unit.state == "home" and not spec.sending then
 				unit.hp = math.min(spec.params.maxHp, unit.hp + spec.params.homeHeal * dt)
 				place(pack, i, unit)
 				continue
+			end
+			local base, homeAt = homeOf(pack, i)
+			local dinos = shared
+			if spec.homeFor then
+				dinos = {}
+				for _, enemy in enemies do
+					table.insert(dinos, asDino(enemy, base))
+				end
+			end
+			if spec.candidates then
+				dinos = spec.candidates(i, dinos)
 			end
 			local claimed = {}
 			if spec.params.flanking then
@@ -181,20 +217,58 @@ function Walkers.step(dt: number)
 					end
 				end
 			end
-			for _, hit in Walker.step(unit, dt, now, spec.params, spec.homeAt, dinos, claimed) do
+			for _, hit in Walker.step(unit, dt, now, spec.params, homeAt, dinos, claimed) do
 				local enemy = hit.target
 				if enemy and enemy.alive then
 					spec.onHit(enemy, hit)
 				end
 			end
 			if Walker.exposed(unit) then
-				for _, dino in dinos do
+				for _, dino in shared do
 					Walker.trample(unit, dino, spec.params, now)
 				end
 			end
 			place(pack, i, unit)
 		end
 	end
+end
+
+-- Raptor Charge: while `at` is set every standing walker of `tower` runs with the sweep
+-- there (no bites of its own; the tower bites what the sweep passes); nil ends it and they
+-- run home from where the sweep left them.
+function Walkers.charge(tower: any, at: number?)
+	local pack = packs[tower]
+	if pack then
+		pack.override = at
+	end
+end
+
+-- How many of `tower`'s walkers are fighting now (Dive aura).
+function Walkers.fighting(tower: any): number
+	local n = 0
+	for _, unit in Walkers.unitsOf(tower) do
+		if unit.state == "fight" then
+			n += 1
+		end
+	end
+	return n
+end
+
+-- Where `tower`'s first standing walker is (the alpha's roar), or nil.
+function Walkers.firstAt(tower: any): Vector3?
+	local pack = packs[tower]
+	if not pack then
+		return nil
+	end
+	for i, unit in pack.units do
+		if unit.state ~= "down" then
+			if unit.state == "home" then
+				return (homeOf(pack, i))
+			end
+			return Enemies.pointAt(unit.at, pack.spec.side)
+		end
+	end
+	return nil
 end
 
 -- A dino is about to bite: if one of its own side's walkers is on it (fighting it), the

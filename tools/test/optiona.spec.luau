@@ -78,11 +78,34 @@ local AFTER_SNAPSHOT: { [string]: any } = {
 	reflectDamage = 0,
 	wallSeconds = 0,
 	takeDownMarkPercent = 0,
+	-- PLAN 9g (T124): walkers (none on these towers) and the generic Hunter damage %
+	walkers = 0,
+	walkerHpMult = 1,
+	walkerSpeedMult = 1,
+	walkerResistPercent = 0,
+	walkerRespawnMult = 1,
+	holdSeconds = 0,
+	bossHoldSeconds = 0,
+	flanking = false,
+	targetsFirst = false,
+	healsBetweenRounds = false,
+	dodge = false,
+	alpha = false,
+	swarm = false,
+	charge = false,
+	guard = false,
+	stunRoarEvery = 0,
+	takeDownStackPercent = 0,
+	avengerX = 0,
+	hunterDamagePercent = 0,
 }
+-- ... and fields whose "does nothing" value is the tower's own (hitsAir moved from the Towers
+-- row into the stats with the generic Hits air column, PLAN 9g).
+local AFTER_SNAPSHOT_DEF: { [string]: string } = { hitsAir = "hitsAir" }
 -- Towers added after the snapshot (the 4x towers, PLAN 9g-9j): no "before" to hold them to.
 local NEW_TOWERS = { RESIN = true, RAPTOR = true, BLIMP = true, TOTEM = true, METEOR = true, VENT = true, RANGER = true }
 
-local function same(actual: { [string]: any }, expected: { [string]: any }, where: string): number
+local function same(actual: { [string]: any }, expected: { [string]: any }, where: string, def: any?): number
 	local bad = 0
 	for field, value in expected do
 		if exact(actual[field]) ~= value then
@@ -95,6 +118,9 @@ local function same(actual: { [string]: any }, expected: { [string]: any }, wher
 			-- Fields added after the snapshot hold their "does nothing" value on every
 			-- option-A build, so option A plays exactly as before (PLAN 9c wirings).
 			local idle = AFTER_SNAPSHOT[field]
+			if def and AFTER_SNAPSHOT_DEF[field] then
+				idle = def[AFTER_SNAPSHOT_DEF[field]] == true
+			end
 			if idle == nil or value ~= idle then
 				bad += 1
 				eq(value, idle, `{where} {field} is new`)
@@ -141,7 +167,7 @@ test("every tower build with option A computes exactly the stats it had before A
 		for _, build in snap.builds do
 			local tiers = numbers(build.tiers)
 			local stats = TowerStats.compute(def, tiers, picksFor(tiers)) :: any
-			bad += same(stats, build.stats, `{key} {table.concat(tiers, "/")}`)
+			bad += same(stats, build.stats, `{key} {table.concat(tiers, "/")}`, def)
 			builds += 1
 		end
 	end

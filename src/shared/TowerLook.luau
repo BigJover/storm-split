@@ -35,6 +35,7 @@ TowerLook.COLORS = table.freeze({
 	BALLISTA = Color3.fromRGB(125, 90, 55), -- Harpoon Ballista: oiled oak
 	TARPIT = Color3.fromRGB(35, 28, 24), -- Tar Pit: tar black
 	RESIN = Color3.fromRGB(240, 150, 40), -- Amber Resin Cannon: amber (PLAN 9g)
+	RAPTOR = Color3.fromRGB(150, 120, 70), -- Raptor Pen: raptor hide (PLAN 9g)
 })
 
 TowerLook.BODY_HEIGHT = 5
@@ -246,6 +247,26 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 			block("Keg", Vector3.new(1.0, 0.8, 0.8), at(0, 1.1, 0.85) * CFrame.Angles(0, 0, math.rad(90)), WOOD, Enum.Material.Wood, CYLINDER),
 			block("Drip", Vector3.new(0.35, 0.5, 0.35), at(0.3, 0.85, 0.85), color, Enum.Material.Glass, Enum.PartType.Ball),
 		}
+	end,
+	-- Raptor Pen (PLAN 9g): a log fence round a straw floor, an open gate on the track side,
+	-- a hide-coloured shelter and a feeding bone. The raptors are Server/Walkers' (RaptorLook).
+	RAPTOR = function(color)
+		local straw = Color3.fromRGB(205, 180, 110)
+		local bone = Color3.fromRGB(225, 215, 190)
+		local blocks = {
+			block("Floor", Vector3.new(2.9, 0.2, 2.9), at(0, 0.1, 0), straw, Enum.Material.Grass),
+			block("Shelter", Vector3.new(1.4, 1.3, 1.2), at(0.6, 0.85, 0.7), color, Enum.Material.Fabric),
+			block("Roof", Vector3.new(1.6, 0.2, 1.4), at(0.6, 1.6, 0.7) * CFrame.Angles(0, 0, math.rad(8)), DARK_WOOD, Enum.Material.Wood),
+			block("Bone", Vector3.new(0.9, 0.2, 0.2), at(-0.6, 0.35, 0.4) * CFrame.Angles(0, math.rad(30), 0), bone, Enum.Material.Limestone),
+			block("GateL", Vector3.new(0.6, 1.4, 0.15), at(-0.95, 0.9, -1.15) * CFrame.Angles(0, math.rad(-35), 0), WOOD, Enum.Material.Wood),
+		}
+		for i, spot in { { -1.35, -1.35 }, { 1.35, -1.35 }, { -1.35, 0 }, { 1.35, 0 }, { -1.35, 1.35 }, { 1.35, 1.35 }, { 0, 1.35 } } do
+			table.insert(blocks, block(`Post{i}`, Vector3.new(0.25, 1.8, 0.25), at(spot[1], 0.9, spot[2]), WOOD, Enum.Material.Wood))
+		end
+		table.insert(blocks, block("RailL", Vector3.new(0.15, 0.2, 2.7), at(-1.35, 1.3, 0), DARK_WOOD, Enum.Material.Wood))
+		table.insert(blocks, block("RailR", Vector3.new(0.15, 0.2, 2.7), at(1.35, 1.3, 0), DARK_WOOD, Enum.Material.Wood))
+		table.insert(blocks, block("RailB", Vector3.new(2.7, 0.2, 0.15), at(0, 1.3, 1.35), DARK_WOOD, Enum.Material.Wood))
+		return blocks
 	end,
 	-- Supply Camp: stacked crates under an orange tarp, a flag on a pole.
 	QUARTERMASTER = function(color)

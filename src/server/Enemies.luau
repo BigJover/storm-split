@@ -635,6 +635,11 @@ function Enemies.pointAt(distance: number, side: number?): Vector3
 	return position
 end
 
+-- A side's track length (studs): Raptor Charge sweeps it from the exit end (PLAN 9g).
+function Enemies.trackLength(side: number?): number
+	return paths[side or 1].length
+end
+
 -- Read-only view for targeting. Do not mutate what you get back.
 function Enemies.getLive(): { [number]: Enemy }
 	return live

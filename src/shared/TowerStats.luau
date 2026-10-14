@@ -146,6 +146,28 @@ export type Stats = {
 	reflectDamage: number, -- Amber Mirror: a throw its Grounding catches hits the thrower for this
 	wallSeconds: number, -- Resin Wall: once a round (AutoFire) a track wall holds dinos this long
 	takeDownMarkPercent: number, -- 4x common rule: a take-down marks dinos near it +% (Bone Dust)
+	-- Walkers (PLAN 9g T124; rules in Shared/Walker): 0 / false / 1 on a tower without walkers
+	-- (Towers column Walkers), except the generic Hits air and Hunter damage %.
+	hitsAir: boolean, -- the tower can hit flyers (its Towers row, or a Hits air tier: Sky Leap)
+	walkers: number, -- walkers this build has (the Towers row's unless a tier raises it)
+	walkerHpMult: number,
+	walkerSpeedMult: number,
+	walkerResistPercent: number,
+	walkerRespawnMult: number,
+	holdSeconds: number, -- a pounce holds a non-boss (Tuning Pounce hold when the build sets none)
+	bossHoldSeconds: number, -- ... a boss, once per boss (0 = never)
+	flanking: boolean,
+	targetsFirst: boolean,
+	healsBetweenRounds: boolean,
+	dodge: boolean,
+	alpha: boolean, -- Alpha Raptor: one big raptor
+	swarm: boolean, -- Raptor Swarm
+	charge: boolean, -- Raptor Charge
+	guard: boolean, -- Guard Raptors
+	stunRoarEvery: number, -- Rex Tamer: roars every N s (0 = none)
+	takeDownStackPercent: number, -- Hungry Alpha
+	avengerX: number, -- Raider Hounds (0 = off)
+	hunterDamagePercent: number, -- own side's hunters in range +% to dinos only (Pack Bond, #319)
 }
 
 local MULTIPLIERS = {
@@ -162,6 +184,9 @@ local MULTIPLIERS = {
 	"hunterSpreadMult",
 	"healMult",
 	"entombHitsMult",
+	"walkerHpMult",
+	"walkerSpeedMult",
+	"walkerRespawnMult",
 }
 local HIGHEST = {
 	"shots",
@@ -233,12 +258,21 @@ local HIGHEST = {
 	"reflectDamage",
 	"wallSeconds",
 	"takeDownMarkPercent",
+	-- PLAN 9g (T124): walkers and the Raptor Pen
+	"walkers",
+	"walkerResistPercent",
+	"holdSeconds",
+	"bossHoldSeconds",
+	"takeDownStackPercent",
+	"avengerX",
+	"hunterDamagePercent",
 }
 -- Timers where the shortest non-zero wins (PLAN 9g, the exporter's "minpos" kind).
 local MIN_POSITIVE = {
 	"entombAllEvery",
 	"heartEvery",
 	"sealEvery",
+	"stunRoarEvery",
 }
 local FLAGS = {
 	"piercesArmor",
@@ -260,6 +294,15 @@ local FLAGS = {
 	"eruption",
 	"chainEffects",
 	"targetsBiggest",
+	"hitsAir",
+	"flanking",
+	"targetsFirst",
+	"healsBetweenRounds",
+	"dodge",
+	"alpha",
+	"swarm",
+	"charge",
+	"guard",
 }
 
 -- `pathPicks` is each path's A/B/C letters ("", "B", "BA"; Shared/Upgrades); nil means
@@ -310,6 +353,7 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		end
 	end
 
+	local walking = (def.walkers or 0) > 0
 	return {
 		damage = def.baseDamage * mult.damageMult,
 		rate = def.baseRate * mult.rateMult,
@@ -377,11 +421,11 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		groundingEvery = high.groundingEvery or 0,
 		auraArcPercent = high.auraArcPercent or 0,
 		birds = if (def.birds or 0) <= 0 then 0 elseif flag.eagle then 1 else math.floor(math.max(def.birds, high.birds or 0)),
-		firstDiveX = if (def.birds or 0) > 0 then math.max(1, high.firstDiveX or 0) else 1,
+		firstDiveX = if (def.birds or 0) > 0 or (def.walkers or 0) > 0 then math.max(1, high.firstDiveX or 0) else 1,
 		eagle = (def.birds or 0) > 0 and flag.eagle == true,
 		murmuration = (def.birds or 0) > 0 and flag.murmuration == true,
 		bossMarkPercent = high.bossMarkPercent or 0,
-		diveAuraRatePercent = if (def.birds or 0) > 0 then high.diveAuraRatePercent or 0 else 0,
+		diveAuraRatePercent = if (def.birds or 0) > 0 or (def.walkers or 0) > 0 then high.diveAuraRatePercent or 0 else 0,
 		skewer = def.harpoons == true and flag.skewer == true,
 		towLine = def.harpoons == true and flag.towLine == true,
 		chainHarpoons = def.harpoons == true and flag.chainHarpoons == true,
@@ -419,6 +463,26 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		reflectDamage = high.reflectDamage or 0,
 		wallSeconds = if def.resin then high.wallSeconds or 0 else 0,
 		takeDownMarkPercent = high.takeDownMarkPercent or 0,
+		hitsAir = def.hitsAir == true or flag.hitsAir == true,
+		walkers = if walking then math.floor(math.max(def.walkers, high.walkers or 0)) else 0,
+		walkerHpMult = if walking then mult.walkerHpMult else 1,
+		walkerSpeedMult = if walking then mult.walkerSpeedMult else 1,
+		walkerResistPercent = if walking then high.walkerResistPercent or 0 else 0,
+		walkerRespawnMult = if walking then mult.walkerRespawnMult else 1,
+		holdSeconds = if walking then (if (high.holdSeconds or 0) > 0 then high.holdSeconds else Config.Tuning.PounceHoldS) else 0,
+		bossHoldSeconds = if walking then high.bossHoldSeconds or 0 else 0,
+		flanking = walking and flag.flanking == true,
+		targetsFirst = walking and flag.targetsFirst == true,
+		healsBetweenRounds = walking and flag.healsBetweenRounds == true,
+		dodge = walking and flag.dodge == true,
+		alpha = walking and flag.alpha == true,
+		swarm = walking and flag.swarm == true,
+		charge = walking and flag.charge == true,
+		guard = walking and flag.guard == true,
+		stunRoarEvery = if walking then shortest.stunRoarEvery or 0 else 0,
+		takeDownStackPercent = if walking then high.takeDownStackPercent or 0 else 0,
+		avengerX = if walking then high.avengerX or 0 else 0,
+		hunterDamagePercent = high.hunterDamagePercent or 0,
 	}
 end
 

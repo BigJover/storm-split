@@ -583,6 +583,11 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 	outcome.hit = true
 	local scale = levelScale(stateOf(player))
 	local damage = stats.damage * scale * (if Enemies.isMarked(enemy) then stats.markedDamageMult else 1)
+	-- Pack Bond (PLAN 9g, #319): own side's Raptor Pens with 3+ raptors out, against dinos only.
+	local body = root(player)
+	if body then
+		damage *= 1 + Towers.hunterDamageAt(body.Position, sideOf(player)) / 100
+	end
 	local distance, position, flying = enemy.distance, enemy.part.Position, enemy.def.flying
 	local trackSide = enemy.side
 

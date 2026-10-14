@@ -126,6 +126,9 @@ local Sides = require(Shared:WaitForChild("Sides"))
 local BattleRules = require(Shared:WaitForChild("BattleRules"))
 local TowerPerks = require(Shared:WaitForChild("TowerPerks"))
 local Resin = require(Shared:WaitForChild("Resin"))
+local Raptor = require(Shared:WaitForChild("Raptor"))
+local RaptorLook = require(Shared:WaitForChild("RaptorLook"))
+local BattleFlow = require(Shared:WaitForChild("BattleFlow"))
 local FourX = require(Shared:WaitForChild("FourX"))
 local AutoFire = require(Shared:WaitForChild("AutoFire"))
 
@@ -184,7 +187,23 @@ export type Tower = {
 	sealedUntil: number, -- an Amber Shield seal: no damage until then (os.clock; PLAN 9g)
 	sealHealPercent: number, -- ... and Self-Sealing's heal when it breaks (0 = none)
 	resin: ResinState?, -- Amber Resin Cannon (PLAN 9g T123); nil on every other tower
+	raptor: RaptorState?, -- Raptor Pen (PLAN 9g T124); nil on every other tower
+	hurtBy: any?, -- the last dino that bit or hit it with a throw (Guard Raptors, PLAN 9g)
 	model: Model,
+}
+
+-- A Raptor Pen's own state (Shared/Raptor rules; its raptors are Server/Walkers').
+type RaptorState = {
+	auto: AutoFire.State, -- Raptor Swarm / Raptor Charge, once a round
+	swarmKey: { key: string, id: number }, -- the Swarm's own pack in Walkers
+	swarmUntil: number,
+	charge: { elapsed: number, bitten: { [any]: boolean } }?,
+	roarTimer: number,
+	takeDowns: number, -- by its raptors this round (Hungry Alpha)
+	attacker: any?, -- the last dino that hurt a tower in range (Raider Hounds)
+	lastStung: number?, -- when it last stung a raider (os.clock)
+	posts: { any }, -- Guard Raptors: the tower each raptor guards
+	postTimer: number,
 }
 
 -- An Amber Resin Cannon's own state (Shared/Resin rules).
@@ -347,6 +366,9 @@ function showHealth(tower: Tower)
 	TowerLook.setHealth(tower.model, if tower.maxHp > 0 then tower.hp / tower.maxHp else 1)
 end
 
+-- Set below (Raptor Pen): tells Server/Walkers what a tower's walkers are now.
+local syncWalkers: (Tower) -> () = function(_tower) end
+
 local function setKnockedOut(tower: Tower, on: boolean)
 	if tower.knockedOut == on then
 		return
@@ -356,6 +378,7 @@ local function setKnockedOut(tower: Tower, on: boolean)
 	tower.freezeTimer = 0
 	TowerLook.setKnockedOut(tower.model, on)
 	refreshAuras() -- its auras go (and come back on repair)
+	syncWalkers(tower) -- a Trampled pen keeps its raptors out but sends none (#315)
 end
 
 -- Last Stand: the first standing hospital covering this tower that hasn't
@@ -454,6 +477,11 @@ local function stingRaider(tower: Tower, hunter: Player)
 		return
 	end
 	stungAt[hunter] = now
+	for _, pen in towers do -- Raider Hounds: a raider was stung here (PLAN 9g, Shared/Raptor.avenger)
+		if pen.raptor and pen.stats.avengerX > 0 and pen.side == tower.side and stingCovers(pen, root.Position) then
+			pen.raptor.lastStung = now
+		end
+	end
 	if sting.damage > 0 then
 		Health.pvpHit(hunter, sting.damage)
 	end
@@ -484,6 +512,15 @@ function Towers.damage(tower: Tower, amount: number, source: any?): number
 	local dealt = Combat.towerDealt(tower.def, tower.hp, amount, resist)
 	if dealt > 0 and typeof(source) == "Instance" and source:IsA("Player") then
 		stingRaider(tower, source) -- before the hit lands: a Raider tower trampled by it still stings
+	elseif dealt > 0 and type(source) == "table" and source.alive ~= nil then
+		-- A dino bit it or hit it with a throw (PLAN 9g): Guard Raptors answer at its post;
+		-- Raider Hounds remember it for every pen covering this tower.
+		tower.hurtBy = source
+		for _, pen in towers do
+			if pen.raptor and pen.stats.avengerX > 0 and covers(pen, tower.base) and BattleRules.canSupport(pen.side, tower.side) then
+				pen.raptor.attacker = source
+			end
+		end
 	end
 	tower.hp -= dealt
 	if tower.hp <= 0 and seal(tower) then
@@ -775,12 +812,28 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 				wall = nil,
 			}
 			else nil,
+		raptor = if (def.walkers or 0) > 0
+			then {
+				auto = AutoFire.new(),
+				swarmKey = { key = key .. " swarm", id = nextId },
+				swarmUntil = 0,
+				charge = nil,
+				roarTimer = 0,
+				takeDowns = 0,
+				attacker = nil,
+				lastStung = nil,
+				posts = {},
+				postTimer = 0,
+			}
+			else nil,
+		hurtBy = nil,
 		model = model,
 	}
 	table.insert(towers, tower)
 	showPool(tower)
 	showHealth(tower)
 	refreshAuras()
+	syncWalkers(tower)
 	return tower
 end
 
@@ -809,6 +862,7 @@ function Towers.upgrade(tower: Tower, pathIndex: number, option: string?): boole
 	TowerLook.setLantern(tower.model, tower.stats.rescueRespawnMult > 0) -- Rescue Beacon
 	showHealth(tower)
 	refreshAuras()
+	syncWalkers(tower) -- Raptor Pen: more raptors, stronger raptors
 	return true
 end
 
@@ -855,7 +909,7 @@ local function canTarget(tower: Tower, enemy: Enemies.Enemy): boolean
 	if not ownSide(tower, enemy) then
 		return false
 	end
-	if enemy.def.flying and not tower.def.hitsAir then
+	if enemy.def.flying and not tower.stats.hitsAir then -- the Towers row, or a Hits air tier (PLAN 9g)
 		return false
 	end
 	return Enemies.canHurt(enemy, piercing(tower))
@@ -1050,11 +1104,14 @@ local function resinHit(tower: Tower, enemy: Enemies.Enemy)
 	end
 end
 
-local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number?)
+-- One hit of the tower's: armour, boss x, its stun and knockback, breaks, the pop. Returns
+-- the species key if the dino is gone. `walker`: a Raptor Pen bite (PLAN 9g): its Stun (s) is
+-- Rex Tamer's roar, never a bite's.
+local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number?, walker: boolean?): string?
 	local stats = tower.stats
 	local pierce = piercing(tower)
 	if not ownSide(tower, enemy) or not Enemies.canHurt(enemy, pierce) then
-		return
+		return nil
 	end
 	if enemy.def.armored then
 		damage *= stats.armoredMult
@@ -1065,7 +1122,9 @@ local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: n
 	if tower.buff.slowedPercent > 0 and Enemies.isSlowed(enemy) then
 		damage *= 1 + tower.buff.slowedPercent / 100 -- Tar Totem
 	end
-	Enemies.stun(enemy, stats.stunSeconds, stats.stunsBosses)
+	if not walker then
+		Enemies.stun(enemy, stats.stunSeconds, stats.stunsBosses)
+	end
 	Enemies.knockback(enemy, stats.knockback)
 	local b = if breaks and breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
 	local at = enemy.part.Position
@@ -1080,6 +1139,7 @@ local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: n
 	if tower.resin and enemy.alive then
 		resinHit(tower, enemy) -- Amber Resin Cannon: slow + resin + entomb (PLAN 9g)
 	end
+	return gone
 end
 
 -- Bomblets land along the track (side `trackSide`'s) around `distance`, alternating behind
@@ -1193,6 +1253,281 @@ local function fire(tower: Tower, live): boolean
 		Effects.tracer(tower.muzzle, targetPosition, TowerLook.COLORS[tower.key] or Color3.new(1, 1, 1))
 	end
 	return fired
+end
+
+------------------------------------------------------------------ Raptor Pen (PLAN 9g T124)
+
+-- Its bite: the pen's composed damage (its auras, the team's level, Hungry Alpha's stack).
+local function raptorDamage(tower: Tower): number
+	local state = tower.raptor :: RaptorState
+	local stack = Raptor.stack(state.takeDowns, tower.stats.takeDownStackPercent)
+	return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale * (1 + stack / 100)
+end
+
+-- A raptor's bite or pounce lands (x `x`: First dive x, Swarm share, Avenger x): the generic
+-- hit rules (armour, boss x, breaks, Mark %, Slow % / linger) and the pounce's hold.
+local function raptorBite(tower: Tower, enemy: Enemies.Enemy, x: number, hold: number)
+	local state = tower.raptor
+	if not state or not enemy.alive or not canTarget(tower, enemy) then
+		return
+	end
+	local stats = tower.stats
+	local _, avenge = Raptor.avenger(stats.avengerX, state.lastStung, os.clock(), state.attacker)
+	if enemy ~= state.attacker then
+		avenge = 1
+	end
+	if stats.markPercent > 0 then
+		Enemies.mark(enemy, stats.markPercent, Config.Tuning.MarkDuration or 0)
+	end
+	if stats.slowPercent > 0 then
+		Enemies.chill(enemy, { slowPercent = stats.slowPercent, seconds = math.max(stats.slowLinger, 0.5), affectsBosses = stats.slowsBosses, brittlePercent = 0, stripsArmor = false })
+	end
+	if hold > 0 then
+		Enemies.stun(enemy, hold, true) -- the pounce's hold (Shared/Walker: a boss only with Boss hold, once)
+	end
+	local gone = hit(tower, enemy, raptorDamage(tower) * x * avenge, stats.sizeBreaks, true)
+	if gone and stats.takeDownStackPercent > 0 then
+		state.takeDowns += 1 -- Hungry Alpha
+	end
+end
+
+local function campColour(tower: Tower): Color3
+	return BrickColor.new(BattleFlow.campColor(tower.side) :: any).Color
+end
+
+-- Guard Raptors: re-post each raptor beside a tower in range, the most damaged first.
+local function guardPosts(tower: Tower, count: number)
+	local state = tower.raptor :: RaptorState
+	local list, shares = {}, {}
+	for _, other in towers do
+		if other ~= tower and not other.def.untouchable and BattleRules.canSupport(tower.side, other.side) and covers(tower, other.base) then
+			table.insert(list, other)
+			table.insert(shares, if other.maxHp > 0 then other.hp / other.maxHp else 1)
+		end
+	end
+	local posts = {}
+	for i, index in Raptor.guardPosts(count, shares) do
+		posts[i] = list[index]
+	end
+	state.posts = posts
+end
+
+local function raptorKind(stats: Stats, swarm: boolean?): string
+	return if swarm then "swarm" elseif stats.stunRoarEvery > 0 then "rex" elseif stats.alpha then "alpha" else "raptor"
+end
+
+local function tiersBought(tower: Tower): number
+	return tower.pathTiers[1] + tower.pathTiers[2] + tower.pathTiers[3]
+end
+
+syncWalkers = function(tower: Tower)
+	local state = tower.raptor
+	if not state then
+		return
+	end
+	local stats = tower.stats
+	local colour = campColour(tower)
+	local homeAt = Enemies.trackDistanceNear(tower.base, tower.side)
+	local params = Raptor.params(stats, tiersBought(tower))
+	params.rate = stats.rate * (1 + tower.buff.ratePercent / 100)
+	if stats.guard then
+		guardPosts(tower, stats.walkers)
+	else
+		state.posts = {}
+	end
+	Walkers.sync(tower, {
+		count = stats.walkers,
+		params = params,
+		side = tower.side,
+		base = tower.base,
+		homeAt = homeAt,
+		sending = not tower.knockedOut,
+		healsBetweenRounds = stats.healsBetweenRounds,
+		look = function()
+			return RaptorLook.build(raptorKind(tower.stats), colour)
+		end,
+		onHit = function(enemy, landed)
+			raptorBite(tower, enemy, landed.x, landed.hold)
+		end,
+		homeFor = if stats.guard
+			then function(i)
+				local post = state.posts[i]
+				if post and table.find(towers, post) then
+					return post.base, Enemies.trackDistanceNear(post.base, tower.side)
+				end
+				return tower.base, homeAt
+			end
+			else nil,
+		candidates = if stats.guard or stats.avengerX > 0
+			then function(i, dinos)
+				if tower.stats.guard then
+					-- Guard: only a dino that hurt its post, within Guard reach of it.
+					local post = state.posts[i]
+					local out = {}
+					if post and post.hurtBy then
+						for _, dino in dinos do
+							if dino.id == post.hurtBy and Raptor.guardAnswers(dino.fromHome) then
+								table.insert(out, dino)
+							end
+						end
+					end
+					return out
+				end
+				local target = Raptor.avenger(tower.stats.avengerX, state.lastStung, os.clock(), state.attacker)
+				if target then
+					for _, dino in dinos do
+						if dino.id == target then
+							return { dino }
+						end
+					end
+				end
+				return dinos
+			end
+			else nil,
+	})
+end
+
+-- Raptor Swarm: Swarm raptors small raptors (Swarm share HP and bite) hunt anywhere on the
+-- side's track for Swarm (s), then vanish; never past the side's walker cap.
+local function releaseSwarm(tower: Tower)
+	local state = tower.raptor
+	if not state or not tower.stats.swarm then
+		return
+	end
+	local stats = tower.stats
+	local onSide = 0
+	for _, other in towers do
+		if other.side == tower.side then
+			onSide += #Walkers.unitsOf(other)
+		end
+	end
+	local params = Raptor.params(stats, tiersBought(tower), true)
+	params.respawn = math.huge -- a swarm raptor bitten down is gone
+	params.rate = stats.rate * (1 + tower.buff.ratePercent / 100)
+	local colour = campColour(tower)
+	Walkers.sync(state.swarmKey, {
+		count = Raptor.swarmCount(onSide),
+		params = params,
+		side = tower.side,
+		base = tower.base,
+		homeAt = Enemies.trackDistanceNear(tower.base, tower.side),
+		sending = true,
+		healsBetweenRounds = false,
+		look = function()
+			return RaptorLook.build("swarm", colour)
+		end,
+		onHit = function(enemy, landed)
+			raptorBite(tower, enemy, landed.x * Raptor.swarmBite(), landed.hold)
+		end,
+	})
+	state.swarmUntil = os.clock() + Config.Tuning.SwarmS
+end
+
+-- Raptor Charge: every standing raptor sweeps the side's track from the exit end back.
+local function startCharge(tower: Tower)
+	local state = tower.raptor
+	if state and tower.stats.charge then
+		state.charge = { elapsed = 0, bitten = {} }
+	end
+end
+
+local function stepRaptor(tower: Tower, dt: number, own)
+	local state = tower.raptor
+	if not state then
+		return
+	end
+	local stats, now = tower.stats, os.clock()
+	-- The Swarm runs out.
+	if state.swarmUntil > 0 and now >= state.swarmUntil then
+		state.swarmUntil = 0
+		Walkers.clear(state.swarmKey)
+	end
+	if tower.knockedOut then
+		return
+	end
+	-- Guard Raptors: re-post about once a second (the most damaged tower first).
+	if stats.guard then
+		state.postTimer += dt
+		if state.postTimer >= 1 then
+			state.postTimer = 0
+			guardPosts(tower, stats.walkers)
+		end
+	end
+	-- Raptor Swarm / Raptor Charge: once a round, fired by Shared/AutoFire.
+	if stats.swarm or stats.charge then
+		local inArea, boss = 0, false
+		for _, enemy in own do
+			if enemy.alive and (enemy.part.Position - tower.position).Magnitude <= stats.range then
+				inArea += 1
+				boss = boss or enemy.def.boss == true
+			end
+		end
+		if AutoFire.check(state.auto, boss, inArea, Enemies.allSpawned(tower.side), #own) then
+			if stats.swarm then
+				releaseSwarm(tower)
+			else
+				startCharge(tower)
+			end
+		end
+	end
+	local charge = state.charge
+	if charge then
+		charge.elapsed += dt
+		local speed = Config.Tuning.RaptorSpeed * stats.walkerSpeedMult
+		local at = Raptor.chargeAt(Enemies.trackLength(tower.side), speed, charge.elapsed)
+		if not at then
+			state.charge = nil
+			Walkers.charge(tower, nil)
+		else
+			Walkers.charge(tower, at)
+			for _, enemy in own do
+				if enemy.alive and not charge.bitten[enemy] and math.abs(enemy.distance - at) <= Config.Tuning.RaptorReach then
+					charge.bitten[enemy] = true
+					local knock = Raptor.chargeKnock(enemy.size, enemy.def.boss == true) -- small dinos only, never a boss
+					raptorBite(tower, enemy, 1, 0)
+					if enemy.alive then
+						Enemies.knockback(enemy, knock)
+					end
+				end
+			end
+		end
+	end
+	-- Rex Tamer: the roar stuns small dinos near the alpha.
+	if stats.stunRoarEvery > 0 then
+		state.roarTimer += dt
+		if state.roarTimer >= stats.stunRoarEvery then
+			local at = Walkers.firstAt(tower)
+			if at then
+				state.roarTimer = 0
+				local list, distances, sizes, bosses = {}, {}, {}, {}
+				for _, enemy in own do
+					if enemy.alive then
+						table.insert(list, enemy)
+						table.insert(distances, (enemy.part.Position - at).Magnitude)
+						table.insert(sizes, enemy.size)
+						table.insert(bosses, enemy.def.boss == true)
+					end
+				end
+				for _, i in Raptor.roared(distances, sizes, bosses) do
+					Enemies.stun(list[i], stats.stunSeconds, false)
+				end
+				Effects.disc(at, Config.Tuning.RoarReachStuds, campColour(tower), 0.4, 0.7)
+			end
+		end
+	end
+end
+
+-- Pack Bond (#319): the strongest own-side pen covering `position` with 3+ raptors out:
+-- its hunters' extra damage % against dinos only (Hero asks for its shots on dinos).
+function Towers.hunterDamageAt(position: Vector3, side: number?): number
+	local best = 0
+	for _, source in towers do
+		local percent = source.stats.hunterDamagePercent
+		if percent > 0 and not source.knockedOut and covers(source, position) and BattleRules.canSupport(source.side, side or 1) then
+			best = math.max(best, Raptor.packBond(percent, Walkers.outCount(source), true))
+		end
+	end
+	return best
 end
 
 ------------------------------------------------------------------ Storm Coil
@@ -1562,7 +1897,9 @@ end
 local function huntingParties(): { Falcon.Party }
 	local parties = {}
 	for _, tower in towers do
-		if tower.stats.diveAuraRatePercent > 0 and #tower.sorties > 0 then
+		-- A roost while a bird dives; a Raptor Pen while a raptor fights (PLAN 9g, Raptor.diveAura).
+		local active = if tower.raptor then Raptor.diveAura(1, Walkers.fighting(tower)) > 0 else #tower.sorties > 0
+		if tower.stats.diveAuraRatePercent > 0 and active then
 			table.insert(parties, { center = tower.base, radius = tower.stats.range, percent = tower.stats.diveAuraRatePercent, diving = true, source = tower })
 		end
 	end
@@ -2067,6 +2404,11 @@ function Towers.newRound()
 			state.fuelPercent = 0
 			AutoFire.reset(state.auto)
 		end
+		local pen = tower.raptor
+		if pen then -- once a round: Raptor Swarm / Raptor Charge; Hungry Alpha's stack is per round
+			AutoFire.reset(pen.auto)
+			pen.takeDowns = 0
+		end
 	end
 	if fuel then
 		refreshAuras()
@@ -2095,6 +2437,7 @@ function Towers.step(dt: number)
 		stepHood(tower, own)
 		stepTow(tower, dt, own)
 		stepResin(tower, dt, own)
+		stepRaptor(tower, dt, own)
 	end
 	stepSeals()
 	stepGrid(dt, live)
@@ -2104,8 +2447,8 @@ function Towers.step(dt: number)
 
 	for _, tower in towers do
 		local stats = tower.stats
-		if stats.rate <= 0 or stats.damage <= 0 or tower.knockedOut then
-			continue -- Quartermaster and anything else that doesn't shoot; trampled towers
+		if stats.rate <= 0 or stats.damage <= 0 or tower.knockedOut or tower.raptor then
+			continue -- Quartermaster and anything else that doesn't shoot; trampled towers; a Raptor Pen's raptors bite (Walkers)
 		end
 
 		tower.cooldown -= dt
@@ -2158,6 +2501,9 @@ function Towers.remove(tower: Tower)
 		sortie.part:Destroy()
 	end
 	Walkers.clear(tower) -- a sold tower's walkers go with it (#315)
+	if tower.raptor then
+		Walkers.clear(tower.raptor.swarmKey)
+	end
 	tower.model:Destroy()
 	refreshAuras()
 end
@@ -2254,6 +2600,16 @@ function Towers.fireNow(key: string, position: Vector3): string
 		if tower.stats.wallSeconds > 0 then
 			raiseWall(tower)
 			table.insert(fired, "Resin Wall")
+		end
+	end
+	if tower.raptor then
+		if tower.stats.swarm then
+			releaseSwarm(tower)
+			table.insert(fired, "Raptor Swarm")
+		end
+		if tower.stats.charge then
+			startCharge(tower)
+			table.insert(fired, "Raptor Charge")
 		end
 	end
 	return table.concat(fired, ", ")

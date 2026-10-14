@@ -61,6 +61,9 @@ local function expected(def, tiers: { number })
 		hunterSpreadMult = product("hunterSpreadMult"),
 		healPerSecond = def.healPerSecond * product("healMult"),
 		entombHitsMult = product("entombHitsMult"),
+		walkerHpMult = product("walkerHpMult"),
+		walkerSpeedMult = product("walkerSpeedMult"),
+		walkerRespawnMult = product("walkerRespawnMult"),
 	}
 	for _, field in TowerStats.HIGHEST do
 		local value = highest(field)
@@ -141,6 +144,25 @@ local function expected(def, tiers: { number })
 			end
 		end
 		e[field] = value
+	end
+	-- Walkers (PLAN 9g): the Towers row's count unless a tier raises it, Tuning's pounce hold
+	-- unless a tier sets one; Hits air from the row or a tier; off on a tower without walkers.
+	e.hitsAir = def.hitsAir or e.hitsAir
+	if (def.walkers or 0) > 0 then
+		e.walkers = math.max(def.walkers, e.walkers)
+		e.holdSeconds = if e.holdSeconds > 0 then e.holdSeconds else Config.Tuning.PounceHoldS
+		e.firstDiveX = math.max(1, highest("firstDiveX"))
+		e.diveAuraRatePercent = highest("diveAuraRatePercent")
+	else
+		for _, field in { "walkers", "walkerResistPercent", "holdSeconds", "bossHoldSeconds", "stunRoarEvery", "takeDownStackPercent", "avengerX" } do
+			e[field] = 0
+		end
+		for _, field in { "walkerHpMult", "walkerSpeedMult", "walkerRespawnMult" } do
+			e[field] = 1
+		end
+		for _, field in { "flanking", "targetsFirst", "healsBetweenRounds", "dodge", "alpha", "swarm", "charge", "guard" } do
+			e[field] = false
+		end
 	end
 	if def.resin then
 		e.entombSeconds = if e.entombSeconds > 0 then e.entombSeconds else Config.Tuning.EntombBaseS

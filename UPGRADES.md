@@ -342,6 +342,41 @@ A/B/C picks at tiers 4 and 5 (PLAN 9g, DECISIONS #312–#320; names = DINO_REVIE
 | **Resin Shell** | 4 | Self-Sealing — Sealed towers heal 30% when the shell breaks | Raider Glue — Raiders and biters near your towers slow down | Sticky Thorns — Biters get slowed and take 5 damage |
 | **Resin Shell** | 5 | Amber Fortress — Nearby towers can't be knocked out (20 s each) | Resin Wall — Once a round, an amber wall holds every dino 3 s | Amber Mirror — Throws at your towers bounce back |
 
+
+---
+
+## Raptor Pen (RAPTOR) — tamed raptors: pack damage, one big hunter, support · built (PLAN 9g T124; unreleased until T124b) · unlock 500 Amber
+
+A log pen (850 cash, 22-stud hunting ground, 150 HP) that never shoots: its tamed **raptors**
+(collar and stripe in the camp colour) sprint out along your own track, pounce, bite (10 a
+bite, 1.5 bites a second) and come back. A raptor has 60 HP (grows with tiers like towers),
+runs home at 30 % HP and heals 15 HP/s in the pen (it leaves again at 80 %), and is gone 8 s
+if bitten to 0. The dino it fights bites it instead of a tower; a big dino (3+ sizes left)
+walking through it tramples it for a quarter of its HP. A pounce holds a non-boss 0.5 s.
+Hunters can't hit raptors and raptors never touch hunters; they never leave your side's track.
+At most 24 walkers a side. Rules: `Shared/Walker` (every walker), `Shared/Raptor`.
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Pack** | pack damage | Second Raptor | Quick Whistle | *Pack of Five* | *Hide Rippers* | *Raptor Swarm* |
+| **Alpha** | one big hunter | Sharp Claws | Thick Hide | *Alpha Raptor* | *Sickle Claw* | *King of the Pack* |
+| **Trainer** | support | Tracking Nose | Herding Call | *Pack Howl* | *Treat Bag* | *Raptor Charge* |
+
+- Second Raptor: 2 raptors. Quick Whistle: bites x1.4, raptors 30 % faster and back 30 % sooner. Pack of Five: 5 raptors.
+- Sharp Claws / Thick Hide / Alpha Raptor: one raptor, much harder bites (x1.9 / x3.6 / x7); Thick Hide: x1.6 HP and 25 % less damage taken; Alpha Raptor: one big alpha (x3 HP), breaks 2 and holds what it pounces 1 s.
+- Tracking Nose: raptors go for the dino furthest along, +15 % range. Herding Call: bites slow 20 % for 1 s. Pack Howl: 2 raptors; towers in range attack 15 % faster while a raptor is fighting.
+
+A/B/C picks at tiers 4 and 5 (PLAN 9g, DECISIONS #312–#320; names = DINO_REVIEW Round 19). Hide Rippers: raptors bite through armour. Flanking: no two raptors on one dino while another is free. Ambush: each raptor's first pounce after leaving the pen hits double. Raptor Swarm: once a round (fires itself: a boss or 6 dinos in range, else the round's last spawn; never on an empty track) 10 small raptors (40 % HP and bite) hunt anywhere on your track for 15 s, within the walker cap. Clever Girls: a raptor ignores one bite every 3 s and is never trampled by a small dino. Sky Leap: raptors jump at flyers. Sickle Claw: the alpha bites much harder and breaks 3. Boss Hunter: x1.6 on bosses and its pounce holds a boss 0.5 s (once per boss). Scent Trail: its target is marked +15 %. King of the Pack: a giant alpha, x1.5 HP, takes half damage, breaks 4. Rex Tamer: a small tamed T. rex (x1.4 HP); every 15 s its roar stuns small dinos within 10 studs for 1 s. Hungry Alpha: each take-down by its raptors adds +10 % to their bites this round (up to +50 %). Treat Bag: raptors heal fully between rounds and come back twice as fast. Guard Raptors: each raptor is posted beside a tower in range (the most damaged first) and attacks a dino within 10 studs that bites or throws at that tower, then goes back to its post. Whistle Drill: raptors run 30 % faster; towers in range +20 % attack speed while a raptor fights. Raptor Charge: once a round (fires itself) every raptor charges your whole track from the exit end back at double speed, biting each dino it passes once and knocking small dinos 6 studs back (never a boss). Pack Bond: 3 raptors; your hunters in range deal +20 % to dinos (never to hunters or towers) while 3 or more raptors are out. Raider Hounds is the Raider option: in battles an enemy hunter who shoots a tower in range is stung for 10 (×0.5) and slowed 20 % for 1 s (generic Raider sting, never through Camo Cover; the raptors' run at the hunter is a look only); its dino part (co-op too): with no raider stung in the last 3 s the raptors go for the last dino that hurt a tower in range, bites x2, breaks 2.
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Pack** | 4 | Hide Rippers — Raptors bite through armour | Flanking — Each raptor picks a different dino | Ambush — Each raptor's first pounce hits double |
+| **Pack** | 5 | Raptor Swarm — 10 small raptors flood the track once a round | Clever Girls — Raptors dodge bites and never get trampled | Sky Leap — Raptors jump at low flyers |
+| **Alpha** | 4 | Sickle Claw — ×3 on its target, breaks 3 | Boss Hunter — Can hold a boss for a moment | Scent Trail — Its target is marked +15% |
+| **Alpha** | 5 | King of the Pack — A giant raptor, half damage taken | Rex Tamer — A tamed T. rex whose roar stuns | Hungry Alpha — Stronger with every take-down |
+| **Trainer** | 4 | Treat Bag — Raptors heal and return faster | Guard Raptors — A raptor guards each tower | Whistle Drill — Raptors run 30% faster |
+| **Trainer** | 5 | Raptor Charge — Every raptor charges the track once a round | Pack Bond — Hunters nearby +20% with 3+ raptors out | Raider Hounds — Raptors chase raiders (or the dino that hurt a tower) |
+
 ---
 
 ## Mechanics and when they're built

@@ -133,7 +133,8 @@ SUPPORT_PATHS = {("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knock
                  ("COIL", "Lightning Rod"),  # PLAN T64: Charged Air, Storm Warning, Lightning Rodeo
                  ("FALCON", "Falconer"),  # PLAN T65: Falcon Bells, Hooded Scout, Lure, Hunting Party
                  ("BALLISTA", "Reel"),  # PLAN T66: Pin Down, Reel In, Tow Line
-                 ("TARPIT", "Deep Tar"), ("TARPIT", "Dig Site")}  # PLAN T67: slow and sink; cash and Tar Totem
+                 ("TARPIT", "Deep Tar"), ("TARPIT", "Dig Site"),  # PLAN T67: slow and sink; cash and Tar Totem
+                 ("RAPTOR", "Trainer")}  # PLAN 9g (#314): support, judged on its metric line
 # Single tiers that buy control on a damage path (#74): still in the table and the medians,
 # never flagged dead. Longshot Perch Big Bore T3 = Concussion Round (a stun on hit).
 CONTROL_TIERS = {("SNIPER", "Big Bore", 3)}
@@ -246,7 +247,7 @@ def tower_stats(t, tiers, picks=None):
         "shots": max(1, math.floor(high["shots"])),
         "lineHits": max(1, math.floor(high["lineHits"])),
         "sizeBreaks": max(1, math.floor(high["sizeBreaks"])),
-        "hitsAir": t["hitsAir"],
+        "hitsAir": t["hitsAir"] or flag.get("hitsAir", False),  # PLAN 9g: a Hits air tier (Sky Leap)
         "pierces": flag.get("piercesArmor", False) or flag.get("stripsArmor", False),
         "armoredMult": mult["armoredMult"], "bossMult": mult["bossMult"],
         "markPercent": high.get("markPercent", 0), "brittlePercent": high.get("brittlePercent", 0),
@@ -281,11 +282,11 @@ def tower_stats(t, tiers, picks=None):
         "range": t["range"] * mult["rangeMult"],
         "birds": (1 if flag.get("eagle") else max(t.get("birds", 0), math.floor(high.get("birds", 0))))
         if t.get("birds", 0) > 0 else 0,
-        "firstDiveX": max(1, high.get("firstDiveX", 0)) if t.get("birds", 0) > 0 else 1,
+        "firstDiveX": max(1, high.get("firstDiveX", 0)) if t.get("birds", 0) > 0 or t.get("walkers", 0) > 0 else 1,
         "eagle": bool(t.get("birds", 0) > 0 and flag.get("eagle", False)),
         "murmuration": bool(t.get("birds", 0) > 0 and flag.get("murmuration", False)),
         "bossMarkPercent": high.get("bossMarkPercent", 0), "knockback": high.get("knockback", 0),
-        "diveAuraRatePercent": high.get("diveAuraRatePercent", 0) if t.get("birds", 0) > 0 else 0,
+        "diveAuraRatePercent": high.get("diveAuraRatePercent", 0) if t.get("birds", 0) > 0 or t.get("walkers", 0) > 0 else 0,
         # Harpoon Ballista (Shared/TowerStats: only a tower with harpoons)
         "skewer": bool(t.get("harpoons") and flag.get("skewer", False)),
         "towLine": bool(t.get("harpoons") and flag.get("towLine", False)),
@@ -318,6 +319,16 @@ def tower_stats(t, tiers, picks=None):
         "entombSeconds": (high.get("entombSeconds", 0) or TUNING["EntombBaseS"]) if t.get("resin") else 0,
         "entombHitsMult": mult["entombHitsMult"],
         "reflectDamage": high.get("reflectDamage", 0), "takeDownMarkPercent": high.get("takeDownMarkPercent", 0),
+        # Walkers (PLAN 9g T124; Shared/TowerStats: a tower with walkers only)
+        "walkers": max(t.get("walkers", 0), math.floor(high.get("walkers", 0))) if t.get("walkers", 0) > 0 else 0,
+        **{f: (mult[f] if t.get("walkers", 0) > 0 else 1) for f in ("walkerHpMult", "walkerSpeedMult", "walkerRespawnMult")},
+        **{f: (high.get(f, 0) if t.get("walkers", 0) > 0 else 0)
+           for f in ("walkerResistPercent", "bossHoldSeconds", "takeDownStackPercent", "avengerX")},
+        **{f: bool(t.get("walkers", 0) > 0 and flag.get(f, False))
+           for f in ("flanking", "targetsFirst", "healsBetweenRounds", "dodge", "alpha", "swarm", "charge", "guard")},
+        "holdSeconds": (high.get("holdSeconds", 0) or TUNING["PounceHoldS"]) if t.get("walkers", 0) > 0 else 0,
+        "stunRoarEvery": shortest.get("stunRoarEvery", 0) if t.get("walkers", 0) > 0 else 0,
+        "hunterDamagePercent": high.get("hunterDamagePercent", 0),
     }
 
 
@@ -643,8 +654,8 @@ def value_table(data, mixes):
         for pi, path in enumerate(t["paths"]):
             for tier in range(0, len(export_constants.line(path)) + 1):
                 s = path_stats(t, pi, tier)
-                own = [edps(s, m, tuning) for m in mixes]
-                zero_waste = [edps(s, m, tuning, overkill=False) for m in mixes]
+                own = [tower_edps(t, s, m, tuning) for m in mixes]
+                zero_waste = [tower_edps(t, s, m, tuning, overkill=False) for m in mixes]
                 aura = [aura_credit(data, s, m, brittle=is_support(key, path)) for m in mixes]
                 rows[(key, pi, tier)] = {
                     "cost": cumulative_cost(t, pi, tier),
@@ -1348,6 +1359,52 @@ def resin_worth(data, pid, s, mix):
             + (g("reflectDamage") / 3 / ground + 20 / ground if ground else 0))
 
 
+def walker_uptime(s):
+    """A walker's share of the time it is biting (PLAN 9g walker model, #314): 0.7 (0.8 with Heals
+    between rounds or Walker respawn x < 1; 0.85 with Dodge) x Walker speed x ^ 0.3."""
+    base = 0.85 if s["dodge"] else 0.8 if s["healsBetweenRounds"] or s["walkerRespawnMult"] < 1 else WALKER_UPTIME
+    return base * s["walkerSpeedMult"] ** 0.3
+
+
+def walker_edps(s, mix, tuning, **kw):
+    """A walker tower's eDPS (#314): Walkers x uptime x the honest-hits bite eDPS (edps of one
+    raptor) x (1 + (First dive x - 1) / 6 bites per pounce); plus Raptor Swarm's Swarm raptors x
+    Swarm share x one raptor's eDPS x Swarm s / Round seconds (model), and Hungry Alpha x (1 +
+    its cap / 200). Holds and the Rex roar count 0 (blind spots: they carry damage)."""
+    one = edps(s, mix, tuning, **kw)
+    out = s["walkers"] * walker_uptime(s) * one * (1 + (s["firstDiveX"] - 1) / 6)
+    if s["swarm"]:
+        out += tuning["SwarmRaptors"] * tuning["SwarmShare"] * one * tuning["SwarmS"] / tuning["RoundSecondsModel"]
+    if s["takeDownStackPercent"]:
+        out *= 1 + tuning["HungryAlphaCap"] / 200
+    return out
+
+
+def tower_edps(t, s, mix, tuning, **kw):
+    """A tower's own eDPS: the walker model for a tower with walkers (PLAN 9g), else edps."""
+    return walker_edps(s, mix, tuning, **kw) if t.get("walkers", 0) > 0 else edps(s, mix, tuning, **kw)
+
+
+def raptor_trainer(data, s, mix):
+    """Raptor Pen Trainer (#314): walker eDPS + Dive aura (x 0.7 uptime) + HOLD_EDPS x H (Walkers x
+    uptime x Slow %, + Charge: 6 dinos x Charge knockback / 8 / Round seconds) + 0.2 x own eDPS
+    with Guard + Hunter damage credit x 0.6 (3+ out) + Avenger: own eDPS x 0.3 x (Avenger x - 1).
+    Raider Hounds is scored without its Raider columns."""
+    tuning = data["Tuning"]
+    own = walker_edps(s, mix, tuning)
+    aura = aura_credit(data, {**s, "diveAuraRatePercent": s.get("diveAuraRatePercent", 0) * WALKER_UPTIME}, mix)
+    h = s["walkers"] * walker_uptime(s) * s["slowPercent"] / 100
+    if s["charge"]:
+        h += DINOS_IN_BUNCH * tuning["ChargeKnockbackStuds"] / 8 / tuning["RoundSecondsModel"]
+    worth = own + aura + HOLD_EDPS * h
+    if s["guard"]:
+        worth += 0.2 * own
+    worth += s["hunterDamagePercent"] / 100 * HUNTER_EDPS * 0.6
+    if s["avengerX"]:
+        worth += own * 0.3 * (s["avengerX"] - 1)
+    return worth
+
+
 def tower_worth(data, key, pi, s, late):
     """One tower build's worth on its path's metric (see the block comment)."""
     t, tuning = data["Towers"][key], data["Tuning"]
@@ -1355,6 +1412,10 @@ def tower_worth(data, key, pi, s, late):
     g = (lambda f, d=0: s.get(f) or d)
     if key == "RESIN":
         return resin_worth(data, pid, s, late)
+    if key == "RAPTOR":  # PLAN 9g (#314): the walker model
+        if pid == "Trainer":
+            return raptor_trainer(data, s, late)
+        return walker_edps(s, late, tuning) + aura_credit(data, s, late)
     if key == "QUARTERMASTER":
         if pid == "Logistics":
             return g("discountPercent") + 100 * max(0, g("sellRefund") - tuning["SellRefund"]) + g("auraRatePercent")
@@ -1482,11 +1543,11 @@ def option_report(data):
                 for o, why in option_bar(worths, raider_letters(path, tier)):
                     name = (path["t4"][o] if tier == 4 else path["t5"][before + o])["name"]
                     note(f"OPTIONS: {t['display']} {path['id']} {label} {o} {name}: {why} (#280)", len(letters) > 1)
-            if key in ROUND4_BATCH | ROUND9_BATCH and key not in SUPPORT_TOWERS and not is_support(key, path):
+            if key in ROUND4_BATCH | ROUND9_BATCH and key not in SUPPORT_TOWERS | UNRELEASED and not is_support(key, path):
                 cost = cumulative_cost(t, pi, 5)
                 for picks in path["t5"]:
                     s = path_stats(t, pi, 5, picks)
-                    cpd = ratio(cost, edps(s, late, data["Tuning"]) + aura_credit(data, s, late))
+                    cpd = ratio(cost, tower_edps(t, s, late, data["Tuning"]) + aura_credit(data, s, late))
                     best.append((cpd, f"{path['id']} {picks}"))
                     if t.get("untouchable"):
                         why = worth_bar(cpd, m, True)
@@ -1810,12 +1871,16 @@ def breaks_report(data):
         # T5s 1.25x-2x the median cost/eDPS), so bar 3 doesn't gate it: reported like a boss specialist.
         untouchable = t.get("untouchable", False)
         for i in (BREAKS_T1_BANDS if tier == 1 else BREAKS_BANDS):
-            z, b1, sv = r["before"][i], edps(s, mixes[i], tuning, breaks1=True) + r["aura"][i], r["edps"][i]
+            z, b1, sv = r["before"][i], tower_edps(t, s, mixes[i], tuning, breaks1=True) + r["aura"][i], r["edps"][i]
             bad, branch = break_bars(z, b1, sv, tier == 5 and not specialist and not untouchable, medians[i])
             lo, hi = BANDS[i]
+            # A tower not sold yet is judged at its batch's release task (PLAN 9g rule 5, #312): reported only.
+            held = key in UNRELEASED
             print(f"  {label:<46} r{lo}-{hi}  Z {fmt(z):>5}  B1 {fmt(b1):>5}  S {fmt(sv):>5}"
-                  f"  S/B1 {sv / b1:.2f}  S/Z {sv / z:.2f}  bar1:{branch}{'  FAIL ' + ', '.join(bad) if bad else ''}")
-            failures += [f"{label} r{lo}-{hi}: {b}" for b in bad]
+                  f"  S/B1 {sv / b1:.2f}  S/Z {sv / z:.2f}  bar1:{branch}"
+                  f"{('  (unreleased, report) ' if held else '  FAIL ') + ', '.join(bad) if bad else ''}")
+            if not held:
+                failures += [f"{label} r{lo}-{hi}: {b}" for b in bad]
             if specialist or (untouchable and tier == 5):
                 specialists.append((("boss specialist (report, #164)" if specialist else "can't be damaged (report, #148)"),
                                     f"{label} r{lo}-{hi} S {fmt(sv)} S/B1 {sv / b1:.2f} S/Z {sv / z:.2f}"

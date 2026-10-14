@@ -180,6 +180,28 @@ ABILITY_COLUMNS = [
     ("reflectDamage", 115, "num", 0),  # DK: a throw caught by Grounding hits its thrower for this
     ("wallSeconds", 116, "num", 0),  # DL: once a round (AutoFire) a track wall holds dinos this long
     ("takeDownMarkPercent", 117, "num", 0),  # DM: a take-down marks dinos within Take-down mark radius
+    # PLAN 9g (T124): walkers (Shared/Walker; Raptor Pen raptors, later Paratroopers and rangers)
+    # and the Raptor Pen's own rules. A tower with walkers has Towers column Z (Walkers) > 0.
+    ("walkers", 118, "num", 0),  # DN: walkers this build has (blank = the Towers row's)
+    ("walkerHpMult", 119, "num", 1),  # DO
+    ("walkerSpeedMult", 120, "num", 1),  # DP
+    ("walkerResistPercent", 121, "num", 0),  # DQ
+    ("walkerRespawnMult", 122, "num", 1),  # DR
+    ("holdSeconds", 123, "num", 0),  # DS: a pounce holds a non-boss this long (blank = Tuning Pounce hold)
+    ("bossHoldSeconds", 124, "num", 0),  # DT: ... a boss this long, once per boss
+    ("flanking", 125, "bool", False),  # DU
+    ("targetsFirst", 126, "bool", False),  # DV
+    ("hitsAir", 127, "bool", False),  # DW: generic, the tower can hit flyers
+    ("healsBetweenRounds", 128, "bool", False),  # DX
+    ("dodge", 129, "bool", False),  # DY
+    ("alpha", 130, "bool", False),  # DZ: one big raptor (look)
+    ("swarm", 131, "bool", False),  # EA: Raptor Swarm, once a round (AutoFire)
+    ("charge", 132, "bool", False),  # EB: Raptor Charge, once a round (AutoFire)
+    ("guard", 133, "bool", False),  # EC: Guard Raptors
+    ("stunRoarEvery", 134, "num", 0),  # ED: Rex Tamer's roar every N s (0 = none)
+    ("takeDownStackPercent", 135, "num", 0),  # EE: Hungry Alpha
+    ("avengerX", 136, "num", 0),  # EF: Raider Hounds: bites x this on the dino that hurt a tower
+    ("hunterDamagePercent", 137, "num", 0),  # EG: own side's hunters in range +% to dinos only
 ]
 
 # Columns only a tower that chains (Towers column Chains) can use.
@@ -197,6 +219,11 @@ SINK_CASH = ("sinkCash", "sinkChestCash")
 RESIN_ONLY = ("entombSeconds", "entombHitsMult", "entombAmpPercent", "entombSpread", "entombSlowPercent",
               "entombAllEvery", "bossEntombSeconds", "sendBack", "fossilBelowPercent", "fossilRatePercent",
               "bountyFossilsX", "heartEvery", "sealSeconds", "sealEvery", "sealHealPercent", "wallSeconds")
+# Columns only a tower with walkers (Towers column Walkers) can use (PLAN 9g, T124).
+WALKER_ONLY = ("walkers", "walkerHpMult", "walkerSpeedMult", "walkerResistPercent", "walkerRespawnMult",
+               "holdSeconds", "bossHoldSeconds", "flanking", "targetsFirst", "healsBetweenRounds", "dodge",
+               "alpha", "swarm", "charge", "guard", "stunRoarEvery", "takeDownStackPercent", "avengerX")
+WALKER_ONE = ("walkerHpMult", "walkerSpeedMult", "walkerRespawnMult")  # blank = 1
 
 # Paths allowed a Size breaks above 1 (DECISIONS #127, #134). A new one is a
 # Director call: add it here and to PLAN's design table together.
@@ -205,6 +232,8 @@ BREAK_PATHS = {
     ("Falcon Roost", "Talons"),  # PLAN T65: Power Dive 2, Iron Talons 3, Eagle of the Peak 3
     ("Harpoon Ballista", "Spearhead"),  # PLAN T66: Crusher Bolt 2, Great Harpoon 3, Skewer 3
     ("Storm Coil", "Charge"),  # PLAN 9e (#297): Thunderstrike 2 (the strike's first dino; arcs break 1)
+    ("Raptor Pen", "Alpha"),  # PLAN 9g: Alpha Raptor 2, Sickle Claw 3, King of the Pack 4
+    ("Raptor Pen", "Trainer"),  # PLAN 9g: Raider Hounds 2
 }
 HERO_BREAK_PATHS = {("Tracker", "Marksman"), ("Brush Beater", "Slug")}
 
@@ -259,6 +288,8 @@ def read_towers(ws):
             "harpoons": yes(v(ws, r, 24)),
             # Resin: its hits build up resin and entomb (Amber Resin Cannon, PLAN 9g T123).
             "resin": yes(v(ws, r, 25)),
+            # Walkers: NPC units on the track (Raptor Pen raptors, PLAN 9g T124); 0 = none.
+            "walkers": num(v(ws, r, 26)),
             "paths": [],
         }
         order.append(key)
@@ -303,8 +334,8 @@ TOWER_STEP_KINDS = {
     # PLAN 9e: intervals, so a step sets them (Ground Wire's 2 s beats Grounding Spike's 4 s)
     "groundingEvery": "set", "fieldStrikeEvery": "set",
     # PLAN 9g (#316): timers where the shorter wins; a blank (0) is "off", never the minimum
-    "entombAllEvery": "minpos", "heartEvery": "minpos", "sealEvery": "minpos",
-    "entombHitsMult": "mult",
+    "entombAllEvery": "minpos", "heartEvery": "minpos", "sealEvery": "minpos", "stunRoarEvery": "minpos",
+    "entombHitsMult": "mult", "walkerHpMult": "mult", "walkerSpeedMult": "mult", "walkerRespawnMult": "mult",
 }
 for _key, _col, _kind, _default in ABILITY_COLUMNS:
     TOWER_STEP_KINDS.setdefault(_key, "flag" if _kind == "bool" else "max")
@@ -1731,8 +1762,8 @@ def validate(data):
                     problems.append(f"{key} {p['id']} tier {i}: Field strike every (s) and Field strike x go together (PLAN 9e)")
                 if step["arcForks"] and step["arcForks"] != int(step["arcForks"]) or step["arcs"] != int(step["arcs"]):
                     problems.append(f"{key} {p['id']} tier {i}: Arcs and Arc forks must be whole numbers")
-                for field in BIRD_ONLY:
-                    if step[field] and not t["birds"]:
+                for field in BIRD_ONLY:  # Dive aura rate %: a Raptor Pen's raptors too (PLAN 9g)
+                    if step[field] and not (t["birds"] or (field == "diveAuraRatePercent" and t["walkers"])):
                         problems.append(f"{key} {p['id']} tier {i}: {field} needs a tower with birds (Towers column W)")
                 for field in HARPOON_ONLY:
                     if step[field] and not t["harpoons"]:
@@ -1743,6 +1774,9 @@ def validate(data):
                 for field in SINK_CASH:
                     if step[field] and not (t["onTrack"] or t["resin"]):
                         problems.append(f"{key} {p['id']} tier {i}: {field} needs a Tar Pit or a Resin tower (Towers column U or Y)")
+                for field in WALKER_ONLY:
+                    if step[field] not in (False, 1 if field in WALKER_ONE else 0) and not t["walkers"]:
+                        problems.append(f"{key} {p['id']} tier {i}: {field} needs a tower with walkers (Towers column Z)")
                 for field in RESIN_ONLY:
                     if step[field] != (1 if field == "entombHitsMult" else 0) and not t["resin"]:
                         problems.append(f"{key} {p['id']} tier {i}: {field} needs a Resin tower (Towers column Y)")
@@ -1750,8 +1784,8 @@ def validate(data):
                     problems.append(f"{key} {p['id']} tier {i}: Slow % and Tracks slow % must be 0-100")
                 if step["birds"] != int(step["birds"]):
                     problems.append(f"{key} {p['id']} tier {i}: Birds must be a whole number")
-                if step["firstDiveX"] != 1 and not t["birds"]:
-                    problems.append(f"{key} {p['id']} tier {i}: First dive x needs a tower with birds (Towers column W)")
+                if step["firstDiveX"] != 1 and not (t["birds"] or t["walkers"]):
+                    problems.append(f"{key} {p['id']} tier {i}: First dive x needs a tower with birds or walkers (Towers column W / Z)")
                 if step["firstDiveX"] < 1:
                     problems.append(f"{key} {p['id']} tier {i}: First dive x must be 1 or more (blank = 1)")
                 if step["auraArcPercent"] > 100:
