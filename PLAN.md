@@ -163,6 +163,29 @@ higher" (#275) is why T5 line-hit options are tuned against their T4 siblings.
   tables, audit clean, `--options` clean). Tester: one B and one C per tower in a match; each
   card text matches what happens; a stripped Ankylosaurus takes damage from a non-piercing
   tower; Seismic Charge never moves a boss; Rockfall stuns a boss 0.5 s.
+- **T115b — 9c review fixes (#303–#307; ONE Builder commit after 9d's running task; assert
+  each old value first; the 2 tolerated `audit --strict` findings must be gone after it):**
+  1. Hunting Blind Lookout 5C `Name` "Trophy Spotter" → **"Alpha Spotter"** (Blurb unchanged).
+  2. Hunting Blind Lookout **T2** `Name` "Long Barrel" → **"Spyglass"** (Brush Beater Slug 4A
+     keeps "Long Barrel"); update `UPGRADES.md`.
+  3. Hunting Blind Trigger Happy 5C Shredder: `Pierces armour` = Yes; `Damage x` 1.7 → **1.5**
+     (the pierce now credits the armoured share); Blurb "Bullets punch through armour and
+     strip it". `--options` must stay clean (if not, step Damage x by 0.05 toward the median).
+  4. **Bomblet fires cap:** new Tuning row `Bomblet fires per shell` seed **6** (append): a
+     shell lights at most 6 burn patches (first generation first, then the next); the rest of
+     its bomblets still hit. `value.py` credits bomblet burn as min(fires per shell, cap) ×
+     Burn DPS × Burn s (today 0). `--options` clean for Cluster after it.
+  5. **Strip on bosses: half time** (Strip (s) × 0.5, as Jaw Lock), in the generic strip rule;
+     spec: a boss stripped 1.5 s, a non-boss 3 s.
+  Specs + Config diff accounted for; audit `--strict` 0; Tester: none (rides 9d's Tester run:
+  Shredder damages an Ankylosaurus; a Firecracker Rain shell shows ≤ 6 fires).
+  6. (9d, #308) Armory Outfitter 4B `Name` "Speed Loader" → **"Loading Bench"** (Tracker Trick
+     Shot T1 keeps "Speed Loader"); update `UPGRADES.md`.
+  7. (#309) **Bounty cash scales with the difficulty's cash multiplier**, exactly as Tar Pit sink
+     cash does (same helper in `Economy`); spec: Hard pays the scaled bounty.
+  8. (#310) Studio-only **`standinpick <tower> <path> <letters>`** (behind `Shared/StudioOnly`):
+     sets a stand-in camp tower's picks (e.g. a stand-in Tranq Station "BC"), so the Tester can
+     be the raider; spec: refused on a live server.
 
 **9d — B/C for Tranq Station, Supply Camp, Field Hospital, Armory** (12 paths, **48 options**).
 **DESIGNED (Director, 2026-10-13, #292–#295) — enter as written** (🦖 names first; working
@@ -291,7 +314,10 @@ Wirings (existing columns on a tower that didn't use them): Tranq `Aura rate %` 
   take-down in range (cash log); Heavy Crates drop 2 crates; Bitter Tonic slows a biting
   dino; auras don't stack across options (a 5B Gunsmith + a 5C Gunsmith on one tower: the
   stronger of each aura only); Sleeper Darts / Barbed Wire sting the stand-in hunter at ×0.5
-  in a Camp Clash round and do nothing through Camo Cover.
+  in a Camp Clash round and do nothing through Camo Cover. **Rewritten (#310): stand-ins never
+  shoot, so the Tester is the raider** — `standinpick` a stand-in Tranq Station to 4C and an
+  Armory to 4C, walk into range, shoot a stand-in tower: the Tester's hunter is stung (×0.5
+  damage, slowed ≤ 30 % ≤ 3 s, once per 3 s), not stung during Camo Cover after a respawn.
 
 **9e — B/C for the 2× batch** (Storm Coil, Falcon Roost, Tar Pit, Harpoon Ballista: 12 paths,
 **48 options**; A = Jovan's own T4/T5 picks, unchanged). **DESIGNED (Director, 2026-10-13,
