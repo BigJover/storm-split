@@ -369,6 +369,7 @@ end
 -- where the hunter stands, on the tower's side, sting them (battles only, enemies only).
 local RAIDER_FIELDS = { "raiderSlowPercent", "raiderDamage" }
 local BOUNTY_FIELDS = { "bountyCash" }
+local BITER_FIELDS = { "biterSlowPercent" }
 local function stingRaider(tower: Tower, hunter: Player)
 	local character = hunter.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
@@ -468,9 +469,9 @@ end
 
 -- A dino just bit something standing at `position`: the strongest Thorn
 -- Plating covering it bites back (pierces armour, scales with the team's
--- level, kill credited to the Armory's owner), and Bulwark stuns the biter
--- (not bosses). Called by DinoAttacks through its onBite hook.
-function Towers.bitten(enemy: Enemies.Enemy, position: Vector3)
+-- level, kill credited to the Armory's owner), Bulwark stuns the biter
+-- (not bosses), and a Biter slow tower slows it (not bosses). Called by DinoAttacks through its onBite hook.
+function Towers.bitten(enemy: Enemies.Enemy, position: Vector3, onTower: boolean?)
 	local thorns, thornsOwner, stun = 0, nil, 0
 	for _, source in towers do
 		local s = source.stats
@@ -483,6 +484,14 @@ function Towers.bitten(enemy: Enemies.Enemy, position: Vector3)
 	end
 	if stun > 0 then
 		Enemies.stun(enemy, stun, false)
+	end
+	-- Biter slow (Bitter Tonic / Bitter Brew, PLAN 9d #294): a sedation slow, never on a boss.
+	local slow, seconds = 0, 0
+	if onTower then -- a bite on a tower in range (a hunter bitten there doesn't count)
+		slow, seconds = TowerPerks.biterSlow(perkSources(position, BITER_FIELDS), enemy.side, enemy.def.boss == true)
+	end
+	if slow > 0 then
+		Enemies.chill(enemy, { slowPercent = slow, seconds = seconds, affectsBosses = false, brittlePercent = 0, stripsArmor = false })
 	end
 	if thorns > 0 then
 		credit(thornsOwner, Enemies.damage(enemy, thorns * levelScale, true))

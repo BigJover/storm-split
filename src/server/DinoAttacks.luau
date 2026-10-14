@@ -83,13 +83,13 @@ local folder: Instance? = nil
 local damageMult: () -> number = function()
 	return 1
 end
-local onBite: ((Enemies.Enemy, Vector3) -> ())? = nil -- Armory thorns / Bulwark (Towers.bitten)
+local onBite: ((Enemies.Enemy, Vector3, boolean) -> ())? = nil -- Armory thorns / Bulwark, Biter slow (Towers.bitten)
 local random = Random.new()
 
 export type Hooks = {
 	damageMult: (() -> number)?, -- the difficulty's Dino damage x
 	folder: Instance?, -- where projectile visuals live (the map's effect folder)
-	onBite: ((Enemies.Enemy, Vector3) -> ())?, -- after every bite, with where the target stood
+	onBite: ((Enemies.Enemy, Vector3, boolean) -> ())?, -- after every bite: where the target stood, was it a tower
 }
 
 function DinoAttacks.init(hooks: Hooks?)
@@ -159,7 +159,8 @@ local function bite(enemy: Enemies.Enemy, target: Combat.Target)
 	hurt(target, damage, enemy, { species = enemy.def.display, attack = enemy.def.meleeName })
 	biteLook(enemy, target.position + Vector3.new(0, 2, 0))
 	if onBite then
-		onBite(enemy, target.position) -- may hurt or stun the biter (Armory)
+		local onTower = not (typeof(target.ref) == "Instance" and target.ref:IsA("Player"))
+		onBite(enemy, target.position, onTower) -- may hurt, stun (Armory) or slow (Biter slow) the biter
 	end
 end
 

@@ -14,6 +14,9 @@
 	  bounty      Bounty cash: a dino taken down (not a shrink) inside the range of a standing
 	              Supply Camp on its own side pays that side the camp's Bounty cash; the
 	              strongest camp covering it pays, once (no stacking).
+	  biterSlow   Biter slow (`Biter slow %`, `Biter slow (s)`): a dino that bites a tower in
+	              range of a standing tower on its side is slowed (a sedation slow, the
+	              strongest of each); never a boss.
 ]]
 
 local Config = require(script.Parent.Config)
@@ -32,6 +35,8 @@ export type Source = {
 		raiderSlowPercent: number,
 		raiderSlowSeconds: number,
 		bountyCash: number,
+		biterSlowPercent: number,
+		biterSlowSeconds: number,
 	},
 }
 
@@ -81,6 +86,25 @@ function TowerPerks.bounty(sources: { Source }, dinoSide: number): number
 		end
 	end
 	return best
+end
+
+-- Biter slow for a dino of `dinoSide` that bit a tower at the measured point: (percent,
+-- seconds), the strongest of each; (0, 0) for a boss or when nothing covers it.
+function TowerPerks.biterSlow(sources: { Source }, dinoSide: number, boss: boolean): (number, number)
+	if boss then
+		return 0, 0
+	end
+	local percent, seconds = 0, 0
+	for _, source in sources do
+		if counts(source, dinoSide) then
+			percent = math.max(percent, source.stats.biterSlowPercent)
+			seconds = math.max(seconds, source.stats.biterSlowSeconds)
+		end
+	end
+	if percent <= 0 or seconds <= 0 then
+		return 0, 0
+	end
+	return percent, seconds
 end
 
 return TowerPerks

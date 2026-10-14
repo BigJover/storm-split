@@ -289,6 +289,10 @@ def tower_stats(t, tiers, picks=None):
         "auraSlowedPercent": high.get("auraSlowedPercent", 0),
         # Read by the support paths' worth metrics (PLAN 9d, #292): the composed build's own.
         "bountyCash": high.get("bountyCash", 0),
+        "stunBitersSeconds": high.get("stunBitersSeconds", 0), "reviveSpeed": high.get("reviveSpeed", 0),
+        "rescueRespawnMult": high.get("rescueRespawnMult", 0), "lastStand": flag.get("lastStand", False),
+        "hunterSpreadMult": mult["hunterSpreadMult"], "hunterRecoilMult": mult["hunterRecoilMult"],
+        "biterSlowPercent": high.get("biterSlowPercent", 0), "biterSlowSeconds": high.get("biterSlowSeconds", 0),
     }
 
 
@@ -1021,10 +1025,13 @@ def hero_lines(data, rows, mixes):
 #                                          interest at its cap, Bounty cash x BOUNTY_TAKEDOWNS);
 #                                          Logistics: discount % +
 #                                          refund points over the base + aura rate %
-#   Field Hospital Ward / Rescue / Tonic   heal/s (x REVIVE_X if it revives) / kit HP a round
-#                                          x range / tower HP % + aura rate %
-#   Armory Plating / Gunsmith / Outfitter  resist % + thorns / aura credit / hunter handling
-#                                          (range x, reload, spread, recoil, rate)
+#   Field Hospital Ward                    heal/s x range x (1 + 0.5 x revive speed if it revives)
+#   Field Hospital Rescue                  (kits x kit heal + 1) x range x (2 - respawn x)
+#   Field Hospital Tonic                   tower HP % + aura rate % + LAST_STAND if Last stand
+#                                          + biter slow % x biter slow s / 4
+#   Armory Plating / Gunsmith / Outfitter  resist % + thorns + 20 x biter stun s / aura credit /
+#                                          hunter handling (range x, reload, spread, recoil,
+#                                          rate: the composed build's multipliers)
 #   Tar Pit Deep Tar / Bubbling / Dig Site seconds a ground dino loses / share of ground HP
 #                                          removed / cash a round from sinks (tar_lines)
 #   heroes                                 sustained hero_dps (pays for reloads)
@@ -1040,7 +1047,7 @@ OPTION_LO, OPTION_HI = 0.8, 1.25
 RAIDER_FLOOR = 0.8
 HERO_PARITY = 1.15
 SLOW_DWELL = 2.0  # s a dino is assumed to stay in a Tranq Station's range (linger adds to it)
-REVIVE_X = 1.25  # a Ward that revives trampled towers, against one that doesn't
+LAST_STAND = 10  # Hospital Tonic (PLAN 9d, #292): Last stand's credit in HP-% points
 BOUNTY_TAKEDOWNS = 30  # Supply Yield (PLAN 9d, #292): in-range take-downs a round, r31-40 (a quarter of the round's dinos)
 
 
@@ -1117,13 +1124,14 @@ def tower_worth(data, key, pi, s, late):
                 + g("bountyCash") * BOUNTY_TAKEDOWNS)
     if key == "HOSPITAL":
         if pid == "Ward":
-            return g("healPerSecond") * (REVIVE_X if g("revives") else 1)
+            return g("healPerSecond") * g("rangeMult", 1) * (1 + 0.5 * g("reviveSpeed") if g("revives") else 1)
         if pid == "Rescue":
-            return (g("medKits") * g("medKitHeal") + 1) * g("rangeMult", 1) / g("rescueRespawnMult", 1)
-        return g("auraHpPercent") + g("auraRatePercent")
+            return (g("medKits") * g("medKitHeal") + 1) * g("rangeMult", 1) * (2 - g("rescueRespawnMult", 1))
+        return (g("auraHpPercent") + g("auraRatePercent") + (LAST_STAND if g("lastStand") else 0)
+                + g("biterSlowPercent") * g("biterSlowSeconds") / 4)
     if key == "ARMORY":
         if pid == "Plating":
-            return g("resistPercent") + g("thornsDamage")
+            return g("resistPercent") + g("thornsDamage") + 20 * g("stunBitersSeconds")
         if pid == "Outfitter":
             return (g("rangeMult", 1) * (1 + g("hunterRatePercent") / 100)
                     / (g("hunterReloadMult", 1) * g("hunterSpreadMult", 1) * g("hunterRecoilMult", 1)))

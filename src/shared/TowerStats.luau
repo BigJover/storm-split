@@ -113,6 +113,9 @@ export type Stats = {
 	raiderDamage: number, -- before the PvP hunter lever (x0.5)
 	-- Bounty cash (PLAN 9d, #294): cash to this side for each of its dinos taken down in range.
 	bountyCash: number,
+	-- Biter slow (PLAN 9d, #294): a dino that bites a tower in range is slowed (not bosses).
+	biterSlowPercent: number,
+	biterSlowSeconds: number,
 }
 
 local MULTIPLIERS = {
@@ -180,6 +183,8 @@ local HIGHEST = {
 	"raiderSlowSeconds",
 	"raiderDamage",
 	"bountyCash",
+	"biterSlowPercent",
+	"biterSlowSeconds",
 }
 local FLAGS = {
 	"piercesArmor",
@@ -327,6 +332,8 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		raiderSlowSeconds = high.raiderSlowSeconds or 0,
 		raiderDamage = high.raiderDamage or 0,
 		bountyCash = high.bountyCash or 0,
+		biterSlowPercent = high.biterSlowPercent or 0,
+		biterSlowSeconds = high.biterSlowSeconds or 0,
 	}
 end
 

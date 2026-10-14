@@ -147,6 +147,9 @@ ABILITY_COLUMNS = [
     ("raiderSlowSeconds", 91, "num", 0),  # CM: how long (<= RAIDER_SLOW_SECONDS_MAX)
     ("raiderDamage", 92, "num", 0),  # CN: the sting's damage, before the PvP hunter lever (x0.5)
     ("bountyCash", 93, "num", 0),  # CO: Supply Camp: cash per dino taken down in range (strongest camp pays)
+    # Biter slow (PLAN 9d, #294): a dino that bites a tower in range is slowed (not bosses).
+    ("biterSlowPercent", 94, "num", 0),  # CP
+    ("biterSlowSeconds", 95, "num", 0),  # CQ
 ]
 
 # Columns only a tower that chains (Towers column Chains) can use.

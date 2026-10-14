@@ -43,8 +43,32 @@ local OPTIONS = {
 	{ "QUARTERMASTER", "Logistics", 4, "C", "Scrap Dealer", { sellRefund = 0.97 } },
 	{ "QUARTERMASTER", "Logistics", 5, "B", "Wholesale", { discountPercent = 32 } },
 	{ "QUARTERMASTER", "Logistics", 5, "C", "Depot", { auraRatePercent = 20, discountPercent = 15, sellRefund = 0.95 } },
+	{ "HOSPITAL", "Ward", 4, "B", "Quick Stitch", { reviveSpeed = 1 } },
+	{ "HOSPITAL", "Ward", 4, "C", "Big Tent", { rangeMult = 1.25 } },
+	{ "HOSPITAL", "Ward", 5, "B", "Field Ward", { healMult = 1.2, rangeMult = 1.4 } },
+	{ "HOSPITAL", "Ward", 5, "C", "Rapid Recovery", { healMult = 1.25, reviveSpeed = 2 } },
+	{ "HOSPITAL", "Rescue", 4, "B", "Long Whistle", { rangeMult = 1.3, medKits = 3 } },
+	{ "HOSPITAL", "Rescue", 4, "C", "Kit Bags", { medKits = 4 } },
+	{ "HOSPITAL", "Rescue", 5, "B", "Pack Train", { rangeMult = 1.15, medKits = 5, medKitHeal = 50 } },
+	{ "HOSPITAL", "Rescue", 5, "C", "Medevac", { rangeMult = 1.15, medKitHeal = 45, rescueRespawnMult = 0.35 } },
+	{ "HOSPITAL", "Tonic", 4, "B", "Hot Coffee", { auraRatePercent = 18, auraHpPercent = 25 } },
+	{ "HOSPITAL", "Tonic", 4, "C", "Bitter Tonic", { auraHpPercent = 25, biterSlowPercent = 25, biterSlowSeconds = 2 } },
+	{ "HOSPITAL", "Tonic", 5, "B", "Adrenaline", { auraRatePercent = 30, auraHpPercent = 40 } },
+	{ "HOSPITAL", "Tonic", 5, "C", "Bitter Brew", { auraHpPercent = 45, biterSlowPercent = 30, biterSlowSeconds = 3 } },
+	{ "ARMORY", "Plating", 4, "B", "Spiked Walls", { resistPercent = 30, thornsDamage = 10 } },
+	{ "ARMORY", "Plating", 4, "C", "Barbed Wire", { resistPercent = 32, raiderSlowPercent = 20, raiderSlowSeconds = 2, raiderDamage = 10 }, true },
+	{ "ARMORY", "Plating", 5, "B", "Iron Fortress", { resistPercent = 55 } },
+	{ "ARMORY", "Plating", 5, "C", "Spike Fortress", { resistPercent = 40, thornsDamage = 18 } },
+	{ "ARMORY", "Gunsmith", 4, "B", "Rapid Feed", { auraRatePercent = 20, auraDamagePercent = 15 } },
+	{ "ARMORY", "Gunsmith", 4, "C", "Heavy Loads", { auraRatePercent = 5, auraDamagePercent = 30 } },
+	{ "ARMORY", "Gunsmith", 5, "B", "Machine Shop", { auraRatePercent = 30, auraDamagePercent = 25 } },
+	{ "ARMORY", "Gunsmith", 5, "C", "Magnum Loads", { auraRatePercent = 15, auraDamagePercent = 40 } },
+	{ "ARMORY", "Outfitter", 4, "B", "Speed Loader", { hunterReloadMult = 0.7 } },
+	{ "ARMORY", "Outfitter", 4, "C", "Gun Braces", { hunterRecoilMult = 0.7 } },
+	{ "ARMORY", "Outfitter", 5, "B", "Gun Oil", { hunterReloadMult = 0.8, rangeMult = 1.15385 } },
+	{ "ARMORY", "Outfitter", 5, "C", "Steady Aim", { hunterSpreadMult = 0.8, rangeMult = 1.15385 } },
 }
-local TOWERS = { "CHILLER", "QUARTERMASTER" }
+local TOWERS = { "CHILLER", "QUARTERMASTER", "HOSPITAL", "ARMORY" }
 
 local function pathOf(key: string, id: string): (any, number)
 	for i, path in Config.Towers[key].paths do
@@ -142,9 +166,8 @@ test("Raider sting: x0.5 PvP, once per cooldown per hunter, never through Camo C
 	eq(cooldown, 3, "Tuning Raider sting cooldown (s) seed")
 	eq(Config.Tuning.PvPHunterDamage, 0.5, "the PvP hunter lever")
 	local darts = stats("CHILLER", "Sedate", 4, "C")
-	local wire = stats("ARMORY", "Plating", 0, "")
-	wire = table.clone(wire)
-	wire.raiderDamage, wire.raiderSlowPercent, wire.raiderSlowSeconds = 10, 20, 2 -- Barbed Wire's cells (T117 enters the row)
+	local wire = stats("ARMORY", "Plating", 4, "C") -- Barbed Wire
+	ok(wire.raiderDamage == 10 and wire.raiderSlowPercent == 20 and wire.raiderSlowSeconds == 2, "Barbed Wire's sting cells")
 	-- Sleeper Darts on side 1; a side-2 hunter shot a side-1 tower from inside its range.
 	local sting = TowerPerks.sting({ source(1, darts) }, 1, 2, false, nil, 100)
 	ok(sting ~= nil, "Sleeper Darts stings")
@@ -172,7 +195,7 @@ test("Raider sting: x0.5 PvP, once per cooldown per hunter, never through Camo C
 	end
 end)
 
-test("Raider options in co-op: the dino part carries the slot (Sleeper Darts' slow on every build)", function()
+test("Raider options in co-op: the dino part carries the slot (Sleeper Darts' slow, Barbed Wire's resist, on every build)", function()
 	-- No enemy hunters in co-op, so the sting never fires (above); the option still slows dinos.
 	for _, picks in { "C", "CA", "CB", "CC" } do
 		local s = stats("CHILLER", "Sedate", if #picks == 1 then 4 else 5, picks)
@@ -180,6 +203,21 @@ test("Raider options in co-op: the dino part carries the slot (Sleeper Darts' sl
 		ok(s.raiderSlowPercent == 30 and s.raiderSlowSeconds == 2, `Sedate {picks}: the sting rides every T5 after it`)
 	end
 	ok(stats("CHILLER", "Sedate", 4, "C").slowPercent > stats("CHILLER", "Sedate", 4, "A").slowPercent, "Sleeper Darts slows dinos harder than 4A")
+	for _, picks in { "C", "CA", "CB", "CC" } do
+		local s = stats("ARMORY", "Plating", if #picks == 1 then 4 else 5, picks)
+		ok(s.resistPercent >= 32, `Plating {picks}: towers in range resist {s.resistPercent} %`)
+		ok(s.raiderDamage == 10 and s.raiderSlowPercent == 20, `Plating {picks}: the sting rides every T5 after it`)
+	end
+	-- Only the two Raider builds' lines carry sting cells (the exporter refuses any other).
+	local stinging = 0
+	for _, key in TOWERS do
+		for _, path in Config.Towers[key].paths do
+			for _, row in path.t4 do
+				stinging += if (row.raiderSlowPercent or 0) > 0 or (row.raiderDamage or 0) > 0 then 1 else 0
+			end
+		end
+	end
+	eq(stinging, 2, "Sleeper Darts and Barbed Wire are the only T4 stings")
 	for _, key in TOWERS do
 		for _, path in Config.Towers[key].paths do
 			for picks, row in path.t5 do
@@ -199,4 +237,36 @@ test("Bounty cash: the strongest standing own-side camp covering the take-down p
 	eq(TowerPerks.bounty({ source(1, hall, false) }, 1), 0, "a trampled camp pays nothing")
 	eq(TowerPerks.bounty({ source(1, hall, true, false) }, 1), 0, "outside its range: nothing")
 	eq(TowerPerks.bounty({ source(1, stats("QUARTERMASTER", "Yield", 5, "AA")) }, 1), 0, "option A: no bounty")
+end)
+
+test("Biter slow: a dino biting a tower in range is slowed, the strongest of each; never a boss", function()
+	local tonic = stats("HOSPITAL", "Tonic", 4, "C")
+	local brew = stats("HOSPITAL", "Tonic", 5, "CC")
+	ok(tonic.biterSlowPercent == 25 and tonic.biterSlowSeconds == 2, "Bitter Tonic: 25 % for 2 s")
+	ok(brew.biterSlowPercent == 30 and brew.biterSlowSeconds == 3, "Bitter Brew: 30 % for 3 s")
+	local p, sec = TowerPerks.biterSlow({ source(1, tonic) }, 1, false)
+	ok(p == 25 and sec == 2, "a biter is slowed 25 % for 2 s")
+	p, sec = TowerPerks.biterSlow({ source(1, tonic), source(1, brew) }, 1, false)
+	ok(p == 30 and sec == 3, "two hospitals: the strongest of each, not added")
+	p, sec = TowerPerks.biterSlow({ source(1, brew) }, 1, true)
+	ok(p == 0 and sec == 0, "never a boss")
+	p = TowerPerks.biterSlow({ source(2, brew) }, 1, false)
+	eq(p, 0, "another side's hospital: nothing")
+	p = TowerPerks.biterSlow({ source(1, brew, false) }, 1, false)
+	eq(p, 0, "a trampled hospital: nothing")
+	p = TowerPerks.biterSlow({ source(1, brew, true, false) }, 1, false)
+	eq(p, 0, "out of range: nothing")
+	p = TowerPerks.biterSlow({ source(1, stats("HOSPITAL", "Tonic", 5, "AA")) }, 1, false)
+	eq(p, 0, "option A: no biter slow")
+end)
+
+test("9d wirings on Hospital and Armory: Revive speed at T4, range, kits, respawn, hunter gear from the composed build", function()
+	eq(stats("HOSPITAL", "Ward", 4, "B").reviveSpeed, 1, "Quick Stitch revives at full speed")
+	eq(stats("HOSPITAL", "Ward", 5, "BC").reviveSpeed, 2, "Rapid Recovery: twice that")
+	ok(stats("HOSPITAL", "Ward", 4, "C").range > stats("HOSPITAL", "Ward", 4, "A").range, "Big Tent: a wider ring")
+	eq(stats("HOSPITAL", "Rescue", 5, "AC").rescueRespawnMult, 0.35, "Medevac: respawn x 0.35")
+	eq(stats("HOSPITAL", "Rescue", 4, "C").medKits, 4, "Kit Bags: four kits")
+	ok(close(stats("ARMORY", "Outfitter", 4, "B").hunterReloadMult, 0.65 * 0.7), "Speed Loader: reload x 0.7 on Ammo Crate's")
+	ok(close(stats("ARMORY", "Outfitter", 4, "C").hunterRecoilMult, 0.75 * 0.7), "Gun Braces: recoil x 0.7 on Recoil Pads'")
+	ok(math.abs(stats("ARMORY", "Outfitter", 5, "CC").hunterSpreadMult - 0.8) < 1e-9, "Steady Aim: spread x 0.8")
 end)

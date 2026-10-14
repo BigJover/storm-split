@@ -50,6 +50,8 @@ local AFTER_SNAPSHOT: { [string]: any } = {
 	raiderSlowSeconds = 0,
 	raiderDamage = 0,
 	bountyCash = 0, -- 9d Bounty cash
+	biterSlowPercent = 0, -- 9d Biter slow
+	biterSlowSeconds = 0,
 }
 
 local function same(actual: { [string]: any }, expected: { [string]: any }, where: string): number

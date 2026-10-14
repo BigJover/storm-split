@@ -145,6 +145,17 @@ Hospitals don't stack: the strongest one covering a tower or hunter heals it.
 - Stretcher Team: range ×1.2. Signal Whistle: ×1.4. Med Kits: 2 white kits with a green "+" land nearby each round (like the Supply Camp's chests); the first hurt hunter to run over one heals 30 (a hunter at full HP leaves it for a teammate). Pack Mules: 3 kits, 40. Rescue Beacon: range ×1.8, kits heal 50, and downed hunters come back beside the hospital in half the respawn time.
 - Camp Rations: towers in range +10% max HP · Iron Tonic +20%. Smelling Salts: towers in range also +10% attack speed. Bone Broth: +35% HP. Last Stand: +50% HP, and once per round a tower in range that would be trampled stays at 1 HP.
 
+A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table's T4 / T5; names are working names until the Dino pass). Biter slow (Bitter Tonic / Bitter Brew): a dino that bites a tower in range is slowed (not bosses); the strongest hospital's slow wins:
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Ward** | 4 | Night Shift — Heals towers and hunters even faster | Quick Stitch — Trampled towers stand up twice as fast | Big Tent — Heals towers in a wider ring |
+| **Ward** | 5 | Miracle Ward — The fastest heals; trampled towers revive at full speed | Field Ward — Heals a huge ring of towers | Rapid Recovery — Trampled towers jump back up 4x as fast |
+| **Rescue** | 4 | Pack Mules — Three med kits a round, and each heals more | Long Whistle — Kits reach hunters in a much wider ring | Kit Bags — Four med kits land each round |
+| **Rescue** | 5 | Rescue Beacon — Bigger kits and reach; downed hunters return sooner | Pack Train — Five med kits a round, 50 each | Medevac — Downed hunters come back 3x as fast |
+| **Tonic** | 4 | Bone Broth — Towers in range get much more health | Hot Coffee — Towers in range fire 18% faster | Bitter Tonic — Dinos that bite towers in range get slowed |
+| **Tonic** | 5 | Last Stand — More health; once a round, saves a tower from trampling | Adrenaline — Towers in range fire 30% faster | Bitter Brew — Biters slowed 30% for 3 s; towers +45% HP |
+
 ## Armory (ARMORY) — damage resistance, no attack ✅ Step 2 · unlock 150 Amber
 
 Never shoots. Towers and hunters in its range (itself included) take 15% less damage.
@@ -159,6 +170,17 @@ Resistance doesn't stack: the strongest source wins, capped at 60% (Tuning).
 - Hide Padding 20% · Iron Plates 25%. Thorn Plating: dinos that bite anything in range take 3 damage back (pierces armour, grows with tower levels, the kill counts for the Armory's builder). Tempered Steel: 35%, thorns 5. Bulwark: 45%, and biters are stunned 0.5s (not bosses).
 - Oiled Actions: towers in range +5% attack speed. Hand Loads: +10% damage. Piercing Rounds: towers in range pierce armour. Match Grade: +20% damage, +10% speed. Master Gunsmith: +30% damage, +15% speed.
 - Wide Rack: range ×1.3. Recoil Pads: hunters in range have 25% less recoil. Ammo Crate: reload ×0.65. Steady Rests: spread ×0.7. Full Kit: range ×1.5, hunters in range fire 20% faster.
+
+A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table's T4 / T5; names are working names until the Dino pass). Barbed Wire is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (10 damage x0.5, slow 20 % for 2 s, once per 3 s per hunter, never through Camo Cover); in co-op it is 32 % resistance:
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Plating** | 4 | Tempered Steel — Tougher armour, and biters take more damage back | Spiked Walls — Dinos that bite take 10 damage back | Barbed Wire — Stings and slows raiders who shoot towers here |
+| **Plating** | 5 | Bulwark — The best armour; biting dinos get stunned (not bosses) | Iron Fortress — Towers in range take 55% less damage | Spike Fortress — Biters take 18 damage back |
+| **Gunsmith** | 4 | Match Grade — Towers in range hit harder and shoot faster | Rapid Feed — Towers in range fire 20% faster | Heavy Loads — Towers in range hit 30% harder |
+| **Gunsmith** | 5 | Master Gunsmith — Towers in range hit much harder and faster | Machine Shop — Towers in range fire 30% faster | Magnum Loads — Towers in range hit 40% harder |
+| **Outfitter** | 4 | Steady Rests — Hunters in range shoot straighter | Speed Loader — Hunters in range reload 30% faster | Gun Braces — Hunters in range have 30% less recoil |
+| **Outfitter** | 5 | Full Kit — Wider reach, and hunters in range fire faster | Gun Oil — Wider ring; hunters in it reload 20% faster | Steady Aim — Wider ring; hunters in it aim 20% tighter |
 
 ---
 
