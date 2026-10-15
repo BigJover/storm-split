@@ -159,6 +159,12 @@ test("ground only unless Shooting Stars (Hits air)", function()
 	ok(stats("Sky Rocks", 5, "AC").hitsAir and not stats("Sky Rocks", 5, "AA").hitsAir, "only Shooting Stars hits air")
 end)
 
+test("Comet Tail sweeps ground dinos only, even on a build that hits air (#347)", function()
+	eq(Meteor.cometSweeps(false), true, "a ground dino is swept")
+	eq(Meteor.cometSweeps(true), false, "a flyer is never swept (Shooting Stars' card)")
+	ok(not stats("Sky Rocks", 5, "AB").hitsAir, "Comet Tail builds don't hit air")
+end)
+
 test("n points: the n densest bunches, Scatter's segments; the splash and its breaks", function()
 	local track = dinos({ { 10 }, { 12 }, { 14 }, { 200 }, { 202 }, { 500 } })
 	local p = Meteor.points(track, 2, false, 600, false)

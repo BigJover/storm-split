@@ -1691,7 +1691,7 @@ def meteor_edps(s, mix, tuning, overkill=True, breaks1=False, **_kw):
     (none with Starfall) = Burn DPS (blank = Crater burn DPS) x Crater s x 3 ground dinos (x 2 with Fire
     line); Burn streak = Burn DPS x 3 s x 1 dino per small meteor; Extinction = Extinction x the meteor on 5
     dinos at Extinction breaks + 5 at breaks 1, per Round seconds (model); Comet Tail = Field strike x the
-    meteor on DINOS_ON_SIDE dinos (breaks 1) per round. Side slow, Biggest breaks, Scatter = blind spots."""
+    meteor on DINOS_ON_SIDE dinos (breaks 1) per round, ground only (#347: no air share). Side slow, Biggest breaks, Scatter = blind spots."""
     if s["rate"] <= 0:
         return 0.0
     every, damage, n, br = 1 / s["rate"], s["damage"], max(1, s["meteors"]), s["sizeBreaks"]
@@ -1721,7 +1721,8 @@ def meteor_edps(s, mix, tuning, overkill=True, breaks1=False, **_kw):
         out += (hit(big, METEOR_EXTINCTION_DINOS, int(tuning["ExtinctionBreaks"]))
                 + hit(big, METEOR_EXTINCTION_DINOS, 1)) / secs
     if s["bombingRun"]:
-        out += hit(damage * s["fieldStrikeX"], DINOS_ON_SIDE, 1) / secs
+        out += meteor_strike({**s, "hitsAir": False}, mix, tuning, damage * s["fieldStrikeX"], DINOS_ON_SIDE, 1,
+                             overkill, breaks1) / secs
     return out
 
 

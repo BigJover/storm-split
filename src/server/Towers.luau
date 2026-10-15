@@ -1944,7 +1944,7 @@ local function bombingRun(tower: Tower, dinos: { Enemies.Enemy })
 	local stats = tower.stats
 	local list, field = {}, {}
 	for _, enemy in dinos do
-		if enemy.alive and ownSide(tower, enemy) then
+		if enemy.alive and ownSide(tower, enemy) and Meteor.cometSweeps(enemy.def.flying == true) then
 			table.insert(list, enemy)
 			table.insert(field, { side = tower.side, flying = enemy.def.flying == true, armored = enemy.def.armored == true, bare = Enemies.canHurt(enemy, false) })
 		end
@@ -2278,12 +2278,13 @@ local function extinctionEvent(tower: Tower, own)
 end
 
 -- Comet Tail (Bombing run): once a round played, Field strike x the meteor on every dino on the
--- side's track (the 9h Bombing Run rules: air too, armour only if it pierces, breaks 1).
+-- side's track (the 9h Bombing Run rules: armour only if it pierces, breaks 1), ground dinos
+-- only (#347: flyers are Shooting Stars').
 local function cometTail(tower: Tower, own)
 	local stats = tower.stats
 	local list, field = {}, {}
 	for _, enemy in own do
-		if enemy.alive and ownSide(tower, enemy) then
+		if enemy.alive and ownSide(tower, enemy) and Meteor.cometSweeps(enemy.def.flying == true) then
 			table.insert(list, enemy)
 			table.insert(field, { side = tower.side, flying = enemy.def.flying == true, armored = enemy.def.armored == true, bare = Enemies.canHurt(enemy, false) })
 		end

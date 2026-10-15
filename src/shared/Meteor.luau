@@ -22,7 +22,8 @@
 	  - Extinction Event (once per round played; AutoFire's rule with Tuning Extinction min bunch):
 	    every dino on the side takes Extinction x the meteor (breaks 1); the densest bunch's dinos
 	    break Extinction breaks. Comet Tail (Bombing run): once a round, Field strike x the meteor
-	    on every dino along the side's track. Impact Winter: after each meteor every dino on the
+	    on every ground dino along the side's track (#347: never flyers, even with Hits air;
+	    hitting flyers is Shooting Stars' card). Impact Winter: after each meteor every dino on the
 	    side is slowed Side slow % for Side slow s (bosses too: a slow, not a hard stop).
 	Own side only (BattleRules); nothing reaches another camp. The server (Towers) aims, lands and
 	draws it (rule 4).
@@ -248,6 +249,11 @@ function Meteor.prune(craters: { Crater }, now: number): { Crater }
 		end
 	end
 	return out
+end
+
+-- Comet Tail's sweep (#347): ground dinos only, whatever the build's Hits air.
+function Meteor.cometSweeps(flying: boolean): boolean
+	return not flying
 end
 
 -- Extinction Event (#283 via AutoFire's rule): fire now? A boss in the bunch, or Tuning
