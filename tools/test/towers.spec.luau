@@ -372,3 +372,12 @@ test("PLAN T126c: the Bone Totem is released at its Amber price (#331)", functio
 	eq(def.unlockCost, 450, "TOTEM unlock Amber (never moves, #313)")
 	eq(def.baseCost, 600, "TOTEM in-match cost (#331)")
 end)
+
+test("PLAN T125b: the Spotter Blimp is released at its Amber price (#336)", function()
+	local ShopRules = require(src.shared.ShopRules)
+	local def = Config.Towers.BLIMP
+	eq(ShopRules.Unreleased.BLIMP, nil, "BLIMP is sold and unlockable")
+	eq(table.find(Config.TowerOrder, "BLIMP") ~= nil, true, "BLIMP is listed in the shop order")
+	eq(def.unlockCost, 400, "BLIMP unlock Amber (never moves, #313)")
+	eq(def.baseCost, 600, "BLIMP in-match cost (#336)")
+end)

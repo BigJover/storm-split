@@ -415,7 +415,7 @@ A/B/C picks at tiers 4 and 5 (PLAN 9h, DECISIONS #312–#320; names = DINO_REVIE
 
 ---
 
-## Spotter Blimp (BLIMP) — untouchable: a door gun, a searchlight or cargo · built (PLAN 9h T125b; unreleased until its release step) · unlock 400 Amber
+## Spotter Blimp (BLIMP) — untouchable: a door gun, a searchlight or cargo · built (PLAN 9h T125b) · sold from T125b · unlock 400 Amber
 
 Its mooring mast is placed like any tower (600 cash, off the track); the blimp flies your track
 from the spawn end to the exit end and back (a **lap**, about 30 s at 40 studs/s), 30 studs up.
