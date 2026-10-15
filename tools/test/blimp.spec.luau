@@ -64,7 +64,7 @@ end)
 local ROWS = {
 	{ "Door Gun", 1, "", "Belt Gun", { damageMult = 1.5, rateMult = 1.2 } },
 	{ "Door Gun", 2, "", "Twin Mount", { damageMult = 1.5, rateMult = 1.2, shots = 2 } },
-	{ "Door Gun", 3, "", "Strafing Run", { damageMult = 2.6, rateMult = 1.2, shots = 2, lineHits = 3 } },
+	{ "Door Gun", 3, "", "Treetop Pass", { damageMult = 2.6, rateMult = 1.2, shots = 2, lineHits = 3 } },
 	{ "Door Gun", 4, "A", "Heavy Mount", { damageMult = 1.7, piercesArmor = true, sizeBreaks = 2 } },
 	{ "Door Gun", 4, "B", "Rocket Pods", { damageMult = 1.4, bomblets = 3, bombletGenerations = 1 } },
 	{ "Door Gun", 4, "C", "Tracer Belt", { damageMult = 1.75, markPercent = 15 } },

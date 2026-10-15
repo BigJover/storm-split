@@ -264,8 +264,8 @@ batch, #330) **released both** (Amber 500 each). Studio aids: `firenow`,
 Phase 9 batch 9h (2026-10-15): the **Bone Totem** (`Shared/Totem`) and the **Spotter Blimp**
 (`Shared/Blimp`) are built, headless-tested (807 specs) and **released** (Totem T126c, #331-#333:
 charge 3, cost 600; Blimp T125b, #334-#336: cost 600, Door Gun / Searchlight / Cargo metrics in
-`value.py`), but **not playtested** (Tester Run 9h next). Open: Door Gun T3 "Strafing Run" repeats
-Falcon Roost's Flock T5C name (#291; audit --strict's 2 findings, a Director call). Studio aid:
+`value.py`), but **not playtested** (Tester Run 9h next). Door Gun T3 renamed "Treetop Pass"
+(T125c, #341; Falcon Roost keeps "Strafing Run"). Studio aid:
 `firenow BLIMP`.
 
 ## Open issues

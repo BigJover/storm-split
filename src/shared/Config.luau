@@ -103790,7 +103790,7 @@ return table.freeze({
 							hookEvery = 0,
 						},
 						{
-							name = "Strafing Run",
+							name = "Treetop Pass",
 							cost = 7300,
 							damageMult = 2.6,
 							rateMult = 1.2,

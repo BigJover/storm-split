@@ -426,11 +426,11 @@ judged on their own lines (out of the damage medians, #334/#335). Rules: `Shared
 
 | Path | Focus | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
-| **Door Gun** | damage | Belt Gun | Twin Mount | *Strafing Run* | *Heavy Mount* | *Gunship* |
+| **Door Gun** | damage | Belt Gun | Twin Mount | *Treetop Pass* | *Heavy Mount* | *Gunship* |
 | **Searchlight** | support | Spotlight | Wide Beam | *Night Hunt* | *Floodlights* | *All-Seeing Eye* |
 | **Cargo** | cash | Supply Crates | Ammo Drop | *Med Drop* | *Heavy Cargo* | *Cargo Run* |
 
-- Belt Gun / Twin Mount / Strafing Run: a harder, faster gun (x1.5 / x1.5 / x2.6, rate x1.2); Twin Mount fires 2 shots; Strafing Run's shots cut through 3 dinos along the track.
+- Belt Gun / Twin Mount / Treetop Pass: a harder, faster gun (x1.5 / x1.5 / x2.6, rate x1.2); Twin Mount fires 2 shots; Treetop Pass's shots cut through 3 dinos along the track.
 - Spotlight / Wide Beam / Night Hunt: dinos under the light take +10 %; Wide Beam lights a 30 % wider circle; Night Hunt: towers in the circle +15 % range.
 - Supply Crates / Ammo Drop / Med Drop: one crate a round lands below the blimp (200 / 550 / 1,550 cash; Supply Camp's chest rules); Ammo Drop: your hunters under it reload 20 % faster; Med Drop: a med kit (40 HP) drops below it every lap.
 

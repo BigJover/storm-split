@@ -162,6 +162,11 @@ SKEWER_DINOS = 3
 CHAIN_DINOS = 3
 NEIGHBOUR_TOWER, NEIGHBOUR_TIER, NEIGHBOURS = "SCOUT", 2, 3
 DEAD_X, DOMINANT_X = 2.0, 0.5
+# DEAD tiers the Director accepted (still printed as findings, tagged with the decision): a fix would
+# only move the flag to the next tier or break the path's T4/T5 bars. Keyed (tower key, path, tier).
+KNOWN_DEAD = {("SNIPER", "Big Bore", 1): "#165", ("BALLISTA", "Spearhead", 1): "#194",
+              ("BALLISTA", "Spearhead", 2): "#194", ("TOTEM", "Roar", 1): "#332",
+              ("TOTEM", "Roar", 2): "#332", ("BLIMP", "Door Gun", 1): "#342"}
 # "Worth it" for the 2x-Amber round-4 batch (PLAN T68, DECISIONS #193): a damageable tower's best
 # T5 cost/eDPS in rounds 31-40 is at most WORTH_HI x M; an untouchable tower's damage T5s sit
 # between WORTH_HI x M and UNTOUCHABLE_HI x M. M = the released damage-path T5 median of the
@@ -735,7 +740,8 @@ def judge(data, rows):
                     findings.append(
                         f"DEAD tier: {t['display']} {path['id']} T{tier} {export_constants.line(path)[tier - 1]['name']}: "
                         f"marginal {fmt(r['marginal'][BOUGHT_BAND[tier]])} cash/eDPS = {r['vsMedian']:.1f}x the T{tier} median "
-                        f"({fmt(medians[tier]['marginal'])}) in rounds {lo}-{hi}")
+                        f"({fmt(medians[tier]['marginal'])}) in rounds {lo}-{hi}"
+                        + (f" (known, {KNOWN_DEAD[(key, path['id'], tier)]})" if (key, path["id"], tier) in KNOWN_DEAD else ""))
             if dominant:
                 findings.append(f"DOMINANT path: {t['display']} {path['id']}: cost/eDPS < {DOMINANT_X}x the median at every tier in every band")
     return medians, findings
@@ -902,10 +908,11 @@ def resin_lines(data, mixes):
 TOTEM_ROUND20_X = 1.5
 
 
-def blimp_lines(data, mixes):
+def blimp_lines(data, mixes, rows):
     """Spotter Blimp's release lines (PLAN 9h T125b, #334-#336), r31-40: the lap and coverage, each
     Searchlight tier's worth, Cargo's cash a round and each T1-T3 tier's payback (bar DIG_PAYBACK
-    rounds, #335; lever Chest cash). The bar is a finding once it is released. Returns (lines, findings)."""
+    rounds, #335; lever Chest cash; T1-T3 = its round-20 bar, #343) and the Door Gun T2 r11-20 report
+    line (printed, never gated, #343). The bar is a finding once it is released. Returns (lines, findings)."""
     if "BLIMP" not in data["Towers"]:
         return [], []
     t, tuning = data["Towers"]["BLIMP"], data["Tuning"]
@@ -933,6 +940,14 @@ def blimp_lines(data, mixes):
             else:
                 bits.append(f"T{tier} {blimp_light(data, s, late):.0f}")
         out.append(f"  Spotter Blimp {path['id']:<11} r31-40: " + "; ".join(bits))
+    t2 = [r["cpd"][1] for (k, p, tier), r in rows.items()
+          if tier == 2 and not r["support"] and r["released"] and k not in ROUND9_BATCH]
+    gun = next((pi for pi, p in enumerate(t["paths"]) if p["id"] == "Door Gun"), None)
+    if t2 and gun is not None:
+        bar = TOTEM_ROUND20_X * statistics.median(t2)
+        cpd = rows[("BLIMP", gun, 2)]["cpd"][1]
+        out.append(f"  Spotter Blimp Door Gun T2 c/e {fmt(cpd)} in r11-20 (vs {fmt(bar)}" + ("" if cpd <= bar else ", over")
+                   + ") (report, #343: Cargo T1-T3 payback is the Blimp's round-20 bar)")
     return out, findings
 
 
@@ -2055,7 +2070,7 @@ def value_report(data, full=False):
     for line in lines:
         print(line)
     findings += totem
-    lines, blimp = blimp_lines(data, mixes)  # PLAN 9h T125b: the Spotter Blimp's release lines
+    lines, blimp = blimp_lines(data, mixes, rows)  # PLAN 9h T125b: the Spotter Blimp's release lines
     for line in lines:
         print(line)
     findings += blimp
