@@ -350,3 +350,16 @@ test("PLAN T68: the round-4 towers are released at 2x Amber and their tuned in-m
 		eq(def.baseCost, w[2], `{key} in-match cost`)
 	end
 end)
+
+test("PLAN T124d: the 9g towers are released at their Amber prices", function()
+	local ShopRules = require(src.shared.ShopRules)
+	-- key = { Amber unlock (Jovan's prices, never move #313), in-match cost (#326) }
+	local want = { RESIN = { 500, 800 }, RAPTOR = { 500, 600 } }
+	for key, w in want do
+		local def = Config.Towers[key]
+		eq(ShopRules.Unreleased[key], nil, `{key} is sold and unlockable`)
+		eq(table.find(Config.TowerOrder, key) ~= nil, true, `{key} is listed in the shop order`)
+		eq(def.unlockCost, w[1], `{key} unlock Amber`)
+		eq(def.baseCost, w[2], `{key} in-match cost`)
+	end
+end)

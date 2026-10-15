@@ -50,7 +50,7 @@ test("the Towers row (PLAN 9g): 800 cash, 500 Amber, 2 x 1/s, 18 studs, ground o
 	eq(RESIN.maxHp, 150)
 	eq(RESIN.resin, true)
 	ok(not RESIN.untouchable and not RESIN.onTrack and not RESIN.chains and not RESIN.harpoons and RESIN.birds == 0, "no other kind flag")
-	eq(ShopRules.Unreleased.RESIN, true, "unreleased: the 9g release is held (T124c, #312)")
+	eq(ShopRules.Unreleased.RESIN, nil, "released at T124d (#312, #329-#330)")
 end)
 
 test("the AMBER RESIN CANNON Tuning block (seeds)", function()

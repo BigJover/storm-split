@@ -50,7 +50,7 @@ test("the Towers row (PLAN T124c, #326: cost at the 600 floor, Damage 10, the wa
 	eq(PEN.maxHp, 150)
 	eq(PEN.walkers, 1)
 	ok(not PEN.untouchable and not PEN.resin and PEN.birds == 0, "no other kind flag")
-	eq(ShopRules.Unreleased.RAPTOR, true, "unreleased: the 9g release is held (T124c, #312)")
+	eq(ShopRules.Unreleased.RAPTOR, nil, "released at T124d (#312, #329-#330)")
 end)
 
 test("the RAPTOR PEN Tuning block (seeds)", function()

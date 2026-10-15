@@ -1853,12 +1853,14 @@ def breaks_report(data):
     rows = value_table(data, mixes)
     tuning = data["Tuning"]
     medians = [statistics.median(r["edps"][i] for (k, p, t), r in rows.items()
-                                 if t == 5 and not r["support"] and r["released"]) for i in range(len(BANDS))]
+                                 if t == 5 and not r["support"] and r["released"] and k not in ROUND9_BATCH)
+               for i in range(len(BANDS))]
     print("breaks (PLAN T48 final, DECISIONS #160, #164-#166): Z = zero-waste, B1 = every break 1,"
           f" S = the sheet's breaks; bar 1 S >= {S_OVER_B1}x B1 where Z/B1 >= {S_OVER_B1} [branch B1],"
           f" else S >= {RECOVER_Z}x Z [branch Z]; bar 2 S <= {S_OVER_Z}x Z;"
           " bar 3 general raw T5 S >= the band's damage-path T5 median")
-    print("  T5 median: " + ", ".join(f"r{BANDS[i][0]}-{BANDS[i][1]} {fmt(medians[i])}" for i in BREAKS_BANDS))
+    print("  T5 median (4x batch out, #330): "
+          + ", ".join(f"r{BANDS[i][0]}-{BANDS[i][1]} {fmt(medians[i])}" for i in BREAKS_BANDS))
     failures, specialists = [], []
     for key, pi, tier in raw_tiers(data):
         t = data["Towers"][key]
