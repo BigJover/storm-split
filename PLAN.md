@@ -14,7 +14,7 @@ DataStore writes from an agent). N15 rides any `Battle` commit (#272).
 **Status (2026-10-13, later): 9a + 9b done (c1a7c5a, 0f82bb7, 929b66a, cd6a413, cd749d2; 706 specs); Tester Run 8 running. 9c designed below (#290). Next: 🦖 names 9c → Builder T114 + T115.**
 **Status (2026-10-13, Director): 9d + 9e designed below (#292–#297; 96 options, metrics, 6 new mechanics). Next after 9c: 🦖 names 9d → T116–T118, then 9e → T119–T120.**
 **Status (2026-10-13, Director): 9f designed below (#298–#302; 48 hero options, per-path metrics, 1 new mechanic). Next after 9e: 🦖 names 9f → T121–T122.**
-**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.** **Update (2026-10-14): 9g built; next = T124c (finishes T124b, #325–#328), then Tester Run 9g.** **Update (2026-10-15): T124c steps 1–4 in (03c9634), release held on King of the Pack bar 3; next = T124d (#329–#330, King Rate x 1.25 + frozen bar-3 median + release), then Tester Run 9g.** **Update (2026-10-15, later): Bone Totem built unreleased (1b08327); Blimp rows refused. Next = T126c (Totem fix + release, #331–#333), then T125b (Blimp, #334–#336), then Tester Run 9h; 9i/9j numbers re-checked (#337+).** **Update (2026-10-15, 9h released 906a8b1/ad1be17): next = T125c (#341–#343), then 9i as written (#344).**
+**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.** **Update (2026-10-14): 9g built; next = T124c (finishes T124b, #325–#328), then Tester Run 9g.** **Update (2026-10-15): T124c steps 1–4 in (03c9634), release held on King of the Pack bar 3; next = T124d (#329–#330, King Rate x 1.25 + frozen bar-3 median + release), then Tester Run 9g.** **Update (2026-10-15, later): Bone Totem built unreleased (1b08327); Blimp rows refused. Next = T126c (Totem fix + release, #331–#333), then T125b (Blimp, #334–#336), then Tester Run 9h; 9i/9j numbers re-checked (#337+).** **Update (2026-10-15, 9h released 906a8b1/ad1be17): next = T125c (#341–#343), then 9i as written (#344).** **Update (2026-10-15, 9i built, Vent released 6a05e1b): next = T128c (Meteor release, #345–#347), Tester Run 9i, then 9j as written (#348).**
 
 ## Size of the job
 | | Slots (T4+T5) | Options to build | New options to design |
@@ -1461,6 +1461,16 @@ spec (8 studs from the track yes, 12 no).
 round-20 bar). **Tester Run 9i:** common rule 10, plus: a meteor lands on the biggest bunch
 after its warning ring; Extinction Event fires itself once a round (and on a boss); lava floods
 the stretch and shoves dinos; crust slows; Frozen Fire stops the flow's dinos 2 s (a boss 1 s).
+
+**T128c (Builder) — Meteor release (#345–#347), one commit, pushed, then 9j.**
+1. Keep Starfall Damage x **3.388**; no other number changes.
+2. **Comet Tail sweep is ground only** (#347): the sweep skips flyers (behaviour + `value.py`'s
+   Comet term drops the air share); spec it. Impact Winter slowing bosses and Near track measured
+   to the lane edge stay as built.
+3. Re-run `value.py` / `--breaks1` / `--options`: Starfall's slots must stay ≥ 0.80× (the 5B
+   median can only fall); if any slot breaks, step the ⚙ lever (rule 7) and report.
+4. **Release Meteor** (out of `Unreleased`), `tools/test.sh` green, exporter clean, audit strict 0.
+   Then **Tester Run 9i** (both towers), then 9j as written (#348).
 
 **9j — Ranger Station** (alone: the heaviest; T129 rules + sheet + tower, T130 posts UI +
 value.py, T130b release). TOWERS_LATER's "5 at Ranger Corps" → "5 at Ranger Troop" (Round 19).
