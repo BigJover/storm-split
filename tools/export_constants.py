@@ -236,6 +236,21 @@ ABILITY_COLUMNS = [
     ("dinoOutlines", 166, "bool", False),  # FJ: Spotter's Map: own-side hunters see own-side dinos (#319)
     ("bombingRun", 167, "bool", False),  # FK: Bombing Run: once a round played (AutoFire), Field strike x the gun
     ("hookEvery", 168, "num", 0),  # FL: Sky Hook: every N s lifts the smallest small dino in range
+    # PLAN 9i (T127, #337): the Meteor Beacon (Shared/Meteor). KEY_ONLY keeps them on the beacon.
+    ("meteors", 169, "num", 0),  # FM: each strike is this many small meteors on the densest points (blank = 1 big)
+    ("scatter", 170, "bool", False),  # FN: Scatter Field: the points are the densest of equal track segments
+    ("meteorEvery", 171, "num", 0),  # FO: Endless Rain: one more small meteor every N s
+    ("starfallEvery", 172, "num", 0),  # FP: Starfall: every N s Starfall meteors replace the strike
+    ("craterSeconds", 173, "num", 0),  # FQ: s a crater lasts (blank = Tuning Crater (s))
+    ("craterAmpPercent", 174, "num", 0),  # FR: Scorch Marks: a dino crossing a crater takes +% for 3 s
+    ("biteMissPercent", 175, "num", 0),  # FS: Ash Cloud: dinos in a crater miss this % of bites
+    ("craterFreezeSeconds", 176, "num", 0),  # FT: New Ice Age: a dino entering a crater is hard-stopped once
+    ("fireLine", 177, "bool", False),  # FU: Fire Line: close craters join into one burning strip
+    ("burnStreak", 178, "bool", False),  # FV: Cinder Trail: each small meteor leaves a burning strip
+    ("extinction", 179, "bool", False),  # FW: Extinction Event, once per round played (AutoFire)
+    ("sideSlowPercent", 180, "num", 0),  # FX: Impact Winter: after each meteor every dino on the side slowed
+    ("sideSlowSeconds", 181, "num", 0),  # FY
+    ("biggestBreaks", 182, "num", 0),  # FZ: Dino Killer: the biggest dino a meteor hits breaks this many more
 ]
 
 # Columns only a tower that chains (Towers column Chains) can use.
@@ -266,7 +281,12 @@ KEY_ONLY = {
                "finishingRoar"), ("chargeMult", "chargeNeededMult", "hunterCooldownMult")),
     "BLIMP": (("blimpSpeedMult", "lapChests", "lapRepairs", "crateHealPercent", "paratroopers", "airlift",
                "throwMissPercent", "auraReachX", "dinoOutlines", "bombingRun", "hookEvery"), ("blimpSpeedMult",)),
+    "METEOR": (("meteors", "scatter", "meteorEvery", "starfallEvery", "craterSeconds", "craterAmpPercent",
+                "biteMissPercent", "craterFreezeSeconds", "fireLine", "burnStreak", "extinction", "sideSlowPercent",
+                "sideSlowSeconds", "biggestBreaks"), ()),
 }
+# A KEY_ONLY column a later 4x tower reuses (PLAN 9i "Reused"): field -> the other keys allowed.
+KEY_SHARED = {"throwMissPercent": ("METEOR",), "bombingRun": ("METEOR",)}
 
 # Paths allowed a Size breaks above 1 (DECISIONS #127, #134). A new one is a
 # Director call: add it here and to PLAN's design table together.
@@ -278,6 +298,7 @@ BREAK_PATHS = {
     ("Raptor Pen", "Alpha"),  # PLAN 9g: Alpha Raptor 2, Sickle Claw 3, King of the Pack 4
     ("Raptor Pen", "Trainer"),  # PLAN 9g: Raider Hounds 2
     ("Spotter Blimp", "Door Gun"),  # PLAN T125b (#336): Heavy Mount 2
+    ("Meteor Beacon", "Impact"),  # PLAN 9i (#337, #338): Ground Zero 2, Planet Killer 3; bar 3 reported
     ("Bone Totem", "Roar"),  # PLAN 9h: Thunder Roar 3 (the Spirit Roar breaks Tuning Roar breaks 2 below it)
 }
 HERO_BREAK_PATHS = {("Tracker", "Marksman"), ("Brush Beater", "Slug")}
@@ -385,6 +406,8 @@ TOWER_STEP_KINDS = {
     "chargeMult": "mult", "chargeNeededMult": "mult", "hunterCooldownMult": "mult",
     # PLAN 9h (T125b): the Spotter Blimp
     "blimpSpeedMult": "mult", "hookEvery": "minpos",
+    # PLAN 9i (T127): the Meteor Beacon
+    "meteorEvery": "minpos", "starfallEvery": "minpos",
 }
 for _key, _col, _kind, _default in ABILITY_COLUMNS:
     TOWER_STEP_KINDS.setdefault(_key, "flag" if _kind == "bool" else "max")
@@ -1832,7 +1855,7 @@ def validate(data):
                         problems.append(f"{key} {p['id']} tier {i}: {field} needs a Resin tower (Towers column Y)")
                 for owner, (fields, ones) in KEY_ONLY.items():
                     for field in fields:
-                        if step[field] not in (False, 1 if field in ones else 0) and key != owner:
+                        if step[field] not in (False, 1 if field in ones else 0) and key != owner and key not in KEY_SHARED.get(field, ()):
                             problems.append(f"{key} {p['id']} tier {i}: {field} is the {owner} tower's own column (PLAN 9h)")
                 if step["tracksSlowPercent"] > 100 or (t["onTrack"] and step["slowPercent"] > 100):
                     problems.append(f"{key} {p['id']} tier {i}: Slow % and Tracks slow % must be 0-100")

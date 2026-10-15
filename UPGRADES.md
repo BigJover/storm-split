@@ -445,6 +445,37 @@ A/B/C picks at tiers 4 and 5 (PLAN 9h + T125b, DECISIONS #334–#336; names = DI
 | **Cargo** | 4 | Heavy Cargo — Bigger crates | Rebuild Kits — Fixes a Trampled tower each lap | Spare Parts — A crate heals the closest tower |
 | **Cargo** | 5 | Cargo Run — A big crate every lap | Paratroopers — Drops 2 rangers a round | Airlift — Fixes the first Trampled tower each round |
 
+## Meteor Beacon (METEOR) — meteors on the biggest bunch: area hits and burning craters · built (PLAN 9i T127) · not sold yet (T128b) · unlock 600 Amber
+
+A radio mast (600 cash, off the track, 150 HP). Every 8 s it calls a meteor on the **biggest bunch**
+of dinos anywhere on your side's track (the point with the most dinos within 8 studs; a boss counts
+3; ties go furthest along): a red warning ring for 1 s, then every ground dino within 8 studs takes
+40 and breaks the meteor's sizes (every dino in the splash, #337). The strike leaves a **crater**
+(6 studs, 5 s) that burns dinos in it 10 a second (x the team's level). Ground only (Shooting
+Stars hits flyers). Aftermath is judged on its control line (out of the damage medians, #314).
+Rules: `Shared/Meteor`.
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Impact** | damage | Heavier Rock | Iron Core | *Ground Zero* | *Planet Killer* | *Extinction Event* |
+| **Sky Rocks** | damage | Rock Chunks | Twin Fall | *Fireball Flurry* | *Endless Rain* | *Starfall* |
+| **Aftermath** | control | Hot Crater | Ash Cloud | *Shockwave Ring* | *Long Burn* | *Fire Line* |
+
+- Heavier Rock / Iron Core / Ground Zero: a heavier meteor (x1.7 / x3.3 / x6); Ground Zero breaks 2.
+- Rock Chunks / Twin Fall / Fireball Flurry: each strike is 2 / 3 / 5 small meteors (x0.6 damage, x0.7 splash) on the densest points, over 2 s (x1.4 / x2.1 / x2.6).
+- Hot Crater / Ash Cloud / Shockwave Ring: craters burn 20 / 20 / 30 a second (x1.3 / x1.6 / x2.4); Ash Cloud: dinos in a crater miss 30 % of their bites and throws; Shockwave Ring: the impact knocks dinos 6 studs back (not bosses).
+
+A/B/C picks at tiers 4 and 5 (PLAN 9i, DECISIONS #337–#338; names = DINO_REVIEW Round 19). Planet Killer: breaks 3, x2 on bosses. Plate Cracker: the whole meteor cuts through armour. Quick Call: meteors fall 50 % more often. Extinction Event: once per round played (it picks its moment: a boss or 6 dinos in the bunch, else the round's last spawn; never on an empty track) one giant meteor hits every dino on your side for 3x the meteor (breaks 1) and the bunch's dinos break 4. Dino Killer: the biggest dino a meteor hits breaks 2 more sizes. Impact Winter: after each meteor every dino on your side is slowed 30 % for 3 s. Endless Rain: one more small meteor every 4 s. Scatter Field: the small meteors land on the densest point of each stretch of the track. Cinder Trail: each small meteor leaves a 10-stud strip burning 20 a second for 3 s. Starfall: every 15 s, 20 small meteors across your side in place of the strike (no crater). Comet Tail: once a round played (it picks its moment) a comet sweeps your whole track, hitting every dino for 6x the meteor (breaks 1). Shooting Stars: meteors hit flyers too. Long Burn: craters last 8 s and burn 45. Glass Crater: craters strip armour, burn 40. Scorch Marks: a dino crossing a crater takes +15 % from everything for 3 s, burn 40. Fire Line: craters within 30 studs along the track join into one burning strip, burn 54. Blinding Dust: dinos in a crater can't bite or throw, burn 55. New Ice Age: a dino entering a crater is frozen solid 2 s, once per crater (a boss 1 s). No Raider option (#320).
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Impact** | 4 | Planet Killer — Breaks 3, ×2 on bosses | Plate Cracker — Meteors cut through armour | Quick Call — Meteors fall 50% more often |
+| **Impact** | 5 | Extinction Event — One giant meteor a round, fires itself | Dino Killer — Breaks the biggest dino it hits 2 extra sizes | Impact Winter — Every dino on your side slowed after each hit |
+| **Sky Rocks** | 4 | Endless Rain — A small meteor every 4 s | Scatter Field — Meteors land all along the track | Cinder Trail — Small meteors leave a burning streak |
+| **Sky Rocks** | 5 | Starfall — 20 meteors across your side every 15 s | Comet Tail — A comet sweeps the whole track once a round | Shooting Stars — Meteors can hit flyers |
+| **Aftermath** | 4 | Long Burn — Craters last 8 s, hotter | Glass Crater — Craters strip armour | Scorch Marks — Dinos crossing a crater take +15% |
+| **Aftermath** | 5 | Fire Line — Craters join into one burning strip | Blinding Dust — Dinos in the ash can't bite or throw | New Ice Age — Craters freeze dinos solid for 2 s |
+
 ---
 
 ## Mechanics and when they're built

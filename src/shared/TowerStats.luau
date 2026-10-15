@@ -202,6 +202,21 @@ export type Stats = {
 	dinoOutlines: boolean, -- Spotter's Map: own-side hunters see own-side dinos through walls (#319)
 	bombingRun: boolean, -- Bombing Run: once a round played, Field strike x the gun on the whole side
 	hookEvery: number, -- Sky Hook: every N s (0 = none)
+	-- Meteor Beacon (PLAN 9i T127; rules in Shared/Meteor). Only the METEOR's rows set these (KEY_ONLY).
+	meteors: number, -- each strike is this many small meteors (0/1 = one big meteor)
+	scatter: boolean, -- Scatter Field: the n points are the densest of n equal track segments
+	meteorEvery: number, -- Endless Rain: one more small meteor every N s (0 = none)
+	starfallEvery: number, -- Starfall: every N s Starfall meteors replace the strike (0 = none)
+	craterSeconds: number, -- s a crater lasts (0 = Tuning Crater (s); Shared/Meteor)
+	craterAmpPercent: number, -- Scorch Marks: a dino crossing a crater takes +% for 3 s
+	biteMissPercent: number, -- Ash Cloud: dinos in a crater miss this % of their bites
+	craterFreezeSeconds: number, -- New Ice Age: a dino entering a crater is hard-stopped this long, once
+	fireLine: boolean, -- Fire Line: craters close along the track join into one burning strip
+	burnStreak: boolean, -- Cinder Trail: each small meteor leaves a burning strip
+	extinction: boolean, -- Extinction Event: once per round played (AutoFire)
+	sideSlowPercent: number, -- Impact Winter: after each meteor every dino on the side is slowed
+	sideSlowSeconds: number,
+	biggestBreaks: number, -- Dino Killer: the biggest dino a meteor hits breaks this many sizes more
 }
 
 local MULTIPLIERS = {
@@ -323,6 +338,15 @@ local HIGHEST = {
 	"paratroopers",
 	"throwMissPercent",
 	"auraReachX",
+	-- PLAN 9i (T127): the Meteor Beacon
+	"meteors",
+	"craterSeconds",
+	"craterAmpPercent",
+	"biteMissPercent",
+	"craterFreezeSeconds",
+	"sideSlowPercent",
+	"sideSlowSeconds",
+	"biggestBreaks",
 }
 -- Timers where the shortest non-zero wins (PLAN 9g, the exporter's "minpos" kind).
 local MIN_POSITIVE = {
@@ -331,6 +355,8 @@ local MIN_POSITIVE = {
 	"sealEvery",
 	"stunRoarEvery",
 	"hookEvery",
+	"meteorEvery",
+	"starfallEvery",
 }
 local FLAGS = {
 	"piercesArmor",
@@ -370,6 +396,10 @@ local FLAGS = {
 	"airlift",
 	"dinoOutlines",
 	"bombingRun",
+	"scatter",
+	"fireLine",
+	"burnStreak",
+	"extinction",
 }
 
 -- `pathPicks` is each path's A/B/C letters ("", "B", "BA"; Shared/Upgrades); nil means
@@ -581,6 +611,20 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		dinoOutlines = flag.dinoOutlines == true,
 		bombingRun = flag.bombingRun == true,
 		hookEvery = shortest.hookEvery or 0,
+		meteors = math.floor(high.meteors or 0),
+		scatter = flag.scatter == true,
+		meteorEvery = shortest.meteorEvery or 0,
+		starfallEvery = shortest.starfallEvery or 0,
+		craterSeconds = high.craterSeconds or 0,
+		craterAmpPercent = high.craterAmpPercent or 0,
+		biteMissPercent = high.biteMissPercent or 0,
+		craterFreezeSeconds = high.craterFreezeSeconds or 0,
+		fireLine = flag.fireLine == true,
+		burnStreak = flag.burnStreak == true,
+		extinction = flag.extinction == true,
+		sideSlowPercent = high.sideSlowPercent or 0,
+		sideSlowSeconds = high.sideSlowSeconds or 0,
+		biggestBreaks = math.floor(high.biggestBreaks or 0),
 	}
 end
 

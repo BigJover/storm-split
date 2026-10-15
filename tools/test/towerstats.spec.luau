@@ -186,6 +186,9 @@ local function expected(def, tiers: { number })
 	e.auraReachX = math.max(1, e.auraReachX)
 	e.lapRepairs = math.floor(e.lapRepairs)
 	e.paratroopers = math.floor(e.paratroopers)
+	-- Meteor Beacon (PLAN 9i T127): counts are whole.
+	e.meteors = math.floor(e.meteors)
+	e.biggestBreaks = math.floor(e.biggestBreaks)
 	return e
 end
 

@@ -131,6 +131,21 @@ local AFTER_SNAPSHOT: { [string]: any } = {
 	dinoOutlines = false,
 	bombingRun = false,
 	hookEvery = 0,
+	-- PLAN 9i (T127): the Meteor Beacon's own fields (none on these towers)
+	meteors = 0,
+	scatter = false,
+	meteorEvery = 0,
+	starfallEvery = 0,
+	craterSeconds = 0,
+	craterAmpPercent = 0,
+	biteMissPercent = 0,
+	craterFreezeSeconds = 0,
+	fireLine = false,
+	burnStreak = false,
+	extinction = false,
+	sideSlowPercent = 0,
+	sideSlowSeconds = 0,
+	biggestBreaks = 0,
 }
 -- ... and fields whose "does nothing" value is the tower's own (hitsAir moved from the Towers
 -- row into the stats with the generic Hits air column, PLAN 9g).

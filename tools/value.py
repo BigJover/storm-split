@@ -131,6 +131,7 @@ BOUGHT_BAND = {1: 1, 2: 1, 3: 2, 4: 3, 5: 3}  # tier -> index into BANDS
 # Tranq Station's Knockout (hard stops) and Weak Spot (damage amp for every tower in range).
 SUPPORT_PATHS = {("TOTEM", "Ancestors"), ("TOTEM", "Bone Pile"),  # PLAN 9h (#314): buffs and cash
                  ("BLIMP", "Searchlight"), ("BLIMP", "Cargo"),  # PLAN 9h T125b (#334, #335): light and cash
+                 ("METEOR", "Aftermath"),  # PLAN 9i (#314, #337): crater control, option bars only
                  ("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knockout"), ("CHILLER", "Weak Spot"),
                  ("COIL", "Lightning Rod"),  # PLAN T64: Charged Air, Storm Warning, Lightning Rodeo
                  ("FALCON", "Falconer"),  # PLAN T65: Falcon Bells, Hooded Scout, Lure, Hunting Party
@@ -166,7 +167,10 @@ DEAD_X, DOMINANT_X = 2.0, 0.5
 # only move the flag to the next tier or break the path's T4/T5 bars. Keyed (tower key, path, tier).
 KNOWN_DEAD = {("SNIPER", "Big Bore", 1): "#165", ("BALLISTA", "Spearhead", 1): "#194",
               ("BALLISTA", "Spearhead", 2): "#194", ("TOTEM", "Roar", 1): "#332",
-              ("TOTEM", "Roar", 2): "#332", ("BLIMP", "Door Gun", 1): "#342"}
+              ("TOTEM", "Roar", 2): "#332", ("BLIMP", "Door Gun", 1): "#342",
+              ("METEOR", "Impact", 1): "#338", ("METEOR", "Impact", 2): "#338", ("METEOR", "Sky Rocks", 1): "#338"}
+# Area strikes (#338): bar 3 of --breaks1 is printed, not gated (bars 1-2 still gate).
+AREA_STRIKES = {("METEOR", "Impact")}
 # "Worth it" for the 2x-Amber round-4 batch (PLAN T68, DECISIONS #193): a damageable tower's best
 # T5 cost/eDPS in rounds 31-40 is at most WORTH_HI x M; an untouchable tower's damage T5s sit
 # between WORTH_HI x M and UNTOUCHABLE_HI x M. M = the released damage-path T5 median of the
@@ -348,6 +352,11 @@ def tower_stats(t, tiers, picks=None):
         **{f: high.get(f, 0) for f in ("lapRepairs", "crateHealPercent", "paratroopers", "throwMissPercent")},
         **{f: flag.get(f, False) for f in ("lapChests", "airlift", "dinoOutlines", "bombingRun")},
         "hookEvery": shortest.get("hookEvery", 0),
+        # Meteor Beacon (PLAN 9i T127; Shared/TowerStats)
+        **{f: high.get(f, 0) for f in ("meteors", "craterSeconds", "craterAmpPercent", "biteMissPercent", "craterFreezeSeconds",
+                                       "sideSlowPercent", "sideSlowSeconds", "biggestBreaks")},
+        **{f: shortest.get(f, 0) for f in ("meteorEvery", "starfallEvery")},
+        **{f: flag.get(f, False) for f in ("scatter", "fireLine", "burnStreak", "extinction")},
     }
 
 
@@ -994,6 +1003,48 @@ def totem_lines(data, mixes, rows):
     return out, findings
 
 
+# The 9i damage towers' release bars (PLAN 9g-9j common rule 6, #312/#313): over every damage path's 9 T5
+# builds (r31-40) the best c/e <= WORTH_HI x M and every one <= UNTOUCHABLE_HI x M; the best damage T2 c/e
+# in r11-20 <= ROUND9_T2_X x the released damage-path T2 median (4x batch out). Findings once released.
+ROUND9_T2_X = 1.5
+ROUND9_DAMAGE = ("METEOR",)
+
+
+def round9_lines(data, mixes, rows):
+    out, findings = [], []
+    late, tuning = mixes[BOUGHT_BAND[5]], data["Tuning"]
+    m = statistics.median(r["cpd"][BOUGHT_BAND[5]] for (k, p, t), r in rows.items()
+                          if t == 5 and not r["support"] and r["released"] and k not in ROUND4_BATCH | ROUND9_BATCH)
+    t2 = statistics.median(r["cpd"][1] for (k, p, t), r in rows.items()
+                           if t == 2 and not r["support"] and r["released"] and k not in ROUND9_BATCH)
+    for key in ROUND9_DAMAGE:
+        if key not in data["Towers"]:
+            continue
+        t = data["Towers"][key]
+        judged = key not in UNRELEASED
+        builds, early = [], []
+        for pi, path in enumerate(t["paths"]):
+            if is_support(key, path):
+                continue
+            cost = cumulative_cost(t, pi, 5)
+            for picks in path["t5"]:
+                s = path_stats(t, pi, 5, picks)
+                builds.append((ratio(cost, tower_edps(t, s, late, tuning) + aura_credit(data, s, late)), f"{path['id']} {picks}"))
+            early.append((rows[(key, pi, 2)]["cpd"][1], path["id"]))
+        if not builds:
+            continue
+        (lo, lo_at), (hi, hi_at), (e, e_at) = min(builds), max(builds), min(early)
+        bad = [why for why, failed in ((f"best T5 c/e {fmt(lo)} > {fmt(WORTH_HI * m)}", lo > WORTH_HI * m),
+                                       (f"worst T5 c/e {fmt(hi)} > {fmt(UNTOUCHABLE_HI * m)}", hi > UNTOUCHABLE_HI * m),
+                                       (f"best T2 c/e r11-20 {fmt(e)} > {fmt(ROUND9_T2_X * t2)}", e > ROUND9_T2_X * t2)) if failed]
+        out.append(f"  {t['display']} damage T5 builds c/e {fmt(lo)} ({lo_at}) - {fmt(hi)} ({hi_at}) (bars <= {fmt(WORTH_HI * m)}"
+                   f" / <= {fmt(UNTOUCHABLE_HI * m)}); best T2 r11-20 c/e {fmt(e)} ({e_at}, bar <= {fmt(ROUND9_T2_X * t2)})"
+                   + ("" if not bad else " FAIL" if judged else " (unreleased: judged at T128b)"))
+        if judged:
+            findings += [f"{key}: {why} (PLAN 9g-9j rule 6, #312)" for why in bad]
+    return out, findings
+
+
 def fmt(x):
     if x == math.inf:
         return "inf"
@@ -1505,6 +1556,8 @@ def tower_edps(t, s, mix, tuning, **kw):
         return totem_edps(s, mix, tuning, **kw)
     if t["display"] == "Spotter Blimp":
         return blimp_gun(s, mix, tuning, **kw)
+    if t["display"] == "Meteor Beacon":
+        return meteor_edps(s, mix, tuning, **kw)
     return walker_edps(s, mix, tuning, **kw) if t.get("walkers", 0) > 0 else edps(s, mix, tuning, **kw)
 
 
@@ -1596,6 +1649,79 @@ def blimp_cargo(data, s, mix):
               "walkerSpeedMult": 1}
         w += EDPS_CASH * walker_edps(ps, mix, tuning) * BLIMP_PARA_TAKE
     return w
+
+
+# Meteor Beacon (PLAN 9i T127, #314 made exact by #337; stated assumptions, 9k revisits them).
+METEOR_CRATER_DINOS = 3  # dinos a crater burns (one crater a strike; none with Starfall)
+METEOR_STARFALL_HITS = 1.5  # dino-hits of each Starfall small meteor (breaks 1)
+METEOR_STREAK = (3, 1)  # Cinder Trail: each small meteor's strip burns (s, dinos)
+METEOR_EXTINCTION_DINOS = 5  # Extinction Event: this many in the bunch at Extinction breaks + this many at 1
+METEOR_KNOCKBACK_DINOS = 5  # Shockwave Ring: dinos knocked back a strike
+METEOR_AMP = (3, 3)  # Scorch Marks: a crossing dino takes +x % for (s), (dinos) a crater
+
+
+def meteor_strike(s, mix, tuning, damage, hits, breaks, overkill=True, breaks1=False):
+    """One meteor's damage on `hits` dinos (#337: every dino in the splash breaks `breaks`): honest hits
+    (no bomblets, marks or chains), or the zero-waste number."""
+    if not overkill:
+        return damage * hits * (mix["plain"] + mix["armoured"] * (s["armoredMult"] if s["pierces"] else 0)
+                                + mix["flying"] * (1 if s["hitsAir"] else 0) + mix["boss"] * s["bossMult"])
+    c = {**s, "targets": 1, "lineHits": 1, "bomblets": 0, "bombletGenerations": 0, "chains": False,
+         "chainHarpoons": False, "sizeBreaks": breaks}
+    return honest_hits(c, mix, tuning, damage, hits, s["pierces"], breaks1)
+
+
+def meteor_edps(s, mix, tuning, overkill=True, breaks1=False, **_kw):
+    """Impact / Sky Rocks (PLAN 9i, #337, r31-40 in the report): a strike every 1 / rate s = a meteor of
+    Damage on Targets dinos at Size breaks (Meteors n: n small meteors, Small meteor x damage on Targets x
+    Small splash x dinos); Meteor every adds a small meteor per that many s; Starfall = Starfall meteors x 1.5
+    dino-hits of a small meteor (breaks 1) per Starfall every, in place of the strike; one crater a strike
+    (none with Starfall) = Burn DPS (blank = Crater burn DPS) x Crater s x 3 ground dinos (x 2 with Fire
+    line); Burn streak = Burn DPS x 3 s x 1 dino per small meteor; Extinction = Extinction x the meteor on 5
+    dinos at Extinction breaks + 5 at breaks 1, per Round seconds (model); Comet Tail = Field strike x the
+    meteor on DINOS_ON_SIDE dinos (breaks 1) per round. Side slow, Biggest breaks, Scatter = blind spots."""
+    if s["rate"] <= 0:
+        return 0.0
+    every, damage, n, br = 1 / s["rate"], s["damage"], max(1, s["meteors"]), s["sizeBreaks"]
+    small, splash = damage * tuning["SmallMeteorX"], s["targets"] * tuning["SmallSplashX"]
+    secs = tuning["RoundSecondsModel"]
+    hit = lambda d, h, b: meteor_strike(s, mix, tuning, d, h, b, overkill, breaks1)
+    out, craters = 0.0, 0.0
+    if s["starfallEvery"]:
+        out += METEOR_STARFALL_HITS * tuning["StarfallMeteors"] * hit(small, 1, 1) / s["starfallEvery"]
+    elif n > 1:
+        out += n * hit(small, splash, br) / every
+        craters = 1 / every
+    else:
+        out += hit(damage, s["targets"], br) / every
+        craters = 1 / every
+    if s["meteorEvery"]:
+        out += hit(small, splash, br) / s["meteorEvery"]
+    smalls = ((n / every if n > 1 and not s["starfallEvery"] else 0) + (1 / s["meteorEvery"] if s["meteorEvery"] else 0)
+              + (tuning["StarfallMeteors"] / s["starfallEvery"] if s["starfallEvery"] else 0))
+    ground = 1 - mix["flying"]
+    burn = s["burnDps"] or tuning["CraterBurnDPS"]
+    out += craters * burn * (s["craterSeconds"] or tuning["CraterS"]) * METEOR_CRATER_DINOS * ground * (2 if s["fireLine"] else 1)
+    if s["burnStreak"]:
+        out += burn * METEOR_STREAK[0] * METEOR_STREAK[1] * ground * smalls
+    if s["extinction"]:
+        big = damage * tuning["ExtinctionX"]
+        out += (hit(big, METEOR_EXTINCTION_DINOS, int(tuning["ExtinctionBreaks"]))
+                + hit(big, METEOR_EXTINCTION_DINOS, 1)) / secs
+    if s["bombingRun"]:
+        out += hit(damage * s["fieldStrikeX"], DINOS_ON_SIDE, 1) / secs
+    return out
+
+
+def meteor_aftermath(s, mix, tuning):
+    """Aftermath (control, PLAN 9i #314): the strike's eDPS + HOLD_EDPS x (Knockback / 8 x 5 dinos + Crater
+    freeze s x 3 dinos) per strike gap + Crater amp % / 100 x 120 x 3 s x 3 dinos per gap + 0.5 x (Throw
+    miss % + Bite miss %)."""
+    gap = 1 / s["rate"] if s["rate"] > 0 else math.inf
+    h = (s["knockback"] / 8 * METEOR_KNOCKBACK_DINOS + s["craterFreezeSeconds"] * METEOR_CRATER_DINOS) / gap
+    amp = s["craterAmpPercent"] / 100 * HOLD_EDPS * METEOR_AMP[0] * METEOR_AMP[1] / gap
+    return (meteor_edps(s, mix, tuning) + HOLD_EDPS * h + amp
+            + 0.5 * (s["throwMissPercent"] + s["biteMissPercent"]))
 
 
 def track_studs():
@@ -1724,6 +1850,10 @@ def tower_worth(data, key, pi, s, late):
         if pid == "Cargo":
             return blimp_cargo(data, s, late)
         return blimp_gun(s, late, tuning) + aura_credit(data, s, late)
+    if key == "METEOR":  # PLAN 9i T127 (#314, #337)
+        if pid == "Aftermath":
+            return meteor_aftermath(s, late, tuning)
+        return meteor_edps(s, late, tuning) + aura_credit(data, s, late)
     if key == "RAPTOR":  # PLAN 9g (#314): the walker model
         if pid == "Trainer":
             return raptor_trainer(data, s, late)
@@ -2074,6 +2204,10 @@ def value_report(data, full=False):
     for line in lines:
         print(line)
     findings += blimp
+    lines, r9 = round9_lines(data, mixes, rows)  # PLAN 9i: the Meteor Beacon's / Volcano Vent's release bars
+    for line in lines:
+        print(line)
+    findings += r9
     print('"worth it" (PLAN T68, #193; round-4 batch T5 cost/eDPS in rounds 31-40):')
     lines, worth = worth_lines(data, rows)
     for line in lines:
@@ -2189,12 +2323,13 @@ def breaks_report(data):
         s = path_stats(t, pi, tier)
         label = f"{t['display'][:14]} {path['id']} T{tier} {export_constants.line(path)[tier - 1]['name']} b{r['breaks']}"
         specialist = (key, path["id"], tier) in BOSS_SPECIALIST
+        area = (key, path["id"]) in AREA_STRIKES  # #338: bar 3 reported, not gated
         # A tower that can't be damaged is held to the "worth it" window instead (#193: its damage
         # T5s 1.25x-2x the median cost/eDPS), so bar 3 doesn't gate it: reported like a boss specialist.
         untouchable = t.get("untouchable", False)
         for i in (BREAKS_T1_BANDS if tier == 1 else BREAKS_BANDS):
             z, b1, sv = r["before"][i], tower_edps(t, s, mixes[i], tuning, breaks1=True) + r["aura"][i], r["edps"][i]
-            bad, branch = break_bars(z, b1, sv, tier == 5 and not specialist and not untouchable, medians[i])
+            bad, branch = break_bars(z, b1, sv, tier == 5 and not specialist and not untouchable and not area, medians[i])
             lo, hi = BANDS[i]
             # A tower not sold yet is judged at its batch's release task (PLAN 9g rule 5, #312): reported only.
             held = key in UNRELEASED
@@ -2203,8 +2338,9 @@ def breaks_report(data):
                   f"{('  (unreleased, report) ' if held else '  FAIL ') + ', '.join(bad) if bad else ''}")
             if not held:
                 failures += [f"{label} r{lo}-{hi}: {b}" for b in bad]
-            if specialist or (untouchable and tier == 5):
-                specialists.append((("boss specialist (report, #164)" if specialist else "can't be damaged (report, #148)"),
+            if specialist or ((untouchable or area) and tier == 5):
+                specialists.append((("boss specialist (report, #164)" if specialist else "area strike (report, #338)" if area
+                                     else "can't be damaged (report, #148)"),
                                     f"{label} r{lo}-{hi} S {fmt(sv)} S/B1 {sv / b1:.2f} S/Z {sv / z:.2f}"
                                     f" (median {fmt(medians[i])})"))
     for why, line in specialists:

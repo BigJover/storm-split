@@ -182,7 +182,7 @@ test("T111: row reads the composed build for the picks; tierCount is 5 for tower
 end)
 
 test("T111: every real path offers option A at tiers 4 and 5; the starters A, B and C (9c)", function()
-	local withBC = { SCOUT = true, SNIPER = true, GRENADIER = true, CHILLER = true, QUARTERMASTER = true, HOSPITAL = true, ARMORY = true, COIL = true, FALCON = true, TARPIT = true, BALLISTA = true, RESIN = true, RAPTOR = true, TOTEM = true, BLIMP = true } -- 9c, 9d, 9e; 9g; 9h
+	local withBC = { SCOUT = true, SNIPER = true, GRENADIER = true, CHILLER = true, QUARTERMASTER = true, HOSPITAL = true, ARMORY = true, COIL = true, FALCON = true, TARPIT = true, BALLISTA = true, RESIN = true, RAPTOR = true, TOTEM = true, BLIMP = true, METEOR = true } -- 9c, 9d, 9e; 9g; 9h
 	local heroBC = { PISTOL = true, RIFLE = true, SHOTGUN = true, MEDIC = true } -- 9f
 	for g, group in { Config.Towers, Config.Heroes } do
 		for key, def in group :: any do
