@@ -14,7 +14,7 @@ DataStore writes from an agent). N15 rides any `Battle` commit (#272).
 **Status (2026-10-13, later): 9a + 9b done (c1a7c5a, 0f82bb7, 929b66a, cd6a413, cd749d2; 706 specs); Tester Run 8 running. 9c designed below (#290). Next: 🦖 names 9c → Builder T114 + T115.**
 **Status (2026-10-13, Director): 9d + 9e designed below (#292–#297; 96 options, metrics, 6 new mechanics). Next after 9c: 🦖 names 9d → T116–T118, then 9e → T119–T120.**
 **Status (2026-10-13, Director): 9f designed below (#298–#302; 48 hero options, per-path metrics, 1 new mechanic). Next after 9e: 🦖 names 9f → T121–T122.**
-**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.** **Update (2026-10-14): 9g built; next = T124c (finishes T124b, #325–#328), then Tester Run 9g.**
+**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.** **Update (2026-10-14): 9g built; next = T124c (finishes T124b, #325–#328), then Tester Run 9g.** **Update (2026-10-15): T124c steps 1–4 in (03c9634), release held on King of the Pack bar 3; next = T124d (#329–#330, King Rate x 1.25 + frozen bar-3 median + release), then Tester Run 9g.**
 
 ## Size of the job
 | | Slots (T4+T5) | Options to build | New options to design |
@@ -948,6 +948,23 @@ dino that bit a tower).
 6. **Tester Run 9g** as T124b, plus watches (report, not bars): a pounced dino visibly stops
    (0.5 s; alpha 1 s); dinos bite raptors instead of the pen's neighbours; a Clever Girls
    raptor in a big dino's path is not trampled; a Museum Piece fossil pays 150 Sink cash.
+**T124d — unblocks T124c step 5 (Director 2026-10-15, #329–#330; ONE Builder commit = T124c
+step 5 + these, then step 6).** T124c steps 1–4 stand (03c9634). Checked on a copy with RESIN
+and RAPTOR released: `--breaks1` (with step 2) exit 0, `--options` 0, `value.py` 0, no new DEAD.
+1. **King of the Pack stays gated by bar 3 (#329); lever = bite rate.** `Tower Upgrades!H338`
+   (Rate x, row M338 "King of the Pack") 1 → **1.25** (assert 1; assert `BJ338` Size breaks 4
+   unchanged, it's at `MaxSizeBreaks`). r21–30 S 151 → **188** ≥ 182; r31–40 368 ≥ 291. King c/e
+   230 → 184 (1.30× M); best Raptor T5 Raptor Swarm 155 ≤ 177; Alpha T5 slots 5A 368/308/341,
+   5B 439/369/405, 5C 395/328/368 (options clean). Not Damage x: r21–30 S is capped at 4 × B1.
+2. **Bar 3 median frozen like M (#330).** `tools/value.py` `breaks_report`: the `medians`
+   filter becomes `t == 5 and not r["support"] and r["released"] and k not in ROUND9_BATCH`;
+   header line notes "(4× batch out, #330)". Expect "T5 median: r21-30 182, r31-40 291" with
+   the towers released. (Without it the median chases King and at 1.3 fails Harpoon Skewer.)
+3. **Release = T124c step 5** unchanged. Config diff = T124c's cells already in + `H338` (King
+   rate x 1.25) + the two keys sold. Commit message adds the King row (c/e 184, 1.30× M; bar 3
+   S 188 / 368) and the re-measured Alpha T5 range. `tools/test.sh` green; `--breaks1` 0 released.
+4. **Docs:** none; the card ("A giant raptor, half damage taken") and `UPGRADES.md` stay
+   (Rate x is a hidden number, like Sickle Claw's Damage x, #318).
 
 **9h — Spotter Blimp + Bone Totem** (T125 Blimp, T126 Totem, T126b release).
 
