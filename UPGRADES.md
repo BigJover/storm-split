@@ -476,6 +476,37 @@ A/B/C picks at tiers 4 and 5 (PLAN 9i, DECISIONS #337–#338; names = DINO_REVIE
 | **Aftermath** | 4 | Long Burn — Craters last 8 s, hotter | Glass Crater — Craters strip armour | Scorch Marks — Dinos crossing a crater take +15% |
 | **Aftermath** | 5 | Fire Line — Craters join into one burning strip | Blinding Dust — Dinos in the ash can't bite or throw | New Ice Age — Craters freeze dinos solid for 2 s |
 
+## Volcano Vent (VENT) — lava on one stretch of track: burns, shoves, crust · built (PLAN 9i T128) · not sold yet (T128b) · unlock 600 Amber
+
+A smoking crack in the ground (600 cash, 200 HP) that must stand **within 8 studs of the track**.
+It owns one stretch: 24 studs of track centred on the track point nearest it. Every 12 s it
+erupts: 4 ground dinos on the stretch take 30 (breaks 1) and **lava** floods the stretch for 6 s.
+Dinos in the lava burn 8 a second (x Damage x and the team's level) and are **shoved** sideways
+3 studs a second, up to 4 (bosses aren't shoved); after the flow they walk back to the path. Two
+vents' lava on one dino: the strongest only. Obsidian is judged on its control line (out of the
+damage medians, #314). Rules: `Shared/Vent`.
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Magma** | damage | Hot Rock | Searing Flow | *Lava Lake* | *White Hot* | *Supervolcano* |
+| **Pressure** | damage | Shorter Fuse | Twin Vents | *Geyser* | *Steam Burst* | *Ring of Fire* |
+| **Obsidian** | control | Cooling Crust | Sharp Glass | *Obsidian Wall* | *Jagged Crust* | *Glass Maze* |
+
+- Hot Rock / Searing Flow / Lava Lake: hotter eruptions and lava (x1.6 / x3 / x5.4); Lava Lake's lava lasts 10 s and its burn breaks a size a tick.
+- Shorter Fuse / Twin Vents / Geyser: erupts more often (x1.33 / x2 / x2, damage x1.2 / x1.5 / x2.5); Geyser: a burst on the stretch every 5 s between eruptions (x0.3).
+- Cooling Crust / Sharp Glass / Obsidian Wall: after each flow its stretch is crust for 6 s (dinos on it slowed 30 %); Sharp Glass: the crust strips armour; Obsidian Wall: once a round played (it picks its moment, like the Resin Wall) a wall at the stretch's far end holds dinos 2 s.
+
+A/B/C picks at tiers 4 and 5 (PLAN 9i, DECISIONS #339; names = DINO_REVIEW Round 19). White Hot: the lava melts armour (pierces). Rivers of Fire: the lava runs 1.8x as far. Ember Rain: embers hit low flyers. Supervolcano: once a round played (it picks its moment) every dino on your side stands in lava for 4 s. Lava Bombs: each eruption also throws 6 lava bombs (x0.5) at the biggest dinos in range. Fire Mountain: eruptions twice as big (twice the stretch and the targets). Steam Burst: eruptions knock small dinos 6 studs back. Rumble: dinos in range stumble (20 % slower) while no lava is down. Pressure Valve: erupts at once when a boss comes into range (once per boss). Ring of Fire: 3 small vents (half size) erupt in turn between eruptions. Old Faithful: erupts 2.5x as often, smaller. Ash Blanket: after each eruption every dino on your side misses 30 % of its throws for 5 s. Jagged Crust: the crust cuts dinos on it 35 a second (x the team's level). Black Glass: towers in range see 15 % further; crust 15 a second. Heat Shimmer: dinos on the crust can't throw; crust 10 a second. Glass Maze: a dino crossing the crust walks 12 studs further. Obsidian Armour: towers in range take 30 % less from throws; crust 15 a second. Frozen Fire: when the lava ends every dino on it is frozen 2 s (a boss 1 s). No Raider option (#320).
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Magma** | 4 | White Hot — Lava melts armour | Rivers of Fire — The lava runs 20 studs further | Ember Rain — Embers hit low flyers |
+| **Magma** | 5 | Supervolcano — Floods the whole track once a round | Lava Bombs — Throws 6 lava bombs at big dinos | Fire Mountain — Eruptions twice as big |
+| **Pressure** | 4 | Steam Burst — Eruptions knock small dinos back | Rumble — Dinos nearby stumble: −20% speed | Pressure Valve — Erupts early when a boss comes |
+| **Pressure** | 5 | Ring of Fire — 3 small vents erupt in turn | Old Faithful — Erupts 2.5× as often, smaller | Ash Blanket — Ash makes dinos miss 30% of throws |
+| **Obsidian** | 4 | Jagged Crust — The crust cuts dinos | Black Glass — Nearby towers see 15% further | Heat Shimmer — Dinos on the crust can't throw |
+| **Obsidian** | 5 | Glass Maze — The crust makes dinos walk 12 studs further | Obsidian Armour — Nearby towers take 30% less from throws | Frozen Fire — The whole flow hardens: 2 s stop |
+
 ---
 
 ## Mechanics and when they're built

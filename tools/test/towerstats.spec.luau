@@ -68,6 +68,7 @@ local function expected(def, tiers: { number })
 		chargeNeededMult = product("chargeNeededMult"),
 		hunterCooldownMult = product("hunterCooldownMult"),
 		blimpSpeedMult = product("blimpSpeedMult"), -- PLAN 9h (T125b): the Spotter Blimp
+		flowLengthMult = product("flowLengthMult"), -- PLAN 9i (T128): the Volcano Vent
 	}
 	for _, field in TowerStats.HIGHEST do
 		local value = highest(field)
@@ -174,7 +175,9 @@ local function expected(def, tiers: { number })
 		e.heartEvery = math.floor(e.heartEvery)
 	else
 		for _, field in { "entombSeconds", "entombAmpPercent", "entombSpread", "entombSlowPercent", "entombAllEvery", "bossEntombSeconds", "sendBack", "fossilBelowPercent", "fossilRatePercent", "bountyFossilsX", "heartEvery", "sealSeconds", "sealEvery", "sealHealPercent", "wallSeconds" } do
-			e[field] = 0
+			if not (field == "wallSeconds" and (def.nearTrack or 0) > 0) then -- the Vent's Obsidian Wall (PLAN 9i)
+				e[field] = 0
+			end
 		end
 	end
 	-- Bone Totem (PLAN 9h): Hunter / Bounty charge x are 1 when no tier sets them; counts are whole.
@@ -189,6 +192,7 @@ local function expected(def, tiers: { number })
 	-- Meteor Beacon (PLAN 9i T127): counts are whole.
 	e.meteors = math.floor(e.meteors)
 	e.biggestBreaks = math.floor(e.biggestBreaks)
+	e.extraVents = math.floor(e.extraVents)
 	return e
 end
 

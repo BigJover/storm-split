@@ -146,6 +146,21 @@ local AFTER_SNAPSHOT: { [string]: any } = {
 	sideSlowPercent = 0,
 	sideSlowSeconds = 0,
 	biggestBreaks = 0,
+	-- PLAN 9i (T128): the Volcano Vent's own fields (none on these towers)
+	flowSeconds = 0,
+	flowLengthMult = 1,
+	burnBreaks = false,
+	geyserEvery = 0,
+	extraVents = 0,
+	lavaBombs = false,
+	bossErupt = false,
+	sideThrowMissPercent = 0,
+	supervolcano = false,
+	crust = false,
+	crustDps = 0,
+	mazeStuds = 0,
+	freezeFlowSeconds = 0,
+	throwResistPercent = 0,
 }
 -- ... and fields whose "does nothing" value is the tower's own (hitsAir moved from the Towers
 -- row into the stats with the generic Hits air column, PLAN 9g).

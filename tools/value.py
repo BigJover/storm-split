@@ -132,6 +132,7 @@ BOUGHT_BAND = {1: 1, 2: 1, 3: 2, 4: 3, 5: 3}  # tier -> index into BANDS
 SUPPORT_PATHS = {("TOTEM", "Ancestors"), ("TOTEM", "Bone Pile"),  # PLAN 9h (#314): buffs and cash
                  ("BLIMP", "Searchlight"), ("BLIMP", "Cargo"),  # PLAN 9h T125b (#334, #335): light and cash
                  ("METEOR", "Aftermath"),  # PLAN 9i (#314, #337): crater control, option bars only
+                 ("VENT", "Obsidian"),  # PLAN 9i (#314, #339): crust control, option bars only
                  ("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knockout"), ("CHILLER", "Weak Spot"),
                  ("COIL", "Lightning Rod"),  # PLAN T64: Charged Air, Storm Warning, Lightning Rodeo
                  ("FALCON", "Falconer"),  # PLAN T65: Falcon Bells, Hooded Scout, Lure, Hunting Party
@@ -326,6 +327,7 @@ def tower_stats(t, tiers, picks=None):
            for f in ("entombAmpPercent", "entombSpread", "entombSlowPercent", "bossEntombSeconds", "sendBack",
                      "fossilBelowPercent", "fossilRatePercent", "bountyFossilsX", "sealSeconds", "sealHealPercent",
                      "wallSeconds")},
+        "wallSeconds": high.get("wallSeconds", 0) if t.get("resin") or t.get("nearTrack", 0) > 0 else 0,  # the Vent's Obsidian Wall (9i)
         **{f: (shortest.get(f, 0) if t.get("resin") else 0) for f in ("entombAllEvery", "heartEvery", "sealEvery")},
         "entombSeconds": (high.get("entombSeconds", 0) or TUNING["EntombBaseS"]) if t.get("resin") else 0,
         "entombHitsMult": mult["entombHitsMult"],
@@ -357,6 +359,11 @@ def tower_stats(t, tiers, picks=None):
                                        "sideSlowPercent", "sideSlowSeconds", "biggestBreaks")},
         **{f: shortest.get(f, 0) for f in ("meteorEvery", "starfallEvery")},
         **{f: flag.get(f, False) for f in ("scatter", "fireLine", "burnStreak", "extinction")},
+        # Volcano Vent (PLAN 9i T128; Shared/TowerStats)
+        **{f: high.get(f, 0) for f in ("flowSeconds", "extraVents", "sideThrowMissPercent", "crustDps", "mazeStuds",
+                                       "freezeFlowSeconds", "throwResistPercent")},
+        "flowLengthMult": mult["flowLengthMult"], "geyserEvery": shortest.get("geyserEvery", 0),
+        **{f: flag.get(f, False) for f in ("burnBreaks", "lavaBombs", "bossErupt", "supervolcano", "crust")},
     }
 
 
@@ -1007,7 +1014,7 @@ def totem_lines(data, mixes, rows):
 # builds (r31-40) the best c/e <= WORTH_HI x M and every one <= UNTOUCHABLE_HI x M; the best damage T2 c/e
 # in r11-20 <= ROUND9_T2_X x the released damage-path T2 median (4x batch out). Findings once released.
 ROUND9_T2_X = 1.5
-ROUND9_DAMAGE = ("METEOR",)
+ROUND9_DAMAGE = ("METEOR", "VENT")
 
 
 def round9_lines(data, mixes, rows):
@@ -1558,6 +1565,8 @@ def tower_edps(t, s, mix, tuning, **kw):
         return blimp_gun(s, mix, tuning, **kw)
     if t["display"] == "Meteor Beacon":
         return meteor_edps(s, mix, tuning, **kw)
+    if t["display"] == "Volcano Vent":
+        return vent_edps(s, mix, tuning, t["baseDamage"], **kw)
     return walker_edps(s, mix, tuning, **kw) if t.get("walkers", 0) > 0 else edps(s, mix, tuning, **kw)
 
 
@@ -1724,6 +1733,68 @@ def meteor_aftermath(s, mix, tuning):
             + 0.5 * (s["throwMissPercent"] + s["biteMissPercent"]))
 
 
+# Volcano Vent (PLAN 9i T128, #314 made exact by #339; stated assumptions, 9k revisits them).
+VENT_FLOW_DINOS = 2  # dinos in a lava flow (and on its crust); 2 crossing dinos per flow for Glass Maze
+VENT_WALL_DINOS = 6  # dinos an Obsidian Wall holds a round
+VENT_THROW_RESIST = 0.3  # Obsidian Armour: points per Throw resist % (as Armory points)
+
+
+def vent_hits(s, mix, tuning, damage, hits, breaks, overkill=True, breaks1=False):
+    """Honest hits of `damage` on `hits` dinos at `breaks` (no bomblets, chains or marks)."""
+    return meteor_strike(s, mix, tuning, damage, hits, breaks, overkill, breaks1)
+
+
+def vent_eruption(s, mix, tuning, base, size=1.0, bombs=True, overkill=True, breaks1=False):
+    """One eruption: honest hits of Damage x size on Targets dinos (breaks 1) + the flow's burn (Flow burn
+    DPS x Damage / base Damage x size x 2 dinos x Flow s x Flow length x x the ground share) + Lava Bombs
+    (honest hits of Lava bomb x the damage on Lava bombs dinos at Size breaks)."""
+    out = vent_hits(s, mix, tuning, s["damage"] * size, s["targets"], 1, overkill, breaks1)
+    flow = s["flowSeconds"] or tuning["FlowS"]
+    out += (tuning["FlowBurnDPS"] * s["damage"] / base * size * VENT_FLOW_DINOS * flow * s["flowLengthMult"]
+            * (1 - mix["flying"]))
+    if bombs and s["lavaBombs"]:
+        out += vent_hits(s, mix, tuning, s["damage"] * tuning["LavaBombX"], tuning["LavaBombs"], s["sizeBreaks"], overkill, breaks1)
+    return out
+
+
+def vent_edps(s, mix, tuning, base, overkill=True, breaks1=False, **_kw):
+    """Magma / Pressure (PLAN 9i, #339, r31-40 in the report): an eruption per 1 / rate s + Geyser (honest
+    hits of Geyser x the damage on Targets per Geyser every) + Extra vents (n eruptions at Extra vent x size,
+    no bombs, per gap) + Supervolcano (DINOS_ON_SIDE x the flow's burn x Supervolcano s per Round seconds
+    (model)) + Boss erupt (one more eruption per boss round). Shove, Rumble, knockback, ash = blind spots."""
+    if s["rate"] <= 0 or base <= 0:
+        return 0.0
+    every = 1 / s["rate"]
+    one = vent_eruption(s, mix, tuning, base, 1.0, True, overkill, breaks1)
+    out = one / every
+    if s["geyserEvery"]:
+        out += vent_hits(s, mix, tuning, s["damage"] * tuning["GeyserX"], s["targets"], 1, overkill, breaks1) / s["geyserEvery"]
+    if s["extraVents"]:
+        out += s["extraVents"] * vent_eruption(s, mix, tuning, base, tuning["ExtraVentX"], False, overkill, breaks1) / every
+    secs = tuning["RoundSecondsModel"]
+    if s["supervolcano"]:
+        out += DINOS_ON_SIDE * tuning["FlowBurnDPS"] * s["damage"] / base * tuning["SupervolcanoS"] * (1 - mix["flying"]) / secs
+    if s["bossErupt"]:
+        out += one * mix["bossRounds"] / secs
+    return out
+
+
+def vent_obsidian(data, s, mix, base):
+    """Obsidian (control, PLAN 9i #339): the eruption's eDPS + HOLD_EDPS x H (crust: 2 dinos x Crust slow % x
+    Crust s; Glass Maze / 8 x 2 crossing dinos; Frozen Fire s x 2 dinos; all per eruption gap; Obsidian Wall
+    s x 6 dinos per round) + Crust DPS x 2 dinos x Crust s per gap + aura credit (Aura range % as rate % / 2)
+    + 0.5 x Throw miss % + 0.3 x Throw resist %."""
+    tuning = data["Tuning"]
+    gap = 1 / s["rate"] if s["rate"] > 0 else math.inf
+    crust = tuning["CrustS"]
+    h = ((VENT_FLOW_DINOS * tuning["CrustSlow"] / 100 * crust if s["crust"] else 0) + s["mazeStuds"] / 8 * VENT_FLOW_DINOS
+         + s["freezeFlowSeconds"] * VENT_FLOW_DINOS) / gap + s["wallSeconds"] * VENT_WALL_DINOS / tuning["RoundSecondsModel"]
+    worth = vent_edps(s, mix, tuning, base) + HOLD_EDPS * h + s["crustDps"] * VENT_FLOW_DINOS * crust / gap
+    if s["auraRangePercent"]:
+        worth += aura_credit(data, {**s, "auraRatePercent": s["auraRangePercent"] / 2}, mix)
+    return worth + 0.5 * s["throwMissPercent"] + VENT_THROW_RESIST * s["throwResistPercent"]
+
+
 def track_studs():
     """The track's length (studs), from Track.luau (read once)."""
     global TRACK_STUDS
@@ -1854,6 +1925,10 @@ def tower_worth(data, key, pi, s, late):
         if pid == "Aftermath":
             return meteor_aftermath(s, late, tuning)
         return meteor_edps(s, late, tuning) + aura_credit(data, s, late)
+    if key == "VENT":  # PLAN 9i T128 (#314, #339)
+        if pid == "Obsidian":
+            return vent_obsidian(data, s, late, t["baseDamage"])
+        return vent_edps(s, late, tuning, t["baseDamage"]) + aura_credit(data, s, late)
     if key == "RAPTOR":  # PLAN 9g (#314): the walker model
         if pid == "Trainer":
             return raptor_trainer(data, s, late)

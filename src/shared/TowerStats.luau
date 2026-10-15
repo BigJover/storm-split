@@ -217,6 +217,21 @@ export type Stats = {
 	sideSlowPercent: number, -- Impact Winter: after each meteor every dino on the side is slowed
 	sideSlowSeconds: number,
 	biggestBreaks: number, -- Dino Killer: the biggest dino a meteor hits breaks this many sizes more
+	-- Volcano Vent (PLAN 9i T128; rules in Shared/Vent). Only the VENT's rows set these (KEY_ONLY).
+	flowSeconds: number, -- s the lava stays down (0 = Tuning Flow (s))
+	flowLengthMult: number, -- x Tuning Flow length
+	burnBreaks: boolean, -- Lava Lake: lava ticks break 1
+	geyserEvery: number, -- Geyser: a burst every N s between eruptions (0 = none)
+	extraVents: number, -- Ring of Fire: small vents erupting in turn
+	lavaBombs: boolean, -- Lava Bombs
+	bossErupt: boolean, -- Pressure Valve: erupts at once when a boss enters range, once per boss
+	sideThrowMissPercent: number, -- Ash Blanket: after each eruption the side's dinos miss this % of throws
+	supervolcano: boolean, -- Supervolcano: once per round played (AutoFire)
+	crust: boolean, -- Obsidian: crust after each flow
+	crustDps: number, -- Jagged Crust: the crust's cut a second (x the team's level)
+	mazeStuds: number, -- Glass Maze: a dino crossing the crust walks this much further
+	freezeFlowSeconds: number, -- Frozen Fire: when the flow ends its dinos are hard-stopped this long
+	throwResistPercent: number, -- Obsidian Armour: towers in range take this % less from throws
 }
 
 local MULTIPLIERS = {
@@ -240,6 +255,7 @@ local MULTIPLIERS = {
 	"chargeNeededMult",
 	"hunterCooldownMult",
 	"blimpSpeedMult",
+	"flowLengthMult",
 }
 local HIGHEST = {
 	"shots",
@@ -347,6 +363,14 @@ local HIGHEST = {
 	"sideSlowPercent",
 	"sideSlowSeconds",
 	"biggestBreaks",
+	-- PLAN 9i (T128): the Volcano Vent
+	"flowSeconds",
+	"extraVents",
+	"sideThrowMissPercent",
+	"crustDps",
+	"mazeStuds",
+	"freezeFlowSeconds",
+	"throwResistPercent",
 }
 -- Timers where the shortest non-zero wins (PLAN 9g, the exporter's "minpos" kind).
 local MIN_POSITIVE = {
@@ -357,6 +381,7 @@ local MIN_POSITIVE = {
 	"hookEvery",
 	"meteorEvery",
 	"starfallEvery",
+	"geyserEvery",
 }
 local FLAGS = {
 	"piercesArmor",
@@ -400,6 +425,11 @@ local FLAGS = {
 	"fireLine",
 	"burnStreak",
 	"extinction",
+	"burnBreaks",
+	"lavaBombs",
+	"bossErupt",
+	"supervolcano",
+	"crust",
 }
 
 -- `pathPicks` is each path's A/B/C letters ("", "B", "BA"; Shared/Upgrades); nil means
@@ -558,7 +588,7 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		sealEvery = if def.resin then shortest.sealEvery or 0 else 0,
 		sealHealPercent = if def.resin then high.sealHealPercent or 0 else 0,
 		reflectDamage = high.reflectDamage or 0,
-		wallSeconds = if def.resin then high.wallSeconds or 0 else 0,
+		wallSeconds = if def.resin or (def.nearTrack or 0) > 0 then high.wallSeconds or 0 else 0, -- the Volcano Vent's Obsidian Wall too (PLAN 9i)
 		takeDownMarkPercent = high.takeDownMarkPercent or 0,
 		hitsAir = def.hitsAir == true or flag.hitsAir == true,
 		walkers = if walking then math.floor(math.max(def.walkers, high.walkers or 0)) else 0,
@@ -625,6 +655,20 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		sideSlowPercent = high.sideSlowPercent or 0,
 		sideSlowSeconds = high.sideSlowSeconds or 0,
 		biggestBreaks = math.floor(high.biggestBreaks or 0),
+		flowSeconds = high.flowSeconds or 0,
+		flowLengthMult = mult.flowLengthMult,
+		burnBreaks = flag.burnBreaks == true,
+		geyserEvery = shortest.geyserEvery or 0,
+		extraVents = math.floor(high.extraVents or 0),
+		lavaBombs = flag.lavaBombs == true,
+		bossErupt = flag.bossErupt == true,
+		sideThrowMissPercent = high.sideThrowMissPercent or 0,
+		supervolcano = flag.supervolcano == true,
+		crust = flag.crust == true,
+		crustDps = high.crustDps or 0,
+		mazeStuds = high.mazeStuds or 0,
+		freezeFlowSeconds = high.freezeFlowSeconds or 0,
+		throwResistPercent = high.throwResistPercent or 0,
 	}
 end
 

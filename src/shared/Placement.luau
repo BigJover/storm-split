@@ -11,6 +11,9 @@
 	still never overlaps another tower or pit (2 x TowerRadius), and its pool must not
 	overlap another pit's pool at that pool's current length (checkPool, DECISIONS #189).
 
+	NEAR TRACK (PLAN 9i T128): a tower with Near track (studs) > 0 (the Volcano Vent) must
+	also stand within that many studs of its side's track (checkNear; measured to the lane).
+
 	SIDES (PLAN T75, DECISIONS #209): `zone` is the builder's side (Shared/Sides). The spot
 	must be inside that side's build zone, and the track rules use that side's copy of the
 	track, so a Tar Pit only ever goes on its own side's track. No zone = side 1 of co-op,
@@ -121,6 +124,22 @@ function Placement.check(position: Vector3, others: { Vector3 }, onTrack: boolea
 	end
 
 	return true, nil
+end
+
+-- Near track (PLAN 9i): an off-track spot within `studs` of the builder's side's track (the
+-- lane's edge, flat). `studs` 0 = no rule.
+function Placement.checkNear(position: Vector3, studs: number, zone: Sides.Zone?): (boolean, string?)
+	if studs <= 0 then
+		return true, nil
+	end
+	local z = zone or COOP_ZONE
+	local p = flat(position) - flat(z.offset)
+	for _, rect in lanes do
+		if distanceToRect(p, rect) <= studs then
+			return true, nil
+		end
+	end
+	return false, `Must be within {studs} studs of the track`
 end
 
 -- A new pit's pool (centred `at` studs along the track, `length` long) against the pools

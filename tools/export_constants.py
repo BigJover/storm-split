@@ -251,6 +251,21 @@ ABILITY_COLUMNS = [
     ("sideSlowPercent", 180, "num", 0),  # FX: Impact Winter: after each meteor every dino on the side slowed
     ("sideSlowSeconds", 181, "num", 0),  # FY
     ("biggestBreaks", 182, "num", 0),  # FZ: Dino Killer: the biggest dino a meteor hits breaks this many more
+    # PLAN 9i (T128, #339): the Volcano Vent (Shared/Vent). KEY_ONLY keeps them on the vent.
+    ("flowSeconds", 183, "num", 0),  # GA: s the lava stays down (blank = Tuning Flow (s))
+    ("flowLengthMult", 184, "num", 1),  # GB: x Tuning Flow length
+    ("burnBreaks", 185, "bool", False),  # GC: Lava Lake: lava ticks break 1 (Tar Pit's Boiling Pit rule)
+    ("geyserEvery", 186, "num", 0),  # GD: Geyser: a burst on the stretch every N s between eruptions
+    ("extraVents", 187, "num", 0),  # GE: Ring of Fire: small vents erupting in turn between the main eruptions
+    ("lavaBombs", 188, "bool", False),  # GF: Lava Bombs: each eruption throws Tuning Lava bombs at the biggest dinos
+    ("bossErupt", 189, "bool", False),  # GG: Pressure Valve: erupts at once when a boss enters range, once per boss
+    ("sideThrowMissPercent", 190, "num", 0),  # GH: Ash Blanket: each eruption, the side's dinos miss this % of throws
+    ("supervolcano", 191, "bool", False),  # GI: Supervolcano, once per round played (AutoFire)
+    ("crust", 192, "bool", False),  # GJ: Obsidian: the flow's stretch is crust after the lava
+    ("crustDps", 193, "num", 0),  # GK: Jagged Crust: the crust cuts dinos on it (x the team's level)
+    ("mazeStuds", 194, "num", 0),  # GL: Glass Maze: a dino crossing the crust walks this much further
+    ("freezeFlowSeconds", 195, "num", 0),  # GM: Frozen Fire: when the flow ends its dinos are hard-stopped
+    ("throwResistPercent", 196, "num", 0),  # GN: Obsidian Armour: towers in range take this % less from throws
 ]
 
 # Columns only a tower that chains (Towers column Chains) can use.
@@ -284,9 +299,14 @@ KEY_ONLY = {
     "METEOR": (("meteors", "scatter", "meteorEvery", "starfallEvery", "craterSeconds", "craterAmpPercent",
                 "biteMissPercent", "craterFreezeSeconds", "fireLine", "burnStreak", "extinction", "sideSlowPercent",
                 "sideSlowSeconds", "biggestBreaks"), ()),
+    "VENT": (("flowSeconds", "flowLengthMult", "burnBreaks", "geyserEvery", "extraVents", "lavaBombs", "bossErupt",
+              "sideThrowMissPercent", "supervolcano", "crust", "crustDps", "mazeStuds", "freezeFlowSeconds",
+              "throwResistPercent"), ("flowLengthMult",)),
 }
 # A KEY_ONLY column a later 4x tower reuses (PLAN 9i "Reused"): field -> the other keys allowed.
-KEY_SHARED = {"throwMissPercent": ("METEOR",), "bombingRun": ("METEOR",)}
+KEY_SHARED = {"throwMissPercent": ("METEOR", "VENT"), "bombingRun": ("METEOR",)}
+# Resin columns another 4x tower reuses (PLAN 9i): the Volcano Vent's Obsidian Wall is the Resin Wall.
+RESIN_SHARED = {"wallSeconds": ("VENT",)}
 
 # Paths allowed a Size breaks above 1 (DECISIONS #127, #134). A new one is a
 # Director call: add it here and to PLAN's design table together.
@@ -356,6 +376,9 @@ def read_towers(ws):
             "resin": yes(v(ws, r, 25)),
             # Walkers: NPC units on the track (Raptor Pen raptors, PLAN 9g T124); 0 = none.
             "walkers": num(v(ws, r, 26)),
+            # Near track: a tower that must stand within this many studs of the track (the Volcano
+            # Vent, PLAN 9i T128; Shared/Placement.checkNear); 0 = none.
+            "nearTrack": num(v(ws, r, 27)),
             "paths": [],
         }
         order.append(key)
@@ -408,6 +431,8 @@ TOWER_STEP_KINDS = {
     "blimpSpeedMult": "mult", "hookEvery": "minpos",
     # PLAN 9i (T127): the Meteor Beacon
     "meteorEvery": "minpos", "starfallEvery": "minpos",
+    # PLAN 9i (T128): the Volcano Vent
+    "flowLengthMult": "mult", "geyserEvery": "minpos",
 }
 for _key, _col, _kind, _default in ABILITY_COLUMNS:
     TOWER_STEP_KINDS.setdefault(_key, "flag" if _kind == "bool" else "max")
@@ -1851,7 +1876,7 @@ def validate(data):
                     if step[field] not in (False, 1 if field in WALKER_ONE else 0) and not t["walkers"]:
                         problems.append(f"{key} {p['id']} tier {i}: {field} needs a tower with walkers (Towers column Z)")
                 for field in RESIN_ONLY:
-                    if step[field] != (1 if field == "entombHitsMult" else 0) and not t["resin"]:
+                    if step[field] != (1 if field == "entombHitsMult" else 0) and not t["resin"] and key not in RESIN_SHARED.get(field, ()):
                         problems.append(f"{key} {p['id']} tier {i}: {field} needs a Resin tower (Towers column Y)")
                 for owner, (fields, ones) in KEY_ONLY.items():
                     for field in fields:
