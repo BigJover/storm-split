@@ -223,7 +223,19 @@ ABILITY_COLUMNS = [
     ("boneCash", 154, "num", 0),  # EX: cash to the side per pop in range
     ("bankCashPerCharge", 155, "num", 0),  # EY: Bone Bank: at round end, x the charge held
     ("finishingRoar", 156, "bool", False),  # EZ: a free roar at a boss in range under Finisher %
-    ("auraRangePercent", 157, "num", 0),  # FA: towers in range +% range (Ancestor's Eye; the Blimp's later)
+    ("auraRangePercent", 157, "num", 0),  # FA: towers in range +% range (Ancestor's Eye; the Blimp's Night Hunt)
+    # PLAN 9h (T125b, #334-#336): the Spotter Blimp (Shared/Blimp). KEY_ONLY keeps them on the blimp.
+    ("blimpSpeedMult", 158, "num", 1),  # FB: x Tuning Blimp speed (Gunship)
+    ("lapChests", 159, "bool", False),  # FC: Cargo Run: one crate every lap instead of the round's Chests
+    ("lapRepairs", 160, "num", 0),  # FD: Rebuild Kits: each lap repairs up to this many Trampled towers in reach
+    ("crateHealPercent", 161, "num", 0),  # FE: Spare Parts: a crate heals the nearest tower this % of max HP
+    ("paratroopers", 162, "num", 0),  # FF: Paratroopers: walkers dropped once a round played (Tuning stats)
+    ("airlift", 163, "bool", False),  # FG: Airlift: the side's first Trampled tower each round is repaired
+    ("throwMissPercent", 164, "num", 0),  # FH: Blinding Glare: dinos under the light miss this % of throws
+    ("auraReachX", 165, "num", 0),  # FI: Lighthouse: its aura damage reaches Range x this (blank = 1)
+    ("dinoOutlines", 166, "bool", False),  # FJ: Spotter's Map: own-side hunters see own-side dinos (#319)
+    ("bombingRun", 167, "bool", False),  # FK: Bombing Run: once a round played (AutoFire), Field strike x the gun
+    ("hookEvery", 168, "num", 0),  # FL: Sky Hook: every N s lifts the smallest small dino in range
 ]
 
 # Columns only a tower that chains (Towers column Chains) can use.
@@ -252,6 +264,8 @@ KEY_ONLY = {
                "roarWholeTrack", "skulls", "fullGuardSeconds", "spiritHunters", "fullCash", "paydayCash", "treasure",
                "chargeAuraDamagePercent", "hunterCooldownMult", "sideAuraHalf", "boneCash", "bankCashPerCharge",
                "finishingRoar"), ("chargeMult", "chargeNeededMult", "hunterCooldownMult")),
+    "BLIMP": (("blimpSpeedMult", "lapChests", "lapRepairs", "crateHealPercent", "paratroopers", "airlift",
+               "throwMissPercent", "auraReachX", "dinoOutlines", "bombingRun", "hookEvery"), ("blimpSpeedMult",)),
 }
 
 # Paths allowed a Size breaks above 1 (DECISIONS #127, #134). A new one is a
@@ -263,6 +277,7 @@ BREAK_PATHS = {
     ("Storm Coil", "Charge"),  # PLAN 9e (#297): Thunderstrike 2 (the strike's first dino; arcs break 1)
     ("Raptor Pen", "Alpha"),  # PLAN 9g: Alpha Raptor 2, Sickle Claw 3, King of the Pack 4
     ("Raptor Pen", "Trainer"),  # PLAN 9g: Raider Hounds 2
+    ("Spotter Blimp", "Door Gun"),  # PLAN T125b (#336): Heavy Mount 2
     ("Bone Totem", "Roar"),  # PLAN 9h: Thunder Roar 3 (the Spirit Roar breaks Tuning Roar breaks 2 below it)
 }
 HERO_BREAK_PATHS = {("Tracker", "Marksman"), ("Brush Beater", "Slug")}
@@ -368,6 +383,8 @@ TOWER_STEP_KINDS = {
     "entombHitsMult": "mult", "walkerHpMult": "mult", "walkerSpeedMult": "mult", "walkerRespawnMult": "mult",
     # PLAN 9h (T126): the Bone Totem
     "chargeMult": "mult", "chargeNeededMult": "mult", "hunterCooldownMult": "mult",
+    # PLAN 9h (T125b): the Spotter Blimp
+    "blimpSpeedMult": "mult", "hookEvery": "minpos",
 }
 for _key, _col, _kind, _default in ABILITY_COLUMNS:
     TOWER_STEP_KINDS.setdefault(_key, "flag" if _kind == "bool" else "max")
@@ -1787,10 +1804,11 @@ def validate(data):
                 for field in ("shots", "lineHits", "sizeBreaks"):
                     if step[field] < 1 or step[field] != int(step[field]):
                         problems.append(f"{key} {p['id']} tier {i}: {field} must be a whole number >= 1")
-                for field in CHAIN_ONLY:
-                    if step[field] and not t["chains"]:
+                for field in CHAIN_ONLY:  # Field strike x: a Bombing Run's too (the Blimp, T125b)
+                    if step[field] and not t["chains"] and not (field == "fieldStrikeX" and step["bombingRun"]):
                         problems.append(f"{key} {p['id']} tier {i}: {field} needs a tower that chains (Towers column V)")
-                if bool(step["fieldStrikeEvery"]) != bool(step["fieldStrikeX"]):
+                # The Blimp's Bombing Run fires Field strike x once a round (AutoFire), no timer (T125b).
+                if bool(step["fieldStrikeEvery"]) != bool(step["fieldStrikeX"]) and not (step["bombingRun"] and not step["fieldStrikeEvery"]):
                     problems.append(f"{key} {p['id']} tier {i}: Field strike every (s) and Field strike x go together (PLAN 9e)")
                 if step["arcForks"] and step["arcForks"] != int(step["arcForks"]) or step["arcs"] != int(step["arcs"]):
                     problems.append(f"{key} {p['id']} tier {i}: Arcs and Arc forks must be whole numbers")

@@ -119,6 +119,18 @@ local AFTER_SNAPSHOT: { [string]: any } = {
 	bankCashPerCharge = 0,
 	finishingRoar = false,
 	auraRangePercent = 0,
+	-- PLAN 9h (T125b): the Spotter Blimp's own fields (none on these towers)
+	blimpSpeedMult = 1,
+	lapChests = false,
+	lapRepairs = 0,
+	crateHealPercent = 0,
+	paratroopers = 0,
+	airlift = false,
+	throwMissPercent = 0,
+	auraReachX = 1,
+	dinoOutlines = false,
+	bombingRun = false,
+	hookEvery = 0,
 }
 -- ... and fields whose "does nothing" value is the tower's own (hitsAir moved from the Towers
 -- row into the stats with the generic Hits air column, PLAN 9g).

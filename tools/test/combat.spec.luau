@@ -183,10 +183,10 @@ test("Chaos softens towers and hardens the gun", function()
 	near(HeroStats.damageScale(5), hero5, "no difficulty = the level curve")
 end)
 
-test("can't be damaged (DECISIONS #148): only Falcon Roost and Tar Pit; no HP", function()
+test("can't be damaged (DECISIONS #148): only Falcon Roost, Tar Pit and the Spotter Blimp (PLAN 9h); no HP", function()
 	for _, key in Config.TowerOrder do
 		local def = Config.Towers[key]
-		eq(def.untouchable, key == "FALCON" or key == "TARPIT", `{key} untouchable`)
+		eq(def.untouchable, key == "FALCON" or key == "TARPIT" or key == "BLIMP", `{key} untouchable`)
 		if def.untouchable then
 			eq(def.maxHp, 0, `{key} has no Max HP`)
 			eq(Combat.towerMaxHp(def, { 5, 2, 0 }, 50), 0, `{key} no HP from tiers or a Tonic aura`)

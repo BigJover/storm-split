@@ -189,7 +189,19 @@ export type Stats = {
 	boneCash: number, -- cash to the side per pop in range
 	bankCashPerCharge: number, -- Bone Bank: at each round end, x the charge held
 	finishingRoar: boolean, -- Finishing Roar: a free roar at a weak boss in range, once per boss
-	auraRangePercent: number, -- towers in range +% range (Ancestor's Eye; the Spotter Blimp's later)
+	auraRangePercent: number, -- towers in range +% range (Ancestor's Eye; the Spotter Blimp's Night Hunt)
+	-- Spotter Blimp (PLAN 9h T125b; rules in Shared/Blimp). Only the BLIMP's rows set these (KEY_ONLY).
+	blimpSpeedMult: number, -- x Tuning Blimp speed (Gunship)
+	lapChests: boolean, -- Cargo Run: one crate every lap instead of the round's Chests
+	lapRepairs: number, -- Rebuild Kits: each lap repairs up to this many Trampled towers in reach
+	crateHealPercent: number, -- Spare Parts: a crate heals the nearest tower this % of max HP
+	paratroopers: number, -- Paratroopers: walkers dropped once a round played
+	airlift: boolean, -- Airlift: the side's first Trampled tower each round is repaired
+	throwMissPercent: number, -- Blinding Glare: dinos under the light miss this % of their throws
+	auraReachX: number, -- Lighthouse: its aura damage reaches Range x this (1 = Range)
+	dinoOutlines: boolean, -- Spotter's Map: own-side hunters see own-side dinos through walls (#319)
+	bombingRun: boolean, -- Bombing Run: once a round played, Field strike x the gun on the whole side
+	hookEvery: number, -- Sky Hook: every N s (0 = none)
 }
 
 local MULTIPLIERS = {
@@ -212,6 +224,7 @@ local MULTIPLIERS = {
 	"chargeMult",
 	"chargeNeededMult",
 	"hunterCooldownMult",
+	"blimpSpeedMult",
 }
 local HIGHEST = {
 	"shots",
@@ -304,6 +317,12 @@ local HIGHEST = {
 	"boneCash",
 	"bankCashPerCharge",
 	"auraRangePercent",
+	-- PLAN 9h (T125b): the Spotter Blimp
+	"lapRepairs",
+	"crateHealPercent",
+	"paratroopers",
+	"throwMissPercent",
+	"auraReachX",
 }
 -- Timers where the shortest non-zero wins (PLAN 9g, the exporter's "minpos" kind).
 local MIN_POSITIVE = {
@@ -311,6 +330,7 @@ local MIN_POSITIVE = {
 	"heartEvery",
 	"sealEvery",
 	"stunRoarEvery",
+	"hookEvery",
 }
 local FLAGS = {
 	"piercesArmor",
@@ -346,6 +366,10 @@ local FLAGS = {
 	"treasure",
 	"sideAuraHalf",
 	"finishingRoar",
+	"lapChests",
+	"airlift",
+	"dinoOutlines",
+	"bombingRun",
 }
 
 -- `pathPicks` is each path's A/B/C letters ("", "B", "BA"; Shared/Upgrades); nil means
@@ -485,7 +509,7 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		biterSlowPercent = high.biterSlowPercent or 0,
 		biterSlowSeconds = high.biterSlowSeconds or 0,
 		fieldStrikeEvery = if def.chains then high.fieldStrikeEvery or 0 else 0,
-		fieldStrikeX = if def.chains then high.fieldStrikeX or 0 else 0,
+		fieldStrikeX = if def.chains or flag.bombingRun then high.fieldStrikeX or 0 else 0, -- a Bombing Run's too (T125b)
 		chainEffects = def.chains == true and flag.chainEffects == true,
 		targetsBiggest = flag.targetsBiggest == true,
 		entombSeconds = if def.resin then (if (high.entombSeconds or 0) > 0 then high.entombSeconds else Config.Tuning.EntombBaseS) else 0,
@@ -546,6 +570,17 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		bankCashPerCharge = high.bankCashPerCharge or 0,
 		finishingRoar = flag.finishingRoar == true,
 		auraRangePercent = high.auraRangePercent or 0,
+		blimpSpeedMult = mult.blimpSpeedMult,
+		lapChests = flag.lapChests == true,
+		lapRepairs = math.floor(high.lapRepairs or 0),
+		crateHealPercent = high.crateHealPercent or 0,
+		paratroopers = math.floor(high.paratroopers or 0),
+		airlift = flag.airlift == true,
+		throwMissPercent = high.throwMissPercent or 0,
+		auraReachX = math.max(1, high.auraReachX or 0),
+		dinoOutlines = flag.dinoOutlines == true,
+		bombingRun = flag.bombingRun == true,
+		hookEvery = shortest.hookEvery or 0,
 	}
 end
 

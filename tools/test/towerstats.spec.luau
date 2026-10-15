@@ -67,6 +67,7 @@ local function expected(def, tiers: { number })
 		chargeMult = product("chargeMult"), -- PLAN 9h: the Bone Totem
 		chargeNeededMult = product("chargeNeededMult"),
 		hunterCooldownMult = product("hunterCooldownMult"),
+		blimpSpeedMult = product("blimpSpeedMult"), -- PLAN 9h (T125b): the Spotter Blimp
 	}
 	for _, field in TowerStats.HIGHEST do
 		local value = highest(field)
@@ -181,6 +182,10 @@ local function expected(def, tiers: { number })
 	e.bountyChargeX = math.max(1, e.bountyChargeX)
 	e.roarEchoes = math.floor(e.roarEchoes)
 	e.skulls = math.floor(e.skulls)
+	-- Spotter Blimp (PLAN 9h T125b): Aura reach x is 1 (Range) when no tier sets it; counts are whole.
+	e.auraReachX = math.max(1, e.auraReachX)
+	e.lapRepairs = math.floor(e.lapRepairs)
+	e.paratroopers = math.floor(e.paratroopers)
 	return e
 end
 

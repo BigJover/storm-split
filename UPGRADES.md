@@ -415,6 +415,38 @@ A/B/C picks at tiers 4 and 5 (PLAN 9h, DECISIONS #312–#320; names = DINO_REVIE
 
 ---
 
+## Spotter Blimp (BLIMP) — untouchable: a door gun, a searchlight or cargo · built (PLAN 9h T125b; unreleased until its release step) · unlock 400 Amber
+
+Its mooring mast is placed like any tower (600 cash, off the track); the blimp flies your track
+from the spawn end to the exit end and back (a **lap**, about 30 s at 40 studs/s), 30 studs up.
+Everything it does is centred on the track point below it: its door gun (5 a shot, 2 shots a
+second, hits flyers) and every effect reach a 14-stud circle there. It can't be damaged (no
+HP; never repaired; Armory and Field Hospital auras skip it, #148). Searchlight and Cargo are
+judged on their own lines (out of the damage medians, #334/#335). Rules: `Shared/Blimp`.
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Door Gun** | damage | Belt Gun | Twin Mount | *Strafing Run* | *Heavy Mount* | *Gunship* |
+| **Searchlight** | support | Spotlight | Wide Beam | *Night Hunt* | *Floodlights* | *All-Seeing Eye* |
+| **Cargo** | cash | Supply Crates | Ammo Drop | *Med Drop* | *Heavy Cargo* | *Cargo Run* |
+
+- Belt Gun / Twin Mount / Strafing Run: a harder, faster gun (x1.5 / x1.5 / x2.6, rate x1.2); Twin Mount fires 2 shots; Strafing Run's shots cut through 3 dinos along the track.
+- Spotlight / Wide Beam / Night Hunt: dinos under the light take +10 %; Wide Beam lights a 30 % wider circle; Night Hunt: towers in the circle +15 % range.
+- Supply Crates / Ammo Drop / Med Drop: one crate a round lands below the blimp (200 / 550 / 1,550 cash; Supply Camp's chest rules); Ammo Drop: your hunters under it reload 20 % faster; Med Drop: a med kit (40 HP) drops below it every lap.
+
+A/B/C picks at tiers 4 and 5 (PLAN 9h + T125b, DECISIONS #334–#336; names = DINO_REVIEW Round 19). Heavy Mount: shoots through armour, breaks 2. Rocket Pods: each shot throws 3 rockets that splash (one generation, x1.4). Tracer Belt: hit dinos are marked +15 %. Gunship: four guns and rockets (2 per shot, one generation), the blimp flies 1.5x faster (x0.78 damage). Bombing Run: once a round played (it picks its moment, like the Resin Wall) every dino on your track takes 12x the gun's shot (air too, armour only once it pierces, breaks 1). Sky Hook: every 5 s the smallest non-boss dino under it with at most 2 sizes left is lifted off the track (a take-down: every size pays). Floodlights: the circle x1.6. Tracking Beam: the light and gun centre on your track's biggest dino (moving at the blimp's speed), +14 %. Blinding Glare: dinos in the light miss 25 % of their throws (a missed throw lands short), +15 %. All-Seeing Eye: +25 %. Lighthouse: towers near its path +10 % damage (its circle x1.5 for this). Spotter's Map: your camp's hunters see every dino on your track through walls (never players, never another camp's dinos, #319), +22 %. Heavy Cargo: 2,000-cash crates. Rebuild Kits: each lap it fixes a Trampled tower within reach of its path. Spare Parts: 1,900-cash crates, and a crate heals the tower nearest where it lands by 20 % of its max HP. Cargo Run: one crate every lap instead of the round's crate. Paratroopers: 10 s into each round 2 rangers (80 HP, 40 a shot, 1.5 a second) drop below it and fight ground dinos within 14 studs of where they land until the round ends. Airlift: the first of your towers Trampled each round is lifted and set back down repaired 3 s later; 2,700-cash crates. No Raider option (#320).
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Door Gun** | 4 | Heavy Mount — Shoots through armour, breaks 2 | Rocket Pods — Rockets that splash | Tracer Belt — Hit dinos are marked +15% |
+| **Door Gun** | 5 | Gunship — Faster, four guns and rockets | Bombing Run — Bombs the whole track once a round | Sky Hook — Snatches the smallest dino every 5 s |
+| **Searchlight** | 4 | Floodlights — Lights a much wider circle | Tracking Beam — The light follows the biggest dino | Blinding Glare — Dinos in the light miss throws |
+| **Searchlight** | 5 | All-Seeing Eye — Every dino under the blimp marked +25% | Lighthouse — Towers near its path +10% damage | Spotter's Map — See every dino through walls |
+| **Cargo** | 4 | Heavy Cargo — Bigger crates | Rebuild Kits — Fixes a Trampled tower each lap | Spare Parts — A crate heals the closest tower |
+| **Cargo** | 5 | Cargo Run — A big crate every lap | Paratroopers — Drops 2 rangers a round | Airlift — Fixes the first Trampled tower each round |
+
+---
+
 ## Mechanics and when they're built
 
 | Mechanic | Used by | Status |

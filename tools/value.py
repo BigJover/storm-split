@@ -130,6 +130,7 @@ BOUGHT_BAND = {1: 1, 2: 1, 3: 2, 4: 3, 5: 3}  # tier -> index into BANDS
 # Support and control paths: judged on their own effect, not DPS (DECISIONS #59). #74 added the
 # Tranq Station's Knockout (hard stops) and Weak Spot (damage amp for every tower in range).
 SUPPORT_PATHS = {("TOTEM", "Ancestors"), ("TOTEM", "Bone Pile"),  # PLAN 9h (#314): buffs and cash
+                 ("BLIMP", "Searchlight"), ("BLIMP", "Cargo"),  # PLAN 9h T125b (#334, #335): light and cash
                  ("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knockout"), ("CHILLER", "Weak Spot"),
                  ("COIL", "Lightning Rod"),  # PLAN T64: Charged Air, Storm Warning, Lightning Rodeo
                  ("FALCON", "Falconer"),  # PLAN T65: Falcon Bells, Hooded Scout, Lure, Hunting Party
@@ -308,7 +309,7 @@ def tower_stats(t, tiers, picks=None):
         "biterSlowPercent": high.get("biterSlowPercent", 0), "biterSlowSeconds": high.get("biterSlowSeconds", 0),
         # PLAN 9e (#296): Field strike (a coil only), Chain effects, Targets biggest, and the Reel's control
         "fieldStrikeEvery": high.get("fieldStrikeEvery", 0) if t.get("chains") else 0,
-        "fieldStrikeX": high.get("fieldStrikeX", 0) if t.get("chains") else 0,
+        "fieldStrikeX": high.get("fieldStrikeX", 0) if t.get("chains") or flag.get("bombingRun") else 0,
         "chainEffects": bool(t.get("chains") and flag.get("chainEffects", False)),
         "targetsBiggest": flag.get("targetsBiggest", False),
         # Amber Resin Cannon (PLAN 9g T123; Shared/TowerStats: a Resin tower only)
@@ -337,6 +338,11 @@ def tower_stats(t, tiers, picks=None):
                                        "paydayCash", "chargeAuraDamagePercent", "boneCash", "bankCashPerCharge",
                                        "auraRangePercent")},
         **{f: flag.get(f, False) for f in ("roarWholeTrack", "spiritHunters", "treasure", "sideAuraHalf", "finishingRoar")},
+        # Spotter Blimp (PLAN 9h T125b; Shared/TowerStats)
+        "blimpSpeedMult": mult["blimpSpeedMult"], "auraReachX": max(1, high.get("auraReachX", 0)),
+        **{f: high.get(f, 0) for f in ("lapRepairs", "crateHealPercent", "paratroopers", "throwMissPercent")},
+        **{f: flag.get(f, False) for f in ("lapChests", "airlift", "dinoOutlines", "bombingRun")},
+        "hookEvery": shortest.get("hookEvery", 0),
     }
 
 
@@ -896,6 +902,40 @@ def resin_lines(data, mixes):
 TOTEM_ROUND20_X = 1.5
 
 
+def blimp_lines(data, mixes):
+    """Spotter Blimp's release lines (PLAN 9h T125b, #334-#336), r31-40: the lap and coverage, each
+    Searchlight tier's worth, Cargo's cash a round and each T1-T3 tier's payback (bar DIG_PAYBACK
+    rounds, #335; lever Chest cash). The bar is a finding once it is released. Returns (lines, findings)."""
+    if "BLIMP" not in data["Towers"]:
+        return [], []
+    t, tuning = data["Towers"]["BLIMP"], data["Tuning"]
+    late = mixes[3]
+    judged = "BLIMP" not in UNRELEASED
+    base = path_stats(t, 0, 0)
+    out = [f"  Spotter Blimp lap {2 * track_studs() / tuning['BlimpSpeedStudsS']:.1f} s ({fmt(blimp_laps(base, tuning))} a round),"
+           f" c(Range {fmt(base['range'])}) {blimp_cover(base['range']):.2f}, Sky Hook small HP {blimp_small_hp(late, tuning):.0f}"]
+    findings = []
+    for pi, path in enumerate(t["paths"]):
+        if path["id"] not in ("Searchlight", "Cargo"):
+            continue
+        bits, prev = [], 0.0
+        for tier in range(1, len(export_constants.line(path)) + 1):
+            s = path_stats(t, pi, tier)
+            if path["id"] == "Cargo":
+                cash = blimp_cargo(data, s, late)
+                step = export_constants.line(path)[tier - 1]["cost"]
+                payback = step / (cash - prev) if cash > prev else math.inf
+                bits.append(f"T{tier} +{cash:.0f}/round" + (f" = {fmt(payback)}r" if tier <= DIG_TIERS else ""))
+                if judged and tier <= DIG_TIERS and not dig_payback_ok(payback):
+                    findings.append(f"BLIMP: Cargo T{tier} pays back in {fmt(payback)} rounds (bar {DIG_PAYBACK[0]}-{DIG_PAYBACK[1]};"
+                                    " lever Chest cash; PLAN T125b, #335)")
+                prev = cash
+            else:
+                bits.append(f"T{tier} {blimp_light(data, s, late):.0f}")
+        out.append(f"  Spotter Blimp {path['id']:<11} r31-40: " + "; ".join(bits))
+    return out, findings
+
+
 def totem_lines(data, mixes, rows):
     """Bone Totem's release lines (PLAN 9h T126b): per Roar tier the fills and a roar's damage a
     round (r31-40), Bone Pile's cash a round and each T1-T3 tier's payback (bar DIG_PAYBACK rounds,
@@ -1445,9 +1485,11 @@ def walker_edps(s, mix, tuning, **kw):
 
 def tower_edps(t, s, mix, tuning, **kw):
     """A tower's own eDPS: the walker model for a tower with walkers (PLAN 9g), the Bone Totem's roar
-    model (PLAN 9h), else edps."""
+    model and the Spotter Blimp's Door Gun metric (PLAN 9h), else edps."""
     if t["display"] == "Bone Totem":
         return totem_edps(s, mix, tuning, **kw)
+    if t["display"] == "Spotter Blimp":
+        return blimp_gun(s, mix, tuning, **kw)
     return walker_edps(s, mix, tuning, **kw) if t.get("walkers", 0) > 0 else edps(s, mix, tuning, **kw)
 
 
@@ -1459,6 +1501,86 @@ TOTEM_HUNTERS = 2  # hunters on the side (Camp Payday)
 TOTEM_BANK_CHARGE = 4  # the charge held at a round's end, on average (Bone Bank)
 TREASURE_ROUNDS = 15  # Ancient Treasure's one chest spread over this many rounds
 TRACK_STUDS = None
+
+# Spotter Blimp (PLAN 9h T125b, #334-#336; stated assumptions, 9k revisits them). The blimp flies the
+# side's track there and back; its range is a circle under it, so everything it does is x coverage.
+BLIMP_COVER_X = 20  # coverage c(R) = min(1, this x R / track length) (#336)
+BLIMP_TRAMPLED = 0.2  # Trampled towers a round within its reach, shared by Rebuild Kits and Airlift (#335)
+BLIMP_TOWER = 6000  # an average tower's cash: a repair is worth Repair cost x this
+BLIMP_CRATE_HP = 150  # HP a Spare Parts crate's heal lands on, at 2 cash per HP
+BLIMP_RELOAD_SHARE = 0.3  # Ammo Drop: the share of a hunter's 30 eDPS its faster reload adds
+BLIMP_KIT_CASH = 0.5  # cash per HP a med kit heals
+BLIMP_CRATE_TAKE = 0.8  # the share of a crate's cash collected (Supply Camp's chests)
+BLIMP_PARA_TAKE = 0.8  # Paratroopers: their walker eDPS x this (#335)
+
+
+def blimp_cover(r):
+    """c(R): the share of the side's dinos under the blimp's circle of radius R (#336)."""
+    return min(1.0, BLIMP_COVER_X * r / track_studs())
+
+
+def blimp_laps(s, tuning):
+    """Laps a round (Round seconds (model) / one lap's seconds): a lap = 2 x track / speed."""
+    lap = 2 * track_studs() / (tuning["BlimpSpeedStudsS"] * s["blimpSpeedMult"])
+    return tuning["RoundSecondsModel"] / lap
+
+
+def blimp_small_hp(mix, tuning):
+    """Sky Hook's take: the band's non-boss count-weighted HP of their last Hook max sizes sizes."""
+    ds = [(n, min(tuning["HookMaxSizes"], sizes) * hp) for n, kind, sizes, hp, _ in mix["dinos"] if kind != "boss"]
+    count = sum(n for n, _ in ds)
+    return sum(n * h for n, h in ds) / count if count else 0.0
+
+
+def blimp_gun(s, mix, tuning, overkill=True, breaks1=False, **_kw):
+    """Door Gun (#336): eDPS x c(R) + Bombing Run (honest hits of Field strike x x damage on
+    DINOS_ON_SIDE dinos, breaks 1, no mark or bomblets, once a round) + Sky Hook (the small HP /
+    Hook every x c(R)). The aura credit is added by the caller."""
+    c = blimp_cover(s["range"])
+    out = edps(s, mix, tuning, overkill=overkill, breaks1=breaks1) * c
+    secs = tuning["RoundSecondsModel"]
+    if s["bombingRun"]:
+        rs = {**s, "lineHits": 1, "targets": 1, "bomblets": 0, "bombletGenerations": 0, "sizeBreaks": 1, "markPercent": 0}
+        out += honest_hits(rs, mix, tuning, s["damage"] * s["fieldStrikeX"], DINOS_ON_SIDE, s["pierces"], breaks1) / secs
+    if s["hookEvery"]:
+        out += blimp_small_hp(mix, tuning) / s["hookEvery"] * c
+    return out
+
+
+def blimp_light(data, s, mix):
+    """Searchlight (#334): 120 x lit x Brittle %/100 (lit = 10 x c(R); Targets biggest: (1 + boss
+    share) + 9 x c(R)) + aura_credit(Aura range %/2 as rate) x c(R) + 120 x 10 x c(R x Aura reach x)
+    x Aura damage %/100 + 0.5 x Throw miss %. Dino outlines 0 (it carries Brittle)."""
+    c = blimp_cover(s["range"])
+    lit = (1 + mix["boss"]) + 9 * c if s["targetsBiggest"] else DINOS_ON_SIDE * c
+    w = HOLD_EDPS * lit * s["brittlePercent"] / 100
+    w += aura_credit(data, {**s, "auraRatePercent": s["auraRangePercent"] / 2, "auraDamagePercent": 0,
+                            "brittlePercent": 0}, mix) * c
+    w += HOLD_EDPS * DINOS_ON_SIDE * blimp_cover(s["range"] * s["auraReachX"]) * s["auraDamagePercent"] / 100
+    return w + 0.5 * s["throwMissPercent"]
+
+
+def blimp_cargo(data, s, mix):
+    """Cargo (#335), cash a round: crates x Chest cash x 0.8 (crates = Chests, or laps with Lap
+    chests) + min(BLIMP_TRAMPLED, laps x Lap repairs + Airlift) x Repair cost x BLIMP_TOWER + Crate
+    heal %/100 x 150 x crates x 2 + 14 x 30 x (1/Hunter reload x - 1) x 0.3 + Med kits x heal x 0.5
+    + 14 x 0.8 x the Paratroopers' walker eDPS (Tuning damage and rate; ground, breaks 1)."""
+    tuning = data["Tuning"]
+    laps = blimp_laps(s, tuning)
+    crates = max(s["chests"], laps) if s["lapChests"] else s["chests"]
+    w = crates * s["chestCash"] * BLIMP_CRATE_TAKE
+    w += min(BLIMP_TRAMPLED, laps * s["lapRepairs"] + (1 if s["airlift"] else 0)) * tuning["RepairCost"] * BLIMP_TOWER
+    w += s["crateHealPercent"] / 100 * BLIMP_CRATE_HP * crates * 2
+    w += EDPS_CASH * HUNTER_EDPS * (1 / s["hunterReloadMult"] - 1) * BLIMP_RELOAD_SHARE
+    w += s["medKits"] * s["medKitHeal"] * BLIMP_KIT_CASH
+    if s["paratroopers"]:
+        ps = {**s, "walkers": s["paratroopers"], "damage": tuning["ParatrooperDamage"], "rate": tuning["ParatrooperRate"],
+              "targets": 1, "lineHits": 1, "hitsAir": False, "sizeBreaks": 1, "pierces": False, "bomblets": 0,
+              "bombletGenerations": 0, "markPercent": 0, "brittlePercent": 0, "firstDiveX": 1, "swarm": False,
+              "takeDownStackPercent": 0, "dodge": False, "healsBetweenRounds": False, "walkerRespawnMult": 1,
+              "walkerSpeedMult": 1}
+        w += EDPS_CASH * walker_edps(ps, mix, tuning) * BLIMP_PARA_TAKE
+    return w
 
 
 def track_studs():
@@ -1581,6 +1703,12 @@ def tower_worth(data, key, pi, s, late):
         if pid == "Bone Pile":
             return totem_cash(data, s, late)
         return totem_edps(s, late, tuning) + aura_credit(data, s, late)
+    if key == "BLIMP":  # PLAN 9h T125b (#334-#336)
+        if pid == "Searchlight":
+            return blimp_light(data, s, late)
+        if pid == "Cargo":
+            return blimp_cargo(data, s, late)
+        return blimp_gun(s, late, tuning) + aura_credit(data, s, late)
     if key == "RAPTOR":  # PLAN 9g (#314): the walker model
         if pid == "Trainer":
             return raptor_trainer(data, s, late)
@@ -1927,6 +2055,10 @@ def value_report(data, full=False):
     for line in lines:
         print(line)
     findings += totem
+    lines, blimp = blimp_lines(data, mixes)  # PLAN 9h T125b: the Spotter Blimp's release lines
+    for line in lines:
+        print(line)
+    findings += blimp
     print('"worth it" (PLAN T68, #193; round-4 batch T5 cost/eDPS in rounds 31-40):')
     lines, worth = worth_lines(data, rows)
     for line in lines:

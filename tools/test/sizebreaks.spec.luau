@@ -229,6 +229,7 @@ test("Size breaks per tier are PLAN's seeds and reach the tower and hero stats",
 		["Falcon Roost/Talons"] = { 1, 1, 2, 3, 3 }, -- PLAN T65: Power Dive 2, Iron Talons 3, the eagle 3
 		["Harpoon Ballista/Spearhead"] = { 1, 1, 2, 3, 3 }, -- PLAN T66: Crusher Bolt 2, Great Harpoon 3, Skewer 3 (#149)
 		["Raptor Pen/Alpha"] = { 1, 1, 2, 3, 4 }, -- PLAN 9g: Alpha Raptor 2, Sickle Claw 3, King of the Pack 4
+		["Spotter Blimp/Door Gun"] = { 1, 1, 1, 2, 2 }, -- PLAN T125b (#336): Heavy Mount 2 (A at T4 and T5)
 		["Bone Totem/Roar"] = { 1, 1, 3, 3, 3 }, -- PLAN 9h: Thunder Roar 3 (below it the roar breaks Tuning Roar breaks 2)
 	}
 	for key, def in Config.Towers do

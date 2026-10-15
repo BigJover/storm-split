@@ -62,6 +62,7 @@ LADDER_EXTENSIONS = {
     ("tower", "RESIN"): ("Amber Resin Cannon", 500, "PLAN 9g"),
     ("tower", "RAPTOR"): ("Raptor Pen", 500, "PLAN 9g"),
     ("tower", "TOTEM"): ("Bone Totem", 450, "PLAN 9h"),
+    ("tower", "BLIMP"): ("Spotter Blimp", 400, "PLAN 9h"),
 }
 
 
