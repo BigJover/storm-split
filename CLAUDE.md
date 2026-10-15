@@ -268,6 +268,13 @@ charge 3, cost 600; Blimp T125b, #334-#336: cost 600, Door Gun / Searchlight / C
 (T125c, #341; Falcon Roost keeps "Strafing Run"). Studio aid:
 `firenow BLIMP`.
 
+Phase 9 batch 9i (2026-10-15): the **Meteor Beacon** (`Shared/Meteor`) and the **Volcano Vent**
+(`Shared/Vent`, the Near track placement rule) are built and headless-tested (825 specs) but **not
+playtested**. The Vent is **released** (T128b; c/e 167-274, T2 202); the Meteor is **held**: its
+Sky Rocks T5s measure above the Director's check (Comet Tail's sweep term, which the harness left
+out), Starfall's lever was stepped 2.8 -> 3.388 (rule 7); bars pass, a Director call. Studio aids:
+`firenow METEOR`, `firenow VENT`.
+
 ## Open issues
 
 - Leak cost is effective HP (BTD6-style), so 40 starting lives is likely too few in co-op.

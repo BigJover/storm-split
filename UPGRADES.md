@@ -445,7 +445,7 @@ A/B/C picks at tiers 4 and 5 (PLAN 9h + T125b, DECISIONS #334–#336; names = DI
 | **Cargo** | 4 | Heavy Cargo — Bigger crates | Rebuild Kits — Fixes a Trampled tower each lap | Spare Parts — A crate heals the closest tower |
 | **Cargo** | 5 | Cargo Run — A big crate every lap | Paratroopers — Drops 2 rangers a round | Airlift — Fixes the first Trampled tower each round |
 
-## Meteor Beacon (METEOR) — meteors on the biggest bunch: area hits and burning craters · built (PLAN 9i T127) · not sold yet (T128b) · unlock 600 Amber
+## Meteor Beacon (METEOR) — meteors on the biggest bunch: area hits and burning craters · built (PLAN 9i T127) · not sold yet (held at T128b) · unlock 600 Amber
 
 A radio mast (600 cash, off the track, 150 HP). Every 8 s it calls a meteor on the **biggest bunch**
 of dinos anywhere on your side's track (the point with the most dinos within 8 studs; a boss counts
@@ -476,7 +476,7 @@ A/B/C picks at tiers 4 and 5 (PLAN 9i, DECISIONS #337–#338; names = DINO_REVIE
 | **Aftermath** | 4 | Long Burn — Craters last 8 s, hotter | Glass Crater — Craters strip armour | Scorch Marks — Dinos crossing a crater take +15% |
 | **Aftermath** | 5 | Fire Line — Craters join into one burning strip | Blinding Dust — Dinos in the ash can't bite or throw | New Ice Age — Craters freeze dinos solid for 2 s |
 
-## Volcano Vent (VENT) — lava on one stretch of track: burns, shoves, crust · built (PLAN 9i T128) · not sold yet (T128b) · unlock 600 Amber
+## Volcano Vent (VENT) — lava on one stretch of track: burns, shoves, crust · built (PLAN 9i T128) · sold from T128b · unlock 600 Amber
 
 A smoking crack in the ground (600 cash, 200 HP) that must stand **within 8 studs of the track**.
 It owns one stretch: 24 studs of track centred on the track point nearest it. Every 12 s it

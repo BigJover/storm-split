@@ -799,6 +799,9 @@ def worth_lines(data, rows):
         t = data["Towers"][key]
         if key not in ROUND4_BATCH | ROUND9_BATCH or key in SUPPORT_TOWERS or key in UNRELEASED:
             continue
+        if key in ROUND9_DAMAGE:  # PLAN 9i: judged over all 9 builds per path (#280) by round9_lines
+            lines.append(f"  {t['display']:<16} best T5: over its 9 builds a path (the 9i line above)")
+            continue
         untouchable = t.get("untouchable", False)
         t5 = [(export_constants.line(t["paths"][pi])[4]["name"], r["cpd"][late]) for (k, pi, tier), r in rows.items()
               if k == key and tier == 5 and not r["support"]]

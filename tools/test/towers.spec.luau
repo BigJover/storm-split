@@ -381,3 +381,13 @@ test("PLAN T125b: the Spotter Blimp is released at its Amber price (#336)", func
 	eq(def.unlockCost, 400, "BLIMP unlock Amber (never moves, #313)")
 	eq(def.baseCost, 600, "BLIMP in-match cost (#336)")
 end)
+
+test("PLAN T128b: the Volcano Vent is released at its Amber price (#339); the Meteor Beacon is held", function()
+	local ShopRules = require(src.shared.ShopRules)
+	local def = Config.Towers.VENT
+	eq(ShopRules.Unreleased.VENT, nil, "VENT is sold and unlockable")
+	eq(table.find(Config.TowerOrder, "VENT") ~= nil, true, "VENT is listed in the shop order")
+	eq(def.unlockCost, 600, "VENT unlock Amber (never moves, #313)")
+	eq(def.baseCost, 600, "VENT in-match cost (#339)")
+	eq(ShopRules.Unreleased.METEOR, true, "METEOR held (T128b: Sky Rocks T5 off the Director's check)")
+end)
