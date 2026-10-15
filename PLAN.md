@@ -14,7 +14,7 @@ DataStore writes from an agent). N15 rides any `Battle` commit (#272).
 **Status (2026-10-13, later): 9a + 9b done (c1a7c5a, 0f82bb7, 929b66a, cd6a413, cd749d2; 706 specs); Tester Run 8 running. 9c designed below (#290). Next: 🦖 names 9c → Builder T114 + T115.**
 **Status (2026-10-13, Director): 9d + 9e designed below (#292–#297; 96 options, metrics, 6 new mechanics). Next after 9c: 🦖 names 9d → T116–T118, then 9e → T119–T120.**
 **Status (2026-10-13, Director): 9f designed below (#298–#302; 48 hero options, per-path metrics, 1 new mechanic). Next after 9e: 🦖 names 9f → T121–T122.**
-**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.** **Update (2026-10-14): 9g built; next = T124c (finishes T124b, #325–#328), then Tester Run 9g.** **Update (2026-10-15): T124c steps 1–4 in (03c9634), release held on King of the Pack bar 3; next = T124d (#329–#330, King Rate x 1.25 + frozen bar-3 median + release), then Tester Run 9g.** **Update (2026-10-15, later): Bone Totem built unreleased (1b08327); Blimp rows refused. Next = T126c (Totem fix + release, #331–#333), then T125b (Blimp, #334–#336), then Tester Run 9h; 9i/9j numbers re-checked (#337+).**
+**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.** **Update (2026-10-14): 9g built; next = T124c (finishes T124b, #325–#328), then Tester Run 9g.** **Update (2026-10-15): T124c steps 1–4 in (03c9634), release held on King of the Pack bar 3; next = T124d (#329–#330, King Rate x 1.25 + frozen bar-3 median + release), then Tester Run 9g.** **Update (2026-10-15, later): Bone Totem built unreleased (1b08327); Blimp rows refused. Next = T126c (Totem fix + release, #331–#333), then T125b (Blimp, #334–#336), then Tester Run 9h; 9i/9j numbers re-checked (#337+).** **Update (2026-10-15, 9h released 906a8b1/ad1be17): next = T125c (#341–#343), then 9i as written (#344).**
 
 ## Size of the job
 | | Slots (T4+T5) | Options to build | New options to design |
@@ -1244,6 +1244,16 @@ numbers).** As T125 (mechanics, `Shared/Blimp`, look, Studio aids, `UPGRADES.md`
    (rule 7), then report.
 6. **Release** in the same task (BLIMP out of `Unreleased`), `tools/test.sh` green, exporter clean,
    `--options` exit 0. Then **Tester Run 9h** (the T126b text above, both towers).
+
+**T125c (Builder) — 9h tidy-up (#341–#343), one small commit, pushed, then continue with 9i.**
+1. Rename Door Gun T3 **"Strafing Run" → "Treetop Pass"** in the Blimp's row (Tower Upgrades,
+   name column; openpyxl, re-export, diff `Config.luau` = that one name), `UPGRADES.md`, this
+   PLAN's 9h table, and any spec that asserts the old Blimp name (`blimp.spec`,
+   `round4options.spec`). Falcon Roost Flock T5C keeps "Strafing Run". `grep -rn "Strafing Run"`
+   afterwards = Falcon only (plus history in DECISIONS/DINO_REVIEW). `audit.py --strict` → 0.
+2. `value.py`: Door Gun T1 Belt Gun DEAD joins the known findings (#342); the Blimp's round-20
+   bar = Cargo payback (#343), Door Gun T2 r11–20 printed not gated (as Totem Roar, #332).
+3. `tools/test.sh` green, `value.py` / `--breaks1` / `--options` exit 0; no number changes.
 
 **9i — Meteor Beacon + Volcano Vent** (T127 Meteor, T128 Vent, T128b release). Meteor = strikes
 on the densest bunch anywhere on your side; Vent = owns one stretch (#282).
