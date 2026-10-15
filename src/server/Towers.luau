@@ -139,6 +139,7 @@ local BattleFlow = require(Shared:WaitForChild("BattleFlow"))
 local FourX = require(Shared:WaitForChild("FourX"))
 local AutoFire = require(Shared:WaitForChild("AutoFire"))
 local Totem = require(Shared:WaitForChild("Totem"))
+local Blimp = require(Shared:WaitForChild("Blimp"))
 
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
@@ -198,6 +199,7 @@ export type Tower = {
 	resin: ResinState?, -- Amber Resin Cannon (PLAN 9g T123); nil on every other tower
 	raptor: RaptorState?, -- Raptor Pen (PLAN 9g T124); nil on every other tower
 	totem: TotemState?, -- Bone Totem (PLAN 9h T126); nil on every other tower
+	blimp: BlimpState?, -- Spotter Blimp (PLAN 9h T125b); nil on every other tower
 	rangeBase: number, -- stats.range before any range aura (PLAN 9h)
 	hurtBy: any?, -- the last dino that bit or hit it with a throw (Guard Raptors, PLAN 9g)
 	model: Model,
@@ -227,6 +229,21 @@ type TotemState = {
 	spiritTimer: number,
 	finished: { [any]: boolean }, -- Finishing Roar: bosses that had their free roar (weak keys)
 	shownShare: number, -- the charge ring's share as last drawn (visual)
+}
+
+-- A Spotter Blimp's own state (Shared/Blimp rules). The tower's `position` is the ground point
+-- its circle is centred on (below the blimp, or Tracking Beam's point); `base` is the mast.
+type BlimpState = {
+	at: number, -- the blimp's distance along its side's track
+	dir: number, -- +1 toward the exit end, -1 back
+	focus: number, -- the circle's centre along the track (Tracking Beam follows the biggest dino)
+	model: Model, -- the flying blimp (visual)
+	auto: AutoFire.State, -- Bombing Run, once a round played
+	hookTimer: number, -- Sky Hook
+	roundClock: number, -- s into the round played (Paratroopers)
+	paraDropped: boolean,
+	airliftUsed: boolean,
+	paraKey: { key: string, id: number }, -- its Paratroopers' own pack in Walkers
 }
 
 -- An Amber Resin Cannon's own state (Shared/Resin rules).
@@ -265,6 +282,7 @@ local onBountyExtra: ((Player, string, number) -> ())? = nil -- Prize Fossils (P
 local onCash: ((side: number, cash: number) -> ())? = nil -- Bone Totem cash (PLAN 9h; Main pays, scaled)
 local onCrate: ((position: Vector3, cash: number, side: number) -> ())? = nil -- Ancient Treasure's chest (9h)
 local huntersOn: ((side: number) -> number)? = nil -- hunters on a side (Camp Payday, 9h)
+local onKit: ((position: Vector3, heal: number, side: number) -> ())? = nil -- a Spotter Blimp's lap med kit (9h)
 local auraDirty = false -- a Bone Totem's charge share moved: auras are refreshed at most every AURA_REFRESH s
 local auraClock = 0
 local levelScale = 1 -- damage multiplier from the team's level
@@ -313,7 +331,8 @@ local function hasAura(s: Stats): boolean
 end
 
 local function covers(source: Tower, point: Vector3): boolean
-	local offset = point - source.base
+	-- A Spotter Blimp's circle is centred below it (PLAN 9h), not on its mast.
+	local offset = point - (if source.blimp then source.position else source.base)
 	return Vector2.new(offset.X, offset.Z).Magnitude <= source.stats.range
 end
 
@@ -336,6 +355,11 @@ local function refreshAuras()
 					hpBonus = if tower.def.untouchable then hpBonus else math.max(hpBonus, Totem.auraAt(s.auraHpPercent, false, true))
 					range = math.max(range, Totem.auraAt(s.auraRangePercent, false, true))
 				end
+			end
+			-- Lighthouse (PLAN 9h T125b): a blimp's aura damage reaches Range x Aura reach x.
+			if source.blimp and source ~= tower and s.auraDamagePercent > 0 and BattleRules.canSupport(source.side, tower.side)
+				and Blimp.under(tower.base, source.position, s.range * s.auraReachX) then
+				damage = math.max(damage, s.auraDamagePercent)
 			end
 			if not source.knockedOut and (hasAura(s) or fuel > 0) and covers(source, tower.base) and BattleRules.canSupport(source.side, tower.side) then
 				-- An Armory's resistance covers itself too; the other auras are for others.
@@ -419,6 +443,7 @@ end
 
 -- Set below (Raptor Pen): tells Server/Walkers what a tower's walkers are now.
 local syncWalkers: (Tower) -> () = function(_tower) end
+local airlift: (Tower) -> () = function(_tower) end -- Spotter Blimp Airlift (below)
 
 local function setKnockedOut(tower: Tower, on: boolean)
 	if tower.knockedOut == on then
@@ -585,6 +610,7 @@ function Towers.damage(tower: Tower, amount: number, source: any?): number
 	elseif outcome == "trampled" then
 		tower.hp = 0
 		setKnockedOut(tower, true)
+		airlift(tower)
 	end
 	-- Visual only: a red hit flash, or Last Stand's green save flash and the
 	-- saving hospital's "+" pulse (DECISIONS #48).
@@ -721,6 +747,9 @@ end
 -- The range ring: a Tar Pit's range is its pool's length of track, drawn as the pool
 -- itself, so it only gets a ring when it has an aura (Tar Totem).
 local function ringRange(def, stats: Stats): number
+	if def == Config.Towers.BLIMP then
+		return 0 -- its circle is under the flying blimp (TowerLook.poseBlimp), not at the mast
+	end
 	if def.onTrack and stats.auraSlowedPercent <= 0 then
 		return 0
 	end
@@ -782,6 +811,8 @@ export type Hooks = {
 	onCash: ((side: number, cash: number) -> ())?,
 	onCrate: ((position: Vector3, cash: number, side: number) -> ())?,
 	huntersOn: ((side: number) -> number)?,
+	-- Spotter Blimp (PLAN 9h T125b): a med kit on the ground for a side (Airdrops' kit rules).
+	onKit: ((position: Vector3, heal: number, side: number) -> ())?,
 }
 
 function Towers.init(folder: Instance, hooks: Hooks?)
@@ -798,6 +829,7 @@ function Towers.init(folder: Instance, hooks: Hooks?)
 	onCash = hooks and hooks.onCash
 	onCrate = hooks and hooks.onCrate
 	huntersOn = hooks and hooks.huntersOn
+	onKit = hooks and hooks.onKit
 end
 
 -- Callers check Placement first (Shop does); this only builds. `side`: the builder's side
@@ -897,11 +929,29 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 				shownShare = -1,
 			}
 			else nil,
+		blimp = if key == "BLIMP"
+			then {
+				at = 0,
+				dir = 1,
+				focus = 0,
+				model = TowerLook.buildBlimp(TowerLook.COLORS.BLIMP),
+				auto = AutoFire.new(),
+				hookTimer = 0,
+				roundClock = 0,
+				paraDropped = false,
+				airliftUsed = false,
+				paraKey = { key = key .. " paratroopers", id = nextId },
+			}
+			else nil,
 		rangeBase = stats.range,
 		hurtBy = nil,
 		model = model,
 	}
 	table.insert(towers, tower)
+	if tower.blimp then
+		tower.blimp.model.Parent = model -- goes when the mast goes
+		tower.position = Enemies.pointAt(0, tower.side) + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0)
+	end
 	showPool(tower)
 	showHealth(tower)
 	refreshAuras()
@@ -1793,6 +1843,310 @@ local function stepTotem(tower: Tower, dt: number, own)
 	end
 end
 
+------------------------------------------------------------------ Spotter Blimp (PLAN 9h T125b)
+
+-- Visuals only.
+local HOOK_COLOR = Color3.fromRGB(90, 90, 95)
+local BOMB_COLOR = Color3.fromRGB(255, 150, 60)
+local LIGHT_REFRESH = 0.25 -- s the searchlight's +% lasts after the last frame under it (keeps it continuous)
+
+local pendingAirlifts: { { tower: Tower, at: number } } = {}
+
+-- Sky Hook: the smallest small dino under it is lifted off the track (a take-down: every
+-- size pays, pops to the owner).
+local function skyHook(tower: Tower, dinos: { Enemies.Enemy }, ground: Vector3)
+	local list = {}
+	for i, enemy in dinos do
+		list[i] = {
+			hp = enemy.hp,
+			at = enemy.distance,
+			boss = enemy.def.boss == true,
+			sizesLeft = enemy.size,
+			inRange = ownSide(tower, enemy) and Blimp.under(enemy.part.Position, ground, tower.stats.range),
+		}
+	end
+	local i = Blimp.hookPick(list)
+	if not i then
+		return
+	end
+	local enemy = dinos[i]
+	local at = enemy.part.Position
+	local killed, gone, dropped = Enemies.dropSizes(enemy, enemy.size)
+	credit(tower.owner, killed, gone, dropped)
+	if gone then
+		takeDownMark(tower, at)
+	end
+	Effects.tracer(tower.muzzle, at, HOOK_COLOR)
+end
+
+-- Bombing Run (AutoFire, once a round played): every dino on the side's track takes Field
+-- strike x x the gun's shot (9e Field strike rules: air too, armour only if it pierces, breaks 1).
+local function bombingRun(tower: Tower, dinos: { Enemies.Enemy })
+	local stats = tower.stats
+	local list, field = {}, {}
+	for _, enemy in dinos do
+		if enemy.alive and ownSide(tower, enemy) then
+			table.insert(list, enemy)
+			table.insert(field, { side = tower.side, flying = enemy.def.flying == true, armored = enemy.def.armored == true, bare = Enemies.canHurt(enemy, false) })
+		end
+	end
+	local damage = stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale * stats.fieldStrikeX
+	for _, i in StormCoil.fieldTargets(field, tower.side, piercing(tower)) do
+		local enemy = list[i]
+		Effects.tracer(enemy.part.Position + Vector3.new(0, Blimp.HEIGHT, 0), enemy.part.Position, BOMB_COLOR)
+		hit(tower, enemy, damage, 1)
+	end
+end
+
+-- A paratrooper's shot lands (ground dinos only; breaks 1).
+local function paraShot(tower: Tower, enemy: Enemies.Enemy, x: number)
+	if not enemy.alive or enemy.def.flying or not canTarget(tower, enemy) then
+		return
+	end
+	hit(tower, enemy, Blimp.paraDamage() * x * levelScale, 1, true)
+end
+
+-- Paratroopers: n walkers drop below the blimp and fight until the round ends (Shared/Walker,
+-- fight mode; within the side's walker cap).
+local function dropParatroopers(tower: Tower)
+	local state = tower.blimp :: BlimpState
+	local landAt = state.at
+	local land = Enemies.pointAt(landAt, tower.side)
+	local colour = campColour(tower)
+	Walkers.sync(state.paraKey, {
+		count = tower.stats.paratroopers,
+		params = Blimp.paraParams(),
+		side = tower.side,
+		base = land,
+		homeAt = landAt,
+		sending = true,
+		healsBetweenRounds = false,
+		look = function()
+			return TowerLook.buildRanger(colour)
+		end,
+		onHit = function(enemy, landed)
+			paraShot(tower, enemy, landed.x)
+		end,
+	})
+	Effects.disc(land + Vector3.new(0, 0.3, 0), 4, colour, 0.3, 0.8)
+end
+
+-- Airlift: the first of its side's towers Trampled each round is lifted and set down repaired
+-- Blimp.AIRLIFT_S later (one per blimp per round).
+airlift = function(tower: Tower)
+	if tower.def.untouchable then
+		return
+	end
+	for _, source in towers do
+		local state = source.blimp
+		if state and source.side == tower.side and Blimp.airlifts(source.stats, state.airliftUsed) then
+			state.airliftUsed = true
+			table.insert(pendingAirlifts, { tower = tower, at = os.clock() + Blimp.AIRLIFT_S })
+			Effects.tracer(source.muzzle, tower.position, HOOK_COLOR)
+			return
+		end
+	end
+end
+
+local function stepAirlifts()
+	local now = os.clock()
+	for i = #pendingAirlifts, 1, -1 do
+		local lift = pendingAirlifts[i]
+		if now >= lift.at then
+			table.remove(pendingAirlifts, i)
+			if table.find(towers, lift.tower) and lift.tower.knockedOut then
+				Towers.repair(lift.tower)
+			end
+		end
+	end
+end
+
+-- The standing tower with HP nearest `point` on `side` (Spare Parts' crate heal).
+local function nearestDamageable(point: Vector3, side: number): Tower?
+	local best, bestD = nil, math.huge
+	for _, other in towers do
+		local d = (other.base - point).Magnitude
+		if other.side == side and not other.def.untouchable and not other.knockedOut and d < bestD then
+			best, bestD = other, d
+		end
+	end
+	return best
+end
+
+local function crateHeal(tower: Tower, point: Vector3, crates: number)
+	if tower.stats.crateHealPercent <= 0 or crates <= 0 then
+		return
+	end
+	local near = nearestDamageable(point, tower.side)
+	if near then
+		Towers.heal(near, Blimp.crateHeal(tower.stats, near.maxHp) * crates)
+	end
+end
+
+-- A finished lap: a crate (Lap chests), med kits and Rebuild Kits' repairs below its path.
+local function lapDrops(tower: Tower, below: Vector3)
+	local stats = tower.stats
+	local drops = Blimp.lapDrops(stats)
+	if drops.crates > 0 and onCrate then
+		for _ = 1, drops.crates do
+			onCrate(below, stats.chestCash, tower.side)
+		end
+		crateHeal(tower, below, drops.crates)
+	end
+	if drops.kits > 0 and onKit then
+		for _ = 1, drops.kits do
+			onKit(below, stats.medKitHeal, tower.side)
+		end
+	end
+	if drops.repairs > 0 then
+		local trampled, distances = {}, {}
+		for _, other in towers do
+			if other.side == tower.side and other.knockedOut and not other.def.untouchable then
+				local onPath = Enemies.pointAt(Enemies.trackDistanceNear(other.base, tower.side), tower.side)
+				local offset = other.base - onPath
+				table.insert(trampled, other)
+				table.insert(distances, Vector2.new(offset.X, offset.Z).Magnitude)
+			end
+		end
+		for _, i in Blimp.repairs(distances, stats.range, drops.repairs) do
+			Towers.repair(trampled[i])
+			Effects.tracer(tower.muzzle, trampled[i].position, HOOK_COLOR)
+		end
+	end
+end
+
+local function stepBlimp(tower: Tower, dt: number, own)
+	local state = tower.blimp
+	if not state then
+		return
+	end
+	local stats = tower.stats
+	local speed = Blimp.speed(stats)
+	local lapDone
+	state.at, state.dir, lapDone = Blimp.advance(state.at, state.dir, speed, dt, Enemies.trackLength(tower.side))
+	local dinos = {}
+	for _, enemy in own do
+		if enemy.alive then
+			table.insert(dinos, enemy)
+		end
+	end
+	-- Tracking Beam: the light and gun centre on the side's biggest dino, moving at Blimp speed.
+	if stats.targetsBiggest then
+		local list = {}
+		for i, enemy in dinos do
+			list[i] = { hp = enemy.hp, at = enemy.distance, boss = enemy.def.boss == true, sizesLeft = enemy.size, inRange = true }
+		end
+		local i = Blimp.biggest(list)
+		state.focus = Blimp.follow(state.focus, if i then dinos[i].distance else state.at, speed, dt)
+	else
+		state.focus = state.at
+	end
+	local ground = Enemies.pointAt(state.focus, tower.side)
+	local below = Enemies.pointAt(state.at, tower.side)
+	local air = below + Vector3.new(0, Blimp.HEIGHT, 0)
+	tower.position = ground + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0)
+	tower.muzzle = air - Vector3.new(0, 4, 0)
+	TowerLook.poseBlimp(state.model, air, Enemies.pointAt(state.at + state.dir, tower.side) - below, ground, stats.range)
+	if hasAura(stats) then
+		auraDirty = true -- its auras move with it (refreshed at most every AURA_REFRESH s)
+	end
+	-- Searchlight: dinos under the light take +Brittle % (bosses too).
+	if stats.brittlePercent > 0 then
+		for _, enemy in dinos do
+			if ownSide(tower, enemy) and Blimp.under(enemy.part.Position, ground, stats.range) then
+				Enemies.chill(enemy, { slowPercent = 0, seconds = LIGHT_REFRESH, affectsBosses = true, brittlePercent = stats.brittlePercent, stripsArmor = false })
+			end
+		end
+	end
+	if stats.hookEvery > 0 then
+		local fire
+		state.hookTimer, fire = Blimp.hookTick(state.hookTimer, dt, stats.hookEvery)
+		if fire then
+			skyHook(tower, dinos, ground)
+		end
+	end
+	if stats.bombingRun then
+		local boss = false
+		for _, enemy in dinos do
+			boss = boss or enemy.def.boss == true
+		end
+		if AutoFire.check(state.auto, boss, #dinos, Enemies.allSpawned(tower.side), #dinos) then
+			bombingRun(tower, dinos)
+		end
+	end
+	state.roundClock += dt
+	if Blimp.paraDue(stats.paratroopers, state.roundClock, state.paraDropped) then
+		state.paraDropped = true
+		dropParatroopers(tower)
+	end
+	if lapDone then
+		lapDrops(tower, below)
+	end
+end
+
+-- Blinding Glare: the strongest Throw miss % of its side's blimps whose circle holds `point`.
+function Towers.throwMissAt(point: Vector3, side: number): number
+	local percent = 0
+	for _, tower in towers do
+		if tower.blimp and tower.side == side and tower.stats.throwMissPercent > 0 and covers(tower, point) then
+			percent = math.max(percent, tower.stats.throwMissPercent)
+		end
+	end
+	return percent
+end
+
+-- Spotter's Map: publishes which sides' dinos are outlined (each client outlines its own side's).
+local outlined: { [number]: boolean } = {}
+local function publishOutlines()
+	local now: { [number]: boolean } = {}
+	for _, tower in towers do
+		if tower.blimp and tower.stats.dinoOutlines then
+			now[tower.side] = true
+		end
+	end
+	for side in outlined do
+		if not now[side] then
+			ReplicatedStorage:SetAttribute(Blimp.outlineAttribute(side), nil)
+		end
+	end
+	for side in now do
+		if not outlined[side] then
+			ReplicatedStorage:SetAttribute(Blimp.outlineAttribute(side), true)
+		end
+	end
+	outlined = now
+end
+
+-- Studio `firenow BLIMP`: Bombing Run, Paratroopers and Airlift (on the nearest Trampled own
+-- tower) now.
+local function blimpFireNow(tower: Tower, fired: { string })
+	local state = tower.blimp
+	if not state then
+		return
+	end
+	local own = BattleRules.ownDinos(Enemies.getLive(), tower.side, "tower")
+	if tower.stats.bombingRun then
+		bombingRun(tower, own)
+		table.insert(fired, "Bombing Run")
+	end
+	if tower.stats.paratroopers > 0 then
+		Walkers.clear(state.paraKey)
+		dropParatroopers(tower)
+		state.paraDropped = true
+		table.insert(fired, "Paratroopers")
+	end
+	if tower.stats.airlift then
+		for _, other in towers do
+			if other.side == tower.side and other.knockedOut and not other.def.untouchable then
+				state.airliftUsed = false
+				airlift(other)
+				table.insert(fired, "Airlift")
+				break
+			end
+		end
+	end
+end
+
 -- A pop (a dino lost a size; `source` = Enemies.source(): "tower", "hunter" or "totem"): every
 -- standing own-side Bone Totem whose range holds it charges and pays its Bone cash. It only
 -- reads the pop: Bones, scores and Bounties are counted by Main exactly as without a totem.
@@ -2547,7 +2901,7 @@ function Towers.medKits(): { MedKitDrop }
 	local drops = {}
 	for _, tower in towers do
 		local s = tower.stats
-		if s.medKits > 0 and s.medKitHeal > 0 and not tower.knockedOut then
+		if s.medKits > 0 and s.medKitHeal > 0 and not tower.knockedOut and not tower.blimp then -- a blimp's come each lap
 			table.insert(drops, { base = tower.base, count = s.medKits, heal = s.medKitHeal, side = tower.side })
 		end
 	end
@@ -2709,6 +3063,14 @@ function Towers.newRound()
 			AutoFire.reset(pen.auto)
 			pen.takeDowns = 0
 		end
+		local blimp = tower.blimp
+		if blimp then -- once a round: Bombing Run, Paratroopers (last round's go), Airlift
+			AutoFire.reset(blimp.auto)
+			blimp.roundClock = 0
+			blimp.paraDropped = false
+			blimp.airliftUsed = false
+			Walkers.clear(blimp.paraKey)
+		end
 	end
 	if fuel then
 		refreshAuras()
@@ -2739,7 +3101,10 @@ function Towers.step(dt: number)
 		stepResin(tower, dt, own)
 		stepRaptor(tower, dt, own)
 		stepTotem(tower, dt, own)
+		stepBlimp(tower, dt, own)
 	end
+	stepAirlifts()
+	publishOutlines()
 	-- Old Bones (PLAN 9h): a totem's charge aura follows its charge, at most every AURA_REFRESH s.
 	auraClock += dt
 	if auraDirty and auraClock >= AURA_REFRESH then
@@ -2811,6 +3176,9 @@ function Towers.remove(tower: Tower)
 	if tower.raptor then
 		Walkers.clear(tower.raptor.swarmKey)
 	end
+	if tower.blimp then
+		Walkers.clear(tower.blimp.paraKey) -- its blimp model goes with the mast's model
+	end
 	tower.model:Destroy()
 	refreshAuras()
 end
@@ -2853,7 +3221,14 @@ export type Airdrop = { base: Vector3, count: number, cash: number, owner: Playe
 function Towers.airdrops(): { Airdrop }
 	local drops = {}
 	for _, tower in towers do
-		if tower.stats.chests > 0 and tower.stats.chestCash > 0 and not tower.knockedOut then
+		if tower.blimp then
+			-- Spotter Blimp Cargo (PLAN 9h): its crates land below the blimp (none with Lap chests).
+			local count = Blimp.roundCrates(tower.stats)
+			if count > 0 then
+				table.insert(drops, { base = tower.position, count = count, cash = tower.stats.chestCash, owner = tower.owner, side = tower.side })
+				crateHeal(tower, tower.position, count)
+			end
+		elseif tower.stats.chests > 0 and tower.stats.chestCash > 0 and not tower.knockedOut then
 			table.insert(drops, { base = tower.base, count = tower.stats.chests, cash = tower.stats.chestCash, owner = tower.owner, side = tower.side })
 		end
 	end
@@ -2873,7 +3248,9 @@ function Towers.clearAll()
 	towerLevel = 1
 	table.clear(gridTimers)
 	table.clear(stungAt)
+	table.clear(pendingAirlifts)
 	Walkers.clearAll()
+	publishOutlines()
 end
 
 -- A battle side is out (PLAN T77, DECISIONS #213): its towers come off the map.
@@ -2926,6 +3303,7 @@ function Towers.fireNow(key: string, position: Vector3): string
 			table.insert(fired, "Raptor Charge")
 		end
 	end
+	blimpFireNow(tower, fired) -- Spotter Blimp (PLAN 9h T125b)
 	local totem = tower.totem
 	if totem then -- fills it now (PLAN 9h)
 		totem.pending += Totem.add(totem.rules, tower.stats, Totem.full(tower.stats) - totem.rules.charge)

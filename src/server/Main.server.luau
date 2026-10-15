@@ -239,6 +239,9 @@ Towers.init(map.towerFolder, {
 			Economy.earnScaledFor(side, cash, difficulty().cashMult)
 		end
 	end,
+	onKit = function(position, heal, side) -- a Spotter Blimp's lap med kit (PLAN 9h T125b)
+		Airdrops.kitAt(position, heal, side)
+	end,
 	onCrate = function(position, cash, side)
 		Airdrops.chestAt(position, cash, side)
 	end,

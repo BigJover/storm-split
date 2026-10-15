@@ -501,15 +501,22 @@ local LOCK_REASONS = {
 -- Upgrade paths of towers placed on the track (the Tar Pit), whose damage, slow and range
 -- read as the pool's.
 local TAR_PATHS: { [any]: boolean } = {}
-for _, def in Config.Towers do
+-- The Spotter Blimp's paths (PLAN 9h T125b): its drops come every lap, below the blimp.
+local BLIMP_PATHS: { [any]: boolean } = {}
+for key, def in Config.Towers do
 	if def.onTrack then
 		for _, path in def.paths do
 			TAR_PATHS[path] = true
 		end
 	end
+	if key == "BLIMP" then
+		for _, path in def.paths do
+			BLIMP_PATHS[path] = true
+		end
+	end
 end
 
-local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?)
+local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?, blimp: boolean?)
 	local function changed(field: string, default: any): any?
 		local before = if now then now[field] else nil
 		local after = nextStep[field]
@@ -711,7 +718,7 @@ local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?
 	end
 	local brittle = changed("brittlePercent", 0)
 	if brittle then
-		table.insert(parts, `sedated dinos take +{brittle}% damage`)
+		table.insert(parts, if blimp then `dinos under the light take +{brittle}% damage` else `sedated dinos take +{brittle}% damage`)
 	end
 	if changed("stripsArmor", false) then
 		table.insert(parts, "sedated dinos lose their armour")
@@ -786,7 +793,8 @@ local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?
 	local kits = changed("medKits", 0)
 	local kitHeal = changed("medKitHeal", 0)
 	if kits or kitHeal then
-		table.insert(parts, `{nextStep.medKits} med kits land nearby each round, {fmt(nextStep.medKitHeal)} HP each`)
+		local when = if blimp then "below the blimp every lap" else "nearby each round"
+		table.insert(parts, `{nextStep.medKits} med kits land {when}, {fmt(nextStep.medKitHeal)} HP each`)
 	end
 	local rescue = changed("rescueRespawnMult", 0)
 	if rescue then
@@ -799,6 +807,48 @@ local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?
 	if changed("lastStand", false) then
 		table.insert(parts, "once a round, a tower in range that would be trampled stays at 1 HP")
 	end
+
+	-- Spotter Blimp (PLAN 9h T125b; Shared/Blimp)
+	local speedX = changed("blimpSpeedMult", 1)
+	if speedX then
+		table.insert(parts, `the blimp flies x{fmt(speedX)} faster`)
+	end
+	if changed("bombingRun", false) then
+		table.insert(parts, `once a round bombs every dino on your track for x{fmt(nextStep.fieldStrikeX or 0)} a shot`)
+	end
+	local hook = changed("hookEvery", 0)
+	if hook then
+		table.insert(parts, `every {fmt(hook)}s lifts the smallest dino under it off the track`)
+	end
+	local miss = changed("throwMissPercent", 0)
+	if miss then
+		table.insert(parts, `dinos in the light miss {miss}% of their throws`)
+	end
+	local auraReach = changed("auraReachX", 1)
+	if auraReach then
+		table.insert(parts, `its damage aura reaches x{fmt(auraReach)} further`)
+	end
+	if changed("dinoOutlines", false) then
+		table.insert(parts, "your camp sees every dino on your track through walls")
+	end
+	if changed("lapChests", false) then
+		table.insert(parts, "a crate every lap instead of one a round")
+	end
+	local repairs = changed("lapRepairs", 0)
+	if repairs then
+		table.insert(parts, `each lap fixes {repairs} trampled tower{if repairs == 1 then "" else "s"} near its path`)
+	end
+	local crateHeal = changed("crateHealPercent", 0)
+	if crateHeal then
+		table.insert(parts, `a crate heals the nearest tower {crateHeal}% of its HP`)
+	end
+	local paras = changed("paratroopers", 0)
+	if paras then
+		table.insert(parts, `{paras} paratroopers drop and fight each round`)
+	end
+	if changed("airlift", false) then
+		table.insert(parts, "the first tower trampled each round is lifted and fixed")
+	end
 end
 
 -- "+30% damage · +15% rate · 2 shots per trigger" for going from `current`
@@ -808,7 +858,7 @@ local function describeStep(path, current: number, picks: string, option: string
 	local nextStep = Upgrades.row(path, current + 1, Upgrades.pickAfter(picks, current + 1, option or "A"))
 	local parts = {}
 	local tar = TAR_PATHS[path] == true
-	describeAbilities(now, nextStep, parts, tar)
+	describeAbilities(now, nextStep, parts, tar, BLIMP_PATHS[path] == true)
 	for _, stat in { { "damageMult", "damage" }, { "rateMult", "rate" }, { "targetsMult", "targets" }, { "rangeMult", if tar then "pool length" else "range" }, { "splashMult", "blast radius" } } do
 		local before = if now then (now[stat[1]] or 1) else 1
 		local after = nextStep[stat[1]] or 1

@@ -37,6 +37,7 @@ TowerLook.COLORS = table.freeze({
 	RESIN = Color3.fromRGB(240, 150, 40), -- Amber Resin Cannon: amber (PLAN 9g)
 	RAPTOR = Color3.fromRGB(150, 120, 70), -- Raptor Pen: raptor hide (PLAN 9g)
 	TOTEM = Color3.fromRGB(235, 225, 200), -- Bone Totem: bleached bone (PLAN 9h)
+	BLIMP = Color3.fromRGB(205, 195, 170), -- Spotter Blimp: canvas envelope (PLAN 9h)
 })
 
 TowerLook.BODY_HEIGHT = 5
@@ -286,6 +287,17 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 			block("EyeR", Vector3.new(0.25, 0.2, 0.1), at(0.3, 4.15, -0.86), eye, Enum.Material.Neon),
 		}
 	end,
+	-- Spotter Blimp (PLAN 9h T125b): its mooring mast (the blimp itself is buildBlimp's, flying).
+	BLIMP = function(color)
+		return {
+			block("Pad", Vector3.new(2.6, 0.3, 2.6), at(0, 0.15, 0), STEEL, Enum.Material.DiamondPlate),
+			block("Mast", Vector3.new(0.4, 4.4, 0.4), at(0, 2.5, 0), STEEL, Enum.Material.Metal),
+			block("StayL", Vector3.new(0.12, 3.2, 0.12), at(-0.7, 1.6, 0), DARK_WOOD, Enum.Material.Fabric),
+			block("StayR", Vector3.new(0.12, 3.2, 0.12), at(0.7, 1.6, 0), DARK_WOOD, Enum.Material.Fabric),
+			block("Cone", Vector3.new(0.9, 0.5, 0.9), at(0, 4.7, 0), color, Enum.Material.Fabric),
+			block("Windsock", Vector3.new(0.3, 0.3, 1.0), at(0, 4.3, 0.6), Color3.fromRGB(230, 120, 40), Enum.Material.Fabric),
+		}
+	end,
 	-- Supply Camp: stacked crates under an orange tarp, a flag on a pole.
 	QUARTERMASTER = function(color)
 		return {
@@ -363,6 +375,97 @@ function TowerLook.build(key: string, range: number, base: Vector3): Model
 
 	TowerLook.refresh(model, range, { 0, 0, 0 }, 0)
 	return model
+end
+
+-- The Spotter Blimp itself (PLAN 9h T125b, visual only): an envelope with fins, a gondola
+-- with the door gun, and the searchlight's beam and circle (`range`, on the ground below it;
+-- Towers moves the model and stretches the beam). PrimaryPart is "Envelope".
+function TowerLook.buildBlimp(color: Color3): Model
+	local model = Instance.new("Model")
+	model.Name = "Blimp"
+	local function piece(name: string, size: Vector3, cf: CFrame, c: Color3, material: Enum.Material, shape: Enum.PartType?): BasePart
+		local part = Instance.new("Part")
+		part.Name = name
+		if shape then
+			part.Shape = shape
+		end
+		part.Size = size
+		part.CFrame = cf
+		part.Color = c
+		part.Material = material
+		part.Anchored = true
+		part.CanCollide = false
+		part.CanQuery = false
+		part.CanTouch = false
+		part.Parent = model
+		return part
+	end
+	local envelope = piece("Envelope", Vector3.new(14, 5, 5), CFrame.new(), color, Enum.Material.Fabric, Enum.PartType.Cylinder)
+	model.PrimaryPart = envelope
+	piece("NoseCap", Vector3.new(5, 5, 5), CFrame.new(7, 0, 0), color, Enum.Material.Fabric, Enum.PartType.Ball)
+	piece("TailCap", Vector3.new(4, 4, 4), CFrame.new(-7, 0, 0), color, Enum.Material.Fabric, Enum.PartType.Ball)
+	piece("FinTop", Vector3.new(2.5, 2.5, 0.2), CFrame.new(-8, 2.2, 0), DARK_WOOD, Enum.Material.Fabric)
+	piece("FinL", Vector3.new(2.5, 0.2, 2.5), CFrame.new(-8, 0, -2.2), DARK_WOOD, Enum.Material.Fabric)
+	piece("FinR", Vector3.new(2.5, 0.2, 2.5), CFrame.new(-8, 0, 2.2), DARK_WOOD, Enum.Material.Fabric)
+	piece("Gondola", Vector3.new(4, 1.4, 1.8), CFrame.new(0.5, -3.2, 0), WOOD, Enum.Material.Wood)
+	piece("Gun", Vector3.new(1.6, 0.3, 0.3), CFrame.new(1.5, -3.9, 1), STEEL, Enum.Material.Metal)
+	piece("Lamp", Vector3.new(0.8, 0.8, 0.8), CFrame.new(-1, -4, 0), Color3.fromRGB(255, 245, 200), Enum.Material.Neon, Enum.PartType.Ball)
+	local beam = piece("Beam", Vector3.new(1, 1, 1), CFrame.new(), Color3.fromRGB(255, 245, 200), Enum.Material.Neon, Enum.PartType.Cylinder)
+	beam.Transparency = 0.9
+	beam.CastShadow = false
+	local circle = piece("Light", Vector3.new(0.1, 2, 2), CFrame.new(), Color3.fromRGB(255, 245, 200), Enum.Material.Neon, Enum.PartType.Cylinder)
+	circle.Transparency = 0.85
+	circle.CastShadow = false
+	return model
+end
+
+-- A Paratroopers ranger (PLAN 9h T125b, visual only): khaki body, a camp-colour scarf, a rifle.
+function TowerLook.buildRanger(camp: Color3): Model
+	local model = Instance.new("Model")
+	model.Name = "Paratrooper"
+	local function piece(name: string, size: Vector3, offset: Vector3, c: Color3, material: Enum.Material): BasePart
+		local part = Instance.new("Part")
+		part.Name = name
+		part.Size = size
+		part.CFrame = CFrame.new(offset)
+		part.Color = c
+		part.Material = material
+		part.Anchored = true
+		part.CanCollide = false
+		part.CanQuery = false
+		part.CanTouch = false
+		part.Parent = model
+		return part
+	end
+	model.PrimaryPart = piece("Body", Vector3.new(1, 1.4, 0.6), Vector3.new(0, 0.9, 0), SAND, Enum.Material.Fabric)
+	piece("Head", Vector3.new(0.7, 0.7, 0.7), Vector3.new(0, 1.95, 0), Color3.fromRGB(205, 160, 120), Enum.Material.SmoothPlastic)
+	piece("Hat", Vector3.new(0.9, 0.2, 0.9), Vector3.new(0, 2.35, 0), LEAF, Enum.Material.Fabric)
+	piece("Scarf", Vector3.new(1.05, 0.25, 0.65), Vector3.new(0, 1.55, 0), camp, Enum.Material.Fabric)
+	piece("Legs", Vector3.new(0.9, 0.6, 0.5), Vector3.new(0, 0.1, 0), DARK_WOOD, Enum.Material.Fabric)
+	piece("Rifle", Vector3.new(0.15, 0.15, 1.4), Vector3.new(0.6, 1.0, -0.5), STEEL, Enum.Material.Metal)
+	return model
+end
+
+-- Moves the blimp to `air` facing `heading` (a flat direction) and points its light at
+-- `ground` with a circle of `range` (visual only).
+function TowerLook.poseBlimp(model: Model, air: Vector3, heading: Vector3, ground: Vector3, range: number)
+	local flat = Vector3.new(heading.X, 0, heading.Z)
+	local look = if flat.Magnitude > 1e-3 then CFrame.lookAt(air, air + flat) else CFrame.new(air)
+	-- The envelope's cylinder runs along X: turn the model so its nose (+X) faces the heading.
+	model:PivotTo(look * CFrame.Angles(0, math.rad(90), 0))
+	local lamp = model:FindFirstChild("Lamp") :: BasePart?
+	local beam = model:FindFirstChild("Beam") :: BasePart?
+	local circle = model:FindFirstChild("Light") :: BasePart?
+	if lamp and beam then
+		local from, to = lamp.Position, ground + Vector3.new(0, 0.1, 0)
+		local length = (to - from).Magnitude
+		beam.Size = Vector3.new(length, math.max(1, range * 0.4), math.max(1, range * 0.4))
+		beam.CFrame = CFrame.lookAt((from + to) / 2, to) * CFrame.Angles(0, math.rad(90), 0)
+	end
+	if circle then
+		circle.Size = Vector3.new(0.1, range * 2, range * 2)
+		circle.CFrame = CFrame.new(ground + Vector3.new(0, 0.08, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	end
 end
 
 local function setRing(model: Model, range: number)

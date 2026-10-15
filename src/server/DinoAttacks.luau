@@ -41,12 +41,15 @@ local StormCoil = require(Shared:WaitForChild("StormCoil"))
 local Config = require(Shared:WaitForChild("Config"))
 local DinoLook = require(Shared:WaitForChild("DinoLook"))
 local Track = require(Shared:WaitForChild("Track"))
+local Blimp = require(Shared:WaitForChild("Blimp"))
 
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
 local Health = require(script.Parent.Health)
 local Towers = require(script.Parent.Towers)
 local Walkers = require(script.Parent.Walkers)
+
+local missRoll = Random.new() -- Blinding Glare's misses
 
 local DinoAttacks = {}
 
@@ -177,6 +180,11 @@ local function throw(enemy: Enemies.Enemy, target: Combat.Target)
 	local def = enemy.def
 	local from = enemy.part.Position
 	local to = Vector3.new(target.position.X, Track.GroundTop, target.position.Z)
+	-- Blinding Glare (PLAN 9h T125b): a dino under a blimp's light may miss: the throw lands short.
+	if Blimp.misses(Towers.throwMissAt(from, enemy.side), missRoll:NextNumber()) then
+		local short = Blimp.shortOf(from, to)
+		to = Vector3.new(short.X, Track.GroundTop, short.Z)
+	end
 	local cap = Config.Tuning.MaxProjectiles
 	while #projectiles >= cap and #projectiles > 0 do
 		destroy(table.remove(projectiles, 1) :: Projectile) -- past the cap the oldest goes

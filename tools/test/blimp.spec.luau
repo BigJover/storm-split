@@ -8,6 +8,7 @@
 	player. Untouchable: no HP, never a dino target.
 ]]
 
+local fs = require("@lune/fs")
 local Config = require(src.shared.Config)
 local Blimp = require(src.shared.Blimp)
 local TowerStats = require(src.shared.TowerStats)
@@ -234,4 +235,17 @@ test("Spotter's Map: own-side dinos only, never a player, never another side's d
 	ok(not Blimp.outlined(false, 2, 2, true), "a player")
 	ok(not Blimp.outlined(true, 2, 2, false), "no Spotter's Map")
 	eq(Blimp.outlineAttribute(3), "DinoOutlines3")
+end)
+
+test("the server wires it: flight + effects each frame, Airlift on a trample, lap kits, Glare on throws, outlines", function()
+	local towers = fs.readFile("src/server/Towers.luau")
+	ok(string.find(towers, "stepBlimp(tower, dt, own)", 1, true) ~= nil, "Towers.step flies every blimp")
+	ok(string.find(towers, "setKnockedOut(tower, true)\n\t\tairlift(tower)", 1, true) ~= nil, "a trample asks Airlift")
+	ok(string.find(towers, "if source.blimp then source.position else source.base", 1, true) ~= nil, "its circle is under the blimp, not the mast")
+	ok(string.find(towers, "def == Config.Towers.BLIMP", 1, true) ~= nil, "no range ring at the mast")
+	ok(string.find(fs.readFile("src/server/DinoAttacks.luau"), "Towers.throwMissAt(from, enemy.side)", 1, true) ~= nil, "Blinding Glare on throws")
+	ok(string.find(fs.readFile("src/server/Main.server.luau"), "Airdrops.kitAt(position, heal, side)", 1, true) ~= nil, "lap med kits land")
+	local looks = fs.readFile("src/client/Looks.client.luau")
+	ok(string.find(looks, "Blimp.outlined(", 1, true) ~= nil and string.find(looks, "FindFirstChild(\"Enemies\")", 1, true) ~= nil,
+		"Spotter's Map outlines only the map's dino models, through Blimp.outlined")
 end)

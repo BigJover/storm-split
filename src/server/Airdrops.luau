@@ -216,6 +216,14 @@ function Airdrops.chestAt(position: Vector3, cash: number, side: number?)
 	end
 end
 
+-- One med kit on the ground at `position` (a Spotter Blimp's lap kit, PLAN 9h T125b), for
+-- `side` (default 1, co-op).
+function Airdrops.kitAt(position: Vector3, heal: number, side: number?)
+	if heal > 0 then
+		spawnKit(Placement.ground(position), heal, side or 1)
+	end
+end
+
 -- Called at the start of every round: co-op with no side (every drop), a battle once per
 -- living side (that side's towers' drops only).
 function Airdrops.drop(side: number?)
