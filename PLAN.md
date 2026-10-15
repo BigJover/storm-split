@@ -14,7 +14,7 @@ DataStore writes from an agent). N15 rides any `Battle` commit (#272).
 **Status (2026-10-13, later): 9a + 9b done (c1a7c5a, 0f82bb7, 929b66a, cd6a413, cd749d2; 706 specs); Tester Run 8 running. 9c designed below (#290). Next: 🦖 names 9c → Builder T114 + T115.**
 **Status (2026-10-13, Director): 9d + 9e designed below (#292–#297; 96 options, metrics, 6 new mechanics). Next after 9c: 🦖 names 9d → T116–T118, then 9e → T119–T120.**
 **Status (2026-10-13, Director): 9f designed below (#298–#302; 48 hero options, per-path metrics, 1 new mechanic). Next after 9e: 🦖 names 9f → T121–T122.**
-**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.** **Update (2026-10-14): 9g built; next = T124c (finishes T124b, #325–#328), then Tester Run 9g.** **Update (2026-10-15): T124c steps 1–4 in (03c9634), release held on King of the Pack bar 3; next = T124d (#329–#330, King Rate x 1.25 + frozen bar-3 median + release), then Tester Run 9g.**
+**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.** **Update (2026-10-14): 9g built; next = T124c (finishes T124b, #325–#328), then Tester Run 9g.** **Update (2026-10-15): T124c steps 1–4 in (03c9634), release held on King of the Pack bar 3; next = T124d (#329–#330, King Rate x 1.25 + frozen bar-3 median + release), then Tester Run 9g.** **Update (2026-10-15, later): Bone Totem built unreleased (1b08327); Blimp rows refused. Next = T126c (Totem fix + release, #331–#333), then T125b (Blimp, #334–#336), then Tester Run 9h; 9i/9j numbers re-checked (#337+).**
 
 ## Size of the job
 | | Slots (T4+T5) | Options to build | New options to design |
@@ -686,6 +686,13 @@ accounted for; pure rules first; one task = one commit, pushed; co-op specs re-r
     stand-in and is stung at ×0.5, not through Camo Cover; the same option in co-op still does
     its dino part. Card text matches what happens.
 
+11. **Director's numbers are tool-checked (2026-10-15, #337–#340):** 9h–9j cells were re-checked on a
+    sheet copy with the rows written in and `value.py`'s own honest_hits / edps / walker_edps /
+    aura_credit / break_bars (harness: `~/.claude/jobs/2a8d6f9c/tmp/dir/` gen.py, blimp.py,
+    meteor.py, vent.py, ranger.py with blimp_final / meteor_final / vent_final / ranger_final.json;
+    the Totem copy is `totem.xlsx`). Each tower's "Director check" lists the
+    expected worths; the Builder's `value.py` must reproduce them within 3 %.
+
 **9g — Amber Resin Cannon + Raptor Pen** (T123 Resin, T124 Walker + Raptor, T124b release).
 
 #### Amber Resin Cannon (`RESIN`) — a control tower (Tar Pit-like judging, #314)
@@ -1169,29 +1176,97 @@ round-20 bar, Bone Pile payback). **Tester Run 9h:** common rule 10, plus: the b
 lands below it each lap (Cargo Run), Paratroopers drop and fight, a Trampled tower is lifted
 and fixed (Airlift); a full totem roars, Bone Market pays instead, `charge` + kills near it fill
 it, the Bones column is the same as a match without a totem.
+**T126b is replaced by T126c (Totem) + T125b (Blimp) below (Director 2026-10-15, #331–#336).**
+
+**T126c (Builder) — Bone Totem fix + release (#331–#333).** One commit, pushed. Assert each old
+value first (sheet = 1b08327's).
+1. **Cells:** `Towers!C21` 800 → **600**; `Tuning!B231` (Totem charge) 8 → **3**; `Tuning!B237`
+   (Spirit hunter damage) 9 → **8**; `Tower Upgrades!EX366` 6 → **8**, `EX367` 14 → **26**,
+   `EX368` 14 → **26** (Bone cash); `ER368` 400 → **120**, `ER380` 560 → **168** (Full cash).
+   Nothing else (Echo Roar 0.9 / Skull Storm 1.76 stay).
+2. **`value.py`:** the Totem's round-20 bar (#332): the Roar T2 r11–20 c/e line stays printed with
+   "(report, #332: Bone Pile T1–T2 payback is the Totem's round-20 bar)" and is never a finding;
+   drop the "Totem charge −1, ≥ 5" lever text. `ballista.spec`: replace the `baseRate > 0` test by
+   an exempt-key set `{TOTEM = true, METEOR = true, VENT = true}` (#333), comment citing #333.
+3. **Release:** `TOTEM` out of `ShopRules.Unreleased` (as T124d; Amber 450 unchanged); the Studio
+   J/K path sells it. `UPGRADES.md` Totem section: 600 cash, "at 3 it is full", Bone cash 8 / 26,
+   Bone Market 120, Bone Bonus 168; header "sold from T126c". RECAP not touched.
+4. **Expected (Director's run on a copy, real tools; re-run them on the sheet):** `value.py`: Roar
+   T1–T5 c/e 377 / 693 / 290 / 153 / **174**, every Roar T5 build 174–257 (`--options` Roar
+   5A/5B/5C rows 391/333/303, 332/274/269, 327/269/264 eDPS), "Bone Pile … T1 +121/round = 11r;
+   T2 +393 = 12r; T3 +998 = 12r"; Roar T1/T2 DEAD (known, #332). `--breaks1` exit 0 (Ancient Roar
+   S r21–30 203, r31–40 391). `--options` exit 0 (Ancestors 5A slot ≤ 1.25×; Bone Pile clean).
+   Exporter: 0 problems. `tools/test.sh` green; Config diff = these 9 cells + TOTEM sold.
+   If any number differs by > 2 %, stop and report (don't step levers).
+
+**T125b (Builder) — Spotter Blimp: rows, metrics, build, release (#334–#336; replaces T125's
+numbers).** As T125 (mechanics, `Shared/Blimp`, look, Studio aids, `UPGRADES.md`), with:
+1. **Towers row 22 `BLIMP`:** Cost **600**, Damage **5**, Fire rate 2, Targets 1, Range 14, Hits air
+   Yes, Unlock 400, Max HP 0, Untouchable Yes (rest as the 9h "Towers row").
+2. **Tuning block `SPOTTER BLIMP`** as 9h but **Paratrooper damage 40, Paratrooper rate 1.5**.
+3. **Rows** (append from `Tower Upgrades` row 383 in Totem's order: Door Gun T1–T3, 4A, 5A,
+   Searchlight …, Cargo …, then per path 4B, 4C, 5B, 5C) — the 9h table, except:
+   - Door Gun 4B Rocket Pods **Damage x 1.4**, Bomblets 3, **Bomblet generations 1**; 5A Gunship
+     **Damage x 0.78**, Shots 4, Bomblets 2, **Bomblet generations 1**, Blimp speed x 1.5; 5C Sky
+     Hook **Damage x 1.75**. 5B Bombing Run: Field strike x 12 with **`Field strike every (s)`
+     blank** (the Bombing run flag fires it, AutoFire). Add `("Spotter Blimp", "Door Gun")` to
+     `BREAK_PATHS` (Heavy Mount breaks 2, #336).
+   - Searchlight 4B Tracking Beam **Brittle % 14**; 5A All-Seeing Eye **Brittle % 25** (card
+     "Every dino under the blimp marked +25%"); 5B Lighthouse Aura damage % 10, **Aura reach x 1.5**;
+     5C Spotter's Map **Brittle % 22**.
+   - Cargo: T1 Chests 1, **Chest cash 200**; T2 Chests 1, **Chest cash 550**, Hunter reload x 0.8;
+     T3 Chests 1, **Chest cash 1,550**, Hunter reload x 0.8, Med kits 1, Med kit heal 40; 4A Heavy
+     Cargo **Chest cash 2,000**; 4B Rebuild Kits Lap repairs 1; 4C Spare Parts **Chest cash 1,900**,
+     Crate heal % 20; 5A Cargo Run **Lap chests Yes only** (no Chest cash; ⚙ = Chest cash); 5B
+     Paratroopers 2 (⚙ Tuning Paratrooper damage); 5C Airlift Yes, **Chest cash 2,700** ⚙.
+   - Mechanic change: **`Lap chests` = one crate every lap instead of the round's `Chests`**.
+4. **`value.py` metrics (#334–#336; `BLIMP` paths: Searchlight and Cargo in `SUPPORT_PATHS`;
+   `BLIMP_TRAMPLED = 0.2`, `BLIMP_TOWER = 6000` stated):** coverage c(R) = min(1, 20 × R ÷ track
+   length), R = the build's range; lap = 2 × track ÷ (Blimp speed × Blimp speed x); laps = 50 ÷ lap.
+   **Door Gun** = edps × c(R) + [Bombing run] honest_hits(breaks 1, no mark/bomblets; damage ×
+   Field strike x; 10 dinos) ÷ Round seconds + [Hook] the r31–40 non-boss count-weighted HP of
+   min(2, sizes) sizes ÷ Hook every × c(R) + aura_credit. **Searchlight** = 120 × lit × Brittle
+   %/100, lit = 10 × c(R) (Targets biggest: (1 + boss share) + 9 × c(R)) + aura_credit(rate =
+   Aura range %/2) × c(R) + 120 × 10 × c(R × Aura reach x) × Aura damage %/100 + 0.5 × Throw miss %.
+   **Cargo** (cash a round) = crates × Chest cash × 0.8 (crates = Chests, or laps with Lap chests)
+   + min(BLIMP_TRAMPLED, laps × Lap repairs + Airlift) × Repair cost × BLIMP_TOWER + Crate heal
+   %/100 × 150 × crates × 2 + 14 × 30 × (1/Hunter reload x − 1) × 0.3 + Med kits × heal × 0.5 +
+   14 × 0.8 × walker_edps(Paratroopers × (Paratrooper damage, rate; ground, breaks 1)); release
+   line + **payback bar T1–T3 8–15 rounds** (lever Chest cash). The exporter's untouchable band
+   reads the Door Gun metric (with coverage).
+5. **Expected (Director's harness on a copy: these rows + value.py's edps / honest_hits /
+   aura_credit / walker_edps):** Door Gun T1–T3 worth 7 / 15 / 74; T4 146 / 155 / 144; T5 after A4
+   303 / 259 / 262, after B4 244 / 267 / 272, after C4 308 / 249 / 252 → **c/e 221–278** (band
+   178–284). Searchlight T4 116 / 115 / 121; T5 after A4 288 / 236 / 254, B4 205 / 223 / 181, C4
+   193 / 229 / 171. Cargo 160 / 472 / 1,292 a round, payback **8.6 / 10.2 / 8.9**; T4 1,652 /
+   1,652 / 1,632; T5 after A4 2,674 / 2,377 / 2,572, B4 2,444 / 2,377 / 2,572, C4 2,642 / 2,357 /
+   2,632. `--breaks1` 0 fails (Heavy Mount S/B1 1.26 / 1.05). Off by > 3 % → step the ⚙ lever
+   (rule 7), then report.
+6. **Release** in the same task (BLIMP out of `Unreleased`), `tools/test.sh` green, exporter clean,
+   `--options` exit 0. Then **Tester Run 9h** (the T126b text above, both towers).
 
 **9i — Meteor Beacon + Volcano Vent** (T127 Meteor, T128 Vent, T128b release). Meteor = strikes
 on the densest bunch anywhere on your side; Vent = owns one stretch (#282).
 
 #### Meteor Beacon (`METEOR`) — damage (Impact, Sky Rocks), crater control (Aftermath)
-**Towers row:** Cost 1000 · Damage 40 (per meteor) · Fire rate 0.0833 (one per 12 s) · Targets 5
+**Towers row (#337):** Cost **600** · Damage 40 (per meteor) · Fire rate **0.125** (one per 8 s) · Targets **6**
 (average caught; the densest bunch) · Range 999 (your side's whole track) · Hits air No ·
-Splash radius 8 · Unlock 600 · Key `METEOR` · Max HP 150 · note "Calls a meteor on the
+Splash radius 8 · Unlock 600 · Key `METEOR` · Max HP 150 · note "Every 8 s calls a meteor on the
 biggest bunch of dinos on your side: area hit + burning crater. Ground only."
 **Tuning block `METEOR BEACON`:** Bunch radius (studs) 8 · Strike warning (s) 1 · Crater radius 6 ·
 Crater (s) 5 · Crater burn DPS 10 · Small meteor x 0.6 · Small splash x 0.7 · **Extinction min
-bunch 6** (the #283 row) · Extinction x 2.5 · Extinction breaks 4 · Starfall meteors 20 ·
+bunch 6** (the #283 row) · Extinction x **3** · Extinction breaks 4 · Starfall meteors 20 ·
 Fire line gap (studs) 30 · Streak length (studs) 10.
 **Mechanics (pure `Shared/Meteor`):**
 1. **Densest bunch.** Aim = the point on the side's track (ground dinos) with the most dinos
    within Bunch radius (a boss counts 3; ties → furthest along); after Strike warning s (a red
-   ring) every ground dino within Splash radius takes the hit, breaks 1; dinos within 2 studs
-   of the centre break `Size breaks` (pierce-through). `Meteors` n: each strike is n small
+   ring) every ground dino within Splash radius takes the hit and breaks `Size breaks` (pierce-through; #337:
+   every dino in the splash, not only the centre). `Meteors` n: each strike is n small
    meteors (Small meteor x damage, Small splash x radius) on the n densest points, over 2 s;
    `Scatter` = the n points are the densest of n equal track segments; `Meteor every (s)`
    adds one small meteor on that timer; `Starfall every (s)` replaces the normal strike with
    Starfall meteors small meteors on the densest points across the side.
-2. **Craters.** Each (big) meteor leaves a crater (Crater radius) for `Crater (s)` (blank =
+2. **Craters.** Each strike's densest-point meteor (big, or the first of n small ones; not Starfall) leaves a crater (Crater radius) for `Crater (s)` (blank =
    Tuning): dinos in it burn `Burn DPS` (blank = Crater burn DPS) × the tower level; `Strips
    armour` there (Glass Crater); `Crater amp %` (a dino that crosses takes +x % for 3 s);
    `Throw miss %` / `Bite miss %` (dinos in it miss that share); `Knockback (studs)` at impact
@@ -1216,19 +1291,19 @@ armour, Knockback, Throw miss % (9h), Hits air (9g), Bombing run, Field strike x
 | Impact | 1 | | Heavier Rock | — | Damage x 1.7 |
 | Impact | 2 | | Iron Core | — | Damage x 3.3 |
 | Impact | 3 | | Ground Zero | — | Damage x 6, Size breaks 2 |
-| Impact | 4 | A | Planet Killer | Centre breaks 3, ×2 on bosses | Damage x 1.3 ⚙, Size breaks 3, Boss x 2 |
-| Impact | 4 | B | Plate Cracker | Meteors cut through armour | Damage x 1.7 ⚙, Pierces armour Yes |
-| Impact | 4 | C | Quick Call | A meteor every 8 s | Damage x 1.25 ⚙, Rate x 1.5 |
-| Impact | 5 | A | **Extinction Event** | One giant meteor a round, fires itself | Damage x 1 , Extinction Yes (⚙ Tuning Extinction x) |
+| Impact | 4 | A | Planet Killer | Breaks 3, ×2 on bosses | Damage x 1.3 ⚙, Size breaks 3, Boss x 2 |
+| Impact | 4 | B | Plate Cracker | Meteors cut through armour | Damage x **1.8** ⚙, Pierces armour Yes |
+| Impact | 4 | C | Quick Call | Meteors fall 50% more often | Damage x 1.25 ⚙, Rate x 1.5 |
+| Impact | 5 | A | **Extinction Event** | One giant meteor a round, fires itself | Damage x **1.4** ⚙, Extinction Yes |
 | Impact | 5 | B | Dino Killer | Breaks the biggest dino it hits 2 extra sizes | Damage x 1.9 ⚙, Biggest breaks + 2 |
 | Impact | 5 | C | Impact Winter | Every dino on your side slowed after each hit | Damage x 1.9 ⚙, Side slow % 30, Side slow (s) 3 |
 | Sky Rocks | 1 | | Rock Chunks | — | Damage x 1.4, Meteors 2 |
 | Sky Rocks | 2 | | Twin Fall | — | Damage x 2.1, Meteors 3 |
 | Sky Rocks | 3 | | Fireball Flurry | — | Damage x 2.6, Meteors 5 |
 | Sky Rocks | 4 | A | Endless Rain | A small meteor every 4 s | Damage x 1.25 ⚙, Meteor every (s) 4 |
-| Sky Rocks | 4 | B | Scatter Field | Meteors land all along the track | Damage x 1.5 ⚙, Scatter Yes |
+| Sky Rocks | 4 | B | Scatter Field | Meteors land all along the track | Damage x **1.75** ⚙, Scatter Yes |
 | Sky Rocks | 4 | C | Cinder Trail | Small meteors leave a burning streak | Damage x 1.6 ⚙, Burn streak Yes, Burn DPS 20 |
-| Sky Rocks | 5 | A | Starfall | 20 meteors across your side every 15 s | Damage x 0.65 ⚙, Starfall every (s) 15 |
+| Sky Rocks | 5 | A | Starfall | 20 meteors across your side every 15 s | Damage x **2.8** ⚙, Starfall every (s) 15 |
 | Sky Rocks | 5 | B | Comet Tail | A comet sweeps the whole track once a round | Damage x 1.7, Bombing run Yes, Field strike x 6 ⚙ |
 | Sky Rocks | 5 | C | Shooting Stars | Meteors can hit flyers | Damage x 1.95 ⚙, Hits air Yes |
 | Aftermath | 1 | | Hot Crater | — | Damage x 1.3, Burn DPS 20 |
@@ -1237,7 +1312,7 @@ armour, Knockback, Throw miss % (9h), Hits air (9g), Bombing run, Field strike x
 | Aftermath | 4 | A | Long Burn | Craters last 8 s, hotter | Crater (s) 8, Burn DPS 45 ⚙ |
 | Aftermath | 4 | B | Glass Crater | Craters strip armour | Strips armour Yes, Burn DPS 40 ⚙ |
 | Aftermath | 4 | C | Scorch Marks | Dinos crossing a crater take +15% | Crater amp % 15, Burn DPS 40 ⚙ |
-| Aftermath | 5 | A | Fire Line | Craters join into one burning strip | Fire line Yes, Burn DPS 60 ⚙ |
+| Aftermath | 5 | A | Fire Line | Craters join into one burning strip | Fire line Yes, Burn DPS **54** ⚙ |
 | Aftermath | 5 | B | Blinding Dust | Dinos in the ash can't bite or throw | Throw miss % 100, Bite miss % 100, Burn DPS 55 ⚙ |
 | Aftermath | 5 | C | New Ice Age | Craters freeze dinos solid for 2 s | Crater freeze (s) 2, Damage x 1.6 ⚙ |
 
@@ -1245,17 +1320,25 @@ Changed from the proposal: Extinction ×20 → **×2.5** (×20 on every dino sco
 path; ×2.5 makes the T5 ≈ 2× T4 like its siblings — still the biggest single hit in the game);
 card "one giant meteor a round, fires itself" kept. Plate Cracker cuts armour on the whole
 meteor (a centre-only pierce has no model and reads the same); Long Burn "hotter";
-Starfall replaces the 12 s strike (added on top it scored 4×).
-**Worth metrics (#314):** **Impact, Sky Rocks** = eDPS (meteors × hits, honest; Extinction:
-10 dinos × Extinction x × damage + bunch breaks, once per 50 s; Bombing run as 9h; Meteor every
-and Starfall per s; Burn streak = Burn DPS × 3 s × 1 dino per small meteor; Side slow and Biggest
-breaks carry damage, blind spots). **Aftermath** = control path (`SUPPORT_PATHS`; option bars
-only): eDPS (meteor + crater burn × crater s × 3 crossing dinos ÷ every; × 2 with Fire line) +
-120 × H (knockback 6/8 × 5 dinos; Crater freeze s × 3 crossing dinos; per strike) + 0.5 ×
-(Throw miss % + Bite miss %) + amp credit (Crater amp % × 120 × 3 s × 3 dinos per strike).
-**Director check (rough):** Impact T4 1.95/1.92/1.88× T3, T5 2.2/≈2.1/1.9 (Extinction's
-×2.5 is the lever); Sky Rocks T4 2.0/1.95/≈2.0, T5 2.1/≈2.0/2.1; Aftermath: Builder's number
-(⚙ Burn DPS per option). **Expected:** best T5 c/e (Extinction or Starfall) ≈ 140–170.
+Starfall replaces the 8 s strike (#337) (added on top it scored 4×).
+**Worth metrics (#314, made exact by #337; r31–40 mix, `value.py`'s honest_hits):** a strike every
+1 ÷ rate s = honest hits of Damage on Targets dinos at Size breaks (n meteors: n × hits of Small
+meteor x × Damage on Targets × Small splash x dinos); `Meteor every` adds one small meteor per
+that many s; Starfall = 20 × 1.5 dino-hits of a small meteor (breaks 1) per wave ÷ Starfall every
+(replaces the strike); crater (one per strike, none with Starfall) = Burn DPS (blank = Crater
+burn DPS) × Crater s × 3 dinos × (1 − flying share) per strike (× 2 with Fire line); Burn streak
+= Burn DPS × 3 s × 1 dino per small meteor; Extinction = honest hits of Extinction x × Damage on
+5 dinos at Extinction breaks + 5 at breaks 1, ÷ 50; Bombing run = honest hits of Field strike x ×
+Damage on 10 dinos (breaks 1) ÷ 50; Side slow, Biggest breaks, Scatter's spread = blind spots.
+**Aftermath** (control, `SUPPORT_PATHS`, option bars only) = that eDPS + 120 × (Knockback ÷ 8 × 5
+dinos + Crater freeze s × 3 dinos) ÷ strike gap + Crater amp %/100 × 120 × 3 s × 3 dinos ÷ strike
+gap + 0.5 × (Throw miss % + Bite miss %). `BREAK_PATHS` += Meteor Impact (bar 3 report-only, #338).
+**Director check (#337, harness on a copy; the Builder reproduces it in `value.py`):** Impact
+T1–T3 56 / 76 / 155 eDPS, T4 284 / 228 / 270, T5 after A4 433 / 388 / 388, B4 353 / 315 / 315, C4
+395 / 400 / 400 → c/e **157–216**; Sky Rocks 45 / 79 / 142, T4 222 / 198 / 240, T5 after A4 349 /
+307 / 344, B4 248 / 284 / 317, C4 320 / 319 / 350 → c/e 194–274; Aftermath 65 / 101 / 186, T4 259
+/ 205 / 224, T5 A4 435 / 357 / 368, B4 324 / 301 / 314, C4 342 / 320 / 332. Best T2 r11–20 c/e
+179. Breaks: Impact T3 S/B1 r31–40 155/107, T5 bars 1–2 pass. Off by > 3 % → rule 7, then report.
 **Studio aids:** `firenow METEOR` (a strike now; Extinction Event / Comet Tail now, ignoring
 the trigger).
 **T127 (Builder):** `Shared/Meteor` (pure: densest point with boss weight and ties; n-meteor
@@ -1267,10 +1350,10 @@ glow / ice / ash) → value.py. Accept: specs (a 6-dino bunch beats 2 single din
 per round played, own side only), audit, Config diff, `--options` clean.
 
 #### Volcano Vent (`VENT`) — damage (Magma, Pressure), control (Obsidian)
-**Towers row:** Cost 1000 · Damage 30 (eruption hit) · Fire rate 0.05 (one per 20 s) · Targets 4
+**Towers row (#339):** Cost **600** · Damage 30 (eruption hit) · Fire rate **0.0833** (one per 12 s) · Targets 4
 · Range 20 · Hits air No · Unlock 600 · Key `VENT` · Max HP 200 · **Near track (studs) 8**
 (new Towers column; the vent must be placed within 8 studs of the track) · note "Erupts every
-20 s: lava floods its stretch of track for 6 s; dinos burn and are shoved aside."
+12 s: lava floods its stretch of track for 6 s; dinos burn and are shoved aside."
 **Tuning block `VOLCANO VENT`:** Flow length (studs) 24 · Flow (s) 6 · Flow burn DPS 8 · Flow shove
 (studs/s) 3 · Shove max (studs) 4 · Geyser x 0.3 · Crust (s) 6 · Crust slow % 30 · Lava bomb x
 0.5 · Lava bombs 6 · Extra vent x 0.5 · Supervolcano (s) 4 · Ash (s) 5.
@@ -1310,31 +1393,31 @@ Hits air, Pierces armour, Size breaks, Targets x.)
 | Magma | 2 | | Searing Flow | — | Damage x 3 |
 | Magma | 3 | | Lava Lake | — | Damage x 5.4, Flow (s) 10, Burn breaks Yes |
 | Magma | 4 | A | White Hot | Lava melts armour | Damage x 1.75 ⚙, Pierces armour Yes |
-| Magma | 4 | B | Rivers of Fire | The lava runs 20 studs further | Damage x 1.4 ⚙, Flow length x 1.8 |
+| Magma | 4 | B | Rivers of Fire | The lava runs 20 studs further | Damage x **1.3** ⚙, Flow length x 1.8 |
 | Magma | 4 | C | Ember Rain | Embers hit low flyers | Damage x 1.85 ⚙, Hits air Yes |
 | Magma | 5 | A | Supervolcano | Floods the whole track once a round | Damage x 1.5 ⚙, Supervolcano Yes |
-| Magma | 5 | B | Lava Bombs | Throws 6 lava bombs at big dinos | Damage x 1.25 ⚙, Lava bombs Yes, Size breaks 2 |
-| Magma | 5 | C | Fire Mountain | Eruptions twice as big | Damage x 1 ⚙, Flow length x 2, Targets x 2 |
+| Magma | 5 | B | Lava Bombs | Throws 6 lava bombs at big dinos | Damage x **1.5** ⚙, Lava bombs Yes |
+| Magma | 5 | C | Fire Mountain | Eruptions twice as big | Damage x **1.05** ⚙, Flow length x 2, Targets x 2 |
 | Pressure | 1 | | Shorter Fuse | — | Damage x 1.2, Rate x 1.33 |
 | Pressure | 2 | | Twin Vents | — | Damage x 1.5, Rate x 2 |
 | Pressure | 3 | | Geyser | — | Damage x 2.5, Rate x 2, Geyser every (s) 5 |
 | Pressure | 4 | A | Steam Burst | Eruptions knock small dinos back | Damage x 1.75 ⚙, Knockback (studs) 6 |
 | Pressure | 4 | B | Rumble | Dinos nearby stumble: −20% speed | Damage x 1.75 ⚙, Slow % 20 |
 | Pressure | 4 | C | Pressure Valve | Erupts early when a boss comes | Damage x 1.85 ⚙, Boss erupt Yes |
-| Pressure | 5 | A | Ring of Fire | 3 small vents erupt in turn | Damage x 1.2 ⚙, Extra vents 3 |
-| Pressure | 5 | B | Old Faithful | Erupts every 4 s, smaller | Damage x 0.8 ⚙, Rate x 2.5 |
+| Pressure | 5 | A | Ring of Fire | 3 small vents erupt in turn | Damage x **0.85** ⚙, Extra vents 3 |
+| Pressure | 5 | B | Old Faithful | Erupts 2.5× as often, smaller | Damage x 0.8 ⚙, Rate x 2.5 |
 | Pressure | 5 | C | Ash Blanket | Ash makes dinos miss 30% of throws | Damage x 1.9 ⚙, Side throw miss % 30 |
 | Obsidian | 1 | | Cooling Crust | — | Crust Yes |
 | Obsidian | 2 | | Sharp Glass | — | Crust Yes, Strips armour Yes |
 | Obsidian | 3 | | Obsidian Wall | — | Crust Yes, Strips armour Yes, Wall (s) 2 |
-| Obsidian | 4 | A | Jagged Crust | The crust cuts dinos | Crust DPS 25 ⚙ |
-| Obsidian | 4 | B | Black Glass | Nearby towers see 15% further | Aura range % 15 ⚙ |
+| Obsidian | 4 | A | Jagged Crust | The crust cuts dinos | Crust DPS **35** ⚙ |
+| Obsidian | 4 | B | Black Glass | Nearby towers see 15% further | Aura range % 15, **Crust DPS 15** ⚙ |
 | Obsidian | 4 | C | Heat Shimmer | Dinos on the crust can't throw | Throw miss % 100, Crust DPS 10 ⚙ |
 | Obsidian | 5 | A | Glass Maze | The crust makes dinos walk 12 studs further | Maze (studs) 12 ⚙ |
 | Obsidian | 5 | B | Obsidian Armour | Nearby towers take 30% less from throws | Throw resist % 30, Crust DPS 15 ⚙ |
 | Obsidian | 5 | C | Frozen Fire | The whole flow hardens: 2 s stop | Freeze flow (s) 2 ⚙ |
 
-Changed: Old Faithful "every 4 s" (Pressure T3 already erupts every 10 s); Heat Shimmer and
+Changed: Old Faithful "2.5× as often" (#339; Pressure T3 already erupts every 6 s); Heat Shimmer and
 Obsidian Armour carry a little crust damage so their dino part clears the bar.
 **Worth metrics (#314):** **Magma, Pressure** = eDPS: per eruption (Targets hits + flow burn:
 Flow burn × Damage x × 2 dinos in the flow × Flow s × Flow length x + geyser/extra vents/lava
@@ -1344,8 +1427,19 @@ eruption per boss round ÷ 50); shove, Rumble slow, knockback, ash carry damage 
 Crust s per eruption; Maze ÷ 8 per crossing dino (2 per flow); Freeze flow s × 2 dinos per
 eruption; Wall s × 6 dinos per round) + Crust DPS × 2 dinos × Crust s per eruption + aura
 credit (Aura range % as rate ÷ 2) + 0.5 × Throw miss % + 0.3 × Throw resist % (points as eq).
-**Director check (rough):** Magma T4 1.98/≈1.9/1.98, T5 ≈2.0/≈1.9/2.0; Pressure T4 1.75 +
-blind spots ×3 (equal by construction), T5 2.1/2.0/1.9; Obsidian: the Builder's number.
+**Metric made exact (#339; r31–40 mix, value.py's honest_hits):** an eruption = honest hits of
+Damage on Targets dinos (breaks 1) + Flow burn DPS × (Damage ÷ base Damage) × 2 dinos × Flow s ×
+Flow length x × (1 − flying share) [+ Lava bombs: honest hits of Lava bomb x × Damage on 6 dinos];
+÷ the eruption gap; Geyser = honest hits of Geyser x × Damage on Targets ÷ Geyser every; Extra
+vents = n × an eruption at Extra vent x size (no bombs) per gap; Supervolcano and Boss erupt as
+above; Obsidian as above with crust s = Tuning Crust (s), per eruption ÷ the gap, Wall per round.
+Lava Bombs has no Size breaks (Vent stays off `BREAK_PATHS`).
+**Director check (#339, harness on a copy):** Magma T1–T3 24 / 43 / 97, T4 159 / 194 / 165, T5 after
+A4 304 / 277 / 330, B4 339 / 321 / 406, C4 319 / 288 / 344 → c/e **167–245**; Pressure 24 / 45 / 87,
+T4 142 / 142 / 164, T5 after A4 291 / 261 / 247 (B4 the same: both T4s are Damage x 1.75 + a blind
+spot), C4 319 / 286 / 282 → c/e 212–274; Obsidian 51 / 52 / 81, T4 116 / 98 / 141, T5 after A4 146 /
+125 / 156, B4 128 / 107 / 138, C4 171 / 155 / 181. Best T2 r11–20 c/e 202; no DOMINANT (lowest
+marginal 0.55×), no DEAD. Off by > 3 % → rule 7, then report.
 **Studio aids:** `firenow VENT` (an eruption now; Supervolcano now).
 **T128 (Builder):** `Shared/Vent` (pure: stretch from the nearest track point, flow timing,
 shove + rejoin, crust after flow, maze detour, freeze at flow end once, overlap strongest-only,
@@ -1362,7 +1456,7 @@ the stretch and shoves dinos; crust slows; Frozen Fire stops the flow's dinos 2 
 value.py, T130b release). TOWERS_LATER's "5 at Ranger Corps" → "5 at Ranger Troop" (Round 19).
 
 #### Ranger Station (`RANGER`) — damage (Riflemen), traps (Trackers), tougher rangers (Wardens)
-**Towers row:** Cost 900 · Damage 8 (per ranger shot) · Fire rate 1.2 · Targets 1 · Range 30 (how
+**Towers row (#340):** Cost **600** · Damage **10** (per ranger shot) · Fire rate **2.3** · Targets 1 · **Walkers 1** · Range 30 (how
 far from the cabin a post may be) · Hits air No · Unlock 500 · Key `RANGER` · Max HP 200 (the
 cabin) · note "Trains rangers who stand at posts on the track and shoot; bitten too much, they
 go back to the cabin to patch up."
@@ -1415,7 +1509,7 @@ Size breaks, Aura HP %, Rescue beacon (respawn x).)
 | Riflemen | 4 | C | Flare Rounds | Rangers can hit low flyers | Damage x 1.9 ⚙, Hits air Yes |
 | Riflemen | 5 | A | **Ranger Troop** | 5 rangers in formation | Damage x 1.2 ⚙, Walkers 5 |
 | Riflemen | 5 | B | Legend Ranger | One hero-strong ranger with its own dart | Damage x 1.2 ⚙, Legend Yes |
-| Riflemen | 5 | C | Patrol Jeep | Rangers drive the track, firing | Damage x 1.4 ⚙, Jeep Yes |
+| Riflemen | 5 | C | Patrol Jeep | Rangers drive the track, firing | Damage x **2.25** ⚙, Jeep Yes |
 | Trackers | 1 | | Snare Kit | — | Trap Yes |
 | Trackers | 2 | | Bait | — | Trap Yes, Trap every (s) 5, Damage x 1.3 |
 | Trackers | 3 | | Snap Traps | — | Trap Yes, Trap every (s) 5, Damage x 1.6, Trap stun (s) 0.6, Walkers 2 |
@@ -1448,8 +1542,19 @@ s + Knockback ÷ 8) ÷ Trap every + Decoy s × 2 dinos per post per 10 s + Trap 
 with Heals between rounds; respawn x 0.5 → + 0.08; Boss round guard → + 0.08) + 0.5 × points
 (Aura HP % × posts; Guard: rangers × Walker HP x × 100 HP ÷ 100 soaked; Hunter's Lodge 20 × (2
 − respawn x)).
-**Director check (rough):** Riflemen T4 1.98/1.85/2.04, T5 2.0/2.0/≈2.1 (Jeep's coverage is the
-Builder's number). Trackers / Wardens: the Builder's numbers (⚙ levers listed).
+**Metric made exact (#340; r31–40, value.py's edps / walker model):** squad = Walkers × uptime ×
+one ranger's honest eDPS (targets 1) + Heavy: uptime × (one at × Heavy x, breaks 3 − one) +
+Legend: uptime × (one at × Legend x − one) + 20 (dart: 0.25 × 120 × 8 ÷ 12); uptime 0.7 at a post,
+**Jeep: min(1, 20 × Ranger reach ÷ track × 1.3) in place of 0.7, Heavy/Legend kept**; Wardens'
+uptime 0.7 (+0.1 Heals between rounds, +0.08 respawn x < 1, +0.08 Boss round guard). Trackers' H:
+posts = min(Max posts, Walkers); mark credit's take-downs a second = squad eDPS ÷ (the band's EHP
+÷ its dino count). Wardens' points: Aura HP % × Max posts (Post aura), Guard Walkers × Walker HP x,
+Hunter's Lodge 20 × (2 − x).
+**Director check (#340, harness on a copy):** Riflemen T1–T3 26 / 45 / 105, T4 193 / 193 / 205, T5
+after A4 381 / 333 / 295, B4 322 / 317 / 361, C4 401 / 350 / 308 → c/e **169–230**; T2 r11–20 c/e
+342 (≤ 386); marginals 0.73–1.27× (no DOMINANT/DEAD). Trackers 25 / 36 / 108, T4 151 / 156 / 132,
+T5 after A4 184 / 167 / 181, B4 176 / 172 / 186, C4 159 / 148 / 162. Wardens 17 / 38 / 50, T4 58 /
+56 / 65, T5 A4 63 / 59 / 73, B4 62 / 58 / 71, C4 71 / 67 / 80. Off by > 3 % → rule 7, then report.
 **Studio aids:** `walkers`, `firenow RANGER` (Trap line now; the Legend's dart now).
 **T129 (Builder):** `Shared/Ranger` on `Shared/Walker` (`post` state, round-robin posts,
 formation, Heavy/Legend/Jeep, traps per post, trap line at round start, decoy once per dino per
