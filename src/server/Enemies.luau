@@ -75,6 +75,8 @@ export type Enemy = {
 	part: BasePart, -- the model's Root: where the dino is, for targeting
 	alive: boolean,
 	stunnedUntil: number,
+	shoveOffset: number, -- studs off its path sideways (a Volcano Vent's lava, PLAN 9i); a look and a delay
+	detourUntil: number, -- walks back to its path / round Glass Maze until then: no progress, still bites (PLAN 9i)
 	disarmedUntil: number, -- can't bite or shoot until then (Field Medic Jaw Lock)
 	markPercent: number,
 	markedUntil: number,
@@ -204,6 +206,8 @@ local function spawnNow(item: Pending, side: number)
 		part = nil :: any,
 		alive = true,
 		stunnedUntil = 0,
+		shoveOffset = 0,
+		detourUntil = 0,
 		disarmedUntil = 0,
 		markPercent = 0,
 		markedUntil = 0,
@@ -390,6 +394,22 @@ function Enemies.chill(enemy: Enemy, c: Chill)
 	enemy.slowPercent = math.max(enemy.slowPercent, c.slowPercent)
 	enemy.brittlePercent = math.max(enemy.brittlePercent, c.brittlePercent)
 	enemy.armorStripped = enemy.armorStripped or c.stripsArmor
+end
+
+-- A Volcano Vent's lava pushes a dino `offset` studs off its path (PLAN 9i; bosses aren't
+-- shoved: the caller asks Shared/Vent). It keeps walking along meanwhile.
+function Enemies.shove(enemy: Enemy, offset: number)
+	if enemy.alive then
+		enemy.shoveOffset = math.max(0, offset)
+	end
+end
+
+-- No progress along the track for `seconds` (walking back to the path, or round a Glass Maze);
+-- not a hard stop: it still bites and throws. The longer remaining wins.
+function Enemies.detour(enemy: Enemy, seconds: number)
+	if enemy.alive and seconds > 0 then
+		enemy.detourUntil = math.max(enemy.detourUntil, os.clock() + seconds)
+	end
 end
 
 function Enemies.stun(enemy: Enemy, seconds: number, affectsBosses: boolean?)
@@ -590,7 +610,7 @@ function Enemies.step(dt: number)
 	local now = os.clock()
 	for _, enemy in live do
 		local isChilled = now < enemy.chilledUntil
-		if now >= enemy.stunnedUntil then
+		if now >= enemy.stunnedUntil and now >= enemy.detourUntil then
 			local slow = math.max(Enemies.slowFraction(enemy), tarFraction(enemy))
 			enemy.distance += enemy.speed * (1 - slow) * dt
 		end
@@ -619,7 +639,14 @@ function Enemies.step(dt: number)
 				callbacks.onLeak(enemy)
 			end
 		else
-			enemy.part.CFrame = cframeAt(paths[enemy.side], enemy.distance, enemy.height)
+			local at = cframeAt(paths[enemy.side], enemy.distance, enemy.height)
+			if enemy.shoveOffset > 0 then
+				if now >= enemy.detourUntil and enemy.detourUntil > 0 then
+					enemy.shoveOffset = 0 -- back on its path
+				end
+				at *= CFrame.new(enemy.shoveOffset, 0, 0)
+			end
+			enemy.part.CFrame = at
 		end
 	end
 end

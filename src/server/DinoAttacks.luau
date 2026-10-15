@@ -249,7 +249,11 @@ local function land(p: Projectile)
 	local targets = candidates()
 	for _, target in Combat.landingHits(p.to, p.radius, targets) do
 		local onTower = not (typeof(target.ref) == "Instance" and target.ref:IsA("Player"))
-		hurt(target, Combat.throwDamage(p.damage, p.boss, onTower), nil, { species = p.species, attack = p.attack })
+		local damage = Combat.throwDamage(p.damage, p.boss, onTower)
+		if onTower then -- Obsidian Armour (PLAN 9i T128): towers near a vent take less from throws
+			damage *= 1 - Towers.throwResistAt(target.ref.base, target.ref.side) / 100
+		end
+		hurt(target, damage, nil, { species = p.species, attack = p.attack })
 	end
 	landingLook(p)
 	destroy(p)

@@ -874,6 +874,59 @@ local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?
 	if biggest then
 		table.insert(parts, `the biggest dino hit breaks {biggest} more sizes`)
 	end
+
+	-- Volcano Vent (PLAN 9i T128; Shared/Vent)
+	local flowS = changed("flowSeconds", 0)
+	if flowS then
+		table.insert(parts, `the lava stays {fmt(flowS)}s`)
+	end
+	local flowLength = changed("flowLengthMult", 1)
+	if flowLength then
+		table.insert(parts, `the lava runs x{fmt(flowLength)} as far`)
+	end
+	if changed("burnBreaks", false) then
+		table.insert(parts, "the lava's burn breaks a size a tick")
+	end
+	local geyser = changed("geyserEvery", 0)
+	if geyser then
+		table.insert(parts, `a geyser bursts every {fmt(geyser)}s between eruptions`)
+	end
+	local vents = changed("extraVents", 0)
+	if vents then
+		table.insert(parts, `{vents} small vents erupt in turn`)
+	end
+	if changed("lavaBombs", false) then
+		table.insert(parts, `each eruption throws {Config.Tuning.LavaBombs} lava bombs at the biggest dinos`)
+	end
+	if changed("bossErupt", false) then
+		table.insert(parts, "erupts at once when a boss comes into range")
+	end
+	local ash = changed("sideThrowMissPercent", 0)
+	if ash then
+		table.insert(parts, `after each eruption dinos on your track miss {ash}% of their throws`)
+	end
+	if changed("supervolcano", false) then
+		table.insert(parts, "once a round your whole track floods with lava")
+	end
+	if changed("crust", false) then
+		table.insert(parts, `the lava leaves crust that slows dinos {Config.Tuning.CrustSlow}%`)
+	end
+	local crustDps = changed("crustDps", 0)
+	if crustDps then
+		table.insert(parts, `the crust cuts dinos {fmt(crustDps)} a second`)
+	end
+	local maze = changed("mazeStuds", 0)
+	if maze then
+		table.insert(parts, `dinos crossing the crust walk {fmt(maze)} studs further`)
+	end
+	local frozen = changed("freezeFlowSeconds", 0)
+	if frozen then
+		table.insert(parts, `when the lava ends its dinos freeze {fmt(frozen)}s`)
+	end
+	local throwResist = changed("throwResistPercent", 0)
+	if throwResist then
+		table.insert(parts, `towers in range take {throwResist}% less from throws`)
+	end
 	local hook = changed("hookEvery", 0)
 	if hook then
 		table.insert(parts, `every {fmt(hook)}s lifts the smallest dino under it off the track`)
@@ -1275,6 +1328,9 @@ local function moveGhost(spot: Vector3?)
 	local poolAt = if placingDef and placingDef.onTrack then trackPath:closest(spot) else nil
 	if fits and poolAt and placingDef then
 		fits, reason = Placement.checkPool(poolAt, placingDef.range, builtPools(side))
+	end
+	if fits and placingDef and (placingDef.nearTrack or 0) > 0 then -- the Volcano Vent (PLAN 9i T128)
+		fits, reason = Placement.checkNear(spot, placingDef.nearTrack, Sides.zone(layout, side))
 	end
 	local root = characterRoot()
 	if fits and root then

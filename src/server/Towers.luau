@@ -141,6 +141,7 @@ local AutoFire = require(Shared:WaitForChild("AutoFire"))
 local Totem = require(Shared:WaitForChild("Totem"))
 local Blimp = require(Shared:WaitForChild("Blimp"))
 local Meteor = require(Shared:WaitForChild("Meteor"))
+local Vent = require(Shared:WaitForChild("Vent"))
 
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
@@ -202,6 +203,7 @@ export type Tower = {
 	totem: TotemState?, -- Bone Totem (PLAN 9h T126); nil on every other tower
 	blimp: BlimpState?, -- Spotter Blimp (PLAN 9h T125b); nil on every other tower
 	meteor: MeteorState?, -- Meteor Beacon (PLAN 9i T127); nil on every other tower
+	vent: VentState?, -- Volcano Vent (PLAN 9i T128); nil on every other tower
 	rangeBase: number, -- stats.range before any range aura (PLAN 9h)
 	hurtBy: any?, -- the last dino that bit or hit it with a throw (Guard Raptors, PLAN 9g)
 	model: Model,
@@ -256,6 +258,27 @@ type MeteorState = {
 	craters: { Meteor.Crater },
 	auto: AutoFire.State, -- Comet Tail, once a round played
 	extinctionAuto: { fired: boolean }, -- Extinction Event, once a round played
+}
+
+-- A Volcano Vent's own state (Shared/Vent rules).
+type VentState = {
+	at: number, -- the track point nearest the vent (its stretch is centred there)
+	from: number, -- the stretch now (Rivers of Fire / Fire Mountain lengthen it)
+	to: number,
+	timer: number, -- s toward the next eruption
+	geyserTimer: number,
+	ring: { number }, -- Ring of Fire: when each small vent erupts (os.clock)
+	flows: { Vent.Flow }, -- lava down now
+	crusts: { { from: number, to: number, ends: number, crossed: { [any]: boolean } } },
+	shoved: { [any]: boolean }, -- dinos its lava pushed off their path (weak keys)
+	bossSeen: { [any]: boolean }, -- Pressure Valve: bosses it already erupted for (weak keys)
+	auto: AutoFire.State, -- Supervolcano, once a round played
+	wallAuto: AutoFire.State, -- Obsidian Wall, once a round played
+	wall: { at: number, raisedAt: number }?,
+	superUntil: number, -- Supervolcano: the whole side is lava until then
+	superDps: number,
+	ashUntil: number, -- Ash Blanket: the side misses throws until then
+	cone: boolean, -- Fire Mountain's cone is shown (visual)
 }
 
 -- An Amber Resin Cannon's own state (Shared/Resin rules).
@@ -957,6 +980,27 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 			else nil,
 		meteor = if key == "METEOR"
 			then { timer = 0, rainTimer = 0, landings = {}, craters = {}, auto = AutoFire.new(), extinctionAuto = { fired = false } }
+			else nil,
+		vent = if key == "VENT"
+			then {
+				at = Enemies.trackDistanceNear(base, side),
+				from = 0,
+				to = 0,
+				timer = 0,
+				geyserTimer = 0,
+				ring = {},
+				flows = {},
+				crusts = {},
+				shoved = setmetatable({}, { __mode = "k" }) :: any,
+				bossSeen = setmetatable({}, { __mode = "k" }) :: any,
+				auto = AutoFire.new(),
+				wallAuto = AutoFire.new(),
+				wall = nil,
+				superUntil = 0,
+				superDps = 0,
+				ashUntil = 0,
+				cone = false,
+			}
 			else nil,
 		rangeBase = stats.range,
 		hurtBy = nil,
@@ -2370,6 +2414,322 @@ local function meteorFireNow(tower: Tower, fired: { string })
 	end
 end
 
+------------------------------------------------------------------ Volcano Vent (PLAN 9i T128)
+
+-- Visuals only.
+local LAVA_COLOR = Color3.fromRGB(255, 95, 20)
+local CRUST_COLOR = Color3.fromRGB(30, 28, 34)
+local ASH_FALL_COLOR = Color3.fromRGB(110, 105, 100)
+local VENT_TICK = 0.25 -- s a crust's slow / strip / a Rumble lasts after the last frame on it
+local VENT_WALL_CATCH = 1.5 -- studs before the Obsidian Wall where a dino stops
+
+-- One eruption hit (armour / boss rules, breaks `breaks`); Steam Burst knocks small dinos back.
+local function ventHit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number, knock: boolean)
+	local stats = tower.stats
+	local pierce = piercing(tower)
+	if not enemy.alive or not ownSide(tower, enemy) or not Enemies.canHurt(enemy, pierce) then
+		return
+	end
+	if enemy.def.armored then
+		damage *= stats.armoredMult
+	end
+	if enemy.def.boss then
+		damage *= stats.bossMult
+	end
+	local b = if breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
+	local at = enemy.part.Position
+	local killed, gone, dropped = Enemies.damage(enemy, damage, pierce, b)
+	credit(tower.owner, killed, gone, dropped)
+	if gone then
+		takeDownMark(tower, at)
+	end
+	if knock and enemy.alive and FourX.isSmall(enemy.size, enemy.def.boss == true) then
+		Enemies.knockback(enemy, stats.knockback) -- Steam Burst: small dinos only
+	end
+end
+
+local function ventDamage(tower: Tower): number
+	return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
+end
+
+-- The dinos on its stretch it can hit, the furthest along first.
+local function onStretch(tower: Tower, own, from: number, to: number): { Enemies.Enemy }
+	local list = {}
+	for _, enemy in own do
+		if enemy.alive and ownSide(tower, enemy) and Vent.inStretch(enemy.distance, from, to) and (tower.stats.hitsAir or not enemy.def.flying) then
+			table.insert(list, enemy)
+		end
+	end
+	table.sort(list, function(a, b)
+		return a.distance > b.distance
+	end)
+	return list
+end
+
+local function drawStretch(tower: Tower, from: number, to: number, color: Color3, seconds: number, transparency: number)
+	local d = from
+	while d <= to do
+		Effects.disc(Enemies.pointAt(d, tower.side) + Vector3.new(0, 0.4, 0), 3, color, seconds, transparency)
+		d += 4
+	end
+end
+
+-- An eruption at `size` (1 = the main one; Ring of Fire's smaller): Targets dinos on the stretch
+-- take the hit, the lava floods the stretch (a flow), Lava Bombs, Ash Blanket.
+local function ventErupt(tower: Tower, own, size: number, bombs: boolean)
+	local state = tower.vent :: VentState
+	local stats, now = tower.stats, os.clock()
+	local damage = ventDamage(tower) * size
+	local list = onStretch(tower, own, state.from, state.to)
+	for i = 1, math.min(#list, stats.targets) do
+		ventHit(tower, list[i], damage, 1, stats.knockback > 0)
+	end
+	local seconds = Vent.flowSeconds(stats)
+	local dps = Vent.flowBurn(stats, tower.def.baseDamage) * size * (1 + tower.buff.damagePercent / 100) * levelScale
+	table.insert(state.flows, { from = state.from, to = state.to, ends = now + seconds, dps = dps, frozen = false })
+	drawStretch(tower, state.from, state.to, LAVA_COLOR, seconds, 0.35)
+	Effects.part(Vector3.new(1.2, 6, 1.2), CFrame.new(tower.base + Vector3.new(0, 3, 0)), LAVA_COLOR, 0.5) -- the plume
+	if bombs and stats.lavaBombs then -- Lava Bombs: at the biggest dinos in range
+		local inRange, sizes = {}, {}
+		for _, enemy in own do
+			if enemy.alive and ownSide(tower, enemy) and covers(tower, enemy.part.Position) and (stats.hitsAir or not enemy.def.flying) then
+				table.insert(inRange, enemy)
+				table.insert(sizes, { sizes = enemy.size, boss = enemy.def.boss == true })
+			end
+		end
+		local picks, x = Vent.bombTargets(sizes)
+		for _, i in picks do
+			Effects.tracer(tower.muzzle, inRange[i].part.Position, LAVA_COLOR)
+			ventHit(tower, inRange[i], ventDamage(tower) * x, stats.sizeBreaks, false)
+		end
+	end
+	if stats.sideThrowMissPercent > 0 then -- Ash Blanket
+		state.ashUntil = now + Vent.ashSeconds()
+		Effects.disc(tower.base + Vector3.new(0, 6, 0), 8, ASH_FALL_COLOR, 1, 0.5)
+	end
+end
+
+-- The strongest live flow on `side` (any vent's) holding a dino at `at`, and its tower.
+local function strongestFlow(side: number, at: number, now: number): (Vent.Flow?, Tower?)
+	local best, owner = nil, nil
+	for _, other in towers do
+		local state = other.vent
+		if state and other.side == side then
+			local f = Vent.strongest(state.flows, at, now)
+			if f and (best == nil or f.dps > best.dps) then
+				best, owner = f, other
+			end
+			if state.superUntil > now and (best == nil or state.superDps > best.dps) then -- Supervolcano: the whole side
+				best, owner = { from = -math.huge, to = math.huge, ends = state.superUntil, dps = state.superDps, frozen = true }, other
+			end
+		end
+	end
+	return best, owner
+end
+
+local function stepVent(tower: Tower, dt: number, own)
+	local state = tower.vent
+	if not state then
+		return
+	end
+	local stats, now = tower.stats, os.clock()
+	local from, to = Vent.stretch(stats, state.at, Enemies.trackLength(tower.side))
+	state.from, state.to = from, to
+	local cone = stats.flowLengthMult >= 2 -- Fire Mountain (visual)
+	if cone ~= state.cone then
+		state.cone = cone
+		TowerLook.setVentCone(tower.model, cone)
+	end
+	-- Lava: dinos in this vent's (strongest) flow burn and are shoved; flows that end leave crust
+	-- (Obsidian) and Frozen Fire freezes the dinos on them once.
+	for i = #state.flows, 1, -1 do
+		local flow = state.flows[i]
+		if Vent.freezeAtEnd(flow, now) then
+			table.remove(state.flows, i)
+			local crustEnds, _ = Vent.crust(stats, flow.ends)
+			if crustEnds > flow.ends then
+				table.insert(state.crusts, { from = flow.from, to = flow.to, ends = crustEnds, crossed = setmetatable({}, { __mode = "k" }) :: any })
+				drawStretch(tower, flow.from, flow.to, CRUST_COLOR, crustEnds - now, 0.3)
+			end
+			if stats.freezeFlowSeconds > 0 then -- Frozen Fire
+				for _, enemy in onStretch(tower, own, flow.from, flow.to) do
+					if not enemy.def.flying then
+						Enemies.stun(enemy, FourX.hardStop(stats.freezeFlowSeconds, enemy.def.boss == true), true)
+					end
+				end
+			end
+		end
+	end
+	local anyLava = #state.flows > 0 or state.superUntil > now
+	for _, enemy in own do
+		if not enemy.alive or enemy.def.flying or not ownSide(tower, enemy) then
+			continue
+		end
+		local flow, owner = strongestFlow(tower.side, enemy.distance, now)
+		if flow and owner == tower then
+			local pierce = piercing(tower) or stats.stripsArmor
+			if Enemies.canHurt(enemy, pierce) then
+				credit(tower.owner, Enemies.damage(enemy, flow.dps * dt, pierce, 1)) -- ticks break 1 (#127; Lava Lake)
+			end
+			Enemies.shove(enemy, Vent.shove(enemy.shoveOffset, dt, enemy.def.boss == true))
+			state.shoved[enemy] = true
+		elseif not flow and state.shoved[enemy] then
+			state.shoved[enemy] = nil -- out of the lava: it walks back to its path
+			Enemies.detour(enemy, Vent.rejoinSeconds(enemy.shoveOffset, enemy.speed))
+		end
+		-- Crust: slowed, bare (Sharp Glass), cut (Jagged Crust), a detour round Glass Maze once.
+		for _, crust in state.crusts do
+			if crust.ends > now and Vent.inStretch(enemy.distance, crust.from, crust.to) then
+				Enemies.chill(enemy, { slowPercent = Config.Tuning.CrustSlow, seconds = VENT_TICK, affectsBosses = false, brittlePercent = 0, stripsArmor = stats.stripsArmor })
+				if stats.stripsArmor then
+					Enemies.strip(enemy, VENT_TICK)
+				end
+				if stats.crustDps > 0 and Enemies.canHurt(enemy, piercing(tower) or stats.stripsArmor) then
+					credit(tower.owner, Enemies.damage(enemy, stats.crustDps * levelScale * dt, piercing(tower) or stats.stripsArmor, 1))
+				end
+				if stats.mazeStuds > 0 and not crust.crossed[enemy] then
+					crust.crossed[enemy] = true
+					Enemies.detour(enemy, Vent.mazeSeconds(stats.mazeStuds, enemy.speed))
+				end
+				break
+			end
+		end
+		-- Rumble: dinos in range stumble while no lava is down.
+		if stats.slowPercent > 0 and not anyLava and covers(tower, enemy.part.Position) then
+			Enemies.chill(enemy, { slowPercent = stats.slowPercent, seconds = VENT_TICK, affectsBosses = false, brittlePercent = 0, stripsArmor = false })
+		end
+	end
+	local keep = {}
+	for _, crust in state.crusts do
+		if crust.ends > now then
+			table.insert(keep, crust)
+		end
+	end
+	state.crusts = keep
+	if tower.knockedOut then
+		return -- Trampled: no eruptions (the lava already down runs its course)
+	end
+	state.timer += dt * (1 + tower.buff.ratePercent / 100)
+	local gap = if stats.rate > 0 then 1 / stats.rate else math.huge
+	if state.timer >= gap then
+		state.timer = 0
+		ventErupt(tower, own, 1, true)
+		state.ring = {}
+		for _, t in Vent.ringTimes(stats.extraVents, gap) do -- Ring of Fire
+			table.insert(state.ring, now + t)
+		end
+	end
+	for i = #state.ring, 1, -1 do
+		if now >= state.ring[i] then
+			table.remove(state.ring, i)
+			ventErupt(tower, own, Vent.extraSize(), false)
+		end
+	end
+	if stats.geyserEvery > 0 then -- Geyser: a burst on the stretch between eruptions
+		state.geyserTimer += dt
+		if state.geyserTimer >= stats.geyserEvery then
+			state.geyserTimer = 0
+			local list = onStretch(tower, own, from, to)
+			for i = 1, math.min(#list, stats.targets) do
+				ventHit(tower, list[i], ventDamage(tower) * Config.Tuning.GeyserX, 1, false)
+			end
+			Effects.part(Vector3.new(0.8, 8, 0.8), CFrame.new(tower.base + Vector3.new(0, 4, 0)), Color3.fromRGB(230, 240, 255), 0.4)
+		end
+	end
+	local inRange, boss = 0, false
+	for _, enemy in own do
+		if enemy.alive and covers(tower, enemy.part.Position) then
+			inRange += 1
+			if enemy.def.boss then
+				boss = true
+				if stats.bossErupt and Vent.bossErupts(state.bossSeen, enemy) then -- Pressure Valve
+					ventErupt(tower, own, 1, true)
+				end
+			end
+		end
+	end
+	if stats.supervolcano and AutoFire.check(state.auto, boss, inRange, Enemies.allSpawned(tower.side), #own) then
+		state.superUntil = now + Vent.supervolcanoSeconds()
+		state.superDps = Vent.flowBurn(stats, tower.def.baseDamage) * (1 + tower.buff.damagePercent / 100) * levelScale
+		drawStretch(tower, 0, Enemies.trackLength(tower.side), LAVA_COLOR, Vent.supervolcanoSeconds(), 0.4)
+	end
+	-- Obsidian Wall: once a round (AutoFire) at the stretch's far end; it holds every dino reaching it.
+	if stats.wallSeconds > 0 then
+		if not state.wall and AutoFire.check(state.wallAuto, boss, inRange, Enemies.allSpawned(tower.side), #own) then
+			local point = Enemies.pointAt(to, tower.side)
+			local ahead = Enemies.pointAt(to + 1, tower.side)
+			local facing = if (ahead - point).Magnitude > 1e-3 then CFrame.lookAt(point, Vector3.new(ahead.X, point.Y, ahead.Z)) else CFrame.new(point)
+			local part = Effects.part(Vector3.new(10, 6, 1.5), facing + Vector3.new(0, 3, 0), CRUST_COLOR, stats.wallSeconds)
+			part.Material = Enum.Material.Glass
+			state.wall = { at = to, raisedAt = now }
+		end
+		local wall = state.wall
+		if wall then
+			local since = now - wall.raisedAt
+			if since >= stats.wallSeconds then
+				state.wall = nil
+			else
+				for _, enemy in own do
+					local isBoss = enemy.def.boss == true
+					if enemy.alive and enemy.distance >= wall.at - VENT_WALL_CATCH and enemy.distance <= wall.at + 0.5 and Resin.wallHolds(stats.wallSeconds, since, isBoss) then
+						Enemies.stun(enemy, FourX.hardStop(stats.wallSeconds, isBoss) - since, true)
+					end
+				end
+			end
+		end
+	end
+end
+
+-- Heat Shimmer (dinos on the crust) and Ash Blanket (its whole side after an eruption): the
+-- strongest Throw miss % of its side's vents for a dino at `point`.
+local function ventThrowMiss(point: Vector3, side: number): number
+	local percent, now = 0, os.clock()
+	for _, tower in towers do
+		local state = tower.vent
+		if state and tower.side == side then
+			if state.ashUntil > now then
+				percent = math.max(percent, tower.stats.sideThrowMissPercent)
+			end
+			if tower.stats.throwMissPercent > 0 and #state.crusts > 0 then
+				local at = Enemies.trackDistanceNear(point, side)
+				for _, crust in state.crusts do
+					if crust.ends > now and Vent.inStretch(at, crust.from, crust.to) then
+						percent = math.max(percent, tower.stats.throwMissPercent)
+					end
+				end
+			end
+		end
+	end
+	return percent
+end
+
+-- Obsidian Armour: the strongest Throw resist % of its side's vents covering a tower at `point`.
+function Towers.throwResistAt(point: Vector3, side: number): number
+	local percent = 0
+	for _, tower in towers do
+		if tower.vent and tower.side == side and tower.stats.throwResistPercent > 0 and not tower.knockedOut and covers(tower, point) then
+			percent = math.max(percent, tower.stats.throwResistPercent)
+		end
+	end
+	return percent
+end
+
+-- Studio `firenow VENT`: an eruption now; Supervolcano now (ignoring the trigger).
+local function ventFireNow(tower: Tower, fired: { string })
+	local state = tower.vent
+	if not state then
+		return
+	end
+	local own = BattleRules.ownDinos(Enemies.getLive(), tower.side, "tower")
+	ventErupt(tower, own, 1, true)
+	table.insert(fired, "eruption")
+	if tower.stats.supervolcano then
+		state.superUntil = os.clock() + Vent.supervolcanoSeconds()
+		state.superDps = Vent.flowBurn(tower.stats, tower.def.baseDamage) * levelScale
+		table.insert(fired, "Supervolcano")
+	end
+end
+
 -- Blinding Glare: the strongest Throw miss % of its side's blimps whose circle holds `point`.
 function Towers.throwMissAt(point: Vector3, side: number): number
 	local percent = 0
@@ -2378,7 +2738,8 @@ function Towers.throwMissAt(point: Vector3, side: number): number
 			percent = math.max(percent, tower.stats.throwMissPercent)
 		end
 	end
-	return math.max(percent, craterMiss(point, side, "throwMissPercent")) -- Ash Cloud / Blinding Dust (PLAN 9i)
+	-- Ash Cloud / Blinding Dust (Meteor craters), Heat Shimmer / Ash Blanket (Volcano Vent), PLAN 9i
+	return math.max(percent, craterMiss(point, side, "throwMissPercent"), ventThrowMiss(point, side))
 end
 
 -- Spotter's Map: publishes which sides' dinos are outlined (each client outlines its own side's).
@@ -3362,6 +3723,11 @@ function Towers.newRound()
 			AutoFire.reset(meteor.auto)
 			meteor.extinctionAuto.fired = false
 		end
+		local vent = tower.vent
+		if vent then -- once a round played: Supervolcano, Obsidian Wall
+			AutoFire.reset(vent.auto)
+			AutoFire.reset(vent.wallAuto)
+		end
 	end
 	if fuel then
 		refreshAuras()
@@ -3394,6 +3760,7 @@ function Towers.step(dt: number)
 		stepTotem(tower, dt, own)
 		stepBlimp(tower, dt, own)
 		stepMeteor(tower, dt, own)
+		stepVent(tower, dt, own)
 	end
 	stepAirlifts()
 	publishOutlines()
@@ -3414,8 +3781,8 @@ function Towers.step(dt: number)
 		if stats.rate <= 0 or stats.damage <= 0 or tower.knockedOut or tower.raptor then
 			continue -- Quartermaster and anything else that doesn't shoot; trampled towers; a Raptor Pen's raptors bite (Walkers)
 		end
-		if tower.meteor then
-			continue -- a Meteor Beacon calls meteors (stepMeteor)
+		if tower.meteor or tower.vent then
+			continue -- a Meteor Beacon calls meteors (stepMeteor); a Volcano Vent erupts (stepVent)
 		end
 
 		tower.cooldown -= dt
@@ -3600,6 +3967,7 @@ function Towers.fireNow(key: string, position: Vector3): string
 	end
 	blimpFireNow(tower, fired) -- Spotter Blimp (PLAN 9h T125b)
 	meteorFireNow(tower, fired) -- Meteor Beacon (PLAN 9i T127)
+	ventFireNow(tower, fired) -- Volcano Vent (PLAN 9i T128)
 	local totem = tower.totem
 	if totem then -- fills it now (PLAN 9h)
 		totem.pending += Totem.add(totem.rules, tower.stats, Totem.full(tower.stats) - totem.rules.charge)

@@ -39,6 +39,7 @@ TowerLook.COLORS = table.freeze({
 	TOTEM = Color3.fromRGB(235, 225, 200), -- Bone Totem: bleached bone (PLAN 9h)
 	BLIMP = Color3.fromRGB(205, 195, 170), -- Spotter Blimp: canvas envelope (PLAN 9h)
 	METEOR = Color3.fromRGB(70, 95, 130), -- Meteor Beacon: radio-dish steel blue (PLAN 9i)
+	VENT = Color3.fromRGB(75, 60, 55), -- Volcano Vent: basalt (PLAN 9i)
 })
 
 TowerLook.BODY_HEIGHT = 5
@@ -309,6 +310,18 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 			block("BraceR", Vector3.new(0.15, 2.6, 0.15), at(0.6, 1.3, 0), STEEL, Enum.Material.Metal),
 			block("Dish", Vector3.new(0.2, 1.4, 1.4), at(0.35, 3.4, 0), color, Enum.Material.Metal, CYLINDER),
 			block("Flare", Vector3.new(0.5, 0.5, 0.5), at(0, 4.7, 0), flare, Enum.Material.Neon),
+		}
+	end,
+	-- Volcano Vent (PLAN 9i T128): a smoking crack in a basalt mound, lava glowing inside;
+	-- Fire Mountain raises a cone over it (setVentCone).
+	VENT = function(color)
+		local lava = Color3.fromRGB(255, 100, 25)
+		return {
+			block("Mound", Vector3.new(2.8, 0.8, 2.8), at(0, 0.4, 0), color, Enum.Material.Basalt),
+			block("RimL", Vector3.new(0.6, 0.6, 2.2), at(-0.75, 1.1, 0), color, Enum.Material.Basalt),
+			block("RimR", Vector3.new(0.6, 0.6, 2.2), at(0.75, 1.1, 0), color, Enum.Material.Basalt),
+			block("Crack", Vector3.new(0.6, 0.15, 2.0), at(0, 0.85, 0), lava, Enum.Material.Neon),
+			block("Smoke", Vector3.new(0.9, 1.6, 0.9), at(0, 2.4, 0), Color3.fromRGB(150, 145, 140), Enum.Material.Fabric, Enum.PartType.Ball),
 		}
 	end,
 	-- Supply Camp: stacked crates under an orange tarp, a flag on a pole.
@@ -984,6 +997,28 @@ end
 -- Bone Totem (PLAN 9h): a ring round the totem's foot that glows brighter as it charges
 -- (share 0..1; full = bright). Visual only.
 local CHARGE_COLOR = Color3.fromRGB(150, 230, 255)
+-- Volcano Vent Fire Mountain (PLAN 9i): a basalt cone over the crack, or none.
+function TowerLook.setVentCone(model: Model, on: boolean)
+	local cone = model:FindFirstChild("VentCone")
+	if on and not cone then
+		local body = model.PrimaryPart
+		local part = Instance.new("Part")
+		part.Name = "VentCone"
+		part.Anchored = true
+		part.CanCollide = false
+		part.CanQuery = false
+		part.Size = Vector3.new(3.4, 2.2, 3.4)
+		part.Shape = Enum.PartType.Cylinder
+		part.Material = Enum.Material.Basalt
+		part.Color = TowerLook.COLORS.VENT
+		local base = if body then body.Position - Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0) else Vector3.zero
+		part.CFrame = CFrame.new(base + Vector3.new(0, 1.1, 0)) * CFrame.Angles(0, 0, math.rad(90))
+		part.Parent = model
+	elseif cone and not on then
+		cone:Destroy()
+	end
+end
+
 function TowerLook.setCharge(model: Model, share: number)
 	local body = model.PrimaryPart
 	if not body then

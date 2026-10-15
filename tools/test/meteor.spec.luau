@@ -228,7 +228,7 @@ test("the server wires it: meteors each frame (not the shooting loop), craters, 
 	local fs = require("@lune/fs")
 	local towers = fs.readFile("src/server/Towers.luau")
 	ok(string.find(towers, "stepMeteor(tower, dt, own)", 1, true) ~= nil, "Towers.step calls every beacon's meteors")
-	ok(string.find(towers, "if tower.meteor then\n\t\t\tcontinue", 1, true) ~= nil, "a beacon never fires the generic shot")
+	ok(string.find(towers, "if tower.meteor or tower.vent then\n\t\t\tcontinue", 1, true) ~= nil, "a beacon never fires the generic shot")
 	ok(string.find(towers, "def == Config.Towers.METEOR", 1, true) ~= nil, "no range ring (its whole side)")
 	ok(string.find(towers, "meteor.extinctionAuto.fired = false", 1, true) ~= nil, "Extinction Event resets each round played")
 	ok(string.find(towers, "meteorFireNow(tower, fired)", 1, true) ~= nil, "firenow METEOR")

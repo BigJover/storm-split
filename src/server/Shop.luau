@@ -141,6 +141,10 @@ local function build(player: Player, towerKey: unknown, position: unknown): (boo
 		-- The pool, not just the footprint, must not overlap another pit's (#189).
 		fits, reason = Placement.checkPool(Towers.poolAtFor(spot, side), def.range, Towers.pools(side))
 	end
+	if fits and (def.nearTrack or 0) > 0 then
+		-- The Volcano Vent must stand within Near track studs of its side's track (PLAN 9i T128).
+		fits, reason = Placement.checkNear(spot, def.nearTrack, Sides.zone(layout, side))
+	end
 	if not fits then
 		return false, reason or "Can't build there"
 	end
