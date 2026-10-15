@@ -38,9 +38,9 @@ local function close(a: number, b: number): boolean
 	return math.abs(a - b) < 1e-6
 end
 
-test("the Towers row (PLAN 9h): 800 cash, 450 Amber, 60 a roar hit, no shots, 24 studs, hits air, 200 HP, unreleased", function()
+test("the Towers row (PLAN 9h, T126c #331): 600 cash, 450 Amber, 60 a roar hit, no shots, 24 studs, hits air, 200 HP, sold", function()
 	eq(TOTEM.display, "Bone Totem")
-	eq(TOTEM.baseCost, 800)
+	eq(TOTEM.baseCost, 600) -- 800 -> 600 (T126c, #331)
 	eq(TOTEM.unlockCost, 450)
 	eq(TOTEM.baseDamage, 60)
 	eq(TOTEM.baseRate, 0)
@@ -48,17 +48,17 @@ test("the Towers row (PLAN 9h): 800 cash, 450 Amber, 60 a roar hit, no shots, 24
 	eq(TOTEM.hitsAir, true)
 	eq(TOTEM.maxHp, 200)
 	ok(not TOTEM.untouchable and not TOTEM.onTrack and not TOTEM.chains and not TOTEM.resin and TOTEM.walkers == 0, "no other kind flag")
-	eq(ShopRules.Unreleased.TOTEM, true, "unreleased until the 9h release (T126b, #312)")
+	eq(ShopRules.Unreleased.TOTEM, nil, "released at T126c (#331)")
 end)
 
-test("the BONE TOTEM Tuning block (seeds; Spirit hunter damage after T126's lever step)", function()
-	eq(T.TotemChargeBones, 8)
+test("the BONE TOTEM Tuning block (seeds; T126c: Totem charge 3, Spirit hunter damage 8, #331)", function()
+	eq(T.TotemChargeBones, 3) -- 8 -> 3 (T126c, #331)
 	eq(T.RoarBreaks, 2)
 	eq(T.FearKnockbackStuds, 8)
 	eq(T.ShatterStripS, 4)
 	eq(T.SkullX, 0.6)
 	eq(T.SpiritHunters, 3)
-	eq(T.SpiritHunterDamage, 9) -- 10 -> 9: Spirit Hunters' lever, one 10 % step (PLAN 9g rule 7)
+	eq(T.SpiritHunterDamage, 8) -- 10 -> 9 (T126 lever step) -> 8 (T126c, #331)
 	eq(T.SpiritHunterRate, 2)
 	eq(T.SpiritS, 6)
 	eq(T.FullBuffS, 6)
@@ -86,12 +86,12 @@ local ROWS = {
 	{ "Ancestors", 5, "A", "Spirit Hunters", { spiritHunters = true } },
 	{ "Ancestors", 5, "B", "Totem Pole", { sideAuraHalf = true, chargeAuraDamagePercent = 30 } },
 	{ "Ancestors", 5, "C", "Elder Wisdom", { hunterCooldownMult = 0.75 } },
-	{ "Bone Pile", 1, "", "Bone Collector", { boneCash = 6 } },
-	{ "Bone Pile", 2, "", "Trade Post", { boneCash = 14 } },
-	{ "Bone Pile", 3, "", "Bone Market", { boneCash = 14, fullCash = 400 } },
+	{ "Bone Pile", 1, "", "Bone Collector", { boneCash = 8 } },
+	{ "Bone Pile", 2, "", "Trade Post", { boneCash = 26 } },
+	{ "Bone Pile", 3, "", "Bone Market", { boneCash = 26, fullCash = 120 } },
 	{ "Bone Pile", 4, "A", "Rare Bones", { bossChargePercent = 50 } },
 	{ "Bone Pile", 4, "B", "Bone Bank", { bankCashPerCharge = 25 } },
-	{ "Bone Pile", 4, "C", "Bone Bonus", { fullCash = 560 } },
+	{ "Bone Pile", 4, "C", "Bone Bonus", { fullCash = 168 } },
 	{ "Bone Pile", 5, "A", "Camp Payday", { paydayCash = 30 } },
 	{ "Bone Pile", 5, "B", "Bounty Wall", { chargeMult = 1.25, bountyChargeX = 1.25 } },
 	{ "Bone Pile", 5, "C", "Ancient Treasure", { treasure = true } },
@@ -142,20 +142,21 @@ test("charge: 1 a pop (x Charge x), a hunter's x Hunter charge x, a boss's share
 end)
 
 test("full: Totem charge x Charge needed x; the overflow is kept; the charge carries over", function()
-	local roar = stats("Roar", 2) -- Charge needed x 0.8: 6.4
+	local roar = stats("Roar", 2) -- Charge needed x 0.8: 2.4 (Totem charge 3, T126c #331)
 	local state = Totem.new()
 	eq(state.charge, 0, "a new totem starts empty")
 	eq(Totem.full(roar), T.TotemChargeBones * 0.8)
+	ok(close(Totem.full(roar), 2.4), "3 x 0.8")
 	local fills = 0
-	for _ = 1, 6 do
+	for _ = 1, 2 do
 		fills += Totem.add(state, roar, 1)
 	end
-	eq(fills, 0, "6 of 6.4")
-	eq(Totem.add(state, roar, 1), 1, "the 7th fills it")
+	eq(fills, 0, "2 of 2.4")
+	eq(Totem.add(state, roar, 1), 1, "the 3rd fills it")
 	ok(close(state.charge, 0.6), "0.6 overflow kept")
-	eq(Totem.add(state, roar, 13), 2, "a big add fills it twice")
-	ok(close(state.charge, 13.6 - 12.8), "and keeps the rest")
-	eq(state.fills, 3)
+	eq(Totem.add(state, roar, 7), 3, "a big add fills it three times")
+	ok(close(state.charge, 7.6 - 7.2), "and keeps the rest")
+	eq(state.fills, 4)
 	eq(Totem.add(state, roar, 0), 0, "nothing added: nothing fires")
 end)
 
@@ -192,8 +193,8 @@ test("Bones, Bone Rush score, Ranked results and Hunt Board counts are identical
 	for species, n in bountiesA do
 		eq(bountiesB[species], n, `{species} bounty count`)
 	end
-	ok(state.charge > 0, "the totem did charge (2 + 2 + 1 + 1, the totem's own pops none)")
-	ok(close(state.charge, 6), `charge {state.charge}`)
+	ok(state.fills > 0, "the totem did charge (2 + 2 + 1 + 1, the totem's own pops none)")
+	ok(close(state.fills * Totem.full(s) + state.charge, 6), `charge {state.charge}, fills {state.fills}`)
 	-- The server: the totem reads pops from Main's onKilled hook (after the Bone is counted), its
 	-- Bone cash and pay go through onCash (cash, never Amber), and Towers never calls onPop for a charge.
 	local main = fs.readFile("src/server/Main.server.luau")
@@ -216,9 +217,9 @@ test("the Spirit Roar: breaks Roar breaks (Thunder Roar 3); Fear only on small d
 	ok(Totem.roars(stats("Roar", 3)) and Totem.roars(stats("Bone Pile", 2)), "Bone Pile T1-T2 still roar")
 	local market = stats("Bone Pile", 3)
 	ok(not Totem.roars(market), "Bone Market: no roar")
-	eq(Totem.fullPay(market, 3), 400)
-	eq(Totem.fullPay(stats("Bone Pile", 5, "AA"), 3), 400 + 30 * 3, "Camp Payday: + 30 per hunter")
-	eq(Totem.fullPay(stats("Bone Pile", 5, "CB"), 3), 560, "Bone Bonus (then Bounty Wall: no Payday)")
+	eq(Totem.fullPay(market, 3), 120)
+	eq(Totem.fullPay(stats("Bone Pile", 5, "AA"), 3), 120 + 30 * 3, "Camp Payday: + 30 per hunter")
+	eq(Totem.fullPay(stats("Bone Pile", 5, "CB"), 3), 168, "Bone Bonus (then Bounty Wall: no Payday)")
 	eq(Totem.fullPay(stats("Roar", 3), 3), 0, "a roaring totem pays nothing")
 end)
 

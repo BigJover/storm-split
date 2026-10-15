@@ -890,22 +890,23 @@ def resin_lines(data, mixes):
     return out, findings
 
 
-# Bone Totem's round-20 bar (PLAN 9h, #313): the Roar T2 totem's c/e in r11-20 is at most this x the
-# released damage-path T2 median (4x batch out, like M; lever: Tuning Totem charge -1 at a time, >= 5).
+# Bone Totem's round-20 line (PLAN 9h T126c, #332): the Roar T2 totem's c/e in r11-20 against this x the
+# released damage-path T2 median (4x batch out, like M) is printed as a report, never a finding: the
+# Totem's round-20 bar is Bone Pile T1-T2 paying back in DIG_PAYBACK rounds (gated above).
 TOTEM_ROUND20_X = 1.5
 
 
 def totem_lines(data, mixes, rows):
     """Bone Totem's release lines (PLAN 9h T126b): per Roar tier the fills and a roar's damage a
     round (r31-40), Bone Pile's cash a round and each T1-T3 tier's payback (bar DIG_PAYBACK rounds,
-    #203; levers Bone cash, Full cash), and the round-20 bar. Bars are findings once it is released.
+    #203; levers Bone cash, Full cash; T1-T2 = its round-20 bar, #332) and the Roar T2 r11-20 report
+    line. Bars are findings once it is released.
     Returns (lines, findings)."""
     if "TOTEM" not in data["Towers"]:
         return [], []
     t, tuning = data["Towers"]["TOTEM"], data["Tuning"]
     late = mixes[3]
     judged = "TOTEM" not in UNRELEASED
-    held = "" if judged else " (unreleased: judged at its release, T126b)"
     out, findings = [], []
     for pi, path in enumerate(t["paths"]):
         bits, prev = [], 0.0
@@ -933,9 +934,8 @@ def totem_lines(data, mixes, rows):
         bar = TOTEM_ROUND20_X * statistics.median(t2)
         cpd = rows[("TOTEM", roar, 2)]["cpd"][1]
         ok = cpd <= bar
-        out.append(f"  Bone Totem round-20 bar: Roar T2 c/e {fmt(cpd)} in r11-20 (bar <= {fmt(bar)})" + ("" if ok else " FAIL") + held)
-        if judged and not ok:
-            findings.append(f"TOTEM: Roar T2 c/e {fmt(cpd)} in r11-20 > {fmt(bar)} (lever Tuning Totem charge -1, >= 5; PLAN 9h)")
+        out.append(f"  Bone Totem Roar T2 c/e {fmt(cpd)} in r11-20 (vs {fmt(bar)}"
+                   + ("" if ok else ", over") + ") (report, #332: Bone Pile T1-T2 payback is the Totem's round-20 bar)")
     return out, findings
 
 

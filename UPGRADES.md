@@ -378,11 +378,11 @@ A/B/C picks at tiers 4 and 5 (PLAN 9g, DECISIONS #312–#320; names = DINO_REVIE
 
 ---
 
-## Bone Totem (TOTEM) — charged by Bones: a roar, buffs or cash · built (PLAN 9h T126; unreleased until the 9h release) · unlock 450 Amber
+## Bone Totem (TOTEM) — charged by Bones: a roar, buffs or cash · built (PLAN 9h T126) · sold from T126c · unlock 450 Amber
 
-A carved pole crowned with a horned dino skull (800 cash, 24 studs, 200 HP, hits air) that never
+A carved pole crowned with a horned dino skull (600 cash, 24 studs, 200 HP, hits air) that never
 shoots. Every pop (a dino losing a size) inside its range on your side, by anyone on your side,
-adds 1 to its **charge**; at 8 it is **full**: the path's effect fires and the charge starts
+adds 1 to its **charge**; at 3 it is **full**: the path's effect fires and the charge starts
 again (the overflow is kept; the charge carries over between rounds and starts at 0 each match).
 A glowing ring round its foot shows the charge. Pops made by any Bone Totem's roar, skulls or
 spirit hunters never charge a totem. It only reads pops: Bones, the Bone Rush score, Ranked
@@ -400,9 +400,9 @@ medians). Rules: `Shared/Totem`.
 
 - Louder Roar / Quick Charge / Thunder Roar: a harder roar (x1.6 / x2.2 / x4.2); Quick Charge fills at 80 %; Thunder Roar pierces armour and breaks 3.
 - Old Bones: towers in range +20 % damage × how full the charge is. Shared Charge: a hunter's pops charge it double. Spirit Guard: when full, towers in range take no damage for 4 s.
-- Bone Collector / Trade Post: 6 / 14 cash to your side for every pop in range (scaled by the difficulty like kill pay). Bone Market: a full charge no longer roars; it pays 400 cash instead.
+- Bone Collector / Trade Post: 8 / 26 cash to your side for every pop in range (scaled by the difficulty like kill pay). Bone Market: a full charge no longer roars; it pays 120 cash instead.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9h, DECISIONS #312–#320; names = DINO_REVIEW Round 19). Echo Roar: the roar hits again 1 s later (x0.9 damage, T126's option-bar step). Fear: the roar knocks small dinos 8 studs back (never a boss). Shatter Roar: the roar strips armour for 4 s first (bosses half). Ancient Roar: the roar reaches every dino on your track (x0.8). Skull Storm: instead of the roar, 8 flying skulls each hit a different dino anywhere on your track for 0.6 × the roar (x1.76, T126's option-bar step), breaking 1. Finishing Roar: a boss in range dropping under 25 % of its HP gets one free roar (once per boss; no charge used). War Paint: your hunters in range deal +15 % to dinos (never to hunters or towers) for 6 s after a full charge. Bone Armour: towers in range +20 % max HP. Ancestor's Eye: towers in range +10 % range. Spirit Hunters: 3 ghost hunters fire 2 shots a second (9 damage each, × the team's level) at dinos in range for 6 s after a full charge. Totem Pole: Old Bones at 30 %, and its auras reach every tower on your side at half strength. Elder Wisdom: your hunters' abilities recharge 25 % faster in range (tempo, not damage). Rare Bones: a boss's pop fills half the charge. Bone Bank: at each round's end it pays 25 cash for each point of charge it holds. Bone Bonus: a full charge pays 560. Camp Payday: each full charge also pays 30 for every hunter in your camp. Bounty Wall: pops in range charge 25 % more, and each take-down in range counts +25 % for the owner's Bounties. Ancient Treasure: the first full charge of the match drops a 1,500-cash chest. No Raider option (#320).
+A/B/C picks at tiers 4 and 5 (PLAN 9h, DECISIONS #312–#320; names = DINO_REVIEW Round 19). Echo Roar: the roar hits again 1 s later (x0.9 damage, T126's option-bar step). Fear: the roar knocks small dinos 8 studs back (never a boss). Shatter Roar: the roar strips armour for 4 s first (bosses half). Ancient Roar: the roar reaches every dino on your track (x0.8). Skull Storm: instead of the roar, 8 flying skulls each hit a different dino anywhere on your track for 0.6 × the roar (x1.76, T126's option-bar step), breaking 1. Finishing Roar: a boss in range dropping under 25 % of its HP gets one free roar (once per boss; no charge used). War Paint: your hunters in range deal +15 % to dinos (never to hunters or towers) for 6 s after a full charge. Bone Armour: towers in range +20 % max HP. Ancestor's Eye: towers in range +10 % range. Spirit Hunters: 3 ghost hunters fire 2 shots a second (8 damage each, × the team's level) at dinos in range for 6 s after a full charge. Totem Pole: Old Bones at 30 %, and its auras reach every tower on your side at half strength. Elder Wisdom: your hunters' abilities recharge 25 % faster in range (tempo, not damage). Rare Bones: a boss's pop fills half the charge. Bone Bank: at each round's end it pays 25 cash for each point of charge it holds. Bone Bonus: a full charge pays 168. Camp Payday: each full charge also pays 30 for every hunter in your camp. Bounty Wall: pops in range charge 25 % more, and each take-down in range counts +25 % for the owner's Bounties. Ancient Treasure: the first full charge of the match drops a 1,500-cash chest. No Raider option (#320).
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|

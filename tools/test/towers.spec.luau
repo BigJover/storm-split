@@ -363,3 +363,12 @@ test("PLAN T124d: the 9g towers are released at their Amber prices", function()
 		eq(def.baseCost, w[2], `{key} in-match cost`)
 	end
 end)
+
+test("PLAN T126c: the Bone Totem is released at its Amber price (#331)", function()
+	local ShopRules = require(src.shared.ShopRules)
+	local def = Config.Towers.TOTEM
+	eq(ShopRules.Unreleased.TOTEM, nil, "TOTEM is sold and unlockable")
+	eq(table.find(Config.TowerOrder, "TOTEM") ~= nil, true, "TOTEM is listed in the shop order")
+	eq(def.unlockCost, 450, "TOTEM unlock Amber (never moves, #313)")
+	eq(def.baseCost, 600, "TOTEM in-match cost (#331)")
+end)

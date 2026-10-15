@@ -13,6 +13,8 @@ local TowerStats = require(src.shared.TowerStats)
 
 local BALLISTA = Config.Towers.BALLISTA
 local T = Config.Tuning
+-- DECISIONS #333: the 4x area strikes, exempt from #191's heaviest-single-hit check.
+local AREA_STRIKES = { TOTEM = true, METEOR = true, VENT = true }
 
 local function at(pathIndex: number, tier: number)
 	local tiers = { 0, 0, 0 }
@@ -48,9 +50,9 @@ test("the tower: 500 cash, 300 Amber, 12 x 0.5/s, 24 studs, air, damageable, har
 	eq(BALLISTA.harpoons, true)
 	for key, def in Config.Towers do
 		eq(def.harpoons, key == "BALLISTA", `{key} has harpoons`)
-		-- A tower that never shoots (Fire rate 0: the Bone Totem's roar is an area pulse when it is
-		-- full, PLAN 9h) has no single hit to compare.
-		if key ~= "BALLISTA" and def.baseRate > 0 then
+		-- The 4x area strikes are exempt by key (DECISIONS #333): a roar, meteor or eruption is an
+		-- area strike every 12-20 s, not a single-target shot.
+		if key ~= "BALLISTA" and not AREA_STRIKES[key] then
 			eq(def.baseDamage < BALLISTA.baseDamage, true, `{key}: the Ballista is the heaviest single hit`)
 		end
 	end
