@@ -98,6 +98,13 @@
 	in that pool drops Eruption sizes outright (Enemies.dropSizes). Tar Totem: an aura;
 	towers in range deal +% to slowed dinos.
 
+	BONE TOTEM (PLAN 9h T126, rules in Shared/Totem): never shoots. Every pop in its range on its
+	side (Main's onKilled -> dinoPopped, with who made it: Enemies.source) charges it; full = the
+	path's effect next frame (the Spirit Roar, Bone Market's pay, Spirit Guard, War Paint, Spirit
+	Hunters, Ancient Treasure). Its own roar, skulls and ghosts never charge a totem. It only reads
+	pops: Bones and scores are Main's, as without it. Old Bones' aura follows the charge (refreshed
+	at most every AURA_REFRESH s); Bone Bank pays in roundIncome.
+
 	SIDES (PLAN T78, DECISIONS #228, #231; rules in Shared/BattleRules): a tower only ever
 	aims at, hurts, slows, stuns or marks its own side's dinos (step() hands each tower its
 	own side's dinos; canTarget checks again), and its pool, Power Grid, Thorn Plating,
@@ -131,6 +138,7 @@ local RaptorLook = require(Shared:WaitForChild("RaptorLook"))
 local BattleFlow = require(Shared:WaitForChild("BattleFlow"))
 local FourX = require(Shared:WaitForChild("FourX"))
 local AutoFire = require(Shared:WaitForChild("AutoFire"))
+local Totem = require(Shared:WaitForChild("Totem"))
 
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
@@ -153,6 +161,7 @@ type Buff = {
 	hpPercent: number, -- +% max HP (a Field Hospital's Tonic in range)
 	arcPercent: number, -- Lightning Rodeo in range: each shot arcs once at this %
 	slowedPercent: number, -- Tar Totem in range: +% damage against slowed dinos
+	rangePercent: number, -- +% range (Ancestor's Eye, PLAN 9h; never on a Tar Pit's pool)
 }
 
 export type Tower = {
@@ -188,6 +197,8 @@ export type Tower = {
 	sealHealPercent: number, -- ... and Self-Sealing's heal when it breaks (0 = none)
 	resin: ResinState?, -- Amber Resin Cannon (PLAN 9g T123); nil on every other tower
 	raptor: RaptorState?, -- Raptor Pen (PLAN 9g T124); nil on every other tower
+	totem: TotemState?, -- Bone Totem (PLAN 9h T126); nil on every other tower
+	rangeBase: number, -- stats.range before any range aura (PLAN 9h)
 	hurtBy: any?, -- the last dino that bit or hit it with a throw (Guard Raptors, PLAN 9g)
 	model: Model,
 }
@@ -204,6 +215,18 @@ type RaptorState = {
 	lastStung: number?, -- when it last stung a raider (os.clock)
 	posts: { any }, -- Guard Raptors: the tower each raptor guards
 	postTimer: number,
+}
+
+-- A Bone Totem's own state (Shared/Totem rules).
+type TotemState = {
+	rules: Totem.State, -- the charge, full charges this match, the treasure, Bounty Wall's fraction
+	pending: number, -- full charges waiting to fire (a pop fills it inside Enemies' damage call)
+	echoAt: number, -- Echo Roar: when the second roar goes (os.clock; 0 = none)
+	buffUntil: number, -- War Paint: own hunters in range +% until then
+	spiritUntil: number, -- Spirit Hunters: the ghost hunters fire until then
+	spiritTimer: number,
+	finished: { [any]: boolean }, -- Finishing Roar: bosses that had their free roar (weak keys)
+	shownShare: number, -- the charge ring's share as last drawn (visual)
 }
 
 -- An Amber Resin Cannon's own state (Shared/Resin rules).
@@ -238,7 +261,12 @@ local towerFolder: Instance
 local nextId = 0
 local onPop: ((Player?, string?) -> ())? = nil
 local onSink: ((cash: number, chestCash: number, position: Vector3, side: number) -> ())? = nil -- Dig Site pay
-local onBountyExtra: ((Player, string, number) -> ())? = nil -- Prize Fossils (PLAN 9g)
+local onBountyExtra: ((Player, string, number) -> ())? = nil -- Prize Fossils (PLAN 9g), Bounty Wall (9h)
+local onCash: ((side: number, cash: number) -> ())? = nil -- Bone Totem cash (PLAN 9h; Main pays, scaled)
+local onCrate: ((position: Vector3, cash: number, side: number) -> ())? = nil -- Ancient Treasure's chest (9h)
+local huntersOn: ((side: number) -> number)? = nil -- hunters on a side (Camp Payday, 9h)
+local auraDirty = false -- a Bone Totem's charge share moved: auras are refreshed at most every AURA_REFRESH s
+local auraClock = 0
 local levelScale = 1 -- damage multiplier from the team's level
 local towerLevel = 1 -- the team's level itself (pierce-through's level bonus)
 local extraRatePercent: ((Tower) -> number)? = nil -- boosts from outside towers (hero Rally Cry)
@@ -268,7 +296,7 @@ end
 ------------------------------------------------------------------ stats
 
 local NO_BUFF: Buff =
-	table.freeze({ ratePercent = 0, damagePercent = 0, piercesArmor = false, discountPercent = 0, sellRefund = 0, resistPercent = 0, hpPercent = 0, arcPercent = 0, slowedPercent = 0 })
+	table.freeze({ ratePercent = 0, damagePercent = 0, piercesArmor = false, discountPercent = 0, sellRefund = 0, resistPercent = 0, hpPercent = 0, arcPercent = 0, slowedPercent = 0, rangePercent = 0 })
 local showHealth: (Tower) -> () -- below, with the rest of health
 
 local function hasAura(s: Stats): boolean
@@ -281,6 +309,7 @@ local function hasAura(s: Stats): boolean
 		or s.auraHpPercent > 0
 		or s.auraArcPercent > 0
 		or s.auraSlowedPercent > 0
+		or s.auraRangePercent > 0
 end
 
 local function covers(source: Tower, point: Vector3): boolean
@@ -288,14 +317,26 @@ local function covers(source: Tower, point: Vector3): boolean
 	return Vector2.new(offset.X, offset.Z).Magnitude <= source.stats.range
 end
 
--- Recomputed whenever a tower is placed, upgraded or removed. The shop panel
--- reads Discount / RefundRate from the tower's body.
+-- Recomputed whenever a tower is placed, upgraded or removed (and as a Bone Totem's charge
+-- moves, PLAN 9h). The shop panel reads Discount / RefundRate from the tower's body.
 local function refreshAuras()
+	local ranges: { [Tower]: number } = {}
 	for _, tower in towers do
-		local rate, damage, pierce, discount, refund, resist, hpBonus, arc, slowed = 0, 0, false, 0, 0, 0, 0, 0, 0
+		local rate, damage, pierce, discount, refund, resist, hpBonus, arc, slowed, range = 0, 0, false, 0, 0, 0, 0, 0, 0, 0
 		for _, source in towers do
 			local s = source.stats
 			local fuel = if source.resin then source.resin.fuelPercent else 0 -- Fossil Fuel (PLAN 9g)
+			-- A Bone Totem (PLAN 9h): Old Bones scales with its charge; Totem Pole's auras reach the
+			-- rest of its side at half strength.
+			local totem = source.totem
+			if totem and source ~= tower and not source.knockedOut and BattleRules.canSupport(source.side, tower.side) then
+				local inRange = covers(source, tower.base)
+				damage = math.max(damage, Totem.chargeAura(totem.rules, s, inRange))
+				if not inRange and s.sideAuraHalf then
+					hpBonus = if tower.def.untouchable then hpBonus else math.max(hpBonus, Totem.auraAt(s.auraHpPercent, false, true))
+					range = math.max(range, Totem.auraAt(s.auraRangePercent, false, true))
+				end
+			end
 			if not source.knockedOut and (hasAura(s) or fuel > 0) and covers(source, tower.base) and BattleRules.canSupport(source.side, tower.side) then
 				-- An Armory's resistance covers itself too; the other auras are for others.
 				-- Armory and Field Hospital auras skip a tower that can't be damaged (#148).
@@ -311,10 +352,12 @@ local function refreshAuras()
 					hpBonus = if tower.def.untouchable then 0 else math.max(hpBonus, s.auraHpPercent)
 					arc = math.max(arc, s.auraArcPercent)
 					slowed = math.max(slowed, s.auraSlowedPercent)
+					range = math.max(range, s.auraRangePercent)
 				end
 			end
 		end
-		tower.buff = if rate > 0 or damage > 0 or pierce or discount > 0 or refund > 0 or resist > 0 or hpBonus > 0 or arc > 0 or slowed > 0
+		ranges[tower] = range
+		tower.buff = if rate > 0 or damage > 0 or pierce or discount > 0 or refund > 0 or resist > 0 or hpBonus > 0 or arc > 0 or slowed > 0 or range > 0
 			then {
 				ratePercent = rate,
 				damagePercent = damage,
@@ -325,6 +368,7 @@ local function refreshAuras()
 				hpPercent = hpBonus,
 				arcPercent = arc,
 				slowedPercent = slowed,
+				rangePercent = range,
 			}
 			else NO_BUFF
 		-- Tonic: gaining the aura adds the HP it gives; losing it only caps HP.
@@ -341,6 +385,13 @@ local function refreshAuras()
 		if body then
 			body:SetAttribute("Discount", discount)
 			body:SetAttribute("RefundRate", math.max(Config.Tuning.SellRefund, refund))
+		end
+	end
+	-- Range auras land after every tower's cover is worked out (a Tar Pit's range is its pool's
+	-- length: never stretched).
+	for tower, range in ranges do
+		if not tower.def.onTrack then
+			tower.stats.range = tower.rangeBase * (1 + range / 100)
 		end
 	end
 end
@@ -724,8 +775,13 @@ export type Hooks = {
 	-- touches cash).
 	onSink: ((cash: number, chestCash: number, position: Vector3, side: number) -> ())?,
 	-- Prize Fossils (PLAN 9g): a fossil counts `extra` more take-downs of `gone` for this
-	-- hunter's Bounties (Main reports them; meta only).
+	-- hunter's Bounties (Main reports them; meta only). Bounty Wall too (PLAN 9h).
 	onBountyExtra: ((Player, string, number) -> ())?,
+	-- Bone Totem (PLAN 9h): cash to a side (Bone cash, Bone Market, Camp Payday; Main pays it
+	-- scaled like kill pay), a chest (Ancient Treasure) and how many hunters a side has.
+	onCash: ((side: number, cash: number) -> ())?,
+	onCrate: ((position: Vector3, cash: number, side: number) -> ())?,
+	huntersOn: ((side: number) -> number)?,
 }
 
 function Towers.init(folder: Instance, hooks: Hooks?)
@@ -739,6 +795,9 @@ function Towers.init(folder: Instance, hooks: Hooks?)
 	resistOf = hooks and hooks.resistOf
 	onSink = hooks and hooks.onSink
 	onBountyExtra = hooks and hooks.onBountyExtra
+	onCash = hooks and hooks.onCash
+	onCrate = hooks and hooks.onCrate
+	huntersOn = hooks and hooks.huntersOn
 end
 
 -- Callers check Placement first (Shop does); this only builds. `side`: the builder's side
@@ -826,6 +885,19 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 				postTimer = 0,
 			}
 			else nil,
+		totem = if key == "TOTEM"
+			then {
+				rules = Totem.new(), -- a new totem starts empty (the charge starts at 0 each match)
+				pending = 0,
+				echoAt = 0,
+				buffUntil = 0,
+				spiritUntil = 0,
+				spiritTimer = 0,
+				finished = setmetatable({}, { __mode = "k" }) :: any,
+				shownShare = -1,
+			}
+			else nil,
+		rangeBase = stats.range,
 		hurtBy = nil,
 		model = model,
 	}
@@ -853,6 +925,7 @@ function Towers.upgrade(tower: Tower, pathIndex: number, option: string?): boole
 	tower.pathPicks[pathIndex] = Upgrades.pickAfter(tower.pathPicks[pathIndex], nextTier, option)
 	tower.pathTiers[pathIndex] = nextTier
 	tower.stats = TowerStats.compute(tower.def, tower.pathTiers, tower.pathPicks)
+	tower.rangeBase = tower.stats.range
 	-- The HP an upgrade adds to the max is added to current HP too.
 	local maxHp = Combat.towerMaxHp(tower.def, tower.pathTiers, tower.buff.hpPercent)
 	tower.hp = math.min(maxHp, tower.hp + (maxHp - tower.maxHp))
@@ -873,6 +946,7 @@ function Towers.setPicksForStandIn(tower: Tower, pathIndex: number, letters: str
 	tower.pathTiers = { 0, 0, 0 }
 	tower.pathPicks = { "", "", "" }
 	tower.stats = TowerStats.compute(tower.def, tower.pathTiers, tower.pathPicks)
+	tower.rangeBase = tower.stats.range
 	local done = true
 	for _ = 1, 3 do
 		done = done and Towers.upgrade(tower, pathIndex)
@@ -1517,17 +1591,243 @@ local function stepRaptor(tower: Tower, dt: number, own)
 	end
 end
 
--- Pack Bond (#319): the strongest own-side pen covering `position` with 3+ raptors out:
--- its hunters' extra damage % against dinos only (Hero asks for its shots on dinos).
+-- Pack Bond (#319): the strongest own-side pen covering `position` with 3+ raptors out, or a
+-- War Paint Bone Totem for Full buff (s) after a full charge (PLAN 9h): its hunters' extra damage %
+-- against dinos only (Hero asks for its shots on dinos).
 function Towers.hunterDamageAt(position: Vector3, side: number?): number
 	local best = 0
 	for _, source in towers do
 		local percent = source.stats.hunterDamagePercent
 		if percent > 0 and not source.knockedOut and covers(source, position) and BattleRules.canSupport(source.side, side or 1) then
-			best = math.max(best, Raptor.packBond(percent, Walkers.outCount(source), true))
+			if source.totem then
+				best = math.max(best, if os.clock() < source.totem.buffUntil then percent else 0)
+			else
+				best = math.max(best, Raptor.packBond(percent, Walkers.outCount(source), true))
+			end
 		end
 	end
 	return best
+end
+
+-- Elder Wisdom (PLAN 9h, #319): the lowest ability cooldown x of an own-side Bone Totem covering
+-- `position` (1 = none). Ability tempo for hunters, never damage.
+function Towers.hunterCooldownAt(position: Vector3, side: number?): number
+	local best = 1
+	for _, source in towers do
+		local mult = source.stats.hunterCooldownMult
+		if mult < 1 and not source.knockedOut and covers(source, position) and BattleRules.canSupport(source.side, side or 1) then
+			best = math.min(best, mult)
+		end
+	end
+	return best
+end
+
+------------------------------------------------------------------ Bone Totem (PLAN 9h T126)
+
+-- Visuals only.
+local BONE_COLOR = Color3.fromRGB(235, 225, 200)
+local GHOST_COLOR = Color3.fromRGB(150, 230, 255)
+local AURA_REFRESH = 0.25 -- s: a totem's charge aura is refreshed at most this often
+
+-- One hit of a totem's (roar, skull, ghost hunter): its armour / boss rules, breaks, Shatter's
+-- strip first and Fear's knockback after. Its pops never charge a totem (Enemies source "totem").
+local function totemHit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number, strip: boolean)
+	local stats = tower.stats
+	if not enemy.alive or not ownSide(tower, enemy) or (enemy.def.flying and not stats.hitsAir) then
+		return
+	end
+	if strip then
+		Enemies.strip(enemy, Config.Tuning.ShatterStripS) -- Shatter Roar: bare for every tower a while
+	end
+	local pierce = piercing(tower)
+	if not Enemies.canHurt(enemy, pierce) then
+		return
+	end
+	if enemy.def.armored then
+		damage *= stats.armoredMult
+	end
+	if enemy.def.boss then
+		damage *= stats.bossMult
+	end
+	local b = if breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
+	Enemies.setSource("totem")
+	local killed, gone, dropped = Enemies.damage(enemy, damage, pierce, b)
+	Enemies.setSource(nil)
+	credit(tower.owner, killed, gone, dropped)
+	local fear = if enemy.alive then Totem.knock(stats, enemy.size, enemy.def.boss == true) else 0 -- Fear: small dinos only
+	if fear > 0 then
+		Enemies.knockback(enemy, fear)
+	end
+end
+
+-- The Spirit Roar: every dino in range (Ancient Roar: on its side); Skull Storm: skulls instead.
+local function spiritRoar(tower: Tower, own)
+	local stats = tower.stats
+	local damage = stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
+	local list = {}
+	for _, enemy in own do
+		if enemy.alive and (stats.roarWholeTrack or stats.skulls > 0 or covers(tower, enemy.part.Position)) then
+			table.insert(list, enemy)
+		end
+	end
+	if stats.skulls > 0 then
+		local distances = {}
+		for i, enemy in list do
+			distances[i] = enemy.distance
+		end
+		for _, i in Totem.skullTargets(distances, stats.skulls) do
+			local enemy = list[i]
+			Effects.tracer(tower.muzzle, enemy.part.Position, BONE_COLOR)
+			Effects.part(Vector3.one * 1.2, CFrame.new(enemy.part.Position + Vector3.new(0, 1.5, 0)), BONE_COLOR, 0.3, Enum.PartType.Ball)
+			totemHit(tower, enemy, damage * Config.Tuning.SkullX, 1, stats.stripsArmor)
+		end
+		return
+	end
+	Effects.disc(tower.base + Vector3.new(0, 0.2, 0), stats.range, BONE_COLOR, 0.5, 0.55) -- the shockwave
+	local breaks = Totem.roarBreaks(stats)
+	for _, enemy in list do
+		totemHit(tower, enemy, damage, breaks, stats.stripsArmor)
+	end
+end
+
+-- A full charge: the path's effect (roar or pay), then Spirit Guard, War Paint, Spirit Hunters
+-- and Ancient Treasure.
+local function totemFull(tower: Tower, own)
+	local state = tower.totem :: TotemState
+	local stats, now = tower.stats, os.clock()
+	if Totem.roars(stats) then
+		spiritRoar(tower, own)
+		if stats.roarEchoes > 0 then
+			state.echoAt = now + Totem.ECHO_DELAY
+		end
+	elseif onCash then
+		onCash(tower.side, Totem.fullPay(stats, if huntersOn then huntersOn(tower.side) else 1)) -- Bone Market, Camp Payday
+		Effects.disc(tower.base + Vector3.new(0, 0.2, 0), 3, Color3.fromRGB(250, 205, 80), 0.6, 0.4)
+	end
+	local treasure = Totem.treasure(state.rules, stats)
+	if treasure > 0 and onCrate then
+		onCrate(tower.base + Vector3.new(3, 0, 0), treasure, tower.side) -- Ancient Treasure
+	end
+	if stats.fullGuardSeconds > 0 then -- Spirit Guard: towers in range take no damage a while
+		for _, other in towers do
+			if not other.def.untouchable and covers(tower, other.base) and BattleRules.canSupport(tower.side, other.side) then
+				other.sealedUntil = math.max(other.sealedUntil, now + stats.fullGuardSeconds)
+				local shell = Effects.part(Vector3.new(4, TowerLook.BODY_HEIGHT + 1, 4), CFrame.new(other.position), GHOST_COLOR, stats.fullGuardSeconds)
+				shell.Transparency = 0.7
+				shell.Material = Enum.Material.ForceField
+			end
+		end
+	end
+	if stats.hunterDamagePercent > 0 then
+		state.buffUntil = now + Config.Tuning.FullBuffS -- War Paint
+	end
+	if stats.spiritHunters then
+		state.spiritUntil = now + Config.Tuning.SpiritS
+		state.spiritTimer = 0
+	end
+end
+
+-- Spirit Hunters: each ghost fires at a dino in range, the furthest along first.
+local function ghostVolley(tower: Tower, own)
+	local list = {}
+	for _, enemy in own do
+		if enemy.alive and covers(tower, enemy.part.Position) and (tower.stats.hitsAir or not enemy.def.flying) then
+			table.insert(list, enemy)
+		end
+	end
+	if #list == 0 then
+		return
+	end
+	table.sort(list, function(a, b)
+		return a.distance > b.distance
+	end)
+	local count = Config.Tuning.SpiritHunters
+	for i = 1, count do
+		local enemy = list[(i - 1) % #list + 1]
+		local angle = i * 2 * math.pi / count
+		local ghost = tower.base + Vector3.new(math.cos(angle) * 2.5, 2.5, math.sin(angle) * 2.5)
+		local body = Effects.part(Vector3.new(1, 2.4, 1), CFrame.new(ghost), GHOST_COLOR, 0.35)
+		body.Transparency = 0.5
+		Effects.tracer(ghost, enemy.part.Position, GHOST_COLOR)
+		totemHit(tower, enemy, Config.Tuning.SpiritHunterDamage * levelScale, 1, false)
+	end
+end
+
+local function stepTotem(tower: Tower, dt: number, own)
+	local state = tower.totem
+	if not state then
+		return
+	end
+	local stats, now = tower.stats, os.clock()
+	local share = Totem.share(state.rules, stats)
+	if math.abs(share - state.shownShare) > 0.01 then
+		state.shownShare = share
+		TowerLook.setCharge(tower.model, share) -- the charge glow ring
+	end
+	if tower.knockedOut then
+		return -- Trampled: no effects (its charge waits)
+	end
+	while state.pending > 0 do
+		state.pending -= 1
+		totemFull(tower, own)
+	end
+	if state.echoAt > 0 and now >= state.echoAt then
+		state.echoAt = 0
+		spiritRoar(tower, own) -- Echo Roar
+	end
+	if now < state.spiritUntil then
+		state.spiritTimer -= dt
+		if state.spiritTimer <= 0 then
+			state.spiritTimer += 1 / Config.Tuning.SpiritHunterRate
+			ghostVolley(tower, own)
+		end
+	end
+	if stats.finishingRoar then -- a free roar at a weak boss in range, once per boss
+		for _, enemy in own do
+			if enemy.alive and enemy.def.boss and covers(tower, enemy.part.Position)
+				and Totem.finishes(enemy.hp / math.max(1e-9, enemy.share * enemy.sizes), state.finished[enemy] == true) then
+				state.finished[enemy] = true
+				spiritRoar(tower, own)
+			end
+		end
+	end
+end
+
+-- A pop (a dino lost a size; `source` = Enemies.source(): "tower", "hunter" or "totem"): every
+-- standing own-side Bone Totem whose range holds it charges and pays its Bone cash. It only
+-- reads the pop: Bones, scores and Bounties are counted by Main exactly as without a totem.
+function Towers.dinoPopped(enemy: Enemies.Enemy, source: string)
+	local kind: Totem.Source = if source == "hunter" then "hunter" elseif source == "totem" then "totem" else "tower"
+	for _, tower in towers do
+		local state = tower.totem
+		if state and not tower.knockedOut and ownSide(tower, enemy) and covers(tower, enemy.part.Position) then
+			local stats = tower.stats
+			if kind ~= "totem" and stats.boneCash > 0 and onCash then
+				onCash(tower.side, stats.boneCash)
+			end
+			local _, fills = Totem.observe(state.rules, stats, kind, enemy.def.boss == true)
+			state.pending += fills -- fired next frame, outside Enemies' damage call
+			auraDirty = auraDirty or stats.chargeAuraDamagePercent > 0
+		end
+	end
+end
+
+-- A whole dino taken down (Bounty Wall, PLAN 9h): inside a Bounty charge x totem's range, the
+-- owner's Bounties count it Bounty charge x times (the extra whole take-downs reported as they add up).
+function Towers.dinoTakenDown(enemy: Enemies.Enemy, source: string)
+	if source == "totem" or not onBountyExtra then
+		return
+	end
+	for _, tower in towers do
+		local state = tower.totem
+		local owner = tower.owner
+		if state and owner and owner.Parent and tower.stats.bountyChargeX > 1 and not tower.knockedOut and ownSide(tower, enemy) and covers(tower, enemy.part.Position) then
+			local extra = Totem.bountyExtra(state.rules, tower.stats)
+			if extra > 0 then
+				onBountyExtra(owner, enemy.key, extra)
+			end
+		end
+	end
 end
 
 ------------------------------------------------------------------ Storm Coil
@@ -2438,6 +2738,13 @@ function Towers.step(dt: number)
 		stepTow(tower, dt, own)
 		stepResin(tower, dt, own)
 		stepRaptor(tower, dt, own)
+		stepTotem(tower, dt, own)
+	end
+	-- Old Bones (PLAN 9h): a totem's charge aura follows its charge, at most every AURA_REFRESH s.
+	auraClock += dt
+	if auraDirty and auraClock >= AURA_REFRESH then
+		auraDirty, auraClock = false, 0
+		refreshAuras()
 	end
 	stepSeals()
 	stepGrid(dt, live)
@@ -2530,7 +2837,14 @@ function Towers.roundIncome(bankedCash: number, side: number?): number
 			end
 		end
 	end
-	return income + interest
+	-- Bone Bank (PLAN 9h): each standing own-side Bone Totem pays for the charge it holds.
+	local bank = 0
+	for _, tower in towers do
+		if tower.totem and not tower.knockedOut and tower.side == (side or 1) then
+			bank += Totem.bank(tower.totem.rules, tower.stats)
+		end
+	end
+	return income + interest + bank
 end
 
 export type Airdrop = { base: Vector3, count: number, cash: number, owner: Player?, side: number }
@@ -2612,7 +2926,25 @@ function Towers.fireNow(key: string, position: Vector3): string
 			table.insert(fired, "Raptor Charge")
 		end
 	end
+	local totem = tower.totem
+	if totem then -- fills it now (PLAN 9h)
+		totem.pending += Totem.add(totem.rules, tower.stats, Totem.full(tower.stats) - totem.rules.charge)
+		table.insert(fired, "full charge")
+	end
 	return table.concat(fired, ", ")
+end
+
+-- Studio `charge <n>` (PLAN 9h): sets the nearest Bone Totem's charge (at or over full it fires).
+function Towers.setCharge(n: number, position: Vector3): boolean
+	local tower = nearestOf("TOTEM", position)
+	local totem = tower and tower.totem
+	if not (tower and totem) then
+		return false
+	end
+	totem.rules.charge = 0
+	totem.pending += Totem.add(totem.rules, tower.stats, n)
+	auraDirty = true
+	return true
 end
 
 -- Studio `fossils <n>`: the nearest Amber Resin Cannon's match fossil count.

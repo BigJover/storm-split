@@ -126,6 +126,11 @@ local callbacks: {
 	onTakenDown: ((Enemy) -> ())?, -- the whole dino is gone (its last size, a sink): Bounty cash (PLAN 9d)
 } = {}
 
+-- Who is hitting right now (PLAN 9h, the Bone Totem's charge): a hunter's shot or ability marks
+-- itself "hunter", a Bone Totem's roar, skulls and spirit hunters "totem"; everything else is
+-- "tower". Read by the onKilled hook (Server/Main -> Towers.dinoPopped); never a score.
+local popSource = "tower"
+
 local cap = Config.Tuning.MaxConcurrentEnemies
 local baseSpeed = Track.BaseEnemySpeed * Config.Tuning.GlobalSpeedScalar
 local speedMult = 1 -- difficulty
@@ -301,6 +306,16 @@ function Enemies.strip(enemy: Enemy, seconds: number)
 		return
 	end
 	enemy.strippedUntil = Combat.stripUntil(enemy.strippedUntil, os.clock(), Combat.stripSeconds(seconds, enemy.def.boss == true))
+end
+
+-- Marks who makes the next hits (`nil` = back to "tower"); the caller resets it after (PLAN 9h).
+function Enemies.setSource(kind: string?)
+	popSource = kind or "tower"
+end
+
+-- Who is hitting right now: "tower", "hunter" or "totem" (PLAN 9h).
+function Enemies.source(): string
+	return popSource
 end
 
 -- Apply damage. Returns true if this hit crossed a threshold (a pop: it shrank

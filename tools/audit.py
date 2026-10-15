@@ -61,6 +61,7 @@ LADDER_EXTENSIONS = {
     # The 4x towers at the proposed prices (DIRECTION "The 4x towers", PLAN 9g, TOWERS_LATER.md).
     ("tower", "RESIN"): ("Amber Resin Cannon", 500, "PLAN 9g"),
     ("tower", "RAPTOR"): ("Raptor Pen", 500, "PLAN 9g"),
+    ("tower", "TOTEM"): ("Bone Totem", 450, "PLAN 9h"),
 }
 
 

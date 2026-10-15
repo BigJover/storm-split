@@ -167,7 +167,29 @@ export type Stats = {
 	stunRoarEvery: number, -- Rex Tamer: roars every N s (0 = none)
 	takeDownStackPercent: number, -- Hungry Alpha
 	avengerX: number, -- Raider Hounds (0 = off)
-	hunterDamagePercent: number, -- own side's hunters in range +% to dinos only (Pack Bond, #319)
+	hunterDamagePercent: number, -- own side's hunters in range +% to dinos only (Pack Bond, War Paint, #319)
+	-- Bone Totem (PLAN 9h T126; rules in Shared/Totem). Only the TOTEM's rows set these (the
+	-- exporter's KEY_ONLY), except the shared Aura range %.
+	chargeMult: number, -- x every pop's charge (Bounty Wall)
+	hunterChargeX: number, -- a hunter's pop charges x this (1 = like any pop; Shared Charge 2)
+	bossChargePercent: number, -- a boss's pop adds this % of a full charge instead (Rare Bones)
+	bountyChargeX: number, -- take-downs in range count x this for the owner's Bounties (Bounty Wall)
+	chargeNeededMult: number, -- x Tuning Totem charge to be full
+	roarEchoes: number, -- Echo Roar: the roar again 1 s later
+	roarWholeTrack: boolean, -- Ancient Roar: every dino on its side
+	skulls: number, -- Skull Storm: this many skulls instead of the roar
+	fullGuardSeconds: number, -- Spirit Guard: towers in range take no damage this long when full
+	spiritHunters: boolean, -- Spirit Hunters: ghost hunters when full
+	fullCash: number, -- Bone Market: a full charge pays this to the side instead of a roar
+	paydayCash: number, -- Camp Payday: + this per hunter on the side, per full charge
+	treasure: boolean, -- Ancient Treasure: the first full of the match drops a Treasure cash chest
+	chargeAuraDamagePercent: number, -- Old Bones: towers in range + this % x the charge share
+	hunterCooldownMult: number, -- Elder Wisdom: own hunters in range, ability cooldown x this
+	sideAuraHalf: boolean, -- Totem Pole: its auras reach every tower on the side at half strength
+	boneCash: number, -- cash to the side per pop in range
+	bankCashPerCharge: number, -- Bone Bank: at each round end, x the charge held
+	finishingRoar: boolean, -- Finishing Roar: a free roar at a weak boss in range, once per boss
+	auraRangePercent: number, -- towers in range +% range (Ancestor's Eye; the Spotter Blimp's later)
 }
 
 local MULTIPLIERS = {
@@ -187,6 +209,9 @@ local MULTIPLIERS = {
 	"walkerHpMult",
 	"walkerSpeedMult",
 	"walkerRespawnMult",
+	"chargeMult",
+	"chargeNeededMult",
+	"hunterCooldownMult",
 }
 local HIGHEST = {
 	"shots",
@@ -266,6 +291,19 @@ local HIGHEST = {
 	"takeDownStackPercent",
 	"avengerX",
 	"hunterDamagePercent",
+	-- PLAN 9h (T126): the Bone Totem and the shared Aura range %
+	"hunterChargeX",
+	"bossChargePercent",
+	"bountyChargeX",
+	"roarEchoes",
+	"skulls",
+	"fullGuardSeconds",
+	"fullCash",
+	"paydayCash",
+	"chargeAuraDamagePercent",
+	"boneCash",
+	"bankCashPerCharge",
+	"auraRangePercent",
 }
 -- Timers where the shortest non-zero wins (PLAN 9g, the exporter's "minpos" kind).
 local MIN_POSITIVE = {
@@ -303,6 +341,11 @@ local FLAGS = {
 	"swarm",
 	"charge",
 	"guard",
+	"roarWholeTrack",
+	"spiritHunters",
+	"treasure",
+	"sideAuraHalf",
+	"finishingRoar",
 }
 
 -- `pathPicks` is each path's A/B/C letters ("", "B", "BA"; Shared/Upgrades); nil means
@@ -483,6 +526,26 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		takeDownStackPercent = if walking then high.takeDownStackPercent or 0 else 0,
 		avengerX = if walking then high.avengerX or 0 else 0,
 		hunterDamagePercent = high.hunterDamagePercent or 0,
+		chargeMult = mult.chargeMult,
+		hunterChargeX = math.max(1, high.hunterChargeX or 0),
+		bossChargePercent = high.bossChargePercent or 0,
+		bountyChargeX = math.max(1, high.bountyChargeX or 0),
+		chargeNeededMult = mult.chargeNeededMult,
+		roarEchoes = math.floor(high.roarEchoes or 0),
+		roarWholeTrack = flag.roarWholeTrack == true,
+		skulls = math.floor(high.skulls or 0),
+		fullGuardSeconds = high.fullGuardSeconds or 0,
+		spiritHunters = flag.spiritHunters == true,
+		fullCash = high.fullCash or 0,
+		paydayCash = high.paydayCash or 0,
+		treasure = flag.treasure == true,
+		chargeAuraDamagePercent = high.chargeAuraDamagePercent or 0,
+		hunterCooldownMult = mult.hunterCooldownMult,
+		sideAuraHalf = flag.sideAuraHalf == true,
+		boneCash = high.boneCash or 0,
+		bankCashPerCharge = high.bankCashPerCharge or 0,
+		finishingRoar = flag.finishingRoar == true,
+		auraRangePercent = high.auraRangePercent or 0,
 	}
 end
 

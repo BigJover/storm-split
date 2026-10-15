@@ -202,6 +202,28 @@ ABILITY_COLUMNS = [
     ("takeDownStackPercent", 135, "num", 0),  # EE: Hungry Alpha
     ("avengerX", 136, "num", 0),  # EF: Raider Hounds: bites x this on the dino that hurt a tower
     ("hunterDamagePercent", 137, "num", 0),  # EG: own side's hunters in range +% to dinos only
+    # PLAN 9h (T126): the Bone Totem (Shared/Totem). Pops (a dino losing a size) in its range charge
+    # it; full = the path's effect. Kinds in TOWER_STEP_KINDS; KEY_ONLY keeps them on the totem.
+    ("chargeMult", 138, "num", 1),  # EH: x every pop's charge (Bounty Wall)
+    ("hunterChargeX", 139, "num", 0),  # EI: a hunter's pop charges x this (Shared Charge; blank = 1)
+    ("bossChargePercent", 140, "num", 0),  # EJ: a boss's pop adds this % of a full charge (Rare Bones)
+    ("bountyChargeX", 141, "num", 0),  # EK: take-downs in range count x this for the owner's Bounties
+    ("chargeNeededMult", 142, "num", 1),  # EL: x Tuning Totem charge to be full
+    ("roarEchoes", 143, "num", 0),  # EM: Echo Roar: the roar again 1 s later
+    ("roarWholeTrack", 144, "bool", False),  # EN: Ancient Roar: every dino on its side
+    ("skulls", 145, "num", 0),  # EO: Skull Storm: skulls instead of the roar
+    ("fullGuardSeconds", 146, "num", 0),  # EP: Spirit Guard: towers in range take no damage this long
+    ("spiritHunters", 147, "bool", False),  # EQ: Spirit Hunters: ghost hunters when full (Tuning)
+    ("fullCash", 148, "num", 0),  # ER: Bone Market: a full charge pays this instead of a roar
+    ("paydayCash", 149, "num", 0),  # ES: Camp Payday: + this per hunter on the side, per full
+    ("treasure", 150, "bool", False),  # ET: Ancient Treasure: the first full of the match drops a chest
+    ("chargeAuraDamagePercent", 151, "num", 0),  # EU: Old Bones: towers in range + % x charge share
+    ("hunterCooldownMult", 152, "num", 1),  # EV: Elder Wisdom: own hunters in range, ability cooldown x
+    ("sideAuraHalf", 153, "bool", False),  # EW: Totem Pole: its auras reach the whole side at half
+    ("boneCash", 154, "num", 0),  # EX: cash to the side per pop in range
+    ("bankCashPerCharge", 155, "num", 0),  # EY: Bone Bank: at round end, x the charge held
+    ("finishingRoar", 156, "bool", False),  # EZ: a free roar at a boss in range under Finisher %
+    ("auraRangePercent", 157, "num", 0),  # FA: towers in range +% range (Ancestor's Eye; the Blimp's later)
 ]
 
 # Columns only a tower that chains (Towers column Chains) can use.
@@ -224,6 +246,13 @@ WALKER_ONLY = ("walkers", "walkerHpMult", "walkerSpeedMult", "walkerResistPercen
                "holdSeconds", "bossHoldSeconds", "flanking", "targetsFirst", "healsBetweenRounds", "dodge",
                "alpha", "swarm", "charge", "guard", "stunRoarEvery", "takeDownStackPercent", "avengerX")
 WALKER_ONE = ("walkerHpMult", "walkerSpeedMult", "walkerRespawnMult")  # blank = 1
+# Columns only one 4x tower uses (PLAN 9h): tower key -> (its columns, the ones whose blank is 1).
+KEY_ONLY = {
+    "TOTEM": (("chargeMult", "hunterChargeX", "bossChargePercent", "bountyChargeX", "chargeNeededMult", "roarEchoes",
+               "roarWholeTrack", "skulls", "fullGuardSeconds", "spiritHunters", "fullCash", "paydayCash", "treasure",
+               "chargeAuraDamagePercent", "hunterCooldownMult", "sideAuraHalf", "boneCash", "bankCashPerCharge",
+               "finishingRoar"), ("chargeMult", "chargeNeededMult", "hunterCooldownMult")),
+}
 
 # Paths allowed a Size breaks above 1 (DECISIONS #127, #134). A new one is a
 # Director call: add it here and to PLAN's design table together.
@@ -234,6 +263,7 @@ BREAK_PATHS = {
     ("Storm Coil", "Charge"),  # PLAN 9e (#297): Thunderstrike 2 (the strike's first dino; arcs break 1)
     ("Raptor Pen", "Alpha"),  # PLAN 9g: Alpha Raptor 2, Sickle Claw 3, King of the Pack 4
     ("Raptor Pen", "Trainer"),  # PLAN 9g: Raider Hounds 2
+    ("Bone Totem", "Roar"),  # PLAN 9h: Thunder Roar 3 (the Spirit Roar breaks Tuning Roar breaks 2 below it)
 }
 HERO_BREAK_PATHS = {("Tracker", "Marksman"), ("Brush Beater", "Slug")}
 
@@ -336,6 +366,8 @@ TOWER_STEP_KINDS = {
     # PLAN 9g (#316): timers where the shorter wins; a blank (0) is "off", never the minimum
     "entombAllEvery": "minpos", "heartEvery": "minpos", "sealEvery": "minpos", "stunRoarEvery": "minpos",
     "entombHitsMult": "mult", "walkerHpMult": "mult", "walkerSpeedMult": "mult", "walkerRespawnMult": "mult",
+    # PLAN 9h (T126): the Bone Totem
+    "chargeMult": "mult", "chargeNeededMult": "mult", "hunterCooldownMult": "mult",
 }
 for _key, _col, _kind, _default in ABILITY_COLUMNS:
     TOWER_STEP_KINDS.setdefault(_key, "flag" if _kind == "bool" else "max")
@@ -1780,6 +1812,10 @@ def validate(data):
                 for field in RESIN_ONLY:
                     if step[field] != (1 if field == "entombHitsMult" else 0) and not t["resin"]:
                         problems.append(f"{key} {p['id']} tier {i}: {field} needs a Resin tower (Towers column Y)")
+                for owner, (fields, ones) in KEY_ONLY.items():
+                    for field in fields:
+                        if step[field] not in (False, 1 if field in ones else 0) and key != owner:
+                            problems.append(f"{key} {p['id']} tier {i}: {field} is the {owner} tower's own column (PLAN 9h)")
                 if step["tracksSlowPercent"] > 100 or (t["onTrack"] and step["slowPercent"] > 100):
                     problems.append(f"{key} {p['id']} tier {i}: Slow % and Tracks slow % must be 0-100")
                 if step["birds"] != int(step["birds"]):

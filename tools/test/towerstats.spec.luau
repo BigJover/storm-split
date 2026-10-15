@@ -64,6 +64,9 @@ local function expected(def, tiers: { number })
 		walkerHpMult = product("walkerHpMult"),
 		walkerSpeedMult = product("walkerSpeedMult"),
 		walkerRespawnMult = product("walkerRespawnMult"),
+		chargeMult = product("chargeMult"), -- PLAN 9h: the Bone Totem
+		chargeNeededMult = product("chargeNeededMult"),
+		hunterCooldownMult = product("hunterCooldownMult"),
 	}
 	for _, field in TowerStats.HIGHEST do
 		local value = highest(field)
@@ -173,6 +176,11 @@ local function expected(def, tiers: { number })
 			e[field] = 0
 		end
 	end
+	-- Bone Totem (PLAN 9h): Hunter / Bounty charge x are 1 when no tier sets them; counts are whole.
+	e.hunterChargeX = math.max(1, e.hunterChargeX)
+	e.bountyChargeX = math.max(1, e.bountyChargeX)
+	e.roarEchoes = math.floor(e.roarEchoes)
+	e.skulls = math.floor(e.skulls)
 	return e
 end
 

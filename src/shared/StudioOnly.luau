@@ -44,9 +44,10 @@ StudioOnly.FEATURES = {
 	lateStandIn = 'Late stand-in joins now: the host\'s Lobby ("latestandin") mid-battle seats a stand-in as a late joiner (catch-up cash, toast), refused like a player in Ranked/Practice or after Late join last round (Server/Main, Server/Battle, PLAN T105)',
 	clockCap = 'Short match clock: the host\'s Lobby ("clockcap", seconds) for testing the clock end and its warning (Server/Main, Server/Battle, PLAN T104)',
 	standInPick = 'Stand-in picks: the host\'s Lobby ("standinpick", "<tower> <path> <letters>") mid-battle sets every stand-in camp\'s tower of that kind to that path\'s tier 3 + those options (placing one if the camp has none), so the Tester can raid a B/C option (Server/Main, Server/Battle, PLAN T115b, #310)',
-	fireNow = 'Fire now: the host\'s Lobby ("firenow", "<tower key>") makes the nearest tower of that key fire its once-a-round / timed effect now (Amber Age, Resin Wall; Raptor Swarm, Raptor Charge), ignoring AutoFire and timers (Server/Main, PLAN 9g)',
+	fireNow = 'Fire now: the host\'s Lobby ("firenow", "<tower key>") makes the nearest tower of that key fire its once-a-round / timed effect now (Amber Age, Resin Wall; Raptor Swarm, Raptor Charge; a Bone Totem fills), ignoring AutoFire and timers (Server/Main, PLAN 9g)',
 	fossils = 'Fossils: the host\'s Lobby ("fossils", n) sets the nearest Amber Resin Cannon\'s match fossil count (Amber Heart tests; Server/Main, PLAN 9g)',
 	walkers = 'Walkers: the host\'s Lobby ("walkers") prints every walker (tower, state, HP, target) to Output (Server/Main, PLAN 9g)',
+	charge = 'Charge: the host\'s Lobby ("charge", n) sets the nearest Bone Totem\'s charge; at or over full it fires (Server/Main, PLAN 9h)',
 } :: { [string]: string }
 
 function StudioOnly.allowed(isStudio: boolean, feature: string): boolean
@@ -71,6 +72,14 @@ end
 function StudioOnly.fossils(isStudio: boolean, n: unknown): number?
 	if StudioOnly.allowed(isStudio, "fossils") and type(n) == "number" and n >= 0 and n < 1e6 then
 		return math.floor(n)
+	end
+	return nil
+end
+
+-- "charge <n>" (PLAN 9h): a number n >= 0 in Studio; nil live or not a number.
+function StudioOnly.charge(isStudio: boolean, n: unknown): number?
+	if StudioOnly.allowed(isStudio, "charge") and type(n) == "number" and n >= 0 and n < 1e6 then
+		return n
 	end
 	return nil
 end

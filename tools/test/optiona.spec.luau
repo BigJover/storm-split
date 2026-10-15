@@ -98,6 +98,27 @@ local AFTER_SNAPSHOT: { [string]: any } = {
 	takeDownStackPercent = 0,
 	avengerX = 0,
 	hunterDamagePercent = 0,
+	-- PLAN 9h (T126): the Bone Totem's own fields (none on these towers) and the shared Aura range %
+	chargeMult = 1,
+	hunterChargeX = 1,
+	bossChargePercent = 0,
+	bountyChargeX = 1,
+	chargeNeededMult = 1,
+	roarEchoes = 0,
+	roarWholeTrack = false,
+	skulls = 0,
+	fullGuardSeconds = 0,
+	spiritHunters = false,
+	fullCash = 0,
+	paydayCash = 0,
+	treasure = false,
+	chargeAuraDamagePercent = 0,
+	hunterCooldownMult = 1,
+	sideAuraHalf = false,
+	boneCash = 0,
+	bankCashPerCharge = 0,
+	finishingRoar = false,
+	auraRangePercent = 0,
 }
 -- ... and fields whose "does nothing" value is the tower's own (hitsAir moved from the Towers
 -- row into the stats with the generic Hits air column, PLAN 9g).

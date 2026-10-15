@@ -6,7 +6,7 @@
 local fs = require("@lune/fs")
 local StudioOnly = require(src.shared.StudioOnly)
 
-local EXPECTED = { "cash", "amber", "towerHit", "standIns", "startRound", "standInsHold", "standInPierce", "clockCap", "lateStandIn", "standInPick", "fireNow", "fossils", "walkers" }
+local EXPECTED = { "cash", "amber", "towerHit", "standIns", "startRound", "standInsHold", "standInPierce", "clockCap", "lateStandIn", "standInPick", "fireNow", "fossils", "walkers", "charge" }
 
 test("T89: each Studio-only feature is allowed in Studio and refused in a live server", function()
 	local count = 0
@@ -105,6 +105,7 @@ test("T89 grep: every IsStudio() on the server goes through StudioOnly (or is th
 					or string.find(line, "StudioOnly.standInPick(RunService:IsStudio(),", 1, true) -- T115b
 					or string.find(line, "StudioOnly.fireNow(RunService:IsStudio(),", 1, true) -- PLAN 9g
 					or string.find(line, "StudioOnly.fossils(RunService:IsStudio(),", 1, true) -- PLAN 9g
+					or string.find(line, "StudioOnly.charge(RunService:IsStudio(),", 1, true) -- PLAN 9h
 				-- "Studio or unpublished" only ever turns live features OFF (Practice, This-server boards)
 				local notLive = string.find(line, "RunService:IsStudio() or game.PlaceId == 0", 1, true)
 				ok(viaHelper or notLive, `{name}:{i} uses IsStudio() without Shared/StudioOnly`)
@@ -210,6 +211,9 @@ test("PLAN 9g aids: firenow <tower>, fossils <n>, walkers; refused live", functi
 	eq(StudioOnly.fossils(true, -1), nil)
 	eq(StudioOnly.fossils(false, 14), nil, "refused live")
 	eq(StudioOnly.allowed(false, "walkers"), false, "walkers refused live")
+	eq(StudioOnly.charge(true, 6.5), 6.5, "charge <n> (PLAN 9h)")
+	eq(StudioOnly.charge(true, -1), nil)
+	eq(StudioOnly.charge(false, 6), nil, "charge refused live")
 	local main = fs.readFile("src/server/Main.server.luau")
 	ok(main:find('StudioOnly.allowed(RunService:IsStudio(), "walkers")', 1, true) ~= nil, "walkers asks StudioOnly")
 end)

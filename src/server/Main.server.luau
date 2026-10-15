@@ -162,6 +162,7 @@ Enemies.init(map.paths, map.enemyFolder, {
 	onKilled = function(enemy)
 		Economy.earnFor(enemy.side, enemy.share * enemy.cashX * Config.Tuning.CashPerEffectiveHP * difficulty().cashMult)
 		Battle.dinoPopped(enemy.side) -- a stand-in seat's Bone (Studio battles, T79b)
+		Towers.dinoPopped(enemy, Enemies.source()) -- Bone Totems read the pop (PLAN 9h; never a score)
 	end,
 	-- Bounty cash (PLAN 9d, #294): a whole dino down (sinks too, not shrinks) inside a Supply
 	-- Camp's range pays its side the strongest covering camp's Bounty cash, once.
@@ -170,6 +171,7 @@ Enemies.init(map.paths, map.enemyFolder, {
 		if cash > 0 then
 			Economy.earnScaledFor(enemy.side, cash, difficulty().cashMult) -- scaled like sink cash (#309)
 		end
+		Towers.dinoTakenDown(enemy, Enemies.source()) -- Bounty Wall (PLAN 9h)
 	end,
 })
 
@@ -229,6 +231,25 @@ Towers.init(map.towerFolder, {
 			Economy.earnScaledFor(side, cash, difficulty().cashMult) -- the pit's side (T77)
 		end
 		Airdrops.chestAt(position, chestCash, side)
+	end,
+	-- Bone Totem (PLAN 9h): Bone cash, Bone Market and Camp Payday to the totem's side, scaled
+	-- like sink cash (#309); Ancient Treasure's chest; the side's hunters for Camp Payday.
+	onCash = function(side, cash)
+		if cash > 0 then
+			Economy.earnScaledFor(side, cash, difficulty().cashMult)
+		end
+	end,
+	onCrate = function(position, cash, side)
+		Airdrops.chestAt(position, cash, side)
+	end,
+	huntersOn = function(side)
+		local n = 0
+		for _, hunter in hunters() do
+			if Sides.playerSide(hunter:GetAttribute("Side"), ReplicatedStorage:GetAttribute("Sides")) == side then
+				n += 1
+			end
+		end
+		return n
 	end,
 })
 Progression.init(remotes, { onMasteryChanged = Hero.masteryChanged, onLookChanged = Hero.lookChanged })
@@ -319,8 +340,8 @@ lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
 		end
 		return
 	end
-	-- Studio test aids for the 4x towers (PLAN 9g common rule 9): firenow, fossils, walkers.
-	if (action == "firenow" or action == "fossils" or action == "walkers") and isHost(player) then
+	-- Studio test aids for the 4x towers (PLAN 9g common rule 9): firenow, fossils, walkers, charge (9h).
+	if (action == "firenow" or action == "fossils" or action == "walkers" or action == "charge") and isHost(player) then
 		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		local at = if root and root:IsA("BasePart") then root.Position else Vector3.zero
 		if action == "firenow" then
@@ -332,6 +353,11 @@ lobby.OnServerEvent:Connect(function(player, action: unknown, key: unknown)
 			local n = StudioOnly.fossils(RunService:IsStudio(), key)
 			if n then
 				print(`[DinoHunters] fossils {n}: {if Towers.setFossils(n, at) then "set" else "no Resin Cannon"}`)
+			end
+		elseif action == "charge" then
+			local n = StudioOnly.charge(RunService:IsStudio(), key)
+			if n then
+				print(`[DinoHunters] charge {n}: {if Towers.setCharge(n, at) then "set" else "no Bone Totem"}`)
 			end
 		elseif StudioOnly.allowed(RunService:IsStudio(), "walkers") then
 			for _, line in Walkers.describe() do

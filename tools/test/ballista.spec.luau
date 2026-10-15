@@ -48,7 +48,9 @@ test("the tower: 500 cash, 300 Amber, 12 x 0.5/s, 24 studs, air, damageable, har
 	eq(BALLISTA.harpoons, true)
 	for key, def in Config.Towers do
 		eq(def.harpoons, key == "BALLISTA", `{key} has harpoons`)
-		if key ~= "BALLISTA" then
+		-- A tower that never shoots (Fire rate 0: the Bone Totem's roar is an area pulse when it is
+		-- full, PLAN 9h) has no single hit to compare.
+		if key ~= "BALLISTA" and def.baseRate > 0 then
 			eq(def.baseDamage < BALLISTA.baseDamage, true, `{key}: the Ballista is the heaviest single hit`)
 		end
 	end

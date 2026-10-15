@@ -265,7 +265,10 @@ end
 -- The ability's cooldown per charge, with the mastery cooldown cut, / Ability tempo (#259).
 local function abilityCooldown(player: Player, s: State): number
 	local rewards = mastery(player, s)
-	return if s.stats then Pace.abilityCooldown(s.stats.abilityCooldown * (if rewards then rewards.abilityCooldownMult else 1)) else 0
+	-- Elder Wisdom (PLAN 9h, #319): an own-side Bone Totem covering the hunter (ability tempo, not damage).
+	local body = root(player)
+	local totem = if body then Towers.hunterCooldownAt(body.Position, sideOf(player)) else 1
+	return if s.stats then Pace.abilityCooldown(s.stats.abilityCooldown * (if rewards then rewards.abilityCooldownMult else 1) * totem) else 0
 end
 
 -- Everything the client HUD needs, as player attributes. Times are server time.
@@ -626,14 +629,18 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 	local breaks = if direct and stats.splashRadius <= 0 and base > 1
 		then Enemies.breaksFor(enemy, base, 1, true)
 		else 1
+	Enemies.setSource("hunter") -- a hunter's pop (a Bone Totem's Hunter charge x, PLAN 9h)
 	local killed, gone, dropped = Enemies.damage(enemy, damage, stats.piercesArmor, breaks)
+	Enemies.setSource(nil)
 	credit(player, killed, gone, dropped)
 	outcome.killed = outcome.killed or killed
 
 	if stats.splashRadius > 0 then
 		for _, other in live do
 			if other ~= enemy and canHit(other, stats) and (other.part.Position - position).Magnitude <= stats.splashRadius then
+				Enemies.setSource("hunter")
 				local splashKill, splashGone = Enemies.damage(other, damage, stats.piercesArmor)
+				Enemies.setSource(nil)
 				credit(player, splashKill, splashGone)
 				outcome.killed = outcome.killed or splashKill
 			end
@@ -946,7 +953,10 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 			for _, enemy in Enemies.getLive() do
 				if enemy.side == trackSide and BattleRules.canDamage(mySide, enemy.side, "dino", ABILITY) and math.abs(enemy.distance - centre) <= radius then
 					Enemies.stun(enemy, stun)
-					credit(player, Enemies.damage(enemy, power, true))
+					Enemies.setSource("hunter")
+					local killed, gone, dropped = Enemies.damage(enemy, power, true)
+					Enemies.setSource(nil)
+					credit(player, killed, gone, dropped)
 				end
 			end
 			if burnPercent > 0 and ownTrack then

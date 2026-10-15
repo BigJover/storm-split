@@ -311,7 +311,7 @@ A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; names are working 
 
 ---
 
-## Amber Resin Cannon (RESIN) — control: resin slows, entombs and fossilizes · built (PLAN 9g T123; unreleased: the 9g release is held) · unlock 500 Amber
+## Amber Resin Cannon (RESIN) — control: resin slows, entombs and fossilizes · built (PLAN 9g T123; sold from T124d) · unlock 500 Amber
 
 A stubby cannon on a cart that lobs amber resin (2 damage, 1 glob a second, 18 studs, ground
 only, 800 cash). Every glob slows the dino 20 % for 1 s (not bosses) and adds 1 resin; at
@@ -345,7 +345,7 @@ A/B/C picks at tiers 4 and 5 (PLAN 9g, DECISIONS #312–#320; names = DINO_REVIE
 
 ---
 
-## Raptor Pen (RAPTOR) — tamed raptors: pack damage, one big hunter, support · built (PLAN 9g T124; unreleased: the 9g release is held) · unlock 500 Amber
+## Raptor Pen (RAPTOR) — tamed raptors: pack damage, one big hunter, support · built (PLAN 9g T124; sold from T124d) · unlock 500 Amber
 
 A log pen (600 cash, 10 per bite, 2.3 bites a second; 22-stud hunting ground, 150 HP) that never shoots: its tamed **raptors**
 (collar and stripe in the camp colour) sprint out along your own track, pounce, bite (seeds 850 cash / 10 / 1.5, moved by T124b/T124c's guaranteed exit, #326) and come back. A raptor has 60 HP (grows with tiers like towers),
@@ -375,6 +375,43 @@ A/B/C picks at tiers 4 and 5 (PLAN 9g, DECISIONS #312–#320; names = DINO_REVIE
 | **Alpha** | 5 | King of the Pack — A giant raptor, half damage taken | Rex Tamer — A tamed T. rex whose roar stuns | Hungry Alpha — Stronger with every take-down |
 | **Trainer** | 4 | Treat Bag — Raptors heal and return faster | Guard Raptors — A raptor guards each tower | Whistle Drill — Raptors run 30% faster |
 | **Trainer** | 5 | Raptor Charge — Every raptor charges the track once a round | Pack Bond — Hunters nearby +20% with 3+ raptors out | Raider Hounds — Raptors chase raiders (or the dino that hurt a tower) |
+
+---
+
+## Bone Totem (TOTEM) — charged by Bones: a roar, buffs or cash · built (PLAN 9h T126; unreleased until the 9h release) · unlock 450 Amber
+
+A carved pole crowned with a horned dino skull (800 cash, 24 studs, 200 HP, hits air) that never
+shoots. Every pop (a dino losing a size) inside its range on your side, by anyone on your side,
+adds 1 to its **charge**; at 8 it is **full**: the path's effect fires and the charge starts
+again (the overflow is kept; the charge carries over between rounds and starts at 0 each match).
+A glowing ring round its foot shows the charge. Pops made by any Bone Totem's roar, skulls or
+spirit hunters never charge a totem. It only reads pops: Bones, the Bone Rush score, Ranked
+results and Hunt Board counts are exactly what they'd be without it, and it never gives Amber.
+On full, a Roar or Ancestors totem lets out the **Spirit Roar**: every dino in range takes 60
+(× the team's level), breaking 2 sizes, armour only once it pierces. A control/cash tower on
+two of its paths: Ancestors and Bone Pile are judged on their own lines (out of the damage
+medians). Rules: `Shared/Totem`.
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Roar** | damage | Louder Roar | Quick Charge | *Thunder Roar* | *Echo Roar* | *Ancient Roar* |
+| **Ancestors** | buffs | Old Bones | Shared Charge | *Spirit Guard* | *War Paint* | *Spirit Hunters* |
+| **Bone Pile** | cash | Bone Collector | Trade Post | *Bone Market* | *Rare Bones* | *Camp Payday* |
+
+- Louder Roar / Quick Charge / Thunder Roar: a harder roar (x1.6 / x2.2 / x4.2); Quick Charge fills at 80 %; Thunder Roar pierces armour and breaks 3.
+- Old Bones: towers in range +20 % damage × how full the charge is. Shared Charge: a hunter's pops charge it double. Spirit Guard: when full, towers in range take no damage for 4 s.
+- Bone Collector / Trade Post: 6 / 14 cash to your side for every pop in range (scaled by the difficulty like kill pay). Bone Market: a full charge no longer roars; it pays 400 cash instead.
+
+A/B/C picks at tiers 4 and 5 (PLAN 9h, DECISIONS #312–#320; names = DINO_REVIEW Round 19). Echo Roar: the roar hits again 1 s later (x0.9 damage, T126's option-bar step). Fear: the roar knocks small dinos 8 studs back (never a boss). Shatter Roar: the roar strips armour for 4 s first (bosses half). Ancient Roar: the roar reaches every dino on your track (x0.8). Skull Storm: instead of the roar, 8 flying skulls each hit a different dino anywhere on your track for 0.6 × the roar (x1.76, T126's option-bar step), breaking 1. Finishing Roar: a boss in range dropping under 25 % of its HP gets one free roar (once per boss; no charge used). War Paint: your hunters in range deal +15 % to dinos (never to hunters or towers) for 6 s after a full charge. Bone Armour: towers in range +20 % max HP. Ancestor's Eye: towers in range +10 % range. Spirit Hunters: 3 ghost hunters fire 2 shots a second (9 damage each, × the team's level) at dinos in range for 6 s after a full charge. Totem Pole: Old Bones at 30 %, and its auras reach every tower on your side at half strength. Elder Wisdom: your hunters' abilities recharge 25 % faster in range (tempo, not damage). Rare Bones: a boss's pop fills half the charge. Bone Bank: at each round's end it pays 25 cash for each point of charge it holds. Bone Bonus: a full charge pays 560. Camp Payday: each full charge also pays 30 for every hunter in your camp. Bounty Wall: pops in range charge 25 % more, and each take-down in range counts +25 % for the owner's Bounties. Ancient Treasure: the first full charge of the match drops a 1,500-cash chest. No Raider option (#320).
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Roar** | 4 | Echo Roar — The roar hits twice | Fear — The roar scares small dinos 8 studs back | Shatter Roar — The roar strips armour for 4 s |
+| **Roar** | 5 | Ancient Roar — The roar reaches your whole track | Skull Storm — 8 flying skulls hunt dinos | Finishing Roar — A free roar at a weak boss |
+| **Ancestors** | 4 | War Paint — Hunters nearby +15% for 6 s when full | Bone Armour — Nearby towers get 20% more HP | Ancestor's Eye — Nearby towers see 10% further |
+| **Ancestors** | 5 | Spirit Hunters — 3 ghost hunters fire for 6 s when full | Totem Pole — Buffs reach every tower, half strength | Elder Wisdom — Hero abilities nearby recharge 25% faster |
+| **Bone Pile** | 4 | Rare Bones — Bosses fill half the charge | Bone Bank — Leftover charge pays at round end | Bone Bonus — Each full charge pays 40% more |
+| **Bone Pile** | 5 | Camp Payday — Every hunter in your camp gets paid | Bounty Wall — Bones nearby charge 25% faster and count +25% for bounties | Ancient Treasure — One big treasure chest a match |
 
 ---
 

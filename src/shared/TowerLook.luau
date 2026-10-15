@@ -36,6 +36,7 @@ TowerLook.COLORS = table.freeze({
 	TARPIT = Color3.fromRGB(35, 28, 24), -- Tar Pit: tar black
 	RESIN = Color3.fromRGB(240, 150, 40), -- Amber Resin Cannon: amber (PLAN 9g)
 	RAPTOR = Color3.fromRGB(150, 120, 70), -- Raptor Pen: raptor hide (PLAN 9g)
+	TOTEM = Color3.fromRGB(235, 225, 200), -- Bone Totem: bleached bone (PLAN 9h)
 })
 
 TowerLook.BODY_HEIGHT = 5
@@ -267,6 +268,23 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 		table.insert(blocks, block("RailR", Vector3.new(0.15, 0.2, 2.7), at(1.35, 1.3, 0), DARK_WOOD, Enum.Material.Wood))
 		table.insert(blocks, block("RailB", Vector3.new(2.7, 0.2, 0.15), at(0, 1.3, 1.35), DARK_WOOD, Enum.Material.Wood))
 		return blocks
+	end,
+	-- Bone Totem (PLAN 9h): a carved wooden pole stacked with bones, a horned dino skull on top
+	-- with glowing eye sockets; the charge ring round its foot is setCharge's.
+	TOTEM = function(color)
+		local eye = Color3.fromRGB(150, 230, 255)
+		return {
+			block("Mound", Vector3.new(2.6, 0.4, 2.6), at(0, 0.2, 0), DARK_WOOD, Enum.Material.Ground),
+			block("Pole", Vector3.new(0.8, 3.2, 0.8), at(0, 2.0, 0), WOOD, Enum.Material.Wood),
+			block("RibL", Vector3.new(1.8, 0.25, 0.25), at(0, 1.6, 0), color, Enum.Material.Limestone),
+			block("RibR", Vector3.new(0.25, 0.25, 1.8), at(0, 2.3, 0), color, Enum.Material.Limestone),
+			block("Skull", Vector3.new(1.3, 0.9, 1.5), at(0, 4.05, -0.1), color, Enum.Material.Limestone),
+			block("Jaw", Vector3.new(1.0, 0.25, 1.1), at(0, 3.55, -0.4), color, Enum.Material.Limestone),
+			block("HornL", Vector3.new(0.2, 0.5, 0.2), at(-0.5, 4.6, 0.1) * CFrame.Angles(0, 0, math.rad(25)), color, Enum.Material.Limestone),
+			block("HornR", Vector3.new(0.2, 0.5, 0.2), at(0.5, 4.6, 0.1) * CFrame.Angles(0, 0, math.rad(-25)), color, Enum.Material.Limestone),
+			block("EyeL", Vector3.new(0.25, 0.2, 0.1), at(-0.3, 4.15, -0.86), eye, Enum.Material.Neon),
+			block("EyeR", Vector3.new(0.25, 0.2, 0.1), at(0.3, 4.15, -0.86), eye, Enum.Material.Neon),
+		}
 	end,
 	-- Supply Camp: stacked crates under an orange tarp, a flag on a pole.
 	QUARTERMASTER = function(color)
@@ -845,6 +863,36 @@ function TowerLook.setPool(model: Model, points: { Vector3 })
 		end
 	end
 	pool.Parent = model
+end
+
+-- Bone Totem (PLAN 9h): a ring round the totem's foot that glows brighter as it charges
+-- (share 0..1; full = bright). Visual only.
+local CHARGE_COLOR = Color3.fromRGB(150, 230, 255)
+function TowerLook.setCharge(model: Model, share: number)
+	local body = model.PrimaryPart
+	if not body then
+		return
+	end
+	local ring = model:FindFirstChild("ChargeRing") :: BasePart?
+	if not ring then
+		local new = Instance.new("Part")
+		new.Name = "ChargeRing"
+		new.Shape = Enum.PartType.Cylinder
+		new.Size = Vector3.new(0.15, 3, 3)
+		new.Color = CHARGE_COLOR
+		new.Material = Enum.Material.Neon
+		new.Anchored = true
+		new.CanCollide = false
+		new.CanQuery = false
+		new.CanTouch = false
+		new.CastShadow = false
+		local base = body.CFrame.Position - Vector3.new(0, body.Size.Y / 2, 0)
+		new.CFrame = CFrame.new(base + Vector3.new(0, 0.1, 0)) * CFrame.Angles(0, 0, math.rad(90))
+		new.Parent = model
+		ring = new
+	end
+	assert(ring)
+	ring.Transparency = 0.9 - 0.75 * math.clamp(share, 0, 1)
 end
 
 function TowerLook.refresh(model: Model, range: number, tiers: { number }, stage: number, label: string?)

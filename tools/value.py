@@ -129,7 +129,8 @@ BANDS = [(1, 10), (11, 20), (21, 30), (31, 40)]
 BOUGHT_BAND = {1: 1, 2: 1, 3: 2, 4: 3, 5: 3}  # tier -> index into BANDS
 # Support and control paths: judged on their own effect, not DPS (DECISIONS #59). #74 added the
 # Tranq Station's Knockout (hard stops) and Weak Spot (damage amp for every tower in range).
-SUPPORT_PATHS = {("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knockout"), ("CHILLER", "Weak Spot"),
+SUPPORT_PATHS = {("TOTEM", "Ancestors"), ("TOTEM", "Bone Pile"),  # PLAN 9h (#314): buffs and cash
+                 ("SCOUT", "Lookout"), ("CHILLER", "Sedate"), ("CHILLER", "Knockout"), ("CHILLER", "Weak Spot"),
                  ("COIL", "Lightning Rod"),  # PLAN T64: Charged Air, Storm Warning, Lightning Rodeo
                  ("FALCON", "Falconer"),  # PLAN T65: Falcon Bells, Hooded Scout, Lure, Hunting Party
                  ("BALLISTA", "Reel"),  # PLAN T66: Pin Down, Reel In, Tow Line
@@ -329,6 +330,13 @@ def tower_stats(t, tiers, picks=None):
         "holdSeconds": (high.get("holdSeconds", 0) or TUNING["PounceHoldS"]) if t.get("walkers", 0) > 0 else 0,
         "stunRoarEvery": shortest.get("stunRoarEvery", 0) if t.get("walkers", 0) > 0 else 0,
         "hunterDamagePercent": high.get("hunterDamagePercent", 0),
+        # Bone Totem (PLAN 9h T126; Shared/TowerStats) and the shared Aura range %
+        **{f: mult[f] for f in ("chargeMult", "chargeNeededMult", "hunterCooldownMult")},
+        **{f: max(1, high.get(f, 0)) for f in ("hunterChargeX", "bountyChargeX")},
+        **{f: high.get(f, 0) for f in ("bossChargePercent", "roarEchoes", "skulls", "fullGuardSeconds", "fullCash",
+                                       "paydayCash", "chargeAuraDamagePercent", "boneCash", "bankCashPerCharge",
+                                       "auraRangePercent")},
+        **{f: flag.get(f, False) for f in ("roarWholeTrack", "spiritHunters", "treasure", "sideAuraHalf", "finishingRoar")},
     }
 
 
@@ -411,7 +419,13 @@ def band_mix(data):
                 parts.append((ehp, kind, e["hp"] * rd["hpMult"] / max(1, e["sizes"]), e["breakResist"], round_level(tuning, r)))
                 dinos.append((n, kind, max(1, e["sizes"]), e["hp"] * rd["hpMult"] / max(1, e["sizes"]), e["speedMult"]))
         total = sum(share.values())
-        out.append({**{k: v / total for k, v in share.items()}, "total": total,
+        rounds = data["Rounds"][lo - 1:hi]
+        # Bone Totem (PLAN 9h, #314): pops a round in play (Shared/Pace's paced counts, Easy solo; each
+        # spawn pops once per size) and the share of the band's rounds with a boss.
+        pops = sum(n * max(1, enemies[k]["sizes"]) for rd in rounds
+                   for k, n in export_constants.paced_counts(data, rd, 1.0).items()) / max(1, len(rounds))
+        boss_rounds = sum(any(enemies[k]["boss"] and n > 0 for k, n in rd["counts"].items()) for rd in rounds) / max(1, len(rounds))
+        out.append({**{k: v / total for k, v in share.items()}, "total": total, "pops": pops, "bossRounds": boss_rounds,
                     "parts": [(w / total, kind, hp, resist, lv) for w, kind, hp, resist, lv in parts],
                     "dinos": dinos, "seconds": seconds})
     return out
@@ -873,6 +887,55 @@ def resin_lines(data, mixes):
                    + ("" if ok else " FAIL") + ("" if judged else " (unreleased: judged at its release, T124b)"))
         if judged and not ok:
             findings.append(f"RESIN: Entomb T2 holds {h * secs:.1f} hold-s a round in r11-20 (bar {RESIN_ROUND20_HOLD}; lever Tuning Entomb base (s) +0.1, <= 1.2)")
+    return out, findings
+
+
+# Bone Totem's round-20 bar (PLAN 9h, #313): the Roar T2 totem's c/e in r11-20 is at most this x the
+# released damage-path T2 median (4x batch out, like M; lever: Tuning Totem charge -1 at a time, >= 5).
+TOTEM_ROUND20_X = 1.5
+
+
+def totem_lines(data, mixes, rows):
+    """Bone Totem's release lines (PLAN 9h T126b): per Roar tier the fills and a roar's damage a
+    round (r31-40), Bone Pile's cash a round and each T1-T3 tier's payback (bar DIG_PAYBACK rounds,
+    #203; levers Bone cash, Full cash), and the round-20 bar. Bars are findings once it is released.
+    Returns (lines, findings)."""
+    if "TOTEM" not in data["Towers"]:
+        return [], []
+    t, tuning = data["Towers"]["TOTEM"], data["Tuning"]
+    late = mixes[3]
+    judged = "TOTEM" not in UNRELEASED
+    held = "" if judged else " (unreleased: judged at its release, T126b)"
+    out, findings = [], []
+    for pi, path in enumerate(t["paths"]):
+        bits, prev = [], 0.0
+        for tier in range(1, len(export_constants.line(path)) + 1):
+            s = path_stats(t, pi, tier)
+            fills = totem_fills(s, late, tuning)
+            if path["id"] == "Bone Pile":
+                cash = totem_cash(data, s, late)
+                gain = cash - prev
+                step = export_constants.line(path)[tier - 1]["cost"]
+                payback = step / gain if gain > 0 else math.inf
+                bits.append(f"T{tier} +{cash:.0f}/round" + (f" = {fmt(payback)}r" if tier <= DIG_TIERS else ""))
+                if judged and tier <= DIG_TIERS and not dig_payback_ok(payback):
+                    findings.append(f"TOTEM: Bone Pile T{tier} pays back in {fmt(payback)} rounds (bar {DIG_PAYBACK[0]}-{DIG_PAYBACK[1]};"
+                                    " levers Bone cash, Full cash; PLAN 9h, #203)")
+                prev = cash
+            else:
+                bits.append(f"T{tier} {fills:.1f} fills, roar {totem_roar(s, late, tuning):.0f}")
+        out.append(f"  Bone Totem {path['id']:<9} r31-40 a round ({fmt(totem_pops(path_stats(t, pi, 0), late))} pops in range): "
+                   + "; ".join(bits))
+    t2 = [r["cpd"][1] for (k, p, tier), r in rows.items()
+          if tier == 2 and not r["support"] and r["released"] and k not in ROUND9_BATCH]
+    roar = next((pi for pi, p in enumerate(t["paths"]) if p["id"] == "Roar"), None)
+    if t2 and roar is not None:
+        bar = TOTEM_ROUND20_X * statistics.median(t2)
+        cpd = rows[("TOTEM", roar, 2)]["cpd"][1]
+        ok = cpd <= bar
+        out.append(f"  Bone Totem round-20 bar: Roar T2 c/e {fmt(cpd)} in r11-20 (bar <= {fmt(bar)})" + ("" if ok else " FAIL") + held)
+        if judged and not ok:
+            findings.append(f"TOTEM: Roar T2 c/e {fmt(cpd)} in r11-20 > {fmt(bar)} (lever Tuning Totem charge -1, >= 5; PLAN 9h)")
     return out, findings
 
 
@@ -1381,8 +1444,108 @@ def walker_edps(s, mix, tuning, **kw):
 
 
 def tower_edps(t, s, mix, tuning, **kw):
-    """A tower's own eDPS: the walker model for a tower with walkers (PLAN 9g), else edps."""
+    """A tower's own eDPS: the walker model for a tower with walkers (PLAN 9g), the Bone Totem's roar
+    model (PLAN 9h), else edps."""
+    if t["display"] == "Bone Totem":
+        return totem_edps(s, mix, tuning, **kw)
     return walker_edps(s, mix, tuning, **kw) if t.get("walkers", 0) > 0 else edps(s, mix, tuning, **kw)
+
+
+# Bone Totem (PLAN 9h, #314; stated assumptions, 9k revisits them).
+TOTEM_WINDING = 2.5  # pops in range a round = the band's pops x this x Range / track length (a winding track)
+TOTEM_HUNTER_X = 1.3  # Hunter charge x 2: hunters make ~30 % of pops
+TOTEM_ROAR_DINOS = 4  # dinos one roar hits (DINOS_ON_SIDE with Roar whole track)
+TOTEM_HUNTERS = 2  # hunters on the side (Camp Payday)
+TOTEM_BANK_CHARGE = 4  # the charge held at a round's end, on average (Bone Bank)
+TREASURE_ROUNDS = 15  # Ancient Treasure's one chest spread over this many rounds
+TRACK_STUDS = None
+
+
+def track_studs():
+    """The track's length (studs), from Track.luau (read once)."""
+    global TRACK_STUDS
+    if TRACK_STUDS is None:
+        TRACK_STUDS = track_length()
+    return TRACK_STUDS
+
+
+def totem_pops(s, mix):
+    """Pops in the totem's range a round: the band's pops x TOTEM_WINDING x Range / track length."""
+    return mix["pops"] * TOTEM_WINDING * s["range"] / track_studs()
+
+
+def totem_fills(s, mix, tuning):
+    """Full charges a round (#314): pops in range / (Totem charge x Charge needed x) x Charge x (x 1.3
+    with Hunter charge x 2); Boss charge: + Boss charge % / 100 of a fill per boss round."""
+    fills = totem_pops(s, mix) / (tuning["TotemChargeBones"] * s["chargeNeededMult"]) * s["chargeMult"]
+    if s["hunterChargeX"] >= 2:
+        fills *= TOTEM_HUNTER_X
+    return fills + s["bossChargePercent"] / 100 * mix["bossRounds"]
+
+
+def totem_roar(s, mix, tuning, overkill=True, breaks1=False):
+    """One Spirit Roar's damage over the dinos it hits: honest hits on TOTEM_ROAR_DINOS (DINOS_ON_SIDE
+    with Roar whole track) breaking max(Roar breaks, Size breaks); Skull Storm instead Skulls x
+    Skull x dino-hits (the stated metric; in play each skull breaks 1); x (1 + Roar echoes). A Bone Market build (Full cash) doesn't roar."""
+    if s["fullCash"] > 0 or s["damage"] <= 0:
+        return 0.0
+    pierces = s["pierces"]
+    rs = {**s, "lineHits": 1, "targets": 1, "markPercent": 0, "brittlePercent": 0, "bomblets": 0,
+          "bombletGenerations": 0, "chains": False, "chainHarpoons": False,
+          "sizeBreaks": max(int(tuning["RoarBreaks"]), s["sizeBreaks"])}
+    damage, hits = s["damage"], (DINOS_ON_SIDE if s["roarWholeTrack"] else TOTEM_ROAR_DINOS)
+    if s["skulls"]:  # the metric's "Skulls x Skull x dino-hits" (#314), at the roar's hit
+        hits = s["skulls"] * tuning["SkullX"]
+    if overkill:
+        one = honest_hits(rs, mix, tuning, damage, hits, pierces, breaks1)
+    else:
+        one = damage * hits * (mix["plain"] + mix["armoured"] * (s["armoredMult"] if pierces else 0)
+                               + mix["flying"] * (1 if s["hitsAir"] else 0) + mix["boss"] * s["bossMult"])
+    return one * (1 + s["roarEchoes"])
+
+
+def totem_edps(s, mix, tuning, overkill=True, breaks1=False, **_kw):
+    """Roar (#314): fills a second x one roar's honest hits + Finishing Roar's one roar per boss round
+    / Round seconds (model). Fear and Shatter are blind spots (they carry damage)."""
+    secs = tuning["RoundSecondsModel"]
+    roar = totem_roar(s, mix, tuning, overkill, breaks1)
+    out = totem_fills(s, mix, tuning) / secs * roar
+    if s["finishingRoar"]:
+        out += roar / (1 + s["roarEchoes"]) * mix["bossRounds"] / secs
+    return out
+
+
+def totem_ancestors(data, s, mix):
+    """Ancestors (#314): aura credit (Charge aura damage % x 0.5 average charge, and Aura range % as
+    rate % / 2, on the 3 neighbours; Totem Pole: 3 side neighbours more at half) + hunter credit (Hunter
+    damage % x 30 x Full buff s x fills/s) + Spirit hunters (count x damage x rate x Spirit s x fills/s)
+    + Elder Wisdom (30 x (1/x - 1) x 0.3) + points / 2 (Aura HP % + Full guard s x 10 x fills a round)."""
+    tuning = data["Tuning"]
+    fills = totem_fills(s, mix, tuning)
+    per_s = fills / tuning["RoundSecondsModel"]
+    plain = {**s, "auraRatePercent": 0, "auraDamagePercent": 0, "auraPiercesArmor": False, "auraArcPercent": 0,
+             "diveAuraRatePercent": 0, "auraSlowedPercent": 0}
+    near = {**plain, "auraDamagePercent": s["chargeAuraDamagePercent"] * 0.5, "auraRatePercent": s["auraRangePercent"] / 2}
+    aura = aura_credit(data, near, mix)
+    if s["sideAuraHalf"]:
+        aura += aura_credit(data, {**near, "auraDamagePercent": near["auraDamagePercent"] / 2,
+                                   "auraRatePercent": near["auraRatePercent"] / 2}, mix)
+    hunter = s["hunterDamagePercent"] / 100 * HUNTER_EDPS * tuning["FullBuffS"] * per_s
+    spirit = (tuning["SpiritHunters"] * tuning["SpiritHunterDamage"] * tuning["SpiritHunterRate"] * tuning["SpiritS"] * per_s
+              if s["spiritHunters"] else 0)
+    elder = HUNTER_EDPS * (1 / s["hunterCooldownMult"] - 1) * 0.3
+    points = (s["auraHpPercent"] + s["fullGuardSeconds"] * 10 * fills) / 2
+    return aura + hunter + spirit + elder + points
+
+
+def totem_cash(data, s, mix):
+    """Bone Pile (#314): cash a round = Bone cash x pops in range + Full cash x fills + Payday x 2 hunters
+    x fills + Bank x the average charge 4 + Treasure x 0.8 / 15 rounds. Bounty charge x scores 0."""
+    tuning = data["Tuning"]
+    fills = totem_fills(s, mix, tuning)
+    return (s["boneCash"] * totem_pops(s, mix) + s["fullCash"] * fills + s["paydayCash"] * TOTEM_HUNTERS * fills
+            + s["bankCashPerCharge"] * TOTEM_BANK_CHARGE
+            + (tuning["TreasureCash"] * 0.8 / TREASURE_ROUNDS if s["treasure"] else 0))
 
 
 def raptor_trainer(data, s, mix):
@@ -1412,6 +1575,12 @@ def tower_worth(data, key, pi, s, late):
     g = (lambda f, d=0: s.get(f) or d)
     if key == "RESIN":
         return resin_worth(data, pid, s, late)
+    if key == "TOTEM":  # PLAN 9h (#314)
+        if pid == "Ancestors":
+            return totem_ancestors(data, s, late)
+        if pid == "Bone Pile":
+            return totem_cash(data, s, late)
+        return totem_edps(s, late, tuning) + aura_credit(data, s, late)
     if key == "RAPTOR":  # PLAN 9g (#314): the walker model
         if pid == "Trainer":
             return raptor_trainer(data, s, late)
@@ -1754,6 +1923,10 @@ def value_report(data, full=False):
     for line in lines:
         print(line)
     findings += resin
+    lines, totem = totem_lines(data, mixes, rows)  # PLAN 9h: the Bone Totem's release lines
+    for line in lines:
+        print(line)
+    findings += totem
     print('"worth it" (PLAN T68, #193; round-4 batch T5 cost/eDPS in rounds 31-40):')
     lines, worth = worth_lines(data, rows)
     for line in lines:

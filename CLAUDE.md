@@ -259,7 +259,13 @@ Phase 9 batch 9g (2026-10-14): the shared walker module (`Shared/Walker` + `Walk
 but **not playtested**. T124c applied (Raptor 10 a bite x 2.3/s, Museum Piece 150, Clever
 Girls never trampled); T124d (King of the Pack Rate x 1.25, bar 3's median leaves out the 4x
 batch, #330) **released both** (Amber 500 each). Studio aids: `firenow`,
-`fossils`, `walkers` (host's Lobby remote).
+`fossils`, `walkers`, `charge` (host's Lobby remote).
+
+Phase 9 batch 9h (2026-10-15): the **Bone Totem** is built and headless-tested (`Shared/Totem`;
+794 specs) but **not playtested** and **unreleased**: its damage bars can't be met with the
+PLAN's levers (T126b). The **Spotter Blimp** is not built: its Searchlight and Cargo option slots
+fail the 0.8-1.25x bars by PLAN's stated metrics beyond the lever steps, so the exporter refuses
+its rows (back to the Director).
 
 ## Open issues
 
