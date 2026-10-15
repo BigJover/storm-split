@@ -38,6 +38,7 @@ TowerLook.COLORS = table.freeze({
 	RAPTOR = Color3.fromRGB(150, 120, 70), -- Raptor Pen: raptor hide (PLAN 9g)
 	TOTEM = Color3.fromRGB(235, 225, 200), -- Bone Totem: bleached bone (PLAN 9h)
 	BLIMP = Color3.fromRGB(205, 195, 170), -- Spotter Blimp: canvas envelope (PLAN 9h)
+	METEOR = Color3.fromRGB(70, 95, 130), -- Meteor Beacon: radio-dish steel blue (PLAN 9i)
 })
 
 TowerLook.BODY_HEIGHT = 5
@@ -296,6 +297,18 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 			block("StayR", Vector3.new(0.12, 3.2, 0.12), at(0.7, 1.6, 0), DARK_WOOD, Enum.Material.Fabric),
 			block("Cone", Vector3.new(0.9, 0.5, 0.9), at(0, 4.7, 0), color, Enum.Material.Fabric),
 			block("Windsock", Vector3.new(0.3, 0.3, 1.0), at(0, 4.3, 0.6), Color3.fromRGB(230, 120, 40), Enum.Material.Fabric),
+		}
+	end,
+	-- Meteor Beacon (PLAN 9i T127): a radio mast on a stone footing, a dish and a red flare on top.
+	METEOR = function(color)
+		local flare = Color3.fromRGB(255, 80, 50)
+		return {
+			block("Footing", Vector3.new(2.6, 0.5, 2.6), at(0, 0.25, 0), Color3.fromRGB(90, 85, 80), Enum.Material.Slate),
+			block("Mast", Vector3.new(0.35, 4.0, 0.35), at(0, 2.5, 0), STEEL, Enum.Material.Metal),
+			block("BraceL", Vector3.new(0.15, 2.6, 0.15), at(-0.6, 1.3, 0), STEEL, Enum.Material.Metal),
+			block("BraceR", Vector3.new(0.15, 2.6, 0.15), at(0.6, 1.3, 0), STEEL, Enum.Material.Metal),
+			block("Dish", Vector3.new(0.2, 1.4, 1.4), at(0.35, 3.4, 0), color, Enum.Material.Metal, CYLINDER),
+			block("Flare", Vector3.new(0.5, 0.5, 0.5), at(0, 4.7, 0), flare, Enum.Material.Neon),
 		}
 	end,
 	-- Supply Camp: stacked crates under an orange tarp, a flag on a pole.

@@ -23,7 +23,7 @@
 	    every dino on the side takes Extinction x the meteor (breaks 1); the densest bunch's dinos
 	    break Extinction breaks. Comet Tail (Bombing run): once a round, Field strike x the meteor
 	    on every dino along the side's track. Impact Winter: after each meteor every dino on the
-	    side is slowed Side slow % for Side slow s (not bosses: Boss hard stop x halves it).
+	    side is slowed Side slow % for Side slow s (bosses too: a slow, not a hard stop).
 	Own side only (BattleRules); nothing reaches another camp. The server (Towers) aims, lands and
 	draws it (rule 4).
 ]]

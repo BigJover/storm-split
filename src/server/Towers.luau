@@ -140,6 +140,7 @@ local FourX = require(Shared:WaitForChild("FourX"))
 local AutoFire = require(Shared:WaitForChild("AutoFire"))
 local Totem = require(Shared:WaitForChild("Totem"))
 local Blimp = require(Shared:WaitForChild("Blimp"))
+local Meteor = require(Shared:WaitForChild("Meteor"))
 
 local Effects = require(script.Parent.Effects)
 local Enemies = require(script.Parent.Enemies)
@@ -200,6 +201,7 @@ export type Tower = {
 	raptor: RaptorState?, -- Raptor Pen (PLAN 9g T124); nil on every other tower
 	totem: TotemState?, -- Bone Totem (PLAN 9h T126); nil on every other tower
 	blimp: BlimpState?, -- Spotter Blimp (PLAN 9h T125b); nil on every other tower
+	meteor: MeteorState?, -- Meteor Beacon (PLAN 9i T127); nil on every other tower
 	rangeBase: number, -- stats.range before any range aura (PLAN 9h)
 	hurtBy: any?, -- the last dino that bit or hit it with a throw (Guard Raptors, PLAN 9g)
 	model: Model,
@@ -244,6 +246,16 @@ type BlimpState = {
 	paraDropped: boolean,
 	airliftUsed: boolean,
 	paraKey: { key: string, id: number }, -- its Paratroopers' own pack in Walkers
+}
+
+-- A Meteor Beacon's own state (Shared/Meteor rules).
+type MeteorState = {
+	timer: number, -- s toward the next strike (Starfall's wave with Starfall)
+	rainTimer: number, -- Endless Rain: s toward the next small meteor
+	landings: { any }, -- meteors on their way (warning ring showing)
+	craters: { Meteor.Crater },
+	auto: AutoFire.State, -- Comet Tail, once a round played
+	extinctionAuto: { fired: boolean }, -- Extinction Event, once a round played
 }
 
 -- An Amber Resin Cannon's own state (Shared/Resin rules).
@@ -747,8 +759,8 @@ end
 -- The range ring: a Tar Pit's range is its pool's length of track, drawn as the pool
 -- itself, so it only gets a ring when it has an aura (Tar Totem).
 local function ringRange(def, stats: Stats): number
-	if def == Config.Towers.BLIMP then
-		return 0 -- its circle is under the flying blimp (TowerLook.poseBlimp), not at the mast
+	if def == Config.Towers.BLIMP or def == Config.Towers.METEOR then
+		return 0 -- the blimp's circle is under it; a Meteor Beacon reaches its whole side -- its circle is under the flying blimp (TowerLook.poseBlimp), not at the mast
 	end
 	if def.onTrack and stats.auraSlowedPercent <= 0 then
 		return 0
@@ -942,6 +954,9 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 				airliftUsed = false,
 				paraKey = { key = key .. " paratroopers", id = nextId },
 			}
+			else nil,
+		meteor = if key == "METEOR"
+			then { timer = 0, rainTimer = 0, landings = {}, craters = {}, auto = AutoFire.new(), extinctionAuto = { fired = false } }
 			else nil,
 		rangeBase = stats.range,
 		hurtBy = nil,
@@ -2084,6 +2099,277 @@ local function stepBlimp(tower: Tower, dt: number, own)
 	end
 end
 
+------------------------------------------------------------------ Meteor Beacon (PLAN 9i T127)
+
+-- Visuals only.
+local WARN_COLOR = Color3.fromRGB(230, 40, 30)
+local ROCK_COLOR = Color3.fromRGB(95, 60, 45)
+local CRATER_COLOR = Color3.fromRGB(255, 110, 30)
+local ICE_COLOR = Color3.fromRGB(170, 225, 255)
+local ASH_COLOR = Color3.fromRGB(120, 115, 110)
+local CRATER_TICK = 0.25 -- s a crater's touch (strip, amp, miss, ash) lasts after the last frame in it
+
+-- One meteor on its way: it lands at `at` (distance along its side's track) at `when`.
+type Landing = { at: number, when: number, damage: number, splash: number, crater: boolean, small: boolean, giant: boolean? }
+
+-- A meteor lands: every dino it can hit in the splash takes the hit and breaks the build's
+-- sizes (the biggest one more with Dino Killer); a crater, a Cinder Trail strip, Impact
+-- Winter's side slow after.
+local function meteorLand(tower: Tower, landing: Landing, own)
+	local state = tower.meteor :: MeteorState
+	local stats = tower.stats
+	local dinos, list = {}, {}
+	for _, enemy in own do
+		if enemy.alive and ownSide(tower, enemy) then
+			table.insert(list, enemy)
+			table.insert(dinos, { id = enemy, at = enemy.distance, boss = enemy.def.boss == true, flying = enemy.def.flying == true, sizes = enemy.size })
+		end
+	end
+	local point = Enemies.pointAt(landing.at, tower.side)
+	Effects.part(Vector3.one * (if landing.small then 1.5 else 3), CFrame.new(point + Vector3.new(0, 1, 0)), ROCK_COLOR, 0.4, Enum.PartType.Ball)
+	Effects.disc(point + Vector3.new(0, 0.3, 0), landing.splash, CRATER_COLOR, 0.35, 0.4)
+	local hits = Meteor.hits(dinos, landing.at, landing.splash, stats.hitsAir)
+	local biggest = Meteor.biggest(hits)
+	for _, d in hits do
+		local enemy = d.id :: Enemies.Enemy
+		if stats.stripsArmor then
+			Enemies.strip(enemy, Config.Tuning.StripS) -- Glass Crater: the meteor bares them too
+		end
+		hit(tower, enemy, landing.damage, Meteor.breaksFor(stats, d == biggest))
+	end
+	if landing.crater then
+		local crater = Meteor.crater(stats, landing.at, os.clock())
+		table.insert(state.craters, crater)
+		local seconds = Meteor.craterSeconds(stats)
+		Hazards.burn(landing.at, Config.Tuning.CraterRadius, Meteor.craterBurn(stats) * levelScale, seconds, piercing(tower) or stats.stripsArmor, tower.owner, tower.side)
+		if stats.craterFreezeSeconds > 0 then
+			Effects.disc(point + Vector3.new(0, 0.5, 0), Config.Tuning.CraterRadius, ICE_COLOR, seconds, 0.55)
+		elseif stats.throwMissPercent > 0 or stats.biteMissPercent > 0 then
+			Effects.disc(point + Vector3.new(0, 0.5, 0), Config.Tuning.CraterRadius, ASH_COLOR, seconds, 0.6)
+		end
+		if stats.fireLine then -- Fire Line: the stretch to a close live crater burns too
+			local now = os.clock()
+			for _, other in state.craters do
+				local gap = math.abs(other.at - landing.at)
+				if other ~= crater and other.ends > now and gap > 0 and gap <= Config.Tuning.FireLineGapStuds then
+					local both = math.min(other.ends, crater.ends) - now
+					Hazards.burn((other.at + landing.at) / 2, gap / 2, Meteor.craterBurn(stats) * levelScale, both, piercing(tower) or stats.stripsArmor, tower.owner, tower.side)
+				end
+			end
+		end
+	end
+	if landing.small and stats.burnStreak then -- Cinder Trail
+		local from, to = Meteor.streak(landing.at)
+		Hazards.burn((from + to) / 2, (to - from) / 2, Meteor.craterBurn(stats) * levelScale, Meteor.STREAK_SECONDS, piercing(tower), tower.owner, tower.side)
+	end
+	if stats.sideSlowPercent > 0 and stats.sideSlowSeconds > 0 then -- Impact Winter: every dino on the side
+		for _, enemy in list do
+			Enemies.chill(enemy, { slowPercent = stats.sideSlowPercent, seconds = stats.sideSlowSeconds, affectsBosses = true, brittlePercent = 0, stripsArmor = false })
+		end
+	end
+end
+
+-- Queue meteors at `points` after the warning ring (n small ones spread over Meteor.SMALL_SPREAD s).
+local function meteorQueue(tower: Tower, points: { number }, damage: number, splash: number, small: boolean, crater: boolean)
+	local state = tower.meteor :: MeteorState
+	local now, warn = os.clock(), Meteor.warning()
+	for i, at in points do
+		local delay = if #points > 1 then (i - 1) * Meteor.SMALL_SPREAD / #points else 0
+		local point = Enemies.pointAt(at, tower.side)
+		task.delay(delay, function()
+			Effects.disc(point + Vector3.new(0, 0.35, 0), splash, WARN_COLOR, warn, 0.5) -- the warning ring
+		end)
+		table.insert(state.landings, { at = at, when = now + delay + warn, damage = damage, splash = splash, crater = crater and i == 1, small = small })
+	end
+	Effects.tracer(tower.muzzle, tower.muzzle + Vector3.new(0, 30, 0), WARN_COLOR) -- the red flare
+end
+
+local function meteorDinos(tower: Tower, own): { Meteor.Dino }
+	local dinos = {}
+	for _, enemy in own do
+		if enemy.alive and ownSide(tower, enemy) then
+			table.insert(dinos, { id = enemy, at = enemy.distance, boss = enemy.def.boss == true, flying = enemy.def.flying == true, sizes = enemy.size })
+		end
+	end
+	return dinos
+end
+
+local function meteorDamage(tower: Tower): number
+	return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
+end
+
+-- A strike now: one meteor on the densest bunch, n small ones (Sky Rocks; Scatter's segments),
+-- or a Starfall wave (no crater).
+local function meteorStrike(tower: Tower, dinos: { Meteor.Dino }, starfall: boolean)
+	local stats = tower.stats
+	local length = Enemies.trackLength(tower.side)
+	local x = meteorDamage(tower) / math.max(1e-9, stats.damage)
+	if starfall then
+		local n, dmg, splash = Meteor.starfall(stats)
+		meteorQueue(tower, Meteor.points(dinos, n, true, length, stats.hitsAir), dmg * x, splash, true, false)
+		return
+	end
+	local n, dmg, splash = Meteor.strike(stats)
+	meteorQueue(tower, Meteor.points(dinos, n, stats.scatter, length, stats.hitsAir), dmg * x, splash, n > 1, true)
+end
+
+-- Extinction Event: every dino on the side takes Extinction x the meteor (breaks 1); the
+-- densest bunch's break Extinction breaks.
+local function extinctionEvent(tower: Tower, own)
+	local stats = tower.stats
+	local dinos = meteorDinos(tower, own)
+	local centre = Meteor.densest(dinos, stats.hitsAir)
+	if centre == nil then
+		return
+	end
+	Effects.disc(Enemies.pointAt(centre, tower.side) + Vector3.new(0, 0.4, 0), Config.Tuning.BunchRadiusStuds * 2, CRATER_COLOR, 1, 0.3)
+	local scale = meteorDamage(tower) / math.max(1e-9, stats.damage)
+	for _, d in dinos do
+		if stats.hitsAir or not d.flying then
+			local inBunch = math.abs(d.at - centre) <= Config.Tuning.BunchRadiusStuds
+			local dmg, breaks = Meteor.extinctionHit(stats, inBunch)
+			hit(tower, d.id :: Enemies.Enemy, dmg * scale, breaks)
+		end
+	end
+end
+
+-- Comet Tail (Bombing run): once a round played, Field strike x the meteor on every dino on the
+-- side's track (the 9h Bombing Run rules: air too, armour only if it pierces, breaks 1).
+local function cometTail(tower: Tower, own)
+	local stats = tower.stats
+	local list, field = {}, {}
+	for _, enemy in own do
+		if enemy.alive and ownSide(tower, enemy) then
+			table.insert(list, enemy)
+			table.insert(field, { side = tower.side, flying = enemy.def.flying == true, armored = enemy.def.armored == true, bare = Enemies.canHurt(enemy, false) })
+		end
+	end
+	local damage = meteorDamage(tower) * stats.fieldStrikeX
+	for _, i in StormCoil.fieldTargets(field, tower.side, piercing(tower)) do
+		local enemy = list[i]
+		Effects.tracer(enemy.part.Position + Vector3.new(0, 25, 0), enemy.part.Position, CRATER_COLOR)
+		hit(tower, enemy, damage, 1)
+	end
+end
+
+local function stepMeteor(tower: Tower, dt: number, own)
+	local state = tower.meteor
+	if not state then
+		return
+	end
+	local stats, now = tower.stats, os.clock()
+	state.craters = Meteor.prune(state.craters, now)
+	-- Craters touch the dinos in them: Glass Crater strips, Scorch Marks marks, New Ice Age freezes once.
+	if #state.craters > 0 then
+		for _, enemy in own do
+			if enemy.alive and ownSide(tower, enemy) and (stats.hitsAir or not enemy.def.flying) then
+				local crater = Meteor.inCrater(state.craters, enemy.distance, now, stats.fireLine)
+				if crater then
+					if stats.stripsArmor then
+						Enemies.strip(enemy, CRATER_TICK)
+					end
+					if stats.craterAmpPercent > 0 then
+						Enemies.mark(enemy, stats.craterAmpPercent, Meteor.AMP_SECONDS)
+					end
+					if stats.craterFreezeSeconds > 0 and Meteor.freezeOnce(crater, enemy) then
+						Enemies.stun(enemy, FourX.hardStop(stats.craterFreezeSeconds, enemy.def.boss == true), true)
+					end
+				end
+			end
+		end
+	end
+	for i = #state.landings, 1, -1 do
+		local landing = state.landings[i]
+		if now >= landing.when then
+			table.remove(state.landings, i)
+			meteorLand(tower, landing, own)
+		end
+	end
+	if tower.knockedOut then
+		return -- Trampled: no new meteors
+	end
+	local dinos = meteorDinos(tower, own)
+	local every, starfall = Meteor.strikeEvery(stats)
+	state.timer += dt * (1 + tower.buff.ratePercent / 100)
+	if state.timer >= every and #dinos > 0 then
+		state.timer = 0
+		meteorStrike(tower, dinos, starfall)
+	end
+	if stats.meteorEvery > 0 then -- Endless Rain: one more small meteor on its own timer
+		state.rainTimer += dt
+		if state.rainTimer >= stats.meteorEvery and #dinos > 0 then
+			state.rainTimer = 0
+			local dmg, splash = Meteor.small(stats)
+			meteorQueue(tower, Meteor.points(dinos, 1, false, 1, stats.hitsAir), dmg * meteorDamage(tower) / math.max(1e-9, stats.damage), splash, true, false)
+		end
+	end
+	if stats.extinction then
+		local centre = Meteor.densest(dinos, stats.hitsAir)
+		local boss, count = false, 0
+		if centre then
+			for _, d in dinos do
+				if math.abs(d.at - centre) <= Config.Tuning.BunchRadiusStuds then
+					count += 1
+					boss = boss or d.boss == true
+				end
+			end
+		end
+		if Meteor.extinctionNow(state.extinctionAuto, boss, count, Enemies.allSpawned(tower.side), #dinos) then
+			extinctionEvent(tower, own)
+		end
+	end
+	if stats.bombingRun then
+		local boss = false
+		for _, d in dinos do
+			boss = boss or d.boss == true
+		end
+		if AutoFire.check(state.auto, boss, #dinos, Enemies.allSpawned(tower.side), #dinos) then
+			cometTail(tower, own)
+		end
+	end
+end
+
+-- Ash Cloud / Blinding Dust: the strongest Throw / Bite miss % of its side's craters holding `point`.
+local function craterMiss(point: Vector3, side: number, field: string): number
+	local percent, now = 0, os.clock()
+	for _, tower in towers do
+		local state = tower.meteor
+		if state and tower.side == side and (tower.stats :: any)[field] > 0 and #state.craters > 0 then
+			if Meteor.inCrater(state.craters, Enemies.trackDistanceNear(point, side), now, tower.stats.fireLine) then
+				percent = math.max(percent, (tower.stats :: any)[field])
+			end
+		end
+	end
+	return percent
+end
+
+-- Ash Cloud / Blinding Dust: dinos in a crater miss this % of their bites.
+function Towers.biteMissAt(point: Vector3, side: number): number
+	return craterMiss(point, side, "biteMissPercent")
+end
+
+-- Studio `firenow METEOR`: a strike now; Extinction Event / Comet Tail now (ignoring the trigger).
+local function meteorFireNow(tower: Tower, fired: { string })
+	if not tower.meteor then
+		return
+	end
+	local own = BattleRules.ownDinos(Enemies.getLive(), tower.side, "tower")
+	local dinos = meteorDinos(tower, own)
+	if #dinos > 0 then
+		local _, starfall = Meteor.strikeEvery(tower.stats)
+		meteorStrike(tower, dinos, starfall)
+		table.insert(fired, if starfall then "Starfall" else "meteor strike")
+	end
+	if tower.stats.extinction then
+		extinctionEvent(tower, own)
+		table.insert(fired, "Extinction Event")
+	end
+	if tower.stats.bombingRun then
+		cometTail(tower, own)
+		table.insert(fired, "Comet Tail")
+	end
+end
+
 -- Blinding Glare: the strongest Throw miss % of its side's blimps whose circle holds `point`.
 function Towers.throwMissAt(point: Vector3, side: number): number
 	local percent = 0
@@ -2092,7 +2378,7 @@ function Towers.throwMissAt(point: Vector3, side: number): number
 			percent = math.max(percent, tower.stats.throwMissPercent)
 		end
 	end
-	return percent
+	return math.max(percent, craterMiss(point, side, "throwMissPercent")) -- Ash Cloud / Blinding Dust (PLAN 9i)
 end
 
 -- Spotter's Map: publishes which sides' dinos are outlined (each client outlines its own side's).
@@ -3071,6 +3357,11 @@ function Towers.newRound()
 			blimp.airliftUsed = false
 			Walkers.clear(blimp.paraKey)
 		end
+		local meteor = tower.meteor
+		if meteor then -- once a round played: Extinction Event, Comet Tail
+			AutoFire.reset(meteor.auto)
+			meteor.extinctionAuto.fired = false
+		end
 	end
 	if fuel then
 		refreshAuras()
@@ -3102,6 +3393,7 @@ function Towers.step(dt: number)
 		stepRaptor(tower, dt, own)
 		stepTotem(tower, dt, own)
 		stepBlimp(tower, dt, own)
+		stepMeteor(tower, dt, own)
 	end
 	stepAirlifts()
 	publishOutlines()
@@ -3121,6 +3413,9 @@ function Towers.step(dt: number)
 		local stats = tower.stats
 		if stats.rate <= 0 or stats.damage <= 0 or tower.knockedOut or tower.raptor then
 			continue -- Quartermaster and anything else that doesn't shoot; trampled towers; a Raptor Pen's raptors bite (Walkers)
+		end
+		if tower.meteor then
+			continue -- a Meteor Beacon calls meteors (stepMeteor)
 		end
 
 		tower.cooldown -= dt
@@ -3304,6 +3599,7 @@ function Towers.fireNow(key: string, position: Vector3): string
 		end
 	end
 	blimpFireNow(tower, fired) -- Spotter Blimp (PLAN 9h T125b)
+	meteorFireNow(tower, fired) -- Meteor Beacon (PLAN 9i T127)
 	local totem = tower.totem
 	if totem then -- fills it now (PLAN 9h)
 		totem.pending += Totem.add(totem.rules, tower.stats, Totem.full(tower.stats) - totem.rules.charge)

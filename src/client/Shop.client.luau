@@ -503,6 +503,8 @@ local LOCK_REASONS = {
 local TAR_PATHS: { [any]: boolean } = {}
 -- The Spotter Blimp's paths (PLAN 9h T125b): its drops come every lap, below the blimp.
 local BLIMP_PATHS: { [any]: boolean } = {}
+-- The Meteor Beacon's paths (PLAN 9i T127): its burn and misses are its craters'.
+local METEOR_PATHS: { [any]: boolean } = {}
 for key, def in Config.Towers do
 	if def.onTrack then
 		for _, path in def.paths do
@@ -514,9 +516,14 @@ for key, def in Config.Towers do
 			BLIMP_PATHS[path] = true
 		end
 	end
+	if key == "METEOR" then
+		for _, path in def.paths do
+			METEOR_PATHS[path] = true
+		end
+	end
 end
 
-local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?, blimp: boolean?)
+local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?, blimp: boolean?, meteor: boolean?)
 	local function changed(field: string, default: any): any?
 		local before = if now then now[field] else nil
 		local after = nextStep[field]
@@ -814,7 +821,58 @@ local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?
 		table.insert(parts, `the blimp flies x{fmt(speedX)} faster`)
 	end
 	if changed("bombingRun", false) then
-		table.insert(parts, `once a round bombs every dino on your track for x{fmt(nextStep.fieldStrikeX or 0)} a shot`)
+		local what = if meteor then "a comet sweeps your track" else "bombs every dino on your track"
+		table.insert(parts, `once a round {what} for x{fmt(nextStep.fieldStrikeX or 0)} a hit`)
+	end
+
+	-- Meteor Beacon (PLAN 9i T127; Shared/Meteor)
+	local meteors = changed("meteors", 0)
+	if meteors then
+		table.insert(parts, `each strike is {meteors} smaller meteors`)
+	end
+	if changed("scatter", false) then
+		table.insert(parts, "the meteors land all along your track")
+	end
+	local rain = changed("meteorEvery", 0)
+	if rain then
+		table.insert(parts, `one more small meteor every {fmt(rain)}s`)
+	end
+	local starfall = changed("starfallEvery", 0)
+	if starfall then
+		table.insert(parts, `every {fmt(starfall)}s, {Config.Tuning.StarfallMeteors} meteors across your track instead`)
+	end
+	local craterS = changed("craterSeconds", 0)
+	if craterS then
+		table.insert(parts, `craters last {fmt(craterS)}s`)
+	end
+	local amp = changed("craterAmpPercent", 0)
+	if amp then
+		table.insert(parts, `dinos crossing a crater take +{amp}% for 3s`)
+	end
+	local biteMiss = changed("biteMissPercent", 0)
+	if biteMiss then
+		table.insert(parts, `dinos in a crater miss {biteMiss}% of their bites`)
+	end
+	local craterFreeze = changed("craterFreezeSeconds", 0)
+	if craterFreeze then
+		table.insert(parts, `a dino entering a crater is frozen {fmt(craterFreeze)}s, once`)
+	end
+	if changed("fireLine", false) then
+		table.insert(parts, "close craters join into one burning strip")
+	end
+	if changed("burnStreak", false) then
+		table.insert(parts, "small meteors leave a burning streak")
+	end
+	if changed("extinction", false) then
+		table.insert(parts, `once a round a giant meteor hits every dino on your track for x{fmt(Config.Tuning.ExtinctionX)}`)
+	end
+	local sideSlow = changed("sideSlowPercent", 0)
+	if sideSlow then
+		table.insert(parts, `after each meteor every dino on your track is slowed {sideSlow}% for {fmt(nextStep.sideSlowSeconds or 0)}s`)
+	end
+	local biggest = changed("biggestBreaks", 0)
+	if biggest then
+		table.insert(parts, `the biggest dino hit breaks {biggest} more sizes`)
 	end
 	local hook = changed("hookEvery", 0)
 	if hook then
@@ -822,7 +880,8 @@ local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?
 	end
 	local miss = changed("throwMissPercent", 0)
 	if miss then
-		table.insert(parts, `dinos in the light miss {miss}% of their throws`)
+		local where = if meteor then "in a crater" else "in the light"
+		table.insert(parts, `dinos {where} miss {miss}% of their throws`)
 	end
 	local auraReach = changed("auraReachX", 1)
 	if auraReach then
@@ -858,7 +917,7 @@ local function describeStep(path, current: number, picks: string, option: string
 	local nextStep = Upgrades.row(path, current + 1, Upgrades.pickAfter(picks, current + 1, option or "A"))
 	local parts = {}
 	local tar = TAR_PATHS[path] == true
-	describeAbilities(now, nextStep, parts, tar, BLIMP_PATHS[path] == true)
+	describeAbilities(now, nextStep, parts, tar, BLIMP_PATHS[path] == true, METEOR_PATHS[path] == true)
 	for _, stat in { { "damageMult", "damage" }, { "rateMult", "rate" }, { "targetsMult", "targets" }, { "rangeMult", if tar then "pool length" else "range" }, { "splashMult", "blast radius" } } do
 		local before = if now then (now[stat[1]] or 1) else 1
 		local after = nextStep[stat[1]] or 1

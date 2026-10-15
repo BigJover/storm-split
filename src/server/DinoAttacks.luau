@@ -360,7 +360,10 @@ function DinoAttacks.step(dt: number)
 				targets = targets or candidates()
 				local target = Combat.pickTarget(enemy.part.Position, targets :: { Combat.Target }, def.meleeReach)
 				if target then
-					bite(enemy, target)
+					-- Ash Cloud / Blinding Dust (PLAN 9i T127): a dino in a Meteor Beacon's crater may miss.
+					if not Blimp.misses(Towers.biteMissAt(enemy.part.Position, enemy.side), missRoll:NextNumber()) then
+						bite(enemy, target)
+					end
 					left += def.meleeEvery
 				else
 					left = 0 -- ready; bites as soon as something is in reach
