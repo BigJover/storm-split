@@ -393,3 +393,13 @@ test("PLAN T128b/T128c: the Volcano Vent and the Meteor Beacon are released at t
 	eq(table.find(Config.TowerOrder, "METEOR") ~= nil, true, "METEOR is listed in the shop order")
 	eq(Config.Towers.METEOR.baseCost, 600, "METEOR in-match cost (#337)")
 end)
+
+test("PLAN T130b: the Ranger Station is released at its Amber price (#340)", function()
+	local ShopRules = require(src.shared.ShopRules)
+	local def = Config.Towers.RANGER
+	eq(ShopRules.Unreleased.RANGER, nil, "RANGER is sold and unlockable")
+	eq(table.find(Config.TowerOrder, "RANGER") ~= nil, true, "RANGER is listed in the shop order")
+	eq(def.unlockCost, 500, "RANGER unlock Amber (never moves, #313)")
+	eq(def.baseCost, 600, "RANGER in-match cost (#340)")
+	eq(next(ShopRules.Unreleased), nil, "all seven 4x towers are out (9g-9j)")
+end)

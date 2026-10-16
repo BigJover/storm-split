@@ -274,6 +274,11 @@ playtested**. The Vent is **released** (T128b; c/e 167-274, T2 202); the Meteor 
 (T128c, #345-#347: Starfall Damage x 3.388, Comet Tail's sweep ground only). Studio aids:
 `firenow METEOR`, `firenow VENT`.
 
+Phase 9 batch 9j (2026-10-15): the **Ranger Station** (`Shared/Ranger` on `Shared/Walker`'s post
+state, posts UI `Shared/RangerPosts`) is built, headless-tested and **released** (T130b, #340: cost
+600, 10 x 2.3/s, Riflemen c/e 169-230, T2 342), but **not playtested** (Tester Run 9j next). Posts:
+set after placing and with "Move posts" in the tower panel. Studio aids: `firenow RANGER`, `walkers`.
+
 ## Open issues
 
 - Leak cost is effective HP (BTD6-style), so 40 starting lives is likely too few in co-op.

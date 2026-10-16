@@ -507,7 +507,7 @@ A/B/C picks at tiers 4 and 5 (PLAN 9i, DECISIONS #339; names = DINO_REVIEW Round
 | **Obsidian** | 4 | Jagged Crust — The crust cuts dinos | Black Glass — Nearby towers see 15% further | Heat Shimmer — Dinos on the crust can't throw |
 | **Obsidian** | 5 | Glass Maze — The crust makes dinos walk 12 studs further | Obsidian Armour — Nearby towers take 30% less from throws | Frozen Fire — The whole flow hardens: 2 s stop |
 
-## Ranger Station (RANGER) — rangers at posts: rifles, traps, tougher rangers · built (PLAN 9j T129) · not sold yet (until T130b) · unlock 500 Amber
+## Ranger Station (RANGER) — rangers at posts: rifles, traps, tougher rangers · built (PLAN 9j T129–T130) · sold from T130b · unlock 500 Amber
 
 A ranger cabin (600 cash, 200 HP) that trains **rangers** (walkers, `Shared/Walker`'s post state). Each
 ranger walks from the cabin to its **post** (up to 3 track points within the station's range 30;

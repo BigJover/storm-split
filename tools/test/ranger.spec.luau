@@ -5,7 +5,7 @@
 	round-robin + formation, default posts, the posts check, the jeep's lap, traps (first
 	ground dino in reach; stun and knockback never on bosses; the trap line), Decoy once per
 	dino per post, the net once per boss, the dart timer, bites at a post, Hold the Line,
-	Sandbags reach. Unreleased until T130b.
+	Sandbags reach. Released at T130b.
 ]]
 
 local Config = require(src.shared.Config)
@@ -47,7 +47,7 @@ test("the Towers row (#340): 600 cash, 500 Amber, 10 x 2.3/s, 1 ranger, range 30
 	eq(RANGER.range, 30)
 	eq(RANGER.hitsAir, false)
 	eq(RANGER.maxHp, 200)
-	ok(ShopRules.Unreleased.RANGER == true, "unreleased until T130b")
+	eq(ShopRules.Unreleased.RANGER, nil, "released at T130b (#312, #340)")
 end)
 
 test("the RANGER STATION Tuning block", function()
