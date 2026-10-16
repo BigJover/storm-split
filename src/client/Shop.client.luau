@@ -927,6 +927,45 @@ local function describeAbilities(now, nextStep, parts: { string }, tar: boolean?
 	if throwResist then
 		table.insert(parts, `towers in range take {throwResist}% less from throws`)
 	end
+
+	-- Ranger Station (PLAN 9j T129; Shared/Ranger)
+	local regen = changed("walkerRegen", 0)
+	if regen then
+		table.insert(parts, `rangers heal {fmt(regen)} HP a second at their posts`)
+	end
+	if changed("heavyRanger", false) then
+		table.insert(parts, `one ranger gets a heavy rifle: x{fmt(Config.Tuning.HeavyX)}, breaks 3`)
+	end
+	if changed("legend", false) then
+		table.insert(parts, `one ranger is the Legend: x{fmt(Config.Tuning.LegendX)} damage, x{fmt(Config.Tuning.LegendHPX)} HP, its own dart every {fmt(Config.Tuning.LegendDartEveryS)}s`)
+	end
+	if changed("jeep", false) then
+		table.insert(parts, "the rangers drive your track in a jeep, firing as they pass")
+	end
+	if changed("trap", false) then
+		table.insert(parts, `a trap at each post slows the first dino {Config.Tuning.TrapSlow}% for {fmt(Config.Tuning.TrapSlowS)}s`)
+	end
+	local trapEvery = changed("trapEvery", 0)
+	if trapEvery then
+		table.insert(parts, `traps spring every {fmt(trapEvery)}s`)
+	end
+	local trapStun = changed("trapStunSeconds", 0)
+	if trapStun then
+		table.insert(parts, `traps hold a dino {fmt(trapStun)}s (not bosses)`)
+	end
+	if changed("trapLine", false) then
+		table.insert(parts, `each round {Config.Tuning.TrapLineTraps} traps are set along your whole track`)
+	end
+	local decoy = changed("decoySeconds", 0)
+	if decoy then
+		table.insert(parts, `a dino walking up to a ranger stops {fmt(decoy)}s`)
+	end
+	if changed("postAura", false) then
+		table.insert(parts, `towers within {fmt(Config.Tuning.RangerGuardReachStuds)} studs of a post get the HP aura`)
+	end
+	if changed("bossRoundGuard", false) then
+		table.insert(parts, "rangers can't fall while a boss is out")
+	end
 	local hook = changed("hookEvery", 0)
 	if hook then
 		table.insert(parts, `every {fmt(hook)}s lifts the smallest dino under it off the track`)

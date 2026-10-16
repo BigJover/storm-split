@@ -161,6 +161,11 @@ end
 
 local function bite(enemy: Enemies.Enemy, target: Combat.Target)
 	local damage = Combat.attackDamage(enemy.def.meleeDamage, enemy.size, enemy.sizes, damageMult())
+	local isPlayer = typeof(target.ref) == "Instance" and target.ref:IsA("Player")
+	if not isPlayer and Towers.guardBite(target.ref, damage) then
+		biteLook(enemy, target.position + Vector3.new(0, 2, 0)) -- Bodyguards: a ranger took it (PLAN 9j)
+		return
+	end
 	hurt(target, damage, enemy, { species = enemy.def.display, attack = enemy.def.meleeName })
 	biteLook(enemy, target.position + Vector3.new(0, 2, 0))
 	if onBite then
@@ -355,7 +360,7 @@ function DinoAttacks.step(dt: number)
 
 		if bites then
 			local left = tick(biteIn, id, def.meleeEvery, dt, slow)
-			if left <= 0 and Walkers.biteOn(enemy, Combat.attackDamage(def.meleeDamage, enemy.size, enemy.sizes, damageMult())) then
+			if left <= 0 and Walkers.biteOn(enemy, Combat.attackDamage(def.meleeDamage, enemy.size, enemy.sizes, damageMult()), def.meleeReach) then
 				-- A walker on this dino takes the bite instead of a tower (PLAN 9g, #315).
 				biteLook(enemy, enemy.part.Position + Vector3.new(0, 1, 0))
 				left += def.meleeEvery

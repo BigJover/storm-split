@@ -135,6 +135,8 @@ local TowerPerks = require(Shared:WaitForChild("TowerPerks"))
 local Resin = require(Shared:WaitForChild("Resin"))
 local Raptor = require(Shared:WaitForChild("Raptor"))
 local RaptorLook = require(Shared:WaitForChild("RaptorLook"))
+local Ranger = require(Shared:WaitForChild("Ranger"))
+local RangerLook = require(Shared:WaitForChild("RangerLook"))
 local BattleFlow = require(Shared:WaitForChild("BattleFlow"))
 local FourX = require(Shared:WaitForChild("FourX"))
 local AutoFire = require(Shared:WaitForChild("AutoFire"))
@@ -204,6 +206,7 @@ export type Tower = {
 	blimp: BlimpState?, -- Spotter Blimp (PLAN 9h T125b); nil on every other tower
 	meteor: MeteorState?, -- Meteor Beacon (PLAN 9i T127); nil on every other tower
 	vent: VentState?, -- Volcano Vent (PLAN 9i T128); nil on every other tower
+	ranger: RangerState?, -- Ranger Station (PLAN 9j T129); nil on every other tower
 	rangeBase: number, -- stats.range before any range aura (PLAN 9h)
 	hurtBy: any?, -- the last dino that bit or hit it with a throw (Guard Raptors, PLAN 9g)
 	model: Model,
@@ -279,6 +282,22 @@ type VentState = {
 	superDps: number,
 	ashUntil: number, -- Ash Blanket: the side misses throws until then
 	cone: boolean, -- Fire Mountain's cone is shown (visual)
+}
+
+-- A Ranger Station's own state (Shared/Ranger rules; its rangers are Server/Walkers').
+type RangerState = {
+	posts: { number }, -- track distances of its posts (default nearest, or set in the posts UI)
+	custom: boolean, -- the player set the posts (T130)
+	trapTimers: { number }, -- per post: s since its trap last fired
+	lineTraps: { number }, -- Master Trapper: this round's one-shot traps still set (track distances)
+	decoySeen: { { [any]: boolean } }, -- Decoy Calls: per post, dinos it already stopped (weak keys)
+	netted: { [any]: boolean }, -- Net Launchers: bosses already netted (weak keys)
+	nextDart: number, -- the Legend's next Tracking Dart (os.clock)
+	guarded: { any }, -- Bodyguards: the tower each ranger guards
+	guardTimer: number,
+	jeepClock: number,
+	jeep: Model?, -- Patrol Jeep (visual)
+	flags: { BasePart }, -- post markers (visual)
 }
 
 -- An Amber Resin Cannon's own state (Shared/Resin rules).
@@ -371,6 +390,22 @@ local function covers(source: Tower, point: Vector3): boolean
 	return Vector2.new(offset.X, offset.Z).Magnitude <= source.stats.range
 end
 
+-- Sandbags (PLAN 9j): a Ranger Station's Aura HP % reaches towers within Ranger guard reach of
+-- one of its posts, not its range.
+local function auraCovers(source: Tower, point: Vector3): boolean
+	local state = source.ranger
+	if state and source.stats.postAura then
+		for _, at in state.posts do
+			local offset = point - Enemies.pointAt(at, source.side)
+			if Ranger.inPostAura(Vector2.new(offset.X, offset.Z).Magnitude) then
+				return true
+			end
+		end
+		return false
+	end
+	return covers(source, point)
+end
+
 -- Recomputed whenever a tower is placed, upgraded or removed (and as a Bone Totem's charge
 -- moves, PLAN 9h). The shop panel reads Discount / RefundRate from the tower's body.
 local function refreshAuras()
@@ -396,7 +431,7 @@ local function refreshAuras()
 				and Blimp.under(tower.base, source.position, s.range * s.auraReachX) then
 				damage = math.max(damage, s.auraDamagePercent)
 			end
-			if not source.knockedOut and (hasAura(s) or fuel > 0) and covers(source, tower.base) and BattleRules.canSupport(source.side, tower.side) then
+			if not source.knockedOut and (hasAura(s) or fuel > 0) and auraCovers(source, tower.base) and BattleRules.canSupport(source.side, tower.side) then
 				-- An Armory's resistance covers itself too; the other auras are for others.
 				-- Armory and Field Hospital auras skip a tower that can't be damaged (#148).
 				if not tower.def.untouchable then
@@ -938,7 +973,7 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 				wall = nil,
 			}
 			else nil,
-		raptor = if (def.walkers or 0) > 0
+		raptor = if (def.walkers or 0) > 0 and key ~= "RANGER"
 			then {
 				auto = AutoFire.new(),
 				swarmKey = { key = key .. " swarm", id = nextId },
@@ -1000,6 +1035,22 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 				superDps = 0,
 				ashUntil = 0,
 				cone = false,
+			}
+			else nil,
+		ranger = if key == "RANGER"
+			then {
+				posts = {},
+				custom = false,
+				trapTimers = {},
+				lineTraps = {},
+				decoySeen = {},
+				netted = setmetatable({}, { __mode = "k" }) :: any,
+				nextDart = 0,
+				guarded = {},
+				guardTimer = 0,
+				jeepClock = 0,
+				jeep = nil,
+				flags = {},
 			}
 			else nil,
 		rangeBase = stats.range,
@@ -1308,7 +1359,9 @@ local function hit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: n
 	if not walker then
 		Enemies.stun(enemy, stats.stunSeconds, stats.stunsBosses)
 	end
-	Enemies.knockback(enemy, stats.knockback)
+	if not tower.ranger then -- a Ranger Station's Knockback is its traps' (Tripwire, PLAN 9j)
+		Enemies.knockback(enemy, stats.knockback)
+	end
 	local b = if breaks and breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
 	local at = enemy.part.Position
 	local killed, gone, dropped = Enemies.damage(enemy, damage, pierce, b)
@@ -1503,7 +1556,296 @@ local function tiersBought(tower: Tower): number
 	return tower.pathTiers[1] + tower.pathTiers[2] + tower.pathTiers[3]
 end
 
+------------------------------------------------------------------ Ranger Station (PLAN 9j T129)
+
+local POST_SAMPLE = 2 -- studs between the track points searched for default posts
+local RANGER_COLOR = Color3.fromRGB(176, 160, 110) -- visuals only
+
+-- Is a boss alive on `side` (Hold the Line)?
+local function bossOut(side: number): boolean
+	for _, enemy in Enemies.getLive() do
+		if enemy.alive and enemy.side == side and enemy.def.boss == true then
+			return true
+		end
+	end
+	return false
+end
+
+-- Default posts: the nearest track points within Range (Shared/Ranger.defaultPosts).
+local function defaultPosts(tower: Tower): { number }
+	local samples = {}
+	local length = Enemies.trackLength(tower.side)
+	local d = 0
+	while d <= length do
+		local offset = Enemies.pointAt(d, tower.side) - tower.base
+		table.insert(samples, { at = d, dist = Vector2.new(offset.X, offset.Z).Magnitude })
+		d += POST_SAMPLE
+	end
+	return Ranger.defaultPosts(samples, tower.stats.range)
+end
+
+-- Post markers on the track (visual): a short pole with a camp-colour pennant per post.
+local function showPosts(tower: Tower)
+	local state = tower.ranger :: RangerState
+	for _, flag in state.flags do
+		flag:Destroy()
+	end
+	state.flags = {}
+	if tower.stats.jeep or tower.stats.guard then
+		return -- posts unused
+	end
+	for i, at in state.posts do
+		local p = Instance.new("Part")
+		p.Name = `Post{i}`
+		p.Size = Vector3.new(0.3, 2.4, 0.3)
+		p.CFrame = CFrame.new(Enemies.pointAt(at, tower.side) + Vector3.new(0, 1.2, 0))
+		p.Color = campColour(tower)
+		p.Material = Enum.Material.Wood
+		p.Anchored, p.CanCollide, p.CanTouch, p.CanQuery = true, false, false, false
+		p.Parent = tower.model
+		table.insert(state.flags, p)
+	end
+end
+
+-- Bodyguards: each ranger guards a tower in range, the most damaged first (Raptor Guard's rule).
+local function rangerGuards(tower: Tower, count: number)
+	local state = tower.ranger :: RangerState
+	local list, shares = {}, {}
+	for _, other in towers do
+		if other ~= tower and not other.def.untouchable and BattleRules.canSupport(tower.side, other.side) and covers(tower, other.base) then
+			table.insert(list, other)
+			table.insert(shares, if other.maxHp > 0 then other.hp / other.maxHp else 1)
+		end
+	end
+	local guarded = {}
+	for i, index in Raptor.guardPosts(count, shares) do
+		guarded[i] = list[index]
+	end
+	state.guarded = guarded
+end
+
+-- Ranger `index`'s post: its guarded tower's track point (Bodyguards), else round-robin.
+local function postOf(tower: Tower, index: number): number?
+	local state = tower.ranger :: RangerState
+	local guarded = state.guarded[index]
+	if tower.stats.guard and guarded and table.find(towers, guarded) then
+		return Enemies.trackDistanceNear(guarded.base, tower.side)
+	end
+	return (Ranger.postFor(index, state.posts))
+end
+
+-- A ranger's shot lands: the station's composed damage x Heavy x / Legend x (Shared/Ranger.shot),
+-- the generic hit rules; a take-down marks nearby dinos (Head Ranger, in `hit`).
+local function rangerShot(tower: Tower, enemy: Enemies.Enemy, index: number)
+	if not enemy.alive or not canTarget(tower, enemy) then
+		return
+	end
+	local stats = tower.stats
+	local x, breaks = Ranger.shot(index, stats)
+	if stats.markPercent > 0 then
+		Enemies.mark(enemy, stats.markPercent, Config.Tuning.MarkDuration or 0)
+	end
+	local from = Walkers.unitAt(tower, index)
+	local to = enemy.part.Position
+	hit(tower, enemy, stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale * x, math.max(stats.sizeBreaks, breaks), true)
+	if from then
+		Effects.tracer(from + Vector3.new(0, 1, 0), to, campColour(tower))
+	end
+end
+
+local syncRangers: (Tower) -> ()
+syncRangers = function(tower: Tower)
+	local state = tower.ranger :: RangerState
+	local stats = tower.stats
+	if not state.custom or #state.posts == 0 then
+		state.posts = defaultPosts(tower)
+	end
+	if stats.guard then
+		rangerGuards(tower, stats.walkers)
+	else
+		state.guarded = {}
+	end
+	local _, legendIndex = Ranger.roles(stats)
+	local colour = campColour(tower)
+	local rate = stats.rate * (1 + tower.buff.ratePercent / 100)
+	local plain = Ranger.params(stats, tiersBought(tower))
+	plain.rate = rate
+	local legend = Ranger.params(stats, tiersBought(tower), true)
+	legend.rate = rate
+	Walkers.sync(tower, {
+		count = stats.walkers,
+		params = plain,
+		side = tower.side,
+		base = tower.base,
+		homeAt = Enemies.trackDistanceNear(tower.base, tower.side),
+		sending = not tower.knockedOut,
+		healsBetweenRounds = stats.healsBetweenRounds,
+		look = function(i)
+			local heavy, leg = Ranger.roles(tower.stats)
+			return RangerLook.build(if i == leg then "legend" elseif i == heavy then "heavy" else "ranger", colour)
+		end,
+		onHit = function(enemy, _landed, i)
+			rangerShot(tower, enemy, i)
+		end,
+		postFor = function(i)
+			return postOf(tower, i)
+		end,
+		paramsFor = function(i)
+			return if i == legendIndex then legend else plain
+		end,
+		biteHook = if stats.bossRoundGuard
+			then function(unit, amount)
+				return Ranger.guarded(unit.hp, amount, bossOut(tower.side)) -- Hold the Line
+			end
+			else nil,
+		offsetFor = function(i)
+			local _, slot = Ranger.postFor(i, state.posts)
+			return 1.6 * (slot - 1)
+		end,
+	})
+	if stats.jeep and not state.jeep then
+		local jeep = RangerLook.buildJeep(colour)
+		jeep.Parent = tower.model
+		state.jeep = jeep
+	end
+	showPosts(tower)
+	if stats.postAura then
+		refreshAuras() -- Sandbags follows the posts
+	end
+end
+
+-- Bodyguards (PLAN 9j): a ranger guarding `target` takes a bite aimed at it. True if one did.
+function Towers.guardBite(target: any, amount: number): boolean
+	for _, station in towers do
+		local state = station.ranger
+		if state and station.stats.guard and not station.knockedOut and station.side == target.side then
+			for i, guarded in state.guarded do
+				if guarded == target and Walkers.biteUnit(station, i, amount) then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
+-- A trap at `at` springs on the first ground dino within Trap reach (Shared/Ranger).
+local function springTrap(tower: Tower, at: number, own): boolean
+	local list, byId = {}, {}
+	for _, enemy in own do
+		if enemy.alive then
+			table.insert(list, { id = enemy, at = enemy.distance, boss = enemy.def.boss == true, flying = enemy.def.flying == true })
+			byId[enemy] = enemy
+		end
+	end
+	local pick = Ranger.trapPick(at, list)
+	if not pick then
+		return false
+	end
+	local enemy = byId[pick.id]
+	local effect = Ranger.trapEffect(tower.stats, pick.boss)
+	Enemies.chill(enemy, { slowPercent = effect.slowPercent, seconds = effect.slowSeconds, affectsBosses = true, brittlePercent = 0, stripsArmor = false })
+	if effect.stun > 0 then
+		Enemies.stun(enemy, effect.stun, false)
+	end
+	if effect.knockback > 0 then
+		Enemies.knockback(enemy, effect.knockback)
+	end
+	Effects.disc(Enemies.pointAt(at, tower.side), Config.Tuning.TrapReachStuds, RANGER_COLOR, 0.4, 0.5)
+	return true
+end
+
+-- Master Trapper (at a round played's start, and `firenow RANGER`): the one-shot traps.
+local function setTrapLine(tower: Tower)
+	local state = tower.ranger
+	if state and tower.stats.trapLine then
+		state.lineTraps = Ranger.trapLine(Enemies.trackLength(tower.side))
+	end
+end
+
+local function stepRanger(tower: Tower, dt: number, own)
+	local state = tower.ranger
+	if not state then
+		return
+	end
+	local stats, now = tower.stats, os.clock()
+	-- Patrol Jeep: the squad rides there and back (posts unused); a Trampled cabin parks it.
+	if stats.jeep and not tower.knockedOut then
+		state.jeepClock += dt
+		local at = Ranger.jeepAt(state.jeepClock, Enemies.trackLength(tower.side))
+		Walkers.ride(tower, at)
+		if state.jeep then
+			local here = Enemies.pointAt(at, tower.side)
+			local ahead = Enemies.pointAt(at + 1, tower.side)
+			local look = if (ahead - here).Magnitude > 1e-3 then CFrame.lookAt(here, Vector3.new(ahead.X, here.Y, ahead.Z)) else CFrame.new(here)
+			state.jeep:PivotTo(look + Vector3.new(0, 0.7, 0))
+		end
+	else
+		Walkers.ride(tower, nil)
+	end
+	if tower.knockedOut then
+		return
+	end
+	if stats.guard then
+		state.guardTimer += dt
+		if state.guardTimer >= 1 then
+			state.guardTimer = 0
+			syncRangers(tower) -- re-post beside the most damaged towers
+		end
+	end
+	-- Traps at each post (Snare Kit on), and Master Trapper's line.
+	if stats.trap and not stats.jeep then
+		local every = Ranger.trapEvery(stats)
+		for i, at in state.posts do
+			state.trapTimers[i] = (state.trapTimers[i] or every) + dt
+			if state.trapTimers[i] >= every and springTrap(tower, at, own) then
+				state.trapTimers[i] = 0
+			end
+		end
+	end
+	for i = #state.lineTraps, 1, -1 do
+		if springTrap(tower, state.lineTraps[i], own) then
+			table.remove(state.lineTraps, i)
+		end
+	end
+	-- Decoy Calls / Net Launchers / the Legend's dart: per ranger at its post.
+	local _, legendIndex = Ranger.roles(stats)
+	for i, unit in Walkers.unitsOf(tower) do
+		if unit.state ~= "post" then
+			continue
+		end
+		local postIndex = table.find(state.posts, unit.postAt :: any) or 0
+		for _, enemy in own do
+			if enemy.alive and not enemy.def.flying and math.abs(enemy.distance - unit.at) <= Config.Tuning.RangerReach then
+				if stats.decoySeconds > 0 and postIndex > 0 then
+					state.decoySeen[postIndex] = state.decoySeen[postIndex] or setmetatable({}, { __mode = "k" }) :: any
+					local stop = Ranger.decoy(state.decoySeen[postIndex], enemy, enemy.def.boss == true, stats.decoySeconds)
+					if stop > 0 then
+						Enemies.stun(enemy, stop, true)
+					end
+				end
+				local net = Ranger.net(state.netted, enemy, enemy.def.boss == true, stats.bossHoldSeconds)
+				if net > 0 then
+					Enemies.stun(enemy, net, true)
+					Effects.disc(enemy.part.Position, 3, RANGER_COLOR, net, 0.4)
+				end
+			end
+		end
+		if i == legendIndex and unit.target and unit.target.alive then
+			local mark, seconds, nextDart = Ranger.dartDue(state.nextDart, now)
+			state.nextDart = nextDart
+			if mark and seconds then
+				Enemies.mark(unit.target, mark, seconds) -- the Legend's Tracking Dart (the Tracker dart's mark rules)
+			end
+		end
+	end
+end
+
 syncWalkers = function(tower: Tower)
+	if tower.ranger then
+		syncRangers(tower)
+		return
+	end
 	local state = tower.raptor
 	if not state then
 		return
@@ -3729,6 +4071,7 @@ function Towers.newRound()
 			AutoFire.reset(vent.auto)
 			AutoFire.reset(vent.wallAuto)
 		end
+		setTrapLine(tower) -- Master Trapper: one-shot traps along the track (PLAN 9j)
 	end
 	if fuel then
 		refreshAuras()
@@ -3762,6 +4105,7 @@ function Towers.step(dt: number)
 		stepBlimp(tower, dt, own)
 		stepMeteor(tower, dt, own)
 		stepVent(tower, dt, own)
+		stepRanger(tower, dt, own)
 	end
 	stepAirlifts()
 	publishOutlines()
@@ -3779,7 +4123,7 @@ function Towers.step(dt: number)
 
 	for _, tower in towers do
 		local stats = tower.stats
-		if stats.rate <= 0 or stats.damage <= 0 or tower.knockedOut or tower.raptor then
+		if stats.rate <= 0 or stats.damage <= 0 or tower.knockedOut or tower.raptor or tower.ranger then
 			continue -- Quartermaster and anything else that doesn't shoot; trampled towers; a Raptor Pen's raptors bite (Walkers)
 		end
 		if tower.meteor or tower.vent then
@@ -3964,6 +4308,16 @@ function Towers.fireNow(key: string, position: Vector3): string
 		if tower.stats.charge then
 			startCharge(tower)
 			table.insert(fired, "Raptor Charge")
+		end
+	end
+	if tower.ranger then -- Ranger Station (PLAN 9j): Master Trapper's line, the Legend's dart
+		if tower.stats.trapLine then
+			setTrapLine(tower)
+			table.insert(fired, "Master Trapper")
+		end
+		if tower.stats.legend then
+			tower.ranger.nextDart = 0
+			table.insert(fired, "Tracking Dart")
 		end
 	end
 	blimpFireNow(tower, fired) -- Spotter Blimp (PLAN 9h T125b)

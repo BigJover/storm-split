@@ -40,6 +40,7 @@ TowerLook.COLORS = table.freeze({
 	BLIMP = Color3.fromRGB(205, 195, 170), -- Spotter Blimp: canvas envelope (PLAN 9h)
 	METEOR = Color3.fromRGB(70, 95, 130), -- Meteor Beacon: radio-dish steel blue (PLAN 9i)
 	VENT = Color3.fromRGB(75, 60, 55), -- Volcano Vent: basalt (PLAN 9i)
+	RANGER = Color3.fromRGB(176, 160, 110), -- Ranger Station: ranger khaki (PLAN 9j)
 })
 
 TowerLook.BODY_HEIGHT = 5
@@ -322,6 +323,19 @@ local SILHOUETTES: { [string]: (color: Color3) -> { Block } } = {
 			block("RimR", Vector3.new(0.6, 0.6, 2.2), at(0.75, 1.1, 0), color, Enum.Material.Basalt),
 			block("Crack", Vector3.new(0.6, 0.15, 2.0), at(0, 0.85, 0), lava, Enum.Material.Neon),
 			block("Smoke", Vector3.new(0.9, 1.6, 0.9), at(0, 2.4, 0), Color3.fromRGB(150, 145, 140), Enum.Material.Fabric, Enum.PartType.Ball),
+		}
+	end,
+	-- Ranger Station (PLAN 9j T129): a log cabin with a khaki roof, a door, a lookout post
+	-- and a flag. The rangers are Server/Walkers' (RangerLook).
+	RANGER = function(color)
+		return {
+			block("Cabin", Vector3.new(2.6, 1.8, 2.2), at(0, 0.9, 0.2), WOOD, Enum.Material.Wood),
+			block("Roof", Vector3.new(3.0, 0.3, 2.6), at(0, 1.95, 0.2), color, Enum.Material.Fabric),
+			block("Door", Vector3.new(0.7, 1.1, 0.1), at(0, 0.55, -0.92), DARK_WOOD, Enum.Material.Wood),
+			block("Lookout", Vector3.new(0.3, 3.6, 0.3), at(1.0, 1.8, -1.0), DARK_WOOD, Enum.Material.Wood),
+			block("Deck", Vector3.new(0.9, 0.15, 0.9), at(1.0, 3.6, -1.0), WOOD, Enum.Material.Wood),
+			block("Pole", Vector3.new(0.12, 1.4, 0.12), at(-1.2, 2.5, -0.9), STEEL, Enum.Material.Metal),
+			block("Flag", Vector3.new(0.06, 0.5, 0.8), at(-1.2, 3.0, -0.9), color, Enum.Material.Fabric),
 		}
 	end,
 	-- Supply Camp: stacked crates under an orange tarp, a flag on a pole.

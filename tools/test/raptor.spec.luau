@@ -260,7 +260,7 @@ end)
 
 test("server wiring: a pen never shoots, bites through Walkers and Enemies; Trampled sends none; firenow; the cap", function()
 	local towers = fs.readFile("src/server/Towers.luau")
-	ok(towers:find("tower.knockedOut or tower.raptor then", 1, true) ~= nil, "a Raptor Pen doesn't fire like a tower")
+	ok(towers:find("tower.knockedOut or tower.raptor or tower.ranger then", 1, true) ~= nil, "a Raptor Pen doesn't fire like a tower")
 	ok(towers:find("sending = not tower.knockedOut", 1, true) ~= nil, "a Trampled pen keeps its raptors out but sends none")
 	ok(towers:find("syncWalkers(tower) -- a Trampled pen", 1, true) ~= nil, "re-synced on trample / repair")
 	ok(towers:find("local gone = hit(tower, enemy, raptorDamage(tower) * x * avenge, stats.sizeBreaks, true)", 1, true) ~= nil, "bites through the tower's hit rules")
