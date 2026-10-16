@@ -59,6 +59,8 @@ local Path = require(Shared:WaitForChild("Path"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 local OptionPick = require(Shared:WaitForChild("OptionPick"))
+local Ranger = require(Shared:WaitForChild("Ranger"))
+local RangerPosts = require(Shared:WaitForChild("RangerPosts"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local request = remotes:WaitForChild("ShopRequest") :: RemoteFunction
@@ -445,7 +447,7 @@ message.Parent = panel
 -- "huntBoard" is HuntBoard.client's screen, not this panel. It's a mode here so
 -- that only one screen is open at a time and it closes by the same rules.
 -- "profile" is Profile.client's screen (PLAN T57), owned here the same way.
-type Mode = "closed" | "list" | "placing" | "manage" | "heroPick" | "heroUpgrade" | "mastery" | "huntBoard" | "profile"
+type Mode = "closed" | "list" | "placing" | "manage" | "posts" | "heroPick" | "heroUpgrade" | "mastery" | "huntBoard" | "profile"
 
 local mode: Mode = "closed"
 local placingKey: string? = nil
@@ -457,6 +459,14 @@ local managed: BasePart? = nil -- body of the tower being managed
 local managedPrompt: ProximityPrompt? = nil
 local managedConnections: { RBXScriptConnection } = {}
 local busy = false
+-- "posts" (PLAN 9j T130): a Ranger Station's posts, set by clicking its side's track.
+local postsBody: BasePart? = nil
+local postsPrompt: ProximityPrompt? = nil -- set when opened from the tower panel (Back returns there)
+local postSetting = 1 -- the post a click sets
+local postGhost: BasePart? = nil
+local postSpot: Vector3? = nil
+local postFits = false
+local postsConnections: { RBXScriptConnection } = {}
 
 local function escape(text: string): string
 	return (text:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"))
@@ -1338,7 +1348,7 @@ local function groundUnder(screenPoint: Vector2, includesInset: boolean): Vector
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	local ignore: { Instance } = {}
-	for _, instance in { player.Character, ghost, mapFolder("Enemies"), towerFolder() } do
+	for _, instance in { player.Character, ghost, postGhost, mapFolder("Enemies"), towerFolder() } do
 		if instance then
 			table.insert(ignore, instance)
 		end
@@ -1405,9 +1415,22 @@ local render: () -> ()
 local renderRows: () -> () -- the rows of whichever panel is open (render reuses them)
 
 local function setMode(newMode: Mode)
+	if newMode ~= "posts" then
+		if postGhost then
+			postGhost:Destroy()
+		end
+		postGhost, postSpot, postFits = nil, nil, false
+		for _, connection in postsConnections do
+			connection:Disconnect()
+		end
+		table.clear(postsConnections)
+		postsBody, postsPrompt = nil, nil
+	end
 	if newMode ~= "placing" then
 		destroyGhost()
 		placingKey = nil
+	end
+	if newMode ~= "placing" and newMode ~= "posts" then
 		-- Back from placing: gun back in hand.
 		local tool = holstered
 		holstered = nil
@@ -1428,7 +1451,7 @@ local function setMode(newMode: Mode)
 	list.CanvasPosition = Vector2.zero -- a new panel starts scrolled to the top
 	-- Hero.client: first person always, third person only while placing.
 	player:SetAttribute("PanelOpen", newMode ~= "closed")
-	player:SetAttribute("Placing", newMode == "placing")
+	player:SetAttribute("Placing", newMode == "placing" or newMode == "posts") -- third person while setting posts too
 	player:SetAttribute("HuntBoardOpen", newMode == HuntBoard.MODE) -- HuntBoard.client shows it
 	player:SetAttribute("ProfileOpen", newMode == ProfileScreen.MODE) -- Profile.client shows it
 	say("")
@@ -1469,6 +1492,91 @@ local function startPlacing(key: string)
 	moveGhost(groundUnder(UserInputService:GetMouseLocation(), true))
 end
 
+------------------------------------------------------------------ Ranger Station posts (PLAN 9j T130)
+
+local startPosts: (body: BasePart, prompt: ProximityPrompt?) -> ()
+local openManage: (body: BasePart, prompt: ProximityPrompt) -> ()
+
+-- The station's posts as the server published them (Server/Towers: Posts, PostCount, PostRange).
+local function postsOf(body: BasePart): ({ number }, number, number)
+	local list = {}
+	for at in string.gmatch(tostring(body:GetAttribute("Posts") or ""), "[^,]+") do
+		table.insert(list, tonumber(at) or 0)
+	end
+	return list, (body:GetAttribute("PostCount") or 0) :: number, (body:GetAttribute("PostRange") or 0) :: number
+end
+
+-- The post ghost: snapped to the track point nearest the mouse, green where Shared/Ranger.checkPost
+-- passes (on your track, within the station's range, not in a tar pool), red where it doesn't.
+local function movePostGhost(spot: Vector3?)
+	local body = postsBody
+	if not body then
+		return
+	end
+	if not postGhost then
+		local part = Instance.new("Part")
+		part.Name = "PostGhost"
+		part.Size = Vector3.new(0.6, 3, 0.6)
+		part.Anchored, part.CanCollide, part.CanQuery, part.CanTouch, part.CastShadow = true, false, false, false, false
+		part.Material = Enum.Material.Neon
+		part.Transparency = GHOST_TRANSPARENCY
+		postGhost = part
+	end
+	local ghostPart = postGhost :: BasePart
+	postSpot = spot
+	if not spot then
+		postFits = false
+		ghostPart.Parent = nil
+		return
+	end
+	local side, layout = mySide()
+	local track = myTrack()
+	local at = track:closest(spot)
+	local point = track:sample(math.clamp(at, 0, track.length))
+	local onTrack = Placement.check(spot, {}, true, Sides.zone(layout, side))
+	local _, _, range = postsOf(body)
+	local offset = point - body.Position
+	local inPool = false
+	for _, pool in builtPools(side) do
+		inPool = inPool or TarPit.contains(at, pool.at, pool.length)
+	end
+	local fits, reason = Ranger.checkPost(onTrack, Vector2.new(offset.X, offset.Z).Magnitude, range, inPool)
+	postFits = fits
+	ghostPart.Parent = camera
+	ghostPart.CFrame = CFrame.new(Placement.ground(point) + Vector3.new(0, 1.5, 0))
+	ghostPart.Color = if fits then GHOST_OK else GHOST_BAD
+	if not busy then
+		say(RangerPosts.hint(postSetting, fits, reason), if fits then TEXT_DIM else BAD)
+	end
+end
+
+-- Back (or Q): to the tower panel it was opened from, else closed.
+local function postsBack()
+	local body, prompt = postsBody, postsPrompt
+	if body and prompt and prompt.Enabled and body:IsDescendantOf(workspace) then
+		openManage(body, prompt)
+	else
+		setMode("closed")
+	end
+end
+
+local function tryPost()
+	local body, spot = postsBody, postSpot
+	if busy or not body or not spot or not postFits then
+		return
+	end
+	if send("post", body:GetAttribute("TowerId"), postSetting, nil, spot) then
+		local _, n = postsOf(body)
+		local nextPost = RangerPosts.advance(postSetting, n)
+		if nextPost then
+			postSetting = nextPost
+			render()
+		else
+			postsBack() -- every post set
+		end
+	end
+end
+
 local function tryPlace()
 	local key, spot = placingKey, ghostSpot
 	if busy or not key or not spot then
@@ -1479,6 +1587,26 @@ local function tryPlace()
 	end
 	if send("build", key, spot) then
 		setMode("closed")
+		if key == "RANGER" then
+			-- A new Ranger Station: set its posts straight away (PLAN 9j T130). Its body
+			-- replicates a moment later; give up quietly if it doesn't.
+			task.spawn(function()
+				for _ = 1, 20 do
+					local folder = towerFolder()
+					for _, model in if folder then folder:GetChildren() else {} do
+						local body = model:IsA("Model") and model.PrimaryPart
+						if body and body:GetAttribute("Tower") == "RANGER" and body:GetAttribute("OwnerId") == player.UserId
+							and (body.Position - spot).Magnitude < 4 and (body:GetAttribute("PostCount") or 0) > 0 then
+							if mode == "closed" then
+								startPosts(body, nil)
+							end
+							return
+						end
+					end
+					task.wait(0.1)
+				end
+			end)
+		end
 	end
 end
 
@@ -1502,8 +1630,8 @@ render = function()
 	table.clear(staleRows)
 	-- The pick's own controls: Back, the cards and the confirm button (PLAN T112).
 	local picking = pick ~= nil and mode ~= "closed"
-	backButton.Visible = picking
-	title.Size = UDim2.new(1, OptionPick.header(picking).titleRight, 1, 0)
+	backButton.Visible = picking or mode == "posts"
+	title.Size = UDim2.new(1, OptionPick.header(picking or mode == "posts").titleRight, 1, 0)
 	cardsFrame.Visible = picking
 	confirmButton.Visible = picking
 	if not picking then
@@ -1597,6 +1725,24 @@ renderRows = function()
 		addRow(1, "<b>Cancel</b>  (Q)", LOCKED_COLOR, true, function()
 			setMode("list")
 		end)
+	elseif mode == "posts" and postsBody then
+		local body = postsBody :: BasePart
+		local _, n = postsOf(body)
+		title.Text = `Posts  ·  {Config.Towers.RANGER.display}`
+		local set = {}
+		for k = 1, n do
+			set[k] = true -- every post has a spot (the nearest ones until moved)
+		end
+		for k, row in RangerPosts.rows(n, postSetting, set) do
+			if row.text == RangerPosts.DONE then
+				addRow(k, `<b>{RangerPosts.DONE}</b>  (Q)`, LOCKED_COLOR, true, postsBack)
+			else
+				addRow(k, if row.current then `<b>{row.text}</b>` else row.text, if row.current then BUY_COLOR else PANEL_COLOR, true, function()
+					postSetting = k -- tap a post to move it
+					render()
+				end)
+			end
+		end
 	elseif mode == "heroPick" then
 		local current = player:GetAttribute("Hero") or ""
 		title.Text = "Choose your hero"
@@ -1908,6 +2054,17 @@ renderRows = function()
 			end
 		end
 
+		-- A Ranger Station's posts (PLAN 9j T130).
+		local postCount = (managed:GetAttribute("PostCount") or 0) :: number
+		if RangerPosts.movable(key, postCount, managed:GetAttribute("UsesPosts") ~= false, true, trampled) then
+			local body, prompt = managed, managedPrompt
+			addRow(9, `<b>Move posts</b>  ·  {postCount} on the track`, PANEL_COLOR, true, function()
+				if body then
+					startPosts(body, prompt)
+				end
+			end)
+		end
+
 		local refundRate = managed:GetAttribute("RefundRate") or Config.Tuning.SellRefund
 		-- Mirrors Server/Shop: a damaged tower refunds less its repair price.
 		local spentHere = (managed:GetAttribute("Spent") or 0) :: number
@@ -1933,7 +2090,7 @@ renderRows = function()
 	end
 end
 
-local function openManage(body: BasePart, prompt: ProximityPrompt)
+openManage = function(body: BasePart, prompt: ProximityPrompt)
 	setMode("manage")
 	managed, managedPrompt = body, prompt
 	for _, name in { "Spent", "Tower", "Path1", "Path2", "Path3", "Picks1", "Picks2", "Picks3", "Discount", "RefundRate", "HP", "MaxHP", "KO" } do
@@ -1945,6 +2102,37 @@ local function openManage(body: BasePart, prompt: ProximityPrompt)
 		end
 	end))
 	render()
+end
+
+-- The posts mode (PLAN 9j T130): the tower panel's rows become the station's posts; clicking
+-- the track sets the highlighted one. Back / Q / X, and it closes like placing does.
+startPosts = function(body: BasePart, prompt: ProximityPrompt?)
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid and not holstered then
+		holstered = character:FindFirstChildOfClass("Tool") -- so the click doesn't also shoot
+		humanoid:UnequipTools()
+	end
+	setMode("posts")
+	postsBody, postsPrompt, postSetting = body, prompt, 1
+	for _, name in { "Posts", "PostCount", "PostRange", "UsesPosts", "KO" } do
+		table.insert(postsConnections, body:GetAttributeChangedSignal(name):Connect(function()
+			local _, n = postsOf(body)
+			if n <= 0 or body:GetAttribute("UsesPosts") == false or body:GetAttribute("KO") == true then
+				postsBack() -- a jeep, bodyguards or a Trampled cabin: no posts to set
+			else
+				postSetting = math.min(postSetting, n)
+				render()
+			end
+		end))
+	end
+	table.insert(postsConnections, body.AncestryChanged:Connect(function()
+		if not body:IsDescendantOf(workspace) then
+			setMode("closed") -- sold, possibly by a teammate
+		end
+	end))
+	render()
+	movePostGhost(groundUnder(UserInputService:GetMouseLocation(), true))
 end
 
 ------------------------------------------------------------------ input
@@ -2011,6 +2199,10 @@ closeButton.Activated:Connect(function()
 	setMode("closed")
 end)
 backButton.Activated:Connect(function()
+	if mode == "posts" then
+		postsBack()
+		return
+	end
 	pick = nil -- back to the panel it was opened from
 	render()
 end)
@@ -2031,6 +2223,15 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		toggleHuntBoard()
 	elseif input.KeyCode.Name == ProfileScreen.KEY then
 		toggleProfile()
+	elseif mode == "posts" then
+		if input.KeyCode == Enum.KeyCode.Q then
+			postsBack()
+		elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+			tryPost()
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			movePostGhost(groundUnder(Vector2.new(input.Position.X, input.Position.Y), false))
+			tryPost()
+		end
 	elseif mode == "placing" then
 		if input.KeyCode == Enum.KeyCode.Q then
 			setMode("list")
@@ -2046,11 +2247,13 @@ end)
 RunService.RenderStepped:Connect(function()
 	if mode == "placing" and ghost and UserInputService.MouseEnabled then
 		moveGhost(groundUnder(UserInputService:GetMouseLocation(), true))
+	elseif mode == "posts" and UserInputService.MouseEnabled then
+		movePostGhost(groundUnder(UserInputService:GetMouseLocation(), true))
 	end
 end)
 
 ProximityPromptService.PromptTriggered:Connect(function(prompt, who)
-	if who ~= player or mode == "placing" then
+	if who ~= player or mode == "placing" or mode == "posts" then
 		return
 	end
 	local body = prompt.Parent

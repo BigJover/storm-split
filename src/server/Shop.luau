@@ -235,6 +235,29 @@ end
 
 -- Anyone on the tower's side can repair it, in the build phase or mid-round (DECISIONS #10;
 -- battle sides: only its own side, T76).
+-- The posts UI (PLAN 9j T130): a Ranger Station's post `index` to the track point at `spot`.
+-- Anyone in the station's camp may move its posts (as upgrades); the spot must be on the
+-- camp's own track (Shared/Placement), Towers checks Range and Tar Pit pools.
+local function post(player: Player, towerId: unknown, index: unknown, spot: unknown): (boolean, string)
+	if typeof(towerId) ~= "number" or typeof(index) ~= "number" or typeof(spot) ~= "Vector3" then
+		return false, "Unknown post"
+	end
+	local tower = Towers.byId(towerId)
+	if not tower then
+		return false, "That tower is gone"
+	end
+	local side, layout = sideOf(player)
+	local refusal = Sides.manageRefusal("post", side, tower.side) -- never an enemy's station
+	if refusal then
+		return false, refusal
+	end
+	if tower.knockedOut then
+		return false, "Repair it first"
+	end
+	local onTrack = Placement.check(spot, {}, true, Sides.zone(layout, side))
+	return Towers.setPost(tower, index, spot, onTrack)
+end
+
 local function repair(player: Player, towerId: unknown): (boolean, string)
 	if typeof(towerId) ~= "number" then
 		return false, "Unknown tower"
@@ -326,6 +349,8 @@ local function handle(player: Player, action: unknown, a: unknown, b: unknown, c
 		return repair(player, a)
 	elseif action == "sell" then
 		return sell(player, a)
+	elseif action == "post" then
+		return post(player, a, b, c)
 	end
 	return false, "Unknown request"
 end

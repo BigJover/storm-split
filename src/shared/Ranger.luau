@@ -102,9 +102,9 @@ function Ranger.shot(index: number, stats: { heavyRanger: boolean, legend: boole
 	return 1, 0
 end
 
--- The posts a station can have: Max posts.
-function Ranger.maxPosts(): number
-	return Config.Tuning.MaxPosts
+-- The posts a station has: one per ranger, at most Max posts (PLAN 9j T130).
+function Ranger.postCount(walkers: number): number
+	return math.max(0, math.min(Config.Tuning.MaxPosts, math.floor(walkers)))
 end
 
 -- Ranger `index`'s post among `posts` (round-robin) and its formation slot on it (1 = the
@@ -117,17 +117,17 @@ function Ranger.postFor(index: number, posts: { number }): (number?, number)
 	return posts[((index - 1) % n) + 1], (index - 1) // n + 1
 end
 
--- Default posts (before the player moves them): the nearest track points within Range,
--- at least Ranger reach apart. `samples`: track points { at = distance along the track,
--- dist = flat studs from the cabin }.
-function Ranger.defaultPosts(samples: { { at: number, dist: number } }, range: number): { number }
+-- Default posts (before the player moves them): the `count` nearest track points within
+-- Range, at least Ranger reach apart. `samples`: track points { at = distance along the
+-- track, dist = flat studs from the cabin }.
+function Ranger.defaultPosts(samples: { { at: number, dist: number } }, range: number, count: number): { number }
 	local sorted = table.clone(samples)
 	table.sort(sorted, function(a, b)
 		return a.dist < b.dist
 	end)
 	local out: { number } = {}
 	for _, s in sorted do
-		if s.dist > range or #out >= Config.Tuning.MaxPosts then
+		if s.dist > range or #out >= count then
 			break
 		end
 		local free = true
@@ -139,6 +139,33 @@ function Ranger.defaultPosts(samples: { { at: number, dist: number } }, range: n
 		end
 		if free then
 			table.insert(out, s.at)
+		end
+	end
+	return out
+end
+
+-- The posts in use: the player's own (first `count`), topped up with defaults at least Ranger
+-- reach from them (a station that gained rangers), never more than `count`.
+function Ranger.fitPosts(own: { number }, defaults: { number }, count: number): { number }
+	local out: { number } = {}
+	for _, at in own do
+		if #out < count then
+			table.insert(out, at)
+		end
+	end
+	for _, at in defaults do
+		if #out >= count then
+			break
+		end
+		local free = true
+		for _, taken in out do
+			if math.abs(taken - at) < Config.Tuning.RangerReach then
+				free = false
+				break
+			end
+		end
+		if free then
+			table.insert(out, at)
 		end
 	end
 	return out

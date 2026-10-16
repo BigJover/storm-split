@@ -173,9 +173,15 @@ test("posts: round-robin, formation on 3, default nearest posts within Range, th
 	eq((Ranger.postFor(1, {})), nil)
 	local d = Ranger.defaultPosts({
 		{ at = 100, dist = 5 }, { at = 104, dist = 6 }, { at = 130, dist = 9 }, { at = 70, dist = 12 }, { at = 160, dist = 20 }, { at = 300, dist = 40 },
-	}, 30)
-	ok(#d == 3 and d[1] == 100 and d[2] == 130 and d[3] == 70, "nearest first, one every Ranger reach, at most Max posts")
-	eq(#Ranger.defaultPosts({ { at = 0, dist = 31 } }, 30), 0, "none beyond Range")
+	}, 30, 3)
+	ok(#d == 3 and d[1] == 100 and d[2] == 130 and d[3] == 70, "nearest first, one every Ranger reach")
+	eq(#Ranger.defaultPosts({ { at = 0, dist = 31 } }, 30, 3), 0, "none beyond Range")
+	eq(#Ranger.defaultPosts({ { at = 100, dist = 5 }, { at = 130, dist = 9 } }, 30, 1), 1, "one post per ranger")
+	eq(Ranger.postCount(1), 1)
+	eq(Ranger.postCount(5), T.MaxPosts, "Ranger Troop's 5 share Max posts")
+	local fitted = Ranger.fitPosts({ 200 }, { 100, 205, 130 }, 3)
+	ok(#fitted == 3 and fitted[1] == 200 and fitted[2] == 100 and fitted[3] == 130, "own posts first, defaults clear of them")
+	eq(#Ranger.fitPosts({ 1, 50, 90 }, {}, 2), 2, "never more than the rangers")
 	ok(Ranger.checkPost(true, 20, 30, false))
 	ok(not Ranger.checkPost(false, 20, 30, false), "on the track")
 	ok(not Ranger.checkPost(true, 31, 30, false), "within Range")

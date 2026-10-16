@@ -41,7 +41,7 @@ local BEFORE_ROUND = { Lobby = true, Building = true }
 -- Panels a spectator can't use (PLAN T83): their camp is out, so they can't build, pick
 -- or upgrade a hero, or spend mastery. The tower panel stays: every tower left is another
 -- camp's, and it opens read-only (Inspect).
-local SPECTATOR_CLOSED = { list = true, placing = true, heroUpgrade = true, heroPick = true, mastery = true }
+local SPECTATOR_CLOSED = { list = true, placing = true, posts = true, heroUpgrade = true, heroPick = true, mastery = true }
 
 -- May `mode` be opened (or stay open) in `state`? `out`: this hunter's battle camp is out.
 function PanelRules.allowed(mode: string, state: string?, hasHero: boolean, out: boolean?): boolean
@@ -52,7 +52,7 @@ function PanelRules.allowed(mode: string, state: string?, hasHero: boolean, out:
 		return false
 	end
 	local s = state or ""
-	if mode == "list" or mode == "placing" or mode == "manage" then
+	if mode == "list" or mode == "placing" or mode == "manage" or mode == "posts" then -- posts: a Ranger Station's (PLAN 9j T130)
 		return IN_MATCH[s] == true
 	elseif mode == "heroUpgrade" then
 		return IN_MATCH[s] == true and hasHero

@@ -1581,7 +1581,7 @@ local function defaultPosts(tower: Tower): { number }
 		table.insert(samples, { at = d, dist = Vector2.new(offset.X, offset.Z).Magnitude })
 		d += POST_SAMPLE
 	end
-	return Ranger.defaultPosts(samples, tower.stats.range)
+	return Ranger.defaultPosts(samples, tower.stats.range, Ranger.postCount(tower.stats.walkers))
 end
 
 -- Post markers on the track (visual): a short pole with a camp-colour pennant per post.
@@ -1657,9 +1657,8 @@ local syncRangers: (Tower) -> ()
 syncRangers = function(tower: Tower)
 	local state = tower.ranger :: RangerState
 	local stats = tower.stats
-	if not state.custom or #state.posts == 0 then
-		state.posts = defaultPosts(tower)
-	end
+	-- The player's posts (posts UI, T130) first, topped up with the nearest ones.
+	state.posts = Ranger.fitPosts(if state.custom then state.posts else {}, defaultPosts(tower), Ranger.postCount(stats.walkers))
 	if stats.guard then
 		rangerGuards(tower, stats.walkers)
 	else
@@ -1709,9 +1708,55 @@ syncRangers = function(tower: Tower)
 		state.jeep = jeep
 	end
 	showPosts(tower)
+	-- The posts UI (Shop.client, PLAN 9j T130) reads these.
+	local body = tower.model.PrimaryPart
+	if body then
+		local list = {}
+		for _, at in state.posts do
+			table.insert(list, string.format("%.1f", at))
+		end
+		body:SetAttribute("Posts", table.concat(list, ","))
+		body:SetAttribute("PostCount", #state.posts)
+		body:SetAttribute("PostRange", stats.range)
+		body:SetAttribute("UsesPosts", not (stats.jeep or stats.guard))
+	end
 	if stats.postAura then
 		refreshAuras() -- Sandbags follows the posts
 	end
+end
+
+-- The posts UI (PLAN 9j T130): post `index` of a Ranger Station to the track point nearest
+-- `spot`. Server/Shop checked the player and `onTrack` (Shared/Placement on the side's zone);
+-- here: a station whose rangers use posts, within its Range, not in a Tar Pit pool.
+function Towers.setPost(tower: Tower, index: number, spot: Vector3, onTrack: boolean): (boolean, string)
+	local state = tower.ranger
+	if not state then
+		return false, "Only a Ranger Station has posts"
+	end
+	local stats = tower.stats
+	if stats.jeep or stats.guard then
+		return false, "Its rangers don't use posts"
+	end
+	if index ~= math.floor(index) or index < 1 or index > #state.posts then
+		return false, "No such post"
+	end
+	local at = Enemies.trackDistanceNear(spot, tower.side)
+	local offset = Enemies.pointAt(at, tower.side) - tower.base
+	local inPool = false
+	for _, pool in Towers.pools(tower.side) do
+		inPool = inPool or TarPit.contains(at, pool.at, pool.length)
+	end
+	local ok, why = Ranger.checkPost(onTrack, Vector2.new(offset.X, offset.Z).Magnitude, stats.range, inPool)
+	if not ok then
+		return false, why or "Can't post there"
+	end
+	local posts = table.clone(state.posts)
+	posts[index] = at
+	state.posts = posts
+	state.custom = true
+	state.trapTimers = {}
+	syncRangers(tower)
+	return true, `Post {index} set`
 end
 
 -- Bodyguards (PLAN 9j): a ranger guarding `target` takes a bite aimed at it. True if one did.
