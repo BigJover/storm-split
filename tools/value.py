@@ -138,6 +138,7 @@ SUPPORT_PATHS = {("TOTEM", "Ancestors"), ("TOTEM", "Bone Pile"),  # PLAN 9h (#31
                  ("FALCON", "Falconer"),  # PLAN T65: Falcon Bells, Hooded Scout, Lure, Hunting Party
                  ("BALLISTA", "Reel"),  # PLAN T66: Pin Down, Reel In, Tow Line
                  ("TARPIT", "Deep Tar"), ("TARPIT", "Dig Site"),  # PLAN T67: slow and sink; cash and Tar Totem
+                 ("RANGER", "Trackers"), ("RANGER", "Wardens"),  # PLAN 9j (#314, #340): traps; tougher rangers
                  ("RAPTOR", "Trainer")}  # PLAN 9g (#314): support, judged on its metric line
 # Single tiers that buy control on a damage path (#74): still in the table and the medians,
 # never flagged dead. Longshot Perch Big Bore T3 = Concussion Round (a stun on hit).
@@ -364,6 +365,10 @@ def tower_stats(t, tiers, picks=None):
                                        "freezeFlowSeconds", "throwResistPercent")},
         "flowLengthMult": mult["flowLengthMult"], "geyserEvery": shortest.get("geyserEvery", 0),
         **{f: flag.get(f, False) for f in ("burnBreaks", "lavaBombs", "bossErupt", "supervolcano", "crust")},
+        # Ranger Station (PLAN 9j T129; Shared/TowerStats)
+        **{f: high.get(f, 0) for f in ("walkerRegen", "trapStunSeconds", "decoySeconds")},
+        "trapEvery": shortest.get("trapEvery", 0),
+        **{f: flag.get(f, False) for f in ("heavyRanger", "legend", "jeep", "trap", "trapLine", "postAura", "bossRoundGuard")},
     }
 
 
@@ -1017,7 +1022,7 @@ def totem_lines(data, mixes, rows):
 # builds (r31-40) the best c/e <= WORTH_HI x M and every one <= UNTOUCHABLE_HI x M; the best damage T2 c/e
 # in r11-20 <= ROUND9_T2_X x the released damage-path T2 median (4x batch out). Findings once released.
 ROUND9_T2_X = 1.5
-ROUND9_DAMAGE = ("METEOR", "VENT")
+ROUND9_DAMAGE = ("METEOR", "VENT", "RANGER")
 
 
 def round9_lines(data, mixes, rows):
@@ -1570,6 +1575,8 @@ def tower_edps(t, s, mix, tuning, **kw):
         return meteor_edps(s, mix, tuning, **kw)
     if t["display"] == "Volcano Vent":
         return vent_edps(s, mix, tuning, t["baseDamage"], **kw)
+    if t["display"] == "Ranger Station":
+        return ranger_squad(s, mix, tuning, **kw)
     return walker_edps(s, mix, tuning, **kw) if t.get("walkers", 0) > 0 else edps(s, mix, tuning, **kw)
 
 
@@ -1799,6 +1806,71 @@ def vent_obsidian(data, s, mix, base):
     return worth + 0.5 * s["throwMissPercent"] + VENT_THROW_RESIST * s["throwResistPercent"]
 
 
+# Ranger Station (PLAN 9j, #314, #340; stated assumptions, 9k revisits them). Rangers are walkers at posts.
+RANGER_POST_UPTIME = 0.7  # a ranger's share of the time at its post shooting (walk, patch-up, respawn)
+RANGER_JEEP_COVER = 20  # Patrol Jeep: uptime = min(1, this x Ranger reach / track length x RANGER_JEEP_X)
+RANGER_JEEP_X = 1.3
+RANGER_DART = 0.25 * HOLD_EDPS * 8 / 12  # the Legend's Tracking Dart: 25 % mark x 8 s every 12 s (= 20 eDPS)
+RANGER_DECOY_DINOS = 0.2  # Decoy Calls: dinos a post stops a second (2 per 10 s)
+RANGER_MARK_DINOS = 1.5  # Head Ranger: dinos marked per ranger take-down, for MARK_S s
+RANGER_MARK_S = 3
+
+
+def ranger_uptime(s, tuning):
+    """A ranger's uptime: 0.7 at a post (+0.1 Heals between rounds, +0.08 Walker respawn x < 1, +0.08 Boss round
+    guard); Patrol Jeep: min(1, 20 x Ranger reach / track x 1.3) instead (#340)."""
+    if s["jeep"]:
+        return min(1.0, RANGER_JEEP_COVER * tuning["RangerReach"] / track_studs() * RANGER_JEEP_X)
+    return (RANGER_POST_UPTIME + 0.1 * bool(s["healsBetweenRounds"]) + 0.08 * (s["walkerRespawnMult"] < 1)
+            + 0.08 * bool(s["bossRoundGuard"]))
+
+
+def ranger_squad(s, mix, tuning, **kw):
+    """Riflemen eDPS (#340, r31-40 via edps): Walkers x uptime x one ranger's honest eDPS (targets 1) + Heavy:
+    uptime x (one at x Heavy x, breaks 3 - one) + Legend: uptime x (one at x Legend x - one) + the dart."""
+    one_s = {**s, "targets": 1, "lineHits": 1}
+    one = edps(one_s, mix, tuning, **kw)
+    up = ranger_uptime(s, tuning)
+    out = s["walkers"] * up * one
+    if s["heavyRanger"]:
+        heavy = {**one_s, "damage": s["damage"] * tuning["HeavyX"], "sizeBreaks": max(s["sizeBreaks"], 3)}
+        out += up * (edps(heavy, mix, tuning, **kw) - one)
+    if s["legend"]:
+        out += up * (edps({**one_s, "damage": s["damage"] * tuning["LegendX"]}, mix, tuning, **kw) - one) + RANGER_DART
+    return out
+
+
+def ranger_trackers(data, s, mix):
+    """Trackers (control, option bars only, #314/#340): squad eDPS + HOLD_EDPS x H + mark credit. H = posts x
+    (Trap slow %/100 x Trap slow s + Trap stun s + Knockback / 8) / Trap every + Decoy s x 0.2 dinos a second
+    per post + Trap line: traps x effect / 50 + net: Boss hold s x boss rounds / 50; posts = min(Max posts,
+    Walkers). Mark: Take-down mark % x 120 x 3 s x 1.5 dinos per take-down; take-downs a second = squad eDPS /
+    (the band's EHP / its dino count)."""
+    tuning = data["Tuning"]
+    w = ranger_squad(s, mix, tuning)
+    posts = min(tuning["MaxPosts"], s["walkers"])
+    eff = (tuning["TrapSlow"] / 100 * tuning["TrapSlowS"] + s["trapStunSeconds"] + s["knockback"] / 8) if s["trap"] else 0
+    h = posts * eff / (s["trapEvery"] or tuning["TrapEveryS"]) + s["decoySeconds"] * RANGER_DECOY_DINOS * posts
+    h += (tuning["TrapLineTraps"] * eff / tuning["RoundSecondsModel"] if s["trapLine"] else 0)
+    h += s["bossHoldSeconds"] * mix["bossRounds"] / tuning["RoundSecondsModel"]
+    dinos = sum(d[0] for d in mix["dinos"])
+    takedowns = w / (mix["total"] / max(1, dinos))
+    mark = s["takeDownMarkPercent"] / 100 * HOLD_EDPS * RANGER_MARK_S * RANGER_MARK_DINOS * takedowns
+    return w + HOLD_EDPS * h + mark
+
+
+def ranger_wardens(data, s, mix):
+    """Wardens (support, #314/#340): squad eDPS (Wardens' uptime) + 0.5 x points: Aura HP % x Max posts (Post
+    aura), Guard: Walkers x Walker HP x, Hunter's Lodge 20 x (2 - Rescue x)."""
+    tuning = data["Tuning"]
+    pts = s["auraHpPercent"] * tuning["MaxPosts"] if s["postAura"] else 0
+    if s["guard"]:
+        pts += s["walkers"] * s["walkerHpMult"]
+    if 0 < s["rescueRespawnMult"] < 1:
+        pts += 20 * (2 - s["rescueRespawnMult"])
+    return ranger_squad(s, mix, tuning) + 0.5 * pts
+
+
 def track_studs():
     """The track's length (studs), from Track.luau (read once)."""
     global TRACK_STUDS
@@ -1933,6 +2005,12 @@ def tower_worth(data, key, pi, s, late):
         if pid == "Obsidian":
             return vent_obsidian(data, s, late, t["baseDamage"])
         return vent_edps(s, late, tuning, t["baseDamage"]) + aura_credit(data, s, late)
+    if key == "RANGER":  # PLAN 9j (#314, #340): rangers at posts
+        if pid == "Trackers":
+            return ranger_trackers(data, s, late)
+        if pid == "Wardens":
+            return ranger_wardens(data, s, late)
+        return ranger_squad(s, late, tuning) + aura_credit(data, s, late)
     if key == "RAPTOR":  # PLAN 9g (#314): the walker model
         if pid == "Trainer":
             return raptor_trainer(data, s, late)

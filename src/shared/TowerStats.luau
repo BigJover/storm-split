@@ -232,6 +232,18 @@ export type Stats = {
 	mazeStuds: number, -- Glass Maze: a dino crossing the crust walks this much further
 	freezeFlowSeconds: number, -- Frozen Fire: when the flow ends its dinos are hard-stopped this long
 	throwResistPercent: number, -- Obsidian Armour: towers in range take this % less from throws
+	-- Ranger Station (PLAN 9j T129; rules in Shared/Ranger). Only the RANGER's rows set these (KEY_ONLY).
+	walkerRegen: number, -- Medic Bag: HP/s a ranger heals at its post
+	heavyRanger: boolean, -- Heavy Rifle: the first ranger shoots x Heavy x, breaks 3
+	legend: boolean, -- Legend Ranger: one ranger is the Legend
+	jeep: boolean, -- Patrol Jeep: the squad drives the side's track
+	trap: boolean, -- Snare Kit: a trap at each post
+	trapEvery: number, -- s between a post's traps (0 = Tuning Trap every (s))
+	trapStunSeconds: number, -- a trap's hard stop (not bosses)
+	trapLine: boolean, -- Master Trapper: one-shot traps along the side's track each round played
+	decoySeconds: number, -- Decoy Calls: a dino entering a ranger's reach stops this long, once per post
+	postAura: boolean, -- Sandbags: Aura HP % on towers near a post
+	bossRoundGuard: boolean, -- Hold the Line: rangers can't drop below 1 HP while a boss is out
 }
 
 local MULTIPLIERS = {
@@ -371,6 +383,10 @@ local HIGHEST = {
 	"mazeStuds",
 	"freezeFlowSeconds",
 	"throwResistPercent",
+	-- PLAN 9j (T129): the Ranger Station
+	"walkerRegen",
+	"trapStunSeconds",
+	"decoySeconds",
 }
 -- Timers where the shortest non-zero wins (PLAN 9g, the exporter's "minpos" kind).
 local MIN_POSITIVE = {
@@ -382,6 +398,7 @@ local MIN_POSITIVE = {
 	"meteorEvery",
 	"starfallEvery",
 	"geyserEvery",
+	"trapEvery",
 }
 local FLAGS = {
 	"piercesArmor",
@@ -430,6 +447,13 @@ local FLAGS = {
 	"bossErupt",
 	"supervolcano",
 	"crust",
+	"heavyRanger",
+	"legend",
+	"jeep",
+	"trap",
+	"trapLine",
+	"postAura",
+	"bossRoundGuard",
 }
 
 -- `pathPicks` is each path's A/B/C letters ("", "B", "BA"; Shared/Upgrades); nil means
@@ -669,6 +693,17 @@ function TowerStats.compute(def, pathTiers: { number }, pathPicks: { string }?):
 		mazeStuds = high.mazeStuds or 0,
 		freezeFlowSeconds = high.freezeFlowSeconds or 0,
 		throwResistPercent = high.throwResistPercent or 0,
+		walkerRegen = high.walkerRegen or 0,
+		heavyRanger = flag.heavyRanger == true,
+		legend = flag.legend == true,
+		jeep = flag.jeep == true,
+		trap = flag.trap == true,
+		trapEvery = shortest.trapEvery or 0,
+		trapStunSeconds = high.trapStunSeconds or 0,
+		trapLine = flag.trapLine == true,
+		decoySeconds = high.decoySeconds or 0,
+		postAura = flag.postAura == true,
+		bossRoundGuard = flag.bossRoundGuard == true,
 	}
 end
 

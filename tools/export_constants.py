@@ -266,6 +266,18 @@ ABILITY_COLUMNS = [
     ("mazeStuds", 194, "num", 0),  # GL: Glass Maze: a dino crossing the crust walks this much further
     ("freezeFlowSeconds", 195, "num", 0),  # GM: Frozen Fire: when the flow ends its dinos are hard-stopped
     ("throwResistPercent", 196, "num", 0),  # GN: Obsidian Armour: towers in range take this % less from throws
+    # PLAN 9j (T129, #340): the Ranger Station (Shared/Ranger). KEY_ONLY keeps them on the station.
+    ("walkerRegen", 197, "num", 0),  # GO: Medic Bag: HP/s a ranger heals at its post
+    ("heavyRanger", 198, "bool", False),  # GP: Heavy Rifle: the first ranger shoots x Tuning Heavy x, breaks 3
+    ("legend", 199, "bool", False),  # GQ: Legend Ranger: one ranger is the Legend (Tuning Legend x / HP x / dart)
+    ("jeep", 200, "bool", False),  # GR: Patrol Jeep: the squad drives the side's track (posts unused)
+    ("trap", 201, "bool", False),  # GS: Snare Kit: a trap at each post
+    ("trapEvery", 202, "num", 0),  # GT: a post's trap fires every N s (blank = Tuning Trap every (s))
+    ("trapStunSeconds", 203, "num", 0),  # GU: a trap's hard stop (not bosses)
+    ("trapLine", 204, "bool", False),  # GV: Master Trapper: Tuning Trap line traps one-shot traps each round played
+    ("decoySeconds", 205, "num", 0),  # GW: Decoy Calls: a dino entering a ranger's reach stops this long, once per post
+    ("postAura", 206, "bool", False),  # GX: Sandbags: the station's Aura HP % on towers near a post
+    ("bossRoundGuard", 207, "bool", False),  # GY: Hold the Line: rangers can't drop below 1 HP while a boss is out
 ]
 
 # Columns only a tower that chains (Towers column Chains) can use.
@@ -302,6 +314,8 @@ KEY_ONLY = {
     "VENT": (("flowSeconds", "flowLengthMult", "burnBreaks", "geyserEvery", "extraVents", "lavaBombs", "bossErupt",
               "sideThrowMissPercent", "supervolcano", "crust", "crustDps", "mazeStuds", "freezeFlowSeconds",
               "throwResistPercent"), ("flowLengthMult",)),
+    "RANGER": (("walkerRegen", "heavyRanger", "legend", "jeep", "trap", "trapEvery", "trapStunSeconds", "trapLine",
+                "decoySeconds", "postAura", "bossRoundGuard"), ()),
 }
 # A KEY_ONLY column a later 4x tower reuses (PLAN 9i "Reused"): field -> the other keys allowed.
 KEY_SHARED = {"throwMissPercent": ("METEOR", "VENT"), "bombingRun": ("METEOR",)}
@@ -433,6 +447,8 @@ TOWER_STEP_KINDS = {
     "meteorEvery": "minpos", "starfallEvery": "minpos",
     # PLAN 9i (T128): the Volcano Vent
     "flowLengthMult": "mult", "geyserEvery": "minpos",
+    # PLAN 9j (T129): the Ranger Station
+    "trapEvery": "minpos",
 }
 for _key, _col, _kind, _default in ABILITY_COLUMNS:
     TOWER_STEP_KINDS.setdefault(_key, "flag" if _kind == "bool" else "max")

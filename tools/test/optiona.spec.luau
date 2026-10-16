@@ -161,6 +161,18 @@ local AFTER_SNAPSHOT: { [string]: any } = {
 	mazeStuds = 0,
 	freezeFlowSeconds = 0,
 	throwResistPercent = 0,
+	-- PLAN 9j (T129): the Ranger Station's own fields (none on these towers)
+	walkerRegen = 0,
+	heavyRanger = false,
+	legend = false,
+	jeep = false,
+	trap = false,
+	trapEvery = 0,
+	trapStunSeconds = 0,
+	trapLine = false,
+	decoySeconds = 0,
+	postAura = false,
+	bossRoundGuard = false,
 }
 -- ... and fields whose "does nothing" value is the tower's own (hitsAir moved from the Towers
 -- row into the stats with the generic Hits air column, PLAN 9g).

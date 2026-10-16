@@ -507,6 +507,37 @@ A/B/C picks at tiers 4 and 5 (PLAN 9i, DECISIONS #339; names = DINO_REVIEW Round
 | **Obsidian** | 4 | Jagged Crust — The crust cuts dinos | Black Glass — Nearby towers see 15% further | Heat Shimmer — Dinos on the crust can't throw |
 | **Obsidian** | 5 | Glass Maze — The crust makes dinos walk 12 studs further | Obsidian Armour — Nearby towers take 30% less from throws | Frozen Fire — The whole flow hardens: 2 s stop |
 
+## Ranger Station (RANGER) — rangers at posts: rifles, traps, tougher rangers · built (PLAN 9j T129) · not sold yet (until T130b) · unlock 500 Amber
+
+A ranger cabin (600 cash, 200 HP) that trains **rangers** (walkers, `Shared/Walker`'s post state). Each
+ranger walks from the cabin to its **post** (up to 3 track points within the station's range 30;
+rangers share posts in turn) and shoots dinos within 14 studs of it (10 a shot, 2.3 a second,
+ground only, furthest along first); it never chases. Dinos walking past bite it; bitten down to 30 %
+it walks home, heals 20 HP/s at the cabin and goes back; at 0 HP it is down 10 s. Rangers have 100 HP
+(x tiers bought, as towers). Trackers and Wardens are judged on their own lines (out of the damage
+medians, #314). Rules: `Shared/Ranger`.
+
+| Path | Focus | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|---|
+| **Riflemen** | damage | Recruit | Sharpshooter | *Squad* | *Elite Squad* | *Ranger Troop* |
+| **Trackers** | control | Snare Kit | Bait | *Snap Traps* | *Pit Traps* | *Master Trapper* |
+| **Wardens** | support | Leather Coats | Medic Bag | *Shield Wall* | *Field Rations* | *Hold the Line* |
+
+- Recruit / Sharpshooter / Squad: 2 / 2 / 3 rangers; Sharpshooter and Squad shoot harder (x1.8 / x2.8) and post further (range x1.2).
+- Snare Kit / Bait / Snap Traps: a trap at each post: the first ground dino within 3 studs is slowed 40 % for 2 s, every 8 s (Bait and Snap Traps every 5 s, x1.3 / x1.6); Snap Traps: the trap also holds it 0.6 s (not bosses) and the station has 2 rangers.
+- Leather Coats / Medic Bag / Shield Wall: tougher rangers (HP x1.5, x1.3 / x1.5 / x2 damage); Medic Bag: 2 rangers that heal 5 HP a second at their post; Shield Wall: they take 40 % less from bites.
+
+A/B/C picks at tiers 4 and 5 (PLAN 9j, DECISIONS #340; names = DINO_REVIEW Round 19). Elite Squad: rangers shoot through armour. Heavy Rifle: one ranger in the squad gets a heavy rifle (x3, breaks 3). Flare Rounds: rangers can hit low flyers. Ranger Troop: 5 rangers, in formation on the 3 posts. Legend Ranger: one ranger is the Legend (x3 damage, x3 HP) with its own Tracking Dart every 12 s (its target marked +25 % for 8 s). Patrol Jeep: the squad rides a jeep that drives your side's track there and back, firing as it passes (dinos can't bite a moving jeep; posts unused). Pit Traps: traps hold a dino 1.5 s. Decoy Calls: a dino walking into a ranger's reach stops 1 s (once per dino per post). Tripwire: traps knock dinos 4 studs back (not bosses). Master Trapper: at the start of each round played, 6 one-shot traps spread along your side's track. Net Launchers: the first boss within a ranger's reach is netted 2 s (once per boss). Head Ranger: a ranger take-down marks nearby dinos +20 %. Field Rations: rangers heal fully between rounds (HP x1.3). Rally Point: rangers come back 2x faster. Sandbags: towers within 10 studs of a post get 10 % more HP. Hold the Line: while a boss is out on your side, rangers can't drop below 1 HP. Bodyguards: rangers stand beside towers in range instead of posts and take the bites aimed at them. Hunter's Lodge: your side's hunters respawn at the cabin in half the time (battles: your own camp only, #319). No Raider option (#320).
+
+| Path | Tier | A | B | C |
+|---|---|---|---|---|
+| **Riflemen** | 4 | Elite Squad — Rangers shoot through armour | Heavy Rifle — One ranger gets a heavy rifle: ×3, breaks 3 | Flare Rounds — Rangers can hit low flyers |
+| **Riflemen** | 5 | Ranger Troop — 5 rangers in formation | Legend Ranger — One hero-strong ranger with its own dart | Patrol Jeep — Rangers drive the track, firing |
+| **Trackers** | 4 | Pit Traps — Traps hold a dino 1.5 s | Decoy Calls — Dinos stop to fight rangers | Tripwire — Traps knock dinos 4 studs back |
+| **Trackers** | 5 | Master Trapper — Traps along your whole track each round | Net Launchers — Rangers net a boss for 2 s | Head Ranger — Ranger take-downs mark nearby dinos +20% |
+| **Wardens** | 4 | Field Rations — Rangers heal fully between rounds | Rally Point — Rangers come back 2× faster | Sandbags — Towers near a post get 10% more HP |
+| **Wardens** | 5 | Hold the Line — Rangers can't fall while a boss is out | Bodyguards — Rangers take bites for towers | Hunter's Lodge — Hunters come back twice as fast |
+
 ---
 
 ## Mechanics and when they're built

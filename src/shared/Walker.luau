@@ -18,7 +18,10 @@
 	           back  target gone, target beyond range x leash, or HP <= retreat share:
 	                 runs home at speed x 1.5
 	           down  at 0 HP: gone, back at home (full HP) after its respawn time
-	           post  (9j rangers) stands at a set track point, hits in range, never chases
+	           post  (9j rangers) stands at a set track point, hits in range, never chases;
+	                 a post walker leaves home (HP >= 80 %, no target needed), walks out
+	                 to its post, heals Walker regen HP/s there, walks home at HP <=
+	                 retreat share and comes back from home after a respawn
 	  targets  dinos on its side within the tower's range, ground only unless Hits air;
 	           nearest to home by default; Targets first = the furthest along; Flanking =
 	           no two walkers of a tower on one dino while another is free
@@ -58,6 +61,7 @@ export type Params = {
 	trampleSize: number,
 	trampleShare: number,
 	smallSize: number, -- 4x TOWERS Small size: "small dinos" have at most this many sizes left
+	regen: number?, -- HP/s at its post (9j Walker regen; nil = 0)
 }
 
 -- A dino as walkers see it. `at`: distance along its side's track; `fromHome`: flat studs
@@ -95,9 +99,9 @@ export type Hit = { target: any, x: number, pounce: boolean, hold: number }
 function Walker.new(side: number, params: Params, homeAt: number, postAt: number?): Unit
 	return {
 		side = side,
-		state = if postAt then "post" else "home",
+		state = "home",
 		hp = params.maxHp,
-		at = postAt or homeAt,
+		at = homeAt,
 		target = nil,
 		nextBite = 0,
 		fresh = true,
@@ -182,15 +186,40 @@ function Walker.step(unit: Unit, dt: number, now: number, params: Params, homeAt
 	local hits: { Hit } = {}
 	if unit.state == "down" then
 		if now >= unit.downUntil then
-			unit.state = if unit.postAt then "post" else "home"
+			unit.state = "home"
 			unit.hp = params.maxHp
-			unit.at = unit.postAt or homeAt
+			unit.at = homeAt
 			unit.fresh = true
 		end
 		return hits
 	end
 
+	if unit.postAt then
+		local postAt = unit.postAt :: number
+		if unit.state == "home" then
+			unit.at = homeAt
+			unit.hp = math.min(params.maxHp, unit.hp + params.homeHeal * dt)
+			if unit.hp >= params.maxHp * Walker.LEAVE_SHARE then
+				unit.state = "out"
+				unit.target = nil
+			end
+			return hits
+		end
+		if unit.state == "out" then
+			unit.at = moveToward(unit.at, postAt, params.speed * dt)
+			if unit.at == postAt then
+				unit.state = "post"
+			end
+			return hits
+		end
+		if unit.state == "post" and unit.hp <= params.maxHp * params.retreatShare then
+			unit.state = "back"
+			unit.target = nil
+		end
+	end
+
 	if unit.state == "post" then
+		unit.hp = math.min(params.maxHp, unit.hp + (params.regen or 0) * dt)
 		local target = unit.target and find(dinos, unit.target)
 		if not (target and Walker.canTarget(unit, target, params)) then
 			local picked = Walker.pick(unit, dinos, params, claimed)
@@ -286,8 +315,8 @@ end
 -- A dino walking through this walker's spot: Trample share x max HP, once per dino, from a
 -- dino with at least Trample size sizes left that isn't its target. Returns the HP lost.
 function Walker.trample(unit: Unit, dino: Dino, params: Params, now: number): number
-	if not Walker.exposed(unit) or dino.side ~= unit.side or dino.flying or dino.id == unit.target then
-		return 0
+	if not Walker.exposed(unit) or unit.state == "post" or dino.side ~= unit.side or dino.flying or dino.id == unit.target then
+		return 0 -- at a post dinos bite instead (9j)
 	end
 	if dino.sizesLeft < params.trampleSize or unit.trampled[dino.id] or math.abs(dino.at - unit.at) > params.reach then
 		return 0
@@ -311,9 +340,18 @@ function Walker.roundEnd(unit: Unit, params: Params, homeAt: number, healsBetwee
 	end
 	unit.hp = params.maxHp
 	if unit.state == "down" then
-		unit.state = if unit.postAt then "post" else "home"
-		unit.at = unit.postAt or homeAt
+		unit.state = "home"
+		unit.at = homeAt
 		unit.fresh = true
+	end
+end
+
+-- A post walker's post moves (9j "Move posts"): it walks there from where it is.
+function Walker.setPost(unit: Unit, postAt: number)
+	unit.postAt = postAt
+	if unit.state == "post" then
+		unit.state = "out"
+		unit.target = nil
 	end
 end
 
