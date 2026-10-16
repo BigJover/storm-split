@@ -1,5 +1,7 @@
 #!/bin/sh
-# Headless tests: every tools/test/*.spec.luau under Lune (see tools/test/run.luau),
+# Headless tests: first every src/ file through the real Luau compiler (tools/compile.luau:
+# compile errors such as "Out of local registers", which luau-lsp misses, PLAYTEST F11),
+# then every tools/test/*.spec.luau under Lune (see tools/test/run.luau),
 # then the Config <-> design-doc audit (tools/audit.py, a report: findings don't fail
 # the run; use --strict for that) and the threat estimate (tools/threat.py, which fails
 # the run if a DECISIONS #42 target is missed), then the value and pacing models
@@ -16,6 +18,7 @@ PYTHON=/Library/Developer/CommandLineTools/usr/bin/python3 # the Xcode licence b
 [ -x "$PYTHON" ] || PYTHON=python3
 
 status=0
+lune run tools/compile.luau || status=1
 lune run tools/test/run.luau "$@" || status=1
 if [ $# -eq 0 ]; then
 	echo

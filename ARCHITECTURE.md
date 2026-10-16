@@ -111,7 +111,12 @@ src/
 │   ├── Enemies.luau         Spawning, movement, damage, splitting, live cap; armour, stun,
 │   │                        knockback, marks
 │   ├── Towers.luau          Placement, stats, abilities (multi-shot, pierce, bomblets,
-│   │                        burn, auras), targeting, firing
+│   │                        burn, auras), targeting, firing. Per-tower sections (Raptor/Ranger,
+│   │                        Totem/Blimp/Meteor/Vent, Coil/Falcon/Ballista, Frost/Tar/heal/resin)
+│   │                        sit in `do ... end` blocks so the main chunk stays under Luau's
+│   │                        200-register limit (PLAYTEST F11); tools/compile.luau (in
+│   │                        tools/test.sh) compiles every src/ file and fails below 30 free
+│   │                        registers
 │   ├── Waves.luau           Runs the 40-round table (co-op); spawnRound() spawns one side's round
 │   ├── Battle.luau          Runs a Camp Clash / Bone Rush match: sides, build phase, lockstep rounds,
 │   │                        per-side pay and drops, elimination, results, the kill feed (T77)

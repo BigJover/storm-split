@@ -1493,2551 +1493,545 @@ end
 
 ------------------------------------------------------------------ Raptor Pen (PLAN 9g T124)
 
--- Its bite: the pen's composed damage (its auras, the team's level, Hungry Alpha's stack).
-local function raptorDamage(tower: Tower): number
-	local state = tower.raptor :: RaptorState
-	local stack = Raptor.stack(state.takeDowns, tower.stats.takeDownStackPercent)
-	return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale * (1 + stack / 100)
-end
+local campColour: (Tower) -> Color3
+local setTrapLine: (Tower) -> ()
+local stepRanger: (Tower, number, any) -> ()
+local releaseSwarm: (Tower) -> ()
+local startCharge: (Tower) -> ()
+local stepRaptor: (Tower, number, any) -> ()
+do -- block-scoped locals: the main chunk must stay under Luau's 200-register limit (PLAYTEST F11)
+	-- Its bite: the pen's composed damage (its auras, the team's level, Hungry Alpha's stack).
+	local function raptorDamage(tower: Tower): number
+		local state = tower.raptor :: RaptorState
+		local stack = Raptor.stack(state.takeDowns, tower.stats.takeDownStackPercent)
+		return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale * (1 + stack / 100)
+	end
 
--- A raptor's bite or pounce lands (x `x`: First dive x, Swarm share, Avenger x): the generic
--- hit rules (armour, boss x, breaks, Mark %, Slow % / linger) and the pounce's hold.
-local function raptorBite(tower: Tower, enemy: Enemies.Enemy, x: number, hold: number)
-	local state = tower.raptor
-	if not state or not enemy.alive or not canTarget(tower, enemy) then
-		return
-	end
-	local stats = tower.stats
-	local _, avenge = Raptor.avenger(stats.avengerX, state.lastStung, os.clock(), state.attacker)
-	if enemy ~= state.attacker then
-		avenge = 1
-	end
-	if stats.markPercent > 0 then
-		Enemies.mark(enemy, stats.markPercent, Config.Tuning.MarkDuration or 0)
-	end
-	if stats.slowPercent > 0 then
-		Enemies.chill(enemy, { slowPercent = stats.slowPercent, seconds = math.max(stats.slowLinger, 0.5), affectsBosses = stats.slowsBosses, brittlePercent = 0, stripsArmor = false })
-	end
-	if hold > 0 then
-		Enemies.stun(enemy, hold, true) -- the pounce's hold (Shared/Walker: a boss only with Boss hold, once)
-	end
-	local gone = hit(tower, enemy, raptorDamage(tower) * x * avenge, stats.sizeBreaks, true)
-	if gone and stats.takeDownStackPercent > 0 then
-		state.takeDowns += 1 -- Hungry Alpha
-	end
-end
-
-local function campColour(tower: Tower): Color3
-	return BrickColor.new(BattleFlow.campColor(tower.side) :: any).Color
-end
-
--- Guard Raptors: re-post each raptor beside a tower in range, the most damaged first.
-local function guardPosts(tower: Tower, count: number)
-	local state = tower.raptor :: RaptorState
-	local list, shares = {}, {}
-	for _, other in towers do
-		if other ~= tower and not other.def.untouchable and BattleRules.canSupport(tower.side, other.side) and covers(tower, other.base) then
-			table.insert(list, other)
-			table.insert(shares, if other.maxHp > 0 then other.hp / other.maxHp else 1)
-		end
-	end
-	local posts = {}
-	for i, index in Raptor.guardPosts(count, shares) do
-		posts[i] = list[index]
-	end
-	state.posts = posts
-end
-
-local function raptorKind(stats: Stats, swarm: boolean?): string
-	return if swarm then "swarm" elseif stats.stunRoarEvery > 0 then "rex" elseif stats.alpha then "alpha" else "raptor"
-end
-
-local function tiersBought(tower: Tower): number
-	return tower.pathTiers[1] + tower.pathTiers[2] + tower.pathTiers[3]
-end
-
------------------------------------------------------------------- Ranger Station (PLAN 9j T129)
-
-local POST_SAMPLE = 2 -- studs between the track points searched for default posts
-local RANGER_COLOR = Color3.fromRGB(176, 160, 110) -- visuals only
-
--- Is a boss alive on `side` (Hold the Line)?
-local function bossOut(side: number): boolean
-	for _, enemy in Enemies.getLive() do
-		if enemy.alive and enemy.side == side and enemy.def.boss == true then
-			return true
-		end
-	end
-	return false
-end
-
--- Default posts: the nearest track points within Range (Shared/Ranger.defaultPosts).
-local function defaultPosts(tower: Tower): { number }
-	local samples = {}
-	local length = Enemies.trackLength(tower.side)
-	local d = 0
-	while d <= length do
-		local offset = Enemies.pointAt(d, tower.side) - tower.base
-		table.insert(samples, { at = d, dist = Vector2.new(offset.X, offset.Z).Magnitude })
-		d += POST_SAMPLE
-	end
-	return Ranger.defaultPosts(samples, tower.stats.range, Ranger.postCount(tower.stats.walkers))
-end
-
--- Post markers on the track (visual): a short pole with a camp-colour pennant per post.
-local function showPosts(tower: Tower)
-	local state = tower.ranger :: RangerState
-	for _, flag in state.flags do
-		flag:Destroy()
-	end
-	state.flags = {}
-	if tower.stats.jeep or tower.stats.guard then
-		return -- posts unused
-	end
-	for i, at in state.posts do
-		local p = Instance.new("Part")
-		p.Name = `Post{i}`
-		p.Size = Vector3.new(0.3, 2.4, 0.3)
-		p.CFrame = CFrame.new(Enemies.pointAt(at, tower.side) + Vector3.new(0, 1.2, 0))
-		p.Color = campColour(tower)
-		p.Material = Enum.Material.Wood
-		p.Anchored, p.CanCollide, p.CanTouch, p.CanQuery = true, false, false, false
-		p.Parent = tower.model
-		table.insert(state.flags, p)
-	end
-end
-
--- Bodyguards: each ranger guards a tower in range, the most damaged first (Raptor Guard's rule).
-local function rangerGuards(tower: Tower, count: number)
-	local state = tower.ranger :: RangerState
-	local list, shares = {}, {}
-	for _, other in towers do
-		if other ~= tower and not other.def.untouchable and BattleRules.canSupport(tower.side, other.side) and covers(tower, other.base) then
-			table.insert(list, other)
-			table.insert(shares, if other.maxHp > 0 then other.hp / other.maxHp else 1)
-		end
-	end
-	local guarded = {}
-	for i, index in Raptor.guardPosts(count, shares) do
-		guarded[i] = list[index]
-	end
-	state.guarded = guarded
-end
-
--- Ranger `index`'s post: its guarded tower's track point (Bodyguards), else round-robin.
-local function postOf(tower: Tower, index: number): number?
-	local state = tower.ranger :: RangerState
-	local guarded = state.guarded[index]
-	if tower.stats.guard and guarded and table.find(towers, guarded) then
-		return Enemies.trackDistanceNear(guarded.base, tower.side)
-	end
-	return (Ranger.postFor(index, state.posts))
-end
-
--- A ranger's shot lands: the station's composed damage x Heavy x / Legend x (Shared/Ranger.shot),
--- the generic hit rules; a take-down marks nearby dinos (Head Ranger, in `hit`).
-local function rangerShot(tower: Tower, enemy: Enemies.Enemy, index: number)
-	if not enemy.alive or not canTarget(tower, enemy) then
-		return
-	end
-	local stats = tower.stats
-	local x, breaks = Ranger.shot(index, stats)
-	if stats.markPercent > 0 then
-		Enemies.mark(enemy, stats.markPercent, Config.Tuning.MarkDuration or 0)
-	end
-	local from = Walkers.unitAt(tower, index)
-	local to = enemy.part.Position
-	hit(tower, enemy, stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale * x, math.max(stats.sizeBreaks, breaks), true)
-	if from then
-		Effects.tracer(from + Vector3.new(0, 1, 0), to, campColour(tower))
-	end
-end
-
-local syncRangers: (Tower) -> ()
-syncRangers = function(tower: Tower)
-	local state = tower.ranger :: RangerState
-	local stats = tower.stats
-	-- The player's posts (posts UI, T130) first, topped up with the nearest ones.
-	state.posts = Ranger.fitPosts(if state.custom then state.posts else {}, defaultPosts(tower), Ranger.postCount(stats.walkers))
-	if stats.guard then
-		rangerGuards(tower, stats.walkers)
-	else
-		state.guarded = {}
-	end
-	local _, legendIndex = Ranger.roles(stats)
-	local colour = campColour(tower)
-	local rate = stats.rate * (1 + tower.buff.ratePercent / 100)
-	local plain = Ranger.params(stats, tiersBought(tower))
-	plain.rate = rate
-	local legend = Ranger.params(stats, tiersBought(tower), true)
-	legend.rate = rate
-	Walkers.sync(tower, {
-		count = stats.walkers,
-		params = plain,
-		side = tower.side,
-		base = tower.base,
-		homeAt = Enemies.trackDistanceNear(tower.base, tower.side),
-		sending = not tower.knockedOut,
-		healsBetweenRounds = stats.healsBetweenRounds,
-		look = function(i)
-			local heavy, leg = Ranger.roles(tower.stats)
-			return RangerLook.build(if i == leg then "legend" elseif i == heavy then "heavy" else "ranger", colour)
-		end,
-		onHit = function(enemy, _landed, i)
-			rangerShot(tower, enemy, i)
-		end,
-		postFor = function(i)
-			return postOf(tower, i)
-		end,
-		paramsFor = function(i)
-			return if i == legendIndex then legend else plain
-		end,
-		biteHook = if stats.bossRoundGuard
-			then function(unit, amount)
-				return Ranger.guarded(unit.hp, amount, bossOut(tower.side)) -- Hold the Line
-			end
-			else nil,
-		offsetFor = function(i)
-			local _, slot = Ranger.postFor(i, state.posts)
-			return 1.6 * (slot - 1)
-		end,
-	})
-	if stats.jeep and not state.jeep then
-		local jeep = RangerLook.buildJeep(colour)
-		jeep.Parent = tower.model
-		state.jeep = jeep
-	end
-	showPosts(tower)
-	-- The posts UI (Shop.client, PLAN 9j T130) reads these.
-	local body = tower.model.PrimaryPart
-	if body then
-		local list = {}
-		for _, at in state.posts do
-			table.insert(list, string.format("%.1f", at))
-		end
-		body:SetAttribute("Posts", table.concat(list, ","))
-		body:SetAttribute("PostCount", #state.posts)
-		body:SetAttribute("PostRange", stats.range)
-		body:SetAttribute("UsesPosts", not (stats.jeep or stats.guard))
-	end
-	if stats.postAura then
-		refreshAuras() -- Sandbags follows the posts
-	end
-end
-
--- The posts UI (PLAN 9j T130): post `index` of a Ranger Station to the track point nearest
--- `spot`. Server/Shop checked the player and `onTrack` (Shared/Placement on the side's zone);
--- here: a station whose rangers use posts, within its Range, not in a Tar Pit pool.
-function Towers.setPost(tower: Tower, index: number, spot: Vector3, onTrack: boolean): (boolean, string)
-	local state = tower.ranger
-	if not state then
-		return false, "Only a Ranger Station has posts"
-	end
-	local stats = tower.stats
-	if stats.jeep or stats.guard then
-		return false, "Its rangers don't use posts"
-	end
-	if index ~= math.floor(index) or index < 1 or index > #state.posts then
-		return false, "No such post"
-	end
-	local at = Enemies.trackDistanceNear(spot, tower.side)
-	local offset = Enemies.pointAt(at, tower.side) - tower.base
-	local inPool = false
-	for _, pool in Towers.pools(tower.side) do
-		inPool = inPool or TarPit.contains(at, pool.at, pool.length)
-	end
-	local ok, why = Ranger.checkPost(onTrack, Vector2.new(offset.X, offset.Z).Magnitude, stats.range, inPool)
-	if not ok then
-		return false, why or "Can't post there"
-	end
-	local posts = table.clone(state.posts)
-	posts[index] = at
-	state.posts = posts
-	state.custom = true
-	state.trapTimers = {}
-	syncRangers(tower)
-	return true, `Post {index} set`
-end
-
--- Bodyguards (PLAN 9j): a ranger guarding `target` takes a bite aimed at it. True if one did.
-function Towers.guardBite(target: any, amount: number): boolean
-	for _, station in towers do
-		local state = station.ranger
-		if state and station.stats.guard and not station.knockedOut and station.side == target.side then
-			for i, guarded in state.guarded do
-				if guarded == target and Walkers.biteUnit(station, i, amount) then
-					return true
-				end
-			end
-		end
-	end
-	return false
-end
-
--- A trap at `at` springs on the first ground dino within Trap reach (Shared/Ranger).
-local function springTrap(tower: Tower, at: number, own): boolean
-	local list, byId = {}, {}
-	for _, enemy in own do
-		if enemy.alive then
-			table.insert(list, { id = enemy, at = enemy.distance, boss = enemy.def.boss == true, flying = enemy.def.flying == true })
-			byId[enemy] = enemy
-		end
-	end
-	local pick = Ranger.trapPick(at, list)
-	if not pick then
-		return false
-	end
-	local enemy = byId[pick.id]
-	local effect = Ranger.trapEffect(tower.stats, pick.boss)
-	Enemies.chill(enemy, { slowPercent = effect.slowPercent, seconds = effect.slowSeconds, affectsBosses = true, brittlePercent = 0, stripsArmor = false })
-	if effect.stun > 0 then
-		Enemies.stun(enemy, effect.stun, false)
-	end
-	if effect.knockback > 0 then
-		Enemies.knockback(enemy, effect.knockback)
-	end
-	Effects.disc(Enemies.pointAt(at, tower.side), Config.Tuning.TrapReachStuds, RANGER_COLOR, 0.4, 0.5)
-	return true
-end
-
--- Master Trapper (at a round played's start, and `firenow RANGER`): the one-shot traps.
-local function setTrapLine(tower: Tower)
-	local state = tower.ranger
-	if state and tower.stats.trapLine then
-		state.lineTraps = Ranger.trapLine(Enemies.trackLength(tower.side))
-	end
-end
-
-local function stepRanger(tower: Tower, dt: number, own)
-	local state = tower.ranger
-	if not state then
-		return
-	end
-	local stats, now = tower.stats, os.clock()
-	-- Patrol Jeep: the squad rides there and back (posts unused); a Trampled cabin parks it.
-	if stats.jeep and not tower.knockedOut then
-		state.jeepClock += dt
-		local at = Ranger.jeepAt(state.jeepClock, Enemies.trackLength(tower.side))
-		Walkers.ride(tower, at)
-		if state.jeep then
-			local here = Enemies.pointAt(at, tower.side)
-			local ahead = Enemies.pointAt(at + 1, tower.side)
-			local look = if (ahead - here).Magnitude > 1e-3 then CFrame.lookAt(here, Vector3.new(ahead.X, here.Y, ahead.Z)) else CFrame.new(here)
-			state.jeep:PivotTo(look + Vector3.new(0, 0.7, 0))
-		end
-	else
-		Walkers.ride(tower, nil)
-	end
-	if tower.knockedOut then
-		return
-	end
-	if stats.guard then
-		state.guardTimer += dt
-		if state.guardTimer >= 1 then
-			state.guardTimer = 0
-			syncRangers(tower) -- re-post beside the most damaged towers
-		end
-	end
-	-- Traps at each post (Snare Kit on), and Master Trapper's line.
-	if stats.trap and not stats.jeep then
-		local every = Ranger.trapEvery(stats)
-		for i, at in state.posts do
-			state.trapTimers[i] = (state.trapTimers[i] or every) + dt
-			if state.trapTimers[i] >= every and springTrap(tower, at, own) then
-				state.trapTimers[i] = 0
-			end
-		end
-	end
-	for i = #state.lineTraps, 1, -1 do
-		if springTrap(tower, state.lineTraps[i], own) then
-			table.remove(state.lineTraps, i)
-		end
-	end
-	-- Decoy Calls / Net Launchers / the Legend's dart: per ranger at its post.
-	local _, legendIndex = Ranger.roles(stats)
-	for i, unit in Walkers.unitsOf(tower) do
-		if unit.state ~= "post" then
-			continue
-		end
-		local postIndex = table.find(state.posts, unit.postAt :: any) or 0
-		for _, enemy in own do
-			if enemy.alive and not enemy.def.flying and math.abs(enemy.distance - unit.at) <= Config.Tuning.RangerReach then
-				if stats.decoySeconds > 0 and postIndex > 0 then
-					state.decoySeen[postIndex] = state.decoySeen[postIndex] or setmetatable({}, { __mode = "k" }) :: any
-					local stop = Ranger.decoy(state.decoySeen[postIndex], enemy, enemy.def.boss == true, stats.decoySeconds)
-					if stop > 0 then
-						Enemies.stun(enemy, stop, true)
-					end
-				end
-				local net = Ranger.net(state.netted, enemy, enemy.def.boss == true, stats.bossHoldSeconds)
-				if net > 0 then
-					Enemies.stun(enemy, net, true)
-					Effects.disc(enemy.part.Position, 3, RANGER_COLOR, net, 0.4)
-				end
-			end
-		end
-		if i == legendIndex and unit.target and unit.target.alive then
-			local mark, seconds, nextDart = Ranger.dartDue(state.nextDart, now)
-			state.nextDart = nextDart
-			if mark and seconds then
-				Enemies.mark(unit.target, mark, seconds) -- the Legend's Tracking Dart (the Tracker dart's mark rules)
-			end
-		end
-	end
-end
-
-syncWalkers = function(tower: Tower)
-	if tower.ranger then
-		syncRangers(tower)
-		return
-	end
-	local state = tower.raptor
-	if not state then
-		return
-	end
-	local stats = tower.stats
-	local colour = campColour(tower)
-	local homeAt = Enemies.trackDistanceNear(tower.base, tower.side)
-	local params = Raptor.params(stats, tiersBought(tower))
-	params.rate = stats.rate * (1 + tower.buff.ratePercent / 100)
-	if stats.guard then
-		guardPosts(tower, stats.walkers)
-	else
-		state.posts = {}
-	end
-	Walkers.sync(tower, {
-		count = stats.walkers,
-		params = params,
-		side = tower.side,
-		base = tower.base,
-		homeAt = homeAt,
-		sending = not tower.knockedOut,
-		healsBetweenRounds = stats.healsBetweenRounds,
-		look = function()
-			return RaptorLook.build(raptorKind(tower.stats), colour)
-		end,
-		onHit = function(enemy, landed)
-			raptorBite(tower, enemy, landed.x, landed.hold)
-		end,
-		homeFor = if stats.guard
-			then function(i)
-				local post = state.posts[i]
-				if post and table.find(towers, post) then
-					return post.base, Enemies.trackDistanceNear(post.base, tower.side)
-				end
-				return tower.base, homeAt
-			end
-			else nil,
-		candidates = if stats.guard or stats.avengerX > 0
-			then function(i, dinos)
-				if tower.stats.guard then
-					-- Guard: only a dino that hurt its post, within Guard reach of it.
-					local post = state.posts[i]
-					local out = {}
-					if post and post.hurtBy then
-						for _, dino in dinos do
-							if dino.id == post.hurtBy and Raptor.guardAnswers(dino.fromHome) then
-								table.insert(out, dino)
-							end
-						end
-					end
-					return out
-				end
-				local target = Raptor.avenger(tower.stats.avengerX, state.lastStung, os.clock(), state.attacker)
-				if target then
-					for _, dino in dinos do
-						if dino.id == target then
-							return { dino }
-						end
-					end
-				end
-				return dinos
-			end
-			else nil,
-	})
-end
-
--- Raptor Swarm: Swarm raptors small raptors (Swarm share HP and bite) hunt anywhere on the
--- side's track for Swarm (s), then vanish; never past the side's walker cap.
-local function releaseSwarm(tower: Tower)
-	local state = tower.raptor
-	if not state or not tower.stats.swarm then
-		return
-	end
-	local stats = tower.stats
-	local onSide = 0
-	for _, other in towers do
-		if other.side == tower.side then
-			onSide += #Walkers.unitsOf(other)
-		end
-	end
-	local params = Raptor.params(stats, tiersBought(tower), true)
-	params.respawn = math.huge -- a swarm raptor bitten down is gone
-	params.rate = stats.rate * (1 + tower.buff.ratePercent / 100)
-	local colour = campColour(tower)
-	Walkers.sync(state.swarmKey, {
-		count = Raptor.swarmCount(onSide),
-		params = params,
-		side = tower.side,
-		base = tower.base,
-		homeAt = Enemies.trackDistanceNear(tower.base, tower.side),
-		sending = true,
-		healsBetweenRounds = false,
-		look = function()
-			return RaptorLook.build("swarm", colour)
-		end,
-		onHit = function(enemy, landed)
-			raptorBite(tower, enemy, landed.x * Raptor.swarmBite(), landed.hold)
-		end,
-	})
-	state.swarmUntil = os.clock() + Config.Tuning.SwarmS
-end
-
--- Raptor Charge: every standing raptor sweeps the side's track from the exit end back.
-local function startCharge(tower: Tower)
-	local state = tower.raptor
-	if state and tower.stats.charge then
-		state.charge = { elapsed = 0, bitten = {} }
-	end
-end
-
-local function stepRaptor(tower: Tower, dt: number, own)
-	local state = tower.raptor
-	if not state then
-		return
-	end
-	local stats, now = tower.stats, os.clock()
-	-- The Swarm runs out.
-	if state.swarmUntil > 0 and now >= state.swarmUntil then
-		state.swarmUntil = 0
-		Walkers.clear(state.swarmKey)
-	end
-	if tower.knockedOut then
-		return
-	end
-	-- Guard Raptors: re-post about once a second (the most damaged tower first).
-	if stats.guard then
-		state.postTimer += dt
-		if state.postTimer >= 1 then
-			state.postTimer = 0
-			guardPosts(tower, stats.walkers)
-		end
-	end
-	-- Raptor Swarm / Raptor Charge: once a round, fired by Shared/AutoFire.
-	if stats.swarm or stats.charge then
-		local inArea, boss = 0, false
-		for _, enemy in own do
-			if enemy.alive and (enemy.part.Position - tower.position).Magnitude <= stats.range then
-				inArea += 1
-				boss = boss or enemy.def.boss == true
-			end
-		end
-		if AutoFire.check(state.auto, boss, inArea, Enemies.allSpawned(tower.side), #own) then
-			if stats.swarm then
-				releaseSwarm(tower)
-			else
-				startCharge(tower)
-			end
-		end
-	end
-	local charge = state.charge
-	if charge then
-		charge.elapsed += dt
-		local speed = Config.Tuning.RaptorSpeed * stats.walkerSpeedMult
-		local at = Raptor.chargeAt(Enemies.trackLength(tower.side), speed, charge.elapsed)
-		if not at then
-			state.charge = nil
-			Walkers.charge(tower, nil)
-		else
-			Walkers.charge(tower, at)
-			for _, enemy in own do
-				if enemy.alive and not charge.bitten[enemy] and math.abs(enemy.distance - at) <= Config.Tuning.RaptorReach then
-					charge.bitten[enemy] = true
-					local knock = Raptor.chargeKnock(enemy.size, enemy.def.boss == true) -- small dinos only, never a boss
-					raptorBite(tower, enemy, 1, 0)
-					if enemy.alive then
-						Enemies.knockback(enemy, knock)
-					end
-				end
-			end
-		end
-	end
-	-- Rex Tamer: the roar stuns small dinos near the alpha.
-	if stats.stunRoarEvery > 0 then
-		state.roarTimer += dt
-		if state.roarTimer >= stats.stunRoarEvery then
-			local at = Walkers.firstAt(tower)
-			if at then
-				state.roarTimer = 0
-				local list, distances, sizes, bosses = {}, {}, {}, {}
-				for _, enemy in own do
-					if enemy.alive then
-						table.insert(list, enemy)
-						table.insert(distances, (enemy.part.Position - at).Magnitude)
-						table.insert(sizes, enemy.size)
-						table.insert(bosses, enemy.def.boss == true)
-					end
-				end
-				for _, i in Raptor.roared(distances, sizes, bosses) do
-					Enemies.stun(list[i], stats.stunSeconds, false)
-				end
-				Effects.disc(at, Config.Tuning.RoarReachStuds, campColour(tower), 0.4, 0.7)
-			end
-		end
-	end
-end
-
--- Pack Bond (#319): the strongest own-side pen covering `position` with 3+ raptors out, or a
--- War Paint Bone Totem for Full buff (s) after a full charge (PLAN 9h): its hunters' extra damage %
--- against dinos only (Hero asks for its shots on dinos).
-function Towers.hunterDamageAt(position: Vector3, side: number?): number
-	local best = 0
-	for _, source in towers do
-		local percent = source.stats.hunterDamagePercent
-		if percent > 0 and not source.knockedOut and covers(source, position) and BattleRules.canSupport(source.side, side or 1) then
-			if source.totem then
-				best = math.max(best, if os.clock() < source.totem.buffUntil then percent else 0)
-			else
-				best = math.max(best, Raptor.packBond(percent, Walkers.outCount(source), true))
-			end
-		end
-	end
-	return best
-end
-
--- Elder Wisdom (PLAN 9h, #319): the lowest ability cooldown x of an own-side Bone Totem covering
--- `position` (1 = none). Ability tempo for hunters, never damage.
-function Towers.hunterCooldownAt(position: Vector3, side: number?): number
-	local best = 1
-	for _, source in towers do
-		local mult = source.stats.hunterCooldownMult
-		if mult < 1 and not source.knockedOut and covers(source, position) and BattleRules.canSupport(source.side, side or 1) then
-			best = math.min(best, mult)
-		end
-	end
-	return best
-end
-
------------------------------------------------------------------- Bone Totem (PLAN 9h T126)
-
--- Visuals only.
-local BONE_COLOR = Color3.fromRGB(235, 225, 200)
-local GHOST_COLOR = Color3.fromRGB(150, 230, 255)
-local AURA_REFRESH = 0.25 -- s: a totem's charge aura is refreshed at most this often
-
--- One hit of a totem's (roar, skull, ghost hunter): its armour / boss rules, breaks, Shatter's
--- strip first and Fear's knockback after. Its pops never charge a totem (Enemies source "totem").
-local function totemHit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number, strip: boolean)
-	local stats = tower.stats
-	if not enemy.alive or not ownSide(tower, enemy) or (enemy.def.flying and not stats.hitsAir) then
-		return
-	end
-	if strip then
-		Enemies.strip(enemy, Config.Tuning.ShatterStripS) -- Shatter Roar: bare for every tower a while
-	end
-	local pierce = piercing(tower)
-	if not Enemies.canHurt(enemy, pierce) then
-		return
-	end
-	if enemy.def.armored then
-		damage *= stats.armoredMult
-	end
-	if enemy.def.boss then
-		damage *= stats.bossMult
-	end
-	local b = if breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
-	Enemies.setSource("totem")
-	local killed, gone, dropped = Enemies.damage(enemy, damage, pierce, b)
-	Enemies.setSource(nil)
-	credit(tower.owner, killed, gone, dropped)
-	local fear = if enemy.alive then Totem.knock(stats, enemy.size, enemy.def.boss == true) else 0 -- Fear: small dinos only
-	if fear > 0 then
-		Enemies.knockback(enemy, fear)
-	end
-end
-
--- The Spirit Roar: every dino in range (Ancient Roar: on its side); Skull Storm: skulls instead.
-local function spiritRoar(tower: Tower, own)
-	local stats = tower.stats
-	local damage = stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
-	local list = {}
-	for _, enemy in own do
-		if enemy.alive and (stats.roarWholeTrack or stats.skulls > 0 or covers(tower, enemy.part.Position)) then
-			table.insert(list, enemy)
-		end
-	end
-	if stats.skulls > 0 then
-		local distances = {}
-		for i, enemy in list do
-			distances[i] = enemy.distance
-		end
-		for _, i in Totem.skullTargets(distances, stats.skulls) do
-			local enemy = list[i]
-			Effects.tracer(tower.muzzle, enemy.part.Position, BONE_COLOR)
-			Effects.part(Vector3.one * 1.2, CFrame.new(enemy.part.Position + Vector3.new(0, 1.5, 0)), BONE_COLOR, 0.3, Enum.PartType.Ball)
-			totemHit(tower, enemy, damage * Config.Tuning.SkullX, 1, stats.stripsArmor)
-		end
-		return
-	end
-	Effects.disc(tower.base + Vector3.new(0, 0.2, 0), stats.range, BONE_COLOR, 0.5, 0.55) -- the shockwave
-	local breaks = Totem.roarBreaks(stats)
-	for _, enemy in list do
-		totemHit(tower, enemy, damage, breaks, stats.stripsArmor)
-	end
-end
-
--- A full charge: the path's effect (roar or pay), then Spirit Guard, War Paint, Spirit Hunters
--- and Ancient Treasure.
-local function totemFull(tower: Tower, own)
-	local state = tower.totem :: TotemState
-	local stats, now = tower.stats, os.clock()
-	if Totem.roars(stats) then
-		spiritRoar(tower, own)
-		if stats.roarEchoes > 0 then
-			state.echoAt = now + Totem.ECHO_DELAY
-		end
-	elseif onCash then
-		onCash(tower.side, Totem.fullPay(stats, if huntersOn then huntersOn(tower.side) else 1)) -- Bone Market, Camp Payday
-		Effects.disc(tower.base + Vector3.new(0, 0.2, 0), 3, Color3.fromRGB(250, 205, 80), 0.6, 0.4)
-	end
-	local treasure = Totem.treasure(state.rules, stats)
-	if treasure > 0 and onCrate then
-		onCrate(tower.base + Vector3.new(3, 0, 0), treasure, tower.side) -- Ancient Treasure
-	end
-	if stats.fullGuardSeconds > 0 then -- Spirit Guard: towers in range take no damage a while
-		for _, other in towers do
-			if not other.def.untouchable and covers(tower, other.base) and BattleRules.canSupport(tower.side, other.side) then
-				other.sealedUntil = math.max(other.sealedUntil, now + stats.fullGuardSeconds)
-				local shell = Effects.part(Vector3.new(4, TowerLook.BODY_HEIGHT + 1, 4), CFrame.new(other.position), GHOST_COLOR, stats.fullGuardSeconds)
-				shell.Transparency = 0.7
-				shell.Material = Enum.Material.ForceField
-			end
-		end
-	end
-	if stats.hunterDamagePercent > 0 then
-		state.buffUntil = now + Config.Tuning.FullBuffS -- War Paint
-	end
-	if stats.spiritHunters then
-		state.spiritUntil = now + Config.Tuning.SpiritS
-		state.spiritTimer = 0
-	end
-end
-
--- Spirit Hunters: each ghost fires at a dino in range, the furthest along first.
-local function ghostVolley(tower: Tower, own)
-	local list = {}
-	for _, enemy in own do
-		if enemy.alive and covers(tower, enemy.part.Position) and (tower.stats.hitsAir or not enemy.def.flying) then
-			table.insert(list, enemy)
-		end
-	end
-	if #list == 0 then
-		return
-	end
-	table.sort(list, function(a, b)
-		return a.distance > b.distance
-	end)
-	local count = Config.Tuning.SpiritHunters
-	for i = 1, count do
-		local enemy = list[(i - 1) % #list + 1]
-		local angle = i * 2 * math.pi / count
-		local ghost = tower.base + Vector3.new(math.cos(angle) * 2.5, 2.5, math.sin(angle) * 2.5)
-		local body = Effects.part(Vector3.new(1, 2.4, 1), CFrame.new(ghost), GHOST_COLOR, 0.35)
-		body.Transparency = 0.5
-		Effects.tracer(ghost, enemy.part.Position, GHOST_COLOR)
-		totemHit(tower, enemy, Config.Tuning.SpiritHunterDamage * levelScale, 1, false)
-	end
-end
-
-local function stepTotem(tower: Tower, dt: number, own)
-	local state = tower.totem
-	if not state then
-		return
-	end
-	local stats, now = tower.stats, os.clock()
-	local share = Totem.share(state.rules, stats)
-	if math.abs(share - state.shownShare) > 0.01 then
-		state.shownShare = share
-		TowerLook.setCharge(tower.model, share) -- the charge glow ring
-	end
-	if tower.knockedOut then
-		return -- Trampled: no effects (its charge waits)
-	end
-	while state.pending > 0 do
-		state.pending -= 1
-		totemFull(tower, own)
-	end
-	if state.echoAt > 0 and now >= state.echoAt then
-		state.echoAt = 0
-		spiritRoar(tower, own) -- Echo Roar
-	end
-	if now < state.spiritUntil then
-		state.spiritTimer -= dt
-		if state.spiritTimer <= 0 then
-			state.spiritTimer += 1 / Config.Tuning.SpiritHunterRate
-			ghostVolley(tower, own)
-		end
-	end
-	if stats.finishingRoar then -- a free roar at a weak boss in range, once per boss
-		for _, enemy in own do
-			if enemy.alive and enemy.def.boss and covers(tower, enemy.part.Position)
-				and Totem.finishes(enemy.hp / math.max(1e-9, enemy.share * enemy.sizes), state.finished[enemy] == true) then
-				state.finished[enemy] = true
-				spiritRoar(tower, own)
-			end
-		end
-	end
-end
-
------------------------------------------------------------------- Spotter Blimp (PLAN 9h T125b)
-
--- Visuals only.
-local HOOK_COLOR = Color3.fromRGB(90, 90, 95)
-local BOMB_COLOR = Color3.fromRGB(255, 150, 60)
-local LIGHT_REFRESH = 0.25 -- s the searchlight's +% lasts after the last frame under it (keeps it continuous)
-
-local pendingAirlifts: { { tower: Tower, at: number } } = {}
-
--- Sky Hook: the smallest small dino under it is lifted off the track (a take-down: every
--- size pays, pops to the owner).
-local function skyHook(tower: Tower, dinos: { Enemies.Enemy }, ground: Vector3)
-	local list = {}
-	for i, enemy in dinos do
-		list[i] = {
-			hp = enemy.hp,
-			at = enemy.distance,
-			boss = enemy.def.boss == true,
-			sizesLeft = enemy.size,
-			inRange = ownSide(tower, enemy) and Blimp.under(enemy.part.Position, ground, tower.stats.range),
-		}
-	end
-	local i = Blimp.hookPick(list)
-	if not i then
-		return
-	end
-	local enemy = dinos[i]
-	local at = enemy.part.Position
-	local killed, gone, dropped = Enemies.dropSizes(enemy, enemy.size)
-	credit(tower.owner, killed, gone, dropped)
-	if gone then
-		takeDownMark(tower, at)
-	end
-	Effects.tracer(tower.muzzle, at, HOOK_COLOR)
-end
-
--- Bombing Run (AutoFire, once a round played): every dino on the side's track takes Field
--- strike x x the gun's shot (9e Field strike rules: air too, armour only if it pierces, breaks 1).
-local function bombingRun(tower: Tower, dinos: { Enemies.Enemy })
-	local stats = tower.stats
-	local list, field = {}, {}
-	for _, enemy in dinos do
-		if enemy.alive and ownSide(tower, enemy) and Meteor.cometSweeps(enemy.def.flying == true) then
-			table.insert(list, enemy)
-			table.insert(field, { side = tower.side, flying = enemy.def.flying == true, armored = enemy.def.armored == true, bare = Enemies.canHurt(enemy, false) })
-		end
-	end
-	local damage = stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale * stats.fieldStrikeX
-	for _, i in StormCoil.fieldTargets(field, tower.side, piercing(tower)) do
-		local enemy = list[i]
-		Effects.tracer(enemy.part.Position + Vector3.new(0, Blimp.HEIGHT, 0), enemy.part.Position, BOMB_COLOR)
-		hit(tower, enemy, damage, 1)
-	end
-end
-
--- A paratrooper's shot lands (ground dinos only; breaks 1).
-local function paraShot(tower: Tower, enemy: Enemies.Enemy, x: number)
-	if not enemy.alive or enemy.def.flying or not canTarget(tower, enemy) then
-		return
-	end
-	hit(tower, enemy, Blimp.paraDamage() * x * levelScale, 1, true)
-end
-
--- Paratroopers: n walkers drop below the blimp and fight until the round ends (Shared/Walker,
--- fight mode; within the side's walker cap).
-local function dropParatroopers(tower: Tower)
-	local state = tower.blimp :: BlimpState
-	local landAt = state.at
-	local land = Enemies.pointAt(landAt, tower.side)
-	local colour = campColour(tower)
-	Walkers.sync(state.paraKey, {
-		count = tower.stats.paratroopers,
-		params = Blimp.paraParams(),
-		side = tower.side,
-		base = land,
-		homeAt = landAt,
-		sending = true,
-		healsBetweenRounds = false,
-		look = function()
-			return TowerLook.buildRanger(colour)
-		end,
-		onHit = function(enemy, landed)
-			paraShot(tower, enemy, landed.x)
-		end,
-	})
-	Effects.disc(land + Vector3.new(0, 0.3, 0), 4, colour, 0.3, 0.8)
-end
-
--- Airlift: the first of its side's towers Trampled each round is lifted and set down repaired
--- Blimp.AIRLIFT_S later (one per blimp per round).
-airlift = function(tower: Tower)
-	if tower.def.untouchable then
-		return
-	end
-	for _, source in towers do
-		local state = source.blimp
-		if state and source.side == tower.side and Blimp.airlifts(source.stats, state.airliftUsed) then
-			state.airliftUsed = true
-			table.insert(pendingAirlifts, { tower = tower, at = os.clock() + Blimp.AIRLIFT_S })
-			Effects.tracer(source.muzzle, tower.position, HOOK_COLOR)
+	-- A raptor's bite or pounce lands (x `x`: First dive x, Swarm share, Avenger x): the generic
+	-- hit rules (armour, boss x, breaks, Mark %, Slow % / linger) and the pounce's hold.
+	local function raptorBite(tower: Tower, enemy: Enemies.Enemy, x: number, hold: number)
+		local state = tower.raptor
+		if not state or not enemy.alive or not canTarget(tower, enemy) then
 			return
 		end
-	end
-end
-
-local function stepAirlifts()
-	local now = os.clock()
-	for i = #pendingAirlifts, 1, -1 do
-		local lift = pendingAirlifts[i]
-		if now >= lift.at then
-			table.remove(pendingAirlifts, i)
-			if table.find(towers, lift.tower) and lift.tower.knockedOut then
-				Towers.repair(lift.tower)
-			end
+		local stats = tower.stats
+		local _, avenge = Raptor.avenger(stats.avengerX, state.lastStung, os.clock(), state.attacker)
+		if enemy ~= state.attacker then
+			avenge = 1
+		end
+		if stats.markPercent > 0 then
+			Enemies.mark(enemy, stats.markPercent, Config.Tuning.MarkDuration or 0)
+		end
+		if stats.slowPercent > 0 then
+			Enemies.chill(enemy, { slowPercent = stats.slowPercent, seconds = math.max(stats.slowLinger, 0.5), affectsBosses = stats.slowsBosses, brittlePercent = 0, stripsArmor = false })
+		end
+		if hold > 0 then
+			Enemies.stun(enemy, hold, true) -- the pounce's hold (Shared/Walker: a boss only with Boss hold, once)
+		end
+		local gone = hit(tower, enemy, raptorDamage(tower) * x * avenge, stats.sizeBreaks, true)
+		if gone and stats.takeDownStackPercent > 0 then
+			state.takeDowns += 1 -- Hungry Alpha
 		end
 	end
-end
 
--- The standing tower with HP nearest `point` on `side` (Spare Parts' crate heal).
-local function nearestDamageable(point: Vector3, side: number): Tower?
-	local best, bestD = nil, math.huge
-	for _, other in towers do
-		local d = (other.base - point).Magnitude
-		if other.side == side and not other.def.untouchable and not other.knockedOut and d < bestD then
-			best, bestD = other, d
-		end
+	campColour = function(tower: Tower): Color3
+		return BrickColor.new(BattleFlow.campColor(tower.side) :: any).Color
 	end
-	return best
-end
 
-local function crateHeal(tower: Tower, point: Vector3, crates: number)
-	if tower.stats.crateHealPercent <= 0 or crates <= 0 then
-		return
-	end
-	local near = nearestDamageable(point, tower.side)
-	if near then
-		Towers.heal(near, Blimp.crateHeal(tower.stats, near.maxHp) * crates)
-	end
-end
-
--- A finished lap: a crate (Lap chests), med kits and Rebuild Kits' repairs below its path.
-local function lapDrops(tower: Tower, below: Vector3)
-	local stats = tower.stats
-	local drops = Blimp.lapDrops(stats)
-	if drops.crates > 0 and onCrate then
-		for _ = 1, drops.crates do
-			onCrate(below, stats.chestCash, tower.side)
-		end
-		crateHeal(tower, below, drops.crates)
-	end
-	if drops.kits > 0 and onKit then
-		for _ = 1, drops.kits do
-			onKit(below, stats.medKitHeal, tower.side)
-		end
-	end
-	if drops.repairs > 0 then
-		local trampled, distances = {}, {}
+	-- Guard Raptors: re-post each raptor beside a tower in range, the most damaged first.
+	local function guardPosts(tower: Tower, count: number)
+		local state = tower.raptor :: RaptorState
+		local list, shares = {}, {}
 		for _, other in towers do
-			if other.side == tower.side and other.knockedOut and not other.def.untouchable then
-				local onPath = Enemies.pointAt(Enemies.trackDistanceNear(other.base, tower.side), tower.side)
-				local offset = other.base - onPath
-				table.insert(trampled, other)
-				table.insert(distances, Vector2.new(offset.X, offset.Z).Magnitude)
+			if other ~= tower and not other.def.untouchable and BattleRules.canSupport(tower.side, other.side) and covers(tower, other.base) then
+				table.insert(list, other)
+				table.insert(shares, if other.maxHp > 0 then other.hp / other.maxHp else 1)
 			end
 		end
-		for _, i in Blimp.repairs(distances, stats.range, drops.repairs) do
-			Towers.repair(trampled[i])
-			Effects.tracer(tower.muzzle, trampled[i].position, HOOK_COLOR)
+		local posts = {}
+		for i, index in Raptor.guardPosts(count, shares) do
+			posts[i] = list[index]
 		end
+		state.posts = posts
 	end
-end
 
-local function stepBlimp(tower: Tower, dt: number, own)
-	local state = tower.blimp
-	if not state then
-		return
+	local function raptorKind(stats: Stats, swarm: boolean?): string
+		return if swarm then "swarm" elseif stats.stunRoarEvery > 0 then "rex" elseif stats.alpha then "alpha" else "raptor"
 	end
-	local stats = tower.stats
-	local speed = Blimp.speed(stats)
-	local lapDone
-	state.at, state.dir, lapDone = Blimp.advance(state.at, state.dir, speed, dt, Enemies.trackLength(tower.side))
-	local dinos = {}
-	for _, enemy in own do
-		if enemy.alive then
-			table.insert(dinos, enemy)
-		end
+
+	local function tiersBought(tower: Tower): number
+		return tower.pathTiers[1] + tower.pathTiers[2] + tower.pathTiers[3]
 	end
-	-- Tracking Beam: the light and gun centre on the side's biggest dino, moving at Blimp speed.
-	if stats.targetsBiggest then
-		local list = {}
-		for i, enemy in dinos do
-			list[i] = { hp = enemy.hp, at = enemy.distance, boss = enemy.def.boss == true, sizesLeft = enemy.size, inRange = true }
-		end
-		local i = Blimp.biggest(list)
-		state.focus = Blimp.follow(state.focus, if i then dinos[i].distance else state.at, speed, dt)
-	else
-		state.focus = state.at
-	end
-	local ground = Enemies.pointAt(state.focus, tower.side)
-	local below = Enemies.pointAt(state.at, tower.side)
-	local air = below + Vector3.new(0, Blimp.HEIGHT, 0)
-	tower.position = ground + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0)
-	tower.muzzle = air - Vector3.new(0, 4, 0)
-	TowerLook.poseBlimp(state.model, air, Enemies.pointAt(state.at + state.dir, tower.side) - below, ground, stats.range)
-	if hasAura(stats) then
-		auraDirty = true -- its auras move with it (refreshed at most every AURA_REFRESH s)
-	end
-	-- Searchlight: dinos under the light take +Brittle % (bosses too).
-	if stats.brittlePercent > 0 then
-		for _, enemy in dinos do
-			if ownSide(tower, enemy) and Blimp.under(enemy.part.Position, ground, stats.range) then
-				Enemies.chill(enemy, { slowPercent = 0, seconds = LIGHT_REFRESH, affectsBosses = true, brittlePercent = stats.brittlePercent, stripsArmor = false })
+
+	------------------------------------------------------------------ Ranger Station (PLAN 9j T129)
+
+	local POST_SAMPLE = 2 -- studs between the track points searched for default posts
+	local RANGER_COLOR = Color3.fromRGB(176, 160, 110) -- visuals only
+
+	-- Is a boss alive on `side` (Hold the Line)?
+	local function bossOut(side: number): boolean
+		for _, enemy in Enemies.getLive() do
+			if enemy.alive and enemy.side == side and enemy.def.boss == true then
+				return true
 			end
 		end
+		return false
 	end
-	if stats.hookEvery > 0 then
-		local fire
-		state.hookTimer, fire = Blimp.hookTick(state.hookTimer, dt, stats.hookEvery)
-		if fire then
-			skyHook(tower, dinos, ground)
-		end
-	end
-	if stats.bombingRun then
-		local boss = false
-		for _, enemy in dinos do
-			boss = boss or enemy.def.boss == true
-		end
-		if AutoFire.check(state.auto, boss, #dinos, Enemies.allSpawned(tower.side), #dinos) then
-			bombingRun(tower, dinos)
-		end
-	end
-	state.roundClock += dt
-	if Blimp.paraDue(stats.paratroopers, state.roundClock, state.paraDropped) then
-		state.paraDropped = true
-		dropParatroopers(tower)
-	end
-	if lapDone then
-		lapDrops(tower, below)
-	end
-end
 
------------------------------------------------------------------- Meteor Beacon (PLAN 9i T127)
+	-- Default posts: the nearest track points within Range (Shared/Ranger.defaultPosts).
+	local function defaultPosts(tower: Tower): { number }
+		local samples = {}
+		local length = Enemies.trackLength(tower.side)
+		local d = 0
+		while d <= length do
+			local offset = Enemies.pointAt(d, tower.side) - tower.base
+			table.insert(samples, { at = d, dist = Vector2.new(offset.X, offset.Z).Magnitude })
+			d += POST_SAMPLE
+		end
+		return Ranger.defaultPosts(samples, tower.stats.range, Ranger.postCount(tower.stats.walkers))
+	end
 
--- Visuals only.
-local WARN_COLOR = Color3.fromRGB(230, 40, 30)
-local ROCK_COLOR = Color3.fromRGB(95, 60, 45)
-local CRATER_COLOR = Color3.fromRGB(255, 110, 30)
-local ICE_COLOR = Color3.fromRGB(170, 225, 255)
-local ASH_COLOR = Color3.fromRGB(120, 115, 110)
-local CRATER_TICK = 0.25 -- s a crater's touch (strip, amp, miss, ash) lasts after the last frame in it
-
--- One meteor on its way: it lands at `at` (distance along its side's track) at `when`.
-type Landing = { at: number, when: number, damage: number, splash: number, crater: boolean, small: boolean, giant: boolean? }
-
--- A meteor lands: every dino it can hit in the splash takes the hit and breaks the build's
--- sizes (the biggest one more with Dino Killer); a crater, a Cinder Trail strip, Impact
--- Winter's side slow after.
-local function meteorLand(tower: Tower, landing: Landing, own)
-	local state = tower.meteor :: MeteorState
-	local stats = tower.stats
-	local dinos, list = {}, {}
-	for _, enemy in own do
-		if enemy.alive and ownSide(tower, enemy) then
-			table.insert(list, enemy)
-			table.insert(dinos, { id = enemy, at = enemy.distance, boss = enemy.def.boss == true, flying = enemy.def.flying == true, sizes = enemy.size })
+	-- Post markers on the track (visual): a short pole with a camp-colour pennant per post.
+	local function showPosts(tower: Tower)
+		local state = tower.ranger :: RangerState
+		for _, flag in state.flags do
+			flag:Destroy()
+		end
+		state.flags = {}
+		if tower.stats.jeep or tower.stats.guard then
+			return -- posts unused
+		end
+		for i, at in state.posts do
+			local p = Instance.new("Part")
+			p.Name = `Post{i}`
+			p.Size = Vector3.new(0.3, 2.4, 0.3)
+			p.CFrame = CFrame.new(Enemies.pointAt(at, tower.side) + Vector3.new(0, 1.2, 0))
+			p.Color = campColour(tower)
+			p.Material = Enum.Material.Wood
+			p.Anchored, p.CanCollide, p.CanTouch, p.CanQuery = true, false, false, false
+			p.Parent = tower.model
+			table.insert(state.flags, p)
 		end
 	end
-	local point = Enemies.pointAt(landing.at, tower.side)
-	Effects.part(Vector3.one * (if landing.small then 1.5 else 3), CFrame.new(point + Vector3.new(0, 1, 0)), ROCK_COLOR, 0.4, Enum.PartType.Ball)
-	Effects.disc(point + Vector3.new(0, 0.3, 0), landing.splash, CRATER_COLOR, 0.35, 0.4)
-	local hits = Meteor.hits(dinos, landing.at, landing.splash, stats.hitsAir)
-	local biggest = Meteor.biggest(hits)
-	for _, d in hits do
-		local enemy = d.id :: Enemies.Enemy
-		if stats.stripsArmor then
-			Enemies.strip(enemy, Config.Tuning.StripS) -- Glass Crater: the meteor bares them too
+
+	-- Bodyguards: each ranger guards a tower in range, the most damaged first (Raptor Guard's rule).
+	local function rangerGuards(tower: Tower, count: number)
+		local state = tower.ranger :: RangerState
+		local list, shares = {}, {}
+		for _, other in towers do
+			if other ~= tower and not other.def.untouchable and BattleRules.canSupport(tower.side, other.side) and covers(tower, other.base) then
+				table.insert(list, other)
+				table.insert(shares, if other.maxHp > 0 then other.hp / other.maxHp else 1)
+			end
 		end
-		hit(tower, enemy, landing.damage, Meteor.breaksFor(stats, d == biggest))
+		local guarded = {}
+		for i, index in Raptor.guardPosts(count, shares) do
+			guarded[i] = list[index]
+		end
+		state.guarded = guarded
 	end
-	if landing.crater then
-		local crater = Meteor.crater(stats, landing.at, os.clock())
-		table.insert(state.craters, crater)
-		local seconds = Meteor.craterSeconds(stats)
-		Hazards.burn(landing.at, Config.Tuning.CraterRadius, Meteor.craterBurn(stats) * levelScale, seconds, piercing(tower) or stats.stripsArmor, tower.owner, tower.side)
-		if stats.craterFreezeSeconds > 0 then
-			Effects.disc(point + Vector3.new(0, 0.5, 0), Config.Tuning.CraterRadius, ICE_COLOR, seconds, 0.55)
-		elseif stats.throwMissPercent > 0 or stats.biteMissPercent > 0 then
-			Effects.disc(point + Vector3.new(0, 0.5, 0), Config.Tuning.CraterRadius, ASH_COLOR, seconds, 0.6)
+
+	-- Ranger `index`'s post: its guarded tower's track point (Bodyguards), else round-robin.
+	local function postOf(tower: Tower, index: number): number?
+		local state = tower.ranger :: RangerState
+		local guarded = state.guarded[index]
+		if tower.stats.guard and guarded and table.find(towers, guarded) then
+			return Enemies.trackDistanceNear(guarded.base, tower.side)
 		end
-		if stats.fireLine then -- Fire Line: the stretch to a close live crater burns too
-			local now = os.clock()
-			for _, other in state.craters do
-				local gap = math.abs(other.at - landing.at)
-				if other ~= crater and other.ends > now and gap > 0 and gap <= Config.Tuning.FireLineGapStuds then
-					local both = math.min(other.ends, crater.ends) - now
-					Hazards.burn((other.at + landing.at) / 2, gap / 2, Meteor.craterBurn(stats) * levelScale, both, piercing(tower) or stats.stripsArmor, tower.owner, tower.side)
+		return (Ranger.postFor(index, state.posts))
+	end
+
+	-- A ranger's shot lands: the station's composed damage x Heavy x / Legend x (Shared/Ranger.shot),
+	-- the generic hit rules; a take-down marks nearby dinos (Head Ranger, in `hit`).
+	local function rangerShot(tower: Tower, enemy: Enemies.Enemy, index: number)
+		if not enemy.alive or not canTarget(tower, enemy) then
+			return
+		end
+		local stats = tower.stats
+		local x, breaks = Ranger.shot(index, stats)
+		if stats.markPercent > 0 then
+			Enemies.mark(enemy, stats.markPercent, Config.Tuning.MarkDuration or 0)
+		end
+		local from = Walkers.unitAt(tower, index)
+		local to = enemy.part.Position
+		hit(tower, enemy, stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale * x, math.max(stats.sizeBreaks, breaks), true)
+		if from then
+			Effects.tracer(from + Vector3.new(0, 1, 0), to, campColour(tower))
+		end
+	end
+
+	local syncRangers: (Tower) -> ()
+	syncRangers = function(tower: Tower)
+		local state = tower.ranger :: RangerState
+		local stats = tower.stats
+		-- The player's posts (posts UI, T130) first, topped up with the nearest ones.
+		state.posts = Ranger.fitPosts(if state.custom then state.posts else {}, defaultPosts(tower), Ranger.postCount(stats.walkers))
+		if stats.guard then
+			rangerGuards(tower, stats.walkers)
+		else
+			state.guarded = {}
+		end
+		local _, legendIndex = Ranger.roles(stats)
+		local colour = campColour(tower)
+		local rate = stats.rate * (1 + tower.buff.ratePercent / 100)
+		local plain = Ranger.params(stats, tiersBought(tower))
+		plain.rate = rate
+		local legend = Ranger.params(stats, tiersBought(tower), true)
+		legend.rate = rate
+		Walkers.sync(tower, {
+			count = stats.walkers,
+			params = plain,
+			side = tower.side,
+			base = tower.base,
+			homeAt = Enemies.trackDistanceNear(tower.base, tower.side),
+			sending = not tower.knockedOut,
+			healsBetweenRounds = stats.healsBetweenRounds,
+			look = function(i)
+				local heavy, leg = Ranger.roles(tower.stats)
+				return RangerLook.build(if i == leg then "legend" elseif i == heavy then "heavy" else "ranger", colour)
+			end,
+			onHit = function(enemy, _landed, i)
+				rangerShot(tower, enemy, i)
+			end,
+			postFor = function(i)
+				return postOf(tower, i)
+			end,
+			paramsFor = function(i)
+				return if i == legendIndex then legend else plain
+			end,
+			biteHook = if stats.bossRoundGuard
+				then function(unit, amount)
+					return Ranger.guarded(unit.hp, amount, bossOut(tower.side)) -- Hold the Line
+				end
+				else nil,
+			offsetFor = function(i)
+				local _, slot = Ranger.postFor(i, state.posts)
+				return 1.6 * (slot - 1)
+			end,
+		})
+		if stats.jeep and not state.jeep then
+			local jeep = RangerLook.buildJeep(colour)
+			jeep.Parent = tower.model
+			state.jeep = jeep
+		end
+		showPosts(tower)
+		-- The posts UI (Shop.client, PLAN 9j T130) reads these.
+		local body = tower.model.PrimaryPart
+		if body then
+			local list = {}
+			for _, at in state.posts do
+				table.insert(list, string.format("%.1f", at))
+			end
+			body:SetAttribute("Posts", table.concat(list, ","))
+			body:SetAttribute("PostCount", #state.posts)
+			body:SetAttribute("PostRange", stats.range)
+			body:SetAttribute("UsesPosts", not (stats.jeep or stats.guard))
+		end
+		if stats.postAura then
+			refreshAuras() -- Sandbags follows the posts
+		end
+	end
+
+	-- The posts UI (PLAN 9j T130): post `index` of a Ranger Station to the track point nearest
+	-- `spot`. Server/Shop checked the player and `onTrack` (Shared/Placement on the side's zone);
+	-- here: a station whose rangers use posts, within its Range, not in a Tar Pit pool.
+	function Towers.setPost(tower: Tower, index: number, spot: Vector3, onTrack: boolean): (boolean, string)
+		local state = tower.ranger
+		if not state then
+			return false, "Only a Ranger Station has posts"
+		end
+		local stats = tower.stats
+		if stats.jeep or stats.guard then
+			return false, "Its rangers don't use posts"
+		end
+		if index ~= math.floor(index) or index < 1 or index > #state.posts then
+			return false, "No such post"
+		end
+		local at = Enemies.trackDistanceNear(spot, tower.side)
+		local offset = Enemies.pointAt(at, tower.side) - tower.base
+		local inPool = false
+		for _, pool in Towers.pools(tower.side) do
+			inPool = inPool or TarPit.contains(at, pool.at, pool.length)
+		end
+		local ok, why = Ranger.checkPost(onTrack, Vector2.new(offset.X, offset.Z).Magnitude, stats.range, inPool)
+		if not ok then
+			return false, why or "Can't post there"
+		end
+		local posts = table.clone(state.posts)
+		posts[index] = at
+		state.posts = posts
+		state.custom = true
+		state.trapTimers = {}
+		syncRangers(tower)
+		return true, `Post {index} set`
+	end
+
+	-- Bodyguards (PLAN 9j): a ranger guarding `target` takes a bite aimed at it. True if one did.
+	function Towers.guardBite(target: any, amount: number): boolean
+		for _, station in towers do
+			local state = station.ranger
+			if state and station.stats.guard and not station.knockedOut and station.side == target.side then
+				for i, guarded in state.guarded do
+					if guarded == target and Walkers.biteUnit(station, i, amount) then
+						return true
+					end
 				end
 			end
 		end
+		return false
 	end
-	if landing.small and stats.burnStreak then -- Cinder Trail
-		local from, to = Meteor.streak(landing.at)
-		Hazards.burn((from + to) / 2, (to - from) / 2, Meteor.craterBurn(stats) * levelScale, Meteor.STREAK_SECONDS, piercing(tower), tower.owner, tower.side)
-	end
-	if stats.sideSlowPercent > 0 and stats.sideSlowSeconds > 0 then -- Impact Winter: every dino on the side
-		for _, enemy in list do
-			Enemies.chill(enemy, { slowPercent = stats.sideSlowPercent, seconds = stats.sideSlowSeconds, affectsBosses = true, brittlePercent = 0, stripsArmor = false })
-		end
-	end
-end
 
--- Queue meteors at `points` after the warning ring (n small ones spread over Meteor.SMALL_SPREAD s).
-local function meteorQueue(tower: Tower, points: { number }, damage: number, splash: number, small: boolean, crater: boolean)
-	local state = tower.meteor :: MeteorState
-	local now, warn = os.clock(), Meteor.warning()
-	for i, at in points do
-		local delay = if #points > 1 then (i - 1) * Meteor.SMALL_SPREAD / #points else 0
-		local point = Enemies.pointAt(at, tower.side)
-		task.delay(delay, function()
-			Effects.disc(point + Vector3.new(0, 0.35, 0), splash, WARN_COLOR, warn, 0.5) -- the warning ring
-		end)
-		table.insert(state.landings, { at = at, when = now + delay + warn, damage = damage, splash = splash, crater = crater and i == 1, small = small })
-	end
-	Effects.tracer(tower.muzzle, tower.muzzle + Vector3.new(0, 30, 0), WARN_COLOR) -- the red flare
-end
-
-local function meteorDinos(tower: Tower, own): { Meteor.Dino }
-	local dinos = {}
-	for _, enemy in own do
-		if enemy.alive and ownSide(tower, enemy) then
-			table.insert(dinos, { id = enemy, at = enemy.distance, boss = enemy.def.boss == true, flying = enemy.def.flying == true, sizes = enemy.size })
-		end
-	end
-	return dinos
-end
-
-local function meteorDamage(tower: Tower): number
-	return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
-end
-
--- A strike now: one meteor on the densest bunch, n small ones (Sky Rocks; Scatter's segments),
--- or a Starfall wave (no crater).
-local function meteorStrike(tower: Tower, dinos: { Meteor.Dino }, starfall: boolean)
-	local stats = tower.stats
-	local length = Enemies.trackLength(tower.side)
-	local x = meteorDamage(tower) / math.max(1e-9, stats.damage)
-	if starfall then
-		local n, dmg, splash = Meteor.starfall(stats)
-		meteorQueue(tower, Meteor.points(dinos, n, true, length, stats.hitsAir), dmg * x, splash, true, false)
-		return
-	end
-	local n, dmg, splash = Meteor.strike(stats)
-	meteorQueue(tower, Meteor.points(dinos, n, stats.scatter, length, stats.hitsAir), dmg * x, splash, n > 1, true)
-end
-
--- Extinction Event: every dino on the side takes Extinction x the meteor (breaks 1); the
--- densest bunch's break Extinction breaks.
-local function extinctionEvent(tower: Tower, own)
-	local stats = tower.stats
-	local dinos = meteorDinos(tower, own)
-	local centre = Meteor.densest(dinos, stats.hitsAir)
-	if centre == nil then
-		return
-	end
-	Effects.disc(Enemies.pointAt(centre, tower.side) + Vector3.new(0, 0.4, 0), Config.Tuning.BunchRadiusStuds * 2, CRATER_COLOR, 1, 0.3)
-	local scale = meteorDamage(tower) / math.max(1e-9, stats.damage)
-	for _, d in dinos do
-		if stats.hitsAir or not d.flying then
-			local inBunch = math.abs(d.at - centre) <= Config.Tuning.BunchRadiusStuds
-			local dmg, breaks = Meteor.extinctionHit(stats, inBunch)
-			hit(tower, d.id :: Enemies.Enemy, dmg * scale, breaks)
-		end
-	end
-end
-
--- Comet Tail (Bombing run): once a round played, Field strike x the meteor on every dino on the
--- side's track (the 9h Bombing Run rules: armour only if it pierces, breaks 1), ground dinos
--- only (#347: flyers are Shooting Stars').
-local function cometTail(tower: Tower, own)
-	local stats = tower.stats
-	local list, field = {}, {}
-	for _, enemy in own do
-		if enemy.alive and ownSide(tower, enemy) and Meteor.cometSweeps(enemy.def.flying == true) then
-			table.insert(list, enemy)
-			table.insert(field, { side = tower.side, flying = enemy.def.flying == true, armored = enemy.def.armored == true, bare = Enemies.canHurt(enemy, false) })
-		end
-	end
-	local damage = meteorDamage(tower) * stats.fieldStrikeX
-	for _, i in StormCoil.fieldTargets(field, tower.side, piercing(tower)) do
-		local enemy = list[i]
-		Effects.tracer(enemy.part.Position + Vector3.new(0, 25, 0), enemy.part.Position, CRATER_COLOR)
-		hit(tower, enemy, damage, 1)
-	end
-end
-
-local function stepMeteor(tower: Tower, dt: number, own)
-	local state = tower.meteor
-	if not state then
-		return
-	end
-	local stats, now = tower.stats, os.clock()
-	state.craters = Meteor.prune(state.craters, now)
-	-- Craters touch the dinos in them: Glass Crater strips, Scorch Marks marks, New Ice Age freezes once.
-	if #state.craters > 0 then
+	-- A trap at `at` springs on the first ground dino within Trap reach (Shared/Ranger).
+	local function springTrap(tower: Tower, at: number, own): boolean
+		local list, byId = {}, {}
 		for _, enemy in own do
-			if enemy.alive and ownSide(tower, enemy) and (stats.hitsAir or not enemy.def.flying) then
-				local crater = Meteor.inCrater(state.craters, enemy.distance, now, stats.fireLine)
-				if crater then
-					if stats.stripsArmor then
-						Enemies.strip(enemy, CRATER_TICK)
-					end
-					if stats.craterAmpPercent > 0 then
-						Enemies.mark(enemy, stats.craterAmpPercent, Meteor.AMP_SECONDS)
-					end
-					if stats.craterFreezeSeconds > 0 and Meteor.freezeOnce(crater, enemy) then
-						Enemies.stun(enemy, FourX.hardStop(stats.craterFreezeSeconds, enemy.def.boss == true), true)
-					end
-				end
-			end
-		end
-	end
-	for i = #state.landings, 1, -1 do
-		local landing = state.landings[i]
-		if now >= landing.when then
-			table.remove(state.landings, i)
-			meteorLand(tower, landing, own)
-		end
-	end
-	if tower.knockedOut then
-		return -- Trampled: no new meteors
-	end
-	local dinos = meteorDinos(tower, own)
-	local every, starfall = Meteor.strikeEvery(stats)
-	state.timer += dt * (1 + tower.buff.ratePercent / 100)
-	if state.timer >= every and #dinos > 0 then
-		state.timer = 0
-		meteorStrike(tower, dinos, starfall)
-	end
-	if stats.meteorEvery > 0 then -- Endless Rain: one more small meteor on its own timer
-		state.rainTimer += dt
-		if state.rainTimer >= stats.meteorEvery and #dinos > 0 then
-			state.rainTimer = 0
-			local dmg, splash = Meteor.small(stats)
-			meteorQueue(tower, Meteor.points(dinos, 1, false, 1, stats.hitsAir), dmg * meteorDamage(tower) / math.max(1e-9, stats.damage), splash, true, false)
-		end
-	end
-	if stats.extinction then
-		local centre = Meteor.densest(dinos, stats.hitsAir)
-		local boss, count = false, 0
-		if centre then
-			for _, d in dinos do
-				if math.abs(d.at - centre) <= Config.Tuning.BunchRadiusStuds then
-					count += 1
-					boss = boss or d.boss == true
-				end
-			end
-		end
-		if Meteor.extinctionNow(state.extinctionAuto, boss, count, Enemies.allSpawned(tower.side), #dinos) then
-			extinctionEvent(tower, own)
-		end
-	end
-	if stats.bombingRun then
-		local boss = false
-		for _, d in dinos do
-			boss = boss or d.boss == true
-		end
-		if AutoFire.check(state.auto, boss, #dinos, Enemies.allSpawned(tower.side), #dinos) then
-			cometTail(tower, own)
-		end
-	end
-end
-
--- Ash Cloud / Blinding Dust: the strongest Throw / Bite miss % of its side's craters holding `point`.
-local function craterMiss(point: Vector3, side: number, field: string): number
-	local percent, now = 0, os.clock()
-	for _, tower in towers do
-		local state = tower.meteor
-		if state and tower.side == side and (tower.stats :: any)[field] > 0 and #state.craters > 0 then
-			if Meteor.inCrater(state.craters, Enemies.trackDistanceNear(point, side), now, tower.stats.fireLine) then
-				percent = math.max(percent, (tower.stats :: any)[field])
-			end
-		end
-	end
-	return percent
-end
-
--- Ash Cloud / Blinding Dust: dinos in a crater miss this % of their bites.
-function Towers.biteMissAt(point: Vector3, side: number): number
-	return craterMiss(point, side, "biteMissPercent")
-end
-
--- Studio `firenow METEOR`: a strike now; Extinction Event / Comet Tail now (ignoring the trigger).
-local function meteorFireNow(tower: Tower, fired: { string })
-	if not tower.meteor then
-		return
-	end
-	local own = BattleRules.ownDinos(Enemies.getLive(), tower.side, "tower")
-	local dinos = meteorDinos(tower, own)
-	if #dinos > 0 then
-		local _, starfall = Meteor.strikeEvery(tower.stats)
-		meteorStrike(tower, dinos, starfall)
-		table.insert(fired, if starfall then "Starfall" else "meteor strike")
-	end
-	if tower.stats.extinction then
-		extinctionEvent(tower, own)
-		table.insert(fired, "Extinction Event")
-	end
-	if tower.stats.bombingRun then
-		cometTail(tower, own)
-		table.insert(fired, "Comet Tail")
-	end
-end
-
------------------------------------------------------------------- Volcano Vent (PLAN 9i T128)
-
--- Visuals only.
-local LAVA_COLOR = Color3.fromRGB(255, 95, 20)
-local CRUST_COLOR = Color3.fromRGB(30, 28, 34)
-local ASH_FALL_COLOR = Color3.fromRGB(110, 105, 100)
-local VENT_TICK = 0.25 -- s a crust's slow / strip / a Rumble lasts after the last frame on it
-local VENT_WALL_CATCH = 1.5 -- studs before the Obsidian Wall where a dino stops
-
--- One eruption hit (armour / boss rules, breaks `breaks`); Steam Burst knocks small dinos back.
-local function ventHit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number, knock: boolean)
-	local stats = tower.stats
-	local pierce = piercing(tower)
-	if not enemy.alive or not ownSide(tower, enemy) or not Enemies.canHurt(enemy, pierce) then
-		return
-	end
-	if enemy.def.armored then
-		damage *= stats.armoredMult
-	end
-	if enemy.def.boss then
-		damage *= stats.bossMult
-	end
-	local b = if breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
-	local at = enemy.part.Position
-	local killed, gone, dropped = Enemies.damage(enemy, damage, pierce, b)
-	credit(tower.owner, killed, gone, dropped)
-	if gone then
-		takeDownMark(tower, at)
-	end
-	if knock and enemy.alive and FourX.isSmall(enemy.size, enemy.def.boss == true) then
-		Enemies.knockback(enemy, stats.knockback) -- Steam Burst: small dinos only
-	end
-end
-
-local function ventDamage(tower: Tower): number
-	return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
-end
-
--- The dinos on its stretch it can hit, the furthest along first.
-local function onStretch(tower: Tower, own, from: number, to: number): { Enemies.Enemy }
-	local list = {}
-	for _, enemy in own do
-		if enemy.alive and ownSide(tower, enemy) and Vent.inStretch(enemy.distance, from, to) and (tower.stats.hitsAir or not enemy.def.flying) then
-			table.insert(list, enemy)
-		end
-	end
-	table.sort(list, function(a, b)
-		return a.distance > b.distance
-	end)
-	return list
-end
-
-local function drawStretch(tower: Tower, from: number, to: number, color: Color3, seconds: number, transparency: number)
-	local d = from
-	while d <= to do
-		Effects.disc(Enemies.pointAt(d, tower.side) + Vector3.new(0, 0.4, 0), 3, color, seconds, transparency)
-		d += 4
-	end
-end
-
--- An eruption at `size` (1 = the main one; Ring of Fire's smaller): Targets dinos on the stretch
--- take the hit, the lava floods the stretch (a flow), Lava Bombs, Ash Blanket.
-local function ventErupt(tower: Tower, own, size: number, bombs: boolean)
-	local state = tower.vent :: VentState
-	local stats, now = tower.stats, os.clock()
-	local damage = ventDamage(tower) * size
-	local list = onStretch(tower, own, state.from, state.to)
-	for i = 1, math.min(#list, stats.targets) do
-		ventHit(tower, list[i], damage, 1, stats.knockback > 0)
-	end
-	local seconds = Vent.flowSeconds(stats)
-	local dps = Vent.flowBurn(stats, tower.def.baseDamage) * size * (1 + tower.buff.damagePercent / 100) * levelScale
-	table.insert(state.flows, { from = state.from, to = state.to, ends = now + seconds, dps = dps, frozen = false })
-	drawStretch(tower, state.from, state.to, LAVA_COLOR, seconds, 0.35)
-	Effects.part(Vector3.new(1.2, 6, 1.2), CFrame.new(tower.base + Vector3.new(0, 3, 0)), LAVA_COLOR, 0.5) -- the plume
-	if bombs and stats.lavaBombs then -- Lava Bombs: at the biggest dinos in range
-		local inRange, sizes = {}, {}
-		for _, enemy in own do
-			if enemy.alive and ownSide(tower, enemy) and covers(tower, enemy.part.Position) and (stats.hitsAir or not enemy.def.flying) then
-				table.insert(inRange, enemy)
-				table.insert(sizes, { sizes = enemy.size, boss = enemy.def.boss == true })
-			end
-		end
-		local picks, x = Vent.bombTargets(sizes)
-		for _, i in picks do
-			Effects.tracer(tower.muzzle, inRange[i].part.Position, LAVA_COLOR)
-			ventHit(tower, inRange[i], ventDamage(tower) * x, stats.sizeBreaks, false)
-		end
-	end
-	if stats.sideThrowMissPercent > 0 then -- Ash Blanket
-		state.ashUntil = now + Vent.ashSeconds()
-		Effects.disc(tower.base + Vector3.new(0, 6, 0), 8, ASH_FALL_COLOR, 1, 0.5)
-	end
-end
-
--- The strongest live flow on `side` (any vent's) holding a dino at `at`, and its tower.
-local function strongestFlow(side: number, at: number, now: number): (Vent.Flow?, Tower?)
-	local best, owner = nil, nil
-	for _, other in towers do
-		local state = other.vent
-		if state and other.side == side then
-			local f = Vent.strongest(state.flows, at, now)
-			if f and (best == nil or f.dps > best.dps) then
-				best, owner = f, other
-			end
-			if state.superUntil > now and (best == nil or state.superDps > best.dps) then -- Supervolcano: the whole side
-				best, owner = { from = -math.huge, to = math.huge, ends = state.superUntil, dps = state.superDps, frozen = true }, other
-			end
-		end
-	end
-	return best, owner
-end
-
-local function stepVent(tower: Tower, dt: number, own)
-	local state = tower.vent
-	if not state then
-		return
-	end
-	local stats, now = tower.stats, os.clock()
-	local from, to = Vent.stretch(stats, state.at, Enemies.trackLength(tower.side))
-	state.from, state.to = from, to
-	local cone = stats.flowLengthMult >= 2 -- Fire Mountain (visual)
-	if cone ~= state.cone then
-		state.cone = cone
-		TowerLook.setVentCone(tower.model, cone)
-	end
-	-- Lava: dinos in this vent's (strongest) flow burn and are shoved; flows that end leave crust
-	-- (Obsidian) and Frozen Fire freezes the dinos on them once.
-	for i = #state.flows, 1, -1 do
-		local flow = state.flows[i]
-		if Vent.freezeAtEnd(flow, now) then
-			table.remove(state.flows, i)
-			local crustEnds, _ = Vent.crust(stats, flow.ends)
-			if crustEnds > flow.ends then
-				table.insert(state.crusts, { from = flow.from, to = flow.to, ends = crustEnds, crossed = setmetatable({}, { __mode = "k" }) :: any })
-				drawStretch(tower, flow.from, flow.to, CRUST_COLOR, crustEnds - now, 0.3)
-			end
-			if stats.freezeFlowSeconds > 0 then -- Frozen Fire
-				for _, enemy in onStretch(tower, own, flow.from, flow.to) do
-					if not enemy.def.flying then
-						Enemies.stun(enemy, FourX.hardStop(stats.freezeFlowSeconds, enemy.def.boss == true), true)
-					end
-				end
-			end
-		end
-	end
-	local anyLava = #state.flows > 0 or state.superUntil > now
-	for _, enemy in own do
-		if not enemy.alive or enemy.def.flying or not ownSide(tower, enemy) then
-			continue
-		end
-		local flow, owner = strongestFlow(tower.side, enemy.distance, now)
-		if flow and owner == tower then
-			local pierce = piercing(tower) or stats.stripsArmor
-			if Enemies.canHurt(enemy, pierce) then
-				credit(tower.owner, Enemies.damage(enemy, flow.dps * dt, pierce, 1)) -- ticks break 1 (#127; Lava Lake)
-			end
-			Enemies.shove(enemy, Vent.shove(enemy.shoveOffset, dt, enemy.def.boss == true))
-			state.shoved[enemy] = true
-		elseif not flow and state.shoved[enemy] then
-			state.shoved[enemy] = nil -- out of the lava: it walks back to its path
-			Enemies.detour(enemy, Vent.rejoinSeconds(enemy.shoveOffset, enemy.speed))
-		end
-		-- Crust: slowed, bare (Sharp Glass), cut (Jagged Crust), a detour round Glass Maze once.
-		for _, crust in state.crusts do
-			if crust.ends > now and Vent.inStretch(enemy.distance, crust.from, crust.to) then
-				Enemies.chill(enemy, { slowPercent = Config.Tuning.CrustSlow, seconds = VENT_TICK, affectsBosses = false, brittlePercent = 0, stripsArmor = stats.stripsArmor })
-				if stats.stripsArmor then
-					Enemies.strip(enemy, VENT_TICK)
-				end
-				if stats.crustDps > 0 and Enemies.canHurt(enemy, piercing(tower) or stats.stripsArmor) then
-					credit(tower.owner, Enemies.damage(enemy, stats.crustDps * levelScale * dt, piercing(tower) or stats.stripsArmor, 1))
-				end
-				if stats.mazeStuds > 0 and not crust.crossed[enemy] then
-					crust.crossed[enemy] = true
-					Enemies.detour(enemy, Vent.mazeSeconds(stats.mazeStuds, enemy.speed))
-				end
-				break
-			end
-		end
-		-- Rumble: dinos in range stumble while no lava is down.
-		if stats.slowPercent > 0 and not anyLava and covers(tower, enemy.part.Position) then
-			Enemies.chill(enemy, { slowPercent = stats.slowPercent, seconds = VENT_TICK, affectsBosses = false, brittlePercent = 0, stripsArmor = false })
-		end
-	end
-	local keep = {}
-	for _, crust in state.crusts do
-		if crust.ends > now then
-			table.insert(keep, crust)
-		end
-	end
-	state.crusts = keep
-	if tower.knockedOut then
-		return -- Trampled: no eruptions (the lava already down runs its course)
-	end
-	state.timer += dt * (1 + tower.buff.ratePercent / 100)
-	local gap = if stats.rate > 0 then 1 / stats.rate else math.huge
-	if state.timer >= gap then
-		state.timer = 0
-		ventErupt(tower, own, 1, true)
-		state.ring = {}
-		for _, t in Vent.ringTimes(stats.extraVents, gap) do -- Ring of Fire
-			table.insert(state.ring, now + t)
-		end
-	end
-	for i = #state.ring, 1, -1 do
-		if now >= state.ring[i] then
-			table.remove(state.ring, i)
-			ventErupt(tower, own, Vent.extraSize(), false)
-		end
-	end
-	if stats.geyserEvery > 0 then -- Geyser: a burst on the stretch between eruptions
-		state.geyserTimer += dt
-		if state.geyserTimer >= stats.geyserEvery then
-			state.geyserTimer = 0
-			local list = onStretch(tower, own, from, to)
-			for i = 1, math.min(#list, stats.targets) do
-				ventHit(tower, list[i], ventDamage(tower) * Config.Tuning.GeyserX, 1, false)
-			end
-			Effects.part(Vector3.new(0.8, 8, 0.8), CFrame.new(tower.base + Vector3.new(0, 4, 0)), Color3.fromRGB(230, 240, 255), 0.4)
-		end
-	end
-	local inRange, boss = 0, false
-	for _, enemy in own do
-		if enemy.alive and covers(tower, enemy.part.Position) then
-			inRange += 1
-			if enemy.def.boss then
-				boss = true
-				if stats.bossErupt and Vent.bossErupts(state.bossSeen, enemy) then -- Pressure Valve
-					ventErupt(tower, own, 1, true)
-				end
-			end
-		end
-	end
-	if stats.supervolcano and AutoFire.check(state.auto, boss, inRange, Enemies.allSpawned(tower.side), #own) then
-		state.superUntil = now + Vent.supervolcanoSeconds()
-		state.superDps = Vent.flowBurn(stats, tower.def.baseDamage) * (1 + tower.buff.damagePercent / 100) * levelScale
-		drawStretch(tower, 0, Enemies.trackLength(tower.side), LAVA_COLOR, Vent.supervolcanoSeconds(), 0.4)
-	end
-	-- Obsidian Wall: once a round (AutoFire) at the stretch's far end; it holds every dino reaching it.
-	if stats.wallSeconds > 0 then
-		if not state.wall and AutoFire.check(state.wallAuto, boss, inRange, Enemies.allSpawned(tower.side), #own) then
-			local point = Enemies.pointAt(to, tower.side)
-			local ahead = Enemies.pointAt(to + 1, tower.side)
-			local facing = if (ahead - point).Magnitude > 1e-3 then CFrame.lookAt(point, Vector3.new(ahead.X, point.Y, ahead.Z)) else CFrame.new(point)
-			local part = Effects.part(Vector3.new(10, 6, 1.5), facing + Vector3.new(0, 3, 0), CRUST_COLOR, stats.wallSeconds)
-			part.Material = Enum.Material.Glass
-			state.wall = { at = to, raisedAt = now }
-		end
-		local wall = state.wall
-		if wall then
-			local since = now - wall.raisedAt
-			if since >= stats.wallSeconds then
-				state.wall = nil
-			else
-				for _, enemy in own do
-					local isBoss = enemy.def.boss == true
-					if enemy.alive and enemy.distance >= wall.at - VENT_WALL_CATCH and enemy.distance <= wall.at + 0.5 and Resin.wallHolds(stats.wallSeconds, since, isBoss) then
-						Enemies.stun(enemy, FourX.hardStop(stats.wallSeconds, isBoss) - since, true)
-					end
-				end
-			end
-		end
-	end
-end
-
--- Heat Shimmer (dinos on the crust) and Ash Blanket (its whole side after an eruption): the
--- strongest Throw miss % of its side's vents for a dino at `point`.
-local function ventThrowMiss(point: Vector3, side: number): number
-	local percent, now = 0, os.clock()
-	for _, tower in towers do
-		local state = tower.vent
-		if state and tower.side == side then
-			if state.ashUntil > now then
-				percent = math.max(percent, tower.stats.sideThrowMissPercent)
-			end
-			if tower.stats.throwMissPercent > 0 and #state.crusts > 0 then
-				local at = Enemies.trackDistanceNear(point, side)
-				for _, crust in state.crusts do
-					if crust.ends > now and Vent.inStretch(at, crust.from, crust.to) then
-						percent = math.max(percent, tower.stats.throwMissPercent)
-					end
-				end
-			end
-		end
-	end
-	return percent
-end
-
--- Obsidian Armour: the strongest Throw resist % of its side's vents covering a tower at `point`.
-function Towers.throwResistAt(point: Vector3, side: number): number
-	local percent = 0
-	for _, tower in towers do
-		if tower.vent and tower.side == side and tower.stats.throwResistPercent > 0 and not tower.knockedOut and covers(tower, point) then
-			percent = math.max(percent, tower.stats.throwResistPercent)
-		end
-	end
-	return percent
-end
-
--- Studio `firenow VENT`: an eruption now; Supervolcano now (ignoring the trigger).
-local function ventFireNow(tower: Tower, fired: { string })
-	local state = tower.vent
-	if not state then
-		return
-	end
-	local own = BattleRules.ownDinos(Enemies.getLive(), tower.side, "tower")
-	ventErupt(tower, own, 1, true)
-	table.insert(fired, "eruption")
-	if tower.stats.supervolcano then
-		state.superUntil = os.clock() + Vent.supervolcanoSeconds()
-		state.superDps = Vent.flowBurn(tower.stats, tower.def.baseDamage) * levelScale
-		table.insert(fired, "Supervolcano")
-	end
-end
-
--- Blinding Glare: the strongest Throw miss % of its side's blimps whose circle holds `point`.
-function Towers.throwMissAt(point: Vector3, side: number): number
-	local percent = 0
-	for _, tower in towers do
-		if tower.blimp and tower.side == side and tower.stats.throwMissPercent > 0 and covers(tower, point) then
-			percent = math.max(percent, tower.stats.throwMissPercent)
-		end
-	end
-	-- Ash Cloud / Blinding Dust (Meteor craters), Heat Shimmer / Ash Blanket (Volcano Vent), PLAN 9i
-	return math.max(percent, craterMiss(point, side, "throwMissPercent"), ventThrowMiss(point, side))
-end
-
--- Spotter's Map: publishes which sides' dinos are outlined (each client outlines its own side's).
-local outlined: { [number]: boolean } = {}
-local function publishOutlines()
-	local now: { [number]: boolean } = {}
-	for _, tower in towers do
-		if tower.blimp and tower.stats.dinoOutlines then
-			now[tower.side] = true
-		end
-	end
-	for side in outlined do
-		if not now[side] then
-			ReplicatedStorage:SetAttribute(Blimp.outlineAttribute(side), nil)
-		end
-	end
-	for side in now do
-		if not outlined[side] then
-			ReplicatedStorage:SetAttribute(Blimp.outlineAttribute(side), true)
-		end
-	end
-	outlined = now
-end
-
--- Studio `firenow BLIMP`: Bombing Run, Paratroopers and Airlift (on the nearest Trampled own
--- tower) now.
-local function blimpFireNow(tower: Tower, fired: { string })
-	local state = tower.blimp
-	if not state then
-		return
-	end
-	local own = BattleRules.ownDinos(Enemies.getLive(), tower.side, "tower")
-	if tower.stats.bombingRun then
-		bombingRun(tower, own)
-		table.insert(fired, "Bombing Run")
-	end
-	if tower.stats.paratroopers > 0 then
-		Walkers.clear(state.paraKey)
-		dropParatroopers(tower)
-		state.paraDropped = true
-		table.insert(fired, "Paratroopers")
-	end
-	if tower.stats.airlift then
-		for _, other in towers do
-			if other.side == tower.side and other.knockedOut and not other.def.untouchable then
-				state.airliftUsed = false
-				airlift(other)
-				table.insert(fired, "Airlift")
-				break
-			end
-		end
-	end
-end
-
--- A pop (a dino lost a size; `source` = Enemies.source(): "tower", "hunter" or "totem"): every
--- standing own-side Bone Totem whose range holds it charges and pays its Bone cash. It only
--- reads the pop: Bones, scores and Bounties are counted by Main exactly as without a totem.
-function Towers.dinoPopped(enemy: Enemies.Enemy, source: string)
-	local kind: Totem.Source = if source == "hunter" then "hunter" elseif source == "totem" then "totem" else "tower"
-	for _, tower in towers do
-		local state = tower.totem
-		if state and not tower.knockedOut and ownSide(tower, enemy) and covers(tower, enemy.part.Position) then
-			local stats = tower.stats
-			if kind ~= "totem" and stats.boneCash > 0 and onCash then
-				onCash(tower.side, stats.boneCash)
-			end
-			local _, fills = Totem.observe(state.rules, stats, kind, enemy.def.boss == true)
-			state.pending += fills -- fired next frame, outside Enemies' damage call
-			auraDirty = auraDirty or stats.chargeAuraDamagePercent > 0
-		end
-	end
-end
-
--- A whole dino taken down (Bounty Wall, PLAN 9h): inside a Bounty charge x totem's range, the
--- owner's Bounties count it Bounty charge x times (the extra whole take-downs reported as they add up).
-function Towers.dinoTakenDown(enemy: Enemies.Enemy, source: string)
-	if source == "totem" or not onBountyExtra then
-		return
-	end
-	for _, tower in towers do
-		local state = tower.totem
-		local owner = tower.owner
-		if state and owner and owner.Parent and tower.stats.bountyChargeX > 1 and not tower.knockedOut and ownSide(tower, enemy) and covers(tower, enemy.part.Position) then
-			local extra = Totem.bountyExtra(state.rules, tower.stats)
-			if extra > 0 then
-				onBountyExtra(owner, enemy.key, extra)
-			end
-		end
-	end
-end
-
------------------------------------------------------------------- Storm Coil
-
-local function isCoil(tower: Tower): boolean
-	return tower.def.chains == true and not tower.knockedOut
-end
-
--- The circles a coil's arcs may use: its own range, or every standing Storm Coil's
--- with Jump Spark.
-local function coilAreas(tower: Tower): { StormCoil.Area }
-	local areas = { { center = tower.base, radius = tower.stats.range } }
-	if tower.stats.arcJumps then
-		for _, other in towers do
-			if other ~= tower and isCoil(other) then
-				table.insert(areas, { center = other.base, radius = other.stats.range })
-			end
-		end
-	end
-	return areas
-end
-
-local function coilDamage(tower: Tower): number
-	return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
-end
-
--- One coil hit: Static Shock's bonus if its last strike charged this dino, breaks 1
--- unless `breaks` says more (Judgement Bolt).
-local function coilHit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number?)
-	local stats = tower.stats
-	local pierce = piercing(tower)
-	if not Enemies.canHurt(enemy, pierce) then
-		return
-	end
-	if stats.staticPercent > 0 then
-		if tower.static[enemy] then
-			damage *= 1 + stats.staticPercent / 100
-		end
-		tower.static[enemy] = true
-	end
-	if enemy.def.armored then
-		damage *= stats.armoredMult
-	end
-	if enemy.def.boss then
-		damage *= stats.bossMult
-	end
-	if tower.buff.slowedPercent > 0 and Enemies.isSlowed(enemy) then
-		damage *= 1 + tower.buff.slowedPercent / 100 -- Tar Totem
-	end
-	local b = if breaks and breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
-	credit(tower.owner, Enemies.damage(enemy, damage, pierce, b))
-end
-
--- A chain strike from the first dino in range. Returns true if it fired.
-local function fireChain(tower: Tower, live): boolean
-	local stats = tower.stats
-	local target = pickFirst(tower, live)
-	if not target then
-		return false
-	end
-	local areas = coilAreas(tower)
-	local list, points, first = {}, {}, nil
-	for _, enemy in live do
-		if enemy.alive and canTarget(tower, enemy) and (enemy == target or StormCoil.covered(enemy.part.Position, areas)) then
-			table.insert(list, enemy)
-			table.insert(points, enemy.part.Position)
-			if enemy == target then
-				first = #list
-			end
-		end
-	end
-	if not first then
-		return false
-	end
-	local links = StormCoil.chain(points, first, stats.arcs, stats.arcReach, stats.arcForks, Config.Tuning.CoilArcFalloff)
-	-- Static Shock: only dinos this strike reaches stay charged for the next one.
-	local charged = {}
-	for _, link in links do
-		charged[list[link.index]] = tower.static[list[link.index]]
-	end
-	table.clear(tower.static)
-	for enemy, was in charged do
-		tower.static[enemy] = was
-	end
-	local damage = coilDamage(tower)
-	-- Supercell's slow (PLAN 9e): on the first dino, or the whole chain with Chain effects.
-	local slow: Enemies.Chill? = if stats.slowPercent > 0
-		then { slowPercent = stats.slowPercent, seconds = stats.slowLinger, affectsBosses = stats.slowsBosses, brittlePercent = 0, stripsArmor = false }
-		else nil
-	for _, link in links do
-		local enemy = list[link.index]
-		local from = if link.from then list[link.from].part.Position else tower.muzzle
-		Effects.tracer(from, enemy.part.Position, ARC_COLOR)
-		-- Thunderclap stuns the first dino; Chain effects (Superconductor) every arc, capped.
-		Enemies.stun(enemy, StormCoil.linkStun(link.hop, stats.stunSeconds, stats.chainEffects), stats.stunsBosses)
-		if slow and StormCoil.linkSlows(link.hop, stats.chainEffects) then
-			Enemies.chill(enemy, slow)
-		end
-		-- Thunderstrike (PLAN 9e): the strike's first dino gets the build's Size breaks; arcs 1.
-		coilHit(tower, enemy, damage * link.x, if link.hop == 0 then stats.sizeBreaks else nil)
-	end
-	return true
-end
-
--- Storm Front (PLAN 9e, #297): every Field strike every s, every dino on this coil's side's
--- field takes Field strike x its damage, wherever it is (fliers too; armour only if it
--- pierces; breaks 1). Each Storm Front coil fires its own.
-local FIELD_COLOR = Color3.fromRGB(200, 230, 255) -- visuals only
-local function stepField(tower: Tower, dt: number, live)
-	local stats = tower.stats
-	if stats.fieldStrikeEvery <= 0 or tower.knockedOut then
-		tower.fieldTimer = 0
-		return
-	end
-	local fired
-	tower.fieldTimer, fired = StormCoil.fieldTick(tower.fieldTimer, dt, stats.fieldStrikeEvery)
-	if not fired then
-		return
-	end
-	local list, dinos = {}, {}
-	for _, enemy in live do
-		if enemy.alive and ownSide(tower, enemy) then
-			table.insert(list, enemy)
-			table.insert(dinos, { side = tower.side, flying = enemy.def.flying == true, armored = enemy.def.armored == true, bare = Enemies.canHurt(enemy, false) })
-		end
-	end
-	local damage = coilDamage(tower) * stats.fieldStrikeX
-	for _, i in StormCoil.fieldTargets(dinos, tower.side, piercing(tower)) do
-		local enemy = list[i]
-		Effects.tracer(enemy.part.Position + Vector3.new(0, 30, 0), enemy.part.Position, FIELD_COLOR)
-		coilHit(tower, enemy, damage)
-	end
-end
-
--- Judgement Bolt: the dino with the most HP in the coil's range.
-local function stepBolt(tower: Tower, dt: number, live)
-	if not tower.stats.judgementBolt or tower.knockedOut then
-		tower.boltTimer = 0
-		return
-	end
-	local every = Config.Tuning.JudgementBoltEvery
-	tower.boltTimer = math.min(every, tower.boltTimer + dt)
-	if tower.boltTimer < every then
-		return
-	end
-	local list, hps = {}, {}
-	local range = tower.stats.range
-	for _, enemy in live do
-		if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= range then
-			table.insert(list, enemy)
-			table.insert(hps, enemy.hp)
-		end
-	end
-	local pick = StormCoil.biggest(hps)
-	if not pick then
-		return -- stays ready
-	end
-	tower.boltTimer = 0
-	local enemy = list[pick]
-	local tuning = Config.Tuning
-	Effects.tracer(enemy.part.Position + Vector3.new(0, 30, 0), enemy.part.Position, BOLT_COLOR)
-	Enemies.stun(enemy, tuning.JudgementBoltStun, true)
-	coilHit(tower, enemy, coilDamage(tower) * tuning.JudgementBoltX, tuning.JudgementBoltBreaks)
-end
-
--- Power Grid: one shared strike every Power Grid every seconds, however many Power
--- Grid coils stand, from the one that hits hardest (DECISIONS #151).
--- One Power Grid per side (its own coils, its own dinos, #231); co-op is side 1 alone.
-local gridTimers: { [number]: number } = {}
-local function stepGridSide(side: number, dt: number, live)
-	local striker, coils = nil, 0
-	for _, tower in towers do
-		if isCoil(tower) and tower.side == side then
-			coils += 1
-			if tower.stats.powerGrid and (striker == nil or coilDamage(tower) > coilDamage(striker)) then
-				striker = tower
-			end
-		end
-	end
-	if not striker then
-		gridTimers[side] = 0
-		return
-	end
-	local every = Config.Tuning.PowerGridEvery
-	local timer = (gridTimers[side] or 0) + dt
-	gridTimers[side] = timer
-	if timer < every then
-		return
-	end
-	gridTimers[side] = timer - every
-	local rangeMult, damageMult = StormCoil.grid(coils)
-	local areas = {}
-	for _, tower in towers do
-		if isCoil(tower) and tower.side == side then
-			table.insert(areas, { center = tower.base, radius = tower.stats.range * rangeMult })
-			Effects.disc(tower.base + Vector3.new(0, 0.3, 0), tower.stats.range * rangeMult, ARC_COLOR, 0.3, 0.4)
-		end
-	end
-	local damage = coilDamage(striker) * damageMult
-	for _, enemy in live do
-		if enemy.alive and canTarget(striker, enemy) and StormCoil.covered(enemy.part.Position, areas) then
-			Effects.tracer(enemy.part.Position + Vector3.new(0, 12, 0), enemy.part.Position, ARC_COLOR)
-			coilHit(striker, enemy, damage)
-		end
-	end
-end
-
-local function stepGrid(dt: number, live)
-	local seen: { [number]: boolean } = {}
-	for _, tower in towers do
-		if isCoil(tower) and not seen[tower.side] then
-			seen[tower.side] = true
-			stepGridSide(tower.side, dt, live)
-		end
-	end
-	for side in gridTimers do
-		if not seen[side] then
-			gridTimers[side] = 0 -- no coils left on that side
-		end
-	end
-end
-
------------------------------------------------------------------- Falcon Roost
-
-local function hasBirds(tower: Tower): boolean
-	return (tower.def.birds or 0) > 0
-end
-
--- How long a Hooded Scout mark lasts after the last frame a boss spent in range.
-local HOOD_REFRESH = 0.25
-
--- One bird's (or peck's) hit: the tower's hit (armour, boss x, stun, Lure's knockback,
--- breaks), then Falcon Bells' mark on what it struck.
-local function falconHit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number)
-	hit(tower, enemy, damage, breaks)
-	if tower.stats.markPercent > 0 then
-		Enemies.mark(enemy, tower.stats.markPercent, Config.Tuning.FalconBellsMark)
-	end
-end
-
-local function falconDamage(tower: Tower): number
-	return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
-end
-
--- Murmuration: every dino in range takes a peck (breaks 1, no travel time).
-local function peck(tower: Tower, live): boolean
-	local range, pecked = tower.stats.range, false
-	local damage = falconDamage(tower)
-	for _, enemy in live do
-		if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= range then
-			pecked = true
-			Effects.part(Vector3.one * 0.6, CFrame.new(enemy.part.Position + Vector3.new(0, 2, 0)), PECK_COLOR, 0.12, Enum.PartType.Ball)
-			falconHit(tower, enemy, damage, 1)
-		end
-	end
-	return pecked
-end
-
--- Sends a free bird at the first dino in range no other bird of this roost is after.
-local function fireFalcon(tower: Tower, live): boolean
-	local stats = tower.stats
-	if stats.murmuration then
-		return peck(tower, live)
-	end
-	if Falcon.free(stats.birds, #tower.sorties) <= 0 then
-		return false -- every bird is out: wait for one to come home
-	end
-	local list, distances, claimed = {}, {}, {}
-	local after = {}
-	for _, sortie in tower.sorties do
-		if not sortie.landed then
-			after[sortie.enemy] = true
-		end
-	end
-	for _, enemy in live do
-		if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= stats.range then
-			table.insert(list, enemy)
-			table.insert(distances, enemy.distance)
-			claimed[#list] = after[enemy] == true
-		end
-	end
-	local pick = Falcon.pick(distances, claimed)
-	if not pick then
-		return false
-	end
-	local enemy = list[pick]
-	local oneWay = Falcon.flight((enemy.part.Position - tower.muzzle).Magnitude)
-	local size = if stats.eagle then Vector3.new(2.4, 0.4, 1.4) else Vector3.new(1.1, 0.25, 0.7)
-	local part = Effects.part(size, CFrame.new(tower.muzzle), BIRD_COLOR, 2 * oneWay + 0.5)
-	table.insert(tower.sorties, { enemy = enemy, out = oneWay, back = 2 * oneWay, landed = false, at = tower.muzzle, part = part })
-	return true
-end
-
--- Birds in flight: a bird lands its dive when its travel time runs out, then flies home.
-local function stepSorties(tower: Tower, dt: number, live)
-	for i = #tower.sorties, 1, -1 do
-		local sortie = tower.sorties[i]
-		sortie.out -= dt
-		sortie.back -= dt
-		local enemy = sortie.enemy
-		if not sortie.landed then
 			if enemy.alive then
-				sortie.at = enemy.part.Position
+				table.insert(list, { id = enemy, at = enemy.distance, boss = enemy.def.boss == true, flying = enemy.def.flying == true })
+				byId[enemy] = enemy
 			end
-			if sortie.out <= 0 then
-				sortie.landed = true
-				if enemy.alive then
-					local first = not tower.dived[enemy]
-					tower.dived[enemy] = true
-					local stats = tower.stats
-					local damage = Falcon.diveDamage(falconDamage(tower), first, stats.firstDiveX, stats.eagle)
-					-- Raking Strike / Strafing Run (PLAN 9e): who else the dive hits, picked before
-					-- the dive lands (it may take the struck dino down).
-					local extra, line, list = {}, false, {}
-					if stats.targets > 1 or stats.lineHits > 1 then
-						local candidates, struck = {}, nil
-						for _, other in live do
-							if other == enemy or (other.alive and canTarget(tower, other) and (other.part.Position - tower.position).Magnitude <= stats.range) then
-								table.insert(list, other)
-								table.insert(candidates, { position = other.part.Position, distance = other.distance })
-								if other == enemy then
-									struck = #list
+		end
+		local pick = Ranger.trapPick(at, list)
+		if not pick then
+			return false
+		end
+		local enemy = byId[pick.id]
+		local effect = Ranger.trapEffect(tower.stats, pick.boss)
+		Enemies.chill(enemy, { slowPercent = effect.slowPercent, seconds = effect.slowSeconds, affectsBosses = true, brittlePercent = 0, stripsArmor = false })
+		if effect.stun > 0 then
+			Enemies.stun(enemy, effect.stun, false)
+		end
+		if effect.knockback > 0 then
+			Enemies.knockback(enemy, effect.knockback)
+		end
+		Effects.disc(Enemies.pointAt(at, tower.side), Config.Tuning.TrapReachStuds, RANGER_COLOR, 0.4, 0.5)
+		return true
+	end
+
+	-- Master Trapper (at a round played's start, and `firenow RANGER`): the one-shot traps.
+	setTrapLine = function(tower: Tower)
+		local state = tower.ranger
+		if state and tower.stats.trapLine then
+			state.lineTraps = Ranger.trapLine(Enemies.trackLength(tower.side))
+		end
+	end
+
+	stepRanger = function(tower: Tower, dt: number, own)
+		local state = tower.ranger
+		if not state then
+			return
+		end
+		local stats, now = tower.stats, os.clock()
+		-- Patrol Jeep: the squad rides there and back (posts unused); a Trampled cabin parks it.
+		if stats.jeep and not tower.knockedOut then
+			state.jeepClock += dt
+			local at = Ranger.jeepAt(state.jeepClock, Enemies.trackLength(tower.side))
+			Walkers.ride(tower, at)
+			if state.jeep then
+				local here = Enemies.pointAt(at, tower.side)
+				local ahead = Enemies.pointAt(at + 1, tower.side)
+				local look = if (ahead - here).Magnitude > 1e-3 then CFrame.lookAt(here, Vector3.new(ahead.X, here.Y, ahead.Z)) else CFrame.new(here)
+				state.jeep:PivotTo(look + Vector3.new(0, 0.7, 0))
+			end
+		else
+			Walkers.ride(tower, nil)
+		end
+		if tower.knockedOut then
+			return
+		end
+		if stats.guard then
+			state.guardTimer += dt
+			if state.guardTimer >= 1 then
+				state.guardTimer = 0
+				syncRangers(tower) -- re-post beside the most damaged towers
+			end
+		end
+		-- Traps at each post (Snare Kit on), and Master Trapper's line.
+		if stats.trap and not stats.jeep then
+			local every = Ranger.trapEvery(stats)
+			for i, at in state.posts do
+				state.trapTimers[i] = (state.trapTimers[i] or every) + dt
+				if state.trapTimers[i] >= every and springTrap(tower, at, own) then
+					state.trapTimers[i] = 0
+				end
+			end
+		end
+		for i = #state.lineTraps, 1, -1 do
+			if springTrap(tower, state.lineTraps[i], own) then
+				table.remove(state.lineTraps, i)
+			end
+		end
+		-- Decoy Calls / Net Launchers / the Legend's dart: per ranger at its post.
+		local _, legendIndex = Ranger.roles(stats)
+		for i, unit in Walkers.unitsOf(tower) do
+			if unit.state ~= "post" then
+				continue
+			end
+			local postIndex = table.find(state.posts, unit.postAt :: any) or 0
+			for _, enemy in own do
+				if enemy.alive and not enemy.def.flying and math.abs(enemy.distance - unit.at) <= Config.Tuning.RangerReach then
+					if stats.decoySeconds > 0 and postIndex > 0 then
+						state.decoySeen[postIndex] = state.decoySeen[postIndex] or setmetatable({}, { __mode = "k" }) :: any
+						local stop = Ranger.decoy(state.decoySeen[postIndex], enemy, enemy.def.boss == true, stats.decoySeconds)
+						if stop > 0 then
+							Enemies.stun(enemy, stop, true)
+						end
+					end
+					local net = Ranger.net(state.netted, enemy, enemy.def.boss == true, stats.bossHoldSeconds)
+					if net > 0 then
+						Enemies.stun(enemy, net, true)
+						Effects.disc(enemy.part.Position, 3, RANGER_COLOR, net, 0.4)
+					end
+				end
+			end
+			if i == legendIndex and unit.target and unit.target.alive then
+				local mark, seconds, nextDart = Ranger.dartDue(state.nextDart, now)
+				state.nextDart = nextDart
+				if mark and seconds then
+					Enemies.mark(unit.target, mark, seconds) -- the Legend's Tracking Dart (the Tracker dart's mark rules)
+				end
+			end
+		end
+	end
+
+	syncWalkers = function(tower: Tower)
+		if tower.ranger then
+			syncRangers(tower)
+			return
+		end
+		local state = tower.raptor
+		if not state then
+			return
+		end
+		local stats = tower.stats
+		local colour = campColour(tower)
+		local homeAt = Enemies.trackDistanceNear(tower.base, tower.side)
+		local params = Raptor.params(stats, tiersBought(tower))
+		params.rate = stats.rate * (1 + tower.buff.ratePercent / 100)
+		if stats.guard then
+			guardPosts(tower, stats.walkers)
+		else
+			state.posts = {}
+		end
+		Walkers.sync(tower, {
+			count = stats.walkers,
+			params = params,
+			side = tower.side,
+			base = tower.base,
+			homeAt = homeAt,
+			sending = not tower.knockedOut,
+			healsBetweenRounds = stats.healsBetweenRounds,
+			look = function()
+				return RaptorLook.build(raptorKind(tower.stats), colour)
+			end,
+			onHit = function(enemy, landed)
+				raptorBite(tower, enemy, landed.x, landed.hold)
+			end,
+			homeFor = if stats.guard
+				then function(i)
+					local post = state.posts[i]
+					if post and table.find(towers, post) then
+						return post.base, Enemies.trackDistanceNear(post.base, tower.side)
+					end
+					return tower.base, homeAt
+				end
+				else nil,
+			candidates = if stats.guard or stats.avengerX > 0
+				then function(i, dinos)
+					if tower.stats.guard then
+						-- Guard: only a dino that hurt its post, within Guard reach of it.
+						local post = state.posts[i]
+						local out = {}
+						if post and post.hurtBy then
+							for _, dino in dinos do
+								if dino.id == post.hurtBy and Raptor.guardAnswers(dino.fromHome) then
+									table.insert(out, dino)
 								end
 							end
 						end
-						if struck then
-							extra, line = Falcon.extraHits(candidates, struck, stats.targets, stats.lineHits)
+						return out
+					end
+					local target = Raptor.avenger(tower.stats.avengerX, state.lastStung, os.clock(), state.attacker)
+					if target then
+						for _, dino in dinos do
+							if dino.id == target then
+								return { dino }
+							end
 						end
 					end
-					Effects.tracer(sortie.at + Vector3.new(0, 6, 0), sortie.at, BIRD_COLOR)
-					falconHit(tower, enemy, damage, stats.sizeBreaks)
-					for _, i in extra do
-						Effects.tracer(sortie.at, list[i].part.Position, BIRD_COLOR)
-						falconHit(tower, list[i], damage, if line then stats.sizeBreaks else 1)
-					end
+					return dinos
 				end
+				else nil,
+		})
+	end
+
+	-- Raptor Swarm: Swarm raptors small raptors (Swarm share HP and bite) hunt anywhere on the
+	-- side's track for Swarm (s), then vanish; never past the side's walker cap.
+	releaseSwarm = function(tower: Tower)
+		local state = tower.raptor
+		if not state or not tower.stats.swarm then
+			return
+		end
+		local stats = tower.stats
+		local onSide = 0
+		for _, other in towers do
+			if other.side == tower.side then
+				onSide += #Walkers.unitsOf(other)
 			end
 		end
-		local whole = math.max(1e-3, sortie.back - sortie.out) -- one way, in seconds
-		local position = if not sortie.landed
-			then tower.muzzle:Lerp(sortie.at, math.clamp(1 - sortie.out / whole, 0, 1))
-			else sortie.at:Lerp(tower.muzzle, math.clamp(1 - sortie.back / whole, 0, 1))
-		if sortie.part.Parent then
-			sortie.part.CFrame = CFrame.lookAt(position, if sortie.landed then tower.muzzle else sortie.at + Vector3.new(0, 0.01, 0))
-		end
-		if sortie.back <= 0 then
-			sortie.part:Destroy()
-			table.remove(tower.sorties, i)
-		end
+		local params = Raptor.params(stats, tiersBought(tower), true)
+		params.respawn = math.huge -- a swarm raptor bitten down is gone
+		params.rate = stats.rate * (1 + tower.buff.ratePercent / 100)
+		local colour = campColour(tower)
+		Walkers.sync(state.swarmKey, {
+			count = Raptor.swarmCount(onSide),
+			params = params,
+			side = tower.side,
+			base = tower.base,
+			homeAt = Enemies.trackDistanceNear(tower.base, tower.side),
+			sending = true,
+			healsBetweenRounds = false,
+			look = function()
+				return RaptorLook.build("swarm", colour)
+			end,
+			onHit = function(enemy, landed)
+				raptorBite(tower, enemy, landed.x * Raptor.swarmBite(), landed.hold)
+			end,
+		})
+		state.swarmUntil = os.clock() + Config.Tuning.SwarmS
 	end
-end
 
--- Hooded Scout: bosses in range stay marked while they're in it.
-local function stepHood(tower: Tower, live)
-	local percent = tower.stats.bossMarkPercent
-	if percent <= 0 or tower.knockedOut then
-		return
-	end
-	for _, enemy in live do
-		if enemy.alive and enemy.def.boss and ownSide(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= tower.stats.range then
-			Enemies.mark(enemy, percent, HOOD_REFRESH)
+	-- Raptor Charge: every standing raptor sweeps the side's track from the exit end back.
+	startCharge = function(tower: Tower)
+		local state = tower.raptor
+		if state and tower.stats.charge then
+			state.charge = { elapsed = 0, bitten = {} }
 		end
 	end
-end
 
--- Hunting Party: every roost with the aura and a bird out, for Falcon.huntingParty.
-local function huntingParties(): { Falcon.Party }
-	local parties = {}
-	for _, tower in towers do
-		-- A roost while a bird dives; a Raptor Pen while a raptor fights (PLAN 9g, Raptor.diveAura).
-		local active = if tower.raptor then Raptor.diveAura(1, Walkers.fighting(tower)) > 0 else #tower.sorties > 0
-		if tower.stats.diveAuraRatePercent > 0 and active then
-			table.insert(parties, { center = tower.base, radius = tower.stats.range, percent = tower.stats.diveAuraRatePercent, diving = true, source = tower })
+	stepRaptor = function(tower: Tower, dt: number, own)
+		local state = tower.raptor
+		if not state then
+			return
 		end
-	end
-	return parties
-end
-
------------------------------------------------------------------- Harpoon Ballista
-
--- One volley: each bolt at its dino (Ballista.volley), Skewer's line through every dino
--- on it, Chain Harpoons' chain between each linked pair. Returns true if it fired.
-local function fireBallista(tower: Tower, live): boolean
-	local stats = tower.stats
-	local list, distances, points, hps = {}, {}, {}, {}
-	for _, enemy in live do
-		if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= stats.range then
-			table.insert(list, enemy)
-			table.insert(distances, enemy.distance)
-			table.insert(points, enemy.part.Position)
-			table.insert(hps, enemy.hp)
+		local stats, now = tower.stats, os.clock()
+		-- The Swarm runs out.
+		if state.swarmUntil > 0 and now >= state.swarmUntil then
+			state.swarmUntil = 0
+			Walkers.clear(state.swarmKey)
 		end
-	end
-	-- Heartseeker (PLAN 9e): Targets biggest ranks by HP left, not distance.
-	local picks = Ballista.volley(Ballista.aimKeys(distances, hps, stats.targetsBiggest), stats.shots, stats.chainHarpoons)
-	-- PLAN 9e wirings: bolts mark (Serrated Head), slow (Anchor Line: bosses too) and burn
-	-- (Fire Bolts, Firestorm Volley: a burning patch under the target, like a shooter's).
-	local slow: Enemies.Chill? = if stats.slowPercent > 0
-		then { slowPercent = stats.slowPercent, seconds = stats.slowLinger, affectsBosses = stats.slowsBosses, brittlePercent = 0, stripsArmor = false }
-		else nil
-	if #picks == 0 then
-		return false
-	end
-	local damage = stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
-	local landed = {} -- each bolt's impact point
-	for i, pick in picks do
-		local target = list[pick]
-		landed[i] = points[pick]
-		local struck = { target }
-		if stats.skewer then
-			local stop = Ballista.lineEnd(tower.muzzle, points[pick], stats.range)
-			for _, index in Ballista.onLine(points, tower.muzzle, stop) do
-				if index ~= pick then
-					table.insert(struck, list[index])
-				end
-			end
-			Effects.tracer(tower.muzzle, stop, HARPOON_COLOR)
-		else
-			Effects.tracer(tower.muzzle, points[pick], HARPOON_COLOR)
+		if tower.knockedOut then
+			return
 		end
-		addBurn(tower, target)
-		for _, enemy in struck do
-			if stats.markPercent > 0 and ownSide(tower, enemy) then
-				Enemies.mark(enemy, stats.markPercent, Config.Tuning.MarkDuration or 0)
-			end
-			hit(tower, enemy, damage, stats.sizeBreaks)
-			if slow and enemy.alive and ownSide(tower, enemy) then
-				Enemies.chill(enemy, slow)
+		-- Guard Raptors: re-post about once a second (the most damaged tower first).
+		if stats.guard then
+			state.postTimer += dt
+			if state.postTimer >= 1 then
+				state.postTimer = 0
+				guardPosts(tower, stats.walkers)
 			end
 		end
-		rodeoArc(tower, target, struck, damage, live)
-	end
-	if stats.chainHarpoons then
-		for _, pair in Ballista.pairs(#picks) do
-			local a, b = picks[pair[1]], picks[pair[2]]
-			Effects.tracer(landed[pair[1]], landed[pair[2]], CHAIN_COLOR)
-			for _, index in Ballista.onLine(points, landed[pair[1]], landed[pair[2]]) do
-				if index ~= a and index ~= b then
-					hit(tower, list[index], damage, 1)
-				end
-			end
-		end
-	end
-	return true
-end
-
--- Tow Line: every Tow Line every s, the boss furthest along in range is pulled back; stays
--- ready while no boss is in range.
-local function stepTow(tower: Tower, dt: number, live)
-	if not tower.stats.towLine or tower.knockedOut then
-		tower.towTimer = 0
-		return
-	end
-	local tuning = Config.Tuning
-	tower.towTimer = math.min(tuning.TowLineEvery, tower.towTimer + dt)
-	if tower.towTimer < tuning.TowLineEvery then
-		return
-	end
-	local list, distances, bosses = {}, {}, {}
-	for _, enemy in live do
-		if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= tower.stats.range then
-			table.insert(list, enemy)
-			table.insert(distances, enemy.distance)
-			bosses[#list] = enemy.def.boss == true
-		end
-	end
-	local pick = Ballista.towPick(distances, bosses)
-	if not pick then
-		return
-	end
-	tower.towTimer = 0
-	local boss = list[pick]
-	Effects.tracer(tower.muzzle, boss.part.Position, HARPOON_COLOR)
-	Enemies.knockback(boss, tuning.TowLinePull, true) -- the one boss knockback (PLAN T66)
-end
-
--- Visuals only.
-local FREEZE_COLOR = Color3.fromRGB(150, 220, 255)
--- How long a chill lasts after the last frame an enemy spent in range (plus
--- any Permafrost linger). Keeps the chill continuous between frames.
-local CHILL_REFRESH = 0.25
-
--- Chillers: chill everything in range every frame; Freeze pulses hard stops.
-local function stepChill(tower: Tower, dt: number, live)
-	local stats = tower.stats
-	if tower.knockedOut or (stats.slowPercent <= 0 and stats.freezeEvery <= 0) then
-		return
-	end
-	if tower.def.chains or tower.def.harpoons or tower.def.onTrack then
-		-- Coil / Ballista Slow % rides their hits (Supercell, Anchor Line; PLAN 9e); a Tar Pit's
-		-- is its pool's (stepTar: ground dinos in the pool only), never a ring
-		return
-	end
-	local range = stats.range
-	local chill: Enemies.Chill = {
-		slowPercent = stats.slowPercent,
-		seconds = CHILL_REFRESH + stats.slowLinger,
-		affectsBosses = stats.slowsBosses,
-		brittlePercent = stats.brittlePercent,
-		stripsArmor = stats.stripsArmor,
-	}
-	local pulse = false
-	if stats.freezeEvery > 0 then
-		tower.freezeTimer += dt
-		if tower.freezeTimer >= stats.freezeEvery then
-			tower.freezeTimer -= stats.freezeEvery
-			pulse = true
-		end
-	end
-	for _, enemy in live do
-		if ownSide(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= range then
-			if stats.slowPercent > 0 then
-				Enemies.chill(enemy, chill)
-			end
-			if pulse then
-				Enemies.knockOut(enemy, stats.freezeSeconds, stats.freezeHoldsBosses)
-				if stats.freezeDamage > 0 then
-					credit(tower.owner, Enemies.damage(enemy, stats.freezeDamage * levelScale, piercing(tower)))
-				end
-			end
-		end
-	end
-	if pulse then
-		Effects.disc(tower.base + Vector3.new(0, 0.3, 0), range, FREEZE_COLOR, 0.3, 0.6)
-	end
-end
-
------------------------------------------------------------------- Tar Pit
-
-local TAR_COLOR = Color3.fromRGB(30, 24, 20) -- visuals only
-local ERUPTION_COLOR = Color3.fromRGB(255, 120, 40)
--- How long tar slow lasts after the last frame a dino spent in a pool (keeps it
--- continuous between frames), like CHILL_REFRESH.
-local TAR_REFRESH = 0.25
-
--- Seconds each last-size dino has spent in the tar, and the pool it was last in.
-local soaked: { [any]: number } = setmetatable({}, { __mode = "k" }) :: any
-local lastPool: { [any]: Tower } = setmetatable({}, { __mode = "k" }) :: any
-
-local function isPit(tower: Tower): boolean
-	return tower.def.onTrack == true
-end
-
--- A dino walked out of `pit`'s pool: Clinging Tar, Tar Fire, Tar Tracks.
-local function leftPool(pit: Tower, enemy: Enemies.Enemy, now: number)
-	local stats = pit.stats
-	if stats.slowLinger > 0 then
-		Enemies.tar(enemy, stats.slowPercent, stats.slowLinger)
-	end
-	if stats.burnSeconds > 0 and stats.burnDps > 0 then
-		local tick = stats.burnDps * stats.burnSeconds * (1 + pit.buff.damagePercent / 100) * levelScale
-		Hazards.ignite(enemy, tick, stats.burnSeconds, piercing(pit), pit.owner)
-	end
-	if stats.tracksSlowPercent > 0 then
-		pit.tracksUntil = now + Config.Tuning.TarTracksSeconds
-	end
-end
-
-local function stepTar(dt: number, live)
-	local pits, strengths = {}, {}
-	for _, tower in towers do
-		if isPit(tower) then
-			table.insert(pits, tower)
-			table.insert(strengths, TarPit.strength(tower.def, tower.pathTiers))
-		end
-	end
-	if #pits == 0 then
-		return
-	end
-	local tuning = Config.Tuning
-	local now = os.clock()
-	local erupting = {}
-	for _, pit in pits do
-		if pit.stats.eruption then
-			local fired
-			pit.eruptTimer, fired = TarPit.tick(pit.eruptTimer, dt, tuning.EruptionEvery)
-			if fired then
-				erupting[pit] = true
-				for _, d in TarPit.samples(pit.poolAt, pit.stats.range, pit.stats.range / 3) do
-					Effects.part(Vector3.new(1.5, 7, 1.5), CFrame.new(Enemies.pointAt(d, pit.side) + Vector3.new(0, 3.5, 0)), ERUPTION_COLOR, 0.4) -- a geyser
-				end
-			end
-		else
-			pit.eruptTimer = 0
-		end
-	end
-
-	for _, enemy in live do
-		if not enemy.alive or enemy.def.flying then
-			continue
-		end
-		-- The strongest pool this dino stands in (#189: never more than one).
-		local inside, power = {}, {}
-		for i, pit in pits do
-			if BattleRules.canDamage(pit.side, enemy.side, "dino", HAZARD) and TarPit.contains(enemy.distance, pit.poolAt, pit.stats.range) then
-				table.insert(inside, pit)
-				table.insert(power, strengths[i])
-			end
-		end
-		local pick = TarPit.strongest(power)
-		local pit = if pick then inside[pick] else nil
-		if not pit then
-			local was = lastPool[enemy]
-			if was then
-				lastPool[enemy], soaked[enemy] = nil, nil
-				if table.find(towers, was) then
-					leftPool(was, enemy, now)
-				end
-			end
-			for _, other in pits do
-				if BattleRules.canDamage(other.side, enemy.side, "dino", HAZARD) and now < other.tracksUntil and TarPit.onTracks(enemy.distance, other.poolAt, other.stats.range, tuning.TarTracksLength) then
-					Enemies.tar(enemy, other.stats.tracksSlowPercent, TAR_REFRESH)
-				end
-			end
-			continue
-		end
-		lastPool[enemy] = pit
-		local stats = pit.stats
-		Enemies.tar(enemy, stats.slowPercent, TAR_REFRESH)
-		if stats.stripsArmor then
-			Enemies.strip(enemy, tuning.StripS or 0) -- Pitch Coat (PLAN 9e): bare while in it, then Strip (s)
-		end
-		if stats.burnDps > 0 then
-			local damage = stats.burnDps * dt * (1 + pit.buff.damagePercent / 100) * levelScale
-			credit(pit.owner, Enemies.damage(enemy, damage, piercing(pit)))
-		end
-		if enemy.alive and erupting[pit] then
-			credit(pit.owner, Enemies.dropSizes(enemy, tuning.EruptionSizes))
-		end
-		if not enemy.alive then
-			continue
-		end
-		if enemy.size <= 1 and not enemy.def.boss then
-			soaked[enemy] = (soaked[enemy] or 0) + dt
-			if TarPit.sinks(enemy.size, enemy.def.boss == true, false, soaked[enemy], stats.sinkSeconds) then
-				local position = enemy.part.Position
-				local sunk, gone = Enemies.sink(enemy)
-				if sunk then
-					lastPool[enemy], soaked[enemy] = nil, nil
-					credit(pit.owner, true, gone, 1)
-					Effects.disc(Placement.ground(position) + Vector3.new(0, 0.2, 0), 1.5, TAR_COLOR, 0.6, 0.2) -- it goes under
-					if onSink and (stats.sinkCash > 0 or stats.sinkChestCash > 0) then
-						onSink(stats.sinkCash, stats.sinkChestCash, Placement.ground(position), pit.side)
-					end
-				end
-			end
-		else
-			soaked[enemy] = 0
-		end
-	end
-end
-
--- Called every Heartbeat by Main.
--- NOTE: fires at most once per frame (times `shots`), so fire rates above
--- ~60/s are capped.
------------------------------------------------------------------- Field Hospital
-
--- The strongest standing hospital's heal (and revive) rate covering a point, from
--- `side`'s hospitals only; x Ability tempo (Shared/Pace.healRate, #259).
-local function healRates(point: Vector3, side: number): (number, number)
-	local heal, revive = 0, 0
-	for _, source in towers do
-		local s = source.stats
-		if s.healPerSecond > 0 and not source.knockedOut and covers(source, point) and BattleRules.canSupport(source.side, side) then
-			heal = math.max(heal, Pace.healRate(s.healPerSecond))
-			if s.revives then
-				revive = math.max(revive, Pace.healRate(s.healPerSecond) * s.reviveSpeed)
-			end
-		end
-	end
-	return heal, revive
-end
-
-local function stepHealing(dt: number)
-	local any = false
-	for _, source in towers do
-		if source.stats.healPerSecond > 0 and not source.knockedOut then
-			any = true
-			break
-		end
-	end
-	if not any then
-		return
-	end
-	for _, tower in towers do
-		local heal, revive = healRates(tower.base, tower.side)
-		if tower.def.untouchable then
-			continue -- no HP: a Field Hospital skips it (#148)
-		elseif not tower.knockedOut and heal > 0 and tower.hp < tower.maxHp then
-			Towers.heal(tower, heal * dt)
-		elseif tower.knockedOut and revive > 0 then
-			-- Revive: HP climbs while it stays trampled; it stands at full.
-			tower.hp = math.min(tower.maxHp, tower.hp + revive * dt)
-			if tower.hp >= tower.maxHp then
-				Towers.repair(tower)
-			else
-				showHealth(tower)
-			end
-		end
-	end
-	for _, player in Players:GetPlayers() do
-		local character = player.Character
-		local root = character and character:FindFirstChild("HumanoidRootPart")
-		if root and root:IsA("BasePart") then
-			local heal = healRates(root.Position, Sides.playerSide(player:GetAttribute("Side"), ReplicatedStorage:GetAttribute("Sides")))
-			if heal > 0 then
-				Health.heal(player, heal * dt)
-			end
-		end
-	end
-end
-
-export type MedKitDrop = { base: Vector3, count: number, heal: number, side: number }
-
--- Med kits each standing hospital drops this round.
-function Towers.medKits(): { MedKitDrop }
-	local drops = {}
-	for _, tower in towers do
-		local s = tower.stats
-		if s.medKits > 0 and s.medKitHeal > 0 and not tower.knockedOut and not tower.blimp then -- a blimp's come each lap
-			table.insert(drops, { base = tower.base, count = s.medKits, heal = s.medKitHeal, side = tower.side })
-		end
-	end
-	return drops
-end
-
--- A standing Rescue Beacon: where downed hunters come back, and the share of
--- the respawn time they wait. nil if there's none. `side`: the hunter's (default 1, co-op;
--- a battle hunter only comes back at their own side's beacon, T77).
-function Towers.rescueBeacon(side: number?): (Vector3?, number)
-	local best, mult = nil, 1
-	for _, tower in towers do
-		local m = tower.stats.rescueRespawnMult
-		if m > 0 and not tower.knockedOut and tower.side == (side or 1) and (best == nil or m < mult) then
-			best, mult = tower.base, m
-		end
-	end
-	return best, mult
-end
-
------------------------------------------------------------------- Amber Resin Cannon, per frame
-
-local WALL_STEP = 2 -- studs: how finely the wall's spot is searched along the track
-local WALL_CATCH = 1.5 -- studs before the wall where a dino stops
-
--- The furthest-along point of the side's track still inside the cannon's range.
-local function wallSpot(tower: Tower): number
-	local d = Enemies.trackDistanceNear(tower.base, tower.side)
-	local range = tower.stats.range
-	for _ = 1, 400 do
-		local p = Enemies.pointAt(d + WALL_STEP, tower.side)
-		local flat = Vector2.new(p.X - tower.base.X, p.Z - tower.base.Z).Magnitude
-		if flat > range or (p - Enemies.pointAt(d, tower.side)).Magnitude < 1e-3 then
-			break
-		end
-		d += WALL_STEP
-	end
-	return d
-end
-
--- Raises Resin Wall now (AutoFire, or the Studio `firenow`).
-local function raiseWall(tower: Tower)
-	local state = tower.resin
-	if not state or tower.stats.wallSeconds <= 0 then
-		return
-	end
-	local at = wallSpot(tower)
-	local point = Enemies.pointAt(at, tower.side)
-	local ahead = Enemies.pointAt(at + 1, tower.side)
-	local facing = if (ahead - point).Magnitude > 1e-3 then CFrame.lookAt(point, Vector3.new(ahead.X, point.Y, ahead.Z)) else CFrame.new(point)
-	local part = Effects.part(Vector3.new(10, 6, 1.5), facing + Vector3.new(0, 3, 0), AMBER_COLOR, tower.stats.wallSeconds)
-	part.Transparency = 0.3
-	part.Material = Enum.Material.Glass
-	state.wall = { at = at, raisedAt = os.clock(), part = part }
-end
-
--- Amber Age: entombs everything in range now.
-local function entombAll(tower: Tower, own)
-	local stats = tower.stats
-	for _, enemy in own do
-		if enemy.alive and not enemy.def.flying and (enemy.part.Position - tower.position).Magnitude <= stats.range then
-			entomb(tower, enemy, FourX.hardStop(stats.entombSeconds, enemy.def.boss == true), false)
-		end
-	end
-end
-
-local function stepResin(tower: Tower, dt: number, own)
-	local state = tower.resin
-	if not state then
-		return
-	end
-	local stats, now = tower.stats, os.clock()
-	if tower.knockedOut then
-		state.wall = nil
-		return
-	end
-	-- Amber Age: every Entomb all every (s).
-	if stats.entombAllEvery > 0 then
-		state.allTimer += dt
-		if state.allTimer >= stats.entombAllEvery then
-			state.allTimer -= stats.entombAllEvery
-			entombAll(tower, own)
-		end
-	end
-	-- Sticky Bed: dinos near one it entombed walk slower.
-	if stats.entombSlowPercent > 0 then
-		for tomb, untilTime in state.entombed do
-			if now >= untilTime or not tomb.alive then
-				state.entombed[tomb] = nil
-				continue
-			end
-			for _, enemy in own do
-				if enemy ~= tomb and enemy.alive and Resin.inStickyBed((enemy.part.Position - tomb.part.Position).Magnitude) then
-					Enemies.chill(enemy, { slowPercent = stats.entombSlowPercent, seconds = STICKY_REFRESH, affectsBosses = false, brittlePercent = 0, stripsArmor = false })
-				end
-			end
-		end
-	end
-	-- Resin Wall: once a round, fired by Shared/AutoFire; it holds every dino reaching it.
-	if stats.wallSeconds > 0 then
-		if not state.wall then
+		-- Raptor Swarm / Raptor Charge: once a round, fired by Shared/AutoFire.
+		if stats.swarm or stats.charge then
 			local inArea, boss = 0, false
 			for _, enemy in own do
 				if enemy.alive and (enemy.part.Position - tower.position).Magnitude <= stats.range then
@@ -4046,82 +2040,2130 @@ local function stepResin(tower: Tower, dt: number, own)
 				end
 			end
 			if AutoFire.check(state.auto, boss, inArea, Enemies.allSpawned(tower.side), #own) then
-				raiseWall(tower)
+				if stats.swarm then
+					releaseSwarm(tower)
+				else
+					startCharge(tower)
+				end
 			end
 		end
-		local wall = state.wall
-		if wall then
-			local since = now - wall.raisedAt
-			if since >= stats.wallSeconds then
-				state.wall = nil
+		local charge = state.charge
+		if charge then
+			charge.elapsed += dt
+			local speed = Config.Tuning.RaptorSpeed * stats.walkerSpeedMult
+			local at = Raptor.chargeAt(Enemies.trackLength(tower.side), speed, charge.elapsed)
+			if not at then
+				state.charge = nil
+				Walkers.charge(tower, nil)
 			else
+				Walkers.charge(tower, at)
 				for _, enemy in own do
-					local boss = enemy.def.boss == true
-					if enemy.alive and enemy.distance >= wall.at - WALL_CATCH and enemy.distance <= wall.at + 0.5 and Resin.wallHolds(stats.wallSeconds, since, boss) then
-						Enemies.stun(enemy, FourX.hardStop(stats.wallSeconds, boss) - since, true)
+					if enemy.alive and not charge.bitten[enemy] and math.abs(enemy.distance - at) <= Config.Tuning.RaptorReach then
+						charge.bitten[enemy] = true
+						local knock = Raptor.chargeKnock(enemy.size, enemy.def.boss == true) -- small dinos only, never a boss
+						raptorBite(tower, enemy, 1, 0)
+						if enemy.alive then
+							Enemies.knockback(enemy, knock)
+						end
 					end
+				end
+			end
+		end
+		-- Rex Tamer: the roar stuns small dinos near the alpha.
+		if stats.stunRoarEvery > 0 then
+			state.roarTimer += dt
+			if state.roarTimer >= stats.stunRoarEvery then
+				local at = Walkers.firstAt(tower)
+				if at then
+					state.roarTimer = 0
+					local list, distances, sizes, bosses = {}, {}, {}, {}
+					for _, enemy in own do
+						if enemy.alive then
+							table.insert(list, enemy)
+							table.insert(distances, (enemy.part.Position - at).Magnitude)
+							table.insert(sizes, enemy.size)
+							table.insert(bosses, enemy.def.boss == true)
+						end
+					end
+					for _, i in Raptor.roared(distances, sizes, bosses) do
+						Enemies.stun(list[i], stats.stunSeconds, false)
+					end
+					Effects.disc(at, Config.Tuning.RoarReachStuds, campColour(tower), 0.4, 0.7)
+				end
+			end
+		end
+	end
+
+	-- Pack Bond (#319): the strongest own-side pen covering `position` with 3+ raptors out, or a
+	-- War Paint Bone Totem for Full buff (s) after a full charge (PLAN 9h): its hunters' extra damage %
+	-- against dinos only (Hero asks for its shots on dinos).
+	function Towers.hunterDamageAt(position: Vector3, side: number?): number
+		local best = 0
+		for _, source in towers do
+			local percent = source.stats.hunterDamagePercent
+			if percent > 0 and not source.knockedOut and covers(source, position) and BattleRules.canSupport(source.side, side or 1) then
+				if source.totem then
+					best = math.max(best, if os.clock() < source.totem.buffUntil then percent else 0)
+				else
+					best = math.max(best, Raptor.packBond(percent, Walkers.outCount(source), true))
+				end
+			end
+		end
+		return best
+	end
+
+	-- Elder Wisdom (PLAN 9h, #319): the lowest ability cooldown x of an own-side Bone Totem covering
+	-- `position` (1 = none). Ability tempo for hunters, never damage.
+	function Towers.hunterCooldownAt(position: Vector3, side: number?): number
+		local best = 1
+		for _, source in towers do
+			local mult = source.stats.hunterCooldownMult
+			if mult < 1 and not source.knockedOut and covers(source, position) and BattleRules.canSupport(source.side, side or 1) then
+				best = math.min(best, mult)
+			end
+		end
+		return best
+	end
+end
+
+------------------------------------------------------------------ Bone Totem (PLAN 9h T126)
+
+local AURA_REFRESH = 0.25 -- s: a totem's charge aura is refreshed at most this often
+local stepTotem: (Tower, number, any) -> ()
+local pendingAirlifts: { { tower: Tower, at: number } } = {}
+local stepAirlifts: () -> ()
+local crateHeal: (Tower, Vector3, number) -> ()
+local stepBlimp: (Tower, number, any) -> ()
+local stepMeteor: (Tower, number, any) -> ()
+local meteorFireNow: (Tower, { string }) -> ()
+local stepVent: (Tower, number, any) -> ()
+local ventFireNow: (Tower, { string }) -> ()
+local publishOutlines: () -> ()
+local blimpFireNow: (Tower, { string }) -> ()
+do -- block-scoped locals: the main chunk must stay under Luau's 200-register limit (PLAYTEST F11)
+	-- Visuals only.
+	local BONE_COLOR = Color3.fromRGB(235, 225, 200)
+	local GHOST_COLOR = Color3.fromRGB(150, 230, 255)
+
+	-- One hit of a totem's (roar, skull, ghost hunter): its armour / boss rules, breaks, Shatter's
+	-- strip first and Fear's knockback after. Its pops never charge a totem (Enemies source "totem").
+	local function totemHit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number, strip: boolean)
+		local stats = tower.stats
+		if not enemy.alive or not ownSide(tower, enemy) or (enemy.def.flying and not stats.hitsAir) then
+			return
+		end
+		if strip then
+			Enemies.strip(enemy, Config.Tuning.ShatterStripS) -- Shatter Roar: bare for every tower a while
+		end
+		local pierce = piercing(tower)
+		if not Enemies.canHurt(enemy, pierce) then
+			return
+		end
+		if enemy.def.armored then
+			damage *= stats.armoredMult
+		end
+		if enemy.def.boss then
+			damage *= stats.bossMult
+		end
+		local b = if breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
+		Enemies.setSource("totem")
+		local killed, gone, dropped = Enemies.damage(enemy, damage, pierce, b)
+		Enemies.setSource(nil)
+		credit(tower.owner, killed, gone, dropped)
+		local fear = if enemy.alive then Totem.knock(stats, enemy.size, enemy.def.boss == true) else 0 -- Fear: small dinos only
+		if fear > 0 then
+			Enemies.knockback(enemy, fear)
+		end
+	end
+
+	-- The Spirit Roar: every dino in range (Ancient Roar: on its side); Skull Storm: skulls instead.
+	local function spiritRoar(tower: Tower, own)
+		local stats = tower.stats
+		local damage = stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
+		local list = {}
+		for _, enemy in own do
+			if enemy.alive and (stats.roarWholeTrack or stats.skulls > 0 or covers(tower, enemy.part.Position)) then
+				table.insert(list, enemy)
+			end
+		end
+		if stats.skulls > 0 then
+			local distances = {}
+			for i, enemy in list do
+				distances[i] = enemy.distance
+			end
+			for _, i in Totem.skullTargets(distances, stats.skulls) do
+				local enemy = list[i]
+				Effects.tracer(tower.muzzle, enemy.part.Position, BONE_COLOR)
+				Effects.part(Vector3.one * 1.2, CFrame.new(enemy.part.Position + Vector3.new(0, 1.5, 0)), BONE_COLOR, 0.3, Enum.PartType.Ball)
+				totemHit(tower, enemy, damage * Config.Tuning.SkullX, 1, stats.stripsArmor)
+			end
+			return
+		end
+		Effects.disc(tower.base + Vector3.new(0, 0.2, 0), stats.range, BONE_COLOR, 0.5, 0.55) -- the shockwave
+		local breaks = Totem.roarBreaks(stats)
+		for _, enemy in list do
+			totemHit(tower, enemy, damage, breaks, stats.stripsArmor)
+		end
+	end
+
+	-- A full charge: the path's effect (roar or pay), then Spirit Guard, War Paint, Spirit Hunters
+	-- and Ancient Treasure.
+	local function totemFull(tower: Tower, own)
+		local state = tower.totem :: TotemState
+		local stats, now = tower.stats, os.clock()
+		if Totem.roars(stats) then
+			spiritRoar(tower, own)
+			if stats.roarEchoes > 0 then
+				state.echoAt = now + Totem.ECHO_DELAY
+			end
+		elseif onCash then
+			onCash(tower.side, Totem.fullPay(stats, if huntersOn then huntersOn(tower.side) else 1)) -- Bone Market, Camp Payday
+			Effects.disc(tower.base + Vector3.new(0, 0.2, 0), 3, Color3.fromRGB(250, 205, 80), 0.6, 0.4)
+		end
+		local treasure = Totem.treasure(state.rules, stats)
+		if treasure > 0 and onCrate then
+			onCrate(tower.base + Vector3.new(3, 0, 0), treasure, tower.side) -- Ancient Treasure
+		end
+		if stats.fullGuardSeconds > 0 then -- Spirit Guard: towers in range take no damage a while
+			for _, other in towers do
+				if not other.def.untouchable and covers(tower, other.base) and BattleRules.canSupport(tower.side, other.side) then
+					other.sealedUntil = math.max(other.sealedUntil, now + stats.fullGuardSeconds)
+					local shell = Effects.part(Vector3.new(4, TowerLook.BODY_HEIGHT + 1, 4), CFrame.new(other.position), GHOST_COLOR, stats.fullGuardSeconds)
+					shell.Transparency = 0.7
+					shell.Material = Enum.Material.ForceField
+				end
+			end
+		end
+		if stats.hunterDamagePercent > 0 then
+			state.buffUntil = now + Config.Tuning.FullBuffS -- War Paint
+		end
+		if stats.spiritHunters then
+			state.spiritUntil = now + Config.Tuning.SpiritS
+			state.spiritTimer = 0
+		end
+	end
+
+	-- Spirit Hunters: each ghost fires at a dino in range, the furthest along first.
+	local function ghostVolley(tower: Tower, own)
+		local list = {}
+		for _, enemy in own do
+			if enemy.alive and covers(tower, enemy.part.Position) and (tower.stats.hitsAir or not enemy.def.flying) then
+				table.insert(list, enemy)
+			end
+		end
+		if #list == 0 then
+			return
+		end
+		table.sort(list, function(a, b)
+			return a.distance > b.distance
+		end)
+		local count = Config.Tuning.SpiritHunters
+		for i = 1, count do
+			local enemy = list[(i - 1) % #list + 1]
+			local angle = i * 2 * math.pi / count
+			local ghost = tower.base + Vector3.new(math.cos(angle) * 2.5, 2.5, math.sin(angle) * 2.5)
+			local body = Effects.part(Vector3.new(1, 2.4, 1), CFrame.new(ghost), GHOST_COLOR, 0.35)
+			body.Transparency = 0.5
+			Effects.tracer(ghost, enemy.part.Position, GHOST_COLOR)
+			totemHit(tower, enemy, Config.Tuning.SpiritHunterDamage * levelScale, 1, false)
+		end
+	end
+
+	stepTotem = function(tower: Tower, dt: number, own)
+		local state = tower.totem
+		if not state then
+			return
+		end
+		local stats, now = tower.stats, os.clock()
+		local share = Totem.share(state.rules, stats)
+		if math.abs(share - state.shownShare) > 0.01 then
+			state.shownShare = share
+			TowerLook.setCharge(tower.model, share) -- the charge glow ring
+		end
+		if tower.knockedOut then
+			return -- Trampled: no effects (its charge waits)
+		end
+		while state.pending > 0 do
+			state.pending -= 1
+			totemFull(tower, own)
+		end
+		if state.echoAt > 0 and now >= state.echoAt then
+			state.echoAt = 0
+			spiritRoar(tower, own) -- Echo Roar
+		end
+		if now < state.spiritUntil then
+			state.spiritTimer -= dt
+			if state.spiritTimer <= 0 then
+				state.spiritTimer += 1 / Config.Tuning.SpiritHunterRate
+				ghostVolley(tower, own)
+			end
+		end
+		if stats.finishingRoar then -- a free roar at a weak boss in range, once per boss
+			for _, enemy in own do
+				if enemy.alive and enemy.def.boss and covers(tower, enemy.part.Position)
+					and Totem.finishes(enemy.hp / math.max(1e-9, enemy.share * enemy.sizes), state.finished[enemy] == true) then
+					state.finished[enemy] = true
+					spiritRoar(tower, own)
+				end
+			end
+		end
+	end
+
+	------------------------------------------------------------------ Spotter Blimp (PLAN 9h T125b)
+
+	-- Visuals only.
+	local HOOK_COLOR = Color3.fromRGB(90, 90, 95)
+	local BOMB_COLOR = Color3.fromRGB(255, 150, 60)
+	local LIGHT_REFRESH = 0.25 -- s the searchlight's +% lasts after the last frame under it (keeps it continuous)
+
+
+	-- Sky Hook: the smallest small dino under it is lifted off the track (a take-down: every
+	-- size pays, pops to the owner).
+	local function skyHook(tower: Tower, dinos: { Enemies.Enemy }, ground: Vector3)
+		local list = {}
+		for i, enemy in dinos do
+			list[i] = {
+				hp = enemy.hp,
+				at = enemy.distance,
+				boss = enemy.def.boss == true,
+				sizesLeft = enemy.size,
+				inRange = ownSide(tower, enemy) and Blimp.under(enemy.part.Position, ground, tower.stats.range),
+			}
+		end
+		local i = Blimp.hookPick(list)
+		if not i then
+			return
+		end
+		local enemy = dinos[i]
+		local at = enemy.part.Position
+		local killed, gone, dropped = Enemies.dropSizes(enemy, enemy.size)
+		credit(tower.owner, killed, gone, dropped)
+		if gone then
+			takeDownMark(tower, at)
+		end
+		Effects.tracer(tower.muzzle, at, HOOK_COLOR)
+	end
+
+	-- Bombing Run (AutoFire, once a round played): every dino on the side's track takes Field
+	-- strike x x the gun's shot (9e Field strike rules: air too, armour only if it pierces, breaks 1).
+	local function bombingRun(tower: Tower, dinos: { Enemies.Enemy })
+		local stats = tower.stats
+		local list, field = {}, {}
+		for _, enemy in dinos do
+			if enemy.alive and ownSide(tower, enemy) and Meteor.cometSweeps(enemy.def.flying == true) then
+				table.insert(list, enemy)
+				table.insert(field, { side = tower.side, flying = enemy.def.flying == true, armored = enemy.def.armored == true, bare = Enemies.canHurt(enemy, false) })
+			end
+		end
+		local damage = stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale * stats.fieldStrikeX
+		for _, i in StormCoil.fieldTargets(field, tower.side, piercing(tower)) do
+			local enemy = list[i]
+			Effects.tracer(enemy.part.Position + Vector3.new(0, Blimp.HEIGHT, 0), enemy.part.Position, BOMB_COLOR)
+			hit(tower, enemy, damage, 1)
+		end
+	end
+
+	-- A paratrooper's shot lands (ground dinos only; breaks 1).
+	local function paraShot(tower: Tower, enemy: Enemies.Enemy, x: number)
+		if not enemy.alive or enemy.def.flying or not canTarget(tower, enemy) then
+			return
+		end
+		hit(tower, enemy, Blimp.paraDamage() * x * levelScale, 1, true)
+	end
+
+	-- Paratroopers: n walkers drop below the blimp and fight until the round ends (Shared/Walker,
+	-- fight mode; within the side's walker cap).
+	local function dropParatroopers(tower: Tower)
+		local state = tower.blimp :: BlimpState
+		local landAt = state.at
+		local land = Enemies.pointAt(landAt, tower.side)
+		local colour = campColour(tower)
+		Walkers.sync(state.paraKey, {
+			count = tower.stats.paratroopers,
+			params = Blimp.paraParams(),
+			side = tower.side,
+			base = land,
+			homeAt = landAt,
+			sending = true,
+			healsBetweenRounds = false,
+			look = function()
+				return TowerLook.buildRanger(colour)
+			end,
+			onHit = function(enemy, landed)
+				paraShot(tower, enemy, landed.x)
+			end,
+		})
+		Effects.disc(land + Vector3.new(0, 0.3, 0), 4, colour, 0.3, 0.8)
+	end
+
+	-- Airlift: the first of its side's towers Trampled each round is lifted and set down repaired
+	-- Blimp.AIRLIFT_S later (one per blimp per round).
+	airlift = function(tower: Tower)
+		if tower.def.untouchable then
+			return
+		end
+		for _, source in towers do
+			local state = source.blimp
+			if state and source.side == tower.side and Blimp.airlifts(source.stats, state.airliftUsed) then
+				state.airliftUsed = true
+				table.insert(pendingAirlifts, { tower = tower, at = os.clock() + Blimp.AIRLIFT_S })
+				Effects.tracer(source.muzzle, tower.position, HOOK_COLOR)
+				return
+			end
+		end
+	end
+
+	stepAirlifts = function()
+		local now = os.clock()
+		for i = #pendingAirlifts, 1, -1 do
+			local lift = pendingAirlifts[i]
+			if now >= lift.at then
+				table.remove(pendingAirlifts, i)
+				if table.find(towers, lift.tower) and lift.tower.knockedOut then
+					Towers.repair(lift.tower)
+				end
+			end
+		end
+	end
+
+	-- The standing tower with HP nearest `point` on `side` (Spare Parts' crate heal).
+	local function nearestDamageable(point: Vector3, side: number): Tower?
+		local best, bestD = nil, math.huge
+		for _, other in towers do
+			local d = (other.base - point).Magnitude
+			if other.side == side and not other.def.untouchable and not other.knockedOut and d < bestD then
+				best, bestD = other, d
+			end
+		end
+		return best
+	end
+
+	crateHeal = function(tower: Tower, point: Vector3, crates: number)
+		if tower.stats.crateHealPercent <= 0 or crates <= 0 then
+			return
+		end
+		local near = nearestDamageable(point, tower.side)
+		if near then
+			Towers.heal(near, Blimp.crateHeal(tower.stats, near.maxHp) * crates)
+		end
+	end
+
+	-- A finished lap: a crate (Lap chests), med kits and Rebuild Kits' repairs below its path.
+	local function lapDrops(tower: Tower, below: Vector3)
+		local stats = tower.stats
+		local drops = Blimp.lapDrops(stats)
+		if drops.crates > 0 and onCrate then
+			for _ = 1, drops.crates do
+				onCrate(below, stats.chestCash, tower.side)
+			end
+			crateHeal(tower, below, drops.crates)
+		end
+		if drops.kits > 0 and onKit then
+			for _ = 1, drops.kits do
+				onKit(below, stats.medKitHeal, tower.side)
+			end
+		end
+		if drops.repairs > 0 then
+			local trampled, distances = {}, {}
+			for _, other in towers do
+				if other.side == tower.side and other.knockedOut and not other.def.untouchable then
+					local onPath = Enemies.pointAt(Enemies.trackDistanceNear(other.base, tower.side), tower.side)
+					local offset = other.base - onPath
+					table.insert(trampled, other)
+					table.insert(distances, Vector2.new(offset.X, offset.Z).Magnitude)
+				end
+			end
+			for _, i in Blimp.repairs(distances, stats.range, drops.repairs) do
+				Towers.repair(trampled[i])
+				Effects.tracer(tower.muzzle, trampled[i].position, HOOK_COLOR)
+			end
+		end
+	end
+
+	stepBlimp = function(tower: Tower, dt: number, own)
+		local state = tower.blimp
+		if not state then
+			return
+		end
+		local stats = tower.stats
+		local speed = Blimp.speed(stats)
+		local lapDone
+		state.at, state.dir, lapDone = Blimp.advance(state.at, state.dir, speed, dt, Enemies.trackLength(tower.side))
+		local dinos = {}
+		for _, enemy in own do
+			if enemy.alive then
+				table.insert(dinos, enemy)
+			end
+		end
+		-- Tracking Beam: the light and gun centre on the side's biggest dino, moving at Blimp speed.
+		if stats.targetsBiggest then
+			local list = {}
+			for i, enemy in dinos do
+				list[i] = { hp = enemy.hp, at = enemy.distance, boss = enemy.def.boss == true, sizesLeft = enemy.size, inRange = true }
+			end
+			local i = Blimp.biggest(list)
+			state.focus = Blimp.follow(state.focus, if i then dinos[i].distance else state.at, speed, dt)
+		else
+			state.focus = state.at
+		end
+		local ground = Enemies.pointAt(state.focus, tower.side)
+		local below = Enemies.pointAt(state.at, tower.side)
+		local air = below + Vector3.new(0, Blimp.HEIGHT, 0)
+		tower.position = ground + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0)
+		tower.muzzle = air - Vector3.new(0, 4, 0)
+		TowerLook.poseBlimp(state.model, air, Enemies.pointAt(state.at + state.dir, tower.side) - below, ground, stats.range)
+		if hasAura(stats) then
+			auraDirty = true -- its auras move with it (refreshed at most every AURA_REFRESH s)
+		end
+		-- Searchlight: dinos under the light take +Brittle % (bosses too).
+		if stats.brittlePercent > 0 then
+			for _, enemy in dinos do
+				if ownSide(tower, enemy) and Blimp.under(enemy.part.Position, ground, stats.range) then
+					Enemies.chill(enemy, { slowPercent = 0, seconds = LIGHT_REFRESH, affectsBosses = true, brittlePercent = stats.brittlePercent, stripsArmor = false })
+				end
+			end
+		end
+		if stats.hookEvery > 0 then
+			local fire
+			state.hookTimer, fire = Blimp.hookTick(state.hookTimer, dt, stats.hookEvery)
+			if fire then
+				skyHook(tower, dinos, ground)
+			end
+		end
+		if stats.bombingRun then
+			local boss = false
+			for _, enemy in dinos do
+				boss = boss or enemy.def.boss == true
+			end
+			if AutoFire.check(state.auto, boss, #dinos, Enemies.allSpawned(tower.side), #dinos) then
+				bombingRun(tower, dinos)
+			end
+		end
+		state.roundClock += dt
+		if Blimp.paraDue(stats.paratroopers, state.roundClock, state.paraDropped) then
+			state.paraDropped = true
+			dropParatroopers(tower)
+		end
+		if lapDone then
+			lapDrops(tower, below)
+		end
+	end
+
+	------------------------------------------------------------------ Meteor Beacon (PLAN 9i T127)
+
+	-- Visuals only.
+	local WARN_COLOR = Color3.fromRGB(230, 40, 30)
+	local ROCK_COLOR = Color3.fromRGB(95, 60, 45)
+	local CRATER_COLOR = Color3.fromRGB(255, 110, 30)
+	local ICE_COLOR = Color3.fromRGB(170, 225, 255)
+	local ASH_COLOR = Color3.fromRGB(120, 115, 110)
+	local CRATER_TICK = 0.25 -- s a crater's touch (strip, amp, miss, ash) lasts after the last frame in it
+
+	-- One meteor on its way: it lands at `at` (distance along its side's track) at `when`.
+	type Landing = { at: number, when: number, damage: number, splash: number, crater: boolean, small: boolean, giant: boolean? }
+
+	-- A meteor lands: every dino it can hit in the splash takes the hit and breaks the build's
+	-- sizes (the biggest one more with Dino Killer); a crater, a Cinder Trail strip, Impact
+	-- Winter's side slow after.
+	local function meteorLand(tower: Tower, landing: Landing, own)
+		local state = tower.meteor :: MeteorState
+		local stats = tower.stats
+		local dinos, list = {}, {}
+		for _, enemy in own do
+			if enemy.alive and ownSide(tower, enemy) then
+				table.insert(list, enemy)
+				table.insert(dinos, { id = enemy, at = enemy.distance, boss = enemy.def.boss == true, flying = enemy.def.flying == true, sizes = enemy.size })
+			end
+		end
+		local point = Enemies.pointAt(landing.at, tower.side)
+		Effects.part(Vector3.one * (if landing.small then 1.5 else 3), CFrame.new(point + Vector3.new(0, 1, 0)), ROCK_COLOR, 0.4, Enum.PartType.Ball)
+		Effects.disc(point + Vector3.new(0, 0.3, 0), landing.splash, CRATER_COLOR, 0.35, 0.4)
+		local hits = Meteor.hits(dinos, landing.at, landing.splash, stats.hitsAir)
+		local biggest = Meteor.biggest(hits)
+		for _, d in hits do
+			local enemy = d.id :: Enemies.Enemy
+			if stats.stripsArmor then
+				Enemies.strip(enemy, Config.Tuning.StripS) -- Glass Crater: the meteor bares them too
+			end
+			hit(tower, enemy, landing.damage, Meteor.breaksFor(stats, d == biggest))
+		end
+		if landing.crater then
+			local crater = Meteor.crater(stats, landing.at, os.clock())
+			table.insert(state.craters, crater)
+			local seconds = Meteor.craterSeconds(stats)
+			Hazards.burn(landing.at, Config.Tuning.CraterRadius, Meteor.craterBurn(stats) * levelScale, seconds, piercing(tower) or stats.stripsArmor, tower.owner, tower.side)
+			if stats.craterFreezeSeconds > 0 then
+				Effects.disc(point + Vector3.new(0, 0.5, 0), Config.Tuning.CraterRadius, ICE_COLOR, seconds, 0.55)
+			elseif stats.throwMissPercent > 0 or stats.biteMissPercent > 0 then
+				Effects.disc(point + Vector3.new(0, 0.5, 0), Config.Tuning.CraterRadius, ASH_COLOR, seconds, 0.6)
+			end
+			if stats.fireLine then -- Fire Line: the stretch to a close live crater burns too
+				local now = os.clock()
+				for _, other in state.craters do
+					local gap = math.abs(other.at - landing.at)
+					if other ~= crater and other.ends > now and gap > 0 and gap <= Config.Tuning.FireLineGapStuds then
+						local both = math.min(other.ends, crater.ends) - now
+						Hazards.burn((other.at + landing.at) / 2, gap / 2, Meteor.craterBurn(stats) * levelScale, both, piercing(tower) or stats.stripsArmor, tower.owner, tower.side)
+					end
+				end
+			end
+		end
+		if landing.small and stats.burnStreak then -- Cinder Trail
+			local from, to = Meteor.streak(landing.at)
+			Hazards.burn((from + to) / 2, (to - from) / 2, Meteor.craterBurn(stats) * levelScale, Meteor.STREAK_SECONDS, piercing(tower), tower.owner, tower.side)
+		end
+		if stats.sideSlowPercent > 0 and stats.sideSlowSeconds > 0 then -- Impact Winter: every dino on the side
+			for _, enemy in list do
+				Enemies.chill(enemy, { slowPercent = stats.sideSlowPercent, seconds = stats.sideSlowSeconds, affectsBosses = true, brittlePercent = 0, stripsArmor = false })
+			end
+		end
+	end
+
+	-- Queue meteors at `points` after the warning ring (n small ones spread over Meteor.SMALL_SPREAD s).
+	local function meteorQueue(tower: Tower, points: { number }, damage: number, splash: number, small: boolean, crater: boolean)
+		local state = tower.meteor :: MeteorState
+		local now, warn = os.clock(), Meteor.warning()
+		for i, at in points do
+			local delay = if #points > 1 then (i - 1) * Meteor.SMALL_SPREAD / #points else 0
+			local point = Enemies.pointAt(at, tower.side)
+			task.delay(delay, function()
+				Effects.disc(point + Vector3.new(0, 0.35, 0), splash, WARN_COLOR, warn, 0.5) -- the warning ring
+			end)
+			table.insert(state.landings, { at = at, when = now + delay + warn, damage = damage, splash = splash, crater = crater and i == 1, small = small })
+		end
+		Effects.tracer(tower.muzzle, tower.muzzle + Vector3.new(0, 30, 0), WARN_COLOR) -- the red flare
+	end
+
+	local function meteorDinos(tower: Tower, own): { Meteor.Dino }
+		local dinos = {}
+		for _, enemy in own do
+			if enemy.alive and ownSide(tower, enemy) then
+				table.insert(dinos, { id = enemy, at = enemy.distance, boss = enemy.def.boss == true, flying = enemy.def.flying == true, sizes = enemy.size })
+			end
+		end
+		return dinos
+	end
+
+	local function meteorDamage(tower: Tower): number
+		return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
+	end
+
+	-- A strike now: one meteor on the densest bunch, n small ones (Sky Rocks; Scatter's segments),
+	-- or a Starfall wave (no crater).
+	local function meteorStrike(tower: Tower, dinos: { Meteor.Dino }, starfall: boolean)
+		local stats = tower.stats
+		local length = Enemies.trackLength(tower.side)
+		local x = meteorDamage(tower) / math.max(1e-9, stats.damage)
+		if starfall then
+			local n, dmg, splash = Meteor.starfall(stats)
+			meteorQueue(tower, Meteor.points(dinos, n, true, length, stats.hitsAir), dmg * x, splash, true, false)
+			return
+		end
+		local n, dmg, splash = Meteor.strike(stats)
+		meteorQueue(tower, Meteor.points(dinos, n, stats.scatter, length, stats.hitsAir), dmg * x, splash, n > 1, true)
+	end
+
+	-- Extinction Event: every dino on the side takes Extinction x the meteor (breaks 1); the
+	-- densest bunch's break Extinction breaks.
+	local function extinctionEvent(tower: Tower, own)
+		local stats = tower.stats
+		local dinos = meteorDinos(tower, own)
+		local centre = Meteor.densest(dinos, stats.hitsAir)
+		if centre == nil then
+			return
+		end
+		Effects.disc(Enemies.pointAt(centre, tower.side) + Vector3.new(0, 0.4, 0), Config.Tuning.BunchRadiusStuds * 2, CRATER_COLOR, 1, 0.3)
+		local scale = meteorDamage(tower) / math.max(1e-9, stats.damage)
+		for _, d in dinos do
+			if stats.hitsAir or not d.flying then
+				local inBunch = math.abs(d.at - centre) <= Config.Tuning.BunchRadiusStuds
+				local dmg, breaks = Meteor.extinctionHit(stats, inBunch)
+				hit(tower, d.id :: Enemies.Enemy, dmg * scale, breaks)
+			end
+		end
+	end
+
+	-- Comet Tail (Bombing run): once a round played, Field strike x the meteor on every dino on the
+	-- side's track (the 9h Bombing Run rules: armour only if it pierces, breaks 1), ground dinos
+	-- only (#347: flyers are Shooting Stars').
+	local function cometTail(tower: Tower, own)
+		local stats = tower.stats
+		local list, field = {}, {}
+		for _, enemy in own do
+			if enemy.alive and ownSide(tower, enemy) and Meteor.cometSweeps(enemy.def.flying == true) then
+				table.insert(list, enemy)
+				table.insert(field, { side = tower.side, flying = enemy.def.flying == true, armored = enemy.def.armored == true, bare = Enemies.canHurt(enemy, false) })
+			end
+		end
+		local damage = meteorDamage(tower) * stats.fieldStrikeX
+		for _, i in StormCoil.fieldTargets(field, tower.side, piercing(tower)) do
+			local enemy = list[i]
+			Effects.tracer(enemy.part.Position + Vector3.new(0, 25, 0), enemy.part.Position, CRATER_COLOR)
+			hit(tower, enemy, damage, 1)
+		end
+	end
+
+	stepMeteor = function(tower: Tower, dt: number, own)
+		local state = tower.meteor
+		if not state then
+			return
+		end
+		local stats, now = tower.stats, os.clock()
+		state.craters = Meteor.prune(state.craters, now)
+		-- Craters touch the dinos in them: Glass Crater strips, Scorch Marks marks, New Ice Age freezes once.
+		if #state.craters > 0 then
+			for _, enemy in own do
+				if enemy.alive and ownSide(tower, enemy) and (stats.hitsAir or not enemy.def.flying) then
+					local crater = Meteor.inCrater(state.craters, enemy.distance, now, stats.fireLine)
+					if crater then
+						if stats.stripsArmor then
+							Enemies.strip(enemy, CRATER_TICK)
+						end
+						if stats.craterAmpPercent > 0 then
+							Enemies.mark(enemy, stats.craterAmpPercent, Meteor.AMP_SECONDS)
+						end
+						if stats.craterFreezeSeconds > 0 and Meteor.freezeOnce(crater, enemy) then
+							Enemies.stun(enemy, FourX.hardStop(stats.craterFreezeSeconds, enemy.def.boss == true), true)
+						end
+					end
+				end
+			end
+		end
+		for i = #state.landings, 1, -1 do
+			local landing = state.landings[i]
+			if now >= landing.when then
+				table.remove(state.landings, i)
+				meteorLand(tower, landing, own)
+			end
+		end
+		if tower.knockedOut then
+			return -- Trampled: no new meteors
+		end
+		local dinos = meteorDinos(tower, own)
+		local every, starfall = Meteor.strikeEvery(stats)
+		state.timer += dt * (1 + tower.buff.ratePercent / 100)
+		if state.timer >= every and #dinos > 0 then
+			state.timer = 0
+			meteorStrike(tower, dinos, starfall)
+		end
+		if stats.meteorEvery > 0 then -- Endless Rain: one more small meteor on its own timer
+			state.rainTimer += dt
+			if state.rainTimer >= stats.meteorEvery and #dinos > 0 then
+				state.rainTimer = 0
+				local dmg, splash = Meteor.small(stats)
+				meteorQueue(tower, Meteor.points(dinos, 1, false, 1, stats.hitsAir), dmg * meteorDamage(tower) / math.max(1e-9, stats.damage), splash, true, false)
+			end
+		end
+		if stats.extinction then
+			local centre = Meteor.densest(dinos, stats.hitsAir)
+			local boss, count = false, 0
+			if centre then
+				for _, d in dinos do
+					if math.abs(d.at - centre) <= Config.Tuning.BunchRadiusStuds then
+						count += 1
+						boss = boss or d.boss == true
+					end
+				end
+			end
+			if Meteor.extinctionNow(state.extinctionAuto, boss, count, Enemies.allSpawned(tower.side), #dinos) then
+				extinctionEvent(tower, own)
+			end
+		end
+		if stats.bombingRun then
+			local boss = false
+			for _, d in dinos do
+				boss = boss or d.boss == true
+			end
+			if AutoFire.check(state.auto, boss, #dinos, Enemies.allSpawned(tower.side), #dinos) then
+				cometTail(tower, own)
+			end
+		end
+	end
+
+	-- Ash Cloud / Blinding Dust: the strongest Throw / Bite miss % of its side's craters holding `point`.
+	local function craterMiss(point: Vector3, side: number, field: string): number
+		local percent, now = 0, os.clock()
+		for _, tower in towers do
+			local state = tower.meteor
+			if state and tower.side == side and (tower.stats :: any)[field] > 0 and #state.craters > 0 then
+				if Meteor.inCrater(state.craters, Enemies.trackDistanceNear(point, side), now, tower.stats.fireLine) then
+					percent = math.max(percent, (tower.stats :: any)[field])
+				end
+			end
+		end
+		return percent
+	end
+
+	-- Ash Cloud / Blinding Dust: dinos in a crater miss this % of their bites.
+	function Towers.biteMissAt(point: Vector3, side: number): number
+		return craterMiss(point, side, "biteMissPercent")
+	end
+
+	-- Studio `firenow METEOR`: a strike now; Extinction Event / Comet Tail now (ignoring the trigger).
+	meteorFireNow = function(tower: Tower, fired: { string })
+		if not tower.meteor then
+			return
+		end
+		local own = BattleRules.ownDinos(Enemies.getLive(), tower.side, "tower")
+		local dinos = meteorDinos(tower, own)
+		if #dinos > 0 then
+			local _, starfall = Meteor.strikeEvery(tower.stats)
+			meteorStrike(tower, dinos, starfall)
+			table.insert(fired, if starfall then "Starfall" else "meteor strike")
+		end
+		if tower.stats.extinction then
+			extinctionEvent(tower, own)
+			table.insert(fired, "Extinction Event")
+		end
+		if tower.stats.bombingRun then
+			cometTail(tower, own)
+			table.insert(fired, "Comet Tail")
+		end
+	end
+
+	------------------------------------------------------------------ Volcano Vent (PLAN 9i T128)
+
+	-- Visuals only.
+	local LAVA_COLOR = Color3.fromRGB(255, 95, 20)
+	local CRUST_COLOR = Color3.fromRGB(30, 28, 34)
+	local ASH_FALL_COLOR = Color3.fromRGB(110, 105, 100)
+	local VENT_TICK = 0.25 -- s a crust's slow / strip / a Rumble lasts after the last frame on it
+	local VENT_WALL_CATCH = 1.5 -- studs before the Obsidian Wall where a dino stops
+
+	-- One eruption hit (armour / boss rules, breaks `breaks`); Steam Burst knocks small dinos back.
+	local function ventHit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number, knock: boolean)
+		local stats = tower.stats
+		local pierce = piercing(tower)
+		if not enemy.alive or not ownSide(tower, enemy) or not Enemies.canHurt(enemy, pierce) then
+			return
+		end
+		if enemy.def.armored then
+			damage *= stats.armoredMult
+		end
+		if enemy.def.boss then
+			damage *= stats.bossMult
+		end
+		local b = if breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
+		local at = enemy.part.Position
+		local killed, gone, dropped = Enemies.damage(enemy, damage, pierce, b)
+		credit(tower.owner, killed, gone, dropped)
+		if gone then
+			takeDownMark(tower, at)
+		end
+		if knock and enemy.alive and FourX.isSmall(enemy.size, enemy.def.boss == true) then
+			Enemies.knockback(enemy, stats.knockback) -- Steam Burst: small dinos only
+		end
+	end
+
+	local function ventDamage(tower: Tower): number
+		return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
+	end
+
+	-- The dinos on its stretch it can hit, the furthest along first.
+	local function onStretch(tower: Tower, own, from: number, to: number): { Enemies.Enemy }
+		local list = {}
+		for _, enemy in own do
+			if enemy.alive and ownSide(tower, enemy) and Vent.inStretch(enemy.distance, from, to) and (tower.stats.hitsAir or not enemy.def.flying) then
+				table.insert(list, enemy)
+			end
+		end
+		table.sort(list, function(a, b)
+			return a.distance > b.distance
+		end)
+		return list
+	end
+
+	local function drawStretch(tower: Tower, from: number, to: number, color: Color3, seconds: number, transparency: number)
+		local d = from
+		while d <= to do
+			Effects.disc(Enemies.pointAt(d, tower.side) + Vector3.new(0, 0.4, 0), 3, color, seconds, transparency)
+			d += 4
+		end
+	end
+
+	-- An eruption at `size` (1 = the main one; Ring of Fire's smaller): Targets dinos on the stretch
+	-- take the hit, the lava floods the stretch (a flow), Lava Bombs, Ash Blanket.
+	local function ventErupt(tower: Tower, own, size: number, bombs: boolean)
+		local state = tower.vent :: VentState
+		local stats, now = tower.stats, os.clock()
+		local damage = ventDamage(tower) * size
+		local list = onStretch(tower, own, state.from, state.to)
+		for i = 1, math.min(#list, stats.targets) do
+			ventHit(tower, list[i], damage, 1, stats.knockback > 0)
+		end
+		local seconds = Vent.flowSeconds(stats)
+		local dps = Vent.flowBurn(stats, tower.def.baseDamage) * size * (1 + tower.buff.damagePercent / 100) * levelScale
+		table.insert(state.flows, { from = state.from, to = state.to, ends = now + seconds, dps = dps, frozen = false })
+		drawStretch(tower, state.from, state.to, LAVA_COLOR, seconds, 0.35)
+		Effects.part(Vector3.new(1.2, 6, 1.2), CFrame.new(tower.base + Vector3.new(0, 3, 0)), LAVA_COLOR, 0.5) -- the plume
+		if bombs and stats.lavaBombs then -- Lava Bombs: at the biggest dinos in range
+			local inRange, sizes = {}, {}
+			for _, enemy in own do
+				if enemy.alive and ownSide(tower, enemy) and covers(tower, enemy.part.Position) and (stats.hitsAir or not enemy.def.flying) then
+					table.insert(inRange, enemy)
+					table.insert(sizes, { sizes = enemy.size, boss = enemy.def.boss == true })
+				end
+			end
+			local picks, x = Vent.bombTargets(sizes)
+			for _, i in picks do
+				Effects.tracer(tower.muzzle, inRange[i].part.Position, LAVA_COLOR)
+				ventHit(tower, inRange[i], ventDamage(tower) * x, stats.sizeBreaks, false)
+			end
+		end
+		if stats.sideThrowMissPercent > 0 then -- Ash Blanket
+			state.ashUntil = now + Vent.ashSeconds()
+			Effects.disc(tower.base + Vector3.new(0, 6, 0), 8, ASH_FALL_COLOR, 1, 0.5)
+		end
+	end
+
+	-- The strongest live flow on `side` (any vent's) holding a dino at `at`, and its tower.
+	local function strongestFlow(side: number, at: number, now: number): (Vent.Flow?, Tower?)
+		local best, owner = nil, nil
+		for _, other in towers do
+			local state = other.vent
+			if state and other.side == side then
+				local f = Vent.strongest(state.flows, at, now)
+				if f and (best == nil or f.dps > best.dps) then
+					best, owner = f, other
+				end
+				if state.superUntil > now and (best == nil or state.superDps > best.dps) then -- Supervolcano: the whole side
+					best, owner = { from = -math.huge, to = math.huge, ends = state.superUntil, dps = state.superDps, frozen = true }, other
+				end
+			end
+		end
+		return best, owner
+	end
+
+	stepVent = function(tower: Tower, dt: number, own)
+		local state = tower.vent
+		if not state then
+			return
+		end
+		local stats, now = tower.stats, os.clock()
+		local from, to = Vent.stretch(stats, state.at, Enemies.trackLength(tower.side))
+		state.from, state.to = from, to
+		local cone = stats.flowLengthMult >= 2 -- Fire Mountain (visual)
+		if cone ~= state.cone then
+			state.cone = cone
+			TowerLook.setVentCone(tower.model, cone)
+		end
+		-- Lava: dinos in this vent's (strongest) flow burn and are shoved; flows that end leave crust
+		-- (Obsidian) and Frozen Fire freezes the dinos on them once.
+		for i = #state.flows, 1, -1 do
+			local flow = state.flows[i]
+			if Vent.freezeAtEnd(flow, now) then
+				table.remove(state.flows, i)
+				local crustEnds, _ = Vent.crust(stats, flow.ends)
+				if crustEnds > flow.ends then
+					table.insert(state.crusts, { from = flow.from, to = flow.to, ends = crustEnds, crossed = setmetatable({}, { __mode = "k" }) :: any })
+					drawStretch(tower, flow.from, flow.to, CRUST_COLOR, crustEnds - now, 0.3)
+				end
+				if stats.freezeFlowSeconds > 0 then -- Frozen Fire
+					for _, enemy in onStretch(tower, own, flow.from, flow.to) do
+						if not enemy.def.flying then
+							Enemies.stun(enemy, FourX.hardStop(stats.freezeFlowSeconds, enemy.def.boss == true), true)
+						end
+					end
+				end
+			end
+		end
+		local anyLava = #state.flows > 0 or state.superUntil > now
+		for _, enemy in own do
+			if not enemy.alive or enemy.def.flying or not ownSide(tower, enemy) then
+				continue
+			end
+			local flow, owner = strongestFlow(tower.side, enemy.distance, now)
+			if flow and owner == tower then
+				local pierce = piercing(tower) or stats.stripsArmor
+				if Enemies.canHurt(enemy, pierce) then
+					credit(tower.owner, Enemies.damage(enemy, flow.dps * dt, pierce, 1)) -- ticks break 1 (#127; Lava Lake)
+				end
+				Enemies.shove(enemy, Vent.shove(enemy.shoveOffset, dt, enemy.def.boss == true))
+				state.shoved[enemy] = true
+			elseif not flow and state.shoved[enemy] then
+				state.shoved[enemy] = nil -- out of the lava: it walks back to its path
+				Enemies.detour(enemy, Vent.rejoinSeconds(enemy.shoveOffset, enemy.speed))
+			end
+			-- Crust: slowed, bare (Sharp Glass), cut (Jagged Crust), a detour round Glass Maze once.
+			for _, crust in state.crusts do
+				if crust.ends > now and Vent.inStretch(enemy.distance, crust.from, crust.to) then
+					Enemies.chill(enemy, { slowPercent = Config.Tuning.CrustSlow, seconds = VENT_TICK, affectsBosses = false, brittlePercent = 0, stripsArmor = stats.stripsArmor })
+					if stats.stripsArmor then
+						Enemies.strip(enemy, VENT_TICK)
+					end
+					if stats.crustDps > 0 and Enemies.canHurt(enemy, piercing(tower) or stats.stripsArmor) then
+						credit(tower.owner, Enemies.damage(enemy, stats.crustDps * levelScale * dt, piercing(tower) or stats.stripsArmor, 1))
+					end
+					if stats.mazeStuds > 0 and not crust.crossed[enemy] then
+						crust.crossed[enemy] = true
+						Enemies.detour(enemy, Vent.mazeSeconds(stats.mazeStuds, enemy.speed))
+					end
+					break
+				end
+			end
+			-- Rumble: dinos in range stumble while no lava is down.
+			if stats.slowPercent > 0 and not anyLava and covers(tower, enemy.part.Position) then
+				Enemies.chill(enemy, { slowPercent = stats.slowPercent, seconds = VENT_TICK, affectsBosses = false, brittlePercent = 0, stripsArmor = false })
+			end
+		end
+		local keep = {}
+		for _, crust in state.crusts do
+			if crust.ends > now then
+				table.insert(keep, crust)
+			end
+		end
+		state.crusts = keep
+		if tower.knockedOut then
+			return -- Trampled: no eruptions (the lava already down runs its course)
+		end
+		state.timer += dt * (1 + tower.buff.ratePercent / 100)
+		local gap = if stats.rate > 0 then 1 / stats.rate else math.huge
+		if state.timer >= gap then
+			state.timer = 0
+			ventErupt(tower, own, 1, true)
+			state.ring = {}
+			for _, t in Vent.ringTimes(stats.extraVents, gap) do -- Ring of Fire
+				table.insert(state.ring, now + t)
+			end
+		end
+		for i = #state.ring, 1, -1 do
+			if now >= state.ring[i] then
+				table.remove(state.ring, i)
+				ventErupt(tower, own, Vent.extraSize(), false)
+			end
+		end
+		if stats.geyserEvery > 0 then -- Geyser: a burst on the stretch between eruptions
+			state.geyserTimer += dt
+			if state.geyserTimer >= stats.geyserEvery then
+				state.geyserTimer = 0
+				local list = onStretch(tower, own, from, to)
+				for i = 1, math.min(#list, stats.targets) do
+					ventHit(tower, list[i], ventDamage(tower) * Config.Tuning.GeyserX, 1, false)
+				end
+				Effects.part(Vector3.new(0.8, 8, 0.8), CFrame.new(tower.base + Vector3.new(0, 4, 0)), Color3.fromRGB(230, 240, 255), 0.4)
+			end
+		end
+		local inRange, boss = 0, false
+		for _, enemy in own do
+			if enemy.alive and covers(tower, enemy.part.Position) then
+				inRange += 1
+				if enemy.def.boss then
+					boss = true
+					if stats.bossErupt and Vent.bossErupts(state.bossSeen, enemy) then -- Pressure Valve
+						ventErupt(tower, own, 1, true)
+					end
+				end
+			end
+		end
+		if stats.supervolcano and AutoFire.check(state.auto, boss, inRange, Enemies.allSpawned(tower.side), #own) then
+			state.superUntil = now + Vent.supervolcanoSeconds()
+			state.superDps = Vent.flowBurn(stats, tower.def.baseDamage) * (1 + tower.buff.damagePercent / 100) * levelScale
+			drawStretch(tower, 0, Enemies.trackLength(tower.side), LAVA_COLOR, Vent.supervolcanoSeconds(), 0.4)
+		end
+		-- Obsidian Wall: once a round (AutoFire) at the stretch's far end; it holds every dino reaching it.
+		if stats.wallSeconds > 0 then
+			if not state.wall and AutoFire.check(state.wallAuto, boss, inRange, Enemies.allSpawned(tower.side), #own) then
+				local point = Enemies.pointAt(to, tower.side)
+				local ahead = Enemies.pointAt(to + 1, tower.side)
+				local facing = if (ahead - point).Magnitude > 1e-3 then CFrame.lookAt(point, Vector3.new(ahead.X, point.Y, ahead.Z)) else CFrame.new(point)
+				local part = Effects.part(Vector3.new(10, 6, 1.5), facing + Vector3.new(0, 3, 0), CRUST_COLOR, stats.wallSeconds)
+				part.Material = Enum.Material.Glass
+				state.wall = { at = to, raisedAt = now }
+			end
+			local wall = state.wall
+			if wall then
+				local since = now - wall.raisedAt
+				if since >= stats.wallSeconds then
+					state.wall = nil
+				else
+					for _, enemy in own do
+						local isBoss = enemy.def.boss == true
+						if enemy.alive and enemy.distance >= wall.at - VENT_WALL_CATCH and enemy.distance <= wall.at + 0.5 and Resin.wallHolds(stats.wallSeconds, since, isBoss) then
+							Enemies.stun(enemy, FourX.hardStop(stats.wallSeconds, isBoss) - since, true)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- Heat Shimmer (dinos on the crust) and Ash Blanket (its whole side after an eruption): the
+	-- strongest Throw miss % of its side's vents for a dino at `point`.
+	local function ventThrowMiss(point: Vector3, side: number): number
+		local percent, now = 0, os.clock()
+		for _, tower in towers do
+			local state = tower.vent
+			if state and tower.side == side then
+				if state.ashUntil > now then
+					percent = math.max(percent, tower.stats.sideThrowMissPercent)
+				end
+				if tower.stats.throwMissPercent > 0 and #state.crusts > 0 then
+					local at = Enemies.trackDistanceNear(point, side)
+					for _, crust in state.crusts do
+						if crust.ends > now and Vent.inStretch(at, crust.from, crust.to) then
+							percent = math.max(percent, tower.stats.throwMissPercent)
+						end
+					end
+				end
+			end
+		end
+		return percent
+	end
+
+	-- Obsidian Armour: the strongest Throw resist % of its side's vents covering a tower at `point`.
+	function Towers.throwResistAt(point: Vector3, side: number): number
+		local percent = 0
+		for _, tower in towers do
+			if tower.vent and tower.side == side and tower.stats.throwResistPercent > 0 and not tower.knockedOut and covers(tower, point) then
+				percent = math.max(percent, tower.stats.throwResistPercent)
+			end
+		end
+		return percent
+	end
+
+	-- Studio `firenow VENT`: an eruption now; Supervolcano now (ignoring the trigger).
+	ventFireNow = function(tower: Tower, fired: { string })
+		local state = tower.vent
+		if not state then
+			return
+		end
+		local own = BattleRules.ownDinos(Enemies.getLive(), tower.side, "tower")
+		ventErupt(tower, own, 1, true)
+		table.insert(fired, "eruption")
+		if tower.stats.supervolcano then
+			state.superUntil = os.clock() + Vent.supervolcanoSeconds()
+			state.superDps = Vent.flowBurn(tower.stats, tower.def.baseDamage) * levelScale
+			table.insert(fired, "Supervolcano")
+		end
+	end
+
+	-- Blinding Glare: the strongest Throw miss % of its side's blimps whose circle holds `point`.
+	function Towers.throwMissAt(point: Vector3, side: number): number
+		local percent = 0
+		for _, tower in towers do
+			if tower.blimp and tower.side == side and tower.stats.throwMissPercent > 0 and covers(tower, point) then
+				percent = math.max(percent, tower.stats.throwMissPercent)
+			end
+		end
+		-- Ash Cloud / Blinding Dust (Meteor craters), Heat Shimmer / Ash Blanket (Volcano Vent), PLAN 9i
+		return math.max(percent, craterMiss(point, side, "throwMissPercent"), ventThrowMiss(point, side))
+	end
+
+	-- Spotter's Map: publishes which sides' dinos are outlined (each client outlines its own side's).
+	local outlined: { [number]: boolean } = {}
+	publishOutlines = function()
+		local now: { [number]: boolean } = {}
+		for _, tower in towers do
+			if tower.blimp and tower.stats.dinoOutlines then
+				now[tower.side] = true
+			end
+		end
+		for side in outlined do
+			if not now[side] then
+				ReplicatedStorage:SetAttribute(Blimp.outlineAttribute(side), nil)
+			end
+		end
+		for side in now do
+			if not outlined[side] then
+				ReplicatedStorage:SetAttribute(Blimp.outlineAttribute(side), true)
+			end
+		end
+		outlined = now
+	end
+
+	-- Studio `firenow BLIMP`: Bombing Run, Paratroopers and Airlift (on the nearest Trampled own
+	-- tower) now.
+	blimpFireNow = function(tower: Tower, fired: { string })
+		local state = tower.blimp
+		if not state then
+			return
+		end
+		local own = BattleRules.ownDinos(Enemies.getLive(), tower.side, "tower")
+		if tower.stats.bombingRun then
+			bombingRun(tower, own)
+			table.insert(fired, "Bombing Run")
+		end
+		if tower.stats.paratroopers > 0 then
+			Walkers.clear(state.paraKey)
+			dropParatroopers(tower)
+			state.paraDropped = true
+			table.insert(fired, "Paratroopers")
+		end
+		if tower.stats.airlift then
+			for _, other in towers do
+				if other.side == tower.side and other.knockedOut and not other.def.untouchable then
+					state.airliftUsed = false
+					airlift(other)
+					table.insert(fired, "Airlift")
+					break
+				end
+			end
+		end
+	end
+
+	-- A pop (a dino lost a size; `source` = Enemies.source(): "tower", "hunter" or "totem"): every
+	-- standing own-side Bone Totem whose range holds it charges and pays its Bone cash. It only
+	-- reads the pop: Bones, scores and Bounties are counted by Main exactly as without a totem.
+	function Towers.dinoPopped(enemy: Enemies.Enemy, source: string)
+		local kind: Totem.Source = if source == "hunter" then "hunter" elseif source == "totem" then "totem" else "tower"
+		for _, tower in towers do
+			local state = tower.totem
+			if state and not tower.knockedOut and ownSide(tower, enemy) and covers(tower, enemy.part.Position) then
+				local stats = tower.stats
+				if kind ~= "totem" and stats.boneCash > 0 and onCash then
+					onCash(tower.side, stats.boneCash)
+				end
+				local _, fills = Totem.observe(state.rules, stats, kind, enemy.def.boss == true)
+				state.pending += fills -- fired next frame, outside Enemies' damage call
+				auraDirty = auraDirty or stats.chargeAuraDamagePercent > 0
+			end
+		end
+	end
+
+	-- A whole dino taken down (Bounty Wall, PLAN 9h): inside a Bounty charge x totem's range, the
+	-- owner's Bounties count it Bounty charge x times (the extra whole take-downs reported as they add up).
+	function Towers.dinoTakenDown(enemy: Enemies.Enemy, source: string)
+		if source == "totem" or not onBountyExtra then
+			return
+		end
+		for _, tower in towers do
+			local state = tower.totem
+			local owner = tower.owner
+			if state and owner and owner.Parent and tower.stats.bountyChargeX > 1 and not tower.knockedOut and ownSide(tower, enemy) and covers(tower, enemy.part.Position) then
+				local extra = Totem.bountyExtra(state.rules, tower.stats)
+				if extra > 0 then
+					onBountyExtra(owner, enemy.key, extra)
 				end
 			end
 		end
 	end
 end
 
--- An Amber Shield seal broke: Self-Sealing's heal.
-local function stepSeals()
-	local now = os.clock()
-	for _, tower in towers do
-		if tower.sealedUntil > 0 and now >= tower.sealedUntil then
-			tower.sealedUntil = 0
-			if tower.sealHealPercent > 0 and not tower.knockedOut then
-				Towers.heal(tower, Resin.sealHeal(tower.maxHp, tower.sealHealPercent))
+------------------------------------------------------------------ Storm Coil
+
+local fireChain: (Tower, any) -> boolean
+local stepField: (Tower, number, any) -> ()
+local stepBolt: (Tower, number, any) -> ()
+local gridTimers: { [number]: number } = {}
+local stepGrid: (number, any) -> ()
+local hasBirds: (Tower) -> boolean
+local fireFalcon: (Tower, any) -> boolean
+local stepSorties: (Tower, number, any) -> ()
+local stepHood: (Tower, any) -> ()
+local huntingParties: () -> { Falcon.Party }
+local fireBallista: (Tower, any) -> boolean
+local stepTow: (Tower, number, any) -> ()
+do -- block-scoped locals: the main chunk must stay under Luau's 200-register limit (PLAYTEST F11)
+	local function isCoil(tower: Tower): boolean
+		return tower.def.chains == true and not tower.knockedOut
+	end
+
+	-- The circles a coil's arcs may use: its own range, or every standing Storm Coil's
+	-- with Jump Spark.
+	local function coilAreas(tower: Tower): { StormCoil.Area }
+		local areas = { { center = tower.base, radius = tower.stats.range } }
+		if tower.stats.arcJumps then
+			for _, other in towers do
+				if other ~= tower and isCoil(other) then
+					table.insert(areas, { center = other.base, radius = other.stats.range })
+				end
 			end
-			tower.sealHealPercent = 0
 		end
+		return areas
+	end
+
+	local function coilDamage(tower: Tower): number
+		return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
+	end
+
+	-- One coil hit: Static Shock's bonus if its last strike charged this dino, breaks 1
+	-- unless `breaks` says more (Judgement Bolt).
+	local function coilHit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number?)
+		local stats = tower.stats
+		local pierce = piercing(tower)
+		if not Enemies.canHurt(enemy, pierce) then
+			return
+		end
+		if stats.staticPercent > 0 then
+			if tower.static[enemy] then
+				damage *= 1 + stats.staticPercent / 100
+			end
+			tower.static[enemy] = true
+		end
+		if enemy.def.armored then
+			damage *= stats.armoredMult
+		end
+		if enemy.def.boss then
+			damage *= stats.bossMult
+		end
+		if tower.buff.slowedPercent > 0 and Enemies.isSlowed(enemy) then
+			damage *= 1 + tower.buff.slowedPercent / 100 -- Tar Totem
+		end
+		local b = if breaks and breaks > 1 then Enemies.breaksFor(enemy, breaks, towerLevel, false) else 1
+		credit(tower.owner, Enemies.damage(enemy, damage, pierce, b))
+	end
+
+	-- A chain strike from the first dino in range. Returns true if it fired.
+	fireChain = function(tower: Tower, live): boolean
+		local stats = tower.stats
+		local target = pickFirst(tower, live)
+		if not target then
+			return false
+		end
+		local areas = coilAreas(tower)
+		local list, points, first = {}, {}, nil
+		for _, enemy in live do
+			if enemy.alive and canTarget(tower, enemy) and (enemy == target or StormCoil.covered(enemy.part.Position, areas)) then
+				table.insert(list, enemy)
+				table.insert(points, enemy.part.Position)
+				if enemy == target then
+					first = #list
+				end
+			end
+		end
+		if not first then
+			return false
+		end
+		local links = StormCoil.chain(points, first, stats.arcs, stats.arcReach, stats.arcForks, Config.Tuning.CoilArcFalloff)
+		-- Static Shock: only dinos this strike reaches stay charged for the next one.
+		local charged = {}
+		for _, link in links do
+			charged[list[link.index]] = tower.static[list[link.index]]
+		end
+		table.clear(tower.static)
+		for enemy, was in charged do
+			tower.static[enemy] = was
+		end
+		local damage = coilDamage(tower)
+		-- Supercell's slow (PLAN 9e): on the first dino, or the whole chain with Chain effects.
+		local slow: Enemies.Chill? = if stats.slowPercent > 0
+			then { slowPercent = stats.slowPercent, seconds = stats.slowLinger, affectsBosses = stats.slowsBosses, brittlePercent = 0, stripsArmor = false }
+			else nil
+		for _, link in links do
+			local enemy = list[link.index]
+			local from = if link.from then list[link.from].part.Position else tower.muzzle
+			Effects.tracer(from, enemy.part.Position, ARC_COLOR)
+			-- Thunderclap stuns the first dino; Chain effects (Superconductor) every arc, capped.
+			Enemies.stun(enemy, StormCoil.linkStun(link.hop, stats.stunSeconds, stats.chainEffects), stats.stunsBosses)
+			if slow and StormCoil.linkSlows(link.hop, stats.chainEffects) then
+				Enemies.chill(enemy, slow)
+			end
+			-- Thunderstrike (PLAN 9e): the strike's first dino gets the build's Size breaks; arcs 1.
+			coilHit(tower, enemy, damage * link.x, if link.hop == 0 then stats.sizeBreaks else nil)
+		end
+		return true
+	end
+
+	-- Storm Front (PLAN 9e, #297): every Field strike every s, every dino on this coil's side's
+	-- field takes Field strike x its damage, wherever it is (fliers too; armour only if it
+	-- pierces; breaks 1). Each Storm Front coil fires its own.
+	local FIELD_COLOR = Color3.fromRGB(200, 230, 255) -- visuals only
+	stepField = function(tower: Tower, dt: number, live)
+		local stats = tower.stats
+		if stats.fieldStrikeEvery <= 0 or tower.knockedOut then
+			tower.fieldTimer = 0
+			return
+		end
+		local fired
+		tower.fieldTimer, fired = StormCoil.fieldTick(tower.fieldTimer, dt, stats.fieldStrikeEvery)
+		if not fired then
+			return
+		end
+		local list, dinos = {}, {}
+		for _, enemy in live do
+			if enemy.alive and ownSide(tower, enemy) then
+				table.insert(list, enemy)
+				table.insert(dinos, { side = tower.side, flying = enemy.def.flying == true, armored = enemy.def.armored == true, bare = Enemies.canHurt(enemy, false) })
+			end
+		end
+		local damage = coilDamage(tower) * stats.fieldStrikeX
+		for _, i in StormCoil.fieldTargets(dinos, tower.side, piercing(tower)) do
+			local enemy = list[i]
+			Effects.tracer(enemy.part.Position + Vector3.new(0, 30, 0), enemy.part.Position, FIELD_COLOR)
+			coilHit(tower, enemy, damage)
+		end
+	end
+
+	-- Judgement Bolt: the dino with the most HP in the coil's range.
+	stepBolt = function(tower: Tower, dt: number, live)
+		if not tower.stats.judgementBolt or tower.knockedOut then
+			tower.boltTimer = 0
+			return
+		end
+		local every = Config.Tuning.JudgementBoltEvery
+		tower.boltTimer = math.min(every, tower.boltTimer + dt)
+		if tower.boltTimer < every then
+			return
+		end
+		local list, hps = {}, {}
+		local range = tower.stats.range
+		for _, enemy in live do
+			if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= range then
+				table.insert(list, enemy)
+				table.insert(hps, enemy.hp)
+			end
+		end
+		local pick = StormCoil.biggest(hps)
+		if not pick then
+			return -- stays ready
+		end
+		tower.boltTimer = 0
+		local enemy = list[pick]
+		local tuning = Config.Tuning
+		Effects.tracer(enemy.part.Position + Vector3.new(0, 30, 0), enemy.part.Position, BOLT_COLOR)
+		Enemies.stun(enemy, tuning.JudgementBoltStun, true)
+		coilHit(tower, enemy, coilDamage(tower) * tuning.JudgementBoltX, tuning.JudgementBoltBreaks)
+	end
+
+	-- Power Grid: one shared strike every Power Grid every seconds, however many Power
+	-- Grid coils stand, from the one that hits hardest (DECISIONS #151).
+	-- One Power Grid per side (its own coils, its own dinos, #231); co-op is side 1 alone.
+	local function stepGridSide(side: number, dt: number, live)
+		local striker, coils = nil, 0
+		for _, tower in towers do
+			if isCoil(tower) and tower.side == side then
+				coils += 1
+				if tower.stats.powerGrid and (striker == nil or coilDamage(tower) > coilDamage(striker)) then
+					striker = tower
+				end
+			end
+		end
+		if not striker then
+			gridTimers[side] = 0
+			return
+		end
+		local every = Config.Tuning.PowerGridEvery
+		local timer = (gridTimers[side] or 0) + dt
+		gridTimers[side] = timer
+		if timer < every then
+			return
+		end
+		gridTimers[side] = timer - every
+		local rangeMult, damageMult = StormCoil.grid(coils)
+		local areas = {}
+		for _, tower in towers do
+			if isCoil(tower) and tower.side == side then
+				table.insert(areas, { center = tower.base, radius = tower.stats.range * rangeMult })
+				Effects.disc(tower.base + Vector3.new(0, 0.3, 0), tower.stats.range * rangeMult, ARC_COLOR, 0.3, 0.4)
+			end
+		end
+		local damage = coilDamage(striker) * damageMult
+		for _, enemy in live do
+			if enemy.alive and canTarget(striker, enemy) and StormCoil.covered(enemy.part.Position, areas) then
+				Effects.tracer(enemy.part.Position + Vector3.new(0, 12, 0), enemy.part.Position, ARC_COLOR)
+				coilHit(striker, enemy, damage)
+			end
+		end
+	end
+
+	stepGrid = function(dt: number, live)
+		local seen: { [number]: boolean } = {}
+		for _, tower in towers do
+			if isCoil(tower) and not seen[tower.side] then
+				seen[tower.side] = true
+				stepGridSide(tower.side, dt, live)
+			end
+		end
+		for side in gridTimers do
+			if not seen[side] then
+				gridTimers[side] = 0 -- no coils left on that side
+			end
+		end
+	end
+
+	------------------------------------------------------------------ Falcon Roost
+
+	hasBirds = function(tower: Tower): boolean
+		return (tower.def.birds or 0) > 0
+	end
+
+	-- How long a Hooded Scout mark lasts after the last frame a boss spent in range.
+	local HOOD_REFRESH = 0.25
+
+	-- One bird's (or peck's) hit: the tower's hit (armour, boss x, stun, Lure's knockback,
+	-- breaks), then Falcon Bells' mark on what it struck.
+	local function falconHit(tower: Tower, enemy: Enemies.Enemy, damage: number, breaks: number)
+		hit(tower, enemy, damage, breaks)
+		if tower.stats.markPercent > 0 then
+			Enemies.mark(enemy, tower.stats.markPercent, Config.Tuning.FalconBellsMark)
+		end
+	end
+
+	local function falconDamage(tower: Tower): number
+		return tower.stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
+	end
+
+	-- Murmuration: every dino in range takes a peck (breaks 1, no travel time).
+	local function peck(tower: Tower, live): boolean
+		local range, pecked = tower.stats.range, false
+		local damage = falconDamage(tower)
+		for _, enemy in live do
+			if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= range then
+				pecked = true
+				Effects.part(Vector3.one * 0.6, CFrame.new(enemy.part.Position + Vector3.new(0, 2, 0)), PECK_COLOR, 0.12, Enum.PartType.Ball)
+				falconHit(tower, enemy, damage, 1)
+			end
+		end
+		return pecked
+	end
+
+	-- Sends a free bird at the first dino in range no other bird of this roost is after.
+	fireFalcon = function(tower: Tower, live): boolean
+		local stats = tower.stats
+		if stats.murmuration then
+			return peck(tower, live)
+		end
+		if Falcon.free(stats.birds, #tower.sorties) <= 0 then
+			return false -- every bird is out: wait for one to come home
+		end
+		local list, distances, claimed = {}, {}, {}
+		local after = {}
+		for _, sortie in tower.sorties do
+			if not sortie.landed then
+				after[sortie.enemy] = true
+			end
+		end
+		for _, enemy in live do
+			if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= stats.range then
+				table.insert(list, enemy)
+				table.insert(distances, enemy.distance)
+				claimed[#list] = after[enemy] == true
+			end
+		end
+		local pick = Falcon.pick(distances, claimed)
+		if not pick then
+			return false
+		end
+		local enemy = list[pick]
+		local oneWay = Falcon.flight((enemy.part.Position - tower.muzzle).Magnitude)
+		local size = if stats.eagle then Vector3.new(2.4, 0.4, 1.4) else Vector3.new(1.1, 0.25, 0.7)
+		local part = Effects.part(size, CFrame.new(tower.muzzle), BIRD_COLOR, 2 * oneWay + 0.5)
+		table.insert(tower.sorties, { enemy = enemy, out = oneWay, back = 2 * oneWay, landed = false, at = tower.muzzle, part = part })
+		return true
+	end
+
+	-- Birds in flight: a bird lands its dive when its travel time runs out, then flies home.
+	stepSorties = function(tower: Tower, dt: number, live)
+		for i = #tower.sorties, 1, -1 do
+			local sortie = tower.sorties[i]
+			sortie.out -= dt
+			sortie.back -= dt
+			local enemy = sortie.enemy
+			if not sortie.landed then
+				if enemy.alive then
+					sortie.at = enemy.part.Position
+				end
+				if sortie.out <= 0 then
+					sortie.landed = true
+					if enemy.alive then
+						local first = not tower.dived[enemy]
+						tower.dived[enemy] = true
+						local stats = tower.stats
+						local damage = Falcon.diveDamage(falconDamage(tower), first, stats.firstDiveX, stats.eagle)
+						-- Raking Strike / Strafing Run (PLAN 9e): who else the dive hits, picked before
+						-- the dive lands (it may take the struck dino down).
+						local extra, line, list = {}, false, {}
+						if stats.targets > 1 or stats.lineHits > 1 then
+							local candidates, struck = {}, nil
+							for _, other in live do
+								if other == enemy or (other.alive and canTarget(tower, other) and (other.part.Position - tower.position).Magnitude <= stats.range) then
+									table.insert(list, other)
+									table.insert(candidates, { position = other.part.Position, distance = other.distance })
+									if other == enemy then
+										struck = #list
+									end
+								end
+							end
+							if struck then
+								extra, line = Falcon.extraHits(candidates, struck, stats.targets, stats.lineHits)
+							end
+						end
+						Effects.tracer(sortie.at + Vector3.new(0, 6, 0), sortie.at, BIRD_COLOR)
+						falconHit(tower, enemy, damage, stats.sizeBreaks)
+						for _, i in extra do
+							Effects.tracer(sortie.at, list[i].part.Position, BIRD_COLOR)
+							falconHit(tower, list[i], damage, if line then stats.sizeBreaks else 1)
+						end
+					end
+				end
+			end
+			local whole = math.max(1e-3, sortie.back - sortie.out) -- one way, in seconds
+			local position = if not sortie.landed
+				then tower.muzzle:Lerp(sortie.at, math.clamp(1 - sortie.out / whole, 0, 1))
+				else sortie.at:Lerp(tower.muzzle, math.clamp(1 - sortie.back / whole, 0, 1))
+			if sortie.part.Parent then
+				sortie.part.CFrame = CFrame.lookAt(position, if sortie.landed then tower.muzzle else sortie.at + Vector3.new(0, 0.01, 0))
+			end
+			if sortie.back <= 0 then
+				sortie.part:Destroy()
+				table.remove(tower.sorties, i)
+			end
+		end
+	end
+
+	-- Hooded Scout: bosses in range stay marked while they're in it.
+	stepHood = function(tower: Tower, live)
+		local percent = tower.stats.bossMarkPercent
+		if percent <= 0 or tower.knockedOut then
+			return
+		end
+		for _, enemy in live do
+			if enemy.alive and enemy.def.boss and ownSide(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= tower.stats.range then
+				Enemies.mark(enemy, percent, HOOD_REFRESH)
+			end
+		end
+	end
+
+	-- Hunting Party: every roost with the aura and a bird out, for Falcon.huntingParty.
+	huntingParties = function(): { Falcon.Party }
+		local parties = {}
+		for _, tower in towers do
+			-- A roost while a bird dives; a Raptor Pen while a raptor fights (PLAN 9g, Raptor.diveAura).
+			local active = if tower.raptor then Raptor.diveAura(1, Walkers.fighting(tower)) > 0 else #tower.sorties > 0
+			if tower.stats.diveAuraRatePercent > 0 and active then
+				table.insert(parties, { center = tower.base, radius = tower.stats.range, percent = tower.stats.diveAuraRatePercent, diving = true, source = tower })
+			end
+		end
+		return parties
+	end
+
+	------------------------------------------------------------------ Harpoon Ballista
+
+	-- One volley: each bolt at its dino (Ballista.volley), Skewer's line through every dino
+	-- on it, Chain Harpoons' chain between each linked pair. Returns true if it fired.
+	fireBallista = function(tower: Tower, live): boolean
+		local stats = tower.stats
+		local list, distances, points, hps = {}, {}, {}, {}
+		for _, enemy in live do
+			if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= stats.range then
+				table.insert(list, enemy)
+				table.insert(distances, enemy.distance)
+				table.insert(points, enemy.part.Position)
+				table.insert(hps, enemy.hp)
+			end
+		end
+		-- Heartseeker (PLAN 9e): Targets biggest ranks by HP left, not distance.
+		local picks = Ballista.volley(Ballista.aimKeys(distances, hps, stats.targetsBiggest), stats.shots, stats.chainHarpoons)
+		-- PLAN 9e wirings: bolts mark (Serrated Head), slow (Anchor Line: bosses too) and burn
+		-- (Fire Bolts, Firestorm Volley: a burning patch under the target, like a shooter's).
+		local slow: Enemies.Chill? = if stats.slowPercent > 0
+			then { slowPercent = stats.slowPercent, seconds = stats.slowLinger, affectsBosses = stats.slowsBosses, brittlePercent = 0, stripsArmor = false }
+			else nil
+		if #picks == 0 then
+			return false
+		end
+		local damage = stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale
+		local landed = {} -- each bolt's impact point
+		for i, pick in picks do
+			local target = list[pick]
+			landed[i] = points[pick]
+			local struck = { target }
+			if stats.skewer then
+				local stop = Ballista.lineEnd(tower.muzzle, points[pick], stats.range)
+				for _, index in Ballista.onLine(points, tower.muzzle, stop) do
+					if index ~= pick then
+						table.insert(struck, list[index])
+					end
+				end
+				Effects.tracer(tower.muzzle, stop, HARPOON_COLOR)
+			else
+				Effects.tracer(tower.muzzle, points[pick], HARPOON_COLOR)
+			end
+			addBurn(tower, target)
+			for _, enemy in struck do
+				if stats.markPercent > 0 and ownSide(tower, enemy) then
+					Enemies.mark(enemy, stats.markPercent, Config.Tuning.MarkDuration or 0)
+				end
+				hit(tower, enemy, damage, stats.sizeBreaks)
+				if slow and enemy.alive and ownSide(tower, enemy) then
+					Enemies.chill(enemy, slow)
+				end
+			end
+			rodeoArc(tower, target, struck, damage, live)
+		end
+		if stats.chainHarpoons then
+			for _, pair in Ballista.pairs(#picks) do
+				local a, b = picks[pair[1]], picks[pair[2]]
+				Effects.tracer(landed[pair[1]], landed[pair[2]], CHAIN_COLOR)
+				for _, index in Ballista.onLine(points, landed[pair[1]], landed[pair[2]]) do
+					if index ~= a and index ~= b then
+						hit(tower, list[index], damage, 1)
+					end
+				end
+			end
+		end
+		return true
+	end
+
+	-- Tow Line: every Tow Line every s, the boss furthest along in range is pulled back; stays
+	-- ready while no boss is in range.
+	stepTow = function(tower: Tower, dt: number, live)
+		if not tower.stats.towLine or tower.knockedOut then
+			tower.towTimer = 0
+			return
+		end
+		local tuning = Config.Tuning
+		tower.towTimer = math.min(tuning.TowLineEvery, tower.towTimer + dt)
+		if tower.towTimer < tuning.TowLineEvery then
+			return
+		end
+		local list, distances, bosses = {}, {}, {}
+		for _, enemy in live do
+			if enemy.alive and canTarget(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= tower.stats.range then
+				table.insert(list, enemy)
+				table.insert(distances, enemy.distance)
+				bosses[#list] = enemy.def.boss == true
+			end
+		end
+		local pick = Ballista.towPick(distances, bosses)
+		if not pick then
+			return
+		end
+		tower.towTimer = 0
+		local boss = list[pick]
+		Effects.tracer(tower.muzzle, boss.part.Position, HARPOON_COLOR)
+		Enemies.knockback(boss, tuning.TowLinePull, true) -- the one boss knockback (PLAN T66)
 	end
 end
 
--- A new round: every Last Stand is ready again.
-function Towers.newRound()
-	local fuel = false
-	for _, tower in towers do
-		tower.lastStandUsed = false
+local stepChill: (Tower, number, any) -> ()
+local stepTar: (number, any) -> ()
+local stepHealing: (number) -> ()
+local raiseWall: (Tower) -> ()
+local entombAll: (Tower, any) -> ()
+local stepResin: (Tower, number, any) -> ()
+local stepSeals: () -> ()
+do -- block-scoped locals: the main chunk must stay under Luau's 200-register limit (PLAYTEST F11)
+	-- Visuals only.
+	local FREEZE_COLOR = Color3.fromRGB(150, 220, 255)
+	-- How long a chill lasts after the last frame an enemy spent in range (plus
+	-- any Permafrost linger). Keeps the chill continuous between frames.
+	local CHILL_REFRESH = 0.25
+
+	-- Chillers: chill everything in range every frame; Freeze pulses hard stops.
+	stepChill = function(tower: Tower, dt: number, live)
+		local stats = tower.stats
+		if tower.knockedOut or (stats.slowPercent <= 0 and stats.freezeEvery <= 0) then
+			return
+		end
+		if tower.def.chains or tower.def.harpoons or tower.def.onTrack then
+			-- Coil / Ballista Slow % rides their hits (Supercell, Anchor Line; PLAN 9e); a Tar Pit's
+			-- is its pool's (stepTar: ground dinos in the pool only), never a ring
+			return
+		end
+		local range = stats.range
+		local chill: Enemies.Chill = {
+			slowPercent = stats.slowPercent,
+			seconds = CHILL_REFRESH + stats.slowLinger,
+			affectsBosses = stats.slowsBosses,
+			brittlePercent = stats.brittlePercent,
+			stripsArmor = stats.stripsArmor,
+		}
+		local pulse = false
+		if stats.freezeEvery > 0 then
+			tower.freezeTimer += dt
+			if tower.freezeTimer >= stats.freezeEvery then
+				tower.freezeTimer -= stats.freezeEvery
+				pulse = true
+			end
+		end
+		for _, enemy in live do
+			if ownSide(tower, enemy) and (enemy.part.Position - tower.position).Magnitude <= range then
+				if stats.slowPercent > 0 then
+					Enemies.chill(enemy, chill)
+				end
+				if pulse then
+					Enemies.knockOut(enemy, stats.freezeSeconds, stats.freezeHoldsBosses)
+					if stats.freezeDamage > 0 then
+						credit(tower.owner, Enemies.damage(enemy, stats.freezeDamage * levelScale, piercing(tower)))
+					end
+				end
+			end
+		end
+		if pulse then
+			Effects.disc(tower.base + Vector3.new(0, 0.3, 0), range, FREEZE_COLOR, 0.3, 0.6)
+		end
+	end
+
+	------------------------------------------------------------------ Tar Pit
+
+	local TAR_COLOR = Color3.fromRGB(30, 24, 20) -- visuals only
+	local ERUPTION_COLOR = Color3.fromRGB(255, 120, 40)
+	-- How long tar slow lasts after the last frame a dino spent in a pool (keeps it
+	-- continuous between frames), like CHILL_REFRESH.
+	local TAR_REFRESH = 0.25
+
+	-- Seconds each last-size dino has spent in the tar, and the pool it was last in.
+	local soaked: { [any]: number } = setmetatable({}, { __mode = "k" }) :: any
+	local lastPool: { [any]: Tower } = setmetatable({}, { __mode = "k" }) :: any
+
+	local function isPit(tower: Tower): boolean
+		return tower.def.onTrack == true
+	end
+
+	-- A dino walked out of `pit`'s pool: Clinging Tar, Tar Fire, Tar Tracks.
+	local function leftPool(pit: Tower, enemy: Enemies.Enemy, now: number)
+		local stats = pit.stats
+		if stats.slowLinger > 0 then
+			Enemies.tar(enemy, stats.slowPercent, stats.slowLinger)
+		end
+		if stats.burnSeconds > 0 and stats.burnDps > 0 then
+			local tick = stats.burnDps * stats.burnSeconds * (1 + pit.buff.damagePercent / 100) * levelScale
+			Hazards.ignite(enemy, tick, stats.burnSeconds, piercing(pit), pit.owner)
+		end
+		if stats.tracksSlowPercent > 0 then
+			pit.tracksUntil = now + Config.Tuning.TarTracksSeconds
+		end
+	end
+
+	stepTar = function(dt: number, live)
+		local pits, strengths = {}, {}
+		for _, tower in towers do
+			if isPit(tower) then
+				table.insert(pits, tower)
+				table.insert(strengths, TarPit.strength(tower.def, tower.pathTiers))
+			end
+		end
+		if #pits == 0 then
+			return
+		end
+		local tuning = Config.Tuning
+		local now = os.clock()
+		local erupting = {}
+		for _, pit in pits do
+			if pit.stats.eruption then
+				local fired
+				pit.eruptTimer, fired = TarPit.tick(pit.eruptTimer, dt, tuning.EruptionEvery)
+				if fired then
+					erupting[pit] = true
+					for _, d in TarPit.samples(pit.poolAt, pit.stats.range, pit.stats.range / 3) do
+						Effects.part(Vector3.new(1.5, 7, 1.5), CFrame.new(Enemies.pointAt(d, pit.side) + Vector3.new(0, 3.5, 0)), ERUPTION_COLOR, 0.4) -- a geyser
+					end
+				end
+			else
+				pit.eruptTimer = 0
+			end
+		end
+
+		for _, enemy in live do
+			if not enemy.alive or enemy.def.flying then
+				continue
+			end
+			-- The strongest pool this dino stands in (#189: never more than one).
+			local inside, power = {}, {}
+			for i, pit in pits do
+				if BattleRules.canDamage(pit.side, enemy.side, "dino", HAZARD) and TarPit.contains(enemy.distance, pit.poolAt, pit.stats.range) then
+					table.insert(inside, pit)
+					table.insert(power, strengths[i])
+				end
+			end
+			local pick = TarPit.strongest(power)
+			local pit = if pick then inside[pick] else nil
+			if not pit then
+				local was = lastPool[enemy]
+				if was then
+					lastPool[enemy], soaked[enemy] = nil, nil
+					if table.find(towers, was) then
+						leftPool(was, enemy, now)
+					end
+				end
+				for _, other in pits do
+					if BattleRules.canDamage(other.side, enemy.side, "dino", HAZARD) and now < other.tracksUntil and TarPit.onTracks(enemy.distance, other.poolAt, other.stats.range, tuning.TarTracksLength) then
+						Enemies.tar(enemy, other.stats.tracksSlowPercent, TAR_REFRESH)
+					end
+				end
+				continue
+			end
+			lastPool[enemy] = pit
+			local stats = pit.stats
+			Enemies.tar(enemy, stats.slowPercent, TAR_REFRESH)
+			if stats.stripsArmor then
+				Enemies.strip(enemy, tuning.StripS or 0) -- Pitch Coat (PLAN 9e): bare while in it, then Strip (s)
+			end
+			if stats.burnDps > 0 then
+				local damage = stats.burnDps * dt * (1 + pit.buff.damagePercent / 100) * levelScale
+				credit(pit.owner, Enemies.damage(enemy, damage, piercing(pit)))
+			end
+			if enemy.alive and erupting[pit] then
+				credit(pit.owner, Enemies.dropSizes(enemy, tuning.EruptionSizes))
+			end
+			if not enemy.alive then
+				continue
+			end
+			if enemy.size <= 1 and not enemy.def.boss then
+				soaked[enemy] = (soaked[enemy] or 0) + dt
+				if TarPit.sinks(enemy.size, enemy.def.boss == true, false, soaked[enemy], stats.sinkSeconds) then
+					local position = enemy.part.Position
+					local sunk, gone = Enemies.sink(enemy)
+					if sunk then
+						lastPool[enemy], soaked[enemy] = nil, nil
+						credit(pit.owner, true, gone, 1)
+						Effects.disc(Placement.ground(position) + Vector3.new(0, 0.2, 0), 1.5, TAR_COLOR, 0.6, 0.2) -- it goes under
+						if onSink and (stats.sinkCash > 0 or stats.sinkChestCash > 0) then
+							onSink(stats.sinkCash, stats.sinkChestCash, Placement.ground(position), pit.side)
+						end
+					end
+				end
+			else
+				soaked[enemy] = 0
+			end
+		end
+	end
+
+	-- Called every Heartbeat by Main.
+	-- NOTE: fires at most once per frame (times `shots`), so fire rates above
+	-- ~60/s are capped.
+	------------------------------------------------------------------ Field Hospital
+
+	-- The strongest standing hospital's heal (and revive) rate covering a point, from
+	-- `side`'s hospitals only; x Ability tempo (Shared/Pace.healRate, #259).
+	local function healRates(point: Vector3, side: number): (number, number)
+		local heal, revive = 0, 0
+		for _, source in towers do
+			local s = source.stats
+			if s.healPerSecond > 0 and not source.knockedOut and covers(source, point) and BattleRules.canSupport(source.side, side) then
+				heal = math.max(heal, Pace.healRate(s.healPerSecond))
+				if s.revives then
+					revive = math.max(revive, Pace.healRate(s.healPerSecond) * s.reviveSpeed)
+				end
+			end
+		end
+		return heal, revive
+	end
+
+	stepHealing = function(dt: number)
+		local any = false
+		for _, source in towers do
+			if source.stats.healPerSecond > 0 and not source.knockedOut then
+				any = true
+				break
+			end
+		end
+		if not any then
+			return
+		end
+		for _, tower in towers do
+			local heal, revive = healRates(tower.base, tower.side)
+			if tower.def.untouchable then
+				continue -- no HP: a Field Hospital skips it (#148)
+			elseif not tower.knockedOut and heal > 0 and tower.hp < tower.maxHp then
+				Towers.heal(tower, heal * dt)
+			elseif tower.knockedOut and revive > 0 then
+				-- Revive: HP climbs while it stays trampled; it stands at full.
+				tower.hp = math.min(tower.maxHp, tower.hp + revive * dt)
+				if tower.hp >= tower.maxHp then
+					Towers.repair(tower)
+				else
+					showHealth(tower)
+				end
+			end
+		end
+		for _, player in Players:GetPlayers() do
+			local character = player.Character
+			local root = character and character:FindFirstChild("HumanoidRootPart")
+			if root and root:IsA("BasePart") then
+				local heal = healRates(root.Position, Sides.playerSide(player:GetAttribute("Side"), ReplicatedStorage:GetAttribute("Sides")))
+				if heal > 0 then
+					Health.heal(player, heal * dt)
+				end
+			end
+		end
+	end
+
+	export type MedKitDrop = { base: Vector3, count: number, heal: number, side: number }
+
+	-- Med kits each standing hospital drops this round.
+	function Towers.medKits(): { MedKitDrop }
+		local drops = {}
+		for _, tower in towers do
+			local s = tower.stats
+			if s.medKits > 0 and s.medKitHeal > 0 and not tower.knockedOut and not tower.blimp then -- a blimp's come each lap
+				table.insert(drops, { base = tower.base, count = s.medKits, heal = s.medKitHeal, side = tower.side })
+			end
+		end
+		return drops
+	end
+
+	-- A standing Rescue Beacon: where downed hunters come back, and the share of
+	-- the respawn time they wait. nil if there's none. `side`: the hunter's (default 1, co-op;
+	-- a battle hunter only comes back at their own side's beacon, T77).
+	function Towers.rescueBeacon(side: number?): (Vector3?, number)
+		local best, mult = nil, 1
+		for _, tower in towers do
+			local m = tower.stats.rescueRespawnMult
+			if m > 0 and not tower.knockedOut and tower.side == (side or 1) and (best == nil or m < mult) then
+				best, mult = tower.base, m
+			end
+		end
+		return best, mult
+	end
+
+	------------------------------------------------------------------ Amber Resin Cannon, per frame
+
+	local WALL_STEP = 2 -- studs: how finely the wall's spot is searched along the track
+	local WALL_CATCH = 1.5 -- studs before the wall where a dino stops
+
+	-- The furthest-along point of the side's track still inside the cannon's range.
+	local function wallSpot(tower: Tower): number
+		local d = Enemies.trackDistanceNear(tower.base, tower.side)
+		local range = tower.stats.range
+		for _ = 1, 400 do
+			local p = Enemies.pointAt(d + WALL_STEP, tower.side)
+			local flat = Vector2.new(p.X - tower.base.X, p.Z - tower.base.Z).Magnitude
+			if flat > range or (p - Enemies.pointAt(d, tower.side)).Magnitude < 1e-3 then
+				break
+			end
+			d += WALL_STEP
+		end
+		return d
+	end
+
+	-- Raises Resin Wall now (AutoFire, or the Studio `firenow`).
+	raiseWall = function(tower: Tower)
 		local state = tower.resin
-		if state then -- once a round: the seal, Resin Wall; Fossil Fuel's stack is per round
-			state.sealUsed = false
-			state.fossilsRound = 0
-			fuel = fuel or state.fuelPercent > 0
-			state.fuelPercent = 0
-			AutoFire.reset(state.auto)
+		if not state or tower.stats.wallSeconds <= 0 then
+			return
 		end
-		local pen = tower.raptor
-		if pen then -- once a round: Raptor Swarm / Raptor Charge; Hungry Alpha's stack is per round
-			AutoFire.reset(pen.auto)
-			pen.takeDowns = 0
-		end
-		local blimp = tower.blimp
-		if blimp then -- once a round: Bombing Run, Paratroopers (last round's go), Airlift
-			AutoFire.reset(blimp.auto)
-			blimp.roundClock = 0
-			blimp.paraDropped = false
-			blimp.airliftUsed = false
-			Walkers.clear(blimp.paraKey)
-		end
-		local meteor = tower.meteor
-		if meteor then -- once a round played: Extinction Event, Comet Tail
-			AutoFire.reset(meteor.auto)
-			meteor.extinctionAuto.fired = false
-		end
-		local vent = tower.vent
-		if vent then -- once a round played: Supervolcano, Obsidian Wall
-			AutoFire.reset(vent.auto)
-			AutoFire.reset(vent.wallAuto)
-		end
-		setTrapLine(tower) -- Master Trapper: one-shot traps along the track (PLAN 9j)
+		local at = wallSpot(tower)
+		local point = Enemies.pointAt(at, tower.side)
+		local ahead = Enemies.pointAt(at + 1, tower.side)
+		local facing = if (ahead - point).Magnitude > 1e-3 then CFrame.lookAt(point, Vector3.new(ahead.X, point.Y, ahead.Z)) else CFrame.new(point)
+		local part = Effects.part(Vector3.new(10, 6, 1.5), facing + Vector3.new(0, 3, 0), AMBER_COLOR, tower.stats.wallSeconds)
+		part.Transparency = 0.3
+		part.Material = Enum.Material.Glass
+		state.wall = { at = at, raisedAt = os.clock(), part = part }
 	end
-	if fuel then
-		refreshAuras()
+
+	-- Amber Age: entombs everything in range now.
+	entombAll = function(tower: Tower, own)
+		local stats = tower.stats
+		for _, enemy in own do
+			if enemy.alive and not enemy.def.flying and (enemy.part.Position - tower.position).Magnitude <= stats.range then
+				entomb(tower, enemy, FourX.hardStop(stats.entombSeconds, enemy.def.boss == true), false)
+			end
+		end
 	end
-	Walkers.roundEnd() -- Heals between rounds (PLAN 9g)
+
+	stepResin = function(tower: Tower, dt: number, own)
+		local state = tower.resin
+		if not state then
+			return
+		end
+		local stats, now = tower.stats, os.clock()
+		if tower.knockedOut then
+			state.wall = nil
+			return
+		end
+		-- Amber Age: every Entomb all every (s).
+		if stats.entombAllEvery > 0 then
+			state.allTimer += dt
+			if state.allTimer >= stats.entombAllEvery then
+				state.allTimer -= stats.entombAllEvery
+				entombAll(tower, own)
+			end
+		end
+		-- Sticky Bed: dinos near one it entombed walk slower.
+		if stats.entombSlowPercent > 0 then
+			for tomb, untilTime in state.entombed do
+				if now >= untilTime or not tomb.alive then
+					state.entombed[tomb] = nil
+					continue
+				end
+				for _, enemy in own do
+					if enemy ~= tomb and enemy.alive and Resin.inStickyBed((enemy.part.Position - tomb.part.Position).Magnitude) then
+						Enemies.chill(enemy, { slowPercent = stats.entombSlowPercent, seconds = STICKY_REFRESH, affectsBosses = false, brittlePercent = 0, stripsArmor = false })
+					end
+				end
+			end
+		end
+		-- Resin Wall: once a round, fired by Shared/AutoFire; it holds every dino reaching it.
+		if stats.wallSeconds > 0 then
+			if not state.wall then
+				local inArea, boss = 0, false
+				for _, enemy in own do
+					if enemy.alive and (enemy.part.Position - tower.position).Magnitude <= stats.range then
+						inArea += 1
+						boss = boss or enemy.def.boss == true
+					end
+				end
+				if AutoFire.check(state.auto, boss, inArea, Enemies.allSpawned(tower.side), #own) then
+					raiseWall(tower)
+				end
+			end
+			local wall = state.wall
+			if wall then
+				local since = now - wall.raisedAt
+				if since >= stats.wallSeconds then
+					state.wall = nil
+				else
+					for _, enemy in own do
+						local boss = enemy.def.boss == true
+						if enemy.alive and enemy.distance >= wall.at - WALL_CATCH and enemy.distance <= wall.at + 0.5 and Resin.wallHolds(stats.wallSeconds, since, boss) then
+							Enemies.stun(enemy, FourX.hardStop(stats.wallSeconds, boss) - since, true)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- An Amber Shield seal broke: Self-Sealing's heal.
+	stepSeals = function()
+		local now = os.clock()
+		for _, tower in towers do
+			if tower.sealedUntil > 0 and now >= tower.sealedUntil then
+				tower.sealedUntil = 0
+				if tower.sealHealPercent > 0 and not tower.knockedOut then
+					Towers.heal(tower, Resin.sealHeal(tower.maxHp, tower.sealHealPercent))
+				end
+				tower.sealHealPercent = 0
+			end
+		end
+	end
+
+	-- A new round: every Last Stand is ready again.
+	function Towers.newRound()
+		local fuel = false
+		for _, tower in towers do
+			tower.lastStandUsed = false
+			local state = tower.resin
+			if state then -- once a round: the seal, Resin Wall; Fossil Fuel's stack is per round
+				state.sealUsed = false
+				state.fossilsRound = 0
+				fuel = fuel or state.fuelPercent > 0
+				state.fuelPercent = 0
+				AutoFire.reset(state.auto)
+			end
+			local pen = tower.raptor
+			if pen then -- once a round: Raptor Swarm / Raptor Charge; Hungry Alpha's stack is per round
+				AutoFire.reset(pen.auto)
+				pen.takeDowns = 0
+			end
+			local blimp = tower.blimp
+			if blimp then -- once a round: Bombing Run, Paratroopers (last round's go), Airlift
+				AutoFire.reset(blimp.auto)
+				blimp.roundClock = 0
+				blimp.paraDropped = false
+				blimp.airliftUsed = false
+				Walkers.clear(blimp.paraKey)
+			end
+			local meteor = tower.meteor
+			if meteor then -- once a round played: Extinction Event, Comet Tail
+				AutoFire.reset(meteor.auto)
+				meteor.extinctionAuto.fired = false
+			end
+			local vent = tower.vent
+			if vent then -- once a round played: Supervolcano, Obsidian Wall
+				AutoFire.reset(vent.auto)
+				AutoFire.reset(vent.wallAuto)
+			end
+			setTrapLine(tower) -- Master Trapper: one-shot traps along the track (PLAN 9j)
+		end
+		if fuel then
+			refreshAuras()
+		end
+		Walkers.roundEnd() -- Heals between rounds (PLAN 9g)
+	end
 end
 
 local NO_DINOS = table.freeze({})

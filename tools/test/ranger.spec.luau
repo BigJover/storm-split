@@ -243,7 +243,7 @@ test("server wiring: a station never shoots like a tower; rangers shoot through 
 	local towers = fs.readFile("src/server/Towers.luau")
 	ok(towers:find("tower.knockedOut or tower.raptor or tower.ranger then", 1, true) ~= nil, "a Ranger Station doesn't fire like a tower")
 	ok(towers:find('raptor = if (def.walkers or 0) > 0 and key ~= "RANGER"', 1, true) ~= nil, "a station is not a Raptor Pen")
-	ok(towers:find("if tower.ranger then\n\t\tsyncRangers(tower)", 1, true) ~= nil, "place / upgrade / trample re-sync the rangers")
+	ok(towers:find("if tower.ranger then\n%s*syncRangers%(tower%)") ~= nil, "place / upgrade / trample re-sync the rangers")
 	ok(towers:find("if not tower.ranger then -- a Ranger Station's Knockback is its traps'", 1, true) ~= nil, "Tripwire knocks back from traps, not shots")
 	ok(towers:find("stepRanger(tower, dt, own)", 1, true) ~= nil, "stepped")
 	ok(towers:find("setTrapLine(tower) -- Master Trapper", 1, true) ~= nil, "the trap line at a round played's start")

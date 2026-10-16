@@ -152,7 +152,7 @@ test("a dino in two pools gets the strongest one only: the most cash in, first p
 	-- The server applies one pool per dino: it picks with TarPit.strongest and every effect
 	-- below the pick reads `pit`, never the list.
 	local towers = fs.readFile("src/server/Towers.luau")
-	local body = string.match(towers, "local function stepTar.-\nend\n")
+	local body = string.match(towers, "stepTar = function.-\n\tend\n")
 	ok(body ~= nil, "stepTar found")
 	ok(string.find(body, "local pick = TarPit.strongest(power)", 1, true) ~= nil, "picks the strongest")
 	local after = string.match(body, "lastPool%[enemy%] = pit(.*)")
