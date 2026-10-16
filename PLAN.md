@@ -14,7 +14,7 @@ DataStore writes from an agent). N15 rides any `Battle` commit (#272).
 **Status (2026-10-13, later): 9a + 9b done (c1a7c5a, 0f82bb7, 929b66a, cd6a413, cd749d2; 706 specs); Tester Run 8 running. 9c designed below (#290). Next: 🦖 names 9c → Builder T114 + T115.**
 **Status (2026-10-13, Director): 9d + 9e designed below (#292–#297; 96 options, metrics, 6 new mechanics). Next after 9c: 🦖 names 9d → T116–T118, then 9e → T119–T120.**
 **Status (2026-10-13, Director): 9f designed below (#298–#302; 48 hero options, per-path metrics, 1 new mechanic). Next after 9e: 🦖 names 9f → T121–T122.**
-**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.** **Update (2026-10-14): 9g built; next = T124c (finishes T124b, #325–#328), then Tester Run 9g.** **Update (2026-10-15): T124c steps 1–4 in (03c9634), release held on King of the Pack bar 3; next = T124d (#329–#330, King Rate x 1.25 + frozen bar-3 median + release), then Tester Run 9g.** **Update (2026-10-15, later): Bone Totem built unreleased (1b08327); Blimp rows refused. Next = T126c (Totem fix + release, #331–#333), then T125b (Blimp, #334–#336), then Tester Run 9h; 9i/9j numbers re-checked (#337+).** **Update (2026-10-15, 9h released 906a8b1/ad1be17): next = T125c (#341–#343), then 9i as written (#344).** **Update (2026-10-15, 9i built, Vent released 6a05e1b): next = T128c (Meteor release, #345–#347), Tester Run 9i, then 9j as written (#348).**
+**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.** **Update (2026-10-14): 9g built; next = T124c (finishes T124b, #325–#328), then Tester Run 9g.** **Update (2026-10-15): T124c steps 1–4 in (03c9634), release held on King of the Pack bar 3; next = T124d (#329–#330, King Rate x 1.25 + frozen bar-3 median + release), then Tester Run 9g.** **Update (2026-10-15, later): Bone Totem built unreleased (1b08327); Blimp rows refused. Next = T126c (Totem fix + release, #331–#333), then T125b (Blimp, #334–#336), then Tester Run 9h; 9i/9j numbers re-checked (#337+).** **Update (2026-10-15, 9h released 906a8b1/ad1be17): next = T125c (#341–#343), then 9i as written (#344).** **Update (2026-10-15, 9i built, Vent released 6a05e1b): next = T128c (Meteor release, #345–#347), Tester Run 9i, then 9j as written (#348).** **Update (2026-10-15, 9j released 59f2d54; all seven 4× towers out): Builder's 9j calls ruled (#349–#351); 9k designed (#352–#356). Next = T131 → Tester Run 10 → T132 → T133 + Director RECAP "Phase 9".**
 
 ## Size of the job
 | | Slots (T4+T5) | Options to build | New options to design |
@@ -1595,17 +1595,77 @@ Tester's respawn in co-op and only for its own camp in Camp Clash.
 names, the A/B/C table with Blurbs) in the same commit as its rows, so the audit's option-table
 check covers it; `ARCHITECTURE.md` §4 gains `Walkers` (T124).
 
-**9k — balance pass.** `value.py --options` + `--battle`, `threat.py`, per-hero parity;
-`audit.py --strict` with full A/B/C everywhere; co-op ~34 min and battle clocks unchanged
-(a new tower must matter by round ~20; the seven re-checked together on the 9g–9j bars, the
-#313 exchange rates and stand-ins reviewed against Runs 9g–9j; walker count at 10 players).
-**T131** tune, **T132** fixes from Run 9. Tester Run 9:
-a full co-op match on Normal with new towers + a casual Camp Clash with stand-ins.
+**9j Builder calls ruled (#349–#351):** Tuning rows "Ranger retreat HP share" / "Ranger leash x"
+confirmed; setting posts in third person with the gun away **is placing** (same gates, same
+camera; one guard added in T131 step 5); bite at a post within the dino's own bite reach and
+Legend = ranger 2 under Heavy Rifle confirmed.
 
-**9l — docs + recap.** **T133** `UPGRADES.md` / `HEROES.md` option tables complete, Mechanics
-table, `ARCHITECTURE.md` (Upgrades/OptionPick, sheet columns, phase table), `CLAUDE.md` status,
-`VISION.md` if needed; Director writes `RECAP.md` "Phase 9" (what to playtest first, what
-needs Jovan: multi-client Raider tests, feel of 9 builds per path).
+**9k — balance pass (DESIGNED, Director 2026-10-15, #352–#356).** Director's full-suite run on
+59f2d54 (real sheet, read-only; fixes checked on copies in the job tmp): every tool exits 0;
+`--options` 264 slots, 0 findings (every option 0.8–1.25×, hero T6 builds ×1.04–1.13);
+`--battle` all ok (co-op 33.6 min ≤ 35; casual r40 12.1 ≤ 12.5; Ranked 17.4 ≤ 18; per-side
+keeps-up peak 46 ≤ 65); `--breaks1` / `--overkill` / `threat.py` / `audit.py --strict` 0; Chaos
+bars ok; exporter guard: max hero 280 DPS (lvl 9) vs best tower 1,341; Chaos 420 vs 805.
+**Findings:** F1 three new DEAD flags on old towers (Falcon Flock T3 Flock of Six 2.1×, Ballista
+Spearhead T3 Crusher Bolt 2.0×, Volley T3 Spread Volley 2.1×) — caused by the released 4× towers
+entering the tier marginal medians; F2 `--chaos` reads option-A hero peaks only (34.6, not the
+B/C peak 47, #302's watch); F3 walkers (24/side) are not modelled, and a 10-camp Bone Rush could
+run 240 walkers + 130 dinos; F4 Amber: unlock-all 5,325 = 29.8 h on Normal (the 7 new towers
+3,550 of it, ~20 h); F5 (unchanged, report-only #235/#255) edge WATCH: Tracker 64.5 %, BGH
+102.2 %, Brush Beater 100.1 %, Medic 48.2 %; F6 accepted DEADs still flagged (Big Bore T1 #165,
+Spearhead T1–T2 #194, Roar T1–T2 #332, Belt Gun #342, Impact T1–T2 / Rock Chunks #338).
+
+**T131 (Builder) — the 9k tool fixes and walker cap (one commit; no option/tower cell moves):**
+1. `value.py` tier medians (`value_report`, the `damage = [...]` list for `medians[tier]`) leave
+   out `ROUND9_BATCH`, as M (#312) and bar 3 (#330) already do. **Director check on a copy:**
+   only the 9 `KNOWN_DEAD` rows stay DEAD; Flock of Six / Crusher Bolt / Spread Volley clear; no
+   DOMINANT appears. Off → stop and report.
+2. `chaos_report`'s `peak` = max over every path's 9 T6 builds (`hero_dps(h, i, top, a + b)` for
+   a, b in ABC), as the exporter's `hero_peak_dps` already does. **Check on a copy:** peak ~47;
+   towers 0.28 (≤ 0.35) ok, skilled through r30 **0.99** (≥ 0.85) ok, r31–40 **0.45** (≥ 0.4) ok;
+   skill gap +0.29 (report only). Spec: the printed peak equals the exporter's level-1 peak.
+3. Walker cap: new Tuning row (append) **`Walker cap total` 96**; a side's cap =
+   `min(Walker cap per side 24, max(8, floor(96 / sides)))` in pure `Shared/Walker.room` (co-op and
+   2–3 camps keep 24; 10-camp Bone Rush 9 each). **Walkers never count toward the 130 dino cap**
+   (separate counter, unchanged). Specs: 1 / 2 / 3 / 10 sides → 24 / 24 / 24 / 9.
+4. `value.py --battle` gains a walker line per layout (co-op 10 hunters, 2×5, 3 camps, 10×1):
+   demand = per seat the largest walker build one hunter can afford by r40 (Raptor Pack T3 5 +
+   Ranger Troop 5, Swarm 10 counted last) vs the side's cap; report-only, `ok` / `WATCH`.
+5. The tower panel shows "N of M — side's walker cap" on a walker tower that is short; posts
+   mode (#350) shares placing's camera clamp and closes on taking damage, like placing.
+6. Gates: `test.sh`, `check.sh`, `audit.py --strict`, every `value.py` mode exit 0; Config diff
+   = the one new row. Commit + push.
+**T132 (Builder) — fixes from Tester Run 10** (and Runs 9g–9j's open items: #313 exchange rates
+and stand-ins, raptor/ranger uncredited pins and soaks — fix only with a model-backed cell, else
+log as an accepted blind spot). Director rules each fail first.
+**Accepted, no change (#355):** F4 (Jovan's prices, #282; asked below), F5 (#235/#255), F6.
+
+**Tester Run 10 (after T131; general brief + these):** (1) co-op Normal to round 20+ with one of
+each new tower (Resin, Raptor, Totem, Blimp, Vent, Meteor, Ranger), `walkers` aid at the peak,
+server heartbeat noted; (2) each new tower: buy T3, pick a T4 and T5 option on the card, the
+behaviour visible (`firenow <KEY>` for Extinction Event, Starfall, Trap line, the Legend's dart);
+(3) Ranger: set 3 posts, Move posts, posts mode camera = placing and the gun comes back, a
+bitten ranger walks home and returns, Jeep drives, Bodyguards stand at towers, Hunter's Lodge
+respawn; (4) Raptor Swarm + 2 Raptor Packs + Ranger Troop on one side → the cap message appears,
+nothing errors; (5) Blimp/Falcon/Tar Pit can't be damaged, Ranger cabin and Vent can; (6) casual
+Camp Clash with stand-ins: Raider Glue / Raider Hounds sting the Tester (#310), walkers stay on
+their side; (7) Meteor auto-fires once per round played per side (#283); (8) no pop-up traps,
+cursor free on every pick card.
+
+**9l — docs + recap (after T132).** **T133 (Builder):** `UPGRADES.md` / `HEROES.md` option
+tables checked complete by `audit.py`; Mechanics table (walker, posts, AutoFire, Near track,
+traps, walker cap); `ARCHITECTURE.md` (§4 Walkers/Ranger/Meteor/Vent/Totem/Blimp owners,
+Upgrades/OptionPick, new sheet columns, phase table); `CLAUDE.md` status (Phase 9 line, 9j
+released, Run 10 result); `VISION.md` only if the walker cap changes Bone Rush text. **Director:**
+`RECAP.md` "Phase 9" — what changed, what to playtest first (one 4× tower per session; the A/B/C
+pick card; posts), what was / wasn't verified in Studio, and the **ask-Jovan list**:
+1. Unlock-all now ~30 h on Normal (~175 Amber/h; the 7 towers 400–600 = ~20 h) — keep, or let
+   Bounties/Daily Haul pay more? (#355)
+2. Ranger posts in third person = placing (#350) — OK, or first-person posts in battles?
+3. Bone Rush walker cap 9 per camp (#354) — OK after he sees it in a multi-client run?
+4. Feel of the 9 builds per path and the A/B/C pick card (first-person playtest).
+5. Multi-client Raider tests (Raider Glue/Hounds/stings vs a real second hunter).
+6. Standing: Amber/h ×2 from shorter co-op (#256); hero edge WATCH (#235).
 
 ---
 
