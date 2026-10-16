@@ -755,3 +755,22 @@ F8 PASS (own side capped at 13, others undelayed, total ≤ 130, per-side peaks 
 - **N21 (setup note).** The tower panel's Sell row can sit below the list's visible area (y ≈ 505 with 3 path rows + HP + Repair) and isn't clickable until the list is scrolled; normal scroll UI, noted because it looks clickable.
 
 _Run 9 was cut off by a usage limit after R9-23; the coordinator stopped Play (Studio back in Edit mode). Counts as recorded: 17 PASS (incl. cards/buys/stats), 1 PARTIAL, 1 INCONCLUSIVE, 2 NOT TESTABLE, 1 NOT RE-RUN; F10 minor; notes N19–N21._
+
+# Run 10 — 2026-10-15 (Tester, agent) — Phase 9g–9j: the seven new towers
+
+- **Code tested:** Studio synced to 59f2d54: `script_grep` "firenow RANGER" → Server.Towers:1679; "Comet Tail" → Shared.Config:141676, Shared.Meteor:24/229, Shared.AutoFire:5, Server.Towers:236/2506.
+- **Start state:** Edit mode. Work files `~/.claude/jobs/2a8d6f9c/tmp/tester12/` (helpers copied from tester11).
+- **Conveniences (disclosed):** J first every session (`SaveStatus=offline`), J for Amber + M-panel unlocks (offline, nothing saved), K cash, L, keyboard/mouse, `character_navigation`, read-only `execute_luau` probes (labelled "probe"), Studio Lobby remotes (`standins`, `startround`, `standinpick`, `firenow <TOWER>`, `walkers`, `charge`).
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R10-1 | Play starts (server boots) | **FAIL (critical)** F11 | Output on Play: `ServerScriptService.Server.Towers:3697: Out of local registers when trying to allocate FREEZE_COLOR: exceeded limit 200` → `Requested module experienced an error while loading` (Server.Main:46). No `Remotes` are created: every client script hangs ("Infinite yield possible on ReplicatedStorage:WaitForChild("Remotes")" — Client.Home:29, Hud:15, Hero:33, Shop:65), no home screen, no map, J/K do nothing (player attributes empty). `boot.png` |
+| R10-2…R10-n | All seven new towers (unlock, place, base behaviour, B/C at T4/T5, Raider option, per-side live cap, sell, console), co-op regression | **BLOCKED** by F11 | Nothing past the boot is reachable. Play stopped after the check. |
+
+### F11. Server.Towers no longer compiles: more than 200 top-level locals — critical (game doesn't start)
+- **Repro:** Studio synced to 59f2d54 → Play (any mode). Output shows the error above at once; the client waits forever for `Remotes`.
+- **Cause (checked, read-only):** Luau allows at most 200 locals live in one function, and the module's main chunk is one function. `grep -c '^local ' src/server/Towers.luau`: 207 at e84b586 (9i) → **222 at 4863e33** (9j T129 step 2, Ranger Station behaviour) and unchanged since (e4aa423, 59f2d54). The 201st register is hit at L3697 (`local FREEZE_COLOR`), so every 9j Ranger addition (and anything later in the file) pushed it over.
+- **Suspected file / fix:** `src/server/Towers.luau` — fold top-level constants into tables (e.g. the `*_COLOR` visuals into one `COLORS` table, tuning aliases into one table) or move the Ranger/Meteor/Vent/Blimp/Totem blocks into their own server modules, so the main chunk stays well under 200. The headless specs (Lune) and `tools/check.sh` evidently didn't catch it — worth a check (e.g. a spec that `require`s every Server module, or an audit counting top-level locals ≤ 190).
+
+## Run 10 summary
+**Counts:** PASS 0 · FAIL 1 (F11 critical, blocks everything) · BLOCKED all seven-tower items + co-op regression. Studio left in **Edit mode** (Play stopped, `get_studio_state`: Edit); nothing edited in Studio, nothing published, saves never touched (the server never got far enough to load one). Screenshot: `boot.png` in tester12. Re-run Run 10 once F11 is fixed and Rojo re-synced.
