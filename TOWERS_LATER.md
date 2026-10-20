@@ -1,4 +1,4 @@
-# The 4×-Amber tower batch — APPROVED (Jovan, 2026-10-13): all seven
+# The 4×-Amber tower batch — BUILT AND RELEASED (Phase 9, 2026-10-14 → 10-20): all seven
 
 > **APPROVED 2026-10-13: all 7 towers, at these prices, every A/B/C option an in-game pick at
 > tiers 4 and 5; Extinction Event automatic; Raider options in (DIRECTION.md "The 4× towers and
@@ -11,6 +11,29 @@
 batch's 200–300). In-match prices stay in the normal band, at its top end (600–1,000), as
 for the 2× batch. These are **late-game showpieces**: each has one signature thing no other
 tower does, and each tier 5 is a "moment" the whole lobby sees.
+
+## As built (Phase 9, PLAN 9g–9j; final numbers in `UPGRADES.md` and the sheet)
+
+> **All seven are built, released and placed/upgraded in Studio (PLAYTEST Run 10).** The
+> sections below are the approved proposal, kept for history; where they differ, the sheet
+> and `UPGRADES.md` win. Final names are the Dino agent's (Round 19). In-match prices came
+> down to 600–800 because the real `value.py` model showed the proposal ~4–5× short on value
+> per cash (#326, #331, #336, #337, #339, #340).
+
+| Tower | Amber | Cash (proposed → built) | First path, tiers 1–3 | What it does, as built |
+|---|---|---|---|---|
+| Amber Resin Cannon | 500 | 800 (=) | Thick Resin · Quick Set · Amber Tomb | Resin slows, entombs dinos (Amber Age: everything in range stuck every 12 s), fossils pay Bones; Museum Piece fossils pay 50% more cash |
+| Raptor Pen | 500 | 850 → 600 | Second Raptor · Quick Whistle · Pack of Five | Raptors run out, bite (10 × 2.3/s) and come back; Clever Girls dodgers are never trampled; King of the Pack (Rate ×1.25) |
+| Bone Totem | 450 | 800 → 600 | Louder Roar · Quick Charge · Thunder Roar | Take-downs charge it (3 Bones a charge), then it roars by itself, buffs towers, or pays Bone cash (8/26/26) |
+| Spotter Blimp | 400 | 750 → 600 | Belt Gun · Twin Mount · Treetop Pass | Flies your track, can't be damaged: a door gun (base Damage 5), a searchlight, or cargo (pays back in ~9–10 rounds) |
+| Meteor Beacon | 600 | 1,000 → 600 | Heavier Rock · Iron Core · Ground Zero | A meteor every 8 s on the densest bunch, burning craters; **Extinction Event (Impact T5-A) fires itself** once a round: ×2.5 on every dino (was ×20); Starfall Damage ×3.388 |
+| Volcano Vent | 600 | 1,000 → 600 | Hot Rock · Searing Flow · Lava Lake | Placed near the track; erupts every 12 s, floods one stretch with lava: burns, shoves, crust |
+| Ranger Station | 500 | 900 → 600 | Recruit · Sharpshooter · Squad | Rangers walk to posts you set (third person, gun away), shoot (10 × 2.3/s), trap and guard; the cabin can be Trampled |
+
+First-path T5-A per tower: Amber Age, Raptor Swarm, Ancient Roar, Gunship, Extinction Event,
+Supervolcano, Ranger Troop. Raptors and rangers are **walkers** with their own cap (24 per
+side; 9 per camp in a 10-camp Bone Rush, #354). Raider options: only the two approved (Raider
+Glue, Raider Hounds, #320), each with a dino effect. Unlock all seven: 3,550 Amber.
 
 ## What changed since the first draft (and how the ideas were fixed)
 
@@ -42,13 +65,13 @@ tower does, and each tier 5 is a "moment" the whole lobby sees.
 
 | Tower | Role | Amber | Cash | Damaged? | Status |
 |---|---|---|---|---|---|
-| Meteor Beacon | area strikes from the sky, once-a-round "extinction" | 600 | 1,000 | yes | kept, tuned |
-| Amber Resin Cannon | entombs dinos in amber: hard stops, fossils | 500 | 800 | yes | kept, Sap Spray replaced |
-| Ranger Station | trains rangers who walk the track and fight | 500 | 900 | the station | kept, simplified |
-| Spotter Blimp | a gunship over the whole map, helps others | 400 | 750 | **no** | kept, PvP-safe |
-| **Raptor Pen** *(new)* | tamed raptors that hunt *your* dinos | 500 | 850 | yes | new |
-| **Bone Totem** *(new)* | turns Bones into power for your camp | 450 | 800 | yes | new |
-| **Volcano Vent** *(new)* | a slow lava eruption that changes the map | 600 | 1,000 | yes | new |
+| Meteor Beacon | area strikes from the sky, once-a-round "extinction" | 600 | 1,000 | yes | ✅ built (600 cash) |
+| Amber Resin Cannon | entombs dinos in amber: hard stops, fossils | 500 | 800 | yes | ✅ built |
+| Ranger Station | trains rangers who walk the track and fight | 500 | 900 | the station | ✅ built (600 cash) |
+| Spotter Blimp | a gunship over the whole map, helps others | 400 | 750 | **no** | ✅ built (600 cash) |
+| **Raptor Pen** *(new)* | tamed raptors that hunt *your* dinos | 500 | 850 | yes | ✅ built (600 cash) |
+| **Bone Totem** *(new)* | turns Bones into power for your camp | 450 | 800 | yes | ✅ built (600 cash) |
+| **Volcano Vent** *(new)* | a slow lava eruption that changes the map | 600 | 1,000 | yes | ✅ built (600 cash) |
 
 Tiers 1–3 are fixed; **tiers 4 and 5 are in-game picks** (A, B, C; the tier-5 pick is free of
 the tier-4 one, #276; options at a tier cost the same, #277). No tower has a button: "once a

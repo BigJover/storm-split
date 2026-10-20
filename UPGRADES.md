@@ -25,7 +25,7 @@ built). Change a name there, not in code.
 - Double Tap: two shots per trigger pull. Lead Rain: fastest fire in the game.
 - Armor Breaker: can damage armoured dinos (Ankylosaurus). Hollow Points: ×2 vs armoured. Railshot: bullet passes through 3 dinos. Hide Buster: ×4 vs armoured and bosses.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 / T5; names are working names until the Dino pass):
+A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 / T5; final names after the Dino passes):
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -48,7 +48,7 @@ A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 /
 - Marked Target: its target takes +25% from every tower. Eye in the Sky: mark +60%, towers in range +15% attack speed.
 - Bone Breaker: ×3 vs bosses. Concussion Round: stun on hit. Extinction Round: ×10 vs bosses, stuns bosses.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 / T5; names are working names until the Dino pass):
+A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 / T5; final names after the Dino passes):
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -71,7 +71,7 @@ A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 /
 - Cluster Shell: each shell splits into 3 blasts. Chain Reaction: the bomblets burst again.
 - Shockwave: knocks dinos back along the track. Armor Crack: damages armour, ×2 vs armoured. Stun Grenade: brief stun. Tectonic Slam: everything hit is stunned 1s.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 / T5; names are working names until the Dino pass):
+A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 / T5; final names after the Dino passes):
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -94,7 +94,7 @@ A/B/C picks at tiers 4 and 5 (PLAN 9c, DECISIONS #290; A = the path table's T4 /
 - Knockout Dart: knocks out every dino in range every few seconds. Barbed Darts: knockouts also deal damage. Big Game Tranq: a long knockout that holds bosses.
 - Exposed Hide: sedated dinos take +25% damage. Find the Gap: +35%, and sedated dinos lose their armour. Hunter's Call: towers in range +10% attack speed. Apex Predator: +75%, towers in range +20% damage.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table's T4 / T5; names are working names until the Dino pass). Sleeper Darts is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (slow 30 % for 2 s, once per 3 s per hunter, never through Camo Cover); in co-op it is a 72 % slow:
+A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table's T4 / T5; final names after the Dino passes). Sleeper Darts is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (slow 30 % for 2 s, once per 3 s per hunter, never through Camo Cover); in co-op it is a 72 % slow:
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -119,7 +119,7 @@ A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table
 - Airdrop: 1 / 2 / 2 / 3 / 4 chests a round worth 200 / 260 / 515 / 615 / 790 cash each.
 - Bulk Order: towers in range −5% upgrade cost. Recycler: towers in range sell for 90%. Forward Camp: towers in range +10% attack speed. Base Camp: −20% costs, full refunds.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table's T4 / T5; names are working names until the Dino pass). Bounty cash: a dino taken down (sinks count, shrinks don't) inside its range pays this side the bounty; the strongest camp covering it pays, once:
+A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table's T4 / T5; final names after the Dino passes). Bounty cash: a dino taken down (sinks count, shrinks don't) inside its range pays this side the bounty; the strongest camp covering it pays, once:
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -145,7 +145,7 @@ Hospitals don't stack: the strongest one covering a tower or hunter heals it.
 - Stretcher Team: range ×1.2. Signal Whistle: ×1.4. Med Kits: 2 white kits with a green "+" land nearby each round (like the Supply Camp's chests); the first hurt hunter to run over one heals 30 (a hunter at full HP leaves it for a teammate). Pack Mules: 3 kits, 40. Rescue Beacon: range ×1.8, kits heal 50, and downed hunters come back beside the hospital in half the respawn time.
 - Camp Rations: towers in range +10% max HP · Iron Tonic +20%. Smelling Salts: towers in range also +10% attack speed. Bone Broth: +35% HP. Last Stand: +50% HP, and once per round a tower in range that would be trampled stays at 1 HP.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table's T4 / T5; names are working names until the Dino pass). Biter slow (Bitter Tonic / Bitter Brew): a dino that bites a tower in range is slowed (not bosses); the strongest hospital's slow wins:
+A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table's T4 / T5; final names after the Dino passes). Biter slow (Bitter Tonic / Bitter Brew): a dino that bites a tower in range is slowed (not bosses); the strongest hospital's slow wins:
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -171,7 +171,7 @@ Resistance doesn't stack: the strongest source wins, capped at 60% (Tuning).
 - Oiled Actions: towers in range +5% attack speed. Hand Loads: +10% damage. Piercing Rounds: towers in range pierce armour. Match Grade: +20% damage, +10% speed. Master Gunsmith: +30% damage, +15% speed.
 - Wide Rack: range ×1.3. Recoil Pads: hunters in range have 25% less recoil. Ammo Crate: reload ×0.65. Steady Rests: spread ×0.7. Full Kit: range ×1.5, hunters in range fire 20% faster.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table's T4 / T5; names are working names until the Dino pass). Barbed Wire is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (10 damage x0.5, slow 20 % for 2 s, once per 3 s per hunter, never through Camo Cover); in co-op it is 32 % resistance:
+A/B/C picks at tiers 4 and 5 (PLAN 9d, DECISIONS #292–#295; A = the path table's T4 / T5; final names after the Dino passes). Barbed Wire is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (10 damage x0.5, slow 20 % for 2 s, once per 3 s per hunter, never through Camo Cover); in co-op it is 32 % resistance:
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -211,7 +211,7 @@ Voltage; breaks 1 size per hit. Short own range (14). Rules: `Shared/StormCoil`.
 - Battery Pack: +30% damage. Static Shock: a struck dino takes +10% from the next strike. Thunderclap: the first target is stunned 0.4s (not bosses). High Voltage: pierces armour, +40% damage. Judgement Bolt: every 10s one bolt on the biggest dino in range, ×8, breaks 3 sizes, stuns bosses 0.5s.
 - Tall Mast: range ×1.2. Charged Air: towers in range +10% attack speed. Grounding Spike: every 4s strikes down one dino throw aimed at a tower in range. Storm Warning: towers in range +15% damage. Lightning Rodeo: towers in range chain their own shots once (one more dino at 50%).
 
-A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; A = the path table's T4 / T5; names are working names until the Dino pass). Storm Front: every 8 s the coil strikes every dino on its side's field for ×0.5 its damage (air too; armour only if it pierces; breaks 1). Chain effects (Supercell, Superconductor): the strike's slow and stun land on every dino in the chain; an arc's stun is capped at 0.3 s (Tuning Chain stun cap), the first dino keeps its full stun; never bosses. Thunderstrike: the strike's first dino breaks 2 sizes (arcs 1). Rod Strike is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (8 damage x0.5, slow 20 % for 1 s, once per 3 s per hunter, never through Camo Cover); in co-op it is a 15 % rate aura:
+A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; A = the path table's T4 / T5; final names after the Dino passes). Storm Front: every 8 s the coil strikes every dino on its side's field for ×0.5 its damage (air too; armour only if it pierces; breaks 1). Chain effects (Supercell, Superconductor): the strike's slow and stun land on every dino in the chain; an arc's stun is capped at 0.3 s (Tuning Chain stun cap), the first dino keeps its full stun; never bosses. Thunderstrike: the strike's first dino breaks 2 sizes (arcs 1). Rod Strike is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (8 damage x0.5, slow 20 % for 1 s, once per 3 s per hunter, never through Camo Cover); in co-op it is a 15 % rate aura:
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -239,7 +239,7 @@ ground. No armour until Iron Talons. Rules: `Shared/Falcon`.
 - Second Pair: 4 birds. Flock of Six: 6 birds. Wide Circle: radius 60. Murmuration (pending Jovan: or Sky Swarm): 12 small birds peck every dino in range (no more dives or flights; breaks 1).
 - Long Leash: +10% range. Falcon Bells: a struck dino takes +10% for 2s. Hooded Scout: bosses in range marked +25%. Lure: struck dinos pulled 2 studs back (not bosses). Hunting Party: towers in range +15% attack speed while a bird dives.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; names are working names until the Dino pass). Raking Strike: a dive also hits the dino nearest the struck one (breaks 1). Strafing Run: a dive also hits the 2 dinos right behind the struck one on the track, each with the dive's breaks. Guard Falcons is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (6 damage x0.5, slow 20 % for 1 s, once per 3 s per hunter, never through Camo Cover); in co-op bosses in range take +40 %:
+A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; final names after the Dino passes). Raking Strike: a dive also hits the dino nearest the struck one (breaks 1). Strafing Run: a dive also hits the 2 dinos right behind the struck one on the track, each with the dive's breaks. Guard Falcons is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (6 damage x0.5, slow 20 % for 1 s, once per 3 s per hunter, never through Camo Cover); in co-op bosses in range take +40 %:
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -270,7 +270,7 @@ it — so slow, damage, sinking and Eruption never stack (#189). Rules: `Shared/
 - Warm Tar / Simmer: the tar deals damage per second to every dino in it (8, 22). Boiling Pit: burning tar (80/s); its ticks break 1 (#127). Tar Fire: dinos walk out burning — one tick of 2s of the tar's damage, kept as they shrink. Eruption: every 10s (#201, T68b; its tar burns 80/s, like Tar Fire) a geyser drops every dino in the pool 2 sizes outright, bosses included, Break resist ignored; each size pays (#150).
 - Pick and Shovel / Fossil Hunter: +2 / +6 cash per sunk dino (#203, T68b). Lucky Finds: each sink also leaves a chest worth 10 where the dino went under (collected like an airdrop). Tar Tracks: after a dino walks out, the next 12 studs of track slow 15% for 3s. Tar Totem: towers in range +15% damage against slowed dinos (tar or tranq).
 
-A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; names are working names until the Dino pass). La Brea: the smallest dinos sink at once (0.05 s). Pitch Coat: a dino in the pool loses its armour while in it and for Strip (s) after (9c's strip), so the tar's burn hurts it. Bog Boots is the Raider option: in battles it also slows an enemy hunter who shoots a tower near the pit (slow 30 % for 2 s, once per 3 s per hunter, never through Camo Cover; "near" = within Pool sting reach, 12 studs, of the nearest point of the pool at its current length, Tar Lake included; PLAN T120b, #321); in co-op it is a longer pool that slows 45 %. Bog Boots' Range x 1.5 multiplies with Tar Lake (×3 → 81 studs), fine by the pool-overlap rule (#189), playtest watch:
+A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; final names after the Dino passes). La Brea: the smallest dinos sink at once (0.05 s). Pitch Coat: a dino in the pool loses its armour while in it and for Strip (s) after (9c's strip), so the tar's burn hurts it. Bog Boots is the Raider option: in battles it also slows an enemy hunter who shoots a tower near the pit (slow 30 % for 2 s, once per 3 s per hunter, never through Camo Cover; "near" = within Pool sting reach, 12 studs, of the nearest point of the pool at its current length, Tar Lake included; PLAN T120b, #321); in co-op it is a longer pool that slows 45 %. Bog Boots' Range x 1.5 multiplies with Tar Lake (×3 → 81 studs), fine by the pool-overlap rule (#189), playtest watch:
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -297,7 +297,7 @@ furthest along first. Rules: `Shared/Ballista`.
 - Pin Down: the hit dino is held 1s (not bosses). Reel In: drags the hit dino 6 studs back (not bosses). Tow Line: every 15s pulls the boss furthest along in range 10 studs back (the only knockback that moves a boss; waits while no boss is in range).
 - Twin Bolts: 2 bolts. Spread Volley: 3 bolts. Steam Crank: fires twice as fast. Chain Harpoons: 4 bolts in 2 linked pairs; each pair lands on the k-th dino from the front and from the back of the crowd in range, and its chain hits every other dino within Bolt width of the line between them (breaks 1).
 
-A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; names are working names until the Dino pass). Heartseeker (Targets biggest): bolts aim at the dino with the most HP in range instead of the furthest along. Bolts mark what they hit (Serrated Head), slow it (Anchor Line, bosses too) and leave a burning patch under the target (Fire Bolts, Firestorm Volley). Snag Line is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (12 damage x0.5, slow 30 % for 3 s, once per 3 s per hunter, never through Camo Cover); in co-op it holds dinos 1.75 s:
+A/B/C picks at tiers 4 and 5 (PLAN 9e, DECISIONS #296–#297; final names after the Dino passes). Heartseeker (Targets biggest): bolts aim at the dino with the most HP in range instead of the furthest along. Bolts mark what they hit (Serrated Head), slow it (Anchor Line, bosses too) and leave a burning patch under the target (Fire Bolts, Firestorm Volley). Snag Line is the Raider option: in battles it also stings an enemy hunter who shoots a tower here from inside its range (12 damage x0.5, slow 30 % for 3 s, once per 3 s per hunter, never through Camo Cover); in co-op it holds dinos 1.75 s:
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -445,7 +445,7 @@ A/B/C picks at tiers 4 and 5 (PLAN 9h + T125b, DECISIONS #334–#336; names = DI
 | **Cargo** | 4 | Heavy Cargo — Bigger crates | Rebuild Kits — Fixes a Trampled tower each lap | Spare Parts — A crate heals the closest tower |
 | **Cargo** | 5 | Cargo Run — A big crate every lap | Paratroopers — Drops 2 rangers a round | Airlift — Fixes the first Trampled tower each round |
 
-## Meteor Beacon (METEOR) — meteors on the biggest bunch: area hits and burning craters · built (PLAN 9i T127) · not sold yet (held at T128b) · unlock 600 Amber
+## Meteor Beacon (METEOR) — meteors on the biggest bunch: area hits and burning craters · built (PLAN 9i T127) · sold from T128c · unlock 600 Amber
 
 A radio mast (600 cash, off the track, 150 HP). Every 8 s it calls a meteor on the **biggest bunch**
 of dinos anywhere on your side's track (the point with the most dinos within 8 studs; a boss counts
@@ -565,6 +565,12 @@ A/B/C picks at tiers 4 and 5 (PLAN 9j, DECISIONS #340; names = DINO_REVIEW Round
 | Birds with travel time, Power Dive, Eagle of the Peak, Murmuration, Hooded Scout, Lure, Hunting Party | Falcon Roost | ✅ round 4 (PLAN T65) |
 | Spread volleys, Skewer, Pin Down, Reel In, Tow Line (boss pull), Chain Harpoons | Harpoon Ballista | ✅ round 4 (PLAN T66) |
 | Tar pool on the track (strongest pool only), sinking, Clinging Tar, tar damage, Tar Fire, Eruption (size drop), Dig Site cash and chests, Tar Tracks, Tar Totem | Tar Pit | ✅ round 4 (PLAN T67) |
+| A/B/C pick at tiers 4 and 5 (one sheet row per option; tier-5 pick free of tier-4; same cost per tier; picks are match state) | every tower path | ✅ Phase 9 (PLAN 9a–9b, `Shared/OptionPick`) |
+| Strip armour on a hit, bomblet fires (capped 6 per shell), Raider sting, Bounty cash, Biter slow, Field strike, Chain effects, Targets biggest | the 132 B/C options on the 11 towers | ✅ Phase 9 (PLAN 9c–9e) |
+| Raider options (`PvP effect`: mainly enemy hunters, always a dino effect; ≥ 0.8× slot median on dinos alone) | one per tower at most | ✅ Phase 9 (#284) |
+| Auto trigger (no tower buttons: once-a-round effects fire themselves) | Meteor Beacon (Extinction Event ×2.5), Bone Totem roar, others | ✅ Phase 9 (`Shared/AutoFire`, #283) |
+| Walkers (NPC units on the side's own track; own cap, `Walker cap total` 96 → 24 per side, 9 per camp in a 10-camp Bone Rush) | Raptor Pen, Ranger Station | ✅ Phase 9 (`Shared/Walker` + `Walkers`, #315/#354) |
+| Entomb and fossils, raptor packs, Bones charge, flying track gunship, meteors and craters, lava stretch (Near track placement), ranger posts | the seven 4× towers | ✅ Phase 9 (PLAN 9g–9j) |
 
 When a mechanic lands, its numbers get a column on `Tower Upgrades` and the stat-only
 multipliers get rebalanced around it — expect a tuning pass per mechanic.

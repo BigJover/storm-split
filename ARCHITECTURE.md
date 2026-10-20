@@ -16,6 +16,7 @@ and the Fortnite-specific parts of §09 do not. The old UEFN architecture is in 
 | **Rojo** | Code lives as `.luau` files in this folder, synced live into Studio. This is what makes git work. |
 | **Studio MCP server** | Lets Claude start playtests, run code in Studio and read the Output window — the write → run → read errors loop. Built into Studio (switch on Assistant Settings → Manage MCP Servers → "Enable Studio as MCP server"); `tools/studio/mcp.py` is the command-line way in (`tools`, `call <tool> '<json>'`), used by the Tester (`GAUNTLET.md`) |
 | **`tools/export_constants.py`** | Spreadsheet → `src/shared/Config.luau` |
+| **`tools/compile.luau`** | Compile guard (Lune, first step of `tools/test.sh`): every `src/` file through the real Luau compiler, failing on compile errors luau-lsp misses ("Out of local registers", PLAYTEST F11) and on top-level-local headroom below 30 |
 | **`tools/value.py`** | Tower value and pacing model; `--battle` prints how long a battle camp lasts per mode on Normal (typical and "competent" 1.5× builds; T91, #245). A report: it never edits the sheet |
 
 ---
@@ -101,6 +102,19 @@ src/
 │   ├── Falcon.luau          Falcon Roost rules: birds with travel time, dives, Eagle, Murmuration; pure
 │   ├── Ballista.luau        Harpoon Ballista rules: volleys, Skewer lines, Tow Line, Chain Harpoons; pure
 │   ├── TarPit.luau          Tar Pit rules: pool on the track, strongest pool, sinking, Eruption; pure
+│   ├── AutoFire.luau        Phase 9 "no tower button" rule (#283/#316): when a once-a-round effect fires itself (a boss or a bunch in reach, else the round's last spawn); pure
+│   ├── FourX.luau           Shared rules of the seven 4× towers (#316): Amber/cash band, damage-to-hunters neutrality, area-strike keys; pure
+│   ├── Walker.luau          Walkers (#315): NPC units a tower owns that run its own side's track (raptors, rangers): state, HP, target, leash, posts, per-side cap (`Walker cap total` 96, #354); pure
+│   ├── Resin.luau           Amber Resin Cannon: resin slows, entombs, fossils (Museum Piece cash); pure
+│   ├── Raptor.luau          Raptor Pen: pack size, bite rate, Clever Girls (dodgers never trampled), King of the Pack; pure
+│   ├── RaptorLook.luau      Raptor walkers' looks (visual only)
+│   ├── Totem.luau           Bone Totem: charge from take-downs (3 Bones), roar / buffs / Bone cash; pure
+│   ├── Blimp.luau           Spotter Blimp: flies the side's track, Door Gun / Searchlight / Cargo; can't be damaged; pure
+│   ├── Meteor.luau          Meteor Beacon: strikes on the densest bunch, craters, the automatic Extinction Event (×2.5); pure
+│   ├── Vent.luau            Volcano Vent: lava on one stretch of track (Near track placement), burns, shoves, crust; pure
+│   ├── Ranger.luau          Ranger Station: rangers at posts on the track (shoot, trap, guard), retreat/leash rules; pure
+│   ├── RangerLook.luau      Ranger walkers' looks (visual only)
+│   ├── RangerPosts.luau     The posts UI: "Move posts" in the tower panel, post ghost, set in third person with the gun away (#350)
 │   ├── DinoLook.luau        Blocky dino models per species and size (visual)
 │   ├── Theme.luau           Title, currency and display names (Dino Hunters theme)
 │   └── HuntBoard.luau       What the Hunt Board screen draws: tiles, cards, button states, text, fit-to-window
@@ -137,6 +151,7 @@ src/
 │   ├── LevelBoard.luau      The level leaderboard: OrderedDataStore top 50, cache, budgeted writes
 │   ├── TrophyBoard.luau     The Trophy leaderboard: LevelBoard.start on its own store, remote and cache
 │   ├── Wardrobe.luau        The only adder/remover of worn cosmetics on characters (hat, sprint trail)
+│   ├── Walkers.luau         Owns every walker on the server: spawn/move/bite, the per-side walker cap, `walkers` Studio aid
 │   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
 ├── starter/StarterCharacterScripts → StarterPlayer.StarterCharacterScripts
 │   └── Health.server.luau   Empty on purpose: replaces Roblox's health regeneration
@@ -183,7 +198,7 @@ This dissolves most of the problems the UEFN plan was built around:
 | Dino attack timers and projectiles in flight (and the Storm Coil's Grounding Spike timers, which strike throws down) | `DinoAttacks` | — (it hurts towers and players only through `Towers.damage` / `Health.damage`; towers that can't be damaged are never in `Towers.targets()`) |
 | A tower's tiers, A/B/C picks (`pathPicks`, match only, #287) and stats | `Towers` | Call `upgrade(tower, path, option)` after paying; clients read the body's `Path<n>` / `Picks<n>` attributes |
 | A tower's HP and trampled state | `Towers` | Call `damage()` / `heal()` / `repair()` (after paying); dinos pick from `targets()`; clients read the body's `HP` / `MaxHP` / `KO` attributes |
-| Walkers: the NPC units a tower sends along its own side's track (Raptor Pen raptors; Paratroopers, rangers later): state, HP, target, the side cap (PLAN 9g, DECISIONS #315; rules in the pure `Shared/Walker`) | `Walkers` | Towers calls `sync()` after a place / upgrade / repair / trample, `clear()` when the tower goes and `step()` every frame; a walker's hit is handed back to its tower, which lands it through `Enemies` (rule 4); DinoAttacks asks `biteOn()` (a dino with a walker on it bites the walker instead); hunters never touch walkers |
+| Walkers: the NPC units a tower sends along its own side's track (Raptor Pen raptors, Ranger Station rangers at posts): state, HP, target, the side cap (PLAN 9g, DECISIONS #315; rules in the pure `Shared/Walker`) | `Walkers` | Towers calls `sync()` after a place / upgrade / repair / trample, `clear()` when the tower goes and `step()` every frame; a walker's hit is handed back to its tower, which lands it through `Enemies` (rule 4); DinoAttacks asks `biteOn()` (a dino with a walker on it bites the walker instead); hunters never touch walkers |
 | Cash and lives (the Fence), one pot per side (co-op = side 1; arithmetic in the pure `Shared/Ledger`) | `Economy` | Call `trySpendFor(side)` / `earnFor(side)` / `loseFor(side)` (the side-less `trySpend()` / `earn()` / `lose()` are side 1); clients read their side's `Cash` / `Lives` attributes (`Shared/Sides.attr`: side 1 `Cash`, side n `Cash<n>`) |
 | Player HP (the Humanoid's Health / MaxHealth) | `Health` | Call `damage()` / `heal()` / `healAll()`; an enemy hunter's shot goes through `pvpHit()` (Hero, after `Shared/BattleRules.pvpDamage`, which is 0 under Camo Cover: `camoCover()`); clients read the Humanoid |
 | What a tower cost (for refunds) | `Shop` | — |
@@ -322,6 +337,7 @@ second test client.
 | **Round 4** — Jovan's answers (`DIRECTION.md` 2026-10-02) | Renames (Bones, Fence, Big Bore); Linebreaker ×2; per-difficulty `Starting cash` (Hard 850); home-screen rows (`HomeLayout`); softer boss throws; one health pool + pierce-through (`SizeBreaks`) and the boss notched bar; Chaos = gun skill (towers ×0.6, hero ×1.5); mastery small perks (`SmallPerks`); hero tier 6 (`GunRules`); saved player level (`PlayerLevel`), cosmetics and titles (`Cosmetics`, `Wardrobe`, `Looks.client`), Profile screen (`ProfileScreen`, `Profile.client`), level leaderboard (`LevelBoard`, This-server fallback); four new towers (`StormCoil`, `Falcon`, `Ballista`, `TarPit`; can't-be-damaged and on-track placement in `Combat`/`Placement`); `value.py` worth bars and Tar Pit control line (`PLAN.md` round 4, `DECISIONS.md` #118–#206) | **Written 2026-10-02 → 10-06, statically checked + 406 headless specs**, not yet playtested (`RECAP.md`, "Round 4"); Studio playtests T31/T38/T60/T70 open |
 | **7** — battle modes | Camp Clash (team battle) and Bone Rush (battle royale): `Sides` (track copies, zones, crossing strip), per-side `Economy` (`Ledger`) and spawn queue (`SpawnQueue`), `BattleRules` (damage permission per source, PvP levers, Camo Cover, lockstep, results), `BattleFlow` + `Server/Battle` (seating, Studio stand-ins, elimination, Final Stampede), `Matchmaking` (one server, snake draft by Trophies), `Stakes` (Entry fee, escrow, Amber Hoard, Practice Hunt) and `Trophies` (arenas) applied by `Progression`, `TrophyBoard` (shared + server), `RoundFlow` (F4), home/HUD/results/Profile Trophies screens, value.py perk-parity bar (`PLAN.md` phase 7, `DECISIONS.md` #208–#243) | **Written 2026-10-06 → 10-08, 587 headless specs, playtested solo in Studio** (PLAYTEST Runs 2–3 with stand-in camps; Run 4 re-checks T86b). Multi-client steps: Jovan's script (`RECAP.md` "Phase 7"); real stakes, saved Trophies, world boards: need publishing |
 | **8** — ready to publish | Batch 1 (done): publish checklist + multi-client guide (`SETUP.md`); `StudioOnly` gate for every Studio cheat; `SaveStore` + session lock with a fake-store spec; `value.py --battle`; `Tuning!B143` battle rounds 60 → 120 s; Tectonic Slam ×34; Studio stand-in hunter (`StandInHunter`, `Server/StandInHunters`), Start at round N, Stand-ins hold. Batch 2 (done, replaces T98): match length and joiners — `Shared/Pace`, `Shared/BattleLoop`, paced co-op (fewer, tougher dinos), battle round lists (casual every 3rd, Ranked every 2nd), match clock 15:00 / 30:00, tie-break chain, casual late joiners with catch-up cash, Ranked seat lock, Ability tempo ×2, per-side live cap, battle Fence drain 4/s (§5.5–5.8, #249–#270). Waiting on Jovan: the 4×-Amber towers (T97, next), private publish + published smoke (T94–T95), lobby place with TeleportService + MemoryStore by Trophies (T96) (`PLAN.md` "Phase 8") | **Batch 1 built 2026-10-08 (619 specs; Run 5: 23 pass, 0 fail). Batch 2 built 2026-10-12 (682 specs; Run 7: 27 pass, F8 fixed; Run 7b: 9 pass, 0 fail).** Live saves, the lock, cross-server boards and a real late-joining client need Jovan / a published place |
+| **9** — the 4× towers and A/B/C upgrades | `OptionPick` (A/B/C pick in tower/hero panels; picks in match state, validated by `Towers`/`Hero`); `Option` + `PvP effect` sheet columns; `value.py --options` bars enforced by the exporter; 180 B/C options on the 11 towers and 12 hero paths; the seven 4× towers (`Resin`, `Raptor`, `Totem`, `Blimp`, `Meteor`, `Vent`, `Ranger` + `RangerPosts`) on `FourX`, `AutoFire` and the walker module (`Walker` + server `Walkers`, own cap: `Walker cap total` 96); `Pace.coopLeak` (co-op leak cap, #357); `tools/compile.luau` compile guard in `tools/test.sh` (F11) | **Built and released** (845 specs); **Studio Runs 8, 9, 10** pass (Run 10b pending); feel and multi-client effects need Jovan |
 
 ---
 

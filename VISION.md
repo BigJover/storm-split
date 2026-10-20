@@ -133,6 +133,15 @@ Grenadier towers. Other heroes and towers — Chiller, Quartermaster and everyth
 later — are bought with Cores. You can only place towers you own, but you can pay to
 upgrade a teammate's tower of a type you don't own.
 
+**The 4× towers and A/B/C upgrades (Jovan 2026-10-13; Phase 9, built and released
+2026-10-20).** Seven late-game towers at 400–600 Amber (Amber Resin Cannon, Raptor Pen,
+Bone Totem, Spotter Blimp, Meteor Beacon, Volcano Vent, Ranger Station; 3,550 Amber for all
+seven, 5,325 for every unlock in the game ≈ 30 h on Normal, #355). Every tower and hero path
+has an **in-game A/B/C pick at tiers 4 and 5** (BTD6-plus build choice; no dead option, no
+must-pick). Big tower moments **fire themselves** (no tower buttons; players stay busy with
+the gun). Raider options mainly hit enemy hunters in battles but always do something real
+to dinos. Details: `UPGRADES.md`, `HEROES.md`, `TOWERS_LATER.md` "As built".
+
 **Daily Haul and Bounties (round 2, 2026-10-01; built, headless-tested, not yet playtested).**
 They live on the **Hunt Board** (G, home screen only). All numbers are on the `Daily Haul`
 and `Bounties` sheets and the REWARDS levers on `Tuning`.
@@ -175,7 +184,7 @@ Some of this is cheap now and expensive later, so it's built early:
 
 ## Future ideas — brainstorm only (Jovan, 2026-10-13)
 
-Not planned or scheduled yet; Jovan wants "some if not all of this" later. Keep code from
+Not planned or scheduled yet; Jovan wants "some if not all of this" later. **Waiting on his "go"** (asked again in `RECAP.md` "Phase 9"). Keep code from
 blocking it.
 
 - **Pets** as support for hunters. A pet **dies with its hunter**, so in PvP nobody has to

@@ -144,6 +144,12 @@ Extra loop rules for this phase: the **Director writes each content batch's B/C 
 fresh Builder per batch; option A must never change a number (compose guard, #275); every
 batch ends with its Tester steps. Phase 8's Jovan-only leftovers don't block Phase 9.
 
+**Status (2026-10-20):** built and released (9a–9k: T110–T131; 845 specs; calls #274–#360)
+and playtested in Studio (PLAYTEST Runs 8, 9 and 10; Runs 9 and 10 cut off by usage limits;
+F9–F11 fixed, F11 = the server boot crash, now caught by `tools/compile.luau`). Run 10b (T131
+checks) is running; T132 fixes whatever it finds. The recap is `RECAP.md` "Phase 9"; what's
+left needs Jovan (feel, multi-client, publish, the brainstorm "go").
+
 ## Rules
 
 - **Verify every step:** `tools/check.sh` clean; `python3 tools/export_constants.py` clean;

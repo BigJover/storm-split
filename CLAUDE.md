@@ -52,7 +52,7 @@ design in the PDF still holds; its UEFN-specific sections don't. Old UEFN materi
 rojo serve                              # live-sync src/ into Studio
 python3 tools/export_constants.py       # after any spreadsheet change
 tools/check.sh                          # static type-check of src/ (luau-lsp via Rokit)
-tools/test.sh                           # headless specs in tools/test/ (Lune via Rokit) + audit
+tools/test.sh                           # compile guard (tools/compile.luau) + headless specs (Lune) + audit
 python3 tools/audit.py                  # spreadsheet vs UPGRADES/HEROES/DIRECTION/VISION + dead columns
 ```
 
@@ -249,40 +249,40 @@ Ability tempo ×2; per-side live cap; battle Fence drains at most 4/s. Calls: `D
 #249–#270; summary `RECAP.md` "Phase 8 batch 2". N15 (an out side logs "out" instead of its
 peak) is accepted as a log-only tidy-up for the next Builder commit that touches `Battle`.
 
-Next: the 4×-Amber tower picks (T97, `TOWERS_LATER.md`), then (all need Jovan, `RECAP.md`
-"Phase 8") his multi-client script incl. a real late joiner, a private publish per
-`SETUP.md`'s checklist (then the published smoke T95), then the lobby place + teleport
-matchmaking (T96).
+Phase 9, the 4× towers and A/B/C upgrades (2026-10-13 → 10-20, Jovan's 2026-10-13 answer in
+`DIRECTION.md`; calls `DECISIONS.md` #274–#360; summary `RECAP.md` "Phase 9"): **built and
+released**, 845 headless specs green, **playtested in Studio** (Run 8: 18 pass, F9 fixed;
+Run 9: 17 pass, cut off by a usage limit, F10 fixed; Run 10: 13 pass after the F11 boot fix,
+cut off after R10-15; Run 10b pending). What's in:
+- **A/B/C picks** at tiers 4 and 5 of every tower and hero path (`Shared/OptionPick`, picks
+  in match state, server-validated; hero tier 6 stays one capstone). 180 new B/C options on
+  the existing paths (132 tower + 48 hero), plus the 4× towers' own; each held to
+  `value.py --options`' bars (no dead option, no must-pick). Raider options (`PvP effect`)
+  mainly hit enemy hunters, always with a dino effect.
+- **The seven 4× towers**, all released (Amber / cash): Amber Resin Cannon (`Shared/Resin`,
+  500 / 800), Raptor Pen (`Shared/Raptor`, 500 / 600), Bone Totem (`Shared/Totem`, 450 / 600),
+  Spotter Blimp (`Shared/Blimp`, 400 / 600), Meteor Beacon (`Shared/Meteor`, 600 / 600;
+  Extinction Event fires itself), Volcano Vent (`Shared/Vent`, 600 / 600) and Ranger Station
+  (`Shared/Ranger` + `RangerPosts`, 500 / 600). Raptors and rangers are walkers
+  (`Shared/Walker` + server `Walkers`): own counter outside the 130 dino cap, `Walker cap
+  total` 96 → 24 per side (9 per camp in a 10-camp Bone Rush).
+- **Co-op leak cap** (N22, #357): a non-boss leak costs at most a quarter of the starting
+  Fence; build-phase HUD buttons hide while placing or setting posts (N23).
+- **F11 boot crash** (`Server.Towers` over 200 top-level locals) fixed; `tools/test.sh` now
+  runs `tools/compile.luau` (the real Luau compiler + a local-headroom check) first.
+Studio aids: `firenow <TOWER>`, `fossils`, `walkers`, `charge`, `standinpick`.
 
-Phase 9 batch 9g (2026-10-14): the shared walker module (`Shared/Walker` + `Walkers`),
-`Shared/AutoFire`, the Amber Resin Cannon and the Raptor Pen are built and headless-tested
-but **not playtested**. T124c applied (Raptor 10 a bite x 2.3/s, Museum Piece 150, Clever
-Girls never trampled); T124d (King of the Pack Rate x 1.25, bar 3's median leaves out the 4x
-batch, #330) **released both** (Amber 500 each). Studio aids: `firenow`,
-`fossils`, `walkers`, `charge` (host's Lobby remote).
-
-Phase 9 batch 9h (2026-10-15): the **Bone Totem** (`Shared/Totem`) and the **Spotter Blimp**
-(`Shared/Blimp`) are built, headless-tested (807 specs) and **released** (Totem T126c, #331-#333:
-charge 3, cost 600; Blimp T125b, #334-#336: cost 600, Door Gun / Searchlight / Cargo metrics in
-`value.py`), but **not playtested** (Tester Run 9h next). Door Gun T3 renamed "Treetop Pass"
-(T125c, #341; Falcon Roost keeps "Strafing Run"). Studio aid:
-`firenow BLIMP`.
-
-Phase 9 batch 9i (2026-10-15): the **Meteor Beacon** (`Shared/Meteor`) and the **Volcano Vent**
-(`Shared/Vent`, the Near track placement rule) are built and headless-tested (825 specs) but **not
-playtested**. The Vent is **released** (T128b; c/e 167-274, T2 202); the Meteor is **released**
-(T128c, #345-#347: Starfall Damage x 3.388, Comet Tail's sweep ground only). Studio aids:
-`firenow METEOR`, `firenow VENT`.
-
-Phase 9 batch 9j (2026-10-15): the **Ranger Station** (`Shared/Ranger` on `Shared/Walker`'s post
-state, posts UI `Shared/RangerPosts`) is built, headless-tested and **released** (T130b, #340: cost
-600, 10 x 2.3/s, Riflemen c/e 169-230, T2 342), but **not playtested** (Tester Run 9j next). Posts:
-set after placing and with "Move posts" in the tower panel. Studio aids: `firenow RANGER`, `walkers`.
+Next: Tester Run 10b (T131 checks) → T132 (Run 10b fixes, if any). Then it waits on Jovan
+(`RECAP.md` "Phase 9", "What I need from you"): how the A/B/C builds feel, his multi-client
+script (Raider stings from hunter shots, hero gun effects, a real late joiner), a private
+publish per `SETUP.md` (then T95), the lobby place (T96), and a "go" on the brainstorm
+(pets / hub / AFK / bigger Amber numbers).
 
 ## Open issues
 
-- Leak cost is effective HP (BTD6-style), so 40 starting lives is likely too few in co-op.
+- Leak cost is effective HP (BTD6-style); co-op non-boss leaks are now capped at 25% of the
+  starting Fence (#357) — watch it in Run 10b and Jovan's play.
   Battle length is settled (batch 2): ≤ 15 min casual, ≤ 30 min Ranked, ~34 min co-op.
-- Shorter co-op about doubles Amber per hour (Normal ~92 → ~175/h, #256): Jovan to confirm.
+- Unlocking everything = 5,325 Amber ≈ 29.8 h on Normal (#355): Jovan to confirm.
 - Scout Range path has range *and* its old damage/rate boosts — likely too strong; trim.
 - Folder is still named `~/Fortnite`.

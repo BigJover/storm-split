@@ -788,3 +788,25 @@ _Run 9 was cut off by a usage limit after R9-23; the coordinator stopped Play (S
 - **N23 (minor, UX).** In co-op (no hero chosen) the "Choose hero (H)" HUD button sits mid-screen and covers part of the track in posts mode; a click there opens nothing for the posts and doesn't set a post. Clicking beside it works.
 
 _Run 10 was cut off by the weekly usage limit after R10-15; the coordinator stopped Play (Studio back in Edit mode). Boot fix confirmed; all seven towers placed, upgraded with B/C cards, composed stats match, Studio aids work, walker cap holds. Open: N22 (leak cost on Normal), N23, T131 not yet built._
+
+# Run 10b — 2026-10-20 (Tester, agent) — T131 re-check (N22, N23, R10-12, R10-15)
+
+- **Code tested:** Studio synced to c9f9c4f: `script_grep` "coopLeak" → Pace.coopLeak (Pace:108/112, `CoOpLeakCapShare = 0.25` Config:254) and Main:142 non-battle onLeak.
+- **Conveniences (disclosed):** same as Run 10 (J offline/Amber, K cash, L, navigation, read-only probes, Studio Lobby remotes). Work files `~/.claude/jobs/2a8d6f9c/tmp/tester14/`.
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R10b-1 | Play starts (server boots) | PASS | Play → Remotes exist, State=Lobby; console only the usual `[Progression]` / `[LevelBoard]` notes. |
+| R10b-2 | N23 while placing (Build → Hunting Blind row) | PASS | Probe: Building, before: ChooseHero / Mastery visible; placing (`Placing=true`): both hidden; Q: both back. |
+| R10b-3 | N22 co-op Normal, non-boss armoured leak capped at 8 (start round 10; 4 Mortar Pits + 2 Hunting Blinds, no pierce) | PASS | Leak probe, round 10: `LLAMA` leak 30→22, then `ARMOR` leaks 22→14 and 14→6 (each exactly 8 = ⌈30×0.25⌉; Run 10 saw 30→0 on one ARMOR). Heartbeat 16.7/19 ms. |
+| R10b-4 | N22 boss leak still in full | PARTIAL — gameplay NOT REACHED; probe PASS | First boss (Triceratops ZEP ×1) is round 31 behind 26 ARMOR + 16 BRUTE + …; with a defence that lets it through, the 8-per-leak non-bosses end the Fence first, so a live boss leak wasn't reachable. Read-only probe of `Pace.coopLeak` in Play: (48,no,30)=8, (5,no,30)=5, **(48,yes,30)=48**, (48,no,40)=10, (1,no,10)=1 — all match the T131 spec; Main:142 passes `enemy.def.boss == true`. |
+| R10b-5 | Battles unchanged (Camp Clash, 2 camps, Easy, stand-ins, start round 10, my side undefended) | PASS | Probe of `Lives` every 0.1 s: leaks drain gradually, e.g. 18.66 → 10.33 in 2.08 s (= 4.0/s), plateaus at whole numbers between leak batches (22, 19); a 30→22-style cap does not apply. Stand-in side `Lives2` 40 untouched. |
+| (setup) | Co-op Easy, start round 1: 3 Raptor Pens + Ranger Station (M-panel unlocks with J Amber, offline) | note | Pen 1 Pack 5·0·0 4C·5A (Raptor Swarm), pens 2–3 Pack 3 (Pack of Five), Ranger Riflemen 4C·5A (Ranger Troop); K cash. Harness artifact (not a game bug): an `execute_luau` call that waited across the Lobby→match switch made Studio's Assistant reset the camera to Scriptable ("The execute_luau changed camera type…"), freezing the view; fixed by stop/restart Play and not waiting inside that call. |
+| R10b-6 | R10-15 walker-cap line | PASS | Round 1–2, `walkers` probe: 20–24 out (Ranger 5, Raptor 15+); E on the Swarm pen → row **"9 of 15 out · side's walker cap 24"** (disabled row, under Pack/Alpha/Trainer; scroll to see); Pack-3 pens and the Troop station (all out) show no line; no toast. `capline.png` |
+| R10b-7 | N23 posts mode + R10-12 camera | PASS | E on station → scroll → Move posts → "Posts · Ranger Station": ChooseHero hidden (`Placing=true`), camera 12.0 studs back, MouseBehavior Default (= placing). (Mastery is hidden in Playing anyway — see R10b-8.) |
+| R10b-8 | R10-12 posts mode closes on taking damage | PASS | In posts mode, walked onto lane 1 ahead of HUSKs: first bite 100→98 at 5.6 s → `Placing` true→false the same tick, panel closed, ChooseHero back; further bites (→86) changed nothing else. |
+| R10b-9 | N23 posts mode in Building (both buttons), back on Done (Q) | PASS | New co-op (Play restarted; J Amber offline, Ranger unlocked), Building: before both visible; E → Move posts → posts mode: ChooseHero **and** Unlocks & Mastery hidden; Q → both back, `Placing=false`. `postsB.png` |
+| R10b-10 | Quick co-op round regression | PASS | Co-op Easy with 3 pens + station: rounds 1 → 8 auto-advance, Fence 40 throughout, no stalls. |
+| R10b-11 | Console | PASS | No game script errors in any match; only `[Progression]`/`[LevelBoard]` notes and Studio Assistant messages (navigation "Infinite yield … Humanoid" during respawn, camera-type resets — tool-side). |
+
+- **Studio state at the end:** Play stopped; Studio in Edit mode. Nothing published, no saves touched.

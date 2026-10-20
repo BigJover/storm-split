@@ -777,3 +777,102 @@ Blimp, Bone Totem) and the Dino agent names them.
 1. Your tower picks → T97 (built in the round-4 tower pattern, then a Tester run).
 2. Your multi-client script (now with a late joiner) and a private publish (`SETUP.md`).
 3. Then the lobby place with cross-server matchmaking (T96).
+
+# Phase 9 recap for Jovan: the 4× towers and A/B/C upgrades (2026-10-13 → 10-20)
+
+**Your words (2026-10-13):** "I like all of the towers suggesterd, i say we add them all price
+seems about right for each, i do want multiple upgrade pathes so having a/b/c upgrade options
+for each is ideal and all towers/weapons should have this a/b/c upgrade path up to tier 5,
+lets have the extinction event be automatic … i like towers touching enemy hunters however
+they shouldnt be useless against the dinos …"
+
+**Honest status:** built and **released** (everything is in the shop), 845 headless specs
+green, and **played in Studio by the Tester** in Runs 8, 9 and 10 (Runs 9 and 10 were cut
+short by usage limits). Run 10b is running now. How the builds *feel* and anything needing a
+second real player still need you. Calls: `DECISIONS.md` #274–#362.
+
+## What was built
+
+- **The A/B/C pick.** At tier 4 and again at tier 5 of every path, the upgrade button opens
+  three cards; you pick one. Tiers 1–3 are unchanged. Your tier-5 pick doesn't depend on your
+  tier-4 pick (9 builds per path), and the three cards at a tier cost the same. Picks last
+  for the match. Heroes get it too; a hero's tier 6 stays one capstone that works after any
+  tier-5 pick, and hero options change how the gun handles, never its raw damage.
+- **180 new options.** Option A is the old tier 4/5, unchanged. The Director designed B and C
+  for every existing path: **132 tower options** (the 11 towers) and **48 hero options** (the
+  4 heroes), named by the Dino agent. A checker in the balance model refuses any option that
+  is useless or that everyone would always pick.
+- **The seven 4× towers** (Amber to unlock / cash to build). The cash prices came down from
+  the proposal because the balance model showed they'd have been 4–5× too weak for the money:
+  - **Amber Resin Cannon** (500 / 800): resin slows dinos, entombs them in amber, fossils.
+  - **Raptor Pen** (500 / 600): tame raptors run out down your track, bite fast, come back.
+  - **Bone Totem** (450 / 600): your take-downs charge it; then it roars on its own, buffs your
+    towers, or pays out cash.
+  - **Spotter Blimp** (400 / 600): flies your track and can't be hurt: a door gun, a
+    searchlight that helps your towers, or cargo drops that pay.
+  - **Meteor Beacon** (600 / 600): a meteor every 8 s on the biggest bunch, burning craters.
+  - **Volcano Vent** (600 / 600): placed beside the track; erupts and floods a stretch with
+    lava that burns, shoves and crusts over.
+  - **Ranger Station** (500 / 600): rangers walk out to posts you set on the track and shoot,
+    lay traps or guard. You set posts in third person with the gun put away.
+  All seven: 3,550 Amber.
+- **Extinction Event is automatic.** The Meteor Beacon's top pick fires itself once a round:
+  the moment a boss or a big bunch is in reach, otherwise on the last dinos of the round. It
+  hits every dino for **×2.5** (your proposal said ×20, which scored ~10× everything else on
+  its path; it's still the biggest hit in the game). Same rule everywhere: **no tower
+  buttons** — "once a round" things fire themselves so you stay on your gun.
+- **Raider options** (8 in all: Tranq, Armory, Storm Coil, Falcon, Tar Pit, Ballista, Resin,
+  Raptor). In battles they mainly sting enemy hunters who walk into your side (slow up to
+  30% for a moment, half damage, never a stun, never reveal anyone). They always do something
+  real to dinos too, and in co-op they're still a fair pick on that alone.
+- **Walkers.** Raptors and rangers are a new kind of unit with their own limit, separate from
+  the 130-dino cap: 24 per side, but **9 per camp in a 10-camp Bone Rush** so the server holds
+  up. The tower panel says when a pack is short because of the cap.
+- **Co-op leak cap.** One normal dino getting through now costs at most a quarter of your
+  starting Fence (Normal: 8 of 30), so a single leak no longer ends a run. Bosses still cost full.
+  The build-phase HUD buttons also hide while you place a tower or set posts.
+- **The boot crash (F11) and a new guard.** Run 10's first try found the server wouldn't
+  start: the towers script had grown past Roblox's limit of 200 top-level names. Fixed, and
+  the test run now compiles every script with the real Roblox compiler and fails early if a
+  file gets close to that limit, so this can't sneak through again.
+
+## How it was verified
+
+- **Headless:** 845 specs (picks, every option's stats, the seven towers' rules, walkers and
+  their cap, the leak cap, the compile guard) plus the balance model's option checks.
+- **Studio Run 8: 18 pass, 1 minor fail** (F9: the pick header ran under Back → fixed).
+- **Studio Run 9: 17 pass** on B/C cards for the 11 towers and 4 heroes, 1 partial, 1
+  inconclusive; cut off near the end. F10 (a Studio-only test tool) fixed.
+- **Studio Run 10: 13 pass** after the F11 fix: all seven placed, upgraded with A/B/C cards,
+  stats match the cards, co-op Normal past round 20 with all seven at tier 5, Ranger posts,
+  Trampled/Repair, walker cap. Cut off after step 15; it raised the leak note now fixed.
+- Run 10b (c9f9c4f): boot, co-op leak cap (each non-boss leak cost exactly 8 on Normal: 30→22→14→6), battle drain 4.0/s, hidden hero/Unlocks buttons while placing and in posts mode, posts mode closing on a bite, the walker-cap line ("9 of 15 out · side's walker cap 24") and a co-op regression all PASS; a boss leak couldn't be reached in play (first boss is round 31) — a read-only probe confirms it still costs in full (48). No game errors.
+
+## What I need from you
+
+1. **Unlocking everything takes ~30 h on Normal** (5,325 Amber; the seven new towers are
+   3,550 of it). OK, or should Bounties / Daily Haul pay more?
+2. **Ranger posts are set in third person with the gun away.** OK?
+3. **9 walkers per camp in a 10-camp Bone Rush** (24 elsewhere). OK once you've seen it?
+4. **How the A/B/C builds feel** — agents can't judge feel. Try one 4× tower per session, and
+   a couple of B/C picks on towers you know.
+5. **Multi-client checks** the Tester can't do alone: Raider stings from a real second
+   hunter's shots, and hero gun effects (the Tester can't equip the gun).
+6. **Publishing is still pending** (`SETUP.md` checklist), then the lobby place.
+7. **The brainstorm** (pets, hub, AFK farming, bigger Amber numbers) waits for your "go".
+
+## Decisions you may want to overturn
+
+1. **#317 Extinction Event ×2.5, not ×20.**
+2. **#326 Raptors bite faster (2.3/s) instead of harder** (one big bite wasted damage).
+3. **#331 Bone Totem charges from 3 Bones** (was 8: it barely fired).
+4. **#357 Co-op leak cap** at a quarter of the starting Fence (bosses excluded).
+5. **#337 / #339 / #340 4× cash prices cut to 600** (Meteor, Vent from 1,000; Ranger 900).
+6. **#276 Tier-5 pick free of the tier-4 pick** (9 builds per path, not 3 locked lines).
+7. **#287 Picks last one match** (never saved; you choose again each game).
+8. **#320 Only two Raider options on the 4× towers** (Resin, Raptor), none on heroes (#301).
+
+## What's next
+
+1. Run 10b, then T132 fixes anything it finds.
+2. Your answers above, your multi-client test and a private publish.

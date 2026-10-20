@@ -12,6 +12,11 @@ on the spreadsheet plus any new fire mechanic.
 - **Only upgrades cost cash** (the team's shared pot). Each hero has three paths of **six
   tiers** (DECISIONS #133), with the same crossover rule as towers: two paths at most, only
   one past tier 2; tier 6 needs tier 5 on the same path. Max build 6/2/0 (6/3/0 at mastery 20).
+- **A/B/C picks (Phase 9, ✅ built and released):** tiers 4 and 5 of every path are an
+  in-game pick of three options (A = the path table's tier; B/C in each hero's option table;
+  the tier-5 pick is free of the tier-4 one); tier 6 stays one capstone that works after any
+  tier 5. Options change handling and fire modes, never raw gun damage; no Raider options for
+  heroes (#301). Picks last one match. DECISIONS #278, #298–#302.
 - Upgrades are about **how the gun handles and fires** — reload, magazine, recoil, fire
   mode, special rounds — not raw damage.
 - Every hero has its **ability from the start** (F), on a cooldown. One path per hero
@@ -122,7 +127,7 @@ Tier 6 (final names, DECISIONS #133, #174–#175): Hot Swap: the two guns reload
 never stops; reload x0.8. Heart Shot: scoped shots have no spread and shrink a dino 2 sizes. Bounce
 Back: each ricochet take-down puts a round back in the cylinder.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table's T4 / T5; names are working names until the Dino pass; every T6 works after any T5). Twin Burst: each click is 3 rounds, alternating the two guns (Hot Swap still staggers). Hunter's Mark: hits mark dinos (+35% from everything).
+A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table's T4 / T5; final names after the Dino passes; every T6 works after any T5). Twin Burst: each click is 3 rounds, alternating the two guns (Hot Swap still staggers). Hunter's Mark: hits mark dinos (+35% from everything).
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -148,7 +153,7 @@ Tips: small splash. Tier 6: Big Five: bursts of 5; recoil resets between bursts.
 Belt: once fully spun up (2 s of holding), no reloading. Dynamite Rounds: the blast grows to
 6 m and pierces armour.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table's T4 / T5; names are working names until the Dino pass; every T6 works after any T5: every Heavy T5 spins up, every Special Ammo T5 has a blast). Marking Burst / Bright Tracers: hits mark dinos. War Drum: Rally Cry twice as often.
+A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table's T4 / T5; final names after the Dino passes; every T6 works after any T5: every Heavy T5 spins up, every Special Ammo T5 has a blast). Marking Burst / Bright Tracers: hits mark dinos. War Drum: Rally Cry twice as often.
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -177,7 +182,7 @@ Shells: explode on impact. Tier 6: Thunder Slug: slugs shrink a dino 2 sizes; no
 standing still. Wildfire Drum: Dragon's Breath's burning ground 4 studs wide (from 3); holds
 +50% shells. Quad Barrel: four blasts per trigger (from two); reload 1.25x longer.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table's T4 / T5; names are working names until the Dino pass; every T6 works after any T5). Twin Slug: two slugs per pump, each through 4, both from one round (a pump spends 1 round; Double Barrel spends 2; T120b, #323). Slam Fire: full-auto, both barrels each pull (four with Quad Barrel). Bird Shot: blasts hit flying dinos.
+A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table's T4 / T5; final names after the Dino passes; every T6 works after any T5). Twin Slug: two slugs per pump, each through 4, both from one round (a pump spends 1 round; Double Barrel spends 2; T120b, #323). Slam Fire: full-auto, both barrels each pull (four with Quad Barrel). Bird Shot: blasts hit flying dinos.
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
@@ -211,7 +216,7 @@ and are locked for half as long. Tier 6: Rapid Response: the Triage Kit holds 2 
 Bottomless Tube: magazine +50%, reload x0.5. Lights Out: Jaw Lock lasts at least 4 s and
 spreads within 9 studs; bosses still half.
 
-A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table's T4 / T5; names are working names until the Dino pass; every T6 works after any T5). Mending Salve (**Heal regen**, #302): everything the Triage Kit heals (hunters and, with Patch Up, standing towers) regains 2 HP/s for 8 s; flat, no hero levels; doesn't stack (the strongest wins, a recast refreshes it); own team only. Triple Cycle: 3-round bursts.
+A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table's T4 / T5; final names after the Dino passes; every T6 works after any T5). Mending Salve (**Heal regen**, #302): everything the Triage Kit heals (hunters and, with Patch Up, standing towers) regains 2 HP/s for 8 s; flat, no hero levels; doesn't stack (the strongest wins, a recast refreshes it); own team only. Triple Cycle: 3-round bursts.
 
 | Path | Tier | A | B | C |
 |---|---|---|---|---|
