@@ -252,6 +252,8 @@ return table.freeze({
 		LegendDartS = 8,
 		JeepSpeed = 20,
 		RangerGuardReachStuds = 10,
+		WalkerCapTotal = 96,
+		CoOpLeakCapShare = 0.25,
 	},
 	Towers = {
 		SCOUT = {

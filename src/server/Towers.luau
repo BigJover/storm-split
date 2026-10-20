@@ -1709,6 +1709,7 @@ do -- block-scoped locals: the main chunk must stay under Luau's 200-register li
 				return 1.6 * (slot - 1)
 			end,
 		})
+		Walkers.showCap(tower.model.PrimaryPart, { tower }) -- the panel's short-pack line (#359)
 		if stats.jeep and not state.jeep then
 			local jeep = RangerLook.buildJeep(colour)
 			jeep.Parent = tower.model
@@ -1962,6 +1963,7 @@ do -- block-scoped locals: the main chunk must stay under Luau's 200-register li
 				end
 				else nil,
 		})
+		Walkers.showCap(tower.model.PrimaryPart, { tower, state.swarmKey }) -- the panel's short-pack line (#359)
 	end
 
 	-- Raptor Swarm: Swarm raptors small raptors (Swarm share HP and bite) hunt anywhere on the
@@ -1983,7 +1985,8 @@ do -- block-scoped locals: the main chunk must stay under Luau's 200-register li
 		params.rate = stats.rate * (1 + tower.buff.ratePercent / 100)
 		local colour = campColour(tower)
 		Walkers.sync(state.swarmKey, {
-			count = Raptor.swarmCount(onSide),
+			count = Raptor.swarmCount(onSide, Walkers.cap()),
+			want = Config.Tuning.SwarmRaptors, -- the panel counts the Swarm as bought (#359)
 			params = params,
 			side = tower.side,
 			base = tower.base,
@@ -1997,6 +2000,7 @@ do -- block-scoped locals: the main chunk must stay under Luau's 200-register li
 				raptorBite(tower, enemy, landed.x * Raptor.swarmBite(), landed.hold)
 			end,
 		})
+		Walkers.showCap(tower.model.PrimaryPart, { tower, state.swarmKey })
 		state.swarmUntil = os.clock() + Config.Tuning.SwarmS
 	end
 
@@ -2018,6 +2022,7 @@ do -- block-scoped locals: the main chunk must stay under Luau's 200-register li
 		if state.swarmUntil > 0 and now >= state.swarmUntil then
 			state.swarmUntil = 0
 			Walkers.clear(state.swarmKey)
+			Walkers.showCap(tower.model.PrimaryPart, { tower, state.swarmKey })
 		end
 		if tower.knockedOut then
 			return

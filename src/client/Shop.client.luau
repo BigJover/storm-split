@@ -1694,11 +1694,11 @@ renderRows = function()
 	-- A spectator's camp is out: no build or hero buttons (PanelRules.allowed refuses them).
 	local watching = spectating()
 	buildButton.Visible = inMatch and not watching
-	heroButton.Visible = canPickHero() and inMatch
+	heroButton.Visible = canPickHero() and inMatch and mode ~= "placing" and mode ~= "posts" -- a click there is for the world (#358)
 	heroButton.Text = if mode == "heroPick" then "Close  (H)" else "Choose hero  (H)"
 	upgradesButton.Visible = myHero() ~= nil and inMatch and not watching
 	upgradesButton.Text = if mode == "heroUpgrade" then "Close  (U)" else "Upgrades  (U)"
-	masteryButton.Visible = state == "Building" and not watching
+	masteryButton.Visible = state == "Building" and not watching and mode ~= "placing" and mode ~= "posts"
 	masteryButton.Text = if mode == "mastery" then "Close  (M)" else "Unlocks & Mastery  (M)"
 	local cash = math.floor(ReplicatedStorage:GetAttribute(Sides.attr("Cash", (mySide()))) or 0) -- your side's cash (T76)
 
@@ -2054,6 +2054,13 @@ renderRows = function()
 			end
 		end
 
+		-- A walker tower short of what it bought: the side's walker cap (#359, Server/Walkers.showCap).
+		local capLine = PanelRules.walkerCapLine((managed:GetAttribute("WalkersOut") or 0) :: number,
+			(managed:GetAttribute("WalkersWant") or 0) :: number, (managed:GetAttribute("WalkerCap") or 0) :: number)
+		if capLine then
+			addRow(8, `<font size="13">{capLine}</font>`, PANEL_COLOR, false)
+		end
+
 		-- A Ranger Station's posts (PLAN 9j T130).
 		local postCount = (managed:GetAttribute("PostCount") or 0) :: number
 		if RangerPosts.movable(key, postCount, managed:GetAttribute("UsesPosts") ~= false, true, trampled) then
@@ -2093,7 +2100,7 @@ end
 openManage = function(body: BasePart, prompt: ProximityPrompt)
 	setMode("manage")
 	managed, managedPrompt = body, prompt
-	for _, name in { "Spent", "Tower", "Path1", "Path2", "Path3", "Picks1", "Picks2", "Picks3", "Discount", "RefundRate", "HP", "MaxHP", "KO" } do
+	for _, name in { "Spent", "Tower", "Path1", "Path2", "Path3", "Picks1", "Picks2", "Picks3", "Discount", "RefundRate", "HP", "MaxHP", "KO", "WalkersOut", "WalkersWant", "WalkerCap" } do
 		table.insert(managedConnections, body:GetAttributeChangedSignal(name):Connect(render))
 	end
 	table.insert(managedConnections, body.AncestryChanged:Connect(function()
@@ -2115,6 +2122,16 @@ startPosts = function(body: BasePart, prompt: ProximityPrompt?)
 	end
 	setMode("posts")
 	postsBody, postsPrompt, postSetting = body, prompt, 1
+	if humanoid then
+		-- Taking damage closes posts mode (#350, T131 step 5).
+		local last = humanoid.Health
+		table.insert(postsConnections, humanoid.HealthChanged:Connect(function(health)
+			if PanelRules.closesOnHurt(mode, last, health) then
+				setMode("closed")
+			end
+			last = health
+		end))
+	end
 	for _, name in { "Posts", "PostCount", "PostRange", "UsesPosts", "KO" } do
 		table.insert(postsConnections, body:GetAttributeChangedSignal(name):Connect(function()
 			local _, n = postsOf(body)

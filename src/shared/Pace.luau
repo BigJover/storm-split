@@ -114,6 +114,15 @@ function Pace.roundLength(round: number, difficulty: PaceDifficulty): number
 	return T.RoundPace * s + w
 end
 
+-- Co-op only (#357): a non-boss dino's leak costs at most Co-op leak cap share of the match's
+-- starting Fence (rounded up, at least 1); a boss leaks in full. Battles keep #267's drain.
+function Pace.coopLeak(cost: number, boss: boolean, startFence: number): number
+	if boss then
+		return cost
+	end
+	return math.min(cost, math.max(1, math.ceil(startFence * T.CoOpLeakCapShare)))
+end
+
 function Pace.hpX(round: number, difficulty: PaceDifficulty): number
 	local s, w = parts(round, difficulty)
 	if s + w <= 0 then

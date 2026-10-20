@@ -319,3 +319,23 @@ test("T103 round label: the real round of 40, then Final Stampede N (never 'Roun
 	eq(PanelRules.roundLabel(41, 40), "Final Stampede 1")
 	eq(PanelRules.roundLabel(43, 40), "Final Stampede 3")
 end)
+
+test("walker cap line (#359) and posts mode closing on damage (#350, T131 step 5)", function()
+	eq(PanelRules.walkerCapLine(9, 15, 9), "9 of 15 out · side's walker cap 9")
+	eq(PanelRules.walkerCapLine(5, 5, 24), nil, "every walker out: no line")
+	eq(PanelRules.walkerCapLine(0, 0, 24), nil, "not a walker tower: no line")
+	eq(PanelRules.closesOnHurt("posts", 100, 90), true, "a bite closes posts mode")
+	eq(PanelRules.closesOnHurt("posts", 90, 100), false, "a heal doesn't")
+	eq(PanelRules.closesOnHurt("manage", 100, 90), false, "only posts mode")
+	local fs = require("@lune/fs")
+	local shop = fs.readFile("src/client/Shop.client.luau")
+	for _, name in { "WalkersOut", "WalkersWant", "WalkerCap" } do
+		ok(shop:find(`managed:GetAttribute("{name}")`, 1, true) ~= nil, `the panel reads {name}`)
+	end
+	ok(shop:find("PanelRules.closesOnHurt(mode, last, health)", 1, true) ~= nil, "posts mode watches the hunter's health")
+	-- Camera: posts mode is placing for Hero.client (the one "Placing" switch, #350).
+	ok(shop:find('player:SetAttribute("Placing", newMode == "placing" or newMode == "posts")', 1, true) ~= nil, "posts = placing's camera")
+	-- N23 (#358): the hero / mastery buttons hide while placing or setting posts.
+	ok(shop:find('heroButton.Visible = canPickHero() and inMatch and mode ~= "placing" and mode ~= "posts"', 1, true) ~= nil, "Choose hero hidden")
+	ok(shop:find('masteryButton.Visible = state == "Building" and not watching and mode ~= "placing" and mode ~= "posts"', 1, true) ~= nil, "Unlocks hidden")
+end)

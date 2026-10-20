@@ -361,6 +361,14 @@ function Walker.room(want: number, onSide: number, cap: number): number
 	return math.max(0, math.min(want, cap - onSide))
 end
 
+-- A side's walker cap (#354): Walker cap per side, but the server's Walker cap total split
+-- over the sides, never below MIN_SIDE_CAP. Co-op and 2-3 camps keep 24; a 10-camp Bone
+-- Rush gets 9 each. Walkers never count toward the dino cap (their own counter).
+Walker.MIN_SIDE_CAP = 8 -- #354's floor (PLAN T131 step 3: the sheet gains only the total)
+function Walker.sideCap(perSide: number, total: number, sides: number): number
+	return math.min(perSide, math.max(Walker.MIN_SIDE_CAP, math.floor(total / math.max(1, sides))))
+end
+
 -- Walker HP for a build: base x Walker HP x x (1 + Tower HP per tier x tiers bought), as
 -- towers grow.
 function Walker.maxHp(base: number, hpX: number, hpPerTier: number, tiersBought: number): number

@@ -24,6 +24,7 @@ local Walkers = {}
 -- What a tower tells Walkers about its pack (built by Towers from its composed stats).
 export type Spec = {
 	count: number, -- walkers this build has
+	want: number?, -- what the tower panel says it bought when `count` is already capped (the Swarm)
 	params: Walker.Params,
 	side: number,
 	base: Vector3, -- the tower on the build floor
@@ -72,6 +73,13 @@ local function onSide(side: number): number
 	return n
 end
 
+-- This side's walker cap now (Shared/Walker.sideCap, #354): the server's total split over the
+-- match's sides (MapBuilder's "Sides").
+function Walkers.cap(): number
+	local sides = ReplicatedStorage:GetAttribute("Sides")
+	return Walker.sideCap(Config.Tuning.WalkerCapPerSide, Config.Tuning.WalkerCapTotal, if typeof(sides) == "number" then sides else 1)
+end
+
 local function paramsOf(pack: Pack, i: number): Walker.Params
 	return if pack.spec.paramsFor then pack.spec.paramsFor(i) else pack.spec.params
 end
@@ -97,7 +105,7 @@ function Walkers.sync(tower: any, spec: Spec)
 	while #pack.units > spec.count do
 		dropUnit(pack, #pack.units)
 	end
-	local add = Walker.room(spec.count - #pack.units, onSide(spec.side), Config.Tuning.WalkerCapPerSide)
+	local add = Walker.room(spec.count - #pack.units, onSide(spec.side), Walkers.cap())
 	for _ = 1, add do
 		local index = #pack.units + 1
 		local unit = Walker.new(spec.side, paramsOf(pack, index), spec.homeAt, if spec.postFor then spec.postFor(index) else nil)
@@ -113,6 +121,25 @@ function Walkers.sync(tower: any, spec: Spec)
 			Walker.setPost(unit, post) -- a moved post (posts UI) or a new guard spot: it walks there
 		end
 	end
+end
+
+-- The tower panel's short-pack line (#359): walkers out and bought over `keys` (a tower and
+-- its Swarm), and the side's cap, on the tower's body (Shop.client reads them).
+function Walkers.showCap(body: Instance?, keys: { any })
+	if not body then
+		return
+	end
+	local out, want = 0, 0
+	for _, key in keys do
+		local pack = packs[key]
+		if pack then
+			out += #pack.units
+			want += pack.spec.want or pack.spec.count
+		end
+	end
+	body:SetAttribute("WalkersOut", out)
+	body:SetAttribute("WalkersWant", want)
+	body:SetAttribute("WalkerCap", Walkers.cap())
 end
 
 -- The tower is sold or removed: its walkers go with it.

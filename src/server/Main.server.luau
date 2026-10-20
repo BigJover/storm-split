@@ -148,6 +148,7 @@ local function difficulty()
 end
 
 local over = false -- this match has been lost
+local startFence = 0 -- the co-op match's starting Fence (Pace.coopLeak's cap, #357)
 
 Enemies.init(map.paths, map.enemyFolder, {
 	onLeak = function(enemy)
@@ -155,7 +156,9 @@ Enemies.init(map.paths, map.enemyFolder, {
 			Battle.queueLeak(enemy.side, Enemies.leakCost(enemy)) -- drained at Tuning BattleFenceDrain per second (#267)
 			return
 		end
-		Economy.loseFor(enemy.side, Battle.leakCost(enemy.side, Enemies.leakCost(enemy))) -- only that side's Fence (T76)
+		-- Co-op: a non-boss leak costs at most Co-op leak cap share of the starting Fence (#357).
+		local cost = Pace.coopLeak(Enemies.leakCost(enemy), enemy.def.boss == true, startFence)
+		Economy.loseFor(enemy.side, Battle.leakCost(enemy.side, cost)) -- only that side's Fence (T76)
 	end,
 	-- Each split layer pays for its own HP, so a full cascade pays the round's
 	-- effective HP x CashPerEffectiveHP — the spreadsheet's "Kill income".
@@ -690,6 +693,7 @@ local function playMatch()
 		Enemies.setPaths(map.paths)
 	end
 	local chosen = difficulty()
+	startFence = chosen.startingLives
 
 	-- Building: fresh economy, everyone on the track.
 	Economy.init(Pricing.startingPot(chosen, 1), chosen.startingLives, function()

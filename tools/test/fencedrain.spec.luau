@@ -118,7 +118,7 @@ test("server: battles queue leaks and drain; every match-end ranking flushes; co
 	local battle = fs.readFile("src/server/Battle.luau")
 	local main = fs.readFile("src/server/Main.server.luau")
 	ok(main:find("if Battle.active() then\n\t\t\tBattle.queueLeak(enemy.side, Enemies.leakCost(enemy))", 1, true) ~= nil, "battle leaks go to pending")
-	ok(main:find("Economy.loseFor(enemy.side, Battle.leakCost(enemy.side, Enemies.leakCost(enemy)))", 1, true) ~= nil, "co-op leak line unchanged")
+	ok(main:find("Economy.loseFor(enemy.side, Battle.leakCost(enemy.side, cost))", 1, true) ~= nil, "co-op leak line: still straight to the Fence (capped by #357's Pace.coopLeak)")
 	ok(battle:find("BattleRules.drainAll(pendingLeak, fences, out, Config.Tuning.BattleFenceDrain, dt)", 1, true) ~= nil, "the drain reads the Tuning row")
 	ok(battle:find("Economy.loseFor(side, Battle.leakCost(side, loss))", 1, true) ~= nil, "Stand-ins hold still caps the loss")
 	ok(battle:find("RunService.Heartbeat:Connect(function(dt)\n\t\tif not finished then\n\t\t\tdrainFences(out, dt)", 1, true) ~= nil, "drained every Heartbeat")

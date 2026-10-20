@@ -7,6 +7,7 @@
 
 local fs = require("@lune/fs")
 local Walker = require(src.shared.Walker)
+local Config = require(src.shared.Config)
 
 local function params(over: { [string]: any }?): Walker.Params
 	local p: { [string]: any } = {
@@ -249,6 +250,13 @@ test("the side cap: walkers past it aren't spawned; Heals between rounds; HP gro
 	eq(Walker.room(5, 24, 24), 0)
 	eq(Walker.room(3, 0, 24), 3)
 	eq(Walker.room(10, 30, 24), 0, "never negative")
+	-- #354: a side's cap = min(24, max(8, floor(96 / sides))); the real sheet's numbers.
+	local T = Config.Tuning
+	eq(T.WalkerCapTotal, 96)
+	for _, case in { { 1, 24 }, { 2, 24 }, { 3, 24 }, { 4, 24 }, { 5, 19 }, { 10, 9 }, { 13, 8 }, { 20, 8 } } do
+		eq(Walker.sideCap(T.WalkerCapPerSide, T.WalkerCapTotal, case[1]), case[2], `{case[1]} side(s)`)
+	end
+	eq(Walker.sideCap(24, 96, 0), 24, "no sides read as one")
 	local p = params()
 	local w = Walker.new(1, p, HOME)
 	Walker.down(w, p, 0)

@@ -181,6 +181,7 @@ test("Raptor Swarm within the side's cap; 10 players x a Swarm each stays under 
 	eq(Raptor.swarmCount(0), 10)
 	eq(Raptor.swarmCount(20), 4, "the cap: 24 a side")
 	eq(Raptor.swarmCount(24), 0)
+	eq(Raptor.swarmCount(5, 9), 4, "a 10-camp Bone Rush side: cap 9 (#354)")
 	-- 10 players on one co-op side, each with a Pack of Five pen and a Swarm.
 	local onSide = 0
 	for _ = 1, 10 do
@@ -266,5 +267,9 @@ test("server wiring: a pen never shoots, bites through Walkers and Enemies; Tram
 	ok(towers:find("local gone = hit(tower, enemy, raptorDamage(tower) * x * avenge, stats.sizeBreaks, true)", 1, true) ~= nil, "bites through the tower's hit rules")
 	ok(towers:find('table.insert(fired, "Raptor Swarm")', 1, true) ~= nil and towers:find('table.insert(fired, "Raptor Charge")', 1, true) ~= nil, "firenow RAPTOR")
 	local walkers = fs.readFile("src/server/Walkers.luau")
-	ok(walkers:find("Walker.room(spec.count - #pack.units, onSide(spec.side), Config.Tuning.WalkerCapPerSide)", 1, true) ~= nil, "the side cap on every spawn")
+	ok(walkers:find("Walker.room(spec.count - #pack.units, onSide(spec.side), Walkers.cap())", 1, true) ~= nil, "the side cap on every spawn")
+	ok(walkers:find("Walker.sideCap(Config.Tuning.WalkerCapPerSide, Config.Tuning.WalkerCapTotal,", 1, true) ~= nil, "the cap splits the server total over the sides (#354)")
+	ok(towers:find("count = Raptor.swarmCount(onSide, Walkers.cap())", 1, true) ~= nil, "the Swarm under the same side cap")
+	ok(towers:find("Walkers.showCap(tower.model.PrimaryPart, { tower, state.swarmKey })", 1, true) ~= nil
+		and towers:find("Walkers.showCap(tower.model.PrimaryPart, { tower })", 1, true) ~= nil, "pens (Swarm counted) and stations publish the panel's cap line (#359)")
 end)

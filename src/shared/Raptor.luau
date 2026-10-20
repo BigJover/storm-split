@@ -78,9 +78,10 @@ function Raptor.params(stats: Stats, tiersBought: number, swarm: boolean?): Walk
 	}
 end
 
--- Raptor Swarm: how many swarm raptors may come out with `onSide` walkers already out.
-function Raptor.swarmCount(onSide: number): number
-	return Walker.room(Config.Tuning.SwarmRaptors, onSide, Config.Tuning.WalkerCapPerSide)
+-- Raptor Swarm: how many swarm raptors may come out with `onSide` walkers already out, under
+-- the side's walker cap (`cap`: Walkers.cap(), #354; default Walker cap per side).
+function Raptor.swarmCount(onSide: number, cap: number?): number
+	return Walker.room(Config.Tuning.SwarmRaptors, onSide, cap or Config.Tuning.WalkerCapPerSide)
 end
 
 -- A swarm raptor's bite: x Swarm share of a raptor's.

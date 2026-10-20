@@ -362,4 +362,18 @@ function PanelRules.battleResults(r: ResultsIn): ResultsOut
 	return { title = title, won = winTitle ~= nil, placements = placements, lines = lines }
 end
 
+-- A walker tower's short-pack line (#359; Raptor Pen with its Swarm, Ranger Station), or nil
+-- while every bought walker is out (Server/Walkers.showCap sets the three numbers).
+function PanelRules.walkerCapLine(out: number, want: number, cap: number): string?
+	if out >= want then
+		return nil
+	end
+	return `{out} of {want} out · side's walker cap {cap}`
+end
+
+-- Posts mode closes when the hunter takes damage (#350, T131 step 5); a heal doesn't.
+function PanelRules.closesOnHurt(mode: string, before: number, after: number): boolean
+	return mode == "posts" and after < before
+end
+
 return PanelRules

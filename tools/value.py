@@ -731,7 +731,9 @@ def judge(data, rows):
     for tier in range(1, 6):
         # #79: control and support paths stay out of the medians (they aren't judged on DPS);
         # so do towers not sold yet (#196).
-        damage = [r for (k, p, t), r in rows.items() if t == tier and not r["support"] and r["released"]]
+        # The 4x batch stays out too, as M (#312) and bar 3 (#330) do (#352).
+        damage = [r for (k, p, t), r in rows.items() if t == tier and not r["support"] and r["released"]
+                  and k not in ROUND9_BATCH]
         b = BOUGHT_BAND[tier]
         medians[tier] = {
             "marginal": statistics.median(r["marginal"][b] for r in damage),
@@ -2793,6 +2795,20 @@ CHAOS_BARS = (
 CHAOS_REPORT_ROUNDS = range(1, 20)  # average aim before round 20: report only (#167)
 
 
+def chaos_peak(data):
+    """The best hero's level-1 peak over every path's 9 T6 builds (#353), as the exporter's
+    guard reads it (export_constants.hero_peak_dps).
+
+    >>> data = load()
+    >>> abs(chaos_peak(data) - max(export_constants.hero_peak_dps(h) for h in data["Heroes"].values())) < 1e-9
+    True
+    >>> chaos_peak(data) > max(hero_dps(h, i, top_tier(h, i))[0] for h in data["Heroes"].values() for i in range(len(h["paths"])))
+    True
+    """
+    return max(hero_dps(h, i, top_tier(h, i), a + b)[0]
+               for h in data["Heroes"].values() for i in range(len(h["paths"])) for a in "ABC" for b in "ABC")
+
+
 def chaos_report(data):
     """Chaos solo: the cash-to-required ratio with towers only (affordability x Tower damage x)
     and with the hunter's gun added (best hero's top-tier peak (T6, PLAN T53) at the round level x Hero damage x x
@@ -2804,7 +2820,7 @@ def chaos_report(data):
     rows = pacing_rounds(data, wb["Towers"]["C13"].value, key, 1)
     tuning = data["Tuning"]
     per, hero_x = int(tuning.get("RoundsPerLevel", 5)), tuning.get("HeroDamagePerLevel", 0)
-    peak = max(hero_dps(h, i, top_tier(h, i))[0] for h in data["Heroes"].values() for i in range(len(h["paths"])))
+    peak = chaos_peak(data)
 
     def ratio(r, aim):
         row = rows[r - 1]
@@ -3116,6 +3132,52 @@ def peak_live(data, difficulty, modeKey, hunters_per_side, paced, keeps_up=False
     return best
 
 
+WALKER_MIN_SIDE_CAP = 8  # Shared/Walker.MIN_SIDE_CAP (#354)
+
+
+def walker_side_cap(tuning, sides):
+    """A side's walker cap (Shared/Walker.sideCap, #354): min(per side, max(8, floor(total / sides))).
+
+    >>> [walker_side_cap({"WalkerCapPerSide": 24, "WalkerCapTotal": 96}, n) for n in (1, 2, 3, 10)]
+    [24, 24, 24, 9]
+    """
+    return min(tuning["WalkerCapPerSide"], max(WALKER_MIN_SIDE_CAP, math.floor(tuning["WalkerCapTotal"] / max(1, sides))))
+
+
+def seat_walkers(data, cash):
+    """The largest walker build one hunter affords with `cash` (PLAN T131 step 4): Raptor Pen
+    Pack T3 (5), then Ranger Station Riflemen T5 Ranger Troop (5), then Pack T5 Raptor Swarm
+    (+ Swarm raptors, counted last, only on top of the Pack). Returns (walkers, cash spent)."""
+    raptor, ranger = data["Towers"]["RAPTOR"], data["Towers"]["RANGER"]
+    pack = next(i for i, p in enumerate(raptor["paths"]) if p["id"] == "Pack")
+    rifle = next(i for i, p in enumerate(ranger["paths"]) if p["id"] == "Riflemen")
+    steps = [(cumulative_cost(raptor, pack, 3), export_constants.line(raptor["paths"][pack])[2]["walkers"]),
+             (cumulative_cost(ranger, rifle, 5), export_constants.line(ranger["paths"][rifle])[4]["walkers"]),
+             (cumulative_cost(raptor, pack, 5) - cumulative_cost(raptor, pack, 3), data["Tuning"]["SwarmRaptors"])]
+    walkers = spent = 0
+    for i, (cost, n) in enumerate(steps):
+        if spent + cost <= cash and (i < 2 or walkers and spent >= steps[0][0]):
+            walkers, spent = walkers + n, spent + cost
+    return walkers, spent
+
+
+def walker_report(data, difficulty, cost_per_dps, mixes):
+    """Walker demand per layout vs each side's walker cap (PLAN T131 step 4, #354; report only)."""
+    tuning, last = data["Tuning"], len(data["Rounds"])
+    print(f"  walkers at max players, {data['Difficulties'][difficulty]['display']} (report only, #354): demand = per seat the largest walker build"
+          f" one hunter affords with the side's cash by round {last} / its hunters (Raptor Pack T3, Ranger Troop, Swarm last)"
+          f" vs the side's cap min({tuning['WalkerCapPerSide']:g}, max({WALKER_MIN_SIDE_CAP}, floor({tuning['WalkerCapTotal']:g} / sides))); walkers never count toward the dino cap")
+    for name, modeKey, layout in LIVE_LAYOUTS:
+        cap, cells, short = walker_side_cap(tuning, len(layout)), [], False
+        for hunters in sorted(set(layout), reverse=True):
+            rows = battle_side(data, difficulty, modeKey, len(layout), hunters, cost_per_dps, mixes)
+            cash = next(row for row in rows if row["r"] == last)["cash"]
+            seat, _ = seat_walkers(data, cash / hunters)
+            short = short or seat * hunters > cap
+            cells.append(f"{hunters} hunter(s): {seat} a seat = {seat * hunters}")
+        print(f"    {'WATCH' if short else 'ok   '} {name:<27} cap {cap} a side; " + "; ".join(cells))
+
+
 def battle_report(data, difficulty="NORMAL"):
     with contextlib.redirect_stdout(io.StringIO()):
         wb = export_constants.recalculated(export_constants.DEFAULT_XLSX)
@@ -3195,6 +3257,7 @@ def battle_report(data, difficulty="NORMAL"):
             share = math.floor(cap / len(layout))
             side, at = peak_live(data, difficulty, modeKey, layout, True, True, per_side=True)
             print(f"    {'ok  ' if side <= share else 'MISS'}   per side: keeps-up peak {side} (round {at}) vs share floor({cap:g} / {len(layout)} seats) = {share}")
+    walker_report(data, difficulty, cost_per_dps, mixes)
     return missed
 
 

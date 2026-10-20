@@ -5,6 +5,7 @@
 
 local Config = require(src.shared.Config)
 local Pace = require(src.shared.Pace)
+local fs = require("@lune/fs")
 local BattleFlow = require(src.shared.BattleFlow)
 
 local T = Config.Tuning
@@ -347,4 +348,29 @@ test("nextRound / firstRound / skippedBefore follow the lists (#251)", function(
 	local from, to = Pace.skippedBefore(40, "TEAM", false)
 	eq(from, 38)
 	eq(to, 39)
+end)
+
+test("coopLeak: a non-boss leak costs at most Co-op leak cap share of the starting Fence, bosses in full (#357)", function()
+	eq(T.CoOpLeakCapShare, 0.25)
+	eq(Pace.coopLeak(48, false, 30), 8, "Normal: an ARMOR leak at round 10 (48) costs 8")
+	eq(Pace.coopLeak(5, false, 30), 5, "under the cap: its own cost")
+	eq(Pace.coopLeak(48, true, 30), 48, "a boss leaks in full")
+	eq(Pace.coopLeak(48, false, 40), 10)
+	eq(Pace.coopLeak(48, false, 20), 5)
+	eq(Pace.coopLeak(48, false, 10), 3)
+	eq(Pace.coopLeak(1, false, 10), 1)
+	eq(Pace.coopLeak(48, false, 1), 1, "at least 1")
+	-- The real difficulties: four leaks to lose on any of them.
+	for _, want in { { "EASY", 10 }, { "NORMAL", 8 }, { "HARD", 5 }, { "CHAOS", 3 } } do
+		local d = D[want[1]]
+		eq(Pace.coopLeak(1e6, false, d.startingLives), want[2], want[1])
+	end
+	-- Wiring: only Main's non-battle onLeak branch; the battle branch keeps the uncapped drain.
+	local main = fs.readFile("src/server/Main.server.luau")
+	ok(main:find("Battle.queueLeak(enemy.side, Enemies.leakCost(enemy))", 1, true) ~= nil, "battles: uncapped into #267's drain")
+	ok(main:find("local cost = Pace.coopLeak(Enemies.leakCost(enemy), enemy.def.boss == true, startFence)", 1, true) ~= nil
+		and main:find("Economy.loseFor(enemy.side, Battle.leakCost(enemy.side, cost))", 1, true) ~= nil, "co-op: the capped cost")
+	ok(main:find("startFence = chosen.startingLives", 1, true) ~= nil, "the cap reads the match's starting Fence")
+	local _, uses = main:gsub("Pace%.coopLeak%(", "")
+	eq(uses, 1, "used once")
 end)

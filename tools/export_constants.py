@@ -647,6 +647,19 @@ def top_rows(path):
     return list(path.get("t6", path["t5"]).values())
 
 
+def hero_peak_dps(h):
+    """A hero's level-1 peak DPS over every T6 build of every path (the guard's hero side;
+    value.py --chaos must print the same peak, PLAN T131 step 2)."""
+    best = 0.0
+    for t in (row for p in h["paths"] for row in top_rows(p)):  # every T6 after each T5 pick pair
+        guns = max(1, t["guns"] or 1)
+        pellets = h["pellets"]  # damage per shot is conserved across pellet counts
+        shots = max(1, t["shotsPerTrigger"] or 1)
+        dps = h["damage"] * t["damageMult"] * h["rate"] * t["rateMult"] * t["spinUp"] * guns * pellets * shots
+        best = max(best, dps * max(1, t["pierce"] or 1))
+    return best
+
+
 def tier_count(path):
     return len(path["tiers"]) + 2 + (1 if "t6" in path else 0)
 
@@ -2060,15 +2073,6 @@ def validate(data):
                 dps = base * top["damageMult"] * top["rateMult"] * top["targetsMult"]
                 best_tower = max(best_tower, dps)
                 best_by_tower[t["display"]] = max(best_by_tower.get(t["display"], 0.0), dps)
-    def hero_peak_dps(h):
-        best = 0.0
-        for t in (row for p in h["paths"] for row in top_rows(p)):  # every T6 after each T5 pick pair
-            guns = max(1, t["guns"] or 1)
-            pellets = h["pellets"]  # damage per shot is conserved across pellet counts
-            shots = max(1, t["shotsPerTrigger"] or 1)
-            dps = h["damage"] * t["damageMult"] * h["rate"] * t["rateMult"] * t["spinUp"] * guns * pellets * shots
-            best = max(best, dps * max(1, t["pierce"] or 1))
-        return best
     # Compare in the last round (PLAN round 3 T36, DECISIONS #101). Towers fight it at
     # the round level (1 + rounds cleared before it / RoundsPerLevel); hero XP can put a
     # hunter HeroLevelLeadCap levels above that, so the hero side uses the highest hero
