@@ -788,7 +788,7 @@ they shouldnt be useless against the dinos …"
 
 **Honest status:** built and **released** (everything is in the shop), 845 headless specs
 green, and **played in Studio by the Tester** in Runs 8, 9 and 10 (Runs 9 and 10 were cut
-short by usage limits). Run 10b is running now. How the builds *feel* and anything needing a
+short by usage limits), plus the Run 10b re-check, which passed. How the builds *feel* and anything needing a
 second real player still need you. Calls: `DECISIONS.md` #274–#362.
 
 ## What was built
@@ -874,5 +874,5 @@ second real player still need you. Calls: `DECISIONS.md` #274–#362.
 
 ## What's next
 
-1. Run 10b, then T132 fixes anything it finds.
+1. Run 10b passed; nothing left open from it.
 2. Your answers above, your multi-client test and a private publish.
