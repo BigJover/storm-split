@@ -14,7 +14,7 @@ DataStore writes from an agent). N15 rides any `Battle` commit (#272).
 **Status (2026-10-13, later): 9a + 9b done (c1a7c5a, 0f82bb7, 929b66a, cd6a413, cd749d2; 706 specs); Tester Run 8 running. 9c designed below (#290). Next: 🦖 names 9c → Builder T114 + T115.**
 **Status (2026-10-13, Director): 9d + 9e designed below (#292–#297; 96 options, metrics, 6 new mechanics). Next after 9c: 🦖 names 9d → T116–T118, then 9e → T119–T120.**
 **Status (2026-10-13, Director): 9f designed below (#298–#302; 48 hero options, per-path metrics, 1 new mechanic). Next after 9e: 🦖 names 9f → T121–T122.**
-**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.** **Update (2026-10-14): 9g built; next = T124c (finishes T124b, #325–#328), then Tester Run 9g.** **Update (2026-10-15): T124c steps 1–4 in (03c9634), release held on King of the Pack bar 3; next = T124d (#329–#330, King Rate x 1.25 + frozen bar-3 median + release), then Tester Run 9g.** **Update (2026-10-15, later): Bone Totem built unreleased (1b08327); Blimp rows refused. Next = T126c (Totem fix + release, #331–#333), then T125b (Blimp, #334–#336), then Tester Run 9h; 9i/9j numbers re-checked (#337+).** **Update (2026-10-15, 9h released 906a8b1/ad1be17): next = T125c (#341–#343), then 9i as written (#344).** **Update (2026-10-15, 9i built, Vent released 6a05e1b): next = T128c (Meteor release, #345–#347), Tester Run 9i, then 9j as written (#348).** **Update (2026-10-15, 9j released 59f2d54; all seven 4× towers out): Builder's 9j calls ruled (#349–#351); 9k designed (#352–#356). Next = T131 → Tester Run 10 → T132 → T133 + Director RECAP "Phase 9".**
+**Status (2026-10-14, Director): 9g–9j designed below (#312–#320): the seven 4× towers, Round-19 names, rows + options + metrics + mechanics, released per pair (T124b / T126b / T128b / T130b). Next after 9f: T123.** **Update (2026-10-14): 9g built; next = T124c (finishes T124b, #325–#328), then Tester Run 9g.** **Update (2026-10-15): T124c steps 1–4 in (03c9634), release held on King of the Pack bar 3; next = T124d (#329–#330, King Rate x 1.25 + frozen bar-3 median + release), then Tester Run 9g.** **Update (2026-10-15, later): Bone Totem built unreleased (1b08327); Blimp rows refused. Next = T126c (Totem fix + release, #331–#333), then T125b (Blimp, #334–#336), then Tester Run 9h; 9i/9j numbers re-checked (#337+).** **Update (2026-10-15, 9h released 906a8b1/ad1be17): next = T125c (#341–#343), then 9i as written (#344).** **Update (2026-10-15, 9i built, Vent released 6a05e1b): next = T128c (Meteor release, #345–#347), Tester Run 9i, then 9j as written (#348).** **Update (2026-10-15, 9j released 59f2d54; all seven 4× towers out): Builder's 9j calls ruled (#349–#351); 9k designed (#352–#356). Next = T131 → Tester Run 10 → T132 → T133 + Director RECAP "Phase 9".** **Update (2026-10-20, Run 10 partial): 9k final (#357–#360): T131 = steps 1–8 (N22 co-op leak cap, N23 HUD buttons, cap text) in one commit → Tester Run 10b → T132 → 9l.**
 
 ## Size of the job
 | | Slots (T4+T5) | Options to build | New options to design |
@@ -1631,10 +1631,27 @@ Spearhead T1–T2 #194, Roar T1–T2 #332, Belt Gun #342, Impact T1–T2 / Rock 
 4. `value.py --battle` gains a walker line per layout (co-op 10 hunters, 2×5, 3 camps, 10×1):
    demand = per seat the largest walker build one hunter can afford by r40 (Raptor Pack T3 5 +
    Ranger Troop 5, Swarm 10 counted last) vs the side's cap; report-only, `ok` / `WATCH`.
-5. The tower panel shows "N of M — side's walker cap" on a walker tower that is short; posts
-   mode (#350) shares placing's camera clamp and closes on taking damage, like placing.
-6. Gates: `test.sh`, `check.sh`, `audit.py --strict`, every `value.py` mode exit 0; Config diff
-   = the one new row. Commit + push.
+5. The tower panel shows `"{out} of {want} out · side's walker cap {cap}"` on a walker tower
+   whose walkers out < bought (Raptor Pen, Ranger Station; Swarm counted), no toast (#359);
+   posts mode (#350) shares placing's camera clamp and closes on taking damage, like placing.
+6. **N22 co-op leak cap (#357):** append Tuning row **`Co-op leak cap share` 0.25** (note: "co-op
+   only: a non-boss dino's leak costs at most this share of the starting Fence, ⌈⌉, min 1;
+   bosses in full; battles use #267's drain"). Pure `Pace.coopLeak(cost, boss, startFence)` =
+   `boss and cost or math.min(cost, math.max(1, math.ceil(startFence * share)))`; Main's
+   non-battle `onLeak` branch passes `Enemies.leakCost(enemy)` through it (start Fence = the
+   match's starting lives on its side); `Battle.queueLeak` path unchanged. Specs: (48, no, 30)
+   → 8; (5, no, 30) → 5; (48, yes, 30) → 48; (48, no, 40/20/10) → 10/5/3; (1, no, 10) → 1.
+7. **N23 (#358):** `Shop.client` `heroButton.Visible = canPickHero() and inMatch and mode ~=
+   "placing" and mode ~= "posts"`; `masteryButton.Visible` gains the same two terms; `setMode`
+   re-runs the button refresh. H / M keys unchanged.
+8. Gates: `test.sh`, `check.sh`, `audit.py --strict`, every `value.py` mode exit 0; Config diff
+   = the two new rows (`Walker cap total`, `Co-op leak cap share`). Commit + push.
+   **Director check on a copy (2026-10-20):** both rows appended at Tuning 305/306 →
+   `value.py`, `--battle` (co-op 33.6 min ≤ 35 ok), `threat.py` 0 misses, all exit 0.
+**Tester Run 10b (after T131):** R10-12 (posts mode closes on a bite; camera clamp = placing);
+R10-15's panel line appears with Swarm + 2 Packs + Troop; N22: co-op Normal round 10 with
+no pierce, one ARMOR leak takes 30 → 22, a boss leak still costs in full; N23: in posts mode
+no Choose hero / Unlocks button, both back on Done (Q).
 **T132 (Builder) — fixes from Tester Run 10** (and Runs 9g–9j's open items: #313 exchange rates
 and stand-ins, raptor/ranger uncredited pins and soaks — fix only with a model-backed cell, else
 log as an accepted blind spot). Director rules each fail first.
