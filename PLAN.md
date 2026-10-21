@@ -1,4 +1,4 @@
-# Plan — Phase 10: hunter bodies, Base Camp, AFK training, pets, skins, big Amber, store (Director, 2026-10-20)
+# Plan — Phase 10: hunter bodies, Hunters' Outpost, AFK training, pets, skins, big Amber, store (Director, 2026-10-20)
 
 Jovan's answers (verbatim in `DIRECTION.md` "Phase 10 answers"): ~30 h to unlock all is right;
 Ranger posts OK; the brainstorm is a **GO**, plus per-hunter Health/Speed, a melee and a
@@ -13,6 +13,7 @@ purchases** from an agent). **Fresh Builder per batch; 🦖 names before each ba
 every batch ends with its Tester steps.**
 
 **Status (2026-10-20): planned. Next (after Phase 9's Run 10b → T132): 🦖 Round 20 names (D1) → batch 10a (T134 + T135). Waiting
+**Update (2026-10-20): D1 🦖 Round 20 done (6c31c9c; names applied below). 10a DONE: T134 7cbf3d8 (Amber ×1000, 87 cells, migration stamps `amberScale`, K/M/B), T135 ca859f1 (Hunter Stats, parity 1.098, round heal 25 capped at each max HP); 862 specs. Builder rows/pots ruled #397–#398. Next: 10b (T136 + T137, Builder on it) → Tester after 10b (covers 10a's steps too).**
 on Jovan only for the asks below; defaults are applied so nothing blocks.**
 
 **Jovan answered the asks (2026-10-20, #391–#395) — these override the defaults below:**
@@ -35,19 +36,19 @@ defaults; melee reach +20 % stays.
 | Part | Call |
 |---|---|
 | Hunter bodies (#363–#365) | `Hunter Stats` sheet: per hunter Max HP + Walk speed (seeds Tracker 95/17, Big Game Hunter 110/15, Brush Beater 115/15.5, Field Medic 100/16.5; today all 100/16). **Body parity** enforced by the exporter: HP/100 × (speed/16)^`Body speed weight` (1.5), max ÷ min ≤ 1.15 (the #235 bar). Slows multiply the new base. |
-| Melee + grenade (#366–#369) | One of each per hunter (🦖 names; working: Tracker knife / scent bomb, BGH rifle butt / frag, Brush Beater machete / firecracker, Field Medic splint baton / smoke-tonic). Melee: free, short reach, server hit check on the camera ray like guns. Grenade: charges (seed 1, recharge 20 s), thrown on a fixed arc along the camera, max range = the grenade-range stat. Both scale with hunter level like the gun. **Spec = the saved training stats** (no in-match melee/grenade tiers in v1; the hero panel stays clean). PvP: ×0.5 like guns, **no stun/knockback on hunters** (a ≤30 % slow for ≤2 s at most), no friendly fire. `value.py`: gun+melee+grenade still never out-damages the best tower. |
-| Training (#370–#374) | Account-wide stats, % on top of each class's base: **Reach +20 % / Speed +15 % / Health +10 % / Grenade range +30 %**, 10 levels each (+2 / +1.5 / +1 / +3 % a level). Level L takes 10·L min → 9.2 h a stat, ~37 h all four with one slot (≈ the 30 h unlock pace). One training slot (Game Pass: 2). Trains **only while you're in the game** (#391): full rate at its station in Base Camp, half rate elsewhere online (in a match, around camp); **nothing accrues while logged off**. Banked every 60 s and on leave. **We never defeat Roblox's 20-min idle kick** — it just ends that session's training with everything banked (at most 60 s lost). Amber finishes a level (price per remaining minute). **No Amber AFK farming** (logging in never beats playing). Applies in every mode incl. Ranked (strength gap is a feature, #255). |
+| Melee + grenade (#366–#369) | One of each per hunter (🦖 Round 20: Tracker Hunting Knife / Stink Bomb, Big Game Hunter Stock Swing / Safari Grenade, Brush Beater Brush Machete / Cherry Bomb, Field Medic Splint Stick / Dozy Cloud). Melee: free, short reach, server hit check on the camera ray like guns. Grenade: charges (seed 1, recharge 20 s), thrown on a fixed arc along the camera, max range = the grenade-range stat. Both scale with hunter level like the gun. **Spec = the saved training stats** (no in-match melee/grenade tiers in v1; the hero panel stays clean). PvP: ×0.5 like guns, **no stun/knockback on hunters** (a ≤30 % slow for ≤2 s at most), no friendly fire. `value.py`: gun+melee+grenade still never out-damages the best tower. |
+| Training (#370–#374) | Account-wide stats, % on top of each class's base: **Reach +20 % / Speed +15 % / Health +10 % / Grenade range +30 %**, 10 levels each (+2 / +1.5 / +1 / +3 % a level). Level L takes 10·L min → 9.2 h a stat, ~37 h all four with one slot (≈ the 30 h unlock pace). One training slot (Game Pass: 2). Trains **only while you're in the game** (#391): full rate at its station in Hunters' Outpost, half rate elsewhere online (in a match, around camp); **nothing accrues while logged off**. Banked every 60 s and on leave. **We never defeat Roblox's 20-min idle kick** — it just ends that session's training with everything banked (at most 60 s lost). Amber finishes a level (price per remaining minute). **No Amber AFK farming** (logging in never beats playing). Applies in every mode incl. Ranked (strength gap is a feature, #255). |
 | Pets (#375–#379) | Tamed hatchlings (🦖 species). Eggs bought with Amber; hatch timers (seeds 5 min / 30 min / 2 h), 1 incubator (+1 pass); **Amber speeds a hatch** (per remaining minute), Robux hatches instantly. Rarity rolled **at hatch** on the server; odds shown. **6 rarities (#392): Common / Uncommon / Rare / Epic / Legendary / Mythic, basic egg 55 / 25 / 12 / 5 / 2.5 / 0.5 %**; better eggs shift weight up, Mythic never above 2 % on any egg. **Fuse 3 identical (species + rarity) → 1 of the next rarity, Legendary → Mythic included; Mythic doesn't fuse** (#393). Inventory 60, **1 equipped**. In matches the pet follows, has **one small support effect** per species (spot camo, fetch Airdrop chests, regen, round cash, absorb one bite per round), rarity ×1 / 1.25 / 1.5 / 1.75 / 2 / 2.25; **dies and respawns with its hunter, can't be targeted, never affects enemy hunters**; **Mythic** worth ≤ the mastery-perk worth cap (exporter). |
 | Skins (#380–#381) | New Cosmetics slots: **hunter skin, weapon skin (per hero), tower skin (per tower type)** beside the existing ones. Sources: level ladder, Amber skin shop (fixed catalogue on a `Skins` sheet), Robux bundles. Readability rules: a tower skin never changes silhouette, range ring, tier crown/glow or HP bar; a hunter skin keeps the side outline/name tag and has no transparency or dino disguise. Cosmetic only. |
-| Base Camp (#382–#384) | **Same place, own area** (no teleport until publishing): the Lobby state now spawns characters in Base Camp; the home-screen controls become a docked panel (Play, host picks, G Hunt Board, P Profile) — always reachable. **Third person allowed in Base Camp** (no combat there). 10 player **plots** ring the camp: up to 3 inert **decoration towers** (owned towers, with skins) + your **pet pen** (showcase up to 3 pets). Four **training stations**, an incubator hut, a skin/egg shop counter. Built as one self-contained model + server module so T96's lobby place can lift it whole. |
+| Hunters' Outpost (#382–#384) | **Same place, own area** (no teleport until publishing): the Lobby state now spawns characters in Hunters' Outpost; the home-screen controls become a docked panel (Play, host picks, G Hunt Board, P Profile) — always reachable. **Third person allowed in Hunters' Outpost** (no combat there). 10 player **Campsites** ring the camp: up to 3 inert **decoration towers** (owned towers, with skins) + your **Hatchling Pen** (showcase up to 3 pets). Four **training stations**, an Hatchery Hut, a skin/egg shop counter. Built as one self-contained model + server module so T96's lobby place can lift it whole. |
 | Big Amber (#385–#386) | One-time sheet migration **×1000** (`Amber scale`, #394; Normal clear 100,000, unlock-all 5,325,000) of every Amber cell (prices, payouts, Haul, Bounties, Entry fee/buy-ins, unlocks, new Phase-10 prices born scaled); `Profile` save migration (version bump, Amber + escrow ×scale, once, idempotent); short-number display (12.5K, 1.2M); exporter: the "logging in never beats playing" checks are ratios and stay; new check: every Amber value is a multiple of the scale and none below it. |
 | Store (#387–#389) | `Store` sheet (product/pass ids blank until Jovan creates them after publishing — blank id = hidden). Server `Store` handles `ProcessReceipt` idempotently (PurchaseId saved through `SaveStore` before `PurchaseGranted`; any failure → `NotProcessedYet`). **Unpublished/Studio: store shows "The store opens when the game is published"**; no test-grant path. Paid random items: odds shown; `PolicyService` restricted players don't see Robux egg/instant-hatch items. **Pay-to-win scope:** Robux buys time (skips, 2× training, extra slots), Amber and cosmetics; caps are the same for everyone (pay to reach them sooner, never past them); nothing bought mid-match; nothing Robux-only that changes combat. |
 
 ## Builder batches (fresh Builder each; 🦖 first; Tester at the end)
 
 **D1 🦖 Round 20 (before 10a/10b):** names for the 8 melee/grenade items, the 4 stats and
-stations (Punching Bag / Treadmill / Tonic Bench / Throwing Range working), Base Camp, plots,
-pet pen, incubator. **D2 🦖 (before 10d):** egg names, pet species + support-effect names
+stations (Raptor Dummy (reach) / Raptor Chase (speed) / Herb Kitchen (health) / Coconut Toss (grenade range) — named 6c31c9c), Hunters' Outpost, Campsites,
+Hatchling Pen, incubator. **D2 🦖 (before 10d):** egg names, pet species + support-effect names
 (rarity names wait on ask 2). **D3 🦖 (before 10e):** skin catalogue names, store item names.
 
 ### 10a — groundwork
@@ -81,11 +82,14 @@ pet pen, incubator. **D2 🦖 (before 10d):** egg names, pet species + support-e
   `value.py` kit check (gun + melee + grenade < best tower, every hero). **Accept:** specs for
   reach/charge/splash/PvP; value.py bar met; Studio check below.
 
-### 10c — Base Camp + training
-- **T138 Base Camp.** Area + plots + stations (placeholder props fine), Lobby → Base Camp spawn,
+### 10c — Hunters' Outpost + training
+- **T138 Hunters' Outpost.** Area + Campsites + stations (placeholder props fine), Lobby → Hunters' Outpost spawn,
   docked home panel, third person there only, Play moves characters to the match and back after
   results; late joiners blocked from Ranked wait in camp; `PanelRules` still holds.
-- **T139 Training.** `Shared/Training` pure (levels, rates, **online only** #391: accrues on the
+- **T139 Training.** **Caps (#397): reuse T135's Tuning rows `Trained health max` (10 %) and
+  `Trained speed max` (15 %) — no duplicates; append `Trained reach max` 20 % and `Trained
+  grenade range max` 30 % beside them (T136/T137 read them via `HunterStats` at level 0 until
+  T139); per-level step = max ÷ `Training levels` (10).** `Shared/Training` pure (levels, rates, **online only** #391: accrues on the
   server tick while the player is in the server — full at the station, half elsewhere; **no
   offline accrual**: a load never credits time since the last save; tick gaps clamped to the tick
   length so a server hitch can't over-credit; one slot unless pass), saved via `Progression`
@@ -96,7 +100,7 @@ pet pen, incubator. **D2 🦖 (before 10d):** egg names, pet species + support-e
 
 ### 10d — pets
 - **T140 Eggs + pets data.** `Pets`/`Eggs` sheets; `Shared/Pets` pure (roll at hatch, odds,
-  timers, Amber speed-up, fuse 3→1, inventory cap, equip 1); incubator hut UI with odds shown.
+  timers, Amber speed-up, fuse 3→1, inventory cap, equip 1); Hatchery Hut UI with odds shown.
   **6 rarities** (#392): Common / Uncommon / Rare / Epic / Legendary / Mythic; basic egg
   55 / 25 / 12 / 5 / 2.5 / 0.5 %; effect ×1 / 1.25 / 1.5 / 1.75 / 2 / 2.25. Exporter: each egg's
   odds sum to exactly 100, shown to one decimal; Mythic ≤ 2 % on every egg; Mythic worth ≤
@@ -106,13 +110,13 @@ pet pen, incubator. **D2 🦖 (before 10d):** egg names, pet species + support-e
   **Hatch timers count real time** (an egg is a timer, not training), so they keep running while
   offline — #391 covers training only.
 - **T141 Pets in play.** Follower model, support effects (server), dies/respawns with hunter,
-  untargetable, never touches enemy hunters; pet pen showcase on plots; pet on Profile.
+  untargetable, never touches enemy hunters; Hatchling Pen showcase on Campsites; pet on Profile.
   **Accept:** effect specs per species/rarity, worth-cap refusal, PvP specs (no effect on rivals).
 
 ### 10e — skins + store
 - **T142 Skins + decorations.** `Skins` sheet; Cosmetics slots (hunter / weapon per hero /
   tower per type), Amber skin shop, readability guards (spec: silhouette parts untouched),
-  plot decoration towers placed from owned towers.
+  Campsite decoration towers placed from owned towers.
 - **T143 Store.** `Store` sheet, `Shared/Store` pure (catalogue, pass effects, receipt ledger),
   server `Store` (`ProcessReceipt`, `UserOwnsGamePassAsync` cached, `PolicyService`), store UI with
   the unpublished message. **Accept:** fake-receipt specs (duplicate PurchaseId granted once,
@@ -129,7 +133,7 @@ pet pen, incubator. **D2 🦖 (before 10d):** egg names, pet species + support-e
   spawns with its HP/speed (print Humanoid values); a Chiller-type slow restores to the class base.
 - **After 10b:** each hunter's melee hits a dino in reach and misses past it; grenade arcs, lands,
   splashes, recharge shown; vs a stand-in hunter: half damage, no stun/knockback.
-- **After 10c:** Lobby spawns in Base Camp in third person, Play reachable, match starts first
+- **After 10c:** Lobby spawns in Hunters' Outpost in third person, Play reachable, match starts first
   person and returns to camp; station E starts training; `trainskip` levels up; leaving the
   station drops to half rate; stopping play and starting again credits nothing for the gap
   (online only); stats visible in Humanoid after a level.
