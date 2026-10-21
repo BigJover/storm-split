@@ -71,6 +71,7 @@ local Theme = require(Shared:WaitForChild("Theme"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 local GunRules = require(Shared:WaitForChild("GunRules"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
+local Skins = require(Shared:WaitForChild("Skins"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local BattleRules = require(Shared:WaitForChild("BattleRules"))
 
@@ -348,10 +349,13 @@ local function syncTool(player: Player)
 		-- Mastery skin: a gold gun at max mastery, always; then the player's cosmetics
 		-- (Shared/Cosmetics: an animated set, or tint + pattern). Looks only.
 		local look = Cosmetics.gunLook(worn(player), HERO_COLORS[s.hero] or Color3.new(1, 1, 1), maxed, MASTERY_GOLD)
-		handle.Color = look.colour
-		handle.Material = look.material
+		-- A weapon skin for this hero's gun (T142) wins over sets and tints; mastery 20's
+		-- gold stays its own. Colour and material only: the gun's size never changes.
+		local skin = if maxed then nil else Skins.look(player:GetAttribute(Skins.attribute(Skins.slot("weapon", s.hero))))
+		handle.Color = if skin then skin.colour else look.colour
+		handle.Material = if skin then skin.material else look.material
 		-- Looks.client animates a set's colour on every screen.
-		handle:SetAttribute("CosmeticSet", if look.set then look.set.id else nil)
+		handle:SetAttribute("CosmeticSet", if look.set and not skin then look.set.id else nil)
 	end
 end
 

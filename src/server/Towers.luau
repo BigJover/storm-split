@@ -126,6 +126,7 @@ local StormCoil = require(Shared:WaitForChild("StormCoil"))
 local TarPit = require(Shared:WaitForChild("TarPit"))
 local TowerLook = require(Shared:WaitForChild("TowerLook"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
+local Skins = require(Shared:WaitForChild("Skins"))
 local TowerStats = require(Shared:WaitForChild("TowerStats"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 local OptionPick = require(Shared:WaitForChild("OptionPick"))
@@ -914,6 +915,10 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 	local base = Placement.ground(position)
 	local stats = TowerStats.compute(def, { 0, 0, 0 })
 	local model = TowerLook.build(key, ringRange(def, stats), base)
+	-- The builder's tower set for this tower, if they wear one (colours only; T142).
+	if owner then
+		TowerLook.applySkin(model, Skins.look(owner:GetAttribute(Skins.attribute(Skins.slot("tower", key)))))
+	end
 	-- The builder's tower flag, if they wear one (a look only; Shared/Cosmetics).
 	local flag = if owner
 		then Cosmetics.colour(Cosmetics.worn(function(name)

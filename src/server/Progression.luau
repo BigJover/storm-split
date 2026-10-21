@@ -88,6 +88,7 @@ local SaveStore = require(Shared:WaitForChild("SaveStore"))
 local Training = require(Shared:WaitForChild("Training"))
 local HunterKit = require(Shared:WaitForChild("HunterKit"))
 local Pets = require(Shared:WaitForChild("Pets"))
+local Skins = require(Shared:WaitForChild("Skins"))
 
 local Progression = {}
 
@@ -186,6 +187,31 @@ local function publishTraining(player: Player)
 	player:SetAttribute("TrainedSpeed", Training.percent(state, "speed"))
 end
 
+-- Skins (T142): what each slot wears and the Display Towers, as attributes (Wardrobe,
+-- Hero and Towers read them; looks only), and a change counter the shop re-asks on.
+local function publishSkins(player: Player)
+	local profile = profiles[player]
+	if not profile then
+		return
+	end
+	local level = PlayerLevel.level(profile.playerXp)
+	for _, hero in Config.HeroOrder do
+		for _, kind in { "hunter", "weapon" } do
+			local slot = Skins.slot(kind, hero)
+			player:SetAttribute(Skins.attribute(slot), Skins.worn(profile.skins, slot, level))
+		end
+	end
+	for _, tower in Config.TowerOrder do
+		local slot = Skins.slot("tower", tower)
+		player:SetAttribute(Skins.attribute(slot), Skins.worn(profile.skins, slot, level))
+	end
+	for i = 1, Skins.DECO_SLOTS do
+		local tower = profile.skins.deco[i]
+		player:SetAttribute(`{Skins.DECO_PREFIX}{i}`, if tower and tower ~= "" and owns(player, "tower", tower) then tower else nil)
+	end
+	player:SetAttribute("SkinsVersion", ((player:GetAttribute("SkinsVersion") :: number?) or 0) + 1)
+end
+
 local function publish(player: Player)
 	local profile = profiles[player]
 	if not profile then
@@ -219,6 +245,7 @@ local function publish(player: Player)
 	player:SetAttribute("PetKind", if along then along.kind else nil)
 	player:SetAttribute("PetRarity", if along then along.rarity else nil)
 	player:SetAttribute("PetsVersion", ((player:GetAttribute("PetsVersion") :: number?) or 0) + 1)
+	publishSkins(player)
 end
 
 ------------------------------------------------------------------ load / save
@@ -722,6 +749,75 @@ local function equip(player: Player, slot: unknown, id: unknown): (boolean, stri
 	return true, if id == nil or id == "" then "Taken off" else "Equipped"
 end
 
+------------------------------------------------------------------ skins (T142)
+
+-- What the shop counter shows: every skin you own (bought, granted or by level), what each
+-- slot wears, the Display Towers, your level and Amber.
+local function skinView(player: Player): (boolean, any)
+	local profile = profiles[player]
+	if not profile then
+		return false, "Still loading your progress"
+	end
+	local level = PlayerLevel.level(profile.playerXp)
+	local owned = {}
+	for _, key in Config.SkinOrder do
+		if Skins.owns(profile.skins, key, level) then
+			owned[key] = true
+		end
+	end
+	return true, { owned = owned, wear = table.clone(profile.skins.wear), deco = Skins.toSave(profile.skins).deco, level = level }
+end
+
+-- Buy (Amber), wear, Display Towers: between matches only (nothing bought mid-match, #389),
+-- each saved at once. Looks only.
+local function skinAction(player: Player, action: unknown, a: unknown, b: unknown): (boolean, string)
+	local state = ReplicatedStorage:GetAttribute("State")
+	if state ~= "Lobby" and player:GetAttribute("InOutpost") ~= true then
+		return false, "Skins wait in camp between matches"
+	end
+	local profile = profiles[player]
+	if not profile then
+		return false, "Still loading your progress"
+	end
+	local level = PlayerLevel.level(profile.playerXp)
+	local ok, message
+	if action == "buySkin" then
+		local price, refusal = Skins.canBuy(profile.skins, a, level)
+		if not price then
+			return false, refusal
+		end
+		if profile.cores < price then
+			return false, `Not enough {Theme.Currency}`
+		end
+		profile.cores -= price
+		ok, message = Skins.buy(profile.skins, a), "It's yours!"
+	elseif action == "wearSkin" then
+		ok, message = Skins.wear(profile.skins, a, b, level)
+	elseif action == "setDeco" then
+		ok, message = Skins.setDeco(profile.skins, a, b, function(tower: string): boolean
+			return owns(player, "tower", tower)
+		end)
+	elseif action == "studioSkins" then
+		-- Studio test aid (StudioOnly skins): every skin owned, saving off like J.
+		if not StudioOnly.allowed(RunService:IsStudio(), "skins") then
+			return false, "Studio only"
+		end
+		canSave[player] = false
+		Skins.grant(profile.skins, Config.SkinOrder)
+		ok, message = true, "Studio: every skin (saving off)"
+	else
+		return false, "Unknown request"
+	end
+	if ok then
+		publish(player)
+		task.spawn(save, player)
+		if onLookChanged then
+			onLookChanged(player)
+		end
+	end
+	return ok, message
+end
+
 ------------------------------------------------------------------ public
 
 ------------------------------------------------------------------ training (T139)
@@ -954,6 +1050,8 @@ function Progression.init(
 	--             ("swapBounty", id) -> ok, message, the new bounty's id
 	--             ("getRewards", boardIsOpen) -> true, Profile.View | false, message
 	-- Cosmetics:  ("equip", slot, itemId | "") -> ok, message
+	-- Skins (T142): ("skins") -> true, view | ("buySkin", key) | ("wearSkin", slot, key | "")
+	--             | ("setDeco", 1..3, towerKey | "") | ("studioSkins") Studio only -> ok, message
 	request.OnServerInvoke = function(player: Player, action: unknown, a: unknown, b: unknown)
 		local ok, success, message, detail = pcall(function(): (boolean, any, any)
 			if action == "mastery" then
@@ -970,6 +1068,10 @@ function Progression.init(
 				return getRewards(player, a)
 			elseif action == "equip" then
 				return equip(player, a, b)
+			elseif action == "skins" then
+				return skinView(player)
+			elseif action == "buySkin" or action == "wearSkin" or action == "setDeco" or action == "studioSkins" then
+				return skinAction(player, action, a, b)
 			end
 			return false, "Unknown request"
 		end)

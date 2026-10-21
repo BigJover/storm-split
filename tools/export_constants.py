@@ -1999,6 +1999,97 @@ def read_pets(ws):
     return pets, order
 
 
+SKIN_KINDS = ("hunter", "weapon", "tower")
+SKIN_MATERIALS = ("SmoothPlastic", "Plastic", "Fabric", "Wood", "WoodPlanks", "Metal", "DiamondPlate",
+                  "Slate", "Concrete", "Brick", "Granite", "Marble", "Pebble", "Sand", "Grass", "Ice", "Leather")
+
+
+def read_skins(ws):
+    """Skins: Key, Kind, For, Skin, Price (Amber), Level, R, G, B, Accent R/G/B, Material (PLAN 10e T142).
+    Blank price = not in the Amber skin shop; blank level = not on the level ladder."""
+    heads = ("Key", "Kind", "For", "Skin", "Price (Amber)", "Level", "R", "G", "B",
+             "Accent R", "Accent G", "Accent B", "Material")
+    cols = _headed(ws, heads, "PLAN 10e T142")
+    skins, order, r = {}, [], 5
+    while v(ws, r, cols["Key"]):
+        key = str(v(ws, r, cols["Key"])).strip().upper()
+        if key in skins:
+            sys.exit(f"Skins row {r}: {key} is listed twice")
+        for_ = v(ws, r, cols["For"])
+        skins[key] = {"kind": str(v(ws, r, cols["Kind"]) or "").strip().lower(),
+                      "hero": str(for_).strip().upper() if for_ not in (None, "") else None,
+                      "display": str(v(ws, r, cols["Skin"]) or "").strip(),
+                      "price": num(v(ws, r, cols["Price (Amber)"]), None),
+                      "level": num(v(ws, r, cols["Level"]), None),
+                      "colour": [num(v(ws, r, cols[c]), None) for c in ("R", "G", "B")],
+                      "accent": [num(v(ws, r, cols[c]), None) for c in ("Accent R", "Accent G", "Accent B")],
+                      "material": str(v(ws, r, cols["Material"]) or "").strip()}
+        order.append(key)
+        r += 1
+    return skins, order
+
+
+def validate_skins(data, problems, notes):
+    """Skins are looks only and readable (#380/#381): a known kind; hunter and weapon skins name
+    a hero, tower sets none; colours 0-255; no glowing or see-through material; one name per
+    kind and hero; a price (once set) a whole multiple of the Amber scale; a level (once set)
+    a whole number >= 1.
+
+    >>> d = {"Tuning": {"AmberScale": 1000}, "Heroes": {"PISTOL": {}},
+    ...      "Skins": {"A": {"kind": "hunter", "hero": "PISTOL", "display": "Swamp Stalker", "price": None,
+    ...      "level": None, "colour": [1, 2, 3], "accent": [4, 5, 6], "material": "Fabric"}}, "SkinOrder": ["A"]}
+    >>> p = []; validate_skins(d, p, []); p
+    []
+    >>> d["Skins"]["A"]["material"] = "Neon"; p = []; validate_skins(d, p, []); p
+    ['Skins A: material Neon is not allowed (no glow or see-through on a skin, #381)']
+    >>> d["Skins"]["A"]["material"] = "Fabric"; d["Skins"]["A"]["hero"] = None; p = []; validate_skins(d, p, []); p
+    ['Skins A: a hunter skin needs For = a hero key (got None)']
+    >>> d["Skins"]["A"]["hero"] = "PISTOL"; d["Skins"]["A"]["price"] = 2500; p = []; validate_skins(d, p, []); p
+    ['Skins A: price 2500 Amber must be a whole multiple of the Amber scale 1,000 (#386)']
+    >>> d["Skins"]["A"]["price"] = 5000; d["Skins"]["A"]["colour"] = [1, 2, 300]; p = []; validate_skins(d, p, []); p
+    ['Skins A: colour [1, 2, 300] must be three whole numbers 0-255']
+    >>> d["Skins"]["A"]["colour"] = [1, 2, 3]; d["Skins"]["A"]["kind"] = "tower"; p = []; validate_skins(d, p, []); p
+    ['Skins A: a tower set fits every tower: For must be blank (got PISTOL)']
+    """
+    scale = amber_scale(data)
+    seen = {}
+    sold = ladder = 0
+    for key in data["SkinOrder"]:
+        s = data["Skins"][key]
+        where = f"Skins {key}"
+        kind = s["kind"]
+        if kind not in SKIN_KINDS:
+            problems.append(f"{where}: kind '{kind}' must be one of {', '.join(SKIN_KINDS)}")
+            continue
+        if kind == "tower":
+            if s["hero"] is not None:
+                problems.append(f"{where}: a tower set fits every tower: For must be blank (got {s['hero']})")
+        elif s["hero"] not in data["Heroes"]:
+            problems.append(f"{where}: a {kind} skin needs For = a hero key (got {s['hero']})")
+        if not s["display"]:
+            problems.append(f"{where}: no Skin name")
+        for field in ("colour", "accent"):
+            c = s[field]
+            if len(c) != 3 or any(not isinstance(x, (int, float)) or x != int(x) or not 0 <= x <= 255 for x in c):
+                problems.append(f"{where}: {field} {c} must be three whole numbers 0-255")
+        if s["material"] not in SKIN_MATERIALS:
+            problems.append(f"{where}: material {s['material']} is not allowed (no glow or see-through on a skin, #381)")
+        name = (kind, s["hero"], s["display"].lower())
+        if name in seen:
+            problems.append(f"{where}: the name '{s['display']}' is used twice for one {kind} slot ({seen[name]})")
+        seen[name] = key
+        price, level = s["price"], s["level"]
+        if price is not None:
+            sold += 1
+            if price < scale or price != int(price) or int(price) % scale != 0:
+                problems.append(f"{where}: price {price:g} Amber must be a whole multiple of the Amber scale {scale:,} (#386)")
+        if level is not None:
+            ladder += 1
+            if level < 1 or level != int(level):
+                problems.append(f"{where}: level {level:g} must be a whole number >= 1")
+    notes.append(f"skins: {len(data['SkinOrder'])} ({sold} in the Amber shop, {ladder} on the level ladder; blank = not yet)")
+
+
 def pet_worth(pet, mult):
     """Worth % of a pet at a rarity multiplier (#378/#392): 100 x Effect value x mult / Worth ref.
     None while the effect is off (blank value)."""
@@ -2750,6 +2841,7 @@ def validate(data):
     validate_bodies(data, problems, notes)
     validate_kit(data, problems, notes)
     validate_pets(data, problems, notes)
+    validate_skins(data, problems, notes)
     validate_perks(data, problems, notes)
     validate_small_perks(data, problems)
     validate_xp(data, problems, notes)
@@ -2999,6 +3091,9 @@ def read_data(xlsx):
     data["PetRarities"] = read_pet_rarities(wb["Pet Rarities"])
     data["Eggs"], data["EggOrder"] = read_eggs(wb["Eggs"], data["PetRarities"])
     data["Pets"], data["PetOrder"] = read_pets(wb["Pets"])
+    if "Skins" not in wb.sheetnames:
+        sys.exit("The spreadsheet has no 'Skins' sheet (PLAN 10e T142)")
+    data["Skins"], data["SkinOrder"] = read_skins(wb["Skins"])
     return data
 
 

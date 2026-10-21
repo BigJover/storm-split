@@ -20,6 +20,8 @@
 	flashHit() tints a bitten tower red for a moment.
 ]]
 
+local Skins = require(script.Parent.Skins)
+
 local TowerLook = {}
 
 TowerLook.COLORS = table.freeze({
@@ -415,6 +417,27 @@ function TowerLook.build(key: string, range: number, base: Vector3): Model
 
 	TowerLook.refresh(model, range, { 0, 0, 0 }, 0)
 	return model
+end
+
+-- A tower set (PLAN 10e T142, Shared/Skins) on a built tower: each silhouette block takes
+-- the set's colour (blocks in the tower's own colour) or accent (the rest) and its
+-- material, which the tier-5 glow then restores to. Colour and material only: no block
+-- moves, resizes or changes shape, and the body (hitbox), range ring, tier label, crown,
+-- HP bar and owner flag are never touched (#381; spec: tools/test/skins.spec.luau).
+function TowerLook.applySkin(model: Model, look: Skins.Look?)
+	if not look then
+		return
+	end
+	local towerColour = TowerLook.COLORS[model.Name] or Color3.new(1, 1, 1)
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") and part.Name ~= "Body" and typeof(part:GetAttribute("LookMaterial")) == "string" then
+			local colour, material = Skins.paintTower(look, part.Color, towerColour)
+			part.Color = colour
+			part.Material = material
+			part:SetAttribute("LookMaterial", material.Name)
+		end
+	end
+	model:SetAttribute("TowerSkin", true)
 end
 
 -- The Spotter Blimp itself (PLAN 9h T125b, visual only): an envelope with fins, a gondola

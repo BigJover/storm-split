@@ -6,7 +6,7 @@
 local fs = require("@lune/fs")
 local StudioOnly = require(src.shared.StudioOnly)
 
-local EXPECTED = { "cash", "amber", "towerHit", "standIns", "startRound", "standInsHold", "standInPierce", "clockCap", "lateStandIn", "standInPick", "fireNow", "fossils", "walkers", "charge", "trainSkip", "pets" }
+local EXPECTED = { "cash", "amber", "towerHit", "standIns", "startRound", "standInsHold", "standInPierce", "clockCap", "lateStandIn", "standInPick", "fireNow", "fossils", "walkers", "charge", "trainSkip", "pets", "skins" }
 
 test("T89: each Studio-only feature is allowed in Studio and refused in a live server", function()
 	local count = 0

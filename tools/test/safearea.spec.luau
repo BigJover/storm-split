@@ -64,6 +64,7 @@ local USES = {
 	["src/client/Pets.client.luau"] = { "panel.Position = UDim2.new(0.5, 0, 0, SafeArea.localTop(" },
 	["src/client/Hud.client.luau"] = { "startButton.Position = UDim2.new(0.5, 0, 0, SafeArea.localTop(", "battleResults.Position = UDim2.new(0.5, 0, 0, SafeArea.localTop(" },
 	["src/client/Shop.client.luau"] = { "SafeArea.buildHud(inset)" },
+	["src/client/Counter.client.luau"] = { "panel.Position = UDim2.new(0.5, 0, 0, SafeArea.localTop(" },
 }
 
 test("every panel and top button reads SafeArea (Home, Hunt Board, Profile, Training, Hatchery, HUD, Shop)", function()

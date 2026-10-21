@@ -19,6 +19,8 @@
 	  HATCHERY_HUT, SHOP        the Hatchery Hut and the shop counter (placeholders until
 	                            10d / 10e), offsets from CENTRE
 	  atHut(position)           standing at the Hatchery Hut (T140: E opens it), HUT_RADIUS
+	  atShop(position)          standing at the shop counter (T142: E opens it), SHOP_RADIUS
+	  DECO_SPOTS                a Campsite's three Display Tower spots (T142), in its frame
   assignCampsite(taken)     the lowest free Campsite for a new arrival (T141), else nil
   spawnPoint(i)             where the i-th arrival appears (a ring by the camp fire)
 	  inside(position)          is this point over the camp's floor (and not far above it)
@@ -54,6 +56,10 @@ Outpost.STATION_RADIUS = 8
 Outpost.CAMPSITES = 10
 Outpost.CAMPSITE_RING = 82 -- studs from the centre to each Campsite's centre
 Outpost.CAMPSITE_SIZE = 22 -- each Campsite is a square this wide
+-- Display Towers (T142): three spots on each Campsite, in the Campsite's own frame (its
+-- Ground part faces the camp's centre, -Z), clear of the Hatchling Pen at (-6, 5).
+Outpost.DECO_SPOTS = table.freeze({ Vector3.new(6, 0, -6), Vector3.new(6, 0, 0), Vector3.new(6, 0, 6) })
+Outpost.SHOP_RADIUS = 8 -- how near the shop counter counts as "at" it (flat; T142: E opens it)
 Outpost.HATCHERY_HUT = Vector3.new(0, 0, 30)
 Outpost.SHOP = Vector3.new(-24, 0, 26)
 Outpost.SPAWN_RING = 10
@@ -120,6 +126,15 @@ function Outpost.atHut(position: unknown): boolean
 	end
 	local p = position :: Vector3
 	return (flat(p) - flat(Outpost.CENTRE + Outpost.HATCHERY_HUT)).Magnitude <= Outpost.HUT_RADIUS
+end
+
+-- Standing at the shop counter (T142: E opens the shop; never overlaps the hut's circle).
+function Outpost.atShop(position: unknown): boolean
+	if not Outpost.inside(position) then
+		return false
+	end
+	local p = position :: Vector3
+	return (flat(p) - flat(Outpost.CENTRE + Outpost.SHOP)).Magnitude <= Outpost.SHOP_RADIUS
 end
 
 -- The Campsite a new arrival gets (T141: their Hatchling Pen): the lowest free one,

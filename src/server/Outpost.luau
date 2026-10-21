@@ -196,7 +196,7 @@ local function build(): Model
 		part("HutRoof", Vector3.new(12, 1, 10), at(OutpostRules.HATCHERY_HUT, 7.5), LEAF, root, Enum.Material.Grass)
 		label(hut, "Hatchery Hut", "Eggs and pets — press E here", 6)
 		local counter = part("ShopCounter", Vector3.new(8, 3, 2.5), at(OutpostRules.SHOP, 1.5), WOOD, root, Enum.Material.Wood)
-		label(counter, "Shop", "Coming soon", 4)
+		label(counter, "Shop", "Skins and the store — press E here", 4)
 	end
 	root.Parent = workspace
 	return root

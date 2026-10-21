@@ -43,6 +43,9 @@
 	                    pet): the player plays on without pets, every pet call says no, and
 	                    a save writes the stored value back untouched (`petsRaw`), so no pet
 	                    is ever lost to a bad read.
+	  skins             hunter / weapon skins and tower sets owned and worn, and the Campsite
+	                    Display Towers (Shared/Skins, PLAN 10e T142). An older save starts
+	                    with none. Owned keys the sheet no longer lists are kept as stored.
 	  lastResetPayout   Amber paid at a reset for bounties done but not claimed, since the
 	                    board was last opened. Session only, never saved.
 	  rewardsVersion    counts Hunt Board changes; the client re-asks when it moves.
@@ -81,6 +84,7 @@ local Stakes = require(script.Parent.Stakes)
 local Trophies = require(script.Parent.Trophies)
 local Training = require(script.Parent.Training)
 local Pets = require(script.Parent.Pets)
+local Skins = require(script.Parent.Skins)
 
 export type Profile = {
 	cores: number,
@@ -98,6 +102,7 @@ export type Profile = {
 	training: Training.State,
 	pets: Pets.State?,
 	petsRaw: any,
+	skins: Skins.State,
 	lastResetPayout: number,
 	rewardsVersion: number,
 }
@@ -190,6 +195,7 @@ function Profile.blank(now: number, rng: Bounties.Rng): Profile
 		training = Training.blank(),
 		pets = Pets.blank(),
 		petsRaw = nil,
+		skins = Skins.blank(),
 		lastResetPayout = 0,
 		rewardsVersion = 0,
 	}
@@ -225,6 +231,7 @@ function Profile.sanitize(raw: any, now: number, rng: Bounties.Rng): Profile
 	-- Only what this level (or an arena reached, T81) has unlocked, in the right slot;
 	-- anything else is dropped.
 	profile.equipped = Cosmetics.clean(raw.equipped, PlayerLevel.level(profile.playerXp), Profile.bestArenaIndex(profile))
+	profile.skins = Skins.sanitize(raw.skins, PlayerLevel.level(profile.playerXp)) -- T142: none in an older save
 	if
 		type(raw.escrow) == "table"
 		and type(raw.escrow.matchId) == "string"
@@ -282,6 +289,7 @@ function Profile.toSave(profile: Profile): { [string]: any }
 		amberScale = profile.amberScale,
 		training = Training.toSave(profile.training),
 		pets = if profile.pets then Pets.toSave(profile.pets) else profile.petsRaw,
+		skins = Skins.toSave(profile.skins),
 		rewards = if profile.rewards then profile.rewards else profile.rewardsRaw,
 	}
 end
