@@ -857,3 +857,40 @@ Rarity: keep Jovan's six as written — **Common / Uncommon / Rare / Epic / Lege
 Avoided/grepped clean: Honker, Fetcher, Muncher, Snatcher, Speckled, Golden, Mud Egg, "Warm it
 up", "Take along". "Frill" is only an internal Triceratops model part (fine). No "Trophy", no
 old-theme words. "Fetch" appears only in code (HuntBoard fetch), not as a name.
+
+## Round 22 — Phase 10 D3: skins, Campsite decorations, the store (before 10e)
+
+Skins are looks only (silhouette parts untouched, T142). Each hunter line has 3 skins, cheapest → flashiest.
+
+| Hunter | Skin line (3 skins) |
+|---|---|
+| Tracker | **Swamp Stalker** · **Night Prowler** · **Jungle Ghost** |
+| Big Game Hunter | **Safari Classic** · **Safari Chief** · **Gold Rush Safari** |
+| Brush Beater | **Bamboo Basher** · **Swamp Smasher** · **Croc Hide Crusher** |
+| Field Medic | **Frontier Doc** · **Mountain Rescue** · **Lifeline** |
+
+| Gun | Weapon skins |
+|---|---|
+| Revolver | **Snakeskin Grip** · **Silver Spur** |
+| Hunting rifle | **Walnut Classic** · **Engraved Gold** |
+| Shotgun | **Bamboo Boomstick** · **Croc Hide** |
+| Lever carbine | **Brass Saddle** · **Lifesaver** (no red cross: protected emblem) |
+
+| Tower set (fits all 18 towers) | Look |
+|---|---|
+| **Treehouse** | rope, planks, leaves |
+| **Stone Age** | carved rock, vine ties |
+| **Brass Gear** | brass, cogs, rivets |
+| **Midnight** | dark paint, glowing eyes-lamps |
+| **Gold Rush** | gold trim (the flex set) |
+
+Campsite decorations: **Display Tower** (any tower you own, for show, doesn't shoot), **Hammock**, **Rope Swing**, **Fire Pit**, **Stepping Stones**, **Dino Statue**, **Wanted Poster** (shows your best hunt), **Hunter's Flag**.
+
+| Store tab | Product (honest line) |
+|---|---|
+| Amber | **Amber Sack** R$49 · **Amber Crate** R$199 · **Amber Wagon** R$799 — card shows the exact Amber |
+| Passes | **2× Training** R$299 — "Train twice as fast, forever. Same max for everyone." |
+| Hatchery | **Extra Training Spot** R$199 · **Second Hatchery Hut** R$199 · **Hatch now** R$25–99 (R21) |
+| Skins | **{Set} Bundle** — lists every item inside; says "saves X Amber" only when true |
+
+Wording rules: no "free", "guaranteed", "best deal" or countdown pressure; nothing in the store is random (eggs keep their odds line from R21); paid power says "gets you there sooner". Avoided (grepped taken): Thicket, Expedition, Footprint, Lantern, Skull, Barrel, Nest, Jar, Totem, Steam, Handful, Pouch, tint prefixes (Ash/Bone/Clay/Ember/Fern/Moss…), Amber Vault/Shield. No "Trophy", no old-theme words.
