@@ -14,6 +14,7 @@ every batch ends with its Tester steps.**
 
 **Status (2026-10-20): planned. Next (after Phase 9's Run 10b → T132): 🦖 Round 20 names (D1) → batch 10a (T134 + T135). Waiting
 **Update (2026-10-20): D1 🦖 Round 20 done (6c31c9c; names applied below). 10a DONE: T134 7cbf3d8 (Amber ×1000, 87 cells, migration stamps `amberScale`, K/M/B), T135 ca859f1 (Hunter Stats, parity 1.098, round heal 25 capped at each max HP); 862 specs. Builder rows/pots ruled #397–#398. Next: 10b (T136 + T137, Builder on it) → Tester after 10b (covers 10a's steps too).**
+**Update (2026-10-21): 10b DONE: T136 53455ac (melee, V), T137 8f63f9e (grenade, C; E kept free for 10c); kit peak = 27 % of the best tower; 878 specs. Builder questions ruled #400–#402 → T137b, then Tester Run 11 (10a + 10b), then 🦖 D2 → 10c.**
 on Jovan only for the asks below; defaults are applied so nothing blocks.**
 
 **Jovan answered the asks (2026-10-20, #391–#395) — these override the defaults below:**
@@ -81,6 +82,20 @@ Hatchling Pen, incubator. **D2 🦖 (before 10d):** egg names, pet species + sup
   charges + recharge on the HUD; PvP no hard CC (exporter refuses stun/knockback on hunters);
   `value.py` kit check (gun + melee + grenade < best tower, every hero). **Accept:** specs for
   reach/charge/splash/PvP; value.py bar met; Studio check below.
+
+- **T137b (#400–#402, one small Builder commit, before Tester Run 11).** (1) **Kit raids
+  towers:** melee and grenade damage rival towers under the same raid rules and tower-damage
+  multiplier as gun shots (own-side and Camo rules unchanged; grenade = each rival tower in the
+  blast once); no-raid in co-op as today. (2) **Splint Stick stays dino-only** — no change.
+  (3) **Flyers and armour:** kit still deals **no damage** to flyers or armoured dinos, but its
+  **non-damage effects** (Splint/Cherry/Dozy slows, Stink Bomb's +20 %) land on armoured
+  **ground** dinos; flyers stay untouched. **Accept:** specs — melee and grenade raid a rival
+  tower (×same multiplier as a gun hit), none in co-op, none through Camo; armoured ground dino
+  slowed/stunk with 0 damage; flyer untouched; `value.py --battle` raid report re-run, no bar
+  broken; 878+ specs green.
+- **Tester Run 11 (after T137b; covers 10a + 10b steps):** as listed under "Tester steps",
+  plus V/C keys and HUD buttons, a kit hit on a stand-in rival's tower, an armoured dino slowed
+  by Cherry Bomb with no damage.
 
 ### 10c — Hunters' Outpost + training
 - **T138 Hunters' Outpost.** Area + Campsites + stations (placeholder props fine), Lobby → Hunters' Outpost spawn,
