@@ -17,6 +17,13 @@
 	  vsHunter(amount, mySide, theirSide, shielded)   the damage an enemy hunter takes: x PvP
 	                               hunter damage, 0 for the own side (no friendly fire) or under
 	                               Camo Cover (BattleRules.pvpDamage, a hunter's hit)
+	  vsTower(amount, mySide, theirSide, def)   the damage a rival tower takes from a kit hit
+	                               (#400, T137b): the gun's raid rule and tower-damage
+	                               multiplier (x PvP tower damage; 0 for the own side, co-op,
+	                               or an untouchable tower)
+	  dinoTouch(flying, hurtable)  what a kit hit does to a dino (#402): "none" for a flyer,
+	                               "hit" (effect + damage) if it can hurt it, else "effect"
+	                               (an armoured ground dino: slows / Stink Bomb land, 0 damage)
 	  BREAKS                       a melee hit or grenade breaks at most 1 size (like splash)
 ]]
 
@@ -69,6 +76,17 @@ end
 
 function HunterKit.vsHunter(amount: number, mySide: number, theirSide: number, shielded: boolean): number
 	return BattleRules.pvpDamage(amount, mySide, theirSide, "hunter", { attacker = "hunter", shielded = shielded })
+end
+
+function HunterKit.vsTower(amount: number, mySide: number, theirSide: number, def: { untouchable: boolean? }?): number
+	return BattleRules.pvpDamage(amount, mySide, theirSide, "tower", { attacker = "hunter", tower = def })
+end
+
+function HunterKit.dinoTouch(flying: boolean, hurtable: boolean): "none" | "hit" | "effect"
+	if flying then
+		return "none"
+	end
+	return if hurtable then "hit" else "effect"
 end
 
 return HunterKit

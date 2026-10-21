@@ -8,7 +8,11 @@
 	within the arc, nearest first, at most Melee targets) among:
 	  - its OWN side's dinos (BattleRules.ownDinos; co-op: every dino), not flying, and only
 	    ones it can hurt (armour needs Melee pierces armour);
-	  - ENEMY hunters and Studio stand-in hunters (BattleRules: never the own side).
+	  - ENEMY hunters and Studio stand-in hunters (BattleRules: never the own side);
+	  - RIVAL towers (T137b, #400): the gun's raid rule and multiplier (HunterKit.vsTower,
+	    Hero.raidTower); never in co-op, never an untouchable tower.
+	Armoured ground dinos it can't hurt still take its effect with 0 damage; flyers are never
+	touched (HunterKit.dinoTouch, #402). The Splint Stick stays dino-only (#401: data).
 	Each pick also needs a clear line from the hunter's head (the map blocks; dinos, towers,
 	hunters and effects don't).
 
@@ -49,6 +53,8 @@ local Effects = require(script.Parent.Effects)
 local Health = require(script.Parent.Health)
 local Hero = require(script.Parent.Hero)
 local StandInHunters = require(script.Parent.StandInHunters)
+local Towers = require(script.Parent.Towers)
+local Track = require(Shared:WaitForChild("Track"))
 
 local Kit = {}
 
@@ -143,19 +149,20 @@ function Kit.clearLine(from: Vector3, to: Vector3, params: RaycastParams): boole
 	return workspace:Raycast(from, gap, params) == nil
 end
 
--- A dino a kit hit may touch: own side's (the list is already filtered), on the ground,
--- hurtable (armour needs the item's pierce).
+-- A dino a kit hit may touch: own side's (the list is already filtered), on the ground
+-- (HunterKit.dinoTouch: a flyer is never touched; an armoured one it can't hurt still takes
+-- the effect, and Enemies.damage deals it 0).
 function Kit.dinoTargets(mySide: number, pierces: boolean): { any }
 	local list = {}
 	for _, enemy in BattleRules.ownDinos(Enemies.getLive(), mySide, "hunter") do
-		if enemy.alive and not enemy.def.flying and Enemies.canHurt(enemy, pierces) then
+		if enemy.alive and HunterKit.dinoTouch(enemy.def.flying == true, Enemies.canHurt(enemy, pierces)) ~= "none" then
 			table.insert(list, enemy)
 		end
 	end
 	return list
 end
 
-export type Foe = { position: Vector3, hunter: Player?, standIn: number? }
+export type Foe = { position: Vector3, hunter: Player?, standIn: number?, tower: any? }
 
 -- Enemy hunters (alive, in the game) and Studio stand-ins a kit hit may reach. Empty in co-op.
 function Kit.foes(player: Player, mySide: number): { Foe }
@@ -172,6 +179,11 @@ function Kit.foes(player: Player, mySide: number): { Foe }
 	for _, dummy in StandInHunters.standing() do
 		if BattleRules.canDamage(mySide, dummy.side, "hunter") then
 			table.insert(foes, { position = dummy.position, standIn = dummy.side })
+		end
+	end
+	for _, tower in Towers.all() do -- T137b: rival towers, as the gun's foes (Server/Hero)
+		if not tower.knockedOut and BattleRules.canDamage(mySide, tower.side, "tower", { tower = tower.def }) then
+			table.insert(foes, { position = tower.position, tower = tower })
 		end
 	end
 	return foes
@@ -212,6 +224,10 @@ end
 -- One enemy hunter or stand-in takes a kit hit (x PvP hunter damage; Camo Cover = 0), and at
 -- most a capped slow. Returns whether it was downed.
 function Kit.hitFoe(player: Player, mySide: number, foe: Foe, damage: number, slowPercent: number, slowSeconds: number): boolean
+	local tower = foe.tower
+	if tower then -- a raid (#400): x PvP tower damage, no slow; each tower once per hit
+		return Hero.raidTower(player, tower, HunterKit.vsTower(damage, mySide, tower.side, tower.def))
+	end
 	if foe.standIn then
 		local _, downed = StandInHunters.hit(foe.standIn, damage, mySide, player.DisplayName)
 		return downed
@@ -271,7 +287,7 @@ local function swing(player: Player, rayOrigin: unknown, rayDirection: unknown)
 	end
 	for _, foe in foes do
 		table.insert(points, foe.position)
-		table.insert(radii, 1)
+		table.insert(radii, if foe.tower then Track.TowerRadius else 1)
 	end
 	local flat = Vector3.new(look.X, 0, look.Z)
 	local facing = if flat.Magnitude > 1e-3 then flat.Unit else body.CFrame.LookVector
@@ -336,7 +352,7 @@ local function burst(player: Player, row: any, key: string, mySide: number, scal
 	for _, foe in Kit.foes(player, mySide) do
 		if Grenade.inSplash(at, row.splash, foe.position) then
 			hit = true
-			local who = foe.hunter or foe.standIn
+			local who = foe.hunter or foe.standIn or foe.tower
 			local first = Grenade.firstTouch(seen, who)
 			killed = Kit.hitFoe(player, mySide, foe, damage, if first then slowPercent else 0, slowSeconds) or killed
 		end
@@ -362,7 +378,7 @@ local function burst(player: Player, row: any, key: string, mySide: number, scal
 				end
 			end
 			for _, foe in Kit.foes(player, mySide) do
-				if Grenade.inSplash(at, row.splash, foe.position) then
+				if not foe.tower and Grenade.inSplash(at, row.splash, foe.position) then
 					slowFoe(mySide, foe, seen, slowPercent, slowSeconds)
 				end
 			end

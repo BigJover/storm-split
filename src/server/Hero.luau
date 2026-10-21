@@ -722,14 +722,8 @@ local function hitFoe(player: Player, mySide: number, foe: Foe, amount: number, 
 	outcome.hit = true
 	local tower = foe.tower
 	if tower then
-		local damage = BattleRules.pvpDamage(amount, mySide, tower.side, "tower", { tower = tower.def })
-		local standing = not tower.knockedOut
-		Towers.damage(tower, damage, player)
-		if standing and tower.knockedOut then
+		if Hero.raidTower(player, tower, BattleRules.pvpDamage(amount, mySide, tower.side, "tower", { tower = tower.def })) then
 			outcome.killed = true
-			if onRaid then
-				onRaid(player, tower) -- "<name> trampled <Camp>'s <tower>"
-			end
 		end
 		return
 	end
@@ -1159,6 +1153,20 @@ end
 
 function Hero.kitCredit(player: Player, killed: boolean, gone: string?, dropped: number?)
 	credit(player, killed, gone, dropped)
+end
+
+-- A raid hit on a rival tower (damage already x PvP tower damage): a gun pellet or a kit hit
+-- (T137b, #400). Returns whether it trampled the tower (the raid news line fires).
+function Hero.raidTower(player: Player, tower: any, damage: number): boolean
+	local standing = not tower.knockedOut
+	Towers.damage(tower, damage, player)
+	if standing and tower.knockedOut then
+		if onRaid then
+			onRaid(player, tower) -- "<name> trampled <Camp>'s <tower>"
+		end
+		return true
+	end
+	return false
 end
 
 function Hero.kitDowned(victim: Player, attacker: Player)
