@@ -199,6 +199,19 @@ What this adds to his taste (applied in DECISIONS #363–#390, PLAN "Phase 10"):
   speed, +30 % grenade range, slightly longer melee), on top of real per-class differences.
 - **Hunter classes differ in body** (health, speed) and kit (a melee and a grenade each).
 
+### Phase 10 asks answered (Jovan, 2026-10-20, later)
+
+1. **Offline training: no — online only.** Full speed at the station, half elsewhere while in
+   the game; nothing while logged off.
+2. **Pet rarities: six, with Mythic** — Common / Uncommon / Rare / Epic / Legendary / Mythic
+   at 55 / 25 / 12 / 5 / 2.5 / 0.5 %.
+3. **Big Amber: ×1000** (not ×100), shown with K/M abbreviations wherever Amber shows.
+4. **Robux prices: the proposed defaults** (Amber packs 49 / 199 / 799; 2× training 299;
+   extra training slot or incubator 199; instant hatch 25–99). Melee reach +20 % stands.
+
+What this adds: he wants AFK progress to need **being in the game** (presence, not idle
+time away), **a rarer top tier** to chase, and **really big numbers** (millions) read at a glance.
+
 ## Economy (his numbers)
 
 - Casual: solo pays only on a track clear (Easy 50 / Normal 100 / Hard 150 / Chaos 200
