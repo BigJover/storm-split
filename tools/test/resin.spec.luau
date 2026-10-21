@@ -41,7 +41,7 @@ end
 test("the Towers row (PLAN 9g): 800 cash, 500 Amber, 2 x 1/s, 18 studs, ground only, 150 HP, a Resin tower, unreleased", function()
 	eq(RESIN.display, "Amber Resin Cannon")
 	eq(RESIN.baseCost, 800)
-	eq(RESIN.unlockCost, 500)
+	eq(RESIN.unlockCost, 500 * Config.Tuning.AmberScale)
 	eq(RESIN.baseDamage, 2)
 	eq(RESIN.baseRate, 1)
 	eq(RESIN.baseTargets, 1)

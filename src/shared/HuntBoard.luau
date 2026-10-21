@@ -13,7 +13,7 @@
 	  resetLine    "New daily bounties in 5h 12m", under the header
 	  weeklyLine   "New in 3d 4h", beside the Weekly Bounties title
 	  remaining    seconds left, `elapsed` seconds after the server said `seconds`
-	  payoutLine   "Unclaimed bounties paid: +35 Amber", or nil when nothing was paid
+	  payoutLine   "Unclaimed bounties paid: +35K Amber", or nil when nothing was paid
 	  haulNote     the line under the Daily Haul: what missing days does to it (never nil)
 	  card         one bounty card, or nil for a bounty this client doesn't know
 	  cards        the cards of one pool, in board order
@@ -107,15 +107,9 @@ end
 
 -- Text -------------------------------------------------------------------------
 
-local function grouped(n: number): string
-	local digits = tostring(math.floor(n))
-	local out = digits
-	repeat
-		local replaced
-		out, replaced = string.gsub(out, "^(%d+)(%d%d%d)", "%1,%2")
-	until replaced == 0
-	return out
-end
+-- Amber shows short (Theme.formatAmber, PLAN 10a T134): "+10K", "1.2M Amber".
+local short = Theme.formatAmber
+local grouped = Theme.amberExact -- counts and progress: "1,500"
 
 function HuntBoard.countdown(seconds: number): string
 	local minutes = math.max(1, math.ceil(math.max(seconds, 0) / 60))
@@ -145,13 +139,13 @@ function HuntBoard.payoutLine(amber: number?): string?
 	if type(amber) ~= "number" or amber <= 0 then
 		return nil
 	end
-	return `Unclaimed bounties paid: +{grouped(amber)} {Theme.Currency}`
+	return `Unclaimed bounties paid: +{short(amber)} {Theme.Currency}`
 end
 
--- The header's Amber balance, live (DECISIONS #138): "1,250 Amber".
+-- The header's Amber balance, live (DECISIONS #138), short and rounded down: "1.2M Amber".
 function HuntBoard.balance(amber: number?): string
 	local n = if type(amber) == "number" then math.max(0, math.floor(amber)) else 0
-	return `{grouped(n)} {Theme.Currency}`
+	return `{short(n)} {Theme.Currency}`
 end
 
 -- The header of a board `width` wide: title | gap | balance | gap | X.
@@ -197,7 +191,7 @@ function HuntBoard.card(entry: Entry, swapsLeft: number, inFlight: string?): Car
 		id = entry.id,
 		title = def.title,
 		text = (string.gsub(def.text, "{n}", grouped(def.count))),
-		chip = `+{grouped(def.amber)}`,
+		chip = `+{short(def.amber)}`,
 		progress = `{grouped(progress)} / {grouped(def.count)}`,
 		fraction = if def.count > 0 then progress / def.count else 1,
 		state = state,
@@ -245,7 +239,7 @@ function HuntBoard.haul(haulDay: number, haulClaimed: boolean, inFlight: string?
 		out[day] = {
 			day = day,
 			label = if day == days then Theme.BigHaul else `Day {day}`,
-			chip = `+{grouped(Config.DailyHaul[day].amber)}`,
+			chip = `+{short(Config.DailyHaul[day].amber)}`,
 			state = state,
 			today = today,
 			big = day == days,

@@ -330,6 +330,8 @@ def check_unlocks(findings, data):
         findings.append("DIRECTION.md has no '- Unlocks:' bullet")
         return
     kinds = {"tower": ("Towers", data["Towers"]), "hero": ("Heroes", data["Heroes"])}
+    # The docs quote prices from before Big Amber (PLAN 10a T134): the sheet holds them x the scale.
+    scale = export_constants.amber_scale(data)
     expected = {}  # (kind, key) -> (cost, source)
     for display, cost in ladder:
         matches = [(kind, key) for kind, (_, items) in kinds.items()
@@ -353,8 +355,8 @@ def check_unlocks(findings, data):
             want = expected.get((kind, key))
             if want is None:
                 findings.append(f"{block}.{key} ({item['display']}) is on no unlock ladder")
-            elif item.get("unlockCost") != want[0]:
-                findings.append(f"{block}.{key} ({item['display']}) unlock {item.get('unlockCost')}, {want[1]} says {want[0]}")
+            elif item.get("unlockCost") != want[0] * scale:
+                findings.append(f"{block}.{key} ({item['display']}) unlock {item.get('unlockCost')}, {want[1]} says {want[0]} (x Amber scale {scale})")
 
 
 # ---------------------------------------------------------------- 3. dead columns
@@ -488,11 +490,13 @@ def check_stakes(findings, notes, data, vision=None):
         low, high = int(m.group(1)), int(m.group(2))
         if (low, high) != export_constants.BUY_IN_RANGE:
             findings.append(f"VISION.md buy-in {low}-{high} != exporter range {export_constants.BUY_IN_RANGE}")
+        # VISION quotes the buy-in from before Big Amber (PLAN 10a T134): x the scale.
+        scale = export_constants.amber_scale(data)
         buy_in = tuning.get("CompetitiveBuyIn")
-        if buy_in is None or not (low <= buy_in <= high):
-            findings.append(f"Tuning CompetitiveBuyIn ({buy_in}) is outside VISION.md's {low}-{high}")
+        if buy_in is None or not (low * scale <= buy_in <= high * scale):
+            findings.append(f"Tuning CompetitiveBuyIn ({buy_in}) is outside VISION.md's {low}-{high} x Amber scale {scale}")
         else:
-            notes.append(f"buy-in {buy_in:g} within VISION.md {low}-{high}")
+            notes.append(f"buy-in {buy_in:g} within VISION.md {low}-{high} x Amber scale {scale}")
     m = re.search(r"1st gets \*\*(\d+)%\*\*, 2nd \*\*(\d+)%\*\*, 3rd \*\*(\d+)%\*\*", text)
     if not m:
         findings.append("VISION.md: no '1st gets **N%**, 2nd **N%**, 3rd **N%**' line to check the Royale split against")

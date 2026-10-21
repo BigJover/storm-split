@@ -1710,7 +1710,7 @@ renderRows = function()
 			if ShopRules.Unreleased[key] then
 				addRow(order, `<b>{name}</b>  ·  coming later`, LOCKED_COLOR, false)
 			elseif not ownsTower(key) then
-				addRow(order, `<b>{name}</b>  ·  unlock for {def.unlockCost} {CUR} (M)\n<font size="13">{escape(def.role)}. You can still upgrade a teammate's.</font>`, LOCKED_COLOR, false)
+				addRow(order, `<b>{name}</b>  ·  unlock for {Theme.amberPrice(def.unlockCost)} {CUR} (M)\n<font size="13">{escape(def.role)}. You can still upgrade a teammate's.</font>`, LOCKED_COLOR, false)
 			else
 				local affordable = cash >= def.baseCost
 				local text = `<b>{name}</b>  ·  {def.baseCost}\n<font size="13">{escape(def.role)}</font>`
@@ -1751,7 +1751,7 @@ renderRows = function()
 			local chosen = key == current
 			local owned = ownsHero(key)
 			local blurb = ABILITY_BLURB[hero.abilityKind] or ""
-			local status = if chosen then "  ·  your hero" elseif not owned then `  ·  unlock for {hero.unlockCost} {CUR} (M)` else ""
+			local status = if chosen then "  ·  your hero" elseif not owned then `  ·  unlock for {Theme.amberPrice(hero.unlockCost)} {CUR} (M)` else ""
 			local text = `<b>{escape(hero.display)}</b>  ·  {escape(hero.role)}{status}\n<font size="13">{escape(hero.ability)}: {escape(blurb)}  ·  {FIRE_MODE_NAME[hero.fireMode] or hero.fireMode} · {hero.magazine} rounds</font>`
 			addRow(order, text, if chosen then HERO_COLOR elseif owned then BUY_COLOR else LOCKED_COLOR, owned and not chosen, function()
 				if send("pick", key, nil, heroRequest) then
@@ -1851,7 +1851,7 @@ renderRows = function()
 	elseif mode == "mastery" then
 		local cores = player:GetAttribute("Cores") or 0
 		local status = player:GetAttribute("SaveStatus")
-		title.Text = `{cores} {Theme.Currency}`
+		title.Text = `{Theme.formatAmber(cores)} {Theme.Currency}`
 		local between = ReplicatedStorage:GetAttribute("State") ~= "Playing"
 		local UNLOCK_COLOR = Color3.fromRGB(70, 150, 120)
 		local order = 0
@@ -1869,7 +1869,7 @@ renderRows = function()
 			local name = escape(hero.display)
 			if not ownsHero(key) then
 				local affordable = between and cores >= hero.unlockCost
-				addRow(order, `<b>{name}</b>  ·  unlock  ·  {hero.unlockCost} {CUR}\n<font size="13">{escape(hero.role)} · {escape(hero.ability)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
+				addRow(order, `<b>{name}</b>  ·  unlock  ·  {Theme.amberPrice(hero.unlockCost)} {CUR}\n<font size="13">{escape(hero.role)} · {escape(hero.ability)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
 					send("unlock", "hero", key, progressRequest)
 				end)
 				continue
@@ -1885,7 +1885,7 @@ renderRows = function()
 					elseif milestone then `toward level {milestone}: {escape(reward or "")}`
 					else ""
 				local affordable = between and cores >= nextLevel.coreCost
-				local text = `<b>{name}</b>  ·  mastery {level} → {level + 1}  ·  {nextLevel.coreCost} {CUR}\n<font size="13">{toward}</font>{perkLines(key, level)}`
+				local text = `<b>{name}</b>  ·  mastery {level} → {level + 1}  ·  {Theme.amberPrice(nextLevel.coreCost)} {CUR}\n<font size="13">{toward}</font>{perkLines(key, level)}`
 				addRow(order, text, if affordable then Color3.fromRGB(120, 90, 200) else LOCKED_COLOR, affordable, function()
 					send("mastery", key, nil, progressRequest)
 				end)
@@ -1905,7 +1905,7 @@ renderRows = function()
 				addRow(order, `<b>{name}</b>  ·  owned\n<font size="13">{escape(def.role)}</font>`, LOCKED_COLOR, false)
 			else
 				local affordable = between and cores >= def.unlockCost
-				addRow(order, `<b>{name}</b>  ·  unlock  ·  {def.unlockCost} {CUR}\n<font size="13">{escape(def.role)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
+				addRow(order, `<b>{name}</b>  ·  unlock  ·  {Theme.amberPrice(def.unlockCost)} {CUR}\n<font size="13">{escape(def.role)}</font>`, if affordable then UNLOCK_COLOR else LOCKED_COLOR, affordable, function()
 					send("unlock", "tower", key, progressRequest)
 				end)
 			end

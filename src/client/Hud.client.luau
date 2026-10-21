@@ -410,7 +410,7 @@ local function refresh()
 	elseif state == "GameOver" or state == "Victory" then
 		local won = state == "Victory"
 		local payout = player:GetAttribute("LastPayout")
-		local cores = if payout == nil then "" elseif payout > 0 then `+{payout} {Theme.Currency}` else `No {Theme.Currency} (solo pays on a clear)`
+		local cores = if payout == nil then "" elseif payout > 0 then `+{Theme.formatAmber(payout)} {Theme.Currency}` else `No {Theme.Currency} (solo pays on a clear)`
 		-- Player XP (PLAN T56): what this match added, and the level-up if it made one.
 		-- Never "Lv N": that's the hunter's in-match level (DECISIONS #118).
 		local playerXp = player:GetAttribute("LastPlayerXp")
@@ -576,7 +576,7 @@ if studioCash and studioCash:IsA("RemoteEvent") then
 		if input.KeyCode == Enum.KeyCode.K then
 			studioCash:FireServer()
 		elseif input.KeyCode == Enum.KeyCode.J and studioProgress and studioProgress:IsA("RemoteEvent") then
-			studioProgress:FireServer() -- +100 Amber (never saved)
+			studioProgress:FireServer() -- +100K Amber (never saved)
 		elseif input.KeyCode == Enum.KeyCode.L and studioTowerHit and studioTowerHit:IsA("RemoteEvent") then
 			studioTowerHit:FireServer() -- the nearest tower loses half its max HP
 		end

@@ -1,0 +1,517 @@
+{
+ "note": "Every Amber value BEFORE Big Amber (PLAN 10a T134), from the sheet at 00d7ecb. tools/test/bigamber.spec.luau holds Config to old x Tuning.AmberScale.",
+ "values": [
+  {
+   "block": "Tuning",
+   "key": "MultiplayerLossPayout",
+   "old": 5
+  },
+  {
+   "block": "Tuning",
+   "key": "TypicalAmberPerMatch",
+   "old": 50
+  },
+  {
+   "block": "Tuning",
+   "key": "MasteryCostBase",
+   "old": 25
+  },
+  {
+   "block": "Tuning",
+   "key": "CompetitiveBuyIn",
+   "old": 15
+  },
+  {
+   "block": "Tuning",
+   "key": "TeamWinPayout",
+   "old": 50
+  },
+  {
+   "block": "Tuning",
+   "key": "TeamLossPayout",
+   "old": 5
+  },
+  {
+   "block": "Tuning",
+   "key": "Royale1stPayout",
+   "old": 60
+  },
+  {
+   "block": "Tuning",
+   "key": "Royale2ndPayout",
+   "old": 30
+  },
+  {
+   "block": "Tuning",
+   "key": "Royale3rdPayout",
+   "old": 10
+  },
+  {
+   "block": "Tuning",
+   "key": "RoyaleRestPayout",
+   "old": 5
+  },
+  {
+   "block": "Towers",
+   "key": "SCOUT",
+   "field": "unlockCost",
+   "old": 0
+  },
+  {
+   "block": "Towers",
+   "key": "SNIPER",
+   "field": "unlockCost",
+   "old": 0
+  },
+  {
+   "block": "Towers",
+   "key": "GRENADIER",
+   "field": "unlockCost",
+   "old": 0
+  },
+  {
+   "block": "Towers",
+   "key": "CHILLER",
+   "field": "unlockCost",
+   "old": 100
+  },
+  {
+   "block": "Towers",
+   "key": "QUARTERMASTER",
+   "field": "unlockCost",
+   "old": 150
+  },
+  {
+   "block": "Towers",
+   "key": "HOSPITAL",
+   "field": "unlockCost",
+   "old": 100
+  },
+  {
+   "block": "Towers",
+   "key": "ARMORY",
+   "field": "unlockCost",
+   "old": 150
+  },
+  {
+   "block": "Towers",
+   "key": "COIL",
+   "field": "unlockCost",
+   "old": 300
+  },
+  {
+   "block": "Towers",
+   "key": "FALCON",
+   "field": "unlockCost",
+   "old": 200
+  },
+  {
+   "block": "Towers",
+   "key": "TARPIT",
+   "field": "unlockCost",
+   "old": 250
+  },
+  {
+   "block": "Towers",
+   "key": "BALLISTA",
+   "field": "unlockCost",
+   "old": 300
+  },
+  {
+   "block": "Towers",
+   "key": "RESIN",
+   "field": "unlockCost",
+   "old": 500
+  },
+  {
+   "block": "Towers",
+   "key": "RAPTOR",
+   "field": "unlockCost",
+   "old": 500
+  },
+  {
+   "block": "Towers",
+   "key": "TOTEM",
+   "field": "unlockCost",
+   "old": 450
+  },
+  {
+   "block": "Towers",
+   "key": "BLIMP",
+   "field": "unlockCost",
+   "old": 400
+  },
+  {
+   "block": "Towers",
+   "key": "METEOR",
+   "field": "unlockCost",
+   "old": 600
+  },
+  {
+   "block": "Towers",
+   "key": "VENT",
+   "field": "unlockCost",
+   "old": 600
+  },
+  {
+   "block": "Towers",
+   "key": "RANGER",
+   "field": "unlockCost",
+   "old": 500
+  },
+  {
+   "block": "Heroes",
+   "key": "PISTOL",
+   "field": "unlockCost",
+   "old": 0
+  },
+  {
+   "block": "Heroes",
+   "key": "RIFLE",
+   "field": "unlockCost",
+   "old": 75
+  },
+  {
+   "block": "Heroes",
+   "key": "SHOTGUN",
+   "field": "unlockCost",
+   "old": 75
+  },
+  {
+   "block": "Heroes",
+   "key": "MEDIC",
+   "field": "unlockCost",
+   "old": 75
+  },
+  {
+   "block": "Difficulties",
+   "key": "EASY",
+   "field": "clearReward",
+   "old": 50
+  },
+  {
+   "block": "Difficulties",
+   "key": "NORMAL",
+   "field": "clearReward",
+   "old": 100
+  },
+  {
+   "block": "Difficulties",
+   "key": "HARD",
+   "field": "clearReward",
+   "old": 150
+  },
+  {
+   "block": "Difficulties",
+   "key": "CHAOS",
+   "field": "clearReward",
+   "old": 200
+  },
+  {
+   "block": "Mastery",
+   "key": 1,
+   "field": "coreCost",
+   "old": 25.0
+  },
+  {
+   "block": "Mastery",
+   "key": 2,
+   "field": "coreCost",
+   "old": 30.0
+  },
+  {
+   "block": "Mastery",
+   "key": 3,
+   "field": "coreCost",
+   "old": 35.0
+  },
+  {
+   "block": "Mastery",
+   "key": 4,
+   "field": "coreCost",
+   "old": 41.0
+  },
+  {
+   "block": "Mastery",
+   "key": 5,
+   "field": "coreCost",
+   "old": 48.0
+  },
+  {
+   "block": "Mastery",
+   "key": 6,
+   "field": "coreCost",
+   "old": 57.0
+  },
+  {
+   "block": "Mastery",
+   "key": 7,
+   "field": "coreCost",
+   "old": 67.0
+  },
+  {
+   "block": "Mastery",
+   "key": 8,
+   "field": "coreCost",
+   "old": 80.0
+  },
+  {
+   "block": "Mastery",
+   "key": 9,
+   "field": "coreCost",
+   "old": 94.0
+  },
+  {
+   "block": "Mastery",
+   "key": 10,
+   "field": "coreCost",
+   "old": 111.0
+  },
+  {
+   "block": "Mastery",
+   "key": 11,
+   "field": "coreCost",
+   "old": 131.0
+  },
+  {
+   "block": "Mastery",
+   "key": 12,
+   "field": "coreCost",
+   "old": 154.0
+  },
+  {
+   "block": "Mastery",
+   "key": 13,
+   "field": "coreCost",
+   "old": 182.0
+  },
+  {
+   "block": "Mastery",
+   "key": 14,
+   "field": "coreCost",
+   "old": 215.0
+  },
+  {
+   "block": "Mastery",
+   "key": 15,
+   "field": "coreCost",
+   "old": 254.0
+  },
+  {
+   "block": "Mastery",
+   "key": 16,
+   "field": "coreCost",
+   "old": 299.0
+  },
+  {
+   "block": "Mastery",
+   "key": 17,
+   "field": "coreCost",
+   "old": 353.0
+  },
+  {
+   "block": "Mastery",
+   "key": 18,
+   "field": "coreCost",
+   "old": 417.0
+  },
+  {
+   "block": "Mastery",
+   "key": 19,
+   "field": "coreCost",
+   "old": 492.0
+  },
+  {
+   "block": "Mastery",
+   "key": 20,
+   "field": "coreCost",
+   "old": 580.0
+  },
+  {
+   "block": "DailyHaul",
+   "key": 1,
+   "field": "amber",
+   "old": 5
+  },
+  {
+   "block": "DailyHaul",
+   "key": 2,
+   "field": "amber",
+   "old": 5
+  },
+  {
+   "block": "DailyHaul",
+   "key": 3,
+   "field": "amber",
+   "old": 10
+  },
+  {
+   "block": "DailyHaul",
+   "key": 4,
+   "field": "amber",
+   "old": 10
+  },
+  {
+   "block": "DailyHaul",
+   "key": 5,
+   "field": "amber",
+   "old": 15
+  },
+  {
+   "block": "DailyHaul",
+   "key": 6,
+   "field": "amber",
+   "old": 15
+  },
+  {
+   "block": "DailyHaul",
+   "key": 7,
+   "field": "amber",
+   "old": 40
+  },
+  {
+   "block": "Bounties",
+   "key": "D_COMPY_SWEEP",
+   "field": "amber",
+   "old": 10
+  },
+  {
+   "block": "Bounties",
+   "key": "D_RAPTOR_CULL",
+   "field": "amber",
+   "old": 10
+  },
+  {
+   "block": "Bounties",
+   "key": "D_BUSY_DAY",
+   "field": "amber",
+   "old": 10
+  },
+  {
+   "block": "Bounties",
+   "key": "D_GEAR_CHECK",
+   "field": "amber",
+   "old": 10
+  },
+  {
+   "block": "Bounties",
+   "key": "D_PITCH_CAMP",
+   "field": "amber",
+   "old": 10
+  },
+  {
+   "block": "Bounties",
+   "key": "D_HEADBUTT_HUNT",
+   "field": "amber",
+   "old": 15
+  },
+  {
+   "block": "Bounties",
+   "key": "D_SHELL_CRACKER",
+   "field": "amber",
+   "old": 15
+  },
+  {
+   "block": "Bounties",
+   "key": "D_CLEAR_SKIES",
+   "field": "amber",
+   "old": 15
+  },
+  {
+   "block": "Bounties",
+   "key": "D_DEEP_TRAIL_15",
+   "field": "amber",
+   "old": 15
+  },
+  {
+   "block": "Bounties",
+   "key": "D_SHARPEN_UP",
+   "field": "amber",
+   "old": 15
+  },
+  {
+   "block": "Bounties",
+   "key": "D_RUN_THEM_DOWN",
+   "field": "amber",
+   "old": 20
+  },
+  {
+   "block": "Bounties",
+   "key": "D_DEEP_TRAIL_25",
+   "field": "amber",
+   "old": 20
+  },
+  {
+   "block": "Bounties",
+   "key": "D_PATCH_JOB",
+   "field": "amber",
+   "old": 20
+  },
+  {
+   "block": "Bounties",
+   "key": "D_CLEAN_SWEEP",
+   "field": "amber",
+   "old": 20
+  },
+  {
+   "block": "Bounties",
+   "key": "W_STAMPEDE",
+   "field": "amber",
+   "old": 40
+  },
+  {
+   "block": "Bounties",
+   "key": "W_GEAR_CHECK",
+   "field": "amber",
+   "old": 40
+  },
+  {
+   "block": "Bounties",
+   "key": "W_DEEP_TRAIL_2",
+   "field": "amber",
+   "old": 40
+  },
+  {
+   "block": "Bounties",
+   "key": "W_CLEAN_SWEEP",
+   "field": "amber",
+   "old": 60
+  },
+  {
+   "block": "Bounties",
+   "key": "W_ROUGH_COUNTRY",
+   "field": "amber",
+   "old": 60
+  },
+  {
+   "block": "Bounties",
+   "key": "W_HORN_BREAKER",
+   "field": "amber",
+   "old": 60
+  },
+  {
+   "block": "Bounties",
+   "key": "W_PATCH_JOB",
+   "field": "amber",
+   "old": 60
+  },
+  {
+   "block": "Bounties",
+   "key": "W_BADLANDS",
+   "field": "amber",
+   "old": 80
+  },
+  {
+   "block": "Bounties",
+   "key": "W_TYRANTS_END",
+   "field": "amber",
+   "old": 80
+  },
+  {
+   "block": "Bounties",
+   "key": "W_DEEP_TRAIL_4",
+   "field": "amber",
+   "old": 80
+  }
+ ]
+}

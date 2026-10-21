@@ -191,7 +191,7 @@ local difficultyCards: { [string]: TextButton } = {}
 for order, key in Config.DifficultyOrder do
 	local level = Config.Difficulties[key]
 	local button = card(difficultyRow, order, 170, 64)
-	button.Text = `{level.display}\n<font size="14" color="#aaa3bb">clear: {level.clearReward} {string.lower(Theme.Currency)}</font>`
+	button.Text = `{level.display}\n<font size="14" color="#aaa3bb">clear: {Theme.formatAmber(level.clearReward)} {string.lower(Theme.Currency)}</font>`
 	button.Activated:Connect(function()
 		lobby:FireServer("difficulty", key)
 	end)
@@ -485,7 +485,7 @@ local function refresh()
 
 	local heroKey = player:GetAttribute("Hero") or ""
 	local hero = Config.Heroes[heroKey]
-	profileLine.Text = `{player:GetAttribute("Cores") or 0} {Theme.Currency}  ·  Hero: {if hero then hero.display else "none yet (H)"}`
+	profileLine.Text = `{Theme.formatAmber(player:GetAttribute("Cores") or 0)} {Theme.Currency}  ·  Hero: {if hero then hero.display else "none yet (H)"}`
 end
 
 readyCard.Activated:Connect(function()

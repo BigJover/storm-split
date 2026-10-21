@@ -46,7 +46,7 @@ test("the tower: 400 cash, 300 Amber, Damage 6, hits air, chains, damageable, sh
 	eq(COIL.display, "Storm Coil")
 	eq(COIL.baseCost, 400)
 	eq(COIL.baseDamage, 6)
-	eq(COIL.unlockCost, 300)
+	eq(COIL.unlockCost, 300 * Config.Tuning.AmberScale)
 	eq(COIL.hitsAir, true)
 	eq(COIL.chains, true)
 	eq(COIL.untouchable, false)

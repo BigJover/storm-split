@@ -39,7 +39,7 @@ end
 test("the Towers row (#340): 600 cash, 500 Amber, 10 x 2.3/s, 1 ranger, range 30, ground only, 200 HP", function()
 	eq(RANGER.display, "Ranger Station")
 	eq(RANGER.baseCost, 600)
-	eq(RANGER.unlockCost, 500)
+	eq(RANGER.unlockCost, 500 * Config.Tuning.AmberScale)
 	eq(RANGER.baseDamage, 10)
 	eq(RANGER.baseRate, 2.3)
 	eq(RANGER.baseTargets, 1)

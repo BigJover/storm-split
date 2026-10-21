@@ -39,7 +39,7 @@ end
 test("the Towers row (#339): 600 cash, 600 Amber, 30 every 12 s on 4, range 20, ground only, 200 HP, near track 8", function()
 	eq(VENT.display, "Volcano Vent")
 	eq(VENT.baseCost, 600)
-	eq(VENT.unlockCost, 600)
+	eq(VENT.unlockCost, 600 * Config.Tuning.AmberScale)
 	eq(VENT.baseDamage, 30)
 	eq(VENT.baseRate, 0.0833)
 	eq(VENT.baseTargets, 4)

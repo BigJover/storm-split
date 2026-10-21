@@ -37,7 +37,7 @@ end
 test("the Towers row (#337): 600 cash, 600 Amber, 40 a meteor every 8 s on 6, splash 8, ground only, 150 HP", function()
 	eq(METEOR.display, "Meteor Beacon")
 	eq(METEOR.baseCost, 600)
-	eq(METEOR.unlockCost, 600)
+	eq(METEOR.unlockCost, 600 * Config.Tuning.AmberScale)
 	eq(METEOR.baseDamage, 40)
 	eq(METEOR.baseRate, 0.125)
 	eq(METEOR.baseTargets, 6)

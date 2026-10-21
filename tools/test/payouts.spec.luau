@@ -6,7 +6,8 @@
 local Config = require(src.shared.Config)
 local Payouts = require(src.shared.Payouts)
 
-local CLEAR = { EASY = 50, NORMAL = 100, HARD = 150, CHAOS = 200 }
+local A = Config.Tuning.AmberScale -- Big Amber (T134): the old numbers x this
+local CLEAR = { EASY = 50 * A, NORMAL = 100 * A, HARD = 150 * A, CHAOS = 200 * A }
 
 test("the difficulties are the four this spec means", function()
 	local n = 0
@@ -38,12 +39,12 @@ test("a solo loss pays nothing", function()
 end)
 
 test("a multiplayer loss pays MultiplayerLossPayout (5)", function()
-	eq(Config.Tuning.MultiplayerLossPayout, 5, "Tuning")
+	eq(Config.Tuning.MultiplayerLossPayout, 5 * A, "Tuning")
 	for key in CLEAR do
-		eq(Payouts.casualPayout(false, 2, key), 5, `2-player loss {key}`)
-		eq(Payouts.casualPayout(false, 10, key), 5, `10-player loss {key}`)
+		eq(Payouts.casualPayout(false, 2, key), 5 * A, `2-player loss {key}`)
+		eq(Payouts.casualPayout(false, 10, key), 5 * A, `10-player loss {key}`)
 	end
-	eq(Payouts.casualPayout(false, 2, "NOPE"), 5, "loss, unknown difficulty")
+	eq(Payouts.casualPayout(false, 2, "NOPE"), 5 * A, "loss, unknown difficulty")
 end)
 
 test("an unknown difficulty on a clear pays nothing", function()
@@ -66,10 +67,10 @@ test("the unlock ladder equals DIRECTION.md", function()
 	}
 	for key, cost in towers do
 		eq(Config.Towers[key].display, names[key], `Towers.{key} name`)
-		eq(Config.Towers[key].unlockCost, cost, `Towers.{key} unlock`)
+		eq(Config.Towers[key].unlockCost, cost * Config.Tuning.AmberScale, `Towers.{key} unlock`)
 	end
 	for key, cost in heroes do
 		eq(Config.Heroes[key].display, names[key], `Heroes.{key} name`)
-		eq(Config.Heroes[key].unlockCost, cost, `Heroes.{key} unlock`)
+		eq(Config.Heroes[key].unlockCost, cost * Config.Tuning.AmberScale, `Heroes.{key} unlock`)
 	end
 end)

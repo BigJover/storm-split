@@ -205,7 +205,7 @@ test("Field Medic base: Lever-Action Carbine, Triage Kit HEAL 40 HP in 20 studs,
 	eq(m.weapon, "Lever-Action Carbine")
 	eq(m.ability, "Triage Kit")
 	eq(m.abilityKind, "HEAL")
-	eq(m.unlockCost, 75, "unlock (Amber)")
+	eq(m.unlockCost, 75 * Config.Tuning.AmberScale, "unlock (Amber)")
 	eq(m.damage, 1, "damage")
 	eq(m.rate, 3, "fire rate")
 	eq(m.fireMode, "semi")

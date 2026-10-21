@@ -483,7 +483,7 @@ function Bounties.doneText(id: string): string?
 	if not def then
 		return nil
 	end
-	return `Bounty ready: {def.title} (claim +{def.amber} {Theme.Currency} at the {Theme.HuntBoard})`
+	return `Bounty ready: {def.title} (claim +{Theme.formatAmber(def.amber)} {Theme.Currency} at the {Theme.HuntBoard})`
 end
 
 return Bounties

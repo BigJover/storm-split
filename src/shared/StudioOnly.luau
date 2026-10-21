@@ -35,7 +35,7 @@ local StudioOnly = {}
 
 StudioOnly.FEATURES = {
 	cash = "K: +cash for your camp (the StudioCash remote, Server/Main)",
-	amber = "J: +100 Amber and saving off for that player (the StudioProgress remote, Server/Progression)",
+	amber = "J: +100K Amber and saving off for that player (the StudioProgress remote, Server/Progression)",
 	towerHit = "L: knock HP off the tower nearest you (the StudioTowerHit remote, Server/Main)",
 	standIns = "Fill with stand-ins: camps with no player in battles (Server/Main lobby, Server/Battle)",
 	startRound = 'Start at round N: the host\'s Lobby ("startround", n), co-op and battles (Server/Main, Server/Battle)',

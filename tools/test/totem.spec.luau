@@ -41,7 +41,7 @@ end
 test("the Towers row (PLAN 9h, T126c #331): 600 cash, 450 Amber, 60 a roar hit, no shots, 24 studs, hits air, 200 HP, sold", function()
 	eq(TOTEM.display, "Bone Totem")
 	eq(TOTEM.baseCost, 600) -- 800 -> 600 (T126c, #331)
-	eq(TOTEM.unlockCost, 450)
+	eq(TOTEM.unlockCost, 450 * Config.Tuning.AmberScale)
 	eq(TOTEM.baseDamage, 60)
 	eq(TOTEM.baseRate, 0)
 	eq(TOTEM.range, 24)

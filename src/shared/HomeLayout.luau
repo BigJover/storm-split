@@ -12,6 +12,7 @@
 local BattleFlow = require(script.Parent.BattleFlow)
 local Config = require(script.Parent.Config)
 local Modes = require(script.Parent.Modes)
+local Theme = require(script.Parent.Theme)
 
 local HomeLayout = {}
 
@@ -85,7 +86,7 @@ end
 	  options row  Casual / Ranked, then Camp Clash's 2 / 3 camps, then (Studio only) "Fill
 	               with stand-ins". The host's choices; everyone else sees them live.
 	  Ranked row   every player's own Ready (#223), never the host's alone. Ready opens an
-	               inline confirm in the same card ("Pay 15 Amber to enter?", DINO_REVIEW
+	               inline confirm in the same card ("Pay 15K Amber to enter?", DINO_REVIEW
 	               Round 16) with an X beside it; pressing the card again pays (the server
 	               takes the Entry fee when Building starts). Under it: the Entry fee and
 	               your balance, then the Practice Hunt line or the refusal, then who's
@@ -129,17 +130,17 @@ function HomeLayout.refusalLine(reason: unknown, fee: number, currency: string):
 		return nil
 	end
 	local line = if type(reason) == "string" and REFUSED[reason] then REFUSED[reason] else REFUSED_OTHER
-	return (string.gsub(string.gsub(line, "{fee}", tostring(fee)), "{cur}", currency))
+	return (string.gsub(string.gsub(line, "{fee}", Theme.amberPrice(fee)), "{cur}", currency))
 end
 
--- The confirm card's text ("Pay 15 Amber to enter?").
+-- The confirm card's text ("Pay 15K Amber to enter?").
 function HomeLayout.confirmText(fee: number, currency: string): string
-	return `Pay {fee} {currency} to enter?`
+	return `Pay {Theme.amberPrice(fee)} {currency} to enter?`
 end
 
 -- The Entry fee line under Ready.
 function HomeLayout.feeLine(fee: number, have: number, currency: string): string
-	return `Entry fee: {fee} {currency}  \u{b7}  You have {math.max(0, math.floor(have))} {currency}`
+	return `Entry fee: {Theme.amberPrice(fee)} {currency}  \u{b7}  You have {Theme.formatAmber(math.max(0, math.floor(have)))} {currency}`
 end
 
 -- Is the picked mode a battle (the battle rows show)?

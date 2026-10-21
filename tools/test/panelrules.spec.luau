@@ -300,6 +300,8 @@ test("T86b Amber line: the total with its breakdown when there's a share; never 
 	eq(PanelRules.amberLine(20, 15), "Amber +20 (5 payout + 15 Amber Hoard)")
 	eq(PanelRules.amberLine(92, 32), "Amber +92 (60 payout + 32 Amber Hoard)")
 	eq(PanelRules.amberLine(5, 0), "Amber +5", "a zero share: no breakdown")
+	eq(PanelRules.amberLine(92400, 32400), "Amber +92.4K (60K payout + 32.4K Amber Hoard)", "short (T134)")
+	eq(PanelRules.amberLine(100000, nil), "Amber +100K", "a Normal clear")
 	eq(PanelRules.amberLine(60, nil), "Amber +60", "casual")
 	eq(PanelRules.amberLine(nil, 10), nil, "nothing paid out")
 	local r = PanelRules.battleResults({ mode = "ROYALE", place = 1, mySide = 1, camps = {}, payout = 20, share = 15, practice = false })

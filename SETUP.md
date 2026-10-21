@@ -90,7 +90,7 @@ Ranked.
      track, difficulty and presses PLAY. The others see the choices live.
    - Click into a window to control that player. Each window has its own mouse and keys.
 4. **Test keys are per player.** Press **J** in *each* player window you want to test with:
-   J gives that player +100 Amber and turns saving **off for that player only** (the
+   J gives that player +100K Amber and turns saving **off for that player only** (the
    others still save, if the place is published). **K** (+1000 cash) and **L** (knock half
    the HP off the tower nearest you) also work from any player window.
 5. **Where the messages are:** every window has its own **Output** (**Window → Output** in
@@ -154,7 +154,7 @@ name → Attributes):
 place → **Version History** → pick the last good version → **Restore**. Saved player data is
 not rolled back by this, only the place.
 
-**Studio test keys never work in the published game:** K (+1000 cash), J (+100 Amber, no
+**Studio test keys never work in the published game:** K (+1000 cash), J (+100K Amber, no
 saving), L (damage the nearest tower) and "Fill with stand-ins" only exist when the server
 runs in Studio (the server asks `Shared/StudioOnly`; a spec proves each is refused live).
 

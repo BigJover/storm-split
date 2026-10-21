@@ -244,7 +244,7 @@ local function load(player: Player)
 	local refunded = Profile.refundEscrow(loaded)
 	profiles[player] = loaded
 	if refunded > 0 then
-		print(`[Progression] Refunded {player.Name}'s unsettled stake of {refunded} {Theme.Currency}`)
+		print(`[Progression] Refunded {player.Name}'s unsettled stake of {Theme.amberExact(refunded)} {Theme.Currency}`)
 		task.spawn(save, player)
 	end
 	-- Player XP that arrived while loading: added once to a save that loaded; dropped
@@ -421,7 +421,7 @@ local function claimHaul(player: Player): (boolean, string, number?)
 	if not ok then
 		return false, "Today's Haul is already claimed"
 	end
-	return true, `+{amber} {Theme.Currency}`, amber
+	return true, `+{Theme.formatAmber(amber)} {Theme.Currency}`, amber
 end
 
 local function claimBounty(player: Player, id: unknown): (boolean, string, number?)
@@ -435,7 +435,7 @@ local function claimBounty(player: Player, id: unknown): (boolean, string, numbe
 	if not ok then
 		return false, "That bounty can't be claimed"
 	end
-	return true, `+{amber} {Theme.Currency}`, amber
+	return true, `+{Theme.formatAmber(amber)} {Theme.Currency}`, amber
 end
 
 local function swapBounty(player: Player, id: unknown): (boolean, string, string?)
@@ -531,7 +531,7 @@ function Progression.endMatch(result: MatchResult)
 		publish(player)
 		task.spawn(save, player)
 	end
-	print(`[DinoHunters] Match over (round {result.roundReached}, {if result.cleared then "cleared" else "lost"}): +{payout} {Theme.Currency} each`)
+	print(`[DinoHunters] Match over (round {result.roundReached}, {if result.cleared then "cleared" else "lost"}): +{Theme.amberExact(payout)} {Theme.Currency} each`)
 end
 
 ------------------------------------------------------------------ ranked battles
@@ -730,7 +730,7 @@ function Progression.init(
 	done.Parent = remotes
 	bountyDone = done
 
-	-- Studio-only test shortcut (J): +100 Amber for this session, so buying
+	-- Studio-only test shortcut (J): +100 Amber x Amber scale (100K) for this session, so buying
 	-- unlocks and mastery can be tried. Never saved, never present in a
 	-- published game.
 	if StudioOnly.allowed(RunService:IsStudio(), "amber") then
@@ -743,7 +743,7 @@ function Progression.init(
 			local profile = profiles[player]
 			if profile then
 				canSave[player] = false -- keep test progress out of the real save
-				profile.cores += 100
+				profile.cores += 100 * Profile.AMBER_SCALE
 				publish(player)
 			end
 		end)

@@ -2709,22 +2709,22 @@ def pacing_report(data):
         unpaced_s = sum(row["length"] for row in table[(d, 1)])
         clear_s = rounds_s + breaks
         clears = unlock / dd["clearReward"] if dd["clearReward"] else math.inf
-        print(f"    {dd['display']:<7} clear {dd['clearReward']:g} Amber, {rounds_s / 60:.1f} min of rounds ({clear_s / 60:.1f} with breaks)"
+        print(f"    {dd['display']:<7} clear {dd['clearReward']:,.0f} Amber, {rounds_s / 60:.1f} min of rounds ({clear_s / 60:.1f} with breaks)"
               f" [{unpaced_s / 60:.1f} / {(unpaced_s + breaks) / 60:.1f}]:"
-              f" unlock all ({unlock:g}) = {clears:.1f} clears = {clears * clear_s / 3600:.1f} h;"
-              f" WATCH {dd['clearReward'] * 3600 / clear_s:.0f} Amber/h [{dd['clearReward'] * 3600 / (unpaced_s + breaks):.0f}]")
+              f" unlock all ({unlock:,.0f}) = {clears:.1f} clears = {clears * clear_s / 3600:.1f} h;"
+              f" WATCH {dd['clearReward'] * 3600 / clear_s:,.0f} Amber/h [{dd['clearReward'] * 3600 / (unpaced_s + breaks):,.0f}]")
         if d == "NORMAL" and clear_s > tuning["CoOpLengthMax"]:
             findings.append(f"LENGTH: Normal solo 40 rounds with breaks {clear_s / 60:.1f} min > Co-op length max {tuning['CoOpLengthMax'] / 60:.1f} min (DECISIONS #250)")
     mastery = data["Mastery"]
     total = sum(m["coreCost"] for m in mastery)
     easy_clear = data["Difficulties"][order[0]]["clearReward"]
-    print(f"    mastery 1-{len(mastery)}: {total:g} Amber per hero = {total / easy_clear:.1f} Easy clears; cost per level (* = gives a reward):")
-    cells = [f"{i}:{m['coreCost']:g}{'*' if m['unlock'] else ''}" for i, m in enumerate(mastery, start=1)]
+    print(f"    mastery 1-{len(mastery)}: {total:,.0f} Amber per hero = {total / easy_clear:.1f} Easy clears; cost per level (* = gives a reward):")
+    cells = [f"{i}:{m['coreCost']:,.0f}{'*' if m['unlock'] else ''}" for i, m in enumerate(mastery, start=1)]
     for i in range(0, len(cells), 10):
         print("      " + " ".join(cells[i:i + 10]))
     dead = [i for i, m in enumerate(mastery, start=1) if not m["unlock"]]
     if dead:
-        findings.append(f"MASTERY: levels {ranges(dead)} give no reward ({sum(mastery[i - 1]['coreCost'] for i in dead):g} of {total:g} Amber; DECISIONS #61: ask Jovan)")
+        findings.append(f"MASTERY: levels {ranges(dead)} give no reward ({sum(mastery[i - 1]['coreCost'] for i in dead):,.0f} of {total:,.0f} Amber; DECISIONS #61: ask Jovan)")
     timer_lines(data, table[("NORMAL", 1)])
     bounty_report(data, easy, unlock, findings)
 
@@ -2944,9 +2944,9 @@ def bounty_report(data, easy, unlock, findings):
             for slot in export_constants.BOUNTY_SLOTS)
     days = len(data["DailyHaul"])
     week = haul * 7 / days + 7 * best["daily"] + best["weekly"]
-    print(f"    the most a week adds: Daily Haul {haul * 7 / days:g} + dailies 7 x {best['daily']:g} + weeklies {best['weekly']:g} = {week:g} Amber"
-          f" = {week / easy_clear:.1f} Easy clears; alone it unlocks everything ({unlock:g}) in {unlock / week:.1f} weeks")
-    print(f"    log-in only (no play): {haul * 7 / days:g} Amber a week = {haul * 7 / days / easy_clear:g} Easy clears")
+    print(f"    the most a week adds: Daily Haul {haul * 7 / days:,.0f} + dailies 7 x {best['daily']:,.0f} + weeklies {best['weekly']:,.0f} = {week:,.0f} Amber"
+          f" = {week / easy_clear:.1f} Easy clears; alone it unlocks everything ({unlock:,.0f}) in {unlock / week:.1f} weeks")
+    print(f"    log-in only (no play): {haul * 7 / days:,.0f} Amber a week = {haul * 7 / days / easy_clear:g} Easy clears")
 
 
 BATTLE_MODES = (("Camp Clash, 2 camps", "TEAM", 2), ("Camp Clash, 3 camps", "TEAM", 3), ("Bone Rush, 10 camps", "ROYALE", 10))

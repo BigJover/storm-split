@@ -287,3 +287,73 @@ test("T90: Progression is the only profile writer and only reaches the save thro
 		end
 	end
 end)
+
+-- Big Amber (PLAN 10a T134, DECISIONS #394): the save migration through the store ---------
+
+-- What Server/Progression does with a load: sanitize in a pcall; only a profile that read
+-- may be written back (canSave), anything else only refreshes or frees the lock.
+local function progressionLoad(f, session: string)
+	local status, raw = SaveStore.load(f.store, KEY, session, f.env)
+	if status ~= "ok" then
+		return status, nil
+	end
+	local okRead, profile = pcall(Profile.sanitize, raw, NOON, first)
+	return status, if okRead then profile else nil
+end
+local function progressionSave(f, session: string, profile, release: boolean?)
+	return SaveStore.write(f.store, KEY, session, f.env, if profile then function()
+		return Profile.toSave(profile)
+	end else nil, release)
+end
+
+test("T134: an old save migrates once through load + save; loading it again changes nothing", function()
+	local S = Profile.AMBER_SCALE
+	local f = fake()
+	f.data[KEY] = { cores = 240, escrow = { matchId = "m", amount = 15 } }
+	local status, profile = progressionLoad(f, "A")
+	eq(status, "ok")
+	eq(profile.cores, 240 * S, "Amber x the scale")
+	eq(profile.escrow.amount, 15 * S, "escrow x the scale")
+	eq(f.data[KEY].cores, 240, "the load alone writes no Amber (only the lock)")
+	eq(f.data[KEY].amberScale, nil, "nor the scale")
+	eq(progressionSave(f, "A", profile, true), "ok")
+	eq(f.data[KEY].cores, 240 * S, "saved in the new scale")
+	eq(f.data[KEY].amberScale, S, "with the scale stamped")
+	local _, again = progressionLoad(f, "B")
+	eq(again.cores, 240 * S, "a second load does not multiply again")
+	eq(again.escrow.amount, 15 * S, "nor the escrow")
+	eq(progressionSave(f, "B", again, true), "ok")
+	local _, third = progressionLoad(f, "C")
+	eq(third.cores, 240 * S, "idempotent across any number of loads and saves")
+end)
+
+test("T134: a failed load never migrates or overwrites the old save", function()
+	local f = fake()
+	f.data[KEY] = { cores = 240 }
+	f.failing = 99
+	local status, profile = progressionLoad(f, "A")
+	eq(status, "failed")
+	eq(profile, nil, "nothing loaded")
+	f.failing = 0
+	-- Progression's failed load plays on a blank, unsaveable profile: only the lock is touched.
+	eq(progressionSave(f, "A", Profile.blank(NOON, first)), "lost", "a session without the lock writes nothing")
+	eq(f.data[KEY].cores, 240, "old Amber untouched")
+	eq(f.data[KEY].amberScale, nil, "not stamped: it still migrates on its first good load")
+	local _, later = progressionLoad(f, "B")
+	eq(later.cores, 240 * Profile.AMBER_SCALE, "the next good load migrates it, once")
+end)
+
+test("T134: a save in a scale this game can't read is a failed read: never migrated, never written over", function()
+	local S = Profile.AMBER_SCALE
+	for _, bad in { S * 10, S + 7, "1000", 0, -1, 0 / 0 } :: { any } do
+		local f = fake()
+		f.data[KEY] = { cores = 5, amberScale = bad }
+		local status, profile = progressionLoad(f, "A")
+		eq(status, "ok", "the store answered")
+		eq(profile, nil, `amberScale {tostring(bad)}: sanitize refuses it`)
+		-- canSave is false: Progression only frees the lock (data = nil).
+		eq(progressionSave(f, "A", nil, true), "ok")
+		eq(f.data[KEY].cores, 5, "Amber untouched")
+		ok(f.data[KEY].amberScale == bad or (bad ~= bad and f.data[KEY].amberScale ~= f.data[KEY].amberScale), "scale untouched")
+	end
+end)

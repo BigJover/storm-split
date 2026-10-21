@@ -4,6 +4,7 @@
 ]]
 
 local Config = require(src.shared.Config)
+local A = Config.Tuning.AmberScale -- Big Amber (T134): the sheet's old numbers x this
 local Bounties = require(src.shared.Bounties)
 
 local DAY = 86400
@@ -80,7 +81,7 @@ test("the sheet is the one this spec means", function()
 	eq(t.WeeklyResetDay, 1, "Weekly reset day")
 	local haul = {}
 	for i, day in Config.DailyHaul do
-		haul[i] = tostring(day.amber)
+		haul[i] = tostring(day.amber / A)
 	end
 	eq(table.concat(haul, ","), "5,5,10,10,15,15,40", "Daily Haul")
 	local daily, weekly = 0, 0
@@ -293,13 +294,13 @@ test("finished but unclaimed bounties are paid at the reset", function()
 	state.weekly[1].progress = 1499 -- one short: nothing
 	state.weekly[2].progress = 1 -- Rough Country done, unclaimed: 60
 	eq(Bounties.refresh(state, SUNDAY + DAY - 1, first), 0, "nothing is paid before the reset")
-	eq(Bounties.refresh(state, MONDAY, first), 70, "daily 10 + weekly 60")
+	eq(Bounties.refresh(state, MONDAY, first), 70 * A, "daily 10 + weekly 60")
 	eq(Bounties.refresh(state, MONDAY, first), 0, "paid once")
 
 	local midweek = board(THURSDAY)
 	midweek.daily[1].progress = 150
 	midweek.weekly[2].progress = 1
-	eq(Bounties.refresh(midweek, THURSDAY + DAY, first), 10, "a daily reset pays only the dailies")
+	eq(Bounties.refresh(midweek, THURSDAY + DAY, first), 10 * A, "a daily reset pays only the dailies")
 	eq(midweek.weekly[2].progress, 1, "the finished weekly waits")
 	ok(Bounties.claim(midweek, "W_ROUGH_COUNTRY"), "and can still be claimed by hand")
 end)
@@ -316,7 +317,7 @@ test("the Daily Haul: once per UTC day, days 1-7, then round again", function()
 		eq(claimed, true, `day {i}: claimed`)
 		eq(day, i % 7 + 1, `day {i}: Haul day`)
 		eq(today, day, `day {i}: haulToday agreed`)
-		table.insert(paid, tostring(amber))
+		table.insert(paid, tostring(amber / A))
 		-- a second claim the same UTC day is refused, right up to 23:59:59
 		eq(Bounties.canClaimHaul(state, THURSDAY + (i + 1) * DAY - 1), false, `day {i}: no second claim`)
 		local again, nothing = Bounties.claimHaul(state, THURSDAY + (i + 1) * DAY - 1)
@@ -333,15 +334,15 @@ test("a missed day pauses the Daily Haul; it never resets (lever 0)", function()
 	local state = board(THURSDAY)
 	local _, amber, day = Bounties.claimHaul(state, THURSDAY)
 	eq(day, 1, "day 1")
-	eq(amber, 5, "day 1 Amber")
+	eq(amber, 5 * A, "day 1 Amber")
 	-- three days away
 	local claimed, amber2, day2 = Bounties.claimHaul(state, THURSDAY + 4 * DAY)
 	eq(claimed, true, "claimed after the gap")
 	eq(day2, 2, "carries on at day 2")
-	eq(amber2, 5, "day 2 Amber")
+	eq(amber2, 5 * A, "day 2 Amber")
 	local _, amber3, day3 = Bounties.claimHaul(state, THURSDAY + 40 * DAY)
 	eq(day3, 3, "and at day 3 after a month")
-	eq(amber3, 10, "day 3 Amber")
+	eq(amber3, 10 * A, "day 3 Amber")
 	-- an unclaimed day isn't paid later: one claim per day, never a catch-up
 	eq(Bounties.canClaimHaul(state, THURSDAY + 40 * DAY + 5), false, "no catch-up claim")
 end)
@@ -529,7 +530,7 @@ test("claim pays a finished bounty once; a double claim is refused", function()
 	Bounties.progress(state, "pop", "HUSK", 150)
 	local claimed, amber = Bounties.claim(state, "D_COMPY_SWEEP")
 	eq(claimed, true, "claimed")
-	eq(amber, 10, "the daily easy reward")
+	eq(amber, 10 * A, "the daily easy reward")
 	eq(state.daily[1].claimed, true, "marked claimed")
 	local again, more = Bounties.claim(state, "D_COMPY_SWEEP")
 	eq(again, false, "double claim refused")
@@ -543,7 +544,7 @@ test("claim pays a finished bounty once; a double claim is refused", function()
 	state.weekly[2].progress = 1
 	local weeklyClaimed, weeklyAmber = Bounties.claim(state, "W_ROUGH_COUNTRY")
 	eq(weeklyClaimed, true, "weekly claimed")
-	eq(weeklyAmber, 60, "the weekly medium reward")
+	eq(weeklyAmber, 60 * A, "the weekly medium reward")
 end)
 
 test("swap: an unfinished bounty for another from its slot", function()

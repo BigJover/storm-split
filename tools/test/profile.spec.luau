@@ -9,10 +9,12 @@ local Config = require(src.shared.Config)
 local Bounties = require(src.shared.Bounties)
 local Profile = require(src.shared.Profile)
 local Trophies = require(src.shared.Trophies)
+local Theme = require(src.shared.Theme)
 
 local DAY = 86400
 local THURSDAY = 1790812800 -- 2026-10-01 00:00:00 UTC
 local NOON = THURSDAY + 12 * 3600
+local S = Profile.AMBER_SCALE -- Big Amber (T134): a save stamped with it is already in today's Amber
 
 local function first(_n: number): number
 	return 1
@@ -29,9 +31,10 @@ local function countOf(id: string): number
 	return Config.Bounties[id].count
 end
 
--- A stored save with a known board rolled for `now`, and 100 Amber.
+-- A stored save (today's Amber scale) with a known board rolled for `now`, and 100 Amber.
 local function saved(now: number)
 	return {
+		amberScale = S,
 		cores = 100,
 		owned = { ["hero:RIFLE"] = true },
 		mastery = { RIFLE = 2 },
@@ -86,7 +89,7 @@ end)
 test("a round-1 save (no rewards field) keeps everything and gets a fresh Hunt Board", function()
 	local old = { cores = 240, owned = { ["hero:RIFLE"] = true, ["tower:NOPE"] = true }, mastery = { RIFLE = 3 }, highestRound = 22 }
 	local profile = Profile.sanitize(old, NOON, first)
-	eq(profile.cores, 240, "Amber kept")
+	eq(profile.cores, 240 * S, "Amber kept (x the Amber scale: an old save, T134)")
 	eq(profile.owned["hero:RIFLE"], true, "unlock kept")
 	eq(profile.owned["tower:NOPE"], nil, "unknown unlock dropped")
 	eq(profile.mastery.RIFLE, 3, "mastery kept")
@@ -123,7 +126,9 @@ end)
 test("negative or wrong-typed Amber never loads as Amber", function()
 	eq(Profile.sanitize({ cores = -5 }, NOON, first).cores, 0, "negative")
 	eq(Profile.sanitize({ cores = "999" }, NOON, first).cores, 0, "a string")
-	eq(Profile.sanitize({ cores = 12.9 }, NOON, first).cores, 12, "floored")
+	eq(Profile.sanitize({ cores = 12.9 }, NOON, first).cores, 12 * S, "floored, then x the scale (an old save)")
+	eq(Profile.sanitize({ amberScale = S, cores = 12.9 }, NOON, first).cores, 12, "floored")
+	eq(Profile.sanitize({ cores = math.huge }, NOON, first).cores, 0, "infinite")
 end)
 
 -- Saving ----------------------------------------------------------------------------
@@ -156,7 +161,7 @@ test("only the saved fields are stored", function()
 		table.insert(keys, k)
 	end
 	table.sort(keys)
-	eq(table.concat(keys, ","), "cores,equipped,highestRound,mastery,owned,playerXp,rewards,trophies", "stored keys (T80: + trophies; bestArena and escrow only when set)")
+	eq(table.concat(keys, ","), "amberScale,cores,equipped,highestRound,mastery,owned,playerXp,rewards,trophies", "stored keys (T80: + trophies; T134: + amberScale; bestArena and escrow only when set)")
 	ok(out.rewards == profile.rewards, "the Hunt Board state itself")
 end)
 
@@ -464,8 +469,8 @@ test("an unknown event or a bad amount changes nothing", function()
 end)
 
 test("the toast names the bounty by its title and Amber", function()
-	eq(Bounties.doneText("D_RAPTOR_CULL"), `Bounty ready: Raptor Cull (claim +{amberOf("D_RAPTOR_CULL")} Amber at the Hunt Board)`, "Raptor Cull")
-	eq(Bounties.doneText("W_TYRANTS_END"), `Bounty ready: Tyrant's End (claim +{amberOf("W_TYRANTS_END")} Amber at the Hunt Board)`, "Tyrant's End")
+	eq(Bounties.doneText("D_RAPTOR_CULL"), `Bounty ready: Raptor Cull (claim +{Theme.formatAmber(amberOf("D_RAPTOR_CULL"))} Amber at the Hunt Board)`, "Raptor Cull")
+	eq(Bounties.doneText("W_TYRANTS_END"), `Bounty ready: Tyrant's End (claim +{Theme.formatAmber(amberOf("W_TYRANTS_END"))} Amber at the Hunt Board)`, "Tyrant's End")
 	eq(Bounties.doneText("NOT_A_BOUNTY"), nil, "unknown id")
 	for _, id in Config.BountyOrder do
 		ok(Bounties.doneText(id) ~= nil, `{id} has a toast`)
@@ -620,7 +625,7 @@ end)
 -- T80: ranked fields, escrow, settle (DECISIONS #216, #218) ----------------------------
 
 test("T80 an older save loads with 0 Trophies, no best arena, no escrow", function()
-	local p = Profile.sanitize({ cores = 40, highestRound = 3 }, NOON, first)
+	local p = Profile.sanitize({ amberScale = S, cores = 40, highestRound = 3 }, NOON, first)
 	eq(p.trophies, 0)
 	eq(p.bestArena, nil)
 	eq(p.escrow, nil)
@@ -628,25 +633,25 @@ test("T80 an older save loads with 0 Trophies, no best arena, no escrow", functi
 end)
 
 test("T80 sanitize: garbage Trophies / arena / escrow are dropped; good ones kept", function()
-	local bad = Profile.sanitize({ trophies = -5, bestArena = "NOPE", escrow = { matchId = 7, amount = 15 } }, NOON, first)
+	local bad = Profile.sanitize({ amberScale = S, trophies = -5, bestArena = "NOPE", escrow = { matchId = 7, amount = 15 } }, NOON, first)
 	eq(bad.trophies, 0)
 	eq(bad.bestArena, nil)
 	eq(bad.escrow, nil)
-	local nan = Profile.sanitize({ trophies = 0 / 0, escrow = { matchId = "m", amount = 0 / 0 } }, NOON, first)
+	local nan = Profile.sanitize({ amberScale = S, trophies = 0 / 0, escrow = { matchId = "m", amount = 0 / 0 } }, NOON, first)
 	eq(nan.trophies, 0)
 	eq(nan.escrow, nil)
-	local good = Profile.sanitize({ trophies = 650.7, escrow = { matchId = "m1", amount = 15 } }, NOON, first)
+	local good = Profile.sanitize({ amberScale = S, trophies = 650.7, escrow = { matchId = "m1", amount = 15 } }, NOON, first)
 	eq(good.trophies, 650)
 	eq(good.bestArena, Config.Arenas[3].key, "arena from the Trophies (600 floor)")
 	eq(good.escrow.matchId, "m1")
 	eq(good.escrow.amount, 15)
 	-- A stored best arena above the Trophies' one is kept (it's never lost).
-	local kept = Profile.sanitize({ trophies = 10, bestArena = Config.Arenas[4].key }, NOON, first)
+	local kept = Profile.sanitize({ amberScale = S, trophies = 10, bestArena = Config.Arenas[4].key }, NOON, first)
 	eq(kept.bestArena, Config.Arenas[4].key)
 end)
 
 test("T80 toSave round-trips Trophies, best arena and escrow", function()
-	local p = Profile.sanitize({ trophies = 320, escrow = { matchId = "m2", amount = 15 } }, NOON, first)
+	local p = Profile.sanitize({ amberScale = S, trophies = 320, escrow = { matchId = "m2", amount = 15 } }, NOON, first)
 	local again = Profile.sanitize(Profile.toSave(p), NOON, first)
 	eq(again.trophies, 320)
 	eq(again.bestArena, Config.Arenas[2].key)
@@ -668,7 +673,7 @@ test("T80 stake: Amber into escrow once; refused while open or unaffordable", fu
 end)
 
 test("T80 refund on load: an unsettled escrow comes back once; a blank (failed) load has none", function()
-	local p = Profile.sanitize({ cores = 5, escrow = { matchId = "crashed", amount = 15 } }, NOON, first)
+	local p = Profile.sanitize({ amberScale = S, cores = 5, escrow = { matchId = "crashed", amount = 15 } }, NOON, first)
 	eq(Profile.refundEscrow(p), 15)
 	eq(p.cores, 20)
 	eq(p.escrow, nil)
@@ -687,20 +692,20 @@ test("T80 a leaver forfeits: the escrow closes with nothing back", function()
 end)
 
 test("T80 settleBattle: pay, Trophies (floor holds) and that match's escrow cleared together", function()
-	local p = Profile.sanitize({ cores = 0, trophies = 310, escrow = { matchId = "m", amount = 15 } }, NOON, first)
+	local p = Profile.sanitize({ amberScale = S, cores = 0, trophies = 310, escrow = { matchId = "m", amount = 15 } }, NOON, first)
 	local change, reached = Profile.settleBattle(p, "m", 80, -30)
 	eq(p.escrow, nil, "settled + cleared in the same step")
 	eq(p.cores, 80)
 	eq(p.trophies, 300, "the arena floor holds")
 	eq(change, -10)
 	eq(#reached, 0)
-	local up = Profile.sanitize({ trophies = 290 }, NOON, first)
+	local up = Profile.sanitize({ amberScale = S, trophies = 290 }, NOON, first)
 	local _, newOnes = Profile.settleBattle(up, nil, 5, 30)
 	eq(up.trophies, 320)
 	eq(#newOnes, 1)
 	eq(newOnes[1], 2)
 	eq(up.bestArena, Config.Arenas[2].key)
-	local other = Profile.sanitize({ escrow = { matchId = "old", amount = 15 } }, NOON, first)
+	local other = Profile.sanitize({ amberScale = S, escrow = { matchId = "old", amount = 15 } }, NOON, first)
 	Profile.settleBattle(other, "new", 0, 0)
 	eq(other.escrow.matchId, "old", "another match's escrow waits for the load refund")
 end)
@@ -736,26 +741,59 @@ test("T82 Trophies.leaverDelta is last place: Camp Clash the loss, Bone Rush las
 end)
 
 test("T82 leaveRanked: escrow forfeited and Trophies dropped together; floor holds", function()
-	local p = Profile.sanitize({ cores = 5, trophies = 500, escrow = { matchId = "m", amount = 15 } }, NOON, first)
+	local p = Profile.sanitize({ amberScale = S, cores = 5, trophies = 500, escrow = { matchId = "m", amount = 15 } }, NOON, first)
 	eq(Profile.leaveRanked(p, "m", "TEAM", 2, false), Config.Tuning.TeamLossTrophies)
 	eq(p.trophies, 500 + Config.Tuning.TeamLossTrophies)
 	eq(p.escrow, nil, "forfeited")
 	eq(p.cores, 5, "nothing back")
-	local floor = Profile.sanitize({ trophies = 310, escrow = { matchId = "m", amount = 15 } }, NOON, first)
+	local floor = Profile.sanitize({ amberScale = S, trophies = 310, escrow = { matchId = "m", amount = 15 } }, NOON, first)
 	eq(Profile.leaveRanked(floor, "m", "ROYALE", 10, false), -10)
 	eq(floor.trophies, 300, "the arena floor holds")
-	local practice = Profile.sanitize({ trophies = 500, escrow = { matchId = "m", amount = 15 } }, NOON, first)
+	local practice = Profile.sanitize({ amberScale = S, trophies = 500, escrow = { matchId = "m", amount = 15 } }, NOON, first)
 	eq(Profile.leaveRanked(practice, "m", "TEAM", 2, true), 0)
 	eq(practice.trophies, 500)
 	eq(practice.escrow, nil, "the Practice stake still stays in the pot")
 end)
 
 test("T82 leaveRanked touches nothing without that match's open escrow", function()
-	local casual = Profile.sanitize({ trophies = 500 }, NOON, first)
+	local casual = Profile.sanitize({ amberScale = S, trophies = 500 }, NOON, first)
 	eq(Profile.leaveRanked(casual, "m", "TEAM", 2, false), 0)
 	eq(casual.trophies, 500, "a casual leaver keeps their Trophies")
-	local other = Profile.sanitize({ trophies = 500, escrow = { matchId = "old", amount = 15 } }, NOON, first)
+	local other = Profile.sanitize({ amberScale = S, trophies = 500, escrow = { matchId = "old", amount = 15 } }, NOON, first)
 	eq(Profile.leaveRanked(other, "new", "TEAM", 2, false), 0)
 	eq(other.trophies, 500)
 	eq(other.escrow.matchId, "old", "another match's escrow waits for the load refund")
+end)
+
+-- Big Amber (PLAN 10a T134, DECISIONS #394) ---------------------------------------------
+
+test("T134: a save from before Big Amber gets Amber and escrow x the scale, once", function()
+	eq(S, Config.Tuning.AmberScale, "the scale is the sheet's")
+	eq(S, 1000, "x1000 (#394)")
+	local old = { cores = 240, escrow = { matchId = "m", amount = 15 }, highestRound = 4, trophies = 30 }
+	local p = Profile.sanitize(old, NOON, first)
+	eq(p.cores, 240 * S, "Amber")
+	eq(p.escrow.amount, 15 * S, "escrow")
+	eq(p.highestRound, 4, "nothing else scales: rounds")
+	eq(p.trophies, 30, "nothing else scales: Trophies")
+	eq(p.amberScale, S, "stamped")
+	local saved = Profile.toSave(p)
+	eq(saved.amberScale, S, "the save stores the scale")
+	local twice = Profile.sanitize(saved, NOON, first)
+	eq(twice.cores, 240 * S, "loading the migrated save again is a no-op")
+	eq(twice.escrow.amount, 15 * S, "escrow too")
+	eq(Profile.sanitize(Profile.toSave(twice), NOON, first).cores, 240 * S, "and again")
+	eq(Profile.sanitize({ amberScale = 1, cores = 3 }, NOON, first).cores, 3 * S, "an explicit old scale 1 migrates too")
+end)
+
+test("T134: a new player starts stamped; a scale it can't convert from makes sanitize throw", function()
+	local blank = Profile.blank(NOON, first)
+	eq(blank.amberScale, S, "blank")
+	eq(Profile.sanitize(nil, NOON, first).amberScale, S, "nothing stored")
+	eq(Profile.amberFactor({}), S, "no field: an old save")
+	eq(Profile.amberFactor({ amberScale = S }), 1, "current")
+	for _, bad in { S * 10, 7, 0, -5, 2.5, "1000", true, 0 / 0, math.huge } :: { any } do
+		local okRead = pcall(Profile.sanitize, { cores = 5, amberScale = bad }, NOON, first)
+		eq(okRead, false, `amberScale {tostring(bad)} is refused`)
+	end
 end)

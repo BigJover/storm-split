@@ -1365,6 +1365,69 @@ def validate_rewards(data, problems, notes):
                  f"{sum(1 for b in bounties.values() if b['pool'] == 'weekly')} weekly in the pools")
 
 
+# Big Amber (PLAN 10a T134, DECISIONS #385/#386/#394): every Amber value in Config, as
+# (block, field). Each must be a whole multiple of Tuning `Amber scale` and at least one
+# scale; an unlock cost may also be 0 (a free tower or hero). A column the one-shot
+# tools/amber_rescale.py missed shows up here as a value below the scale.
+AMBER_TUNING = ("MultiplayerLossPayout", "TypicalAmberPerMatch", "MasteryCostBase", "CompetitiveBuyIn",
+                "TeamWinPayout", "TeamLossPayout", "Royale1stPayout", "Royale2ndPayout",
+                "Royale3rdPayout", "RoyaleRestPayout")
+AMBER_FIELDS = (
+    ("Towers", "unlockCost"), ("Heroes", "unlockCost"), ("Difficulties", "clearReward"),
+    ("Mastery", "coreCost"), ("DailyHaul", "amber"), ("Bounties", "amber"),
+)
+AMBER_FREE_OK = {"unlockCost"}
+
+
+def amber_scale(data):
+    """Tuning `Amber scale` (1 if missing; validate_amber reports that)."""
+    scale = data["Tuning"].get("AmberScale")
+    return int(scale) if isinstance(scale, (int, float)) and scale >= 1 and scale == int(scale) else 1
+
+
+def amber_values(data):
+    """Every Amber value in Config as (where, field, value)."""
+    out = [(f"Tuning {key}", key, data["Tuning"].get(key)) for key in AMBER_TUNING]
+    for block, field in AMBER_FIELDS:
+        rows = data[block]
+        items = rows.items() if isinstance(rows, dict) else enumerate(rows, start=1)
+        for key, row in items:
+            out.append((f"{block} {key} {field}", field, row.get(field)))
+    return out
+
+
+def validate_amber(data, problems, notes):
+    """Every Amber value is a whole multiple of the scale and none below it (#386).
+
+    >>> d = {"Tuning": {"AmberScale": 1000, **{k: 5000 for k in AMBER_TUNING}},
+    ...      "Towers": {"SCOUT": {"unlockCost": 0}}, "Heroes": {"RIFLE": {"unlockCost": 75}},
+    ...      "Difficulties": {"EASY": {"clearReward": 50000}}, "Mastery": [{"coreCost": 25500}],
+    ...      "DailyHaul": [{"amber": 5000}], "Bounties": {}}
+    >>> p = []; validate_amber(d, p, []); p
+    ['Heroes RIFLE unlockCost: 75 Amber is not a whole multiple of the Amber scale 1,000 (>= 1,000; a missed column? #386)', 'Mastery 1 coreCost: 25500 Amber is not a whole multiple of the Amber scale 1,000 (>= 1,000; a missed column? #386)']
+    >>> d["Heroes"]["RIFLE"]["unlockCost"] = 75000; d["Mastery"][0]["coreCost"] = 25000
+    >>> p = []; validate_amber(d, p, []); p
+    []
+    >>> d["Tuning"]["AmberScale"] = None; p = []; validate_amber(d, p, []); len(p)
+    1
+    """
+    raw = data["Tuning"].get("AmberScale")
+    if not isinstance(raw, (int, float)) or raw < 1 or raw != int(raw):
+        problems.append(f"Tuning 'Amber scale' must be a whole number >= 1 (got {raw!r}; PLAN T134, #394)")
+        return
+    scale = int(raw)
+    count = 0
+    for where, field, value in amber_values(data):
+        count += 1
+        if not isinstance(value, (int, float)):
+            problems.append(f"{where}: Amber must be a number (got {value!r})")
+        elif value == 0 and field in AMBER_FREE_OK:
+            continue
+        elif value < scale or value != int(value) or int(value) % scale != 0:
+            problems.append(f"{where}: {value:g} Amber is not a whole multiple of the Amber scale {scale:,} (>= {scale:,}; a missed column? #386)")
+    notes.append(f"amber: {count} values, all multiples of the scale {scale:,}")
+
+
 def perk_worth(hero, perk):
     """Worth % of one perk (DECISIONS #99): 100 x (seconds added / base + radius added /
     base + power added / base + extra marks x extra-mark strength) + burn % per second
@@ -1605,10 +1668,11 @@ def validate_battle(data, problems, notes):
     if missing:
         return
     t = tuning
-    low, high = BUY_IN_RANGE
+    scale = amber_scale(data)
+    low, high = BUY_IN_RANGE[0] * scale, BUY_IN_RANGE[1] * scale  # VISION's 10-20 in today's Amber (#394)
     buy_in = t["CompetitiveBuyIn"]
     if not (low <= buy_in <= high) or buy_in != int(buy_in):
-        problems.append(f"Tuning Competitive buy-in ({buy_in:g}) must be a whole number from {low} to {high} (VISION.md)")
+        problems.append(f"Tuning Competitive buy-in ({buy_in:g}) must be a whole number from {low:,} to {high:,} (VISION.md x Amber scale)")
     splits = [t["RoyalePot1st"], t["RoyalePot2nd"], t["RoyalePot3rd"]]
     if sum(splits) != 100 or any(s < 0 for s in splits):
         problems.append(f"Tuning Royale pot 1st/2nd/3rd ({'/'.join(f'{s:g}' for s in splits)}) must be >= 0 and add to 100")
@@ -2111,6 +2175,7 @@ def validate(data):
         notes.append(f"  only at the lead level does that hero ({best_weapon:.0f}) pass a maxed: " + ", ".join(lead_only))
 
     validate_rewards(data, problems, notes)
+    validate_amber(data, problems, notes)
     validate_perks(data, problems, notes)
     validate_small_perks(data, problems)
     validate_xp(data, problems, notes)

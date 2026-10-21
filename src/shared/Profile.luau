@@ -25,6 +25,13 @@
 	                    (Shared/Stakes, DECISIONS #216). Saved the moment it's taken; the
 	                    match end settles it and clears it in the same save; a leaver
 	                    forfeits it; a shutdown or a later load finds it and refunds it
+	  amberScale        the Amber scale the save's numbers are in (Big Amber, PLAN 10a T134,
+	                    DECISIONS #394). A save without it is from before: sanitize multiplies
+	                    its Amber and escrow by Config.Tuning.AmberScale once and the next save
+	                    stores the new scale, so loading it again changes nothing. A save in a
+	                    scale this game can't convert to (bigger, or not a divisor) makes
+	                    sanitize throw: Progression then treats it as a failed load and never
+	                    writes over it.
 	  lastResetPayout   Amber paid at a reset for bounties done but not claimed, since the
 	                    board was last opened. Session only, never saved.
 	  rewardsVersion    counts Hunt Board changes; the client re-asks when it moves.
@@ -74,6 +81,7 @@ export type Profile = {
 	trophies: number,
 	bestArena: string?,
 	escrow: Stakes.Escrow?,
+	amberScale: number,
 	lastResetPayout: number,
 	rewardsVersion: number,
 }
@@ -124,6 +132,31 @@ function Profile.bestArenaIndex(profile: Profile): number
 	return arenaIndex(profile.bestArena) or 1
 end
 
+-- Big Amber (PLAN 10a T134) ------------------------------------------------------------
+Profile.AMBER_SCALE = Config.Tuning.AmberScale -- what every Amber number in Config is in
+
+-- How much a stored record's Amber must be multiplied by to be in today's scale: a save
+-- with no `amberScale` is from before Big Amber (scale 1). Errors (never guesses) on a
+-- scale it can't convert from, so that save is never loaded or written over.
+function Profile.amberFactor(raw: any): number
+	local stored = if type(raw) == "table" then raw.amberScale else nil
+	if stored == nil then
+		stored = 1
+	end
+	local target = Profile.AMBER_SCALE
+	if
+		type(stored) ~= "number"
+		or stored ~= stored
+		or stored < 1
+		or stored ~= math.floor(stored)
+		or stored > target
+		or target % stored ~= 0
+	then
+		error(`save has Amber scale {tostring(stored)}, which this game (scale {target}) can't convert`)
+	end
+	return target // stored
+end
+
 function Profile.blank(now: number, rng: Bounties.Rng): Profile
 	return {
 		cores = 0,
@@ -137,6 +170,7 @@ function Profile.blank(now: number, rng: Bounties.Rng): Profile
 		trophies = 0,
 		bestArena = nil,
 		escrow = nil,
+		amberScale = Profile.AMBER_SCALE,
 		lastResetPayout = 0,
 		rewardsVersion = 0,
 	}
@@ -149,8 +183,9 @@ function Profile.sanitize(raw: any, now: number, rng: Bounties.Rng): Profile
 	if type(raw) ~= "table" then
 		return profile
 	end
-	if type(raw.cores) == "number" and raw.cores >= 0 then
-		profile.cores = math.floor(raw.cores)
+	local amberX = Profile.amberFactor(raw) -- 1 once migrated; throws on a scale it can't read
+	if type(raw.cores) == "number" and raw.cores >= 0 and raw.cores < math.huge then
+		profile.cores = math.floor(raw.cores) * amberX
 	end
 	if type(raw.highestRound) == "number" and raw.highestRound >= 0 then
 		profile.highestRound = math.floor(raw.highestRound)
@@ -170,7 +205,7 @@ function Profile.sanitize(raw: any, now: number, rng: Bounties.Rng): Profile
 		and raw.escrow.amount > 0
 		and raw.escrow.amount < math.huge
 	then
-		profile.escrow = Stakes.escrow(raw.escrow.matchId, math.floor(raw.escrow.amount))
+		profile.escrow = Stakes.escrow(raw.escrow.matchId, math.floor(raw.escrow.amount) * amberX)
 	end
 	if type(raw.owned) == "table" then
 		for id, value in raw.owned do
@@ -216,6 +251,7 @@ function Profile.toSave(profile: Profile): { [string]: any }
 		trophies = profile.trophies,
 		bestArena = profile.bestArena,
 		escrow = profile.escrow,
+		amberScale = profile.amberScale,
 		rewards = if profile.rewards then profile.rewards else profile.rewardsRaw,
 	}
 end

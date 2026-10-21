@@ -39,7 +39,7 @@ end
 test("the Towers row (T125b #336): 600 cash, 400 Amber, 5 x 2/s, 14 studs, hits air, untouchable, no HP", function()
 	eq(BLIMP.display, "Spotter Blimp")
 	eq(BLIMP.baseCost, 600) -- 750 -> 600 (#336)
-	eq(BLIMP.unlockCost, 400)
+	eq(BLIMP.unlockCost, 400 * Config.Tuning.AmberScale)
 	eq(BLIMP.baseDamage, 5) -- 3 -> 5 (#336)
 	eq(BLIMP.baseRate, 2)
 	eq(BLIMP.baseTargets, 1)

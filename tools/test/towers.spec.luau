@@ -212,7 +212,7 @@ test("Armory: 600, range 15, no attack, 250 HP, 15% resist, unlock 150", functio
 	eq(def.range, 15, "range")
 	eq(def.hitsAir, false, "hits air")
 	eq(def.maxHp, 250, "Max HP")
-	eq(def.unlockCost, 150, "unlock")
+	eq(def.unlockCost, 150 * Config.Tuning.AmberScale, "unlock")
 	local s = base("ARMORY")
 	ok(s.rate <= 0 or s.damage <= 0, "never shoots")
 	eq(s.resistPercent, 15, "resist aura")
@@ -276,7 +276,7 @@ test("Field Hospital: 450, range 15, no attack, 150 HP, heals 3/s, unlock 100", 
 	eq(def.range, 15, "range")
 	eq(def.hitsAir, false, "hits air")
 	eq(def.maxHp, 150, "Max HP")
-	eq(def.unlockCost, 100, "unlock")
+	eq(def.unlockCost, 100 * Config.Tuning.AmberScale, "unlock")
 	local s = base("HOSPITAL")
 	ok(s.rate <= 0 or s.damage <= 0, "never shoots")
 	eq(s.healPerSecond, 3, "heal")
@@ -346,7 +346,7 @@ test("PLAN T68: the round-4 towers are released at 2x Amber and their tuned in-m
 		local def = Config.Towers[key]
 		eq(ShopRules.Unreleased[key], nil, `{key} is sold and unlockable`)
 		eq(table.find(Config.TowerOrder, key) ~= nil, true, `{key} is listed in the shop order`)
-		eq(def.unlockCost, w[1], `{key} unlock Amber`)
+		eq(def.unlockCost, w[1] * Config.Tuning.AmberScale, `{key} unlock Amber`)
 		eq(def.baseCost, w[2], `{key} in-match cost`)
 	end
 end)
@@ -359,7 +359,7 @@ test("PLAN T124d: the 9g towers are released at their Amber prices", function()
 		local def = Config.Towers[key]
 		eq(ShopRules.Unreleased[key], nil, `{key} is sold and unlockable`)
 		eq(table.find(Config.TowerOrder, key) ~= nil, true, `{key} is listed in the shop order`)
-		eq(def.unlockCost, w[1], `{key} unlock Amber`)
+		eq(def.unlockCost, w[1] * Config.Tuning.AmberScale, `{key} unlock Amber`)
 		eq(def.baseCost, w[2], `{key} in-match cost`)
 	end
 end)
@@ -369,7 +369,7 @@ test("PLAN T126c: the Bone Totem is released at its Amber price (#331)", functio
 	local def = Config.Towers.TOTEM
 	eq(ShopRules.Unreleased.TOTEM, nil, "TOTEM is sold and unlockable")
 	eq(table.find(Config.TowerOrder, "TOTEM") ~= nil, true, "TOTEM is listed in the shop order")
-	eq(def.unlockCost, 450, "TOTEM unlock Amber (never moves, #313)")
+	eq(def.unlockCost, 450 * Config.Tuning.AmberScale, "TOTEM unlock Amber (never moves, #313)")
 	eq(def.baseCost, 600, "TOTEM in-match cost (#331)")
 end)
 
@@ -378,7 +378,7 @@ test("PLAN T125b: the Spotter Blimp is released at its Amber price (#336)", func
 	local def = Config.Towers.BLIMP
 	eq(ShopRules.Unreleased.BLIMP, nil, "BLIMP is sold and unlockable")
 	eq(table.find(Config.TowerOrder, "BLIMP") ~= nil, true, "BLIMP is listed in the shop order")
-	eq(def.unlockCost, 400, "BLIMP unlock Amber (never moves, #313)")
+	eq(def.unlockCost, 400 * Config.Tuning.AmberScale, "BLIMP unlock Amber (never moves, #313)")
 	eq(def.baseCost, 600, "BLIMP in-match cost (#336)")
 end)
 
@@ -387,7 +387,7 @@ test("PLAN T128b/T128c: the Volcano Vent and the Meteor Beacon are released at t
 	local def = Config.Towers.VENT
 	eq(ShopRules.Unreleased.VENT, nil, "VENT is sold and unlockable")
 	eq(table.find(Config.TowerOrder, "VENT") ~= nil, true, "VENT is listed in the shop order")
-	eq(def.unlockCost, 600, "VENT unlock Amber (never moves, #313)")
+	eq(def.unlockCost, 600 * Config.Tuning.AmberScale, "VENT unlock Amber (never moves, #313)")
 	eq(def.baseCost, 600, "VENT in-match cost (#339)")
 	eq(ShopRules.Unreleased.METEOR, nil, "METEOR is sold and unlockable (T128c, #345-#347)")
 	eq(table.find(Config.TowerOrder, "METEOR") ~= nil, true, "METEOR is listed in the shop order")
@@ -399,7 +399,7 @@ test("PLAN T130b: the Ranger Station is released at its Amber price (#340)", fun
 	local def = Config.Towers.RANGER
 	eq(ShopRules.Unreleased.RANGER, nil, "RANGER is sold and unlockable")
 	eq(table.find(Config.TowerOrder, "RANGER") ~= nil, true, "RANGER is listed in the shop order")
-	eq(def.unlockCost, 500, "RANGER unlock Amber (never moves, #313)")
+	eq(def.unlockCost, 500 * Config.Tuning.AmberScale, "RANGER unlock Amber (never moves, #313)")
 	eq(def.baseCost, 600, "RANGER in-match cost (#340)")
 	eq(next(ShopRules.Unreleased), nil, "all seven 4x towers are out (9g-9j)")
 end)

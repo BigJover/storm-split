@@ -308,9 +308,9 @@ function PanelRules.amberLine(total: number?, share: number?): string?
 	local whole = math.floor(total)
 	local hoard = math.floor(share or 0)
 	if hoard <= 0 then
-		return `{Theme.Currency} +{whole}`
+		return `{Theme.Currency} +{Theme.formatAmber(whole)}`
 	end
-	return `{Theme.Currency} +{whole} ({whole - hoard} payout + {hoard} {Theme.Currency} Hoard)`
+	return `{Theme.Currency} +{Theme.formatAmber(whole)} ({Theme.formatAmber(whole - hoard)} payout + {Theme.formatAmber(hoard)} {Theme.Currency} Hoard)`
 end
 
 export type ResultsOut = { title: string, won: boolean, placements: { { text: string, mine: boolean } }, lines: { string } }
