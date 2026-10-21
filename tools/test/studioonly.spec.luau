@@ -108,6 +108,8 @@ test("T89 grep: every IsStudio() on the server goes through StudioOnly (or is th
 					or string.find(line, "StudioOnly.charge(RunService:IsStudio(),", 1, true) -- PLAN 9h
 				-- "Studio or unpublished" only ever turns live features OFF (Practice, This-server boards)
 				local notLive = string.find(line, "RunService:IsStudio() or game.PlaceId == 0", 1, true)
+					-- T143: the store is open only live and published (Shared/Store.isOpen); Studio = closed
+					or string.find(line, "StoreRules.isOpen(RunService:IsStudio(), game.PlaceId)", 1, true)
 				ok(viaHelper or notLive, `{name}:{i} uses IsStudio() without Shared/StudioOnly`)
 				for feature in string.gmatch(line, 'StudioOnly%.allowed%(RunService:IsStudio%(%), "(%w+)"%)') do
 					ok(StudioOnly.FEATURES[feature] ~= nil, `{name}:{i} feature "{feature}" is listed`)

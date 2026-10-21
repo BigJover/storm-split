@@ -43,6 +43,9 @@
 	                    pet): the player plays on without pets, every pet call says no, and
 	                    a save writes the stored value back untouched (`petsRaw`), so no pet
 	                    is ever lost to a bad read.
+	  store             the Robux store's receipt ledger and paid Hatch now credits
+	                    (Shared/Store, PLAN 10e T143): a PurchaseId is granted once. An older
+	                    save has none.
 	  skins             hunter / weapon skins and tower sets owned and worn, and the Campsite
 	                    Display Towers (Shared/Skins, PLAN 10e T142). An older save starts
 	                    with none. Owned keys the sheet no longer lists are kept as stored.
@@ -85,6 +88,7 @@ local Trophies = require(script.Parent.Trophies)
 local Training = require(script.Parent.Training)
 local Pets = require(script.Parent.Pets)
 local Skins = require(script.Parent.Skins)
+local Store = require(script.Parent.Store)
 
 export type Profile = {
 	cores: number,
@@ -103,6 +107,7 @@ export type Profile = {
 	pets: Pets.State?,
 	petsRaw: any,
 	skins: Skins.State,
+	store: Store.State,
 	lastResetPayout: number,
 	rewardsVersion: number,
 }
@@ -196,6 +201,7 @@ function Profile.blank(now: number, rng: Bounties.Rng): Profile
 		pets = Pets.blank(),
 		petsRaw = nil,
 		skins = Skins.blank(),
+		store = Store.blank(),
 		lastResetPayout = 0,
 		rewardsVersion = 0,
 	}
@@ -218,7 +224,7 @@ function Profile.sanitize(raw: any, now: number, rng: Bounties.Rng): Profile
 	profile.playerXp = PlayerLevel.whole(raw.playerXp) -- missing (an older save) or garbage: 0
 	-- Ranked (PLAN T80): older saves have none of these and load as 0 / nil.
 	profile.trophies = PlayerLevel.whole(raw.trophies)
-	profile.training = Training.sanitize(raw.training) -- T139: missing (an older save) = level 0
+	profile.training = Training.sanitize(raw.training, Store.maxTrainingSlots()) -- T139: missing (an older save) = level 0
 	-- Pets (T140) are read on their own: anything unreadable is kept as stored, never lost.
 	local petsOk, pets = pcall(Pets.sanitize, raw.pets, now)
 	if petsOk then
@@ -232,6 +238,7 @@ function Profile.sanitize(raw: any, now: number, rng: Bounties.Rng): Profile
 	-- anything else is dropped.
 	profile.equipped = Cosmetics.clean(raw.equipped, PlayerLevel.level(profile.playerXp), Profile.bestArenaIndex(profile))
 	profile.skins = Skins.sanitize(raw.skins, PlayerLevel.level(profile.playerXp)) -- T142: none in an older save
+	profile.store = Store.sanitize(raw.store) -- T143: none in an older save
 	if
 		type(raw.escrow) == "table"
 		and type(raw.escrow.matchId) == "string"
@@ -290,6 +297,7 @@ function Profile.toSave(profile: Profile): { [string]: any }
 		training = Training.toSave(profile.training),
 		pets = if profile.pets then Pets.toSave(profile.pets) else profile.petsRaw,
 		skins = Skins.toSave(profile.skins),
+		store = Store.toSave(profile.store),
 		rewards = if profile.rewards then profile.rewards else profile.rewardsRaw,
 	}
 end

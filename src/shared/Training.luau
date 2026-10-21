@@ -111,7 +111,9 @@ local function finiteNumber(value: unknown): number?
 	return value
 end
 
-function Training.sanitize(raw: unknown): State
+-- `slots`: the most stats a save may keep training (default the sheet's; Profile passes
+-- the most any pass allows, T143, and Progression trims to the player's own count).
+function Training.sanitize(raw: unknown, slots: number?): State
 	local state = Training.blank()
 	if type(raw) ~= "table" then
 		return state
@@ -128,9 +130,9 @@ function Training.sanitize(raw: unknown): State
 		end
 	end
 	if type(t.active) == "table" then
-		local slots = math.max(1, math.floor(Config.Tuning.TrainingSlots))
+		local keep = math.max(1, math.floor(slots or Config.Tuning.TrainingSlots))
 		for _, stat in t.active do
-			if isStat(stat) and not table.find(state.active, stat) and not maxed(state, stat) and #state.active < slots then
+			if isStat(stat) and not table.find(state.active, stat) and not maxed(state, stat) and #state.active < keep then
 				table.insert(state.active, stat)
 			end
 		end
@@ -192,13 +194,16 @@ local function add(state: State, seconds: number, at: unknown, fullRate: boolean
 	return leveled
 end
 
-function Training.tick(state: State, dt: unknown, at: unknown, tickLength: number): { string }
+-- `speed`: the 2× Training pass (T143, Store.passEffects; 1 without it). It multiplies the
+-- clamped tick, so a hitch still can't over-credit, and the caps are the same for everyone.
+function Training.tick(state: State, dt: unknown, at: unknown, tickLength: number, speed: number?): { string }
 	local seconds = finiteNumber(dt) or 0
 	seconds = math.clamp(seconds, 0, math.max(0, tickLength))
 	if seconds <= 0 then
 		return {}
 	end
-	return add(state, seconds, at, false)
+	local x = finiteNumber(speed) or 1
+	return add(state, seconds * math.clamp(x, 1, 4), at, false)
 end
 
 function Training.credit(state: State, seconds: unknown): { string }

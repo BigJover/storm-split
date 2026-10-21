@@ -89,6 +89,7 @@ local Training = require(Shared:WaitForChild("Training"))
 local HunterKit = require(Shared:WaitForChild("HunterKit"))
 local Pets = require(Shared:WaitForChild("Pets"))
 local Skins = require(Shared:WaitForChild("Skins"))
+local StoreRules = require(Shared:WaitForChild("Store"))
 
 local Progression = {}
 
@@ -118,6 +119,10 @@ local env: SaveStore.Env = {
 		warn(text)
 	end,
 }
+local passEffects: { [Player]: StoreRules.Effects } = {} -- Game Pass effects (Server/Store, T143)
+local function effectsOf(player: Player): StoreRules.Effects
+	return passEffects[player] or StoreRules.passEffects({})
+end
 local saveHintGiven = false -- the developer's "publish the place" hint: one warn per session
 local closing = false -- the server is shutting down (BindToClose): open stakes are refunded
 do
@@ -238,6 +243,11 @@ local function publish(player: Player)
 	player:SetAttribute("RewardsClaimable", Profile.claimable(profile, os.time()))
 	player:SetAttribute("RewardsVersion", profile.rewardsVersion)
 	publishTraining(player)
+	-- Game Pass effects (T143): the client shows slots and incubators from these.
+	local effects = effectsOf(player)
+	player:SetAttribute("TrainRate", effects.trainRate)
+	player:SetAttribute("TrainSlots", effects.trainSlots)
+	player:SetAttribute("Incubators", effects.incubators)
 	-- Pets (T140/T141): the pet taken along (name, kind, rarity) and a change counter the
 	-- Hatchery Hut re-asks on. No pets readable = none.
 	local along = profile.pets and Pets.along(profile.pets)
@@ -250,7 +260,7 @@ end
 
 ------------------------------------------------------------------ load / save
 
-local save: (Player, boolean?) -> () -- below: a load that settles held XP saves it
+local save: (Player, boolean?) -> boolean -- below: a load that settles held XP saves it
 
 local function load(player: Player)
 	local profile: Profile? = nil
@@ -334,10 +344,11 @@ end
 -- Write this player's save (or, with `release`, the last write: it frees the lock).
 -- Only a save that loaded is ever written (canSave); one that didn't only frees its lock.
 -- If another server took the lock, nothing is written and this session stops saving.
-save = function(player: Player, release: boolean?)
+-- Returns true only when this profile was written (the store receipt rule waits on it).
+save = function(player: Player, release: boolean?): boolean
 	local session = sessions[player]
 	if not store or not session or not locked[player] then
-		return
+		return false
 	end
 	local profile = profiles[player]
 	local data = if profile and canSave[player]
@@ -362,6 +373,7 @@ save = function(player: Player, release: boolean?)
 	elseif release then
 		locked[player] = nil
 	end
+	return status == "ok" and data ~= nil
 end
 
 ------------------------------------------------------------------ mastery
@@ -818,6 +830,82 @@ local function skinAction(player: Player, action: unknown, a: unknown, b: unknow
 	return ok, message
 end
 
+------------------------------------------------------------------ store (T143)
+
+-- Game Pass effects for this player (Server/Store after UserOwnsGamePassAsync or a purchase).
+function Progression.setPasses(player: Player, owned: { [string]: boolean })
+	passEffects[player] = StoreRules.passEffects(owned)
+	publish(player)
+end
+
+-- The earliest egg of `egg` still warming, or nil.
+local function warmingSlot(profile: Profile, egg: string, now: number): number?
+	if not profile.pets then
+		return nil
+	end
+	for slot, e in profile.pets.eggs do
+		if e.egg == egg and e.readyAt > now then
+			return slot
+		end
+	end
+	return nil
+end
+
+function Progression.hasWarmingEgg(player: Player, egg: string): boolean
+	local profile = profiles[player]
+	return profile ~= nil and warmingSlot(profile, egg, os.time()) ~= nil
+end
+
+-- What the store shows this player besides the catalogue: paid Hatch now credits.
+function Progression.storeView(player: Player): { [string]: number }
+	local profile = profiles[player]
+	return if profile then table.clone(profile.store.hatchCredits) else {}
+end
+
+-- A Developer Product receipt (Server/Store's ProcessReceipt). Only a profile that loaded
+-- and may be saved gets a grant; the PurchaseId is granted once; PurchaseGranted only
+-- after the save went through (Shared/Store.processReceipt).
+function Progression.storeReceipt(player: Player, purchaseId: string, key: string?): string
+	local profile = profiles[player]
+	local row = StoreRules.row(key)
+	local decision = StoreRules.processReceipt(
+		profile ~= nil and canSave[player] == true,
+		profile and profile.store,
+		purchaseId,
+		if row and row.type == "product" then key else nil,
+		function(): boolean
+			local p = profile :: Profile
+			local r = row :: StoreRules.Row
+			if r.grant == "amber" and r.amount then
+				p.cores += r.amount
+			elseif r.grant == "hatch" and r.items[1] then
+				local egg = r.items[1]
+				local slot = warmingSlot(p, egg, os.time())
+				if slot and p.pets then
+					Pets.warm(p.pets, slot, os.time())
+				else
+					p.store.hatchCredits[egg] = (p.store.hatchCredits[egg] or 0) + 1
+				end
+			elseif r.grant == "skins" then
+				Skins.grant(p.skins, r.items)
+			else
+				return false
+			end
+			return true
+		end,
+		function(): boolean
+			return save(player)
+		end
+	)
+	if decision == StoreRules.GRANTED then
+		publish(player)
+		if onLookChanged then
+			onLookChanged(player)
+		end
+	end
+	return decision
+end
+
 ------------------------------------------------------------------ public
 
 ------------------------------------------------------------------ training (T139)
@@ -831,7 +919,11 @@ do
 		if not profile or #profile.training.active == 0 then
 			return {}
 		end
-		local leveled = Training.tick(profile.training, dt, at, tickLength)
+		local effects = effectsOf(player)
+		while #profile.training.active > effects.trainSlots do
+			table.remove(profile.training.active, 1) -- more than this player's slots (T143)
+		end
+		local leveled = Training.tick(profile.training, dt, at, tickLength, effects.trainRate)
 		dirty[player] = true
 		publishTraining(player)
 		return leveled
@@ -842,7 +934,7 @@ do
 		if not profile then
 			return false, "Still loading your progress"
 		end
-		local ok, message = Training.start(profile.training, stat)
+		local ok, message = Training.start(profile.training, stat, effectsOf(player).trainSlots)
 		if ok then
 			dirty[player] = true
 			publishTraining(player)
@@ -970,7 +1062,7 @@ do
 		local now = os.time()
 		local ok, message
 		if action == "buy" then
-			local price, refusal = Pets.canBuy(state, a)
+			local price, refusal = Pets.canBuy(state, a, effectsOf(player).incubators)
 			if not price then
 				return false, refusal
 			end
@@ -979,6 +1071,16 @@ do
 			end
 			profile.cores -= price
 			ok, message = Pets.buy(state, a, now)
+			-- A paid Hatch now that found no egg of this kind (T143) hatches this one.
+			local credits = profile.store.hatchCredits
+			if ok and type(a) == "string" and (credits[a] or 0) > 0 then
+				credits[a] -= 1
+				if credits[a] <= 0 then
+					credits[a] = nil
+				end
+				Pets.warm(state, #state.eggs, now)
+				message = "Your paid Hatch now was used: it's ready!"
+			end
 		elseif action == "warm" then
 			local price = Pets.warmPrice(state, a, now)
 			if not price then
@@ -1141,6 +1243,7 @@ function Progression.init(
 		profiles[player] = nil
 		canSave[player] = nil
 		held[player] = nil
+		passEffects[player] = nil
 		sessions[player], locked[player], leaving[player] = nil, nil, nil
 	end)
 	-- Keep each held lock fresh (well inside Profile.LOCK_STALE), so only a crashed

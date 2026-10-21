@@ -8,6 +8,10 @@
 	  Weapon skins   the same, per gun
 	  Tower sets     each tower you own: which set it wears (a button cycles your sets)
 	  Campsite       your three Display Tower spots: which owned tower stands on each
+	  Store (T143)   Amber · Passes · Hatchery · Skins: Robux items (Shared/Store). Only in a
+	                 published game; otherwise every store tab says "The store opens when
+	                 the game is published" and nothing can be bought. Buy asks the server,
+	                 which checks and shows Roblox's own purchase prompt.
 
 	No-trap rule: X Close (Modal: frees the mouse) and E close it, it closes when you leave
 	camp, the prompt only shows at the counter, and the panel sits under the CoreGui band
@@ -29,6 +33,8 @@ local SafeArea = require(Shared:WaitForChild("SafeArea"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local request = remotes:WaitForChild("ProgressRequest") :: RemoteFunction
+local storeRequest = remotes:WaitForChild("StoreRequest") :: RemoteFunction
+local StoreRules = require(Shared:WaitForChild("Store"))
 
 local player = Players.LocalPlayer
 
@@ -157,9 +163,13 @@ do
 	l.Parent = tabsRow
 end
 
+local storeRow = tabsRow:Clone()
+storeRow.Position = UDim2.fromOffset(10, 74)
+storeRow.Parent = panel
+
 local list = Instance.new("ScrollingFrame")
-list.Position = UDim2.fromOffset(10, 78)
-list.Size = UDim2.new(1, -20, 1, -88)
+list.Position = UDim2.fromOffset(10, 108)
+list.Size = UDim2.new(1, -20, 1, -118)
 list.BackgroundTransparency = 1
 list.BorderSizePixel = 0
 list.ScrollBarThickness = 6
@@ -178,6 +188,9 @@ local tab = "hunter"
 local order = 0
 
 local TABS = { { "hunter", "Hunter skins" }, { "weapon", "Weapon skins" }, { "tower", "Tower sets" }, { "campsite", "Campsite" } }
+local STORE_TABS = { { "store:Amber", "Amber" }, { "store:Passes", "Passes" }, { "store:Hatchery", "Hatchery" }, { "store:Skins", "Skins" } }
+type StoreView = { open: boolean, restricted: boolean, passes: { [string]: boolean }, credits: { [string]: number } }
+local storeView: StoreView? = nil
 local tabButtons: { [string]: TextButton } = {}
 
 local function clear()
@@ -284,11 +297,67 @@ local function ownsTower(key: string): boolean
 	return player:GetAttribute(`OwnsTower_{key}`) == true
 end
 
+-- The Robux store tabs (T143). Nothing here grants anything: Buy asks the server, which
+-- shows Roblox's purchase prompt; the grant comes with the receipt (Server/Store).
+local function renderStore(tabName: string)
+	local sv = storeView
+	if not sv or not sv.open then
+		heading(StoreRules.CLOSED_LINE)
+		return
+	end
+	local any = false
+	for _, key in StoreRules.order() do
+		local row = StoreRules.row(key)
+		if row and row.tab == tabName and StoreRules.shown(key, sv.restricted) then
+			any = true
+			local f = card(52)
+			local name = textLabel(f, 15, Enum.Font.GothamBold, TEXT)
+			name.Position = UDim2.fromOffset(10, 4)
+			name.Size = UDim2.new(1, -130, 0, 20)
+			local egg = if row.grant == "hatch" then (Config :: any).Eggs[row.items[1]] else nil
+			name.Text = if egg then `{row.display} — {egg.display}` else row.display
+			local line = textLabel(f, 12, Enum.Font.Gotham, TEXT_DIM)
+			line.Position = UDim2.fromOffset(10, 24)
+			line.Size = UDim2.new(1, -130, 0, 26)
+			line.Text = StoreRules.cardLine(key, function(item)
+				local r = Skins.row(item)
+				return r and r.display
+			end, function(item)
+				local r = Skins.row(item)
+				return r and r.price
+			end)
+			local mine = row.type == "pass" and sv.passes[key] == true
+			local b = button(f, if mine then "Yours" else `Buy {StoreRules.priceLabel(key)}`, if mine then GREY else AMBER, 110)
+			b.AnchorPoint = Vector2.new(1, 0.5)
+			b.Position = UDim2.new(1, -8, 0.5, 0)
+			if not mine then
+				b.Activated:Connect(function()
+					local ok, message = storeRequest:InvokeServer("buy", key)
+					if not ok then
+						say(tostring(message))
+					end
+				end)
+			end
+		end
+	end
+	if not any then
+		heading("Nothing here yet")
+	end
+	for egg, n in sv.credits do
+		local def = (Config :: any).Eggs[egg]
+		heading(`Paid Hatch now waiting: {n} × {if def then def.display else egg} (used on your next one)`)
+	end
+end
+
 local function render()
 	clear()
 	for key, b in tabButtons do
 		b.BackgroundColor3 = if key == tab then AMBER else GREY
 		b.TextColor3 = if key == tab then PANEL else TEXT
+	end
+	if string.sub(tab, 1, 6) == "store:" then
+		renderStore(string.sub(tab, 7))
+		return
 	end
 	local v = view
 	if not v then
@@ -380,8 +449,23 @@ for _, t in TABS do
 		render()
 	end)
 end
+do
+	local label = textLabel(storeRow, 13, Enum.Font.GothamBold, AMBER)
+	label.Size = UDim2.fromOffset(44, 26)
+	label.Text = "Store"
+	for _, t in STORE_TABS do
+		local b = button(storeRow, t[2], GREY, 88)
+		tabButtons[t[1]] = b
+		b.Activated:Connect(function()
+			tab = t[1]
+			render()
+		end)
+	end
+end
 
 load = function()
+	local storeOk, storeResult = storeRequest:InvokeServer("view")
+	storeView = if storeOk and type(storeResult) == "table" then storeResult :: StoreView else nil
 	local ok, result = request:InvokeServer("skins")
 	if ok and type(result) == "table" then
 		view = result :: View

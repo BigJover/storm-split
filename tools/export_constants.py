@@ -2090,6 +2090,116 @@ def validate_skins(data, problems, notes):
     notes.append(f"skins: {len(data['SkinOrder'])} ({sold} in the Amber shop, {ladder} on the level ladder; blank = not yet)")
 
 
+STORE_TABS = ("Amber", "Passes", "Hatchery", "Skins")
+STORE_GRANTS = {"amber": "product", "hatch": "product", "skins": "product",
+                "trainRate": "pass", "trainSlots": "pass", "incubators": "pass"}
+
+
+def read_store(ws):
+    """Store: Key, Tab, Type, Item, Robux, Id, Grant, Amount, Items, Random, Line (PLAN 10e T143).
+    Blank Id = hidden (Jovan pastes ids after publishing); blank Amount / Items = hidden."""
+    heads = ("Key", "Tab", "Type", "Item", "Robux", "Id", "Grant", "Amount", "Items", "Random", "Line")
+    cols = _headed(ws, heads, "PLAN 10e T143")
+    store, order, r = {}, [], 5
+    while v(ws, r, cols["Key"]):
+        key = str(v(ws, r, cols["Key"])).strip().upper()
+        if key in store:
+            sys.exit(f"Store row {r}: {key} is listed twice")
+        items = v(ws, r, cols["Items"])
+        store[key] = {"tab": str(v(ws, r, cols["Tab"]) or "").strip(),
+                      "type": str(v(ws, r, cols["Type"]) or "").strip().lower(),
+                      "display": str(v(ws, r, cols["Item"]) or "").strip(),
+                      "robux": num(v(ws, r, cols["Robux"]), None),
+                      "id": num(v(ws, r, cols["Id"]), None),
+                      "grant": str(v(ws, r, cols["Grant"]) or "").strip(),
+                      "amount": num(v(ws, r, cols["Amount"]), None),
+                      "items": [x.strip().upper() for x in str(items).split(",") if x.strip()] if items not in (None, "") else [],
+                      "random": yes(v(ws, r, cols["Random"])),
+                      "line": str(v(ws, r, cols["Line"]) or "").strip()}
+        order.append(key)
+        r += 1
+    return store, order
+
+
+def store_ready(row):
+    """Everything a store row needs before it can show (the id aside)."""
+    g = row["grant"]
+    if row["robux"] is None:
+        return False
+    if g in ("amber", "trainRate", "trainSlots", "incubators"):
+        return row["amount"] is not None
+    if g in ("hatch", "skins"):
+        return len(row["items"]) > 0
+    return False
+
+
+def validate_store(data, problems, notes):
+    """The store (#387-#389): known tab, type and grant (a pass only grants pass effects,
+    a product only Amber / a hatch / skins); whole Robux; a whole positive id, unique per type;
+    an id only on a row that is otherwise complete (so a pasted id never shows a half row);
+    Amber amounts multiples of the scale; a trainRate pass above 1; hatch items are eggs,
+    skins items are skins; a hatch row is marked Random (paid random items, #388).
+
+    >>> d = {"Tuning": {"AmberScale": 1000}, "Eggs": {"MUD": {}}, "Skins": {"MIDNIGHT": {}},
+    ...      "Store": {"A": {"tab": "Amber", "type": "product", "display": "Amber Sack", "robux": 49, "id": None,
+    ...      "grant": "amber", "amount": None, "items": [], "random": False, "line": ""}}, "StoreOrder": ["A"]}
+    >>> p = []; validate_store(d, p, []); p
+    []
+    >>> d["Store"]["A"]["id"] = 123; p = []; validate_store(d, p, []); p
+    ['Store A: has an id but is not complete yet (Robux, Amount or Items blank): it would show half a product']
+    >>> d["Store"]["A"]["amount"] = 2500; p = []; validate_store(d, p, []); p
+    ['Store A: 2500 Amber is not a whole multiple of the Amber scale 1,000 (#386)']
+    >>> d["Store"]["A"]["amount"] = 50000; d["Store"]["A"]["type"] = "pass"; p = []; validate_store(d, p, []); p
+    ['Store A: grant amber is a product, not a pass']
+    >>> d["Store"]["A"].update(type="product", grant="hatch", items=["NOPE"]); p = []; validate_store(d, p, []); p
+    ['Store A: hatch item NOPE is not an egg', 'Store A: a hatch is a paid random item: Random must be yes (#388)']
+    """
+    scale = amber_scale(data)
+    ids = {}
+    shown = 0
+    for key in data["StoreOrder"]:
+        row = data["Store"][key]
+        where = f"Store {key}"
+        g = row["grant"]
+        if row["tab"] not in STORE_TABS:
+            problems.append(f"{where}: tab '{row['tab']}' must be one of {', '.join(STORE_TABS)}")
+        if g not in STORE_GRANTS:
+            problems.append(f"{where}: unknown grant '{g}'")
+            continue
+        if row["type"] != STORE_GRANTS[g]:
+            problems.append(f"{where}: grant {g} is a {STORE_GRANTS[g]}, not a {row['type']}")
+        if not row["display"]:
+            problems.append(f"{where}: no Item name")
+        if row["robux"] is not None and (row["robux"] < 1 or row["robux"] != int(row["robux"])):
+            problems.append(f"{where}: Robux {row['robux']} must be a whole number >= 1")
+        rid = row["id"]
+        if rid is not None:
+            if rid < 1 or rid != int(rid):
+                problems.append(f"{where}: id {rid} must be a whole positive number")
+            elif (row["type"], rid) in ids:
+                problems.append(f"{where}: id {int(rid)} is also {ids[(row['type'], rid)]}")
+            ids[(row["type"], rid)] = key
+            if not store_ready(row):
+                problems.append(f"{where}: has an id but is not complete yet (Robux, Amount or Items blank): it would show half a product")
+            else:
+                shown += 1
+        amount = row["amount"]
+        if g == "amber" and amount is not None and (amount < scale or amount != int(amount) or int(amount) % scale):
+            problems.append(f"{where}: {amount:g} Amber is not a whole multiple of the Amber scale {scale:,} (#386)")
+        if g == "trainRate" and amount is not None and amount <= 1:
+            problems.append(f"{where}: a training speed pass must be above x1 (got {amount})")
+        if g in ("trainSlots", "incubators") and amount is not None and (amount < 1 or amount != int(amount)):
+            problems.append(f"{where}: extra {g} must be a whole number >= 1")
+        for item in row["items"]:
+            if g == "hatch" and item not in data["Eggs"]:
+                problems.append(f"{where}: hatch item {item} is not an egg")
+            if g == "skins" and item not in data["Skins"]:
+                problems.append(f"{where}: skin {item} is not on the Skins sheet")
+        if g == "hatch" and not row["random"]:
+            problems.append(f"{where}: a hatch is a paid random item: Random must be yes (#388)")
+    notes.append(f"store: {len(data['StoreOrder'])} rows, {shown} with an id (blank id = hidden until published)")
+
+
 def pet_worth(pet, mult):
     """Worth % of a pet at a rarity multiplier (#378/#392): 100 x Effect value x mult / Worth ref.
     None while the effect is off (blank value)."""
@@ -2842,6 +2952,7 @@ def validate(data):
     validate_kit(data, problems, notes)
     validate_pets(data, problems, notes)
     validate_skins(data, problems, notes)
+    validate_store(data, problems, notes)
     validate_perks(data, problems, notes)
     validate_small_perks(data, problems)
     validate_xp(data, problems, notes)
@@ -3094,6 +3205,9 @@ def read_data(xlsx):
     if "Skins" not in wb.sheetnames:
         sys.exit("The spreadsheet has no 'Skins' sheet (PLAN 10e T142)")
     data["Skins"], data["SkinOrder"] = read_skins(wb["Skins"])
+    if "Store" not in wb.sheetnames:
+        sys.exit("The spreadsheet has no 'Store' sheet (PLAN 10e T143)")
+    data["Store"], data["StoreOrder"] = read_store(wb["Store"])
     return data
 
 

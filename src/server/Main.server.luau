@@ -304,6 +304,7 @@ Hero.init(remotes, {
 Kit.init(remotes) -- melee and grenade (after Hero: kit hits read the hunter's level)
 require(script.Parent.Training).init(remotes) -- online training ticks, station E, Amber finish (T139)
 Pets.init(remotes) -- eggs, hatching, fusing, the pet taken along (T140/T141)
+require(script.Parent.Store).init(remotes) -- the Robux store: published games only (T143)
 Battle.init(remotes) -- the kill feed
 
 ------------------------------------------------------------------ host

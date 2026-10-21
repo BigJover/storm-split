@@ -295,12 +295,13 @@ function Pets.fullLine(state: State): string
 end
 
 -- Price (Amber) if this egg can be bought now, else nil and why.
-function Pets.canBuy(state: State, egg: unknown): (number?, string)
+-- `incubators`: this player's count (the Second Hatchery Hut pass adds one, T143).
+function Pets.canBuy(state: State, egg: unknown, incubators: number?): (number?, string)
 	local price = Pets.price(egg)
 	if not price then
 		return nil, if eggRow(egg) then "Not for sale yet" else "Unknown egg"
 	end
-	if #state.eggs >= Pets.incubators() then
+	if #state.eggs >= (incubators or Pets.incubators()) then
 		return nil, "Your incubator is busy"
 	end
 	return price, ""
