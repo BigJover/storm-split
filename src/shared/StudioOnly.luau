@@ -48,6 +48,7 @@ StudioOnly.FEATURES = {
 	fossils = 'Fossils: the host\'s Lobby ("fossils", n) sets the nearest Amber Resin Cannon\'s match fossil count (Amber Heart tests; Server/Main, PLAN 9g)',
 	walkers = 'Walkers: the host\'s Lobby ("walkers") prints every walker (tower, state, HP, target) to Output (Server/Main, PLAN 9g)',
 	trainSkip = 'Train skip: "trainskip <min>" (the Training remote) credits that many full-rate minutes to whatever you are training, and turns saving off for that player like J (Server/Training, Server/Progression, PLAN 10c T139)',
+	pets = 'Pet aids: the Pets remote ("studioegg", egg) puts a free egg in the incubator, ("hatchnow") makes every egg ready, ("studiopet", "<PET> <RARITY>", n) adds pets for fuse tests; each turns saving off for that player like J (Server/Pets, Server/Progression, PLAN 10d T140)',
 	charge = 'Charge: the host\'s Lobby ("charge", n) sets the nearest Bone Totem\'s charge; at or over full it fires (Server/Main, PLAN 9h)',
 } :: { [string]: string }
 

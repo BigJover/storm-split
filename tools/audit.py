@@ -79,6 +79,7 @@ DEAD_ALLOWED = {
     ("Bounties", "text"): "display text: the Hunt Board card (PLAN round 2 T29)",
     ("Tuning", "MasteryPerkWorthCap"): "an exporter rule, not a game number: every perk's worth is checked against it (DECISIONS #99)",
     ("Tuning", "PerkParityBand"): "an exporter rule, not a game number: hero-vs-hero perk parity at mastery 10 and 15+ (PLAN T84, DECISIONS #235)",
+    ("Tuning", "PetMythicOddsMax"): "an exporter bar (#392, PLAN 10d T140): validate_pets refuses an egg whose Mythic odds pass it",
     ("Tuning", "CompetitiveEdgeMax"): "a value.py watch threshold, not a game number or a bar: the PvP edge report's WATCH lines (PLAN T84, DECISIONS #235)",
     ("Tuning", "CoOpLengthMax"): "a model bar, not a game clock: value.py --pacing fails if Normal solo with breaks is longer (PLAN T101, DECISIONS #250)",
     ("Tuning", "RoundSecondsModel"): "a model number, not a game clock: value.py's 4x metrics count per-round effects and cash a round over this many seconds (PLAN 9g, #313)",

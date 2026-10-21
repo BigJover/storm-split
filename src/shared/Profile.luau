@@ -36,6 +36,13 @@
 	                    banked progress and what's training. An older save without it starts
 	                    at level 0 everywhere. No time is stored, so loading never credits
 	                    time spent away (online only, #391).
+	  pets              eggs and pets (Shared/Pets, PLAN 10d T140): the collection, the
+	                    incubator timers (real time, #396), the pet taken along and the
+	                    Hatchling Pen. An older save without it starts empty. nil = the
+	                    stored pets couldn't be read in full (a newer version, an unknown
+	                    pet): the player plays on without pets, every pet call says no, and
+	                    a save writes the stored value back untouched (`petsRaw`), so no pet
+	                    is ever lost to a bad read.
 	  lastResetPayout   Amber paid at a reset for bounties done but not claimed, since the
 	                    board was last opened. Session only, never saved.
 	  rewardsVersion    counts Hunt Board changes; the client re-asks when it moves.
@@ -73,6 +80,7 @@ local Cosmetics = require(script.Parent.Cosmetics)
 local Stakes = require(script.Parent.Stakes)
 local Trophies = require(script.Parent.Trophies)
 local Training = require(script.Parent.Training)
+local Pets = require(script.Parent.Pets)
 
 export type Profile = {
 	cores: number,
@@ -88,6 +96,8 @@ export type Profile = {
 	escrow: Stakes.Escrow?,
 	amberScale: number,
 	training: Training.State,
+	pets: Pets.State?,
+	petsRaw: any,
 	lastResetPayout: number,
 	rewardsVersion: number,
 }
@@ -178,6 +188,8 @@ function Profile.blank(now: number, rng: Bounties.Rng): Profile
 		escrow = nil,
 		amberScale = Profile.AMBER_SCALE,
 		training = Training.blank(),
+		pets = Pets.blank(),
+		petsRaw = nil,
 		lastResetPayout = 0,
 		rewardsVersion = 0,
 	}
@@ -201,6 +213,14 @@ function Profile.sanitize(raw: any, now: number, rng: Bounties.Rng): Profile
 	-- Ranked (PLAN T80): older saves have none of these and load as 0 / nil.
 	profile.trophies = PlayerLevel.whole(raw.trophies)
 	profile.training = Training.sanitize(raw.training) -- T139: missing (an older save) = level 0
+	-- Pets (T140) are read on their own: anything unreadable is kept as stored, never lost.
+	local petsOk, pets = pcall(Pets.sanitize, raw.pets, now)
+	if petsOk then
+		profile.pets = pets
+	else
+		profile.pets = nil
+		profile.petsRaw = raw.pets
+	end
 	profile.bestArena = Profile.bestArenaKey(raw.bestArena, profile.trophies)
 	-- Only what this level (or an arena reached, T81) has unlocked, in the right slot;
 	-- anything else is dropped.
@@ -261,6 +281,7 @@ function Profile.toSave(profile: Profile): { [string]: any }
 		escrow = profile.escrow,
 		amberScale = profile.amberScale,
 		training = Training.toSave(profile.training),
+		pets = if profile.pets then Pets.toSave(profile.pets) else profile.petsRaw,
 		rewards = if profile.rewards then profile.rewards else profile.rewardsRaw,
 	}
 end

@@ -1924,6 +1924,203 @@ def validate_kit(data, problems, notes):
         for k, r in kits.items()))
 
 
+# ---------------------------------------------------------------- pets (PLAN 10d T140/T141)
+
+PET_EFFECTS = ("spotcamo", "fetch", "regen", "roundcash", "absorb")  # #378: one per species
+PET_TUNING = ("PetInventoryCap", "Incubators", "HatchlingPenPets", "PetFuseCount",
+              "PetMythicOddsMax", "MasteryPerkWorthCap")
+
+
+def _headed(ws, heads, where):
+    """Column numbers of `heads` found by header text in row 4."""
+    columns = {}
+    for c in range(1, ws.max_column + 1):
+        head = v(ws, 4, c)
+        if head is not None:
+            columns[str(head).strip()] = c
+    for head in heads:
+        if head not in columns:
+            sys.exit(f"{ws.title} row 4: no '{head}' column ({where})")
+    return columns
+
+
+def read_pet_rarities(ws):
+    """Pet Rarities: Key, Rarity, Effect x; one row per rarity from row 5, in fuse order."""
+    cols = _headed(ws, ("Key", "Rarity", "Effect x"), "PLAN 10d T140")
+    out, r = [], 5
+    while v(ws, r, cols["Key"]):
+        out.append({"key": str(v(ws, r, cols["Key"])).strip().upper(),
+                    "display": str(v(ws, r, cols["Rarity"]) or "").strip(),
+                    "mult": num(v(ws, r, cols["Effect x"]), None)})
+        r += 1
+    return out
+
+
+def read_eggs(ws, rarities):
+    """Eggs: Key, Egg, Hatch (min), Price (Amber), one '<Rarity> %' column per rarity, Line.
+    Blank price = not for sale; all odds blank = not for sale (odds left out)."""
+    heads = ["Key", "Egg", "Hatch (min)", "Price (Amber)", "Line"] + [f"{r['display']} %" for r in rarities]
+    cols = _headed(ws, heads, "PLAN 10d T140")
+    eggs, order, r = {}, [], 5
+    while v(ws, r, cols["Key"]):
+        key = str(v(ws, r, cols["Key"])).strip().upper()
+        if key in eggs:
+            sys.exit(f"Eggs row {r}: {key} is listed twice")
+        raw = {x["key"]: v(ws, r, cols[f"{x['display']} %"]) for x in rarities}
+        row = {"display": str(v(ws, r, cols["Egg"]) or "").strip(),
+               "hatchMinutes": num(v(ws, r, cols["Hatch (min)"]), None),
+               "price": num(v(ws, r, cols["Price (Amber)"]), None),
+               "line": str(v(ws, r, cols["Line"]) or "").strip()}
+        if any(x is not None and x != "" for x in raw.values()):
+            row["odds"] = {k: num(x, 0) for k, x in raw.items()}
+        eggs[key] = row
+        order.append(key)
+        r += 1
+    return eggs, order
+
+
+def read_pets(ws):
+    """Pets: Key, Pet, Species, Effect, Effect value, Unit, Worth ref, Line; one row per pet."""
+    cols = _headed(ws, ("Key", "Pet", "Species", "Effect", "Effect value", "Unit", "Worth ref", "Line"), "PLAN 10d T140")
+    pets, order, r = {}, [], 5
+    while v(ws, r, cols["Key"]):
+        key = str(v(ws, r, cols["Key"])).strip().upper()
+        if key in pets:
+            sys.exit(f"Pets row {r}: {key} is listed twice")
+        pets[key] = {"display": str(v(ws, r, cols["Pet"]) or "").strip(),
+                     "species": str(v(ws, r, cols["Species"]) or "").strip(),
+                     "effect": str(v(ws, r, cols["Effect"]) or "").strip().lower(),
+                     "effectValue": num(v(ws, r, cols["Effect value"]), None),
+                     "unit": str(v(ws, r, cols["Unit"]) or "").strip(),
+                     "worthRef": num(v(ws, r, cols["Worth ref"]), None),
+                     "line": str(v(ws, r, cols["Line"]) or "").strip()}
+        order.append(key)
+        r += 1
+    return pets, order
+
+
+def pet_worth(pet, mult):
+    """Worth % of a pet at a rarity multiplier (#378/#392): 100 x Effect value x mult / Worth ref.
+    None while the effect is off (blank value)."""
+    if pet.get("effectValue") is None:
+        return None
+    return round(100 * pet["effectValue"] * mult / pet["worthRef"], 6)
+
+
+def validate_pets(data, problems, notes):
+    """Pets and eggs (PLAN 10d T140, #375-#379, #392/#393/#396).
+
+    Rarities: six, Common first, Effect x rising. Eggs: a positive hatch time; odds (once set)
+    in tenths of a %, summing to exactly 100, Mythic at most Pet Mythic odds max %; a price
+    (once set) a whole multiple of the Amber scale (#386); for sale = price and odds both
+    set. Pets: a known effect each, one species per effect; a set Effect value needs a
+    Worth ref, and its Mythic worth must be <= the Mastery perk worth cap (#378/#392).
+
+    >>> R = [{"key": k, "display": k.title(), "mult": m} for k, m in (("COMMON", 1), ("UNCOMMON", 1.25),
+    ...      ("RARE", 1.5), ("EPIC", 1.75), ("LEGENDARY", 2), ("MYTHIC", 2.25))]
+    >>> odds = {"COMMON": 55, "UNCOMMON": 25, "RARE": 12, "EPIC": 5, "LEGENDARY": 2.5, "MYTHIC": 0.5}
+    >>> t = {"PetInventoryCap": 60, "Incubators": 1, "HatchlingPenPets": 3,
+    ...      "PetFuseCount": 3, "PetMythicOddsMax": 2, "MasteryPerkWorthCap": 40, "AmberScale": 1000}
+    >>> pet = {"display": "Honker", "effect": "regen", "effectValue": 1, "worthRef": 10}
+    >>> d = {"Tuning": t, "PetRarities": R, "Eggs": {"MUD": {"display": "Mud Egg", "hatchMinutes": 5,
+    ...      "price": 5000, "odds": dict(odds)}}, "EggOrder": ["MUD"], "Pets": {"A": pet}, "PetOrder": ["A"]}
+    >>> p = []; validate_pets(d, p, []); p
+    []
+    >>> d["Eggs"]["MUD"]["odds"]["COMMON"] = 55.1; p = []; validate_pets(d, p, []); p
+    ['Eggs MUD: odds add up to 100.1 %, not exactly 100 (#392)']
+    >>> d["Eggs"]["MUD"]["odds"] = dict(odds, COMMON=53, MYTHIC=2.5); p = []; validate_pets(d, p, []); p
+    ['Eggs MUD: Mythic 2.5 % is above Pet Mythic odds max 2 % (#392)']
+    >>> d["Eggs"]["MUD"]["odds"] = dict(odds, COMMON=54.95, MYTHIC=0.55); p = []; validate_pets(d, p, []); p
+    ['Eggs MUD: odds must be whole tenths of a % >= 0 (shown to one decimal; got 54.95, 0.55)']
+    >>> d["Eggs"]["MUD"]["odds"] = dict(odds); d["Eggs"]["MUD"]["price"] = 2500; p = []; validate_pets(d, p, []); p
+    ['Eggs MUD: price 2500 Amber must be a whole multiple of the Amber scale 1,000 (#386)']
+    >>> d["Eggs"]["MUD"]["price"] = 5000; d["Pets"]["A"] = dict(pet, effectValue=2); p = []; validate_pets(d, p, []); p
+    ['Pets A (Honker): Mythic worth 45% is above the Mastery perk worth cap (40%) (#378/#392)']
+    >>> d["Pets"]["A"] = dict(pet, worthRef=None); p = []; validate_pets(d, p, []); p
+    ['Pets A (Honker): Effect value is set but Worth ref is blank, so its worth cannot be measured (#378)']
+    >>> d["Pets"]["A"] = dict(pet, effect="laser"); p = []; validate_pets(d, p, []); p
+    ["Pets A (Honker): effect 'laser' is not one of spotcamo, fetch, regen, roundcash, absorb (#378)"]
+    """
+    t = data["Tuning"]
+    for key in PET_TUNING:
+        val = t.get(key)
+        if not isinstance(val, (int, float)) or val <= 0:
+            problems.append(f"Tuning is missing '{key}' (PETS; Shared/Pets reads it by name)")
+    for key in ("PetInventoryCap", "Incubators", "HatchlingPenPets", "PetFuseCount"):
+        val = t.get(key)
+        if isinstance(val, (int, float)) and (val != int(val) or val < 1):
+            problems.append(f"Tuning {key}: must be a whole number >= 1")
+    scale = t.get("AmberScale") or 1
+    rarities = data["PetRarities"]
+    keys = [r["key"] for r in rarities]
+    if keys != ["COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC"]:
+        problems.append(f"Pet Rarities: must be Common, Uncommon, Rare, Epic, Legendary, Mythic in that order (#392; got {', '.join(keys)})")
+    mults = [r["mult"] for r in rarities]
+    if any(not isinstance(m, (int, float)) for m in mults) or mults != sorted(set(mults)) or (mults and mults[0] != 1):
+        problems.append("Pet Rarities: Effect x must start at 1 and rise with every rarity (#392)")
+    mythic_max = t.get("PetMythicOddsMax") or 0
+    shown = []
+    for key in data["EggOrder"]:
+        egg = data["Eggs"][key]
+        where = f"Eggs {key}"
+        if not isinstance(egg.get("hatchMinutes"), (int, float)) or egg["hatchMinutes"] <= 0:
+            problems.append(f"{where}: Hatch (min) must be above 0 (#396)")
+        price = egg.get("price")
+        if price is not None and (not isinstance(price, (int, float)) or price < scale or price % scale):
+            problems.append(f"{where}: price {price:g} Amber must be a whole multiple of the Amber scale {scale:,} (#386)")
+        odds = egg.get("odds")
+        if odds is not None:
+            tenths = {k: odds.get(k, 0) * 10 for k in keys}
+            bad = [x for x in tenths.values() if x < 0 or abs(x - round(x)) > 1e-9]
+            if bad:
+                problems.append(f"{where}: odds must be whole tenths of a % >= 0 (shown to one decimal; got "
+                                + ", ".join(f"{x / 10:g}" for x in bad) + ")")
+            else:
+                total = sum(round(x) for x in tenths.values())
+                if total != 1000:
+                    problems.append(f"{where}: odds add up to {total / 10:g} %, not exactly 100 (#392)")
+                if odds.get("MYTHIC", 0) > mythic_max:
+                    problems.append(f"{where}: Mythic {odds['MYTHIC']:g} % is above Pet Mythic odds max {mythic_max:g} % (#392)")
+        if price is None or odds is None:
+            notes.append(f"  pets: {egg['display'] or key} has no " + " or ".join(
+                x for x, missing in (("price", price is None), ("odds", odds is None)) if missing)
+                + " yet, so it isn't for sale (Director)")
+        else:
+            shown.append(egg["display"])
+    cap = t.get("MasteryPerkWorthCap") or 0
+    mythic = mults[-1] if mults and isinstance(mults[-1], (int, float)) else 1
+    seen, off = {}, []
+    for key in data["PetOrder"]:
+        pet = data["Pets"][key]
+        where = f"Pets {key} ({pet['display']})"
+        if pet["effect"] not in PET_EFFECTS:
+            problems.append(f"{where}: effect '{pet['effect']}' is not one of {', '.join(PET_EFFECTS)} (#378)")
+            continue
+        if pet["effect"] in seen:
+            problems.append(f"{where}: effect '{pet['effect']}' is also {seen[pet['effect']]}'s (one effect per species, #378)")
+        seen[pet["effect"]] = key
+        value = pet.get("effectValue")
+        if value is None:
+            off.append(pet["display"])
+            continue
+        if not isinstance(value, (int, float)) or value <= 0:
+            problems.append(f"{where}: Effect value must be above 0")
+        elif not isinstance(pet.get("worthRef"), (int, float)) or pet["worthRef"] <= 0:
+            problems.append(f"{where}: Effect value is set but Worth ref is blank, so its worth cannot be measured (#378)")
+        else:
+            worth = pet_worth(pet, mythic)
+            if worth > cap:
+                problems.append(f"{where}: Mythic worth {worth:g}% is above the Mastery perk worth cap ({cap:g}%) (#378/#392)")
+    if off:
+        notes.append(f"  pets: effect off until the Director sets Effect value + Worth ref: {', '.join(off)}")
+    notes.append(f"pets: {len(data['PetOrder'])} pets, {len(data['EggOrder'])} eggs, for sale: {', '.join(shown) or 'none yet'}")
+    warm = t.get("EggWarmAmberPerMin")
+    if warm is None:
+        notes.append("  pets: Egg warm Amber per min is blank, so Amber can't warm an egg yet (#375; Director)")
+    elif not isinstance(warm, (int, float)) or warm < scale or warm % scale:
+        problems.append(f"Tuning Egg warm Amber per min {warm:g}: must be a whole multiple of Amber scale {scale:g} (#386)")
+
+
 def validate_xp(data, problems, notes):
     """Hero XP levers (PLAN round 3 T32, DECISIONS #100-#101)."""
     tuning = data["Tuning"]
@@ -2549,6 +2746,7 @@ def validate(data):
     validate_training(data, problems, notes)
     validate_bodies(data, problems, notes)
     validate_kit(data, problems, notes)
+    validate_pets(data, problems, notes)
     validate_perks(data, problems, notes)
     validate_small_perks(data, problems)
     validate_xp(data, problems, notes)
@@ -2792,6 +2990,12 @@ def read_data(xlsx):
         "HunterKit": read_hunter_kit(wb["Hunter Kit"]) if "Hunter Kit" in wb.sheetnames
         else sys.exit("The spreadsheet has no 'Hunter Kit' sheet (PLAN 10b T136)"),
     }
+    for name in ("Pet Rarities", "Eggs", "Pets"):
+        if name not in wb.sheetnames:
+            sys.exit(f"The spreadsheet has no '{name}' sheet (PLAN 10d T140)")
+    data["PetRarities"] = read_pet_rarities(wb["Pet Rarities"])
+    data["Eggs"], data["EggOrder"] = read_eggs(wb["Eggs"], data["PetRarities"])
+    data["Pets"], data["PetOrder"] = read_pets(wb["Pets"])
     return data
 
 

@@ -87,6 +87,7 @@ local StudioOnly = require(Shared:WaitForChild("StudioOnly"))
 local SaveStore = require(Shared:WaitForChild("SaveStore"))
 local Training = require(Shared:WaitForChild("Training"))
 local HunterKit = require(Shared:WaitForChild("HunterKit"))
+local Pets = require(Shared:WaitForChild("Pets"))
 
 local Progression = {}
 
@@ -211,6 +212,13 @@ local function publish(player: Player)
 	player:SetAttribute("RewardsClaimable", Profile.claimable(profile, os.time()))
 	player:SetAttribute("RewardsVersion", profile.rewardsVersion)
 	publishTraining(player)
+	-- Pets (T140/T141): the pet taken along (name, kind, rarity) and a change counter the
+	-- Hatchery Hut re-asks on. No pets readable = none.
+	local along = profile.pets and Pets.along(profile.pets)
+	player:SetAttribute("Pet", if along then Pets.name(along) else nil)
+	player:SetAttribute("PetKind", if along then along.kind else nil)
+	player:SetAttribute("PetRarity", if along then along.rarity else nil)
+	player:SetAttribute("PetsVersion", ((player:GetAttribute("PetsVersion") :: number?) or 0) + 1)
 end
 
 ------------------------------------------------------------------ load / save
@@ -801,6 +809,136 @@ do
 	Players.PlayerRemoving:Connect(function(player)
 		dirty[player] = nil -- the leave save writes it
 	end)
+end
+
+-- Eggs and pets (PLAN 10d T140/T141): the rules are Shared/Pets; Server/Pets owns the remote,
+-- the Hatchery Hut and the pet in play, and calls these. Every change between matches
+-- only (nothing bought or swapped mid-match, #389), saved at once like any purchase.
+do
+	local function petsOf(player: Player): (Pets.State?, string)
+		local profile = profiles[player]
+		if not profile then
+			return nil, "Still loading your progress"
+		end
+		if not profile.pets then
+			return nil, "Your pets couldn't be loaded this session; they're safe"
+		end
+		return profile.pets, ""
+	end
+
+	local function changed(player: Player)
+		publish(player)
+		task.spawn(save, player)
+	end
+
+	-- What the Hatchery Hut shows: the saved state (the client runs Shared/Pets on it) and
+	-- the server clock it was read at.
+	function Progression.petView(player: Player): (boolean, any)
+		local state, why = petsOf(player)
+		if not state then
+			return false, why
+		end
+		return true, { state = Pets.toSave(state), now = os.time() }
+	end
+
+	function Progression.petAlong(player: Player): Pets.Pet?
+		local profile = profiles[player]
+		return if profile and profile.pets then Pets.along(profile.pets) else nil
+	end
+
+	function Progression.petPen(player: Player): { Pets.Pet }
+		local profile = profiles[player]
+		local out = {}
+		if profile and profile.pets then
+			for _, id in profile.pets.pen do
+				for _, pet in profile.pets.pets do
+					if pet.id == id then
+						table.insert(out, pet)
+					end
+				end
+			end
+		end
+		return out
+	end
+
+	function Progression.petAction(player: Player, action: unknown, a: unknown, b: unknown): (boolean, string)
+		local game_ = ReplicatedStorage:GetAttribute("State")
+		if game_ ~= "Lobby" and player:GetAttribute("InOutpost") ~= true then
+			return false, "Pets wait in camp between matches"
+		end
+		local state, why = petsOf(player)
+		if not state then
+			return false, why
+		end
+		local profile = profiles[player] :: Profile
+		local now = os.time()
+		local ok, message
+		if action == "buy" then
+			local price, refusal = Pets.canBuy(state, a)
+			if not price then
+				return false, refusal
+			end
+			if profile.cores < price then
+				return false, `Not enough {Theme.Currency}`
+			end
+			profile.cores -= price
+			ok, message = Pets.buy(state, a, now)
+		elseif action == "warm" then
+			local price = Pets.warmPrice(state, a, now)
+			if not price then
+				return false, "Nothing to warm up"
+			end
+			if profile.cores < price then
+				return false, `Not enough {Theme.Currency}`
+			end
+			profile.cores -= price
+			ok, message = Pets.warm(state, a, now), "Warmed up!"
+		elseif action == "hatch" then
+			ok, message = Pets.hatch(state, a, now, rng)
+		elseif action == "fuse" then
+			ok, message = Pets.fuse(state, a, b)
+		elseif action == "along" then
+			ok, message = Pets.takeAlong(state, if a == 0 then nil else a)
+		elseif action == "pen" then
+			ok, message = Pets.setPen(state, a, b == true)
+		elseif action == "studioegg" or action == "hatchnow" or action == "studiopet" then
+			-- Studio test aids (StudioOnly pets): free eggs / instant hatch / pets for fuse
+			-- tests; saving off for that player, like J.
+			if not StudioOnly.allowed(RunService:IsStudio(), "pets") then
+				return false, "Studio only"
+			end
+			canSave[player] = false
+			if action == "studioegg" then
+				if not Pets.hatchSeconds(a) then
+					return false, "Unknown egg"
+				end
+				table.insert(state.eggs, { egg = a :: string, readyAt = now + (Pets.hatchSeconds(a) :: number) })
+				ok, message = true, "Studio: free egg (saving off)"
+			elseif action == "hatchnow" then
+				for slot in state.eggs do
+					Pets.warm(state, slot, now)
+				end
+				ok, message = true, "Studio: every egg is ready (saving off)"
+			else
+				local n = math.clamp(math.floor(tonumber(b) or 1), 1, 60)
+				local kind, rarity = string.match(tostring(a), "^(%S+)%s+(%S+)$")
+				if not (Config :: any).Pets[kind] or not Pets.rarityMult(rarity) then
+					return false, "Studio: studiopet <PET> <RARITY>"
+				end
+				for _ = 1, n do
+					table.insert(state.pets, { id = state.nextId, kind = kind :: string, rarity = rarity :: string })
+					state.nextId += 1
+				end
+				ok, message = true, `Studio: +{n} pets (saving off)`
+			end
+		else
+			return false, "Unknown request"
+		end
+		if ok then
+			changed(player)
+		end
+		return ok, message
+	end
 end
 
 function Progression.init(

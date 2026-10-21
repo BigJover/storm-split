@@ -191,10 +191,10 @@ local function build(): Model
 			site.Parent = sites
 		end
 	end
-	do -- Hatchery Hut and shop counter placeholders (10d / 10e)
+	do -- Hatchery Hut (10d: Client/Pets opens it with E nearby) and shop counter placeholder (10e)
 		local hut = part("HatcheryHut", Vector3.new(10, 7, 8), at(OutpostRules.HATCHERY_HUT, 3.5), Color3.fromRGB(170, 130, 80), root, Enum.Material.WoodPlanks)
 		part("HutRoof", Vector3.new(12, 1, 10), at(OutpostRules.HATCHERY_HUT, 7.5), LEAF, root, Enum.Material.Grass)
-		label(hut, "Hatchery Hut", "Eggs coming soon", 6)
+		label(hut, "Hatchery Hut", "Eggs and pets — press E here", 6)
 		local counter = part("ShopCounter", Vector3.new(8, 3, 2.5), at(OutpostRules.SHOP, 1.5), WOOD, root, Enum.Material.Wood)
 		label(counter, "Shop", "Coming soon", 4)
 	end

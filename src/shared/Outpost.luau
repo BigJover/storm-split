@@ -18,7 +18,8 @@
 	  campsite(i)               Campsite i's centre (1..CAMPSITES), else nil
 	  HATCHERY_HUT, SHOP        the Hatchery Hut and the shop counter (placeholders until
 	                            10d / 10e), offsets from CENTRE
-	  spawnPoint(i)             where the i-th arrival appears (a ring by the camp fire)
+	  atHut(position)           standing at the Hatchery Hut (T140: E opens it), HUT_RADIUS
+  spawnPoint(i)             where the i-th arrival appears (a ring by the camp fire)
 	  inside(position)          is this point over the camp's floor (and not far above it)
 	  thirdPerson(inOutpost)    the camera rule: third person allowed only in the Outpost
 	                            (#383); everywhere else first person (Hero.client)
@@ -55,6 +56,7 @@ Outpost.CAMPSITE_SIZE = 22 -- each Campsite is a square this wide
 Outpost.HATCHERY_HUT = Vector3.new(0, 0, 30)
 Outpost.SHOP = Vector3.new(-24, 0, 26)
 Outpost.SPAWN_RING = 10
+Outpost.HUT_RADIUS = 12 -- how near the Hatchery Hut's centre counts as "at" it (flat)
 
 local function flat(v: Vector3): Vector3
 	return Vector3.new(v.X, 0, v.Z)
@@ -108,6 +110,15 @@ function Outpost.inside(position: unknown): boolean
 	return (flat(p) - flat(Outpost.CENTRE)).Magnitude <= Outpost.RADIUS
 		and p.Y >= Outpost.CENTRE.Y - 5
 		and p.Y <= Outpost.CENTRE.Y + Outpost.CEILING
+end
+
+-- Standing at the Hatchery Hut (T140): in camp, within HUT_RADIUS of it (flat).
+function Outpost.atHut(position: unknown): boolean
+	if not Outpost.inside(position) then
+		return false
+	end
+	local p = position :: Vector3
+	return (flat(p) - flat(Outpost.CENTRE + Outpost.HATCHERY_HUT)).Magnitude <= Outpost.HUT_RADIUS
 end
 
 function Outpost.thirdPerson(inOutpost: unknown): boolean

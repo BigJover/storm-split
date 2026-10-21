@@ -161,7 +161,7 @@ test("only the saved fields are stored", function()
 		table.insert(keys, k)
 	end
 	table.sort(keys)
-	eq(table.concat(keys, ","), "amberScale,cores,equipped,highestRound,mastery,owned,playerXp,rewards,training,trophies", "stored keys (T80: + trophies; T134: + amberScale; T139: + training; bestArena and escrow only when set)")
+	eq(table.concat(keys, ","), "amberScale,cores,equipped,highestRound,mastery,owned,pets,playerXp,rewards,training,trophies", "stored keys (T80: + trophies; T134: + amberScale; T139: + training; T140: + pets; bestArena and escrow only when set)")
 	ok(out.rewards == profile.rewards, "the Hunt Board state itself")
 end)
 

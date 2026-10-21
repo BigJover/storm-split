@@ -202,3 +202,14 @@ test("F12 guard: Server/Outpost never decides camp-or-match from a flag cleared 
 	ok(string.find(after, "settle(player, character)", 1, true), "enter() settles the same character the handler does")
 	ok(string.find(fs.readFile("src/server/Hero.luau"), "GetAttributeChangedSignal(\"InOutpost\")", 1, true), "the gun follows the flag")
 end)
+
+test("T140: the Hatchery Hut's E spot: at the hut in camp, not elsewhere", function()
+	local hut = Outpost.CENTRE + Outpost.HATCHERY_HUT + Vector3.new(0, 3, 0)
+	ok(Outpost.atHut(hut + Vector3.new(Outpost.HUT_RADIUS - 1, 0, 0)), "beside the hut")
+	ok(not Outpost.atHut(hut + Vector3.new(Outpost.HUT_RADIUS + 1, 0, 0)), "a step too far")
+	ok(not Outpost.atHut(hut + Vector3.new(0, 500, 0)), "far above camp")
+	ok(not Outpost.atHut("nope"), "not a position")
+	for _, row in Outpost.STATIONS do
+		ok(not Outpost.atHut(Outpost.CENTRE + row.offset + Vector3.new(0, 3, 0)), `{row.name} isn't at the hut (E stays training there)`)
+	end
+end)
