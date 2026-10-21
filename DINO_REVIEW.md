@@ -894,3 +894,36 @@ Campsite decorations: **Display Tower** (any tower you own, for show, doesn't sh
 | Skins | **{Set} Bundle** — lists every item inside; says "saves X Amber" only when true |
 
 Wording rules: no "free", "guaranteed", "best deal" or countdown pressure; nothing in the store is random (eggs keep their odds line from R21); paid power says "gets you there sooner". Avoided (grepped taken): Thicket, Expedition, Footprint, Lantern, Skull, Barrel, Nest, Jar, Totem, Steam, Handful, Pouch, tint prefixes (Ash/Bone/Clay/Ember/Fern/Moss…), Amber Vault/Shield. No "Trophy", no old-theme words.
+
+## Round 23 — T144: every Phase-10 player string (commits 9d14c39..fadde04)
+
+Checked: kit names/HUD (V/C, `x2`, `4s`), HP line, Hunters' Outpost, Campsites, Menu/Hide menu,
+the four stations + prompts, training rows, Hatchery Hut (eggs, odds, timers, Warm it up, fuse,
+Mythic, Take along, ran back to camp, Pets full, Pen), HONK!, skins counter (Wear/Take off/Yours,
+"— player level 12"), Store tabs/rows, "The store opens when the game is published". All match
+Rounds 20–22; odds shown on every egg; no "free"/"guaranteed"/"best deal"; no "Trophy"; no
+old-theme words (Storm/Cores only in internal attribute names).
+
+**Must-fix**
+| File | Current → proposed |
+|---|---|
+| `client/Counter.client.luau` 268, 391 | `Buy 25K` → `Buy 25K Amber` (store buttons say R$; a bare number is ambiguous) |
+| `client/Training.client.luau` 229 | `Finish 24K` → `Finish now — 24K Amber` (same pattern as Warm it up) |
+| `client/Pets.client.luau` 246 | `Incubator (1/2)` → `Warming eggs (1/2)` ("incubator" was renamed; the store sells "Second Hatchery Hut") |
+| `server/Pets.luau` msg | `Your incubator is busy` → `Your Hatchery Hut is full — hatch an egg first` |
+| `client/Home.client.luau` 214 | `clear: 100K amber` → `clear: 100K Amber` (Amber is a name, capital A everywhere) |
+
+**Nice-to-have**
+| File | Current → proposed |
+|---|---|
+| `shared/Training.luau` 267 | `Reach  Lv 3/10  +6% of +20%` → `Reach  Lv 3/10  ·  +6% (max +20%)` |
+| `client/Hero.client.luau` 608 | melee shows no wait → `Hunting Knife  1s` while cooling, like the grenade |
+| `client/Counter.client.luau` 147 / 89 | header `Shop`, prompt `Shop: press E` → `Outpost Shop` (in-match tower Shop is also "Shop") |
+| `shared/Store.luau` 242 | `R$ 49` → `R$49` (Round 22 spelling; pick one) |
+| Config `Store` | three rows all `Hatch now` → `Hatch now — Speckled Egg` / `— Golden Egg` |
+| Config `Pets` Honker line | "the biggest dino" → "a boss dino" if #407 only honks at bosses (honesty) |
+
+**Not yet shipped (T143b/T143c, re-check after):** Mud's R$25 Hatch now row still sold
+(#413 drops it; Speckled/Golden still 49/99, not 25/79); no "Finish this level" R$25 row
+(#414); Amber pack lines empty (#411: card must show the exact Amber); bundles have no R$ price
+and no line (#412: "Inside: …", "saves X Amber" only when true); decorations (#415) absent.
