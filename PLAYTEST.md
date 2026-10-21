@@ -810,3 +810,23 @@ _Run 10 was cut off by the weekly usage limit after R10-15; the coordinator stop
 | R10b-11 | Console | PASS | No game script errors in any match; only `[Progression]`/`[LevelBoard]` notes and Studio Assistant messages (navigation "Infinite yield … Humanoid" during respawn, camera-type resets — tool-side). |
 
 - **Studio state at the end:** Play stopped; Studio in Edit mode. Nothing published, no saves touched.
+
+# Run 11 — 2026-10-21 (Tester, agent) — Phase 10a + 10b (Big Amber, hunter bodies, melee V, grenade C)
+
+- **Code tested:** Studio synced to 8f63f9e: `script_grep` "Dozy Cloud" → Config:183990 + Shared.Grenade:3; "formatAmber" → Theme:27, Hud:385, Shop:1748, Home:172/449, PanelRules:275. **T137b (#400–#402: kit raids towers, effects on armoured ground dinos) is NOT in this build** (git tip 8f63f9e) — its steps are recorded against T137 as built.
+- **Start state:** Edit mode. Work files `~/.claude/jobs/2a8d6f9c/tmp/tester15/` (helpers copied from tester14).
+- **Conveniences (disclosed):** J first (`SaveStatus=offline`), J for Amber (offline, nothing saved), K cash, L, V/C, keyboard/mouse, `character_navigation`, read-only `execute_luau` probes (labelled "probe"), Studio Lobby remotes as Run 10.
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| R11-1 | Play starts (server boots) | PASS | Play → State=Lobby, home screen; console only the usual `[Progression]` / `[LevelBoard]` notes. |
+| R11-2 | J's Amber grant ×1000 | PASS | J → `Cores` 0→100000 → 200000 (+100K each, `SaveStatus=offline`); home "200K Amber · Hero: none yet (H)", Hunt Board header "200K Amber". J has no toast (by design, Hud:579 comment "+100K Amber"). |
+| R11-3 | K/M/B on home, Hunt Board, Unlocks, Ranked fee | PASS | Home difficulty buttons "clear: 50K / 100K / 150K / 200K amber"; Ranked line "Entry fee: 15K Amber · You have 100K Amber"; Hunt Board Haul days +5K/+5K/+10K/+10K/+15K/+15K/+40K, bounties +10K/+15K/+20K/+40K; Unlocks title "200K Amber", rows "Big Game Hunter · unlock · 75K amber", "Tranq Station 100K", "Storm Coil 300K", "Falcon Roost 200K", "Amber Resin Cannon · unlock · 500K amber", "Raptor Pen 500K" (4× tower 500K ✓), mastery "25K amber". `home.png` |
+| R11-4 | Unlock 3 hunters (M) | PASS | Three "unlocked!" messages; Amber 400K → 250K → 175K (75K each). Setup note: one helper click landed on the home "Start at round" button behind the panel (→ round 30, as in Run 10); reset with Lobby `("startround",1)`. |
+| R11-5 | Hunter bodies: max HP / walk speed per hunter (probe of the client Humanoid after each pick, co-op Building) | PASS | Tracker 95/95 ws 17.00; Big Game Hunter 110/110 ws 15.00; Brush Beater 115/115 ws 15.50; Field Medic 100/100 ws 16.50 (= Config HunterStats; switching hero mid-Building re-applies at once). |
+| R11-6 | N19 workaround: gun equipped by a client `Humanoid:EquipTool(Backpack tool)` (setup aid, disclosed — not read-only) | PASS (aid works) | Server sees `Lever-Action Carbine` on the character; HUD kit buttons appear only with the gun out: "Splint Stick (V)" / "Dozy Cloud (C)". |
+| (setup) | Undefended co-op Easy round 1 = GAME OVER in ~1 min | note | Lives 40 → 0 on round 1 with no towers (twice); not a bug. Tests run in short matches. A camera aid (client RenderStepped pointing the camera at the nearest dino within 25 studs; camera only) stands in for mouse aim; observers are read-only `_G` loggers (HeroKit hit marker, MeleeReadyAt/GrenadeFullAt, Effects parts, dino speed every 0.5 s). Server `require` of `Server.Enemies` from execute_luau gets a fresh module copy (live=0), so dino HP isn't readable — damage is judged by hit markers, take-downs and cash. |
+| R11-7 | Medic melee (V, Splint Stick) | PASS | Standing on lane 2, V every 0.7 s: `MeleeReadyAt` +0.56–0.58 s per swing (swing time 0.6), white swing flash; in reach → `HeroKit hit false/true`; HUSK taken down in one hit (+cash 450→456); out of reach → no marker. BRUTE speed after a hit 16.8 → 11.8 (= −30 %, Splint slow), back to 15–17 after ~1.5 s. |
+| R11-8 | Medic grenade (C, Dozy Cloud) | PASS | Ball → bursts at (16,0,−16) as a 20-stud disc (Splash 10), 2 HUSKs gone + hit marker; cloud stays ~5 s: HUSKs walking through it 14.9 → 8.4 (≈ −40 %); `GrenadeFullAt` +19.97; HUD "Dozy Cloud 18s" → "8s" → "(C)". |
+
+_Run 11 stalled after R11-8 (agent stream watchdog); the coordinator stopped Play. The remaining 10b items (other hunters' melee/grenades, PvP in a battle, co-op regression) move to Run 12 after T137b + 10c. Note: the EquipTool workaround now equips the hero gun (N19 solved for agents)._
