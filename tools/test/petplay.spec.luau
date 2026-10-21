@@ -105,7 +105,7 @@ test("PvP guards: a pet never touches an enemy hunter, is never a target, works 
 	ok(string.find(server, "Economy.earnFor(side, cash)", 1, true), "round cash goes to the hunter's own side")
 	ok(string.find(fs.readFile("src/server/Battle.luau"), "Pets.roundCleared(side, huntersOf(side))", 1, true), "battles: each cleared side's own hunters")
 	ok(string.find(fs.readFile("src/server/Main.server.luau"), "Pets.roundCleared(1, hunters())", 1, true), "co-op: side 1")
-	ok(string.find(server, "local wasOut = followers[player] ~= nil and player:GetAttribute(\"InOutpost\") ~= true", 1, true), "dies with its hunter in a match")
+	ok(string.find(server, "PetRules.dropOnDown(followers, player, pet ~= nil, player:GetAttribute(\"InOutpost\") == true)", 1, true), "dies with its hunter in a match (F14)")
 end)
 
 local function dino(boss: boolean, hp: number, distance: number)
@@ -161,4 +161,41 @@ test("honk wiring: gun, melee and grenade only; dinos of its hunter's side; not 
 	ok(string.find(server, "clearHonk(player) -- off when its hunter is down, in camp or not in a match", 1, true), "off when down or in camp (effectOf is nil then)")
 	ok(string.find(server, "clearHonk(player) -- its hunter fell or left the match", 1, true), "a fallen hunter's honk ends")
 	ok(string.find(server, 'PetRules.honkX(if effect == "honk" then strength else nil, honks[player], player, enemy, os.clock())', 1, true), "the bonus asks the honk's own owner, live")
+end)
+
+-- Run 13 F14: the "ran back to camp" line never went out. The server's Heartbeat dropped the
+-- follower the frame Health hit 0, so the deferred Died handler found nothing and stayed quiet.
+-- Both now call Pets.dropOnDown: the line goes out exactly once, whichever runs first.
+test("F14: the pet-down line goes out once, whichever of Heartbeat and Died runs first", function()
+	local function run(order: { string }, oldHeartbeat: boolean?): number
+		local followers = { hunter = "model" }
+		local told = 0
+		for _, who in order do
+			if who == "heartbeat" and oldHeartbeat then
+				followers.hunter = nil -- the old Heartbeat: a plain drop, no line
+			else
+				local _, tell = Pets.dropOnDown(followers, "hunter", true, false)
+				if tell then
+					told += 1
+				end
+			end
+		end
+		eq(followers.hunter, nil, "follower gone")
+		return told
+	end
+	eq(run({ "heartbeat", "died" }), 1, "Heartbeat first (the Run 13 order)")
+	eq(run({ "died", "heartbeat" }), 1, "Died first")
+	eq(run({ "died" }), 1, "Died only")
+	eq(run({ "heartbeat", "died" }, true), 0, "the old Heartbeat reproduces the bug")
+	local followers = { hunter = "model" }
+	local model, tell = Pets.dropOnDown(followers, "hunter", true, true)
+	eq(model, "model")
+	eq(tell, false, "in the Outpost: no line")
+	followers.hunter = "model"
+	_, tell = Pets.dropOnDown(followers, "hunter", false, false)
+	eq(tell, false, "no pet along: no line")
+	local source = fs.readFile("src/server/Pets.luau")
+	ok(source:find("petDown(player) -- the frame Health hits 0", 1, true) ~= nil, "Heartbeat sends it on a down")
+	local died = source:match("humanoid%.Died:Connect%(function%(%)(.-)end%)")
+	ok(died ~= nil and died:find("petDown(player)", 1, true) ~= nil, "Died sends it too")
 end)

@@ -39,6 +39,7 @@ local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Combat = require(Shared:WaitForChild("Combat"))
@@ -59,6 +60,7 @@ local Path = require(Shared:WaitForChild("Path"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local Upgrades = require(Shared:WaitForChild("Upgrades"))
 local OptionPick = require(Shared:WaitForChild("OptionPick"))
+local SafeArea = require(Shared:WaitForChild("SafeArea"))
 local Ranger = require(Shared:WaitForChild("Ranger"))
 local RangerPosts = require(Shared:WaitForChild("RangerPosts"))
 
@@ -117,8 +119,8 @@ local HERO_COLOR = Color3.fromRGB(200, 90, 110)
 local heroButton = Instance.new("TextButton")
 heroButton.Name = "ChooseHero"
 heroButton.AnchorPoint = Vector2.new(0.5, 0)
-heroButton.Position = UDim2.new(0.5, 0, 0, 156)
-heroButton.Size = UDim2.fromOffset(220, 44)
+heroButton.Position = UDim2.new(0.5, 0, 0, SafeArea.buildHud(nil).hero) -- placed under the top bar below
+heroButton.Size = UDim2.fromOffset(220, SafeArea.HERO_H)
 heroButton.BackgroundColor3 = HERO_COLOR
 heroButton.Font = Enum.Font.GothamBold
 heroButton.TextSize = 20
@@ -146,8 +148,8 @@ corner(upgradesButton, 8)
 local masteryButton = Instance.new("TextButton")
 masteryButton.Name = "Mastery"
 masteryButton.AnchorPoint = Vector2.new(0.5, 0)
-masteryButton.Position = UDim2.new(0.5, 0, 0, 206)
-masteryButton.Size = UDim2.fromOffset(220, 40)
+masteryButton.Position = UDim2.new(0.5, 0, 0, SafeArea.buildHud(nil).mastery)
+masteryButton.Size = UDim2.fromOffset(220, SafeArea.MASTERY_H)
 masteryButton.BackgroundColor3 = Color3.fromRGB(120, 90, 200)
 masteryButton.Font = Enum.Font.GothamBold
 masteryButton.TextSize = 18
@@ -157,6 +159,18 @@ masteryButton.Modal = true -- only shown between matches, when the mouse is free
 masteryButton.Visible = false
 masteryButton.Parent = gui
 corner(masteryButton, 8)
+
+-- Under the CoreGui band that eats clicks (Run 13 F13): the stack under Hud.client's Start.
+do
+	local function place()
+		local inset = GuiService:GetGuiInset().Y
+		local hud = SafeArea.buildHud(inset)
+		heroButton.Position = UDim2.new(0.5, 0, 0, hud.hero - inset)
+		masteryButton.Position = UDim2.new(0.5, 0, 0, hud.mastery - inset)
+	end
+	place()
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(place)
+end
 
 -- This player's mastery rewards with their hero (nil below level 1).
 local function myMastery()

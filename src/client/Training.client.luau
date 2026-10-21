@@ -19,6 +19,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Training = require(Shared:WaitForChild("Training"))
 local Outpost = require(Shared:WaitForChild("Outpost"))
 local Theme = require(Shared:WaitForChild("Theme"))
+local SafeArea = require(Shared:WaitForChild("SafeArea"))
+local GuiService = game:GetService("GuiService")
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local request = remotes:WaitForChild("Training") :: RemoteFunction
@@ -93,13 +95,29 @@ end
 local folded = false
 local panel = Instance.new("Frame")
 panel.AnchorPoint = Vector2.new(1, 0)
-panel.Position = UDim2.new(1, -16, 0, 64)
+panel.Position = UDim2.new(1, -16, 0, SafeArea.localTop(GuiService:GetGuiInset().Y)) -- X clickable (Run 13 F13)
 panel.Size = UDim2.fromOffset(WIDTH, 40 + ROW * #Training.STATS)
 panel.BackgroundColor3 = PANEL
 panel.BackgroundTransparency = 0.15
 panel.Visible = false
 panel.Parent = gui
 corner(panel, 10)
+
+-- Shrinks on a short window so its bottom row stays on screen under the safe line.
+do
+	local scale = Instance.new("UIScale")
+	scale.Parent = panel
+	local function fit()
+		local camera = workspace.CurrentCamera
+		if camera then
+			scale.Scale = SafeArea.fitScale(40 + ROW * #Training.STATS, camera.ViewportSize.Y, GuiService:GetGuiInset().Y, 16)
+		end
+	end
+	fit()
+	if workspace.CurrentCamera then
+		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
+	end
+end
 
 local title = textLabel(panel, 18, Enum.Font.GothamBold, AMBER)
 title.Position = UDim2.fromOffset(12, 6)
@@ -108,7 +126,7 @@ title.Text = "TRAINING"
 
 local foldButton = Instance.new("TextButton")
 foldButton.AnchorPoint = Vector2.new(1, 0)
-foldButton.Position = UDim2.new(1, -16, 0, 64)
+foldButton.Position = UDim2.new(1, -16, 0, SafeArea.localTop(GuiService:GetGuiInset().Y))
 foldButton.Size = UDim2.fromOffset(110, 32)
 foldButton.BackgroundColor3 = PANEL
 foldButton.Font = Enum.Font.GothamBold

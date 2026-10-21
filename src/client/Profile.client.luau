@@ -32,6 +32,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 local HomeLayout = require(Shared:WaitForChild("HomeLayout"))
+local SafeArea = require(Shared:WaitForChild("SafeArea"))
 local LevelBoard = require(Shared:WaitForChild("LevelBoard"))
 local ProfileScreen = require(Shared:WaitForChild("ProfileScreen"))
 local TrophyBoard = require(Shared:WaitForChild("TrophyBoard"))
@@ -57,7 +58,6 @@ local CHIP_ON = Color3.fromRGB(200, 90, 110)
 local BAR_BACK = Color3.fromRGB(24, 21, 32)
 local GOOD = Color3.fromRGB(140, 240, 170)
 local BAD = Color3.fromRGB(240, 130, 110)
-local TOP_GAP = 8
 local BOTTOM_GAP = 8
 local CHIP_HEIGHT = 30
 local BOARD_ASK_SECONDS = 15 -- an open Leaderboard tab asks the server's cache again
@@ -258,7 +258,7 @@ end
 -- Under the top bar, above the home screen's Hunt Board row (its buttons, Play and the
 -- action row below it stay uncovered).
 local function band(): (number, number)
-	local top = GuiService:GetGuiInset().Y + TOP_GAP
+	local top = SafeArea.top(GuiService:GetGuiInset().Y) -- the X stays clickable (Run 13 F13)
 	local bottom = gui.AbsoluteSize.Y - ProfileScreen.EDGE
 	local home = playerGui:FindFirstChild("StormSplitHome")
 	local row = home and home:FindFirstChild(HomeLayout.HUNT_ROW, true)

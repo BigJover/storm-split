@@ -19,12 +19,14 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Pets = require(Shared:WaitForChild("Pets"))
 local Outpost = require(Shared:WaitForChild("Outpost"))
 local Theme = require(Shared:WaitForChild("Theme"))
+local SafeArea = require(Shared:WaitForChild("SafeArea"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local request = remotes:WaitForChild("Pets") :: RemoteFunction
@@ -117,11 +119,12 @@ local function say(text: string)
 	end)
 end
 
--- The hut panel, centre.
+-- The hut panel, top centre: its top (and the X) under the CoreGui band that eats clicks
+-- (Run 13 F13), its bottom 16 px above the window's.
 local panel = Instance.new("Frame")
-panel.AnchorPoint = Vector2.new(0.5, 0.5)
-panel.Position = UDim2.fromScale(0.5, 0.5)
-panel.Size = UDim2.new(0, WIDTH, 0.8, 0)
+panel.AnchorPoint = Vector2.new(0.5, 0)
+panel.Position = UDim2.new(0.5, 0, 0, SafeArea.localTop(GuiService:GetGuiInset().Y))
+panel.Size = UDim2.new(0, WIDTH, 1, -(SafeArea.localTop(GuiService:GetGuiInset().Y) + 16))
 panel.BackgroundColor3 = PANEL
 panel.BackgroundTransparency = 0.05
 panel.Visible = false

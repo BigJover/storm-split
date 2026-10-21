@@ -156,7 +156,7 @@ test("the pick fits every window: header, cards and confirm on screen", function
 			ok(shape.scale >= OptionPick.MIN_SCALE and shape.scale <= 1, `{where}: scale {shape.scale}`)
 			ok(shape.width <= OptionPick.WIDTH, `{where}: never wider than the panel`)
 			ok(shape.width * shape.scale <= x - OptionPick.EDGE * 2 + 1e-6, `{where}: width {shape.width} x {shape.scale}`)
-			ok(shape.height * shape.scale <= y - OptionPick.TOP - OptionPick.BOTTOM + 1e-6, `{where}: height {shape.height} x {shape.scale}`)
+			ok(shape.height * shape.scale <= y - OptionPick.top(y) - OptionPick.BOTTOM + 1e-6, `{where}: height {shape.height} x {shape.scale}`)
 			ok(shape.listHeight >= shape.cardHeight - 1e-6, `{where}: at least one whole card shows ({shape.listHeight})`)
 			ok(shape.listHeight <= shape.content + 1e-6, `{where}: the list never outgrows the cards`)
 			local inner = shape.width - OptionPick.PAD * 2
@@ -232,14 +232,13 @@ test("a single card is one full-width card, never a tall one", function()
 end)
 
 test("N20 (T120b, no-trap rule): with Choose hero / Unlocks & Mastery up, the panel stays under them on every window that can fit it", function()
-	-- The buttons' bottoms as Shop.client places them (top-anchored, centred).
+	-- The buttons' bottoms as Shop.client places them (SafeArea.buildHud, Run 13 F13).
 	local shop = require("@lune/fs").readFile("src/client/Shop.client.luau")
+	ok(shop:find("SafeArea.buildHud(inset)", 1, true) ~= nil, "Shop.client places H and M from SafeArea.buildHud")
+	local SafeArea = require(src.shared.SafeArea)
+	local hud = SafeArea.buildHud(nil)
 	local function bottom(name: string): number
-		local at = shop:find(`{name}.Position = UDim2.new(0.5, 0, 0, `, 1, true)
-		assert(at, name)
-		local y = tonumber(shop:match("UDim2%.new%(0%.5, 0, 0, (%d+)%)", at))
-		local h = tonumber(shop:match("UDim2%.fromOffset%(%d+, (%d+)%)", at))
-		return (y :: number) + (h :: number)
+		return if name == "heroButton" then hud.hero + SafeArea.HERO_H else hud.mastery + SafeArea.MASTERY_H
 	end
 	local lowest = math.max(bottom("heroButton"), bottom("masteryButton"))
 	ok(OptionPick.BUILD_HUD_BOTTOM >= lowest, `the reserve {OptionPick.BUILD_HUD_BOTTOM} clears the buttons ({lowest})`)

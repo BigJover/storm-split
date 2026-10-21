@@ -17,6 +17,7 @@
 ]]
 
 local Upgrades = require(script.Parent.Upgrades)
+local SafeArea = require(script.Parent.SafeArea)
 
 local OptionPick = {}
 
@@ -53,15 +54,16 @@ OptionPick.CARD_TALL = 132 -- a card in a row of three: name and a wrapped Blurb
 OptionPick.CARD_FLAT = 64 -- a stacked card, full width
 OptionPick.STACK_BELOW = 108 -- a card narrower than this in a row: stack them instead
 OptionPick.BOTTOM = 24 -- the panel sits this far above the window's bottom
-OptionPick.TOP = 44 -- Roblox's top bar
+OptionPick.TOP = SafeArea.TOP -- under Roblox's top bar and the CoreGui band below it (Run 13 F13)
 OptionPick.LIST_MAX_SCREEN = 0.55 -- the scroll box never takes more of the window than this
 OptionPick.MIN_SCALE = 0.4
 -- PLAYTEST Run 9 N20 (no-trap rule): in a match's build phase Choose hero (H) and Unlocks &
--- Mastery (M) sit top centre (Shop.client: 156 + 44 and 206 + 40 px); while they show, the
+-- Mastery (M) sit top centre (`SafeArea.buildHud`); while they show, the
 -- panel's top stays below them. On a window too short for LIST_ROOM_MIN of list under
 -- them, the panel takes the whole window again (it can't fit otherwise; H and M still work).
-OptionPick.BUILD_HUD_BOTTOM = 254 -- the lower button's bottom (246) + 8 clear
+OptionPick.BUILD_HUD_BOTTOM = SafeArea.buildHud(nil).bottom + 8 -- the lower button's bottom + 8 clear
 OptionPick.LIST_ROOM_MIN = 120 -- px of list (about 3 rows) the panel keeps under them
+OptionPick.TINY_ROOM = 48 -- px of list under the safe line below which a window counts as tiny (F13)
 OptionPick.CHROME = OptionPick.PAD * 2 + OptionPick.HEADER + OptionPick.MESSAGE + OptionPick.GAP * 2 -- the panel without its list (no pick)
 OptionPick.CLOSE_W = 28 -- the X, at the header's right edge
 OptionPick.BACK_W = 60 -- Back, left of the X
@@ -176,6 +178,11 @@ end
 function OptionPick.top(viewportY: number, buildHud: boolean?): number
 	if buildHud and viewportY - OptionPick.BUILD_HUD_BOTTOM - OptionPick.BOTTOM - OptionPick.CHROME >= OptionPick.LIST_ROOM_MIN then
 		return OptionPick.BUILD_HUD_BOTTOM
+	end
+	-- A window too short for a row under the CoreGui band (under ~310 px): the panel takes
+	-- the window under the top bar again, so a row still shows (its key still closes it).
+	if viewportY - OptionPick.TOP - OptionPick.BOTTOM - OptionPick.CHROME < OptionPick.TINY_ROOM then
+		return SafeArea.TOP_BAR
 	end
 	return OptionPick.TOP
 end

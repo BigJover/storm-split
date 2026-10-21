@@ -20,6 +20,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local GuiService = game:GetService("GuiService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
@@ -29,6 +30,7 @@ local HomeLayout = require(Shared:WaitForChild("HomeLayout"))
 local Modes = require(Shared:WaitForChild("Modes"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local Outpost = require(Shared:WaitForChild("Outpost"))
+local SafeArea = require(Shared:WaitForChild("SafeArea"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local lobby = remotes:WaitForChild("Lobby") :: RemoteEvent
@@ -51,6 +53,7 @@ local ORBIT_HEIGHT = 110
 local ORBIT_SPEED = 0.05 -- radians per second
 local DOCK_SCALE = 0.62 -- the docked home column's largest scale (Hunters' Outpost)
 local DOCK_MARGIN = 16 -- px from the left edge
+local TOGGLE_H = 40 -- the Outpost's Menu / Hide menu button, on the safe line (Run 13 F13)
 
 ------------------------------------------------------------------ layout
 
@@ -87,13 +90,22 @@ do
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = column
 
+	-- Every card sits under the CoreGui band that eats clicks (Run 13 F13): the column
+	-- fits and centres in the band from SafeArea.top (under the Menu button when docked)
+	-- to the bottom margin.
 	local function fit()
 		local viewport = camera.ViewportSize
-		local content = layout.AbsoluteContentSize / math.max(columnScale.Scale, 0.01)
-		local tall = (viewport.Y - SCREEN_MARGIN * 2) / math.max(content.Y, 1)
-		local wide = (viewport.X - SCREEN_MARGIN * 2) / HomeLayout.COLUMN
 		local docked = column.AnchorPoint.X == 0
+		local top, bottom = SafeArea.band(viewport.Y, GuiService:GetGuiInset().Y, SCREEN_MARGIN)
+		if docked then
+			top = math.min(top + TOGGLE_H + 8, bottom - 1)
+		end
+		local content = layout.AbsoluteContentSize / math.max(columnScale.Scale, 0.01)
+		local tall = (bottom - top) / math.max(content.Y, 1)
+		local wide = (viewport.X - SCREEN_MARGIN * 2) / HomeLayout.COLUMN
 		columnScale.Scale = math.clamp(math.min(tall, wide), 0.4, if docked then DOCK_SCALE else 1)
+		local middle = math.floor((top + bottom) / 2 - viewport.Y / 2)
+		column.Position = if docked then UDim2.new(0, DOCK_MARGIN, 0.5, middle) else UDim2.new(0.5, 0, 0.5, middle)
 	end
 	column:GetPropertyChangedSignal("AnchorPoint"):Connect(fit)
 	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fit)
@@ -374,8 +386,8 @@ local collapsed = false
 local menuToggle = Instance.new("TextButton")
 menuToggle.Name = "OutpostMenu"
 menuToggle.AnchorPoint = Vector2.new(0, 0)
-menuToggle.Position = UDim2.fromOffset(DOCK_MARGIN, 64)
-menuToggle.Size = UDim2.fromOffset(150, 40)
+menuToggle.Position = UDim2.fromOffset(DOCK_MARGIN, SafeArea.top(GuiService:GetGuiInset().Y)) -- clickable (Run 13 F13)
+menuToggle.Size = UDim2.fromOffset(150, TOGGLE_H)
 menuToggle.BackgroundColor3 = CARD
 menuToggle.AutoButtonColor = true
 menuToggle.Font = Enum.Font.GothamBold
@@ -414,7 +426,6 @@ local function refresh()
 	gui.Enabled = inLobby or wait
 	backdrop.BackgroundTransparency = if view.backdrop then 0.35 else 1
 	column.AnchorPoint = if view.docked then Vector2.new(0, 0.5) else Vector2.new(0.5, 0.5)
-	column.Position = if view.docked then UDim2.new(0, DOCK_MARGIN, 0.5, 30) else UDim2.fromScale(0.5, 0.5)
 	column.Visible = view.column
 	menuToggle.Visible = view.toggle
 	menuToggle.Text = if collapsed then "Menu" else "Hide menu"

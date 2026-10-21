@@ -30,6 +30,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local DinoLook = require(Shared:WaitForChild("DinoLook"))
 local HuntBoard = require(Shared:WaitForChild("HuntBoard"))
 local HomeLayout = require(Shared:WaitForChild("HomeLayout"))
+local SafeArea = require(Shared:WaitForChild("SafeArea"))
 local Theme = require(Shared:WaitForChild("Theme"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -52,7 +53,6 @@ local TEXT = Color3.fromRGB(240, 230, 210)
 local TEXT_DIM = Color3.fromRGB(185, 165, 140)
 local GREY = Color3.fromRGB(150, 145, 140)
 local BAD = Color3.fromRGB(240, 130, 110)
-local TOP_GAP = 8 -- px under the top bar
 local BOTTOM_GAP = 8 -- px above the home screen's Play row
 local RETRY_SECONDS = 5 -- how often an open board that failed to load asks again
 local FLOAT_SECONDS = 1.2 -- the "+15 Amber" that drifts up from a claim
@@ -255,7 +255,7 @@ end
 -- The band the board may use: under the top bar, above the home screen's Hunt Board
 -- row (its button, Play and the action row below it stay uncovered).
 local function band(): (number, number)
-	local top = GuiService:GetGuiInset().Y + TOP_GAP
+	local top = SafeArea.top(GuiService:GetGuiInset().Y) -- the X stays clickable (Run 13 F13)
 	local bottom = gui.AbsoluteSize.Y - HuntBoard.EDGE
 	local home = playerGui:FindFirstChild("StormSplitHome")
 	local actions = home and home:FindFirstChild(HomeLayout.HUNT_ROW, true)

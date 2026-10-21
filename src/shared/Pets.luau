@@ -592,6 +592,18 @@ function Pets.honkX(strength: number?, honk: Honk?, attacker: any, enemy: any, n
 	return 1 + strength / 100
 end
 
+-- Its hunter went down (Run 13 F14). The server's Heartbeat (the root is gone the frame
+-- Health hits 0) and the deferred Humanoid.Died handler both call this, in either order:
+-- whichever runs first takes the follower out of `followers` and is told to send the
+-- "ran back to camp" line; the second finds nothing and stays quiet. So the line goes out
+-- exactly once, and never for a hunter in camp or without a pet along.
+-- Returns (the follower taken out or nil, send the line?).
+function Pets.dropOnDown<M>(followers: { [any]: M }, who: any, hasPet: boolean, inOutpost: boolean): (M?, boolean)
+	local model = followers[who]
+	followers[who] = nil
+	return model, model ~= nil and hasPet and not inOutpost
+end
+
 function Pets.downLine(pet: { kind: string }): string
 	local row = petRow(pet.kind)
 	return `Your {if row then row.display else "pet"} ran back to camp — it returns when you do.`

@@ -10,6 +10,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GuiService = game:GetService("GuiService")
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -25,6 +26,7 @@ local HeroXp = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("He
 local PanelRules = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("PanelRules"))
 local Sides = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Sides"))
 local BattleFlow = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("BattleFlow"))
+local SafeArea = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("SafeArea"))
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "StormSplitHud"
@@ -55,8 +57,8 @@ labelPadding.Parent = label
 local startButton = Instance.new("TextButton")
 startButton.Name = "Start"
 startButton.AnchorPoint = Vector2.new(0.5, 0)
-startButton.Position = UDim2.new(0.5, 0, 0, 60)
-startButton.Size = UDim2.fromOffset(220, 44)
+startButton.Position = UDim2.new(0.5, 0, 0, SafeArea.localTop(GuiService:GetGuiInset().Y)) -- under the CoreGui band (Run 13 F13)
+startButton.Size = UDim2.fromOffset(220, SafeArea.START_H)
 startButton.BackgroundColor3 = Color3.fromRGB(70, 180, 110)
 startButton.TextColor3 = Color3.new(1, 1, 1)
 startButton.Font = Enum.Font.GothamBold
@@ -211,9 +213,10 @@ end
 local resultsDismissed = false
 local battleResults = Instance.new("Frame")
 battleResults.Name = "BattleResults"
-battleResults.AnchorPoint = Vector2.new(0.5, 0.5)
-battleResults.Position = UDim2.fromScale(0.5, 0.5)
-battleResults.Size = UDim2.new(1, -32, 1, -136) -- clear of the status line, inside any window
+-- Its top (and the X) under the CoreGui band that eats clicks (Run 13 F13), inside any window.
+battleResults.AnchorPoint = Vector2.new(0.5, 0)
+battleResults.Position = UDim2.new(0.5, 0, 0, SafeArea.localTop(GuiService:GetGuiInset().Y))
+battleResults.Size = UDim2.new(1, -32, 1, -(SafeArea.localTop(GuiService:GetGuiInset().Y) + 16))
 battleResults.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
 battleResults.BackgroundTransparency = 0.1
 battleResults.Visible = false
@@ -552,7 +555,7 @@ if studioCash and studioCash:IsA("RemoteEvent") then
 	local button = Instance.new("TextButton")
 	button.Name = "StudioCash"
 	button.AnchorPoint = Vector2.new(0, 0)
-	button.Position = UDim2.new(0, 12, 0, 60)
+	button.Position = UDim2.new(0, 12, 0, SafeArea.localTop(GuiService:GetGuiInset().Y)) -- clickable (Run 13 F13)
 	button.Size = UDim2.fromOffset(130, 34)
 	button.BackgroundColor3 = Color3.fromRGB(60, 140, 80)
 	button.TextColor3 = Color3.new(1, 1, 1)
@@ -887,7 +890,7 @@ campStroke.Parent = label
 
 local campsBoard = Instance.new("TextLabel")
 campsBoard.Name = "CampsBoard"
-campsBoard.Position = UDim2.new(0, 12, 0, 104) -- under Studio's +1000 cash button
+campsBoard.Position = UDim2.new(0, 12, 0, SafeArea.localTop(GuiService:GetGuiInset().Y) + 44) -- under Studio's +1000 cash button
 campsBoard.Size = UDim2.new(0.3, 0, 0.42, 0) -- shrinks with the window, never off screen
 campsBoard.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
 campsBoard.BackgroundTransparency = 0.3

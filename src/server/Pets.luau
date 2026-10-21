@@ -195,6 +195,25 @@ local function dropFollower(player: Player)
 	end
 end
 
+-- Its hunter went down: the follower runs back to camp and the hunter hears it once,
+-- whether the Heartbeat or the Died handler sees it first (Run 13 F14, PetRules.dropOnDown).
+local function petDown(player: Player)
+	local pet = Progression.petAlong(player)
+	local model, tell = PetRules.dropOnDown(followers, player, pet ~= nil, player:GetAttribute("InOutpost") == true)
+	if model then
+		model:Destroy()
+	end
+	if pet and tell then
+		downEvent:FireClient(player, PetRules.downLine(pet)) -- it returns when you do
+	end
+end
+
+local function downed(player: Player): boolean
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	return humanoid ~= nil and humanoid.Health <= 0
+end
+
 local function placeFollower(player: Player)
 	dropFollower(player)
 	local pet = Progression.petAlong(player)
@@ -371,12 +390,7 @@ local function watch(player: Player)
 		task.defer(placeFollower, player)
 		if humanoid and humanoid:IsA("Humanoid") then
 			humanoid.Died:Connect(function()
-				local pet = Progression.petAlong(player)
-				local wasOut = followers[player] ~= nil and player:GetAttribute("InOutpost") ~= true
-				dropFollower(player)
-				if pet and wasOut then
-					downEvent:FireClient(player, PetRules.downLine(pet)) -- it returns when you do
-				end
+				petDown(player)
 			end)
 		end
 	end)
@@ -448,7 +462,10 @@ function Pets.init(remotes: Folder)
 		for player, model in followers do
 			local root = aliveRoot(player)
 			local pet = Progression.petAlong(player)
-			if not root or not pet or not model.PrimaryPart then
+			if not root and pet and downed(player) then
+				petDown(player) -- the frame Health hits 0, before Died runs (F14)
+				continue
+			elseif not root or not pet or not model.PrimaryPart then
 				dropFollower(player)
 				continue
 			end
