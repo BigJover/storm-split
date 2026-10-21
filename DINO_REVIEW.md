@@ -813,3 +813,47 @@ Also update the TOWERS_LATER Ranger text "5 at Ranger Corps" → "5 at Ranger Tr
 | Incubator | **Hatchery Hut** |
 
 Avoided (taken): Frag (Frag Shells), Scent (Scent Trail), Slam, Tonic (path), Firecracker (Firecracker Rain), Sleep/Snooze (Sleep Wave, Snooze Alarm), Tranq, Stampede, Trade Post. Kept plain stat words (Reach/Speed/Health/Throw) for kids; "Trophy" unused.
+
+## Round 21 — Phase 10 D2: eggs, pets, rarity, fusing, hatch-skip (before 10d)
+
+Every pet is a tamed hatchling from an egg (#375), so no dog (dogs don't hatch). **No pet is
+an enemy species** (Compy, Raptor, Pachy, Ankylo, Gallimimus, Pteranodon, Triceratops, T-Rex),
+so nobody shoots at, or ignores, the wrong dino. Pets: small, collar + leaf tag, side follower.
+
+| Egg (seed timer) | Line |
+|---|---|
+| **Mud Egg** (5 min) | A plain egg from the riverbank. Most hatch Common. |
+| **Speckled Egg** (30 min) | Spotty and warm. Better odds. |
+| **Golden Egg** (2 h) | Shiny and rare. Best odds (Mythic still ≤ 2 %). |
+
+| Pet (species) | Effect (#378) | Kid line |
+|---|---|---|
+| **Honker** (baby Parasaurolophus) | spot camo | Honks when a hidden dino is near, and shows it. |
+| **Fetcher** (tiny Dimorphodon, pterosaur) | fetch Airdrop chests | Flies to Airdrop chests and brings them to you. |
+| **Fern Muncher** (baby longneck) | regen | You slowly heal while it's with you. |
+| **Shiny Snatcher** (baby Oviraptor) | round cash | Digs up a little cash every round. |
+| **Frill Guard** (baby Protoceratops) | absorb one bite | Takes one dino bite for you each round. |
+
+Rarity: keep Jovan's six as written — **Common / Uncommon / Rare / Epic / Legendary / Mythic**
+(grey / green / blue / purple / gold / red); card shows "Rare · effect ×1.5". Name on cards:
+"Epic Honker".
+
+| Where | String |
+|---|---|
+| Hut header | Hatchery Hut |
+| Odds | Hatch odds: Common 55 % · … · Mythic 0.5 % |
+| Timer | Hatching… 4:32 left / Ready to hatch! / button **Hatch!** |
+| Amber skip | **Warm it up** — 12.5K Amber (finishes now) |
+| Robux skip | **Hatch now** — R$ 49 |
+| Fuse panel | **Fuse** — 3 Rare Honkers → 1 Epic Honker |
+| Fuse needs | Need 3 of the same pet and rarity. |
+| Mythic | Mythic is the top — it can't fuse. |
+| Equip | **Take along** / Taking along (1 pet in hunts) |
+| Pet down | Your Honker ran back to camp — it returns when you do. |
+| Full | Pets full (60/60). Fuse some to make room. |
+| Pen | Show in your Hatchling Pen (3 max) |
+| Profile | Pet: Epic Honker |
+
+Avoided/grepped clean: Honker, Fetcher, Muncher, Snatcher, Speckled, Golden, Mud Egg, "Warm it
+up", "Take along". "Frill" is only an internal Triceratops model part (fine). No "Trophy", no
+old-theme words. "Fetch" appears only in code (HuntBoard fetch), not as a name.
