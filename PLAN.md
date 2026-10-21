@@ -1,3 +1,117 @@
+# Plan — Phase 10: hunter bodies, Base Camp, AFK training, pets, skins, big Amber, store (Director, 2026-10-20)
+
+Jovan's answers (verbatim in `DIRECTION.md` "Phase 10 answers"): ~30 h to unlock all is right;
+Ranger posts OK; the brainstorm is a **GO**, plus per-hunter Health/Speed, a melee and a
+grenade per hunter, AFK-trainable stats (punching bag → reach, treadmill → speed, tonic
+crafting → health, grenade range → throw), skins (hunter, weapon, tower) and monetisation that
+lets impatient players get ahead — **pay-to-win is acceptable to him** (a fun game with a
+"competitive mode", not CS2). Calls: `DECISIONS.md` #363–#390. Phase 7–9 rules hold (one task =
+one commit, pushed; check/export/test + `tools/compile.luau` green; Config diff after every
+sheet change; openpyxl, assert old-value-or-empty; append rows, never insert; pure rules
+first with specs; co-op specs re-run every task; no publish, no DataStore writes, **no real
+purchases** from an agent). **Fresh Builder per batch; 🦖 names before each batch's Builder;
+every batch ends with its Tester steps.**
+
+**Status (2026-10-20): planned. Next (after Phase 9's Run 10b → T132): 🦖 Round 20 names (D1) → batch 10a (T134 + T135). Waiting
+on Jovan only for the asks below; defaults are applied so nothing blocks.**
+
+## Ask Jovan (defaults applied, not blocking — #390)
+1. **Offline training?** Default: yes — a stat keeps training at **half speed while you're away**
+   (in a match, elsewhere, logged off), counted up to **8 h per absence**; full speed at its station.
+2. **Pet rarities and odds.** Default names Common / Uncommon / Rare / Epic / Legendary; basic
+   egg 60 / 25 / 10 / 4 / 1 %; better eggs shift up. Odds always shown.
+3. **Amber scale ×100 or ×1000?** Default ×100 (Normal clear 10,000; unlock-all 532,500).
+4. **Robux prices.** Defaults: Amber packs 49 / 199 / 799 R$; 2× Training pass 299; 2nd
+   training slot 199; 2nd incubator 199; instant hatch 25 / 49 / 99 by egg; finish-a-level 25;
+   skin bundles 149–399.
+5. **Melee reach cap +20 %** ("slightly further")? Default +20 %.
+
+## The design in brief (details in the decisions)
+| Part | Call |
+|---|---|
+| Hunter bodies (#363–#365) | `Hunter Stats` sheet: per hunter Max HP + Walk speed (seeds Tracker 95/17, Big Game Hunter 110/15, Brush Beater 115/15.5, Field Medic 100/16.5; today all 100/16). **Body parity** enforced by the exporter: HP/100 × (speed/16)^`Body speed weight` (1.5), max ÷ min ≤ 1.15 (the #235 bar). Slows multiply the new base. |
+| Melee + grenade (#366–#369) | One of each per hunter (🦖 names; working: Tracker knife / scent bomb, BGH rifle butt / frag, Brush Beater machete / firecracker, Field Medic splint baton / smoke-tonic). Melee: free, short reach, server hit check on the camera ray like guns. Grenade: charges (seed 1, recharge 20 s), thrown on a fixed arc along the camera, max range = the grenade-range stat. Both scale with hunter level like the gun. **Spec = the saved training stats** (no in-match melee/grenade tiers in v1; the hero panel stays clean). PvP: ×0.5 like guns, **no stun/knockback on hunters** (a ≤30 % slow for ≤2 s at most), no friendly fire. `value.py`: gun+melee+grenade still never out-damages the best tower. |
+| Training (#370–#374) | Account-wide stats, % on top of each class's base: **Reach +20 % / Speed +15 % / Health +10 % / Grenade range +30 %**, 10 levels each (+2 / +1.5 / +1 / +3 % a level). Level L takes 10·L min → 9.2 h a stat, ~37 h all four with one slot (≈ the 30 h unlock pace). One training slot (Game Pass: 2). Trains at full rate at its station in Base Camp, half rate otherwise (ask 1), banked every 60 s and on leave. **We never defeat Roblox's 20-min idle kick** — the kick just costs nothing. Amber finishes a level (price per remaining minute). **No Amber AFK farming** (logging in never beats playing). Applies in every mode incl. Ranked (strength gap is a feature, #255). |
+| Pets (#375–#379) | Tamed hatchlings (🦖 species). Eggs bought with Amber; hatch timers (seeds 5 min / 30 min / 2 h), 1 incubator (+1 pass); **Amber speeds a hatch** (per remaining minute), Robux hatches instantly. Rarity rolled **at hatch** on the server; odds shown. **Fuse 3 identical (species + rarity) → 1 of the next rarity.** Inventory 60, **1 equipped**. In matches the pet follows, has **one small support effect** per species (spot camo, fetch Airdrop chests, regen, round cash, absorb one bite per round), rarity ×1 / 1.25 / 1.5 / 1.75 / 2; **dies and respawns with its hunter, can't be targeted, never affects enemy hunters**; Legendary worth ≤ the mastery-perk worth cap (exporter). |
+| Skins (#380–#381) | New Cosmetics slots: **hunter skin, weapon skin (per hero), tower skin (per tower type)** beside the existing ones. Sources: level ladder, Amber skin shop (fixed catalogue on a `Skins` sheet), Robux bundles. Readability rules: a tower skin never changes silhouette, range ring, tier crown/glow or HP bar; a hunter skin keeps the side outline/name tag and has no transparency or dino disguise. Cosmetic only. |
+| Base Camp (#382–#384) | **Same place, own area** (no teleport until publishing): the Lobby state now spawns characters in Base Camp; the home-screen controls become a docked panel (Play, host picks, G Hunt Board, P Profile) — always reachable. **Third person allowed in Base Camp** (no combat there). 10 player **plots** ring the camp: up to 3 inert **decoration towers** (owned towers, with skins) + your **pet pen** (showcase up to 3 pets). Four **training stations**, an incubator hut, a skin/egg shop counter. Built as one self-contained model + server module so T96's lobby place can lift it whole. |
+| Big Amber (#385–#386) | One-time sheet migration ×`Amber scale` (ask 3) of every Amber cell (prices, payouts, Haul, Bounties, Entry fee/buy-ins, unlocks, new Phase-10 prices born scaled); `Profile` save migration (version bump, Amber + escrow ×scale, once, idempotent); short-number display (12.5K, 1.2M); exporter: the "logging in never beats playing" checks are ratios and stay; new check: every Amber value is a multiple of the scale and none below it. |
+| Store (#387–#389) | `Store` sheet (product/pass ids blank until Jovan creates them after publishing — blank id = hidden). Server `Store` handles `ProcessReceipt` idempotently (PurchaseId saved through `SaveStore` before `PurchaseGranted`; any failure → `NotProcessedYet`). **Unpublished/Studio: store shows "The store opens when the game is published"**; no test-grant path. Paid random items: odds shown; `PolicyService` restricted players don't see Robux egg/instant-hatch items. **Pay-to-win scope:** Robux buys time (skips, 2× training, extra slots), Amber and cosmetics; caps are the same for everyone (pay to reach them sooner, never past them); nothing bought mid-match; nothing Robux-only that changes combat. |
+
+## Builder batches (fresh Builder each; 🦖 first; Tester at the end)
+
+**D1 🦖 Round 20 (before 10a/10b):** names for the 8 melee/grenade items, the 4 stats and
+stations (Punching Bag / Treadmill / Tonic Bench / Throwing Range working), Base Camp, plots,
+pet pen, incubator. **D2 🦖 (before 10d):** egg names, pet species + support-effect names
+(rarity names wait on ask 2). **D3 🦖 (before 10e):** skin catalogue names, store item names.
+
+### 10a — groundwork
+- **T134 Big Amber.** One-shot `tools/amber_rescale.py` (openpyxl, every Amber column listed
+  in one registry, asserts old values; refuses to run twice — `Amber scale` cell on Tuning);
+  `Profile` migration (save `amberScale`; multiply Amber + escrow once); `Theme.formatAmber`
+  short numbers everywhere Amber shows; exporter scale check. **Accept:** Config diff = every
+  Amber value ×scale and nothing else; ratio checks pass; a v-old fake profile migrates once
+  (spec, twice = no-op); the HUD/Hunt Board/Unlocks/results show short numbers; 845+ specs green.
+- **T135 Hunter bodies.** `Hunter Stats` sheet + `Shared/HunterStats` (pure: base HP/speed per
+  hunter, trained bonuses applied, caps); `Health` sets MaxHealth/WalkSpeed from it on spawn and
+  hero pick; slows multiply the new base; exporter parity bar. **Accept:** specs for each
+  hunter's numbers, parity refusal on a bad seed, slow-on-new-base; co-op/battle specs green.
+
+### 10b — melee + grenade
+- **T136 Melee.** `Hunter Kit` sheet (per hunter: melee damage, swing time, reach, arc; grenade
+  damage, splash, charges, recharge, base range, dino effect); `Shared/Melee` pure hit rule;
+  server validation (reach, cooldown, line of sight, PvP ×0.5, side rules from `BattleRules`);
+  free keys (Builder picks, logs; must not clash with G/P/U/H); swing anim + hit marker.
+- **T137 Grenade.** `Shared/Grenade` pure arc/landing/splash; server owns the projectile;
+  charges + recharge on the HUD; PvP no hard CC (exporter refuses stun/knockback on hunters);
+  `value.py` kit check (gun + melee + grenade < best tower, every hero). **Accept:** specs for
+  reach/charge/splash/PvP; value.py bar met; Studio check below.
+
+### 10c — Base Camp + training
+- **T138 Base Camp.** Area + plots + stations (placeholder props fine), Lobby → Base Camp spawn,
+  docked home panel, third person there only, Play moves characters to the match and back after
+  results; late joiners blocked from Ranked wait in camp; `PanelRules` still holds.
+- **T139 Training.** `Shared/Training` pure (levels, rates, offline accrual from saved server
+  time, clamps: negative/clock-skew → 0, cap 8 h, one slot unless pass), saved via
+  `Progression`; station interaction (E), progress UI, Amber "finish level"; applies through
+  `HunterStats`. Studio aid `trainskip <min>` (StudioOnly). **Accept:** accrual specs (online,
+  offline, cap, skew, slot), stats reach exact caps, save/load round-trip on the fake store.
+
+### 10d — pets
+- **T140 Eggs + pets data.** `Pets`/`Eggs` sheets; `Shared/Pets` pure (roll at hatch, odds,
+  timers, Amber speed-up, fuse 3→1, inventory cap, equip 1); incubator hut UI with odds shown.
+- **T141 Pets in play.** Follower model, support effects (server), dies/respawns with hunter,
+  untargetable, never touches enemy hunters; pet pen showcase on plots; pet on Profile.
+  **Accept:** effect specs per species/rarity, worth-cap refusal, PvP specs (no effect on rivals).
+
+### 10e — skins + store
+- **T142 Skins + decorations.** `Skins` sheet; Cosmetics slots (hunter / weapon per hero /
+  tower per type), Amber skin shop, readability guards (spec: silhouette parts untouched),
+  plot decoration towers placed from owned towers.
+- **T143 Store.** `Store` sheet, `Shared/Store` pure (catalogue, pass effects, receipt ledger),
+  server `Store` (`ProcessReceipt`, `UserOwnsGamePassAsync` cached, `PolicyService`), store UI with
+  the unpublished message. **Accept:** fake-receipt specs (duplicate PurchaseId granted once,
+  save failure → NotProcessedYet), blank id hidden, Studio shows the message and grants nothing.
+
+### 10f — wrap-up
+- **T144 🦖 review** of all Phase-10 strings → one fix commit. **T145 docs** (CLAUDE.md,
+  ARCHITECTURE modules/ownership: `Training`, `Pets`, `Store`, `BaseCamp` rows; SETUP: creating
+  products/passes after publishing and pasting ids into `Store`; VISION) + `RECAP.md` "Phase 10".
+
+## Tester steps (Studio, solo; turn saving off with J first)
+- **After 10a:** Amber shows short numbers on HUD, Hunt Board, Unlocks, results; each hunter
+  spawns with its HP/speed (print Humanoid values); a Chiller-type slow restores to the class base.
+- **After 10b:** each hunter's melee hits a dino in reach and misses past it; grenade arcs, lands,
+  splashes, recharge shown; vs a stand-in hunter: half damage, no stun/knockback.
+- **After 10c:** Lobby spawns in Base Camp in third person, Play reachable, match starts first
+  person and returns to camp; station E starts training; `trainskip` levels up; leaving the
+  station drops to half rate; stats visible in Humanoid after a level.
+- **After 10d:** buy egg (Amber), odds shown, Amber speed-up, hatch, fuse 3, equip; pet follows in
+  match, effect fires, dies and respawns with the hunter; stand-in rival unaffected.
+- **After 10e:** equip each skin kind, tower still reads (ring, crown, HP bar); store shows the
+  unpublished message and nothing is granted. **Not testable by agents:** real purchases,
+  idle kick, offline time on a live server, cross-server — Jovan after publishing (T95 list).
+
 # Plan — Phase 9: the 4× towers and A/B/C upgrades (Director, 2026-10-13)
 
 Jovan's answer to T97 (verbatim in `DIRECTION.md` "The 4× towers and A/B/C upgrades"): all 7

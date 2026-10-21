@@ -150,6 +150,18 @@ F9–F11 fixed, F11 = the server boot crash, now caught by `tools/compile.luau`)
 checks) is running; T132 fixes whatever it finds. The recap is `RECAP.md` "Phase 9"; what's
 left needs Jovan (feel, multi-client, publish, the brainstorm "go").
 
+## Phase 10 scope (Jovan, 2026-10-20)
+
+Jovan answered the Phase 9 asks (`DIRECTION.md` "Phase 10 answers"): ~30 h to max is right,
+Ranger posts are fine, and the brainstorm is a **GO** with his additions — per-hunter Health
+and Speed, a melee and a grenade per hunter, AFK-trained stats at Base Camp stations, pets,
+hunter/weapon/tower skins, bigger Amber numbers, and monetisation (pay-to-win acceptable).
+Plan: `PLAN.md` "Phase 10" (batches 10a–10f, T134–T145); calls `DECISIONS.md` #363–#390,
+ask list #390 (defaults applied). Extra loop rules: the **Dino agent names before each batch
+(D1–D3)**; **no agent ever makes or simulates a real purchase** — the store is tested only
+for its unpublished message and with fake receipts in specs; Run 10b/T132 of Phase 9 still
+finish first.
+
 ## Rules
 
 - **Verify every step:** `tools/check.sh` clean; `python3 tools/export_constants.py` clean;

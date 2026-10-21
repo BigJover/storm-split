@@ -170,6 +170,35 @@ What this adds to his taste (applied in DECISIONS #274–#287, PLAN "Phase 9"):
   something real to dinos, and be worth its slot in co-op where there are no raiders.
 - Heroes keep the rule: options change handling and fire modes, never raw gun damage.
 
+## Phase 10 answers (Jovan, 2026-10-20)
+
+Verbatim:
+- Unlock pace: "maxing out is on a good pace i want it to take a while and give impatient
+  players something to use to get ahead with micro tranactions 30 hours on normal strikes that
+  balence well"
+- Ranger posts in third person: "fine under PVP rule, its not a super serious competitve game
+  like cs2 just a 'competitve mode' in a fun game to get a playlist where people want to grind
+  or pay to win to flex and show off player skins pets gun skins tower skins ect".
+- The brainstorm: "yes", plus "weapon skins and hunter skins and tower skins i want to
+  implement simple stats so that players have a reason to afk farm such with that I want to add
+  a melee for each hunter and a grenade so that they can be speced into on top of this I think
+  each hunter should have their own unique health stat, speed stat, then melee and grenade and
+  I want said afk farms to run based on those punching bag for melee treadmil for speed, potion
+  crafting/or vitamin making for health, then a grenade throwing range for grenade these stats
+  are more for simple upgrades to the stat melee can reach slightly further health goes up
+  slowly to a cap of 10% increase, grenade goes 30% further and player speed is 15% faster, on
+  top of the characters unique base stats per class of hunter".
+
+What this adds to his taste (applied in DECISIONS #363–#390, PLAN "Phase 10"):
+- **~30 h to max out is right**, and slow on purpose so impatient players have something to buy.
+- **Monetisation is welcome, pay-to-win included.** Competitive is "a competitive mode in a
+  fun game", a place to grind or pay and flex — not a serious esport. Keep paid power to "get
+  there sooner" (same caps for everyone) and keep fights readable.
+- **Show-off is a core motive:** hunter, gun and tower skins, pets — give players places to be seen.
+- **AFK farming is wanted, for stats.** Simple, capped, small upgrades (+10 % health, +15 %
+  speed, +30 % grenade range, slightly longer melee), on top of real per-class differences.
+- **Hunter classes differ in body** (health, speed) and kit (a melee and a grenade each).
+
 ## Economy (his numbers)
 
 - Casual: solo pays only on a track clear (Easy 50 / Normal 100 / Hard 150 / Chaos 200

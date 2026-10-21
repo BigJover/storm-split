@@ -182,10 +182,33 @@ Some of this is cheap now and expensive later, so it's built early:
 | Map sides: build zones per team, several tracks | ✅ phase 7 (`Shared/Sides`, zone check in `Placement`) |
 | Network scale for 10 players (ARCHITECTURE.md §7): clients move enemy copies locally | measure first with Studio's multi-client test |
 
-## Future ideas — brainstorm only (Jovan, 2026-10-13)
+## Phase 10: hunter bodies, Base Camp, AFK training, pets, skins, big Amber, store (Jovan, 2026-10-20)
 
-Not planned or scheduled yet; Jovan wants "some if not all of this" later. **Waiting on his "go"** (asked again in `RECAP.md` "Phase 9"). Keep code from
-blocking it.
+Jovan said **"yes"** to the brainstorm below and added to it (verbatim in `DIRECTION.md`
+"Phase 10 answers"). ~30 h on Normal to max out is right, and slow on purpose: impatient
+players can get ahead with microtransactions. **Pay-to-win is acceptable**; competitive is a
+"competitive mode" in a fun game, where people grind or pay to flex skins, pets, gun and tower
+skins. Plan: `PLAN.md` "Phase 10"; calls `DECISIONS.md` #363–#390.
+
+- **Hunter bodies:** each hunter class has its own Max HP and walk speed (body parity bar), plus
+  **a melee and a grenade** of its own. PvP: ×0.5, no stun/knockback on hunters.
+- **AFK-trained stats** (saved, account-wide, small, capped, on top of the class base): punching
+  bag → melee reach (slightly, +20 %), treadmill → speed (+15 %), tonic/vitamin crafting →
+  health (+10 %), throwing range → grenade range (+30 %). Full speed at the station in Base
+  Camp, slower away; Amber or Robux finish a level. No AFK Amber.
+- **Pets** from eggs (Amber; hatching sped up with Amber), rarities, fusing, one small support
+  effect, die with their hunter, shown off in the pet pen.
+- **Skins:** hunter, weapon and tower skins beside the existing cosmetics; towers and hunters
+  stay readable.
+- **Base Camp:** a walkable hub in the same place for now (the lobby place later), with player
+  plots (decoration towers + pet pen), training stations, incubator, shop.
+- **Bigger Amber numbers** (default ×100), every price and payout together.
+- **Store:** Developer Products and Game Passes that buy time, Amber and cosmetics; same caps
+  for everyone; live only once published.
+
+## Future ideas — brainstorm (Jovan, 2026-10-13) — GO given 2026-10-20, planned as Phase 10
+
+Jovan wanted "some if not all of this"; on 2026-10-20 he said "yes" to all of it (above).
 
 - **Pets** as support for hunters. A pet **dies with its hunter**, so in PvP nobody has to
   shoot two targets. Pets have **rarities**, can be **fused**, and can be **shown off**.
