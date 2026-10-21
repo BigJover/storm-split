@@ -26,6 +26,8 @@
 	  waitsInCamp(state, seated)   whether a player belongs in the camp right now: the Lobby,
 	                            or a match they aren't playing in (a Ranked late joiner waits
 	                            here); never pulled out of a match they're playing
+  campSpawns()              which character is a camp arrival, independent of the order
+                            deferred CharacterAdded handlers run in (F12; see below)
 ]]
 
 local Outpost = {}
@@ -132,6 +134,64 @@ function Outpost.waitsInCamp(state: unknown, seated: boolean): boolean
 		return true
 	end
 	return not seated
+end
+
+--[[
+	Which character is a camp arrival (PLAYTEST F12). Server/Outpost asks for a camp spawn,
+	then LoadCharacterAsync; CharacterAdded handlers run DEFERRED, so they may run before or
+	after LoadCharacterAsync returns. The rule therefore never depends on that order: a
+	pending camp spawn is bound to the first character that reports in (from either side),
+	and that character stays a camp character for as long as it lives. Any other character
+	is a match spawn.
+
+	  ledger:expect(owner)            a camp spawn is starting (refused while one is pending)
+	  ledger:arrived(owner, char)     a character exists: binds a pending spawn to it; true
+	                                  if it's the camp character (same answer every call)
+	  ledger:failed(owner)            the spawn failed: drop the pending request
+	  ledger:pending(owner)           a camp spawn is under way
+	  ledger:forget(owner)            the owner left
+]]
+export type CampSpawns = {
+	expect: (self: CampSpawns, owner: any) -> boolean,
+	arrived: (self: CampSpawns, owner: any, character: any) -> boolean,
+	failed: (self: CampSpawns, owner: any) -> (),
+	pending: (self: CampSpawns, owner: any) -> boolean,
+	forget: (self: CampSpawns, owner: any) -> (),
+}
+
+function Outpost.campSpawns(): CampSpawns
+	local waiting: { [any]: boolean } = {}
+	local bound: { [any]: any } = {}
+	local ledger = {}
+	function ledger.expect(_, owner: any): boolean
+		if waiting[owner] then
+			return false
+		end
+		waiting[owner] = true
+		return true
+	end
+	function ledger.arrived(_, owner: any, character: any): boolean
+		if character == nil then
+			return false
+		end
+		if waiting[owner] then
+			waiting[owner] = nil
+			bound[owner] = character
+			return true
+		end
+		return bound[owner] == character
+	end
+	function ledger.failed(_, owner: any)
+		waiting[owner] = nil
+	end
+	function ledger.pending(_, owner: any): boolean
+		return waiting[owner] == true
+	end
+	function ledger.forget(_, owner: any)
+		waiting[owner] = nil
+		bound[owner] = nil
+	end
+	return (ledger :: any) :: CampSpawns
 end
 
 return Outpost

@@ -18,7 +18,11 @@
 	gun is handed out and no shot, swing or throw counts (Server/Hero, Server/Kit). Any
 	other spawn — the match loop's — clears "InOutpost" on the spot, so Play always moves
 	people to the match in first person; nothing here ever pulls a player out of a match.
-	spawning(player) tells Main's spawn hook not to move a camp arrival to a battle side.
+	spawning(player, character) tells Main's spawn hook not to move a camp arrival to a battle
+	side. Deferred CharacterAdded handlers may run before or after LoadCharacterAsync returns
+	(PLAYTEST F12: the old flag was cleared on return, so the late handler took the camp
+	spawn for a match spawn); Shared/Outpost.campSpawns binds the camp spawn to its
+	character, so the answer is the same in either order.
 ]]
 
 local Players = game:GetService("Players")
@@ -44,7 +48,7 @@ local RAPTOR = Color3.fromRGB(150, 170, 80)
 local PAD = Color3.fromRGB(230, 190, 90)
 local FENCE_HEIGHT = 12
 
-local spawningNow: { [Player]: boolean } = {}
+local campSpawns = OutpostRules.campSpawns() -- which character is a camp arrival (F12)
 local arrivals = 0
 local model: Model? = nil
 
@@ -200,28 +204,37 @@ end
 
 ------------------------------------------------------------------ in and out
 
-function Outpost.spawning(player: Player): boolean
-	return spawningNow[player] == true
+-- Is this character a camp arrival (Main's spawn hook: never move it to a battle side)?
+-- Same answer whichever CharacterAdded handler asks first (Shared/Outpost.campSpawns, F12).
+function Outpost.spawning(player: Player, character: Model?): boolean
+	return campSpawns:pending(player) or (character ~= nil and campSpawns:arrived(player, character))
+end
+
+-- A character reported in (from enter() or a deferred CharacterAdded, either order): the
+-- camp character marks the player in camp; anything else is a match spawn: out of camp.
+local function settle(player: Player, character: Model): boolean
+	local camp = campSpawns:arrived(player, character)
+	player:SetAttribute(ATTRIBUTE, camp)
+	return camp
 end
 
 -- A fresh character in camp (third person allowed, no gun, no combat).
 function Outpost.enter(player: Player)
-	if not player.Parent or spawningNow[player] then
+	if not player.Parent or not campSpawns:expect(player) then
 		return
 	end
-	spawningNow[player] = true
 	player:SetAttribute(ATTRIBUTE, true)
 	task.spawn(function()
 		local ok, err = pcall(function()
 			player:LoadCharacterAsync()
 		end)
-		spawningNow[player] = nil
 		local character = player.Character
-		if ok and character and player:GetAttribute(ATTRIBUTE) == true then
+		if not ok then
+			campSpawns:failed(player)
+			warn(`[Outpost] Couldn't spawn {player.Name} in camp: {err}`)
+		elseif character and settle(player, character) then
 			arrivals += 1
 			character:PivotTo(CFrame.new(OutpostRules.spawnPoint(arrivals)))
-		elseif not ok then
-			warn(`[Outpost] Couldn't spawn {player.Name} in camp: {err}`)
 		end
 	end)
 end
@@ -239,10 +252,8 @@ end
 function Outpost.init()
 	model = build()
 	local function watch(player: Player)
-		player.CharacterAdded:Connect(function()
-			if not spawningNow[player] then
-				player:SetAttribute(ATTRIBUTE, false) -- the match loop spawned them: out of camp
-			end
+		player.CharacterAdded:Connect(function(character)
+			settle(player, character) -- a match spawn clears the flag; a camp arrival keeps it
 		end)
 	end
 	Players.PlayerAdded:Connect(watch)
@@ -250,7 +261,7 @@ function Outpost.init()
 		watch(player)
 	end
 	Players.PlayerRemoving:Connect(function(player)
-		spawningNow[player] = nil
+		campSpawns:forget(player)
 	end)
 end
 

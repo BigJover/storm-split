@@ -130,12 +130,75 @@ test("wiring: no combat in camp, Play moves people out, results bring them back"
 	local client = fs.readFile("src/client/Hero.client.luau")
 	local outpost = fs.readFile("src/server/Outpost.luau")
 	ok(string.find(main, "setState(\"Lobby\")\n\tOutpost.enterAll()", 1, true), "every Lobby: everyone into camp")
-	ok(string.find(main, "if Outpost.spawning(player) then nil else Battle.spawnPoint(player)", 1, true), "a camp arrival never goes to a battle side")
+	ok(string.find(main, "if Outpost.spawning(player, character) then nil else Battle.spawnPoint(player)", 1, true), "a camp arrival never goes to a battle side")
 	ok(string.find(main, "Outpost.enter(player) -- waits in the Hunters' Outpost", 1, true), "a refused late joiner waits in camp")
 	ok(string.find(hero, "player:GetAttribute(\"Out\") == true or player:GetAttribute(\"InOutpost\") == true", 1, true), "no shots from or at camp")
 	ok(string.find(hero, "if not s.hero or player:GetAttribute(\"InOutpost\") == true then", 1, true), "no gun in camp")
 	ok(string.find(kit, "player:GetAttribute(\"InOutpost\") ~= true -- no combat", 1, true), "no swings or throws in camp")
 	ok(string.find(kit, "other:GetAttribute(\"InOutpost\") ~= true", 1, true), "camp players aren't kit foes")
 	ok(string.find(client, "player:GetAttribute(\"Placing\") ~= true and player:GetAttribute(\"InOutpost\") ~= true", 1, true), "first person outside camp")
-	ok(string.find(outpost, "if not spawningNow[player] then\n\t\t\t\tplayer:SetAttribute(ATTRIBUTE, false)", 1, true), "any other spawn leaves camp")
+	ok(string.find(outpost, "player.CharacterAdded:Connect(function(character)\n\t\t\tsettle(player, character)", 1, true), "any other spawn leaves camp")
+end)
+
+-- PLAYTEST F12: CharacterAdded handlers run deferred, so the camp-or-match answer must not
+-- depend on whether they run before or after LoadCharacterAsync returns.
+local function campSpawnRun(ledger: any, handlerFirst: boolean): (boolean, boolean)
+	local player, character = {}, {}
+	ok(ledger:expect(player), "camp spawn starts")
+	local fromHandler, fromEnter
+	if handlerFirst then
+		fromHandler = ledger:arrived(player, character)
+		fromEnter = ledger:arrived(player, character)
+	else
+		fromEnter = ledger:arrived(player, character) -- LoadCharacterAsync returned first
+		fromHandler = ledger:arrived(player, character) -- the deferred handler (the F12 order)
+	end
+	return fromHandler, fromEnter
+end
+
+test("F12: a camp arrival stays in camp whichever order the deferred spawn handler runs in", function()
+	for _, handlerFirst in { true, false } do
+		local a, b = campSpawnRun(Outpost.campSpawns(), handlerFirst)
+		ok(a and b, `in camp (handler first = {handlerFirst})`)
+	end
+	-- Proof the check can fail: the old rule (a flag cleared when LoadCharacterAsync returns,
+	-- read by the deferred handler) loses the camp arrival in the F12 order.
+	local old = {}
+	function old.expect(self) self.flag = true return true end
+	function old.arrived(self, _, _) local v = self.flag == true; self.flag = nil; return v end
+	local a, b = campSpawnRun(old, false)
+	ok(b and not a, "the old flag rule fails the F12 order")
+end)
+
+test("F12: match spawns leave camp; a failed camp spawn or a second request changes nothing", function()
+	local ledger = Outpost.campSpawns()
+	local player, campChar, matchChar = {}, {}, {}
+	ok(not ledger:arrived(player, matchChar), "no camp request: a match spawn")
+	ok(ledger:expect(player))
+	ok(not ledger:expect(player), "one camp spawn at a time")
+	ok(ledger:pending(player))
+	ok(ledger:arrived(player, campChar))
+	ok(not ledger:pending(player))
+	ok(ledger:arrived(player, campChar), "same character, same answer")
+	ok(not ledger:arrived(player, matchChar), "Play: the match character is out of camp")
+	ok(not ledger:arrived(player, nil), "no character, not in camp")
+	ok(ledger:expect(player))
+	ledger:failed(player)
+	ok(not ledger:pending(player) and not ledger:arrived(player, {}), "failed spawn: next one is a match spawn")
+	ok(ledger:expect(player) and ledger:arrived(player, {}), "results: back to camp again")
+	ledger:forget(player)
+	ok(not ledger:pending(player))
+end)
+
+test("F12 guard: Server/Outpost never decides camp-or-match from a flag cleared after the spawn", function()
+	local outpost = fs.readFile("src/server/Outpost.luau")
+	ok(not string.find(outpost, "spawningNow", 1, true), "the old cleared-on-return flag is gone")
+	ok(string.find(outpost, "OutpostRules.campSpawns()", 1, true), "uses Shared/Outpost.campSpawns")
+	local enter = string.match(outpost, "function Outpost%.enter%(.-\nend\n") or ""
+	local load = string.find(enter, "LoadCharacterAsync", 1, true)
+	ok(load, "enter() spawns the character")
+	local after = string.sub(enter, load or 1)
+	ok(not string.find(after, ":expect(", 1, true) and not string.find(after, "= nil", 1, true), "nothing after the spawn clears the camp request")
+	ok(string.find(after, "settle(player, character)", 1, true), "enter() settles the same character the handler does")
+	ok(string.find(fs.readFile("src/server/Hero.luau"), "GetAttributeChangedSignal(\"InOutpost\")", 1, true), "the gun follows the flag")
 end)

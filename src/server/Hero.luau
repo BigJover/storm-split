@@ -1285,6 +1285,10 @@ function Hero.init(remotes: Folder, hooks: Hooks?)
 		player.CharacterAdded:Connect(function()
 			task.defer(syncTool, player)
 		end)
+		-- In or out of camp settles after the spawn in either order (F12): re-check the gun.
+		player:GetAttributeChangedSignal("InOutpost"):Connect(function()
+			task.defer(syncTool, player)
+		end)
 	end
 	Players.PlayerAdded:Connect(setUp)
 	for _, player in Players:GetPlayers() do

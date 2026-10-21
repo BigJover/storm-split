@@ -488,7 +488,7 @@ local function watchCharacter(player: Player)
 		rescueAt[player] = nil
 		-- A battle hunter (re)spawns on their own side (T77); co-op is unchanged.
 		-- A camp arrival (Server/Outpost) stays in camp; it never goes to a battle side.
-		local battleHome = if Outpost.spawning(player) then nil else Battle.spawnPoint(player)
+		local battleHome = if Outpost.spawning(player, character) then nil else Battle.spawnPoint(player)
 		local at = if beacon then beacon + RESCUE_OFFSET elseif battleHome then battleHome + SPAWN_LIFT else nil
 		if at then
 			task.defer(function()
