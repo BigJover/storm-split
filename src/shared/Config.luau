@@ -270,6 +270,7 @@ return table.freeze({
 		TrainingElsewhereRate = 0.5,
 		TrainingSlots = 1,
 		TrainingBankS = 60,
+		TrainingFinishAmberPerMin = 2000,
 	},
 	Towers = {
 		SCOUT = {

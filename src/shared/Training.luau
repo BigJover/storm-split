@@ -221,7 +221,11 @@ function Training.finishPrice(state: State, stat: unknown): number?
 	if type(perMinute) ~= "number" or perMinute <= 0 or not isStat(stat) or maxed(state, stat :: string) then
 		return nil
 	end
-	return math.max(1, math.ceil(Training.remaining(state, stat :: string) / 60)) * perMinute
+	local minutes = math.ceil(Training.remaining(state, stat :: string) / 60) -- a started minute counts (#403)
+	if minutes <= 0 then
+		return nil -- nothing left: no button
+	end
+	return minutes * perMinute
 end
 
 function Training.finish(state: State, stat: unknown): boolean

@@ -7,6 +7,7 @@
 local fs = require("@lune/fs")
 local Config = require(src.shared.Config)
 local Training = require(src.shared.Training)
+local Theme = require(src.shared.Theme)
 local Profile = require(src.shared.Profile)
 local SaveStore = require(src.shared.SaveStore)
 local HunterStats = require(src.shared.HunterStats)
@@ -148,26 +149,46 @@ test("a stat stops at its cap: level 10 exactly, then it can't train", function(
 	eq(Training.remaining(state, "throw"), 0)
 end)
 
-test("Amber finish: blank price = not for sale; priced per whole remaining minute", function()
+test("Amber finish (T139b, #403): 2,000 Amber per remaining minute, rounded up", function()
 	local state = Training.blank()
+	eq(t.TrainingFinishAmberPerMin, 2000, "the sheet's price")
 	Training.start(state, "speed")
 	run(state, 90, "speed")
-	eq(t.TrainingFinishAmberPerMin, nil, "the sheet leaves it blank until the Director sets it")
-	eq(Training.finishPrice(state, "speed"), nil)
+	eq(Training.finishPrice(state, "speed"), 9 * 2000, "510 s left = 9 minutes (rounded up)")
+	state.progress.speed = 600 - 1
+	eq(Training.finishPrice(state, "speed"), 2000, "1 s left = a whole minute")
+	state.progress.speed = 600 - 60
+	eq(Training.finishPrice(state, "speed"), 2000, "exactly 60 s = 1 minute")
+	state.progress.speed = 600 - 61
+	eq(Training.finishPrice(state, "speed"), 4000, "61 s = 2 minutes")
+	state.progress.speed = 600
+	eq(Training.finishPrice(state, "speed"), nil, "0 remaining = no button")
+	state.progress.speed = 0
+	local fresh = Training.blank()
+	fresh.levels.reach = 9
+	eq(Training.finishPrice(fresh, "reach"), 200000, "a whole level 10 = 200K")
+	local whole = 0
+	for level = 1, 10 do
+		local s = Training.blank()
+		s.levels.throw = level - 1
+		whole += Training.finishPrice(s, "throw") :: number
+	end
+	eq(whole, 1100000, "a whole stat = 1.1M")
+	eq(Theme.formatAmber(200000), "200K", "the button shows K/M")
+	ok(Training.finish(state, "speed"))
+	eq(state.levels.speed, 1)
+	eq(state.progress.speed, 0)
+	state.levels.speed = 10
+	eq(Training.finishPrice(state, "speed"), nil, "maxed: nothing to finish")
+	eq(Training.finishPrice(state, "bogus"), nil)
 	local tuning = t :: any
 	local okSet = pcall(function()
-		tuning.TrainingFinishAmberPerMin = 1000
+		tuning.TrainingFinishAmberPerMin = nil
 	end)
 	if okSet then
-		eq(Training.finishPrice(state, "speed"), 9000, "510 s left = 9 minutes (rounded up)")
-		ok(Training.finish(state, "speed"))
-		eq(state.levels.speed, 1)
-		eq(state.progress.speed, 0)
-		state.levels.speed = 10
-		eq(Training.finishPrice(state, "speed"), nil, "maxed: nothing to finish")
-		tuning.TrainingFinishAmberPerMin = nil
+		eq(Training.finishPrice(Training.blank(), "speed"), nil, "blank cell = not for sale")
+		tuning.TrainingFinishAmberPerMin = 2000
 	end
-	eq(Training.finishPrice(state, "bogus"), nil)
 end)
 
 test("saved through Profile + SaveStore: round trip on a fake store; old saves migrate to 0", function()
