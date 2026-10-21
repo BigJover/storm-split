@@ -160,11 +160,51 @@ strength (#392 multipliers); the look per rarity is cosmetic.
   server `Store` (`ProcessReceipt`, `UserOwnsGamePassAsync` cached, `PolicyService`), store UI with
   the unpublished message. **Accept:** fake-receipt specs (duplicate PurchaseId granted once,
   save failure → NotProcessedYet), blank id hidden, Studio shows the message and grants nothing.
+- **T143b Skin, pack and bundle numbers + "Finish this level" (#409–#415).** Sheet only + one
+  product. **Skins E/F** (Price Amber / Level; blank = not that way): F5 15 (Swamp Stalker),
+  E6 300000, E7 500000; F8 25, E9 300000, E10 900000; F11 35, E12 300000, E13 500000; F14 45,
+  E15 300000, E16 500000; F17 65 (Snakeskin Grip), E18 250000; F19 55 (Walnut Classic), E20
+  600000; E21 200000, E22 250000; E23 250000, E24 400000; towers E25 400000, E26 400000, E27
+  600000, E28 800000, E29 1500000. Level rows are granted on reaching the level, never sold.
+  **Store H5:H7** = 150000 / 700000 / 3000000; K5:K7 "150,000 Amber — about 50 minutes of
+  Normal hunting." / "700,000 Amber — about 4 hours of Normal hunting." / "3,000,000 Amber —
+  about 17 hours of Normal hunting." **Bundles** I (Skins keys, the exporter's list format) / E:
+  Treehouse = TREEHOUSE, JUNGLE_GHOST, BAMBOO_BOOMSTICK / 249; Stone Age = STONE_AGE,
+  CROC_HIDE_CRUSHER, CROC_HIDE / 249; Brass Gear = BRASS_GEAR, MOUNTAIN_RESCUE, BRASS_SADDLE /
+  249; Midnight = MIDNIGHT, NIGHT_PROWLER, SILVER_SPUR / 299; Gold Rush = GOLD_RUSH,
+  GOLD_RUSH_SAFARI, ENGRAVED_GOLD / 599. Owning part of a bundle: still sold, card lists what
+  you'd get new; "saves X Amber" only from the unowned items. **Hatch now (#413):** delete row 11
+  (Mud — a 5-min egg, Warm it up 10K covers it); E12 = 25, E13 = 79. **New row** `FINISH_LEVEL`
+  · Hatchery · product · "Finish this level" · 25 · grant `trainFinish` · K "Finishes the level
+  you're training now. Same max for everyone." Shown only while a stat is training; with two
+  stats training the prompt asks which (buttons per stat) before PromptProductPurchase and the
+  server remembers the pick for that PurchaseId; if nothing is training when the receipt lands,
+  save a credit that finishes the next level started (as hatch credits). Never past a cap.
+  Weapon skin beats Cosmetics gun tint/pattern/set on the gun; mastery-20 gold beats all (#414,
+  spec it). **Accept:** exporter green; store specs for trainFinish (pick, credit, cap, dup
+  receipt once); a level-15 profile owns Swamp Stalker without buying; Studio: shop shows
+  prices/"Reach level N", buy one Amber skin, store still shows the unpublished message.
+- **T143c Campsite decorations (#415).** Skins kind `deco`, rows 30–36 (colour/material like the
+  others): FIRE_PIT Level 5; STEPPING_STONES Level 12; HUNTERS_FLAG Level 18 (cloth = your worn
+  Tower flag colour); WANTED_POSTER 100000 (your name + best hunt: highest difficulty cleared +
+  best round, from the saved profile); HAMMOCK 150000; ROPE_SWING 200000; DINO_STATUE 500000.
+  Campsite gets 3 decoration spots (fixed spots beside the 3 Display Towers), set in the
+  Counter's Campsite tab like Display Towers; each spot any owned deco, one of each kind. Inert
+  part models (anchored, no scripts, no touch effects; Hammock/Rope Swing a plain Seat at most),
+  never in matches. **Accept:** exporter green (deco kind, prices ×1000); deco specs (own/place/
+  sanitize, owned only, 3 spots); Studio (studioSkins): place all seven, poster text right.
 
 ### 10f — wrap-up
-- **T144 🦖 review** of all Phase-10 strings → one fix commit. **T145 docs** (CLAUDE.md,
-  ARCHITECTURE modules/ownership: `Training`, `Pets`, `Store`, `BaseCamp` rows; SETUP: creating
-  products/passes after publishing and pasting ids into `Store`; VISION) + `RECAP.md` "Phase 10".
+- **T144 🦖 review** of all Phase-10 strings → one fix commit: training/stations, kits, pets +
+  eggs + odds lines, Honker's honk line, skins/decorations, Counter tabs, Store lines (#409–#415
+  incl. "Finish this level", pack lines, bundle cards, the unpublished message), K/M Amber
+  display. Wording rules from Round 22 (no free/guaranteed/best deal/pressure). **T145 docs**
+  (CLAUDE.md, ARCHITECTURE modules/ownership: `Training`, `Pets`, `Skins`, `Store`, `BaseCamp`
+  rows; SETUP: creating products/passes after publishing, pasting ids into `Store`, the
+  PolicyService note; VISION) + `RECAP.md` "Phase 10" (what changed, what to try) + an
+  **ask-Jovan list**: Gold Rush Robux-only or not (#410), pack sizes (#411), bundle prices
+  (#412), Hatch now Mud dropped (#413), multi-client/published-only checks (real purchases,
+  PvP kit/pets, receipts).
 
 ## Tester steps (Studio, solo; turn saving off with J first)
 - **After 10a:** Amber is ×1000 and shows K/M (e.g. a Normal clear "+100K", J's Amber grant in
