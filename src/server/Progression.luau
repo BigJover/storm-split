@@ -44,6 +44,16 @@
 	                ask again) are attributes on their Player. If the Hunt Board can't
 	                be read the player plays on without it and their stored board is
 	                left as it was.
+	  Training      the four account-wide trained stats (`training`, Shared/Training, PLAN
+	                10c T139). Server/Training ticks ONLINE time in through trainingTick
+	                (full rate at the stat's station, half elsewhere, each tick clamped);
+	                nothing is credited for time away. Changes are banked by bankTraining
+	                every Training bank (s), on leave and at shutdown (the normal saves).
+	                trainStart (a station's E), trainFinish (Amber, between matches, once
+	                a price is set) and Studio's trainSkip (saving off, like J). Published
+	                as attributes: TrainLevel_/TrainProgress_<stat>, TrainActive, and the
+	                percents the game reads (TrainedReach, TrainedThrow, TrainedHealth,
+	                TrainedSpeed).
 	  Bounty progress   Progression.bountyEvent is the one way in for match events
 	                (Main, Shop and Hero call it; the events are Bounties.EVENTS). It
 	                only listens while a match is on (`ability` only during a round,
@@ -75,6 +85,8 @@ local Stakes = require(Shared:WaitForChild("Stakes"))
 local Trophies = require(Shared:WaitForChild("Trophies"))
 local StudioOnly = require(Shared:WaitForChild("StudioOnly"))
 local SaveStore = require(Shared:WaitForChild("SaveStore"))
+local Training = require(Shared:WaitForChild("Training"))
+local HunterKit = require(Shared:WaitForChild("HunterKit"))
 
 local Progression = {}
 
@@ -155,6 +167,24 @@ local function owns(player: Player, kind: string, itemKey: string): boolean
 	return profile ~= nil and profile.owned[`{kind}:{itemKey}`] == true
 end
 
+-- Training (T139): levels, progress and the percents the game reads, as attributes.
+local function publishTraining(player: Player)
+	local profile = profiles[player]
+	if not profile then
+		return
+	end
+	local state = profile.training
+	for _, row in Training.view(state) do
+		player:SetAttribute(`TrainLevel_{row.stat}`, row.level)
+		player:SetAttribute(`TrainProgress_{row.stat}`, math.floor(row.progress))
+	end
+	player:SetAttribute("TrainActive", table.concat(state.active, ","))
+	player:SetAttribute(HunterKit.REACH_ATTRIBUTE, Training.percent(state, "reach"))
+	player:SetAttribute(HunterKit.THROW_ATTRIBUTE, Training.percent(state, "throw"))
+	player:SetAttribute("TrainedHealth", Training.percent(state, "health"))
+	player:SetAttribute("TrainedSpeed", Training.percent(state, "speed"))
+end
+
 local function publish(player: Player)
 	local profile = profiles[player]
 	if not profile then
@@ -180,6 +210,7 @@ local function publish(player: Player)
 	player:SetAttribute("Arena", Trophies.arenaOf(profile.trophies))
 	player:SetAttribute("RewardsClaimable", Profile.claimable(profile, os.time()))
 	player:SetAttribute("RewardsVersion", profile.rewardsVersion)
+	publishTraining(player)
 end
 
 ------------------------------------------------------------------ load / save
@@ -684,6 +715,93 @@ local function equip(player: Player, slot: unknown, id: unknown): (boolean, stri
 end
 
 ------------------------------------------------------------------ public
+
+------------------------------------------------------------------ training (T139)
+
+do
+	local dirty: { [Player]: boolean } = {} -- training changed since the last bank
+
+	-- One tick of online time (Server/Training). Returns the stats that levelled.
+	function Progression.trainingTick(player: Player, dt: number, at: string?, tickLength: number): { string }
+		local profile = profiles[player]
+		if not profile or #profile.training.active == 0 then
+			return {}
+		end
+		local leveled = Training.tick(profile.training, dt, at, tickLength)
+		dirty[player] = true
+		publishTraining(player)
+		return leveled
+	end
+
+	function Progression.trainStart(player: Player, stat: unknown): (boolean, string)
+		local profile = profiles[player]
+		if not profile then
+			return false, "Still loading your progress"
+		end
+		local ok, message = Training.start(profile.training, stat)
+		if ok then
+			dirty[player] = true
+			publishTraining(player)
+		end
+		return ok, message
+	end
+
+	-- Amber finishes the current level (#373): between matches only (nothing bought
+	-- mid-match), once the sheet has a price; saved at once like any purchase.
+	function Progression.trainFinish(player: Player, stat: unknown): (boolean, string)
+		local state = ReplicatedStorage:GetAttribute("State")
+		if state ~= "Lobby" and player:GetAttribute("InOutpost") ~= true then
+			return false, "Finish a level between matches"
+		end
+		local profile = profiles[player]
+		if not profile then
+			return false, "Still loading your progress"
+		end
+		local price = Training.finishPrice(profile.training, stat)
+		if not price then
+			return false, if Training.isStat(stat) then "Not for sale yet" else "Unknown station"
+		end
+		if profile.cores < price then
+			return false, `Not enough {Theme.Currency}`
+		end
+		profile.cores -= price
+		Training.finish(profile.training, stat)
+		publish(player)
+		task.spawn(save, player)
+		return true, "Level finished!"
+	end
+
+	-- Studio test aid "trainskip <min>" (StudioOnly trainSkip): that many full-rate minutes
+	-- to whatever is training; saving off for that player, like J.
+	function Progression.trainSkip(player: Player, minutes: unknown): boolean
+		if not StudioOnly.allowed(RunService:IsStudio(), "trainSkip") or type(minutes) ~= "number" or minutes ~= minutes then
+			return false
+		end
+		local profile = profiles[player]
+		if not profile then
+			return false
+		end
+		canSave[player] = false -- keep test progress out of the real save
+		Training.credit(profile.training, math.clamp(minutes, 0, 10000) * 60)
+		publish(player)
+		return true
+	end
+
+	-- Every Training bank (s): write the saves whose training moved (only saves that loaded
+	-- are ever written: save() checks).
+	function Progression.bankTraining()
+		for player in dirty do
+			dirty[player] = nil
+			if player.Parent and canSave[player] then
+				task.spawn(save, player)
+			end
+		end
+	end
+
+	Players.PlayerRemoving:Connect(function(player)
+		dirty[player] = nil -- the leave save writes it
+	end)
+end
 
 function Progression.init(
 	remotes: Folder,

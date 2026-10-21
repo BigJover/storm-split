@@ -301,6 +301,7 @@ Hero.init(remotes, {
 	end,
 }) -- ability
 Kit.init(remotes) -- melee and grenade (after Hero: kit hits read the hunter's level)
+require(script.Parent.Training).init(remotes) -- online training ticks, station E, Amber finish (T139)
 Battle.init(remotes) -- the kill feed
 
 ------------------------------------------------------------------ host

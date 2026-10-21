@@ -47,6 +47,7 @@ StudioOnly.FEATURES = {
 	fireNow = 'Fire now: the host\'s Lobby ("firenow", "<tower key>") makes the nearest tower of that key fire its once-a-round / timed effect now (Amber Age, Resin Wall; Raptor Swarm, Raptor Charge; a Bone Totem fills; a Spotter Blimp: Bombing Run, Paratroopers, Airlift; a Meteor Beacon: a strike, Extinction Event, Comet Tail; a Volcano Vent: an eruption, Supervolcano; a Ranger Station: Master Trapper\'s line, the Legend\'s dart), ignoring AutoFire and timers (Server/Main, PLAN 9g)',
 	fossils = 'Fossils: the host\'s Lobby ("fossils", n) sets the nearest Amber Resin Cannon\'s match fossil count (Amber Heart tests; Server/Main, PLAN 9g)',
 	walkers = 'Walkers: the host\'s Lobby ("walkers") prints every walker (tower, state, HP, target) to Output (Server/Main, PLAN 9g)',
+	trainSkip = 'Train skip: "trainskip <min>" (the Training remote) credits that many full-rate minutes to whatever you are training, and turns saving off for that player like J (Server/Training, Server/Progression, PLAN 10c T139)',
 	charge = 'Charge: the host\'s Lobby ("charge", n) sets the nearest Bone Totem\'s charge; at or over full it fires (Server/Main, PLAN 9h)',
 } :: { [string]: string }
 

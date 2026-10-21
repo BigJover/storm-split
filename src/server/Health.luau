@@ -58,10 +58,14 @@ local function humanoidOf(player: Player): Humanoid?
 	return nil
 end
 
--- This hunter's body now: the picked hero's row (Hero publishes the "Hero" attribute).
--- Trained bonuses join in T139.
+-- This hunter's body now: the picked hero's row (Hero publishes the "Hero" attribute) with
+-- the account's trained Health / Speed % on top (Progression publishes them, T139).
 local function bodyOf(player: Player): HunterStats.Body
-	return HunterStats.body(player:GetAttribute("Hero"))
+	local health, speed = player:GetAttribute("TrainedHealth"), player:GetAttribute("TrainedSpeed")
+	return HunterStats.body(player:GetAttribute("Hero"), {
+		healthPercent = if type(health) == "number" then health else nil,
+		speedPercent = if type(speed) == "number" then speed else nil,
+	})
 end
 
 local function walkSpeedOf(player: Player): number
@@ -87,9 +91,11 @@ function Health.applyBody(player: Player)
 end
 
 local function watchHero(player: Player)
-	player:GetAttributeChangedSignal("Hero"):Connect(function()
-		Health.applyBody(player)
-	end)
+	for _, name in { "Hero", "TrainedHealth", "TrainedSpeed" } do
+		player:GetAttributeChangedSignal(name):Connect(function()
+			Health.applyBody(player) -- a new hunter or a trained level: the new body now
+		end)
+	end
 end
 
 export type Hooks = {

@@ -1396,6 +1396,43 @@ def amber_values(data):
     return out
 
 
+def validate_training(data, problems, notes):
+    """Training (PLAN 10c T139, #370/#371/#373/#391/#397): whole levels and slots, a positive
+    level time, the elsewhere rate a real fraction of full (online only: never 0, never above
+    full), a sane bank interval; the finish price, once set, a whole multiple of the Amber
+    scale like every Amber value (#386). Blank finish price = not for sale (noted).
+
+    >>> t = {"TrainingLevels": 10, "TrainMinutes": 10, "TrainingElsewhereRate": 0.5, "TrainingSlots": 1,
+    ...      "TrainingBankS": 60, "AmberScale": 1000, "TrainedReachMax": 20}
+    >>> p = []; validate_training({"Tuning": dict(t)}, p, []); p
+    []
+    >>> p = []; validate_training({"Tuning": dict(t, TrainingElsewhereRate=1.5, TrainingLevels=0)}, p, []); len(p)
+    2
+    >>> p = []; validate_training({"Tuning": dict(t, TrainingFinishAmberPerMin=1500)}, p, []); p
+    ['Tuning Training finish Amber per min 1500: must be a whole multiple of Amber scale 1000 (#386)']
+    """
+    t = data["Tuning"]
+    def whole(key, low, high=None):
+        val = t.get(key)
+        if not isinstance(val, (int, float)) or val != int(val) or val < low or (high is not None and val > high):
+            problems.append(f"Tuning {key}: must be a whole number {low}-{high if high is not None else ''} (T139)")
+    whole("TrainingLevels", 1, 100)
+    whole("TrainingSlots", 1, 4)
+    whole("TrainingBankS", 1, 600)
+    minutes = t.get("TrainMinutes")
+    if not isinstance(minutes, (int, float)) or minutes <= 0:
+        problems.append("Tuning TrainMinutes: must be above 0 (T139)")
+    rate = t.get("TrainingElsewhereRate")
+    if not isinstance(rate, (int, float)) or not 0 < rate <= 1:
+        problems.append("Tuning TrainingElsewhereRate: must be above 0 and at most 1 (half speed elsewhere, #391)")
+    price = t.get("TrainingFinishAmberPerMin")
+    scale = t.get("AmberScale") or 1
+    if price is None:
+        notes.append("  training: Training finish Amber per min is blank, so Amber can't finish a level yet (#373; Director)")
+    elif not isinstance(price, (int, float)) or price < scale or price % scale:
+        problems.append(f"Tuning Training finish Amber per min {price:g}: must be a whole multiple of Amber scale {scale:g} (#386)")
+
+
 def validate_amber(data, problems, notes):
     """Every Amber value is a whole multiple of the scale and none below it (#386).
 
@@ -2509,6 +2546,7 @@ def validate(data):
 
     validate_rewards(data, problems, notes)
     validate_amber(data, problems, notes)
+    validate_training(data, problems, notes)
     validate_bodies(data, problems, notes)
     validate_kit(data, problems, notes)
     validate_perks(data, problems, notes)

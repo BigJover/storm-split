@@ -35,6 +35,7 @@ local HomeLayout = require(Shared:WaitForChild("HomeLayout"))
 local LevelBoard = require(Shared:WaitForChild("LevelBoard"))
 local ProfileScreen = require(Shared:WaitForChild("ProfileScreen"))
 local TrophyBoard = require(Shared:WaitForChild("TrophyBoard"))
+local Training = require(Shared:WaitForChild("Training"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local progressRequest = remotes:WaitForChild("ProgressRequest") :: RemoteFunction
@@ -586,6 +587,15 @@ render = function()
 		addSlot(next(), row)
 	end
 	listContent = ProfileScreen.listContent(#rewards, #rows)
+	-- Training (PLAN 10c T139): each stat's level and %, shared by every hunter.
+	addLine(next(), "Training", 16, Enum.Font.GothamBold, TEXT, ProfileScreen.SECTION)
+	local trained = Training.view(Training.fromAttributes(function(name)
+		return player:GetAttribute(name)
+	end))
+	for _, row in trained do
+		addLine(next(), Training.line(row), 13, Enum.Font.Gotham, TEXT_DIM, ProfileScreen.REWARD)
+	end
+	listContent += ProfileScreen.SECTION + ProfileScreen.REWARD * #trained + ProfileScreen.GAP * (1 + #trained)
 	if player:GetAttribute("SaveStatus") == "offline" then
 		-- The same words as Unlocks & Mastery and the Hunt Board.
 		addLine(next(), "Progress isn't saving right now.", 13, Enum.Font.Gotham, TEXT_DIM, 36)
@@ -644,7 +654,7 @@ end)
 player:GetAttributeChangedSignal("ProfileOpen"):Connect(apply)
 ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(apply)
 player.AttributeChanged:Connect(function(name)
-	if name == "PlayerXp" or name == "SaveStatus" or name == "Trophies" or string.sub(name, 1, 6) == "Equip_" then
+	if name == "PlayerXp" or name == "SaveStatus" or name == "Trophies" or name == "TrainActive" or string.sub(name, 1, 6) == "Equip_" or string.sub(name, 1, 11) == "TrainLevel_" then
 		render()
 	end
 end)

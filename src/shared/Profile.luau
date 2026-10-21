@@ -32,6 +32,10 @@
 	                    scale this game can't convert to (bigger, or not a divisor) makes
 	                    sanitize throw: Progression then treats it as a failed load and never
 	                    writes over it.
+	  training          the four trained stats (Shared/Training, PLAN 10c T139): levels,
+	                    banked progress and what's training. An older save without it starts
+	                    at level 0 everywhere. No time is stored, so loading never credits
+	                    time spent away (online only, #391).
 	  lastResetPayout   Amber paid at a reset for bounties done but not claimed, since the
 	                    board was last opened. Session only, never saved.
 	  rewardsVersion    counts Hunt Board changes; the client re-asks when it moves.
@@ -68,6 +72,7 @@ local PlayerLevel = require(script.Parent.PlayerLevel)
 local Cosmetics = require(script.Parent.Cosmetics)
 local Stakes = require(script.Parent.Stakes)
 local Trophies = require(script.Parent.Trophies)
+local Training = require(script.Parent.Training)
 
 export type Profile = {
 	cores: number,
@@ -82,6 +87,7 @@ export type Profile = {
 	bestArena: string?,
 	escrow: Stakes.Escrow?,
 	amberScale: number,
+	training: Training.State,
 	lastResetPayout: number,
 	rewardsVersion: number,
 }
@@ -171,6 +177,7 @@ function Profile.blank(now: number, rng: Bounties.Rng): Profile
 		bestArena = nil,
 		escrow = nil,
 		amberScale = Profile.AMBER_SCALE,
+		training = Training.blank(),
 		lastResetPayout = 0,
 		rewardsVersion = 0,
 	}
@@ -193,6 +200,7 @@ function Profile.sanitize(raw: any, now: number, rng: Bounties.Rng): Profile
 	profile.playerXp = PlayerLevel.whole(raw.playerXp) -- missing (an older save) or garbage: 0
 	-- Ranked (PLAN T80): older saves have none of these and load as 0 / nil.
 	profile.trophies = PlayerLevel.whole(raw.trophies)
+	profile.training = Training.sanitize(raw.training) -- T139: missing (an older save) = level 0
 	profile.bestArena = Profile.bestArenaKey(raw.bestArena, profile.trophies)
 	-- Only what this level (or an arena reached, T81) has unlocked, in the right slot;
 	-- anything else is dropped.
@@ -252,6 +260,7 @@ function Profile.toSave(profile: Profile): { [string]: any }
 		bestArena = profile.bestArena,
 		escrow = profile.escrow,
 		amberScale = profile.amberScale,
+		training = Training.toSave(profile.training),
 		rewards = if profile.rewards then profile.rewards else profile.rewardsRaw,
 	}
 end

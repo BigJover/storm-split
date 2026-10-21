@@ -265,6 +265,11 @@ return table.freeze({
 		KitHunterSlowMaxS = 2,
 		TrainedThrowMax = 30,
 		GrenadeThrowSpeed = 60,
+		TrainingLevels = 10,
+		TrainMinutes = 10,
+		TrainingElsewhereRate = 0.5,
+		TrainingSlots = 1,
+		TrainingBankS = 60,
 	},
 	Towers = {
 		SCOUT = {
