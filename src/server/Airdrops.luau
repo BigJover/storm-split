@@ -47,24 +47,33 @@ local random = Random.new()
 -- player can't take it, e.g. a med kit at full health).
 local live: { [BasePart]: (Player) -> boolean } = {}
 
+local fetchOf: ((Player) -> number)? = nil -- a Fetcher's chest reach (Server/Pets, T141)
+
 local function reachPass()
 	if next(live) == nil then
 		return
 	end
 	for _, player in Players:GetPlayers() do
 		local reach = SmallPerks.ofPlayer(player).pickupReach
+		local fetch = if fetchOf then fetchOf(player) else 0 -- chests only; claim() keeps it to their side
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
-		if reach > 0 and root and root:IsA("BasePart") then
+		if (reach > 0 or fetch > 0) and root and root:IsA("BasePart") then
 			for part, claim in live do
+				local r = if part.Name == "AirdropChest" then math.max(reach, fetch) else reach
 				if part.Parent == nil then
 					live[part] = nil -- cleared with the board
-				elseif SmallPerks.inReach(SmallPerks.gap(root.Position, root.Size.X / 2, part.Position, part.Size), reach) then
+				elseif r > 0 and SmallPerks.inReach(SmallPerks.gap(root.Position, root.Size.X / 2, part.Position, part.Size), r) then
 					claim(player)
 				end
 			end
 		end
 	end
+end
+
+-- A pet that fetches Airdrop chests (Server/Pets, T141): (player) -> reach in studs, 0 = none.
+function Airdrops.setFetch(fn: (Player) -> number)
+	fetchOf = fn
 end
 
 function Airdrops.init(effectFolder: Instance)

@@ -72,6 +72,7 @@ local Economy = require(script.Parent.Economy)
 local StandInHunters = require(script.Parent.StandInHunters)
 local Enemies = require(script.Parent.Enemies)
 local Health = require(script.Parent.Health)
+local Pets = require(script.Parent.Pets)
 local Hero = require(script.Parent.Hero)
 local MapBuilder = require(script.Parent.MapBuilder)
 local Scoreboard = require(script.Parent.Scoreboard)
@@ -597,6 +598,7 @@ function Battle.play(ctx: Context): (boolean, Outcome?)
 				Health.heal(hunter, Config.Tuning.HealPerRound + SmallPerks.ofPlayer(hunter).healPerRound)
 				clearedBy[hunter] = true
 			end
+			Pets.roundCleared(side, huntersOf(side)) -- Shiny Snatchers dig up cash for their own side (T141)
 		end
 		ReplicatedStorage:SetAttribute("RoundsCleared", index)
 		Hero.roundCleared(index, false, clearedBy)

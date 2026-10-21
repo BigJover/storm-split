@@ -187,7 +187,7 @@ local function build(): Model
 			for _, corner in { Vector3.new(-3.5, 0, -3.5), Vector3.new(3.5, 0, -3.5), Vector3.new(-3.5, 0, 3.5), Vector3.new(3.5, 0, 3.5) } do
 				part("PenPost", Vector3.new(0.5, 2, 0.5), pen.CFrame * CFrame.new(corner + Vector3.new(0, 1, 0)), WOOD, site, Enum.Material.Wood)
 			end
-			label(ground, `Campsite {i}`, "Hatchling Pen — pets coming soon", 5)
+			label(ground, `Campsite {i}`, "Hatchling Pen", 5) -- Server/Pets shows its owner and pets here
 			site.Parent = sites
 		end
 	end

@@ -166,7 +166,7 @@ local function bite(enemy: Enemies.Enemy, target: Combat.Target)
 		biteLook(enemy, target.position + Vector3.new(0, 2, 0)) -- Bodyguards: a ranger took it (PLAN 9j)
 		return
 	end
-	hurt(target, damage, enemy, { species = enemy.def.display, attack = enemy.def.meleeName })
+	hurt(target, damage, enemy, { species = enemy.def.display, attack = enemy.def.meleeName, bite = true })
 	biteLook(enemy, target.position + Vector3.new(0, 2, 0))
 	if onBite then
 		local onTower = not (typeof(target.ref) == "Instance" and target.ref:IsA("Player"))

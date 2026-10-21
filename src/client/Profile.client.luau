@@ -596,6 +596,10 @@ render = function()
 		addLine(next(), Training.line(row), 13, Enum.Font.Gotham, TEXT_DIM, ProfileScreen.REWARD)
 	end
 	listContent += ProfileScreen.SECTION + ProfileScreen.REWARD * #trained + ProfileScreen.GAP * (1 + #trained)
+	-- The pet taken along (PLAN 10d T141, Round 21: "Pet: Epic Honker").
+	local pet = player:GetAttribute("Pet")
+	addLine(next(), `Pet: {if type(pet) == "string" then pet else "none"}`, 13, Enum.Font.Gotham, TEXT_DIM, ProfileScreen.REWARD)
+	listContent += ProfileScreen.REWARD + ProfileScreen.GAP
 	if player:GetAttribute("SaveStatus") == "offline" then
 		-- The same words as Unlocks & Mastery and the Hunt Board.
 		addLine(next(), "Progress isn't saving right now.", 13, Enum.Font.Gotham, TEXT_DIM, 36)
@@ -654,7 +658,7 @@ end)
 player:GetAttributeChangedSignal("ProfileOpen"):Connect(apply)
 ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(apply)
 player.AttributeChanged:Connect(function(name)
-	if name == "PlayerXp" or name == "SaveStatus" or name == "Trophies" or name == "TrainActive" or string.sub(name, 1, 6) == "Equip_" or string.sub(name, 1, 11) == "TrainLevel_" then
+	if name == "PlayerXp" or name == "SaveStatus" or name == "Trophies" or name == "TrainActive" or name == "Pet" or string.sub(name, 1, 6) == "Equip_" or string.sub(name, 1, 11) == "TrainLevel_" then
 		render()
 	end
 end)

@@ -19,6 +19,7 @@
 	  HATCHERY_HUT, SHOP        the Hatchery Hut and the shop counter (placeholders until
 	                            10d / 10e), offsets from CENTRE
 	  atHut(position)           standing at the Hatchery Hut (T140: E opens it), HUT_RADIUS
+  assignCampsite(taken)     the lowest free Campsite for a new arrival (T141), else nil
   spawnPoint(i)             where the i-th arrival appears (a ring by the camp fire)
 	  inside(position)          is this point over the camp's floor (and not far above it)
 	  thirdPerson(inOutpost)    the camera rule: third person allowed only in the Outpost
@@ -119,6 +120,17 @@ function Outpost.atHut(position: unknown): boolean
 	end
 	local p = position :: Vector3
 	return (flat(p) - flat(Outpost.CENTRE + Outpost.HATCHERY_HUT)).Magnitude <= Outpost.HUT_RADIUS
+end
+
+-- The Campsite a new arrival gets (T141: their Hatchling Pen): the lowest free one,
+-- nil when all are taken. `taken` maps a Campsite number to its holder.
+function Outpost.assignCampsite(taken: { [number]: any }): number?
+	for i = 1, Outpost.CAMPSITES do
+		if taken[i] == nil then
+			return i
+		end
+	end
+	return nil
 end
 
 function Outpost.thirdPerson(inOutpost: unknown): boolean

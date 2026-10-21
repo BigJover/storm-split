@@ -52,6 +52,7 @@ local Shop = require(script.Parent.Shop)
 local Scoreboard = require(script.Parent.Scoreboard)
 local Wardrobe = require(script.Parent.Wardrobe)
 local LevelBoard = require(script.Parent.LevelBoard)
+local Pets = require(script.Parent.Pets)
 local TrophyBoard = require(script.Parent.TrophyBoard)
 local Effects = require(script.Parent.Effects)
 local Hero = require(script.Parent.Hero)
@@ -302,7 +303,7 @@ Hero.init(remotes, {
 }) -- ability
 Kit.init(remotes) -- melee and grenade (after Hero: kit hits read the hunter's level)
 require(script.Parent.Training).init(remotes) -- online training ticks, station E, Amber finish (T139)
-require(script.Parent.Pets).init(remotes) -- eggs, hatching, fusing, the pet taken along (T140/T141)
+Pets.init(remotes) -- eggs, hatching, fusing, the pet taken along (T140/T141)
 Battle.init(remotes) -- the kill feed
 
 ------------------------------------------------------------------ host
@@ -778,6 +779,7 @@ local function playMatch()
 			for _, hunter in Players:GetPlayers() do -- plus each hunter's First Aid (Shared/SmallPerks)
 				Health.heal(hunter, Config.Tuning.HealPerRound + SmallPerks.ofPlayer(hunter).healPerRound)
 			end
+			Pets.roundCleared(1, hunters()) -- Shiny Snatchers dig up cash (T141)
 
 			ReplicatedStorage:SetAttribute("RoundsCleared", index)
 			Hero.roundCleared(index, #hunters() == 1) -- banks Round XP and this round's pending pop XP; solo per round (#177)

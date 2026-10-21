@@ -47,7 +47,9 @@ type Slow = { humanoid: Humanoid, percent: number, untilAt: number }
 local slowed: { [Player]: Slow } = {} -- Raider sting slows in effect
 
 -- What hurt a hunter, for their private hit notice.
-export type Source = { species: string, attack: string }
+export type Source = { species: string, attack: string, bite: boolean? } -- bite: a dino melee bite (T141)
+
+local biteGuard: ((Player, number) -> number)? = nil
 
 local function humanoidOf(player: Player): Humanoid?
 	local character = player.Character
@@ -153,6 +155,9 @@ function Health.damage(player: Player, amount: number, source: Source?): number
 	if not humanoid or amount <= 0 then
 		return 0
 	end
+	if source and source.bite and biteGuard then
+		amount = biteGuard(player, amount) -- a Frill Guard takes its share of the round's first bite (T141)
+	end
 	local resist = Combat.combineResist(if resistOf then resistOf(player) else {})
 	local dealt = Combat.afterResist(amount, resist)
 	humanoid:TakeDamage(dealt)
@@ -161,6 +166,12 @@ function Health.damage(player: Player, amount: number, source: Source?): number
 		hurtEvent:FireClient(player, source.species, source.attack, dealt)
 	end
 	return dealt
+end
+
+-- The pet hook for dino bites (Server/Pets, T141): (player, damage) -> damage left. Only a
+-- dino bite (source.bite) ever reaches it: hunter shots pass no source.
+function Health.setBiteGuard(fn: (Player, number) -> number)
+	biteGuard = fn
 end
 
 -- Camo Cover: is this hunter still inside Spawn shield seconds of (re)spawning?

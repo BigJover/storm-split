@@ -48,6 +48,9 @@
 	  setPen(state, id, on)         show a pet in the Hatchling Pen (3 max)
 	  along(state)                  the pet taken along, or nil
 	  strength(pet, row?)           the effect strength: Effect value x rarity, nil if off
+	  inPlay(state, inOutpost, out, alive)   the pet is out with its hunter (T141)
+	  heal / absorb / roundCash / fetchReach   each effect's rule (T141); spotcamo has no
+	                                target yet: there are no hidden dinos (Director)
 	  groups(state)                 the collection grouped by species + rarity, for the UI
 	  timerLine / fuseLine / downLine / fullLine   the Round 21 strings
 ]]
@@ -504,6 +507,39 @@ function Pets.strength(pet: { kind: string, rarity: string }, row: any?): (strin
 		return r.effect, nil
 	end
 	return r.effect, r.effectValue * mult
+end
+
+-- Is the pet out with its hunter (T141)? Only in a match (not the Lobby, not in camp),
+-- with its hunter standing and still in. A fallen hunter's pet ran back to camp: no
+-- effect until the hunter is back.
+function Pets.inPlay(gameState: unknown, inOutpost: boolean, out: boolean, alive: boolean): boolean
+	return gameState ~= "Lobby" and gameState ~= nil and not inOutpost and not out and alive
+end
+
+-- Each effect touches only its own hunter, its hunter's side, chests its hunter could take
+-- anyway, or dinos: never an enemy hunter (#378). Strength nil (effect off) = nothing.
+--   regen (Fern Muncher): HP per second, healed on its own hunter
+function Pets.heal(strength: number?, dt: number): number
+	return if strength and dt > 0 then strength * dt else 0
+end
+
+--   absorb (Frill Guard): this % (at most 100) of the round's first dino bite on its hunter.
+--   Returns the damage left and whether the round's bite is now used.
+function Pets.absorb(strength: number?, amount: number, used: boolean): (number, boolean)
+	if not strength or used or amount <= 0 then
+		return amount, used
+	end
+	return amount * (1 - math.min(strength, 100) / 100), true
+end
+
+--   roundcash (Shiny Snatcher): whole cash to its hunter's side for a round that side cleared
+function Pets.roundCash(strength: number?): number
+	return if strength then math.floor(strength) else 0
+end
+
+--   fetch (Fetcher): how far (studs) it brings its hunter's side's Airdrop chests from
+function Pets.fetchReach(strength: number?): number
+	return strength or 0
 end
 
 function Pets.downLine(pet: { kind: string }): string
