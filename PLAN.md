@@ -16,6 +16,7 @@ every batch ends with its Tester steps.**
 **Update (2026-10-20): D1 🦖 Round 20 done (6c31c9c; names applied below). 10a DONE: T134 7cbf3d8 (Amber ×1000, 87 cells, migration stamps `amberScale`, K/M/B), T135 ca859f1 (Hunter Stats, parity 1.098, round heal 25 capped at each max HP); 862 specs. Builder rows/pots ruled #397–#398. Next: 10b (T136 + T137, Builder on it) → Tester after 10b (covers 10a's steps too).**
 **Update (2026-10-21): 10b DONE: T136 53455ac (melee, V), T137 8f63f9e (grenade, C; E kept free for 10c); kit peak = 27 % of the best tower; 878 specs. Builder questions ruled #400–#402 → T137b, then Tester Run 11 (10a + 10b), then 🦖 D2 → 10c.**
 **Update (2026-10-21, later): 10c DONE: T137b 72b3875, T138 2ab2a7f (Hunters' Outpost), T139 27f122f (training, online only); 901 specs. 🦖 Round 21 pets 8233986. Ruled #403–#404 → **T139b** (one cell + spec). Tester Run 12 running; then Builder 10d (T140 + T141), T139b rides with T140's first commit.**
+**Update (2026-10-21, 10d): T140 9f97da8 + T141 6cdfed6 done (919 specs); blanks ruled #405–#408 → **T141b** (egg prices/odds, warm 2,000/min, pet values + worth refs, Honker = honk mark).**
 on Jovan only for the asks below; defaults are applied so nothing blocks.**
 
 **Jovan answered the asks (2026-10-20, #391–#395) — these override the defaults below:**
@@ -137,6 +138,19 @@ strength (#392 multipliers); the look per rarity is cosmetic.
 - **T141 Pets in play.** Follower model, support effects (server), dies/respawns with hunter,
   untargetable, never touches enemy hunters; Hatchling Pen showcase on Campsites; pet on Profile.
   **Accept:** effect specs per species/rarity, worth-cap refusal, PvP specs (no effect on rivals).
+- **T141b Pet + egg numbers, Honker's honk (#405–#408).** Sheet: Eggs D5:D7 = 20000 / 75000 /
+  200000; E6:J6 = 40/30/17/8/4/1; E7:J7 = 20/30/25/14/9/2; Tuning row 333 `Egg warm Amber per
+  min` = 2000. Pets E/G (value / Worth ref): HONKER 5 / 33, FETCHER 4 / 25, FERN_MUNCHER 0.2 / 3,
+  SHINY_SNATCHER 8 / 60, FRILL_GUARD 40 / 250. Honker (#407): effect `spotcamo` → `honk`
+  (PET_EFFECTS, Shared/Pets, Server/Pets); Unit "% more damage from its hunter to the honked
+  dino"; line "Honks at the biggest dino near you — you hit it harder for a moment."; Tuning rows
+  `Honk every (s)` 10, `Honk mark (s)` 3, `Honk reach (studs)` 40; target = nearest boss in reach,
+  else most HP left; a small honk icon over it; bonus only on its own hunter's gun/melee/grenade
+  hits; never a hunter; not a tower/dart mark. value.py hero guard: (gun + kit) × (1 + Mythic
+  honk) still under the best T5 tower (report the %). **Accept:** exporter green (odds = 100,
+  Mythic ≤ 2, every Mythic worth ≤ 40, Amber ×1000 check); honk specs (target pick, owner-only
+  bonus, 3 s/10 s, no hunter target, off when down); Studio: buy each egg, Warm it up price shown
+  (Mud 10K), each effect seen once.
 
 ### 10e — skins + store
 - **T142 Skins + decorations.** `Skins` sheet; Cosmetics slots (hunter / weapon per hero /
