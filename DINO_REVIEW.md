@@ -788,3 +788,28 @@ Read: DIRECTION, Rounds 12 and 16, TOWERS_LATER.md (approved), DECISIONS #274–
 | Obsidian T5 | **Glass Maze** — the crust makes dinos walk further | **Obsidian Armour** — nearby towers take less from throws | **Frozen Fire** — the whole flow hardens: 2 s stop |
 
 Also update the TOWERS_LATER Ranger text "5 at Ranger Corps" → "5 at Ranger Troop" when 9g writes the sheet. Kept on purpose: Clever Girls (fun, kid-readable), Skull Storm (a word, not the old mode), Dino Killer, Geyser (Tar Pit only says "geyser" in a blurb).
+
+## Round 20 — Phase 10 D1: melee, grenades, training, the hub (before 10a/10b)
+
+| Hunter | Melee | Grenade |
+|---|---|---|
+| Tracker | **Hunting Knife** — a quick stab, fastest swing | **Stink Bomb** — a smelly cloud; dinos inside take a bit more damage |
+| Big Game Hunter | **Stock Swing** — a heavy hit with the rifle stock | **Safari Grenade** — the biggest blast |
+| Brush Beater | **Brush Machete** — a wide sweep, hits a few dinos | **Cherry Bomb** — a loud bang; dinos stumble (short slow) |
+| Field Medic | **Splint Stick** — a light bonk that slows | **Dozy Cloud** — dinos inside get sleepy and slow (≤30 %, ≤2 s on hunters) |
+
+| Stat (shown) | Station (was) | Line |
+|---|---|---|
+| Reach | **Raptor Dummy** (Punching Bag) | Hit the padded raptor; your melee reaches further |
+| Speed | **Raptor Chase** (Treadmill) | Run from the wind-up raptor; you run faster |
+| Health | **Herb Kitchen** (Tonic Bench) | Mix fern smoothies; more health |
+| Throw | **Coconut Toss** (Throwing Range) | Hit the far targets; grenades fly further |
+
+| Place | Name |
+|---|---|
+| Base Camp (hub) | **Hunters' Outpost** — "Base Camp" is already the Supply Camp Logistics T5 upgrade (UPGRADES.md 114/131); "Lodge" taken too |
+| Plots | **Campsites** ("your Campsite") |
+| Pet pen | **Hatchling Pen** (Raptor Pen stays the tower) |
+| Incubator | **Hatchery Hut** |
+
+Avoided (taken): Frag (Frag Shells), Scent (Scent Trail), Slam, Tonic (path), Firecracker (Firecracker Rain), Sleep/Snooze (Sleep Wave, Snooze Alarm), Tranq, Stampede, Trade Post. Kept plain stat words (Reach/Speed/Health/Throw) for kids; "Trophy" unused.
