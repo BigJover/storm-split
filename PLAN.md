@@ -15,6 +15,7 @@ every batch ends with its Tester steps.**
 **Status (2026-10-20): planned. Next (after Phase 9's Run 10b → T132): 🦖 Round 20 names (D1) → batch 10a (T134 + T135). Waiting
 **Update (2026-10-20): D1 🦖 Round 20 done (6c31c9c; names applied below). 10a DONE: T134 7cbf3d8 (Amber ×1000, 87 cells, migration stamps `amberScale`, K/M/B), T135 ca859f1 (Hunter Stats, parity 1.098, round heal 25 capped at each max HP); 862 specs. Builder rows/pots ruled #397–#398. Next: 10b (T136 + T137, Builder on it) → Tester after 10b (covers 10a's steps too).**
 **Update (2026-10-21): 10b DONE: T136 53455ac (melee, V), T137 8f63f9e (grenade, C; E kept free for 10c); kit peak = 27 % of the best tower; 878 specs. Builder questions ruled #400–#402 → T137b, then Tester Run 11 (10a + 10b), then 🦖 D2 → 10c.**
+**Update (2026-10-21, later): 10c DONE: T137b 72b3875, T138 2ab2a7f (Hunters' Outpost), T139 27f122f (training, online only); 901 specs. 🦖 Round 21 pets 8233986. Ruled #403–#404 → **T139b** (one cell + spec). Tester Run 12 running; then Builder 10d (T140 + T141), T139b rides with T140's first commit.**
 on Jovan only for the asks below; defaults are applied so nothing blocks.**
 
 **Jovan answered the asks (2026-10-20, #391–#395) — these override the defaults below:**
@@ -91,8 +92,8 @@ Hatchling Pen, incubator. **D2 🦖 (before 10d):** egg names, pet species + sup
   **non-damage effects** (Splint/Cherry/Dozy slows, Stink Bomb's +20 %) land on armoured
   **ground** dinos; flyers stay untouched. **Accept:** specs — melee and grenade raid a rival
   tower (×same multiplier as a gun hit), none in co-op, none through Camo; armoured ground dino
-  slowed/stunk with 0 damage; flyer untouched; `value.py --battle` raid report re-run, no bar
-  broken; 878+ specs green.
+  slowed/stunk with 0 damage; flyer untouched; (raid report dropped, #404: kit uses the gun's raid multiplier,
+  covered by specs); 878+ specs green.
 - **Tester Run 11 (after T137b; covers 10a + 10b steps):** as listed under "Tester steps",
   plus V/C keys and HUD buttons, a kit hit on a stand-in rival's tower, an armoured dino slowed
   by Cherry Bomb with no damage.
@@ -113,7 +114,16 @@ Hatchling Pen, incubator. **D2 🦖 (before 10d):** egg names, pet species + sup
   **Accept:** accrual specs (station vs elsewhere, zero on load after a long absence, tick clamp,
   slot), stats reach exact caps, save/load round-trip on the fake store.
 
+- **T139b (#403).** Tuning `Train finish Amber per min` = **2,000** (assert blank). Finish price =
+  ceil(remaining minutes) × 2,000 (a multiple of 1000 by construction; whole level 10 → 200K, a whole
+  stat 1.1M, all four 4.4M). **Accept:** spec on the price (partial minute rounds up, 0 remaining = no
+  button), button shows K/M price, Config diff = that one row.
+
 ### 10d — pets
+**Names (🦖 Round 21, 8233986):** eggs **Mud Egg / Speckled Egg / Golden Egg** (hatch 5 min / 30 min /
+2 h); pets **Honker** (spots camo), **Fetcher** (fetches Airdrop chests), **Fern Muncher** (regen),
+**Shiny Snatcher** (round cash), **Frill Guard** (absorbs one bite a round). Rarity only scales effect
+strength (#392 multipliers); the look per rarity is cosmetic.
 - **T140 Eggs + pets data.** `Pets`/`Eggs` sheets; `Shared/Pets` pure (roll at hatch, odds,
   timers, Amber speed-up, fuse 3→1, inventory cap, equip 1); Hatchery Hut UI with odds shown.
   **6 rarities** (#392): Common / Uncommon / Rare / Epic / Legendary / Mythic; basic egg
