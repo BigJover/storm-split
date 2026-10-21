@@ -1345,6 +1345,10 @@ def hero_lines(data, rows, mixes):
         top = top_tier(h, best)
         peak, sustained = hero_dps(h, best, top)
         cash = sum(s["cost"] for s in export_constants.line(h["paths"][best]))
+        # The hunter kit (PLAN 10b T137, #369): melee + grenade on top of the gun, the
+        # exporter's kit_dps model (an upper bound: all three at once).
+        kit_row = data.get("HunterKit", {}).get(key)
+        kit = export_constants.kit_dps(kit_row) if kit_row else 0.0
         cells = []
         for lv, rd, b in checkpoints:
             hs, ts = (1 + hero_x) ** (lv - 1), (1 + tower_x) ** (lv - 1)
@@ -1355,12 +1359,20 @@ def hero_lines(data, rows, mixes):
             # best tower at the round level.
             if peak * cs > best_tower:
                 findings.append(f"HERO: {h['display']} {h['paths'][best]['id']} T{top} at L{lv + lead} (ceiling, {peak * cs:.0f}) out-damages every T5 tower path's eDPS at round level {lv} ({best_tower:.0f})")
+            elif (peak + kit) * cs > best_tower:
+                findings.append(f"KIT: {h['display']} gun + melee + grenade at L{lv + lead} (ceiling, {(peak + kit) * cs:.0f}) out-damages every T5 tower path's eDPS at round level {lv} ({best_tower:.0f}; #369)")
             for (tower_key, pi), e in t5.items():
                 if peak * hs <= e[b] * ts < peak * cs:
                     tower = data["Towers"][tower_key]
                     lead_only.append(f"{h['display']} L{lv + lead} {peak * cs:.0f} > {tower['display']} {tower['paths'][pi]['id']} T5 {e[b] * ts:.0f} (round level {lv})")
         out.append(f"  {h['display'][:15]:<15} base {base:5.1f}  best {h['paths'][best]['id'][:10]:<10} T{top} {' '.join(cells)}"
                    f"  cash/DPS {cash / max(1e-9, peak - base):.0f}")
+        if kit_row:
+            lv, _, b = checkpoints[-1]
+            cs = (1 + hero_x) ** (lv + lead - 1)
+            best_tower = max(e[b] for e in t5.values()) * (1 + tower_x) ** (lv - 1)
+            out.append(f"  {'':<15} kit {kit_row['meleeName']} + {kit_row['grenadeName']} +{kit:.1f} DPS (L1); gun + kit at L{lv + lead}"
+                       f" {(peak + kit) * cs:.0f} vs best T5 tower {best_tower:.0f} ({(peak + kit) * cs / best_tower:.0%}, #369)")
     if lead_only:
         out.append("  only at the ceiling does a hunter's peak pass these T5 tower paths (for the Director; not a finding, the rule is the best tower):")
         out += [f"    {line}" for line in lead_only]

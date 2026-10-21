@@ -8,6 +8,8 @@
 	Right-click zooms if the gun has a scope. F uses the hero's ability.
 	V swings the hunter's melee (PLAN 10b T136; free, short reach): the server checks reach,
 	arc, swing time and line of sight (Server/Kit) and echoes hits for the hit marker.
+	C throws the hunter's grenade (T137) along the camera on a fixed arc; the server owns the
+	throw (charges, range, landing, splash). Both indicators sit left of the ability button.
 
 	CAMERA: everyone is in first person all the time, so nobody gets a
 	third-person view advantage in PvP (VISION.md). The one exception is placing
@@ -31,6 +33,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local HeroStats = require(Shared:WaitForChild("HeroStats"))
 local GunRules = require(Shared:WaitForChild("GunRules"))
 local HunterKit = require(Shared:WaitForChild("HunterKit"))
+local Grenade = require(Shared:WaitForChild("Grenade"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -126,6 +129,12 @@ meleeButton.Size = UDim2.fromOffset(124, 48)
 meleeButton.TextSize = 14
 meleeButton.TextWrapped = true
 meleeButton.Parent = gui
+
+-- The grenade's charges and recharge, left of the melee (also a touch button).
+local grenadeButton = meleeButton:Clone()
+grenadeButton.Name = "Grenade"
+grenadeButton.Position = UDim2.new(1, -308, 1, -136)
+grenadeButton.Parent = gui
 
 local ammoLabel = Instance.new("TextLabel")
 ammoLabel.Name = "Ammo"
@@ -497,6 +506,30 @@ end
 
 meleeButton.Activated:Connect(useMelee)
 
+-- Grenade (T137): only a request; the server's ball is what everyone sees.
+local function grenadeCharges(row: any): number
+	return Grenade.charges(player:GetAttribute("GrenadeFullAt") or 0, workspace:GetServerTimeNow(), row)
+end
+
+local function useGrenade()
+	local row = HunterKit.row(heroKey())
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not row or not humanoid or humanoid.Health <= 0 then
+		return
+	end
+	if player:GetAttribute("PanelOpen") == true or player:GetAttribute("Placing") == true then
+		return
+	end
+	if grenadeCharges(row) <= 0 then
+		return
+	end
+	local origin, direction = aimRay()
+	heroKit:FireServer("grenade", origin, direction)
+end
+
+grenadeButton.Activated:Connect(useGrenade)
+
 UserInputService.InputBegan:Connect(function(input, processed)
 	if processed then
 		return
@@ -505,6 +538,8 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		useAbility()
 	elseif input.KeyCode == Enum.KeyCode.V then
 		useMelee()
+	elseif input.KeyCode == Enum.KeyCode.C then
+		useGrenade()
 	elseif input.KeyCode == Enum.KeyCode.R and equippedGun() then
 		request("reload")
 	elseif input.UserInputType == Enum.UserInputType.MouseButton2 and inFirstPerson then
@@ -532,6 +567,7 @@ RunService.RenderStepped:Connect(function()
 	if not stats then
 		abilityButton.Visible = false
 		meleeButton.Visible = false
+		grenadeButton.Visible = false
 		ammoLabel.Visible = false
 		if not hintShown and ReplicatedStorage:GetAttribute("State") ~= nil then
 			hintShown = true
@@ -568,6 +604,15 @@ RunService.RenderStepped:Connect(function()
 		local cooling = (player:GetAttribute("MeleeReadyAt") or 0) > workspace:GetServerTimeNow()
 		meleeButton.Text = `{kit.meleeName}  (V)`
 		meleeButton.BackgroundColor3 = if cooling then WAITING else READY
+	end
+	grenadeButton.Visible = meleeButton.Visible
+	if kit then
+		local charges = grenadeCharges(kit)
+		local wait = Grenade.readyAt(player:GetAttribute("GrenadeFullAt") or 0, workspace:GetServerTimeNow(), kit) - workspace:GetServerTimeNow()
+		grenadeButton.Text = if charges > 0
+			then `{kit.grenadeName}{if kit.charges > 1 then ` x{charges}` else ""}  (C)`
+			else `{kit.grenadeName}  {math.ceil(wait)}s`
+		grenadeButton.BackgroundColor3 = if charges > 0 then READY else WAITING
 	end
 end)
 

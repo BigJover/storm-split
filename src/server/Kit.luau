@@ -18,18 +18,31 @@
 	An enemy hunter takes that damage x PvP hunter damage (0 under Camo Cover) and at most a
 	capped slow (HunterKit.hunterSlow): no stun, no knockback (#368).
 
-	Published for the HUD (server time): MeleeReadyAt. Trained Reach (T139) is read from the
-	Player attribute HunterKit.REACH_ATTRIBUTE, 0 until it is set.
+	GRENADE (T137): a client says "I threw along this camera ray". The server checks the same
+	things plus a charge (Charges, one back per Recharge), finds where it lands
+	(Shared/Grenade.landing: the camera ray's hit, at most the throw range along the ground,
+	then down onto the ground), and owns the projectile: a ball flies the fixed arc for
+	Grenade.flightTime, then bursts. The blast hits own-side ground dinos it can hurt and enemy
+	hunters / stand-ins in Splash (no line-of-sight check: it's a blast), like a melee hit.
+	With Cloud (s) the cloud stays that long and keeps its dino effect on dinos inside; an enemy
+	hunter is slowed at most once per grenade (Grenade.firstTouch), so never past the cap.
+	A thrower who is out (or a game over) by the time it lands deals nothing.
+
+	Published for the HUD (server time): MeleeReadyAt, GrenadeFullAt. Trained Reach / Throw
+	(T139) are read from the Player attributes HunterKit.REACH_ATTRIBUTE / THROW_ATTRIBUTE,
+	0 until they are set.
 ]]
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Sides = require(Shared:WaitForChild("Sides"))
 local BattleRules = require(Shared:WaitForChild("BattleRules"))
 local HunterKit = require(Shared:WaitForChild("HunterKit"))
 local Melee = require(Shared:WaitForChild("Melee"))
+local Grenade = require(Shared:WaitForChild("Grenade"))
 
 local Enemies = require(script.Parent.Enemies)
 local Effects = require(script.Parent.Effects)
@@ -51,6 +64,9 @@ local HEAD_UP = 1.5 -- studs above the root part the line-of-sight check starts
 local RAY_ORIGIN_SLACK = 20 -- studs beyond max camera zoom a ray may start from (Server/Hero)
 
 local lastSwing: { [Player]: number } = {}
+local grenadeFullAt: { [Player]: number } = {} -- server time every grenade charge is back
+local CLOUD_TICK = 0.25 -- s between a cloud's checks of who is inside
+local GROUND_PROBE = 40 -- studs above and below the landing point the ground is looked for
 local kitEvent: RemoteEvent
 
 local function now(): number
@@ -167,6 +183,19 @@ function Kit.hitDino(player: Player, enemy: any, damage: number, pierces: boolea
 	if not enemy.alive then
 		return false
 	end
+	Kit.affectDino(enemy, effect)
+	Enemies.setSource("hunter")
+	local killed, gone, dropped = Enemies.damage(enemy, damage, pierces, HunterKit.BREAKS)
+	Enemies.setSource(nil)
+	Hero.kitCredit(player, killed, gone, dropped)
+	return killed
+end
+
+-- A kit's dino effect: a slow (never holds a boss) or an amp (a mark: +% from everyone).
+function Kit.affectDino(enemy: any, effect: HunterKit.Effect?)
+	if not enemy.alive then
+		return
+	end
 	if effect and effect.kind == "slow" then
 		Enemies.chill(enemy, {
 			slowPercent = effect.percent,
@@ -178,11 +207,6 @@ function Kit.hitDino(player: Player, enemy: any, damage: number, pierces: boolea
 	elseif effect and effect.kind == "amp" then
 		Enemies.mark(enemy, effect.percent, effect.seconds)
 	end
-	Enemies.setSource("hunter")
-	local killed, gone, dropped = Enemies.damage(enemy, damage, pierces, HunterKit.BREAKS)
-	Enemies.setSource(nil)
-	Hero.kitCredit(player, killed, gone, dropped)
-	return killed
 end
 
 -- One enemy hunter or stand-in takes a kit hit (x PvP hunter damage; Camo Cover = 0), and at
@@ -279,24 +303,147 @@ local function swing(player: Player, rayOrigin: unknown, rayDirection: unknown)
 	end
 end
 
+------------------------------------------------------------------ grenade (T137)
+
+-- An enemy hunter in a cloud: the capped slow once per grenade (no damage). Stand-ins don't move.
+local function slowFoe(mySide: number, foe: Foe, seen: { [any]: boolean }, slowPercent: number, slowSeconds: number)
+	local victim = foe.hunter
+	if not victim or slowPercent <= 0 or HunterKit.vsHunter(1, mySide, sideOf(victim), Health.camoCover(victim)) <= 0 then
+		return
+	end
+	if Grenade.firstTouch(seen, victim) then
+		Health.slow(victim, slowPercent, slowSeconds)
+	end
+end
+
+local function burst(player: Player, row: any, key: string, mySide: number, scale: number, at: Vector3)
+	if not canAct(player) then
+		return -- out (or game over) by the time it landed: no damage
+	end
+	local color = KIT_COLORS[key] or Color3.new(1, 1, 1)
+	Effects.disc(at, row.splash, color, 0.35, 0.5)
+	local effect = HunterKit.dinoEffect(row.grenadeEffect, row.grenadeEffectPercent, row.grenadeEffectSeconds)
+	local slowPercent, slowSeconds = HunterKit.hunterSlow(row.grenadeHunterEffect, row.grenadeHunterPercent, row.grenadeHunterSeconds)
+	local damage = row.grenadeDamage * scale
+	local seen: { [any]: boolean } = {}
+	local hit, killed = false, false
+	for _, enemy in Kit.dinoTargets(mySide, row.grenadePiercesArmor) do
+		if Grenade.inSplash(at, row.splash, enemy.part.Position) then
+			hit = true
+			killed = Kit.hitDino(player, enemy, damage, row.grenadePiercesArmor, effect) or killed
+		end
+	end
+	for _, foe in Kit.foes(player, mySide) do
+		if Grenade.inSplash(at, row.splash, foe.position) then
+			hit = true
+			local who = foe.hunter or foe.standIn
+			local first = Grenade.firstTouch(seen, who)
+			killed = Kit.hitFoe(player, mySide, foe, damage, if first then slowPercent else 0, slowSeconds) or killed
+		end
+	end
+	if hit and player.Parent then
+		Kit.marker(player, killed)
+	end
+	if row.cloudSeconds <= 0 then
+		return
+	end
+	Effects.disc(at, row.splash, color, row.cloudSeconds, 0.75)
+	local endsAt = os.clock() + row.cloudSeconds
+	task.spawn(function()
+		while os.clock() < endsAt do
+			task.wait(CLOUD_TICK)
+			local state = ReplicatedStorage:GetAttribute("State")
+			if state ~= "Building" and state ~= "Playing" then
+				return -- the match ended under it
+			end
+			for _, enemy in Kit.dinoTargets(mySide, row.grenadePiercesArmor) do
+				if Grenade.inSplash(at, row.splash, enemy.part.Position) then
+					Kit.affectDino(enemy, effect)
+				end
+			end
+			for _, foe in Kit.foes(player, mySide) do
+				if Grenade.inSplash(at, row.splash, foe.position) then
+					slowFoe(mySide, foe, seen, slowPercent, slowSeconds)
+				end
+			end
+		end
+	end)
+end
+
+local function throw(player: Player, rayOrigin: unknown, rayDirection: unknown)
+	local body = root(player)
+	local key = player:GetAttribute("Hero")
+	local row = HunterKit.row(key)
+	local scale = Hero.kitScale(player)
+	if not body or not row or not scale or not canAct(player) then
+		return
+	end
+	local origin, look = aim(player, body, rayOrigin, rayDirection)
+	if not origin or not look then
+		return
+	end
+	local t = now()
+	local fullAt = grenadeFullAt[player] or 0
+	if Grenade.charges(fullAt, t, row) <= 0 then
+		return
+	end
+	grenadeFullAt[player] = Grenade.use(fullAt, t, row)
+	player:SetAttribute("GrenadeFullAt", grenadeFullAt[player])
+
+	local range = Grenade.range(key, player:GetAttribute(HunterKit.THROW_ATTRIBUTE))
+	local params = sightParams()
+	local from = body.Position
+	local aimHit = workspace:Raycast(origin, look * (range + (origin - from).Magnitude + 10), params)
+	local landing = Grenade.landing(from, aimHit and aimHit.Position, look, range)
+	local ground = workspace:Raycast(landing + Vector3.new(0, GROUND_PROBE, 0), Vector3.new(0, -2 * GROUND_PROBE, 0), params)
+	if ground then
+		landing = ground.Position
+	end
+	local start = from + Vector3.new(0, HEAD_UP, 0)
+	local flight = Grenade.flightTime(start, landing)
+	local ball = Effects.part(Vector3.new(0.9, 0.9, 0.9), CFrame.new(start), KIT_COLORS[key :: string] or Color3.new(1, 1, 1), flight + 0.1, Enum.PartType.Ball)
+	ball.Material = Enum.Material.SmoothPlastic
+	local mySide = sideOf(player)
+	task.spawn(function()
+		local thrown = os.clock()
+		while true do
+			local u = (os.clock() - thrown) / flight
+			if u >= 1 then
+				break
+			end
+			ball.CFrame = CFrame.new(Grenade.arcPoint(start, landing, u))
+			RunService.Heartbeat:Wait()
+		end
+		ball:Destroy()
+		local ok, err = pcall(burst, player, row, key :: string, mySide, scale, landing)
+		if not ok then
+			warn(`[Kit] grenade from {player.Name} failed: {err}`)
+		end
+	end)
+end
+
 ------------------------------------------------------------------ lifecycle
 
--- Between matches: every swing ready again.
+-- Between matches: every swing ready, every grenade charge back.
 function Kit.resetMatch()
 	table.clear(lastSwing)
+	table.clear(grenadeFullAt)
 	for _, player in Players:GetPlayers() do
 		player:SetAttribute("MeleeReadyAt", 0)
+		player:SetAttribute("GrenadeFullAt", 0)
 	end
 end
 
 function Kit.init(remotes: Folder)
-	-- Client -> server: ("melee", rayOrigin, rayDirection). Server -> client: ("hit", killed).
+	-- Client -> server: ("melee" | "grenade", rayOrigin, rayDirection). Server -> client: ("hit", killed).
 	kitEvent = Instance.new("RemoteEvent")
 	kitEvent.Name = "HeroKit"
 	kitEvent.OnServerEvent:Connect(function(player, action, origin, direction)
 		local ok, err = pcall(function()
 			if action == "melee" then
 				swing(player, origin, direction)
+			elseif action == "grenade" then
+				throw(player, origin, direction)
 			end
 		end)
 		if not ok then
@@ -306,6 +453,7 @@ function Kit.init(remotes: Folder)
 	kitEvent.Parent = remotes
 	Players.PlayerRemoving:Connect(function(player)
 		lastSwing[player] = nil
+		grenadeFullAt[player] = nil
 	end)
 end
 

@@ -1670,8 +1670,70 @@ KIT_COLUMNS = [
     ("Melee effect %", "meleeEffectPercent", "num"), ("Melee effect (s)", "meleeEffectSeconds", "num"),
     ("Melee hunter effect", "meleeHunterEffect", "effect"), ("Melee hunter %", "meleeHunterPercent", "num"),
     ("Melee hunter (s)", "meleeHunterSeconds", "num"),
+    ("Grenade", "grenadeName", "name"), ("Grenade damage", "grenadeDamage", "num"), ("Splash (studs)", "splash", "num"),
+    ("Charges", "charges", "num"), ("Recharge (s)", "recharge", "num"), ("Base range (studs)", "baseRange", "num"),
+    ("Grenade pierces armour", "grenadePiercesArmor", "yes"), ("Cloud (s)", "cloudSeconds", "num"),
+    ("Grenade dino effect", "grenadeEffect", "effect"), ("Grenade effect %", "grenadeEffectPercent", "num"),
+    ("Grenade effect (s)", "grenadeEffectSeconds", "num"), ("Grenade hunter effect", "grenadeHunterEffect", "effect"),
+    ("Grenade hunter %", "grenadeHunterPercent", "num"), ("Grenade hunter (s)", "grenadeHunterSeconds", "num"),
 ]
-KIT_LEVERS = ["TrainedReachMax", "KitHunterSlowMax", "KitHunterSlowMaxS", "PvPHunterDamage"]
+KIT_LEVERS = ["TrainedReachMax", "TrainedThrowMax", "GrenadeThrowSpeed", "KitHunterSlowMax", "KitHunterSlowMaxS", "PvPHunterDamage"]
+# The kit guard's model (#369): a grenade's blast is counted on this many dinos (a packed lane).
+KIT_GRENADE_DINOS = 6
+
+
+def kit_dps(row):
+    """A hunter kit's level-1 DPS for the hero-vs-tower guard (#369): the melee at its swing
+    rate on every target it may hit, plus the grenade at one blast per Recharge on
+    KIT_GRENADE_DINOS dinos, an amp counted on the blast (an upper bound: both on top of the gun).
+
+    >>> kit_dps({"meleeDamage": 2.5, "swingTime": 0.75, "meleeTargets": 3, "meleeEffect": "none", "meleeEffectPercent": 0,
+    ...          "grenadeDamage": 12, "recharge": 20, "grenadeEffect": "amp", "grenadeEffectPercent": 20})
+    14.32
+    """
+    melee = row["meleeDamage"] / row["swingTime"] * row["meleeTargets"]
+    amp = 1 + (row["grenadeEffectPercent"] / 100 if row["grenadeEffect"] == "amp" else 0)
+    grenade = row["grenadeDamage"] / row["recharge"] * KIT_GRENADE_DINOS * amp
+    return round(melee + grenade, 2)
+
+
+def validate_kit_guard(data, problems, notes, best_tower, hero_scale):
+    """#369: gun + melee + grenade together never out-damage the best maxed tower (the
+    hero-vs-tower guard's levels; each difficulty's Hero / Tower damage x too).
+
+    >>> h = {"display": "A"}
+    >>> kit = {"meleeDamage": 5, "swingTime": 1, "meleeTargets": 1, "meleeEffect": "none", "meleeEffectPercent": 0,
+    ...        "grenadeDamage": 20, "recharge": 20, "grenadeEffect": "none", "grenadeEffectPercent": 0}
+    >>> d = {"Heroes": {"A": h}, "HunterKit": {"A": kit}, "Difficulties": {}, "DifficultyOrder": []}
+    >>> import unittest.mock as m
+    >>> with m.patch(__name__ + ".hero_peak_dps", return_value=50.0):
+    ...     p = []; validate_kit_guard(d, p, [], 100.0, 1.0); p
+    []
+    >>> with m.patch(__name__ + ".hero_peak_dps", return_value=95.0):
+    ...     p = []; validate_kit_guard(d, p, [], 100.0, 1.0); p
+    ['Hunter Kit A: gun + melee + grenade (95 + 11 = 106 DPS at the top hero level) out-damage the best maxed tower (100; #369)']
+    """
+    if not best_tower:
+        return
+    worst = None
+    for key, h in data["Heroes"].items():
+        kit = data["HunterKit"].get(key)
+        if kit is None or not kit.get("swingTime") or not kit.get("recharge"):
+            continue
+        gun, extra = hero_peak_dps(h) * hero_scale, kit_dps(kit) * hero_scale
+        if gun + extra > best_tower:
+            problems.append(f"Hunter Kit {key}: gun + melee + grenade ({gun:.0f} + {extra:.0f} = {gun + extra:.0f} DPS at the top hero level)"
+                            f" out-damage the best maxed tower ({best_tower:.0f}; #369)")
+        for dkey in data.get("DifficultyOrder", []):
+            dd = data["Difficulties"][dkey]
+            if dd["heroDamageMult"] > 0 and dd["towerDamageMult"] > 0 and (dd["heroDamageMult"] != 1 or dd["towerDamageMult"] != 1):
+                if (gun + extra) * dd["heroDamageMult"] >= best_tower * dd["towerDamageMult"]:
+                    problems.append(f"Hunter Kit {key} on {dd['display']}: gun + melee + grenade out-damage the best maxed tower (#369)")
+        share = (gun + extra) / best_tower
+        if worst is None or share > worst[1]:
+            worst = (key, share, gun, extra)
+    if worst:
+        notes.append(f"kit guard (#369): highest gun + kit {worst[0]} {worst[2]:.0f} + {worst[3]:.0f} = {worst[1]:.0%} of the best maxed tower ({best_tower:.0f})")
 KIT_DINO_EFFECTS = ("none", "slow", "amp")  # amp: dinos take +% damage (a mark)
 KIT_HUNTER_EFFECTS = ("none", "slow")  # #368: no stun or knockback on hunters, ever
 
@@ -1743,10 +1805,14 @@ def validate_kit(data, problems, notes):
     """Every hunter has a kit row whose Hunter name matches Heroes; sane numbers; dino effects
     none / slow / amp; hunter effects none or a capped slow (#368).
 
-    >>> t = {"TrainedReachMax": 20, "KitHunterSlowMax": 30, "KitHunterSlowMaxS": 2, "PvPHunterDamage": 0.5}
+    >>> t = {"TrainedReachMax": 20, "TrainedThrowMax": 30, "GrenadeThrowSpeed": 60, "KitHunterSlowMax": 30,
+    ...      "KitHunterSlowMaxS": 2, "PvPHunterDamage": 0.5}
     >>> row = {"display": "A", "meleeName": "Knife", "meleeDamage": 2, "swingTime": 0.4, "reach": 6, "arc": 50,
     ...        "meleeTargets": 1, "meleePiercesArmor": False, "meleeEffect": "none", "meleeEffectPercent": 0,
-    ...        "meleeEffectSeconds": 0, "meleeHunterEffect": "none", "meleeHunterPercent": 0, "meleeHunterSeconds": 0}
+    ...        "meleeEffectSeconds": 0, "meleeHunterEffect": "none", "meleeHunterPercent": 0, "meleeHunterSeconds": 0,
+    ...        "grenadeName": "Bomb", "grenadeDamage": 8, "splash": 10, "charges": 1, "recharge": 20, "baseRange": 40,
+    ...        "grenadePiercesArmor": False, "cloudSeconds": 5, "grenadeEffect": "slow", "grenadeEffectPercent": 40,
+    ...        "grenadeEffectSeconds": 1, "grenadeHunterEffect": "slow", "grenadeHunterPercent": 30, "grenadeHunterSeconds": 2}
     >>> d = {"Tuning": t, "Heroes": {"A": {"display": "A"}}, "HunterKit": {"A": dict(row)}}
     >>> p = []; validate_kit(d, p, []); p
     []
@@ -1756,6 +1822,12 @@ def validate_kit(data, problems, notes):
     >>> d["HunterKit"]["A"] = dict(row, meleeTargets=1.5, swingTime=0)
     >>> p = []; validate_kit(d, p, []); p
     ['Hunter Kit A: Swing time (s) must be above 0', 'Hunter Kit A: Melee targets must be a whole number >= 1']
+    >>> d["HunterKit"]["A"] = dict(row, grenadeHunterEffect="stun")
+    >>> p = []; validate_kit(d, p, []); p
+    ["Hunter Kit A: Grenade hunter effect 'stun' isn't allowed on hunters (none / slow; #368: no stun or knockback on hunters)"]
+    >>> d["HunterKit"]["A"] = dict(row, grenadeHunterPercent=31)
+    >>> p = []; validate_kit(d, p, []); p
+    ['Hunter Kit A: Grenade hunter slow 31 % for 2 s is past the cap (Kit hunter slow max 30 %, 2 s; #368)']
     """
     t = data["Tuning"]
     missing = [k for k in KIT_LEVERS if k not in t]
@@ -1767,8 +1839,10 @@ def validate_kit(data, problems, notes):
     for key in heroes:
         if key not in kits:
             problems.append(f"Hunter Kit has no row for hero {key} ({heroes[key]['display']})")
-    if t["TrainedReachMax"] < 0:
-        problems.append("Tuning Trained reach max % must not be negative")
+    if t["TrainedReachMax"] < 0 or t["TrainedThrowMax"] < 0:
+        problems.append("Tuning Trained reach max % and Trained throw max % must not be negative")
+    if t["GrenadeThrowSpeed"] <= 0:
+        problems.append("Tuning Grenade throw speed must be above 0")
     for key, row in kits.items():
         where = f"Hunter Kit {key}"
         if key not in heroes:
@@ -1790,9 +1864,27 @@ def validate_kit(data, problems, notes):
                                         row["meleeEffectSeconds"], KIT_DINO_EFFECTS, t, False)
         problems += kit_effect_problems(where, "Melee hunter", row["meleeHunterEffect"], row["meleeHunterPercent"],
                                         row["meleeHunterSeconds"], KIT_HUNTER_EFFECTS, t, True)
+        if not row["grenadeName"]:
+            problems.append(f"{where}: the Grenade needs a name (DINO_REVIEW Round 20)")
+        for head, field in (("Grenade damage", "grenadeDamage"), ("Splash (studs)", "splash"), ("Recharge (s)", "recharge"),
+                            ("Base range (studs)", "baseRange")):
+            if not isinstance(row[field], (int, float)) or row[field] <= 0:
+                problems.append(f"{where}: {head} must be above 0")
+        n = row["charges"]
+        if not isinstance(n, (int, float)) or n < 1 or n != int(n):
+            problems.append(f"{where}: Charges must be a whole number >= 1")
+        if not isinstance(row["cloudSeconds"], (int, float)) or row["cloudSeconds"] < 0:
+            problems.append(f"{where}: Cloud (s) must be 0 (one blast) or more")
+        problems += kit_effect_problems(where, "Grenade dino", row["grenadeEffect"], row["grenadeEffectPercent"],
+                                        row["grenadeEffectSeconds"], KIT_DINO_EFFECTS, t, False)
+        problems += kit_effect_problems(where, "Grenade hunter", row["grenadeHunterEffect"], row["grenadeHunterPercent"],
+                                        row["grenadeHunterSeconds"], KIT_HUNTER_EFFECTS, t, True)
     notes.append("hunter kit melee: " + ", ".join(
         f"{k} {r['meleeName']} {r['meleeDamage']:g}/{r['swingTime']:g}s x{r['meleeTargets']:g} reach {r['reach']:g}"
         for k, r in kits.items() if isinstance(r["swingTime"], (int, float)) and r["swingTime"] > 0))
+    notes.append("hunter kit grenade: " + ", ".join(
+        f"{k} {r['grenadeName']} {r['grenadeDamage']:g} r{r['splash']:g} x{r['charges']:g}/{r['recharge']:g}s range {r['baseRange']:g}"
+        for k, r in kits.items()))
 
 
 def validate_xp(data, problems, notes):
@@ -2412,6 +2504,8 @@ def validate(data):
                  if dps > 0 and floor_weapon <= dps * tower_scale < best_weapon]
     if lead_only:
         notes.append(f"  only at the lead level does that hero ({best_weapon:.0f}) pass a maxed: " + ", ".join(lead_only))
+
+    validate_kit_guard(data, problems, notes, best_tower_leveled, hero_x ** (hero_level - 1))
 
     validate_rewards(data, problems, notes)
     validate_amber(data, problems, notes)
