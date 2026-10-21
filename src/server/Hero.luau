@@ -1146,6 +1146,27 @@ function Hero.towerGuardOf(tower: any): number
 	return guardFrom(towerGuards, tower)
 end
 
+-- Hunter kit (PLAN 10b, Server/Kit): melee and grenade damage scale with the hunter level
+-- like the gun (#366); nil with no hunter picked. A kit take-down is this hunter's pop; a kit
+-- hit that downs an enemy hunter tells them like a shot does.
+function Hero.kitScale(player: Player): number?
+	local s = states[player]
+	if not s or not s.hero then
+		return nil
+	end
+	return levelScale(s)
+end
+
+function Hero.kitCredit(player: Player, killed: boolean, gone: string?, dropped: number?)
+	credit(player, killed, gone, dropped)
+end
+
+function Hero.kitDowned(victim: Player, attacker: Player)
+	if onTranq then
+		onTranq(victim, attacker)
+	end
+end
+
 export type Hooks = {
 	onPop: ((Player?, string?) -> ())?,
 	onBounty: ((Player, string) -> ())?,

@@ -6,6 +6,8 @@
 	the server allows (Shared/HeroStats gives both sides the same numbers).
 	R reloads; an empty magazine reloads by itself (the server starts it).
 	Right-click zooms if the gun has a scope. F uses the hero's ability.
+	V swings the hunter's melee (PLAN 10b T136; free, short reach): the server checks reach,
+	arc, swing time and line of sight (Server/Kit) and echoes hits for the hit marker.
 
 	CAMERA: everyone is in first person all the time, so nobody gets a
 	third-person view advantage in PvP (VISION.md). The one exception is placing
@@ -28,11 +30,13 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local HeroStats = require(Shared:WaitForChild("HeroStats"))
 local GunRules = require(Shared:WaitForChild("GunRules"))
+local HunterKit = require(Shared:WaitForChild("HunterKit"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local heroRequest = remotes:WaitForChild("HeroRequest") :: RemoteFunction
 local heroFire = remotes:WaitForChild("HeroFire") :: RemoteEvent
+local heroKit = remotes:WaitForChild("HeroKit") :: RemoteEvent
 
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
@@ -113,6 +117,15 @@ abilityButton.TextColor3 = TEXT
 abilityButton.Visible = false
 abilityButton.Parent = gui
 corner(abilityButton, 8)
+
+-- The melee's cooldown indicator, left of the ability button (also a touch button).
+local meleeButton = abilityButton:Clone()
+meleeButton.Name = "Melee"
+meleeButton.Position = UDim2.new(1, -176, 1, -136)
+meleeButton.Size = UDim2.fromOffset(124, 48)
+meleeButton.TextSize = 14
+meleeButton.TextWrapped = true
+meleeButton.Parent = gui
 
 local ammoLabel = Instance.new("TextLabel")
 ammoLabel.Name = "Ammo"
@@ -211,7 +224,7 @@ end)
 dressCrosshair()
 
 local markerToken = 0
-heroFire.OnClientEvent:Connect(function(killed: boolean)
+local function showHit(killed: boolean)
 	markerToken += 1
 	local token = markerToken
 	hitMarker.TextColor3 = if killed then KILL else hitColour
@@ -221,6 +234,12 @@ heroFire.OnClientEvent:Connect(function(killed: boolean)
 			hitMarker.Visible = false
 		end
 	end)
+end
+heroFire.OnClientEvent:Connect(showHit)
+heroKit.OnClientEvent:Connect(function(kind: unknown, killed: unknown)
+	if kind == "hit" then
+		showHit(killed == true)
+	end
 end)
 
 -- Local copy of the server's recoil (bloom) so the crosshair shows the real cone.
@@ -426,12 +445,66 @@ end
 
 abilityButton.Activated:Connect(useAbility)
 
+-- Melee (T136): what the swing looks like in your own first-person view (each hunter's
+-- item; visuals only), then the request. The server decides what it hits.
+local MELEE_LOOK = { -- size, colour, material
+	PISTOL = { Vector3.new(0.12, 0.2, 1.3), Color3.fromRGB(205, 210, 215), Enum.Material.Metal }, -- Hunting Knife
+	RIFLE = { Vector3.new(0.35, 0.55, 1.5), Color3.fromRGB(120, 78, 44), Enum.Material.Wood }, -- Stock Swing
+	SHOTGUN = { Vector3.new(0.1, 0.45, 2.1), Color3.fromRGB(150, 160, 140), Enum.Material.Metal }, -- Brush Machete
+	MEDIC = { Vector3.new(0.22, 0.22, 1.6), Color3.fromRGB(225, 205, 160), Enum.Material.Wood }, -- Splint Stick
+}
+local MELEE_SWEEP = 0.15 -- s the item sweeps across the view
+local function swingLook(key: string)
+	local look = MELEE_LOOK[key]
+	if not look then
+		return
+	end
+	local item = Instance.new("Part")
+	item.Anchored, item.CanCollide, item.CanQuery, item.CanTouch, item.CastShadow = true, false, false, false, false
+	item.Size, item.Color, item.Material = look[1], look[2], look[3]
+	item.Parent = camera
+	local started = os.clock()
+	local step
+	step = RunService.RenderStepped:Connect(function()
+		local t = (os.clock() - started) / MELEE_SWEEP
+		if t >= 1 then
+			step:Disconnect()
+			item:Destroy()
+			return
+		end
+		item.CFrame = camera.CFrame * CFrame.new(0.9 - 1.6 * t, -0.7, -2.2) * CFrame.Angles(0, math.rad(50 - 100 * t), math.rad(-30))
+	end)
+end
+
+local function useMelee()
+	local key = heroKey()
+	local row = HunterKit.row(key)
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not key or not row or not humanoid or humanoid.Health <= 0 then
+		return
+	end
+	if player:GetAttribute("PanelOpen") == true or player:GetAttribute("Placing") == true then
+		return
+	end
+	if (player:GetAttribute("MeleeReadyAt") or 0) > workspace:GetServerTimeNow() then
+		return
+	end
+	swingLook(key)
+	local origin, direction = aimRay()
+	heroKit:FireServer("melee", origin, direction)
+end
+
+meleeButton.Activated:Connect(useMelee)
+
 UserInputService.InputBegan:Connect(function(input, processed)
 	if processed then
 		return
 	end
 	if input.KeyCode == Enum.KeyCode.F then
 		useAbility()
+	elseif input.KeyCode == Enum.KeyCode.V then
+		useMelee()
 	elseif input.KeyCode == Enum.KeyCode.R and equippedGun() then
 		request("reload")
 	elseif input.UserInputType == Enum.UserInputType.MouseButton2 and inFirstPerson then
@@ -458,6 +531,7 @@ RunService.RenderStepped:Connect(function()
 
 	if not stats then
 		abilityButton.Visible = false
+		meleeButton.Visible = false
 		ammoLabel.Visible = false
 		if not hintShown and ReplicatedStorage:GetAttribute("State") ~= nil then
 			hintShown = true
@@ -487,6 +561,13 @@ RunService.RenderStepped:Connect(function()
 		local stock = if maxCharges > 1 then `  x{charges}` else ""
 		abilityButton.Text = if remaining > 0 then `{hero.ability}  {math.ceil(remaining)}s` else `{hero.ability}{stock}  (F)`
 		abilityButton.BackgroundColor3 = if remaining > 0 then WAITING else READY
+	end
+	local kit = HunterKit.row(heroKey())
+	meleeButton.Visible = gun ~= nil and kit ~= nil
+	if kit then
+		local cooling = (player:GetAttribute("MeleeReadyAt") or 0) > workspace:GetServerTimeNow()
+		meleeButton.Text = `{kit.meleeName}  (V)`
+		meleeButton.BackgroundColor3 = if cooling then WAITING else READY
 	end
 end)
 

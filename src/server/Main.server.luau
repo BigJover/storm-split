@@ -54,6 +54,7 @@ local LevelBoard = require(script.Parent.LevelBoard)
 local TrophyBoard = require(script.Parent.TrophyBoard)
 local Effects = require(script.Parent.Effects)
 local Hero = require(script.Parent.Hero)
+local Kit = require(script.Parent.Kit) -- melee and grenade (PLAN 10b)
 local Hazards = require(script.Parent.Hazards)
 local Airdrops = require(script.Parent.Airdrops)
 local Progression = require(script.Parent.Progression)
@@ -296,6 +297,7 @@ Hero.init(remotes, {
 		Battle.tell(victim, BattleFlow.tranqLine(attacker.DisplayName))
 	end,
 }) -- ability
+Kit.init(remotes) -- melee and grenade (after Hero: kit hits read the hunter's level)
 Battle.init(remotes) -- the kill feed
 
 ------------------------------------------------------------------ host
@@ -583,6 +585,7 @@ local function resetBoard()
 	DinoAttacks.clear()
 	Effects.clear()
 	Hero.resetMatch()
+	Kit.resetMatch()
 	Scoreboard.resetPops()
 	table.clear(joinedThisMatch)
 	over = false

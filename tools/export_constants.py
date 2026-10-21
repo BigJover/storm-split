@@ -1660,6 +1660,141 @@ def validate_bodies(data, problems, notes):
                      + f"; parity {ratio:.3f} (<= {t['BodyParityMax']:g})")
 
 
+# Hunter kit (PLAN 10b T136/T137, DECISIONS #366-#369): one melee and one grenade per hunter.
+# (header, field, kind): kind "name" text, "num" a number, "yes" Yes/No, "effect" a lower-case word.
+KIT_COLUMNS = [
+    ("Key", "key", "name"), ("Hunter", "display", "name"),
+    ("Melee", "meleeName", "name"), ("Melee damage", "meleeDamage", "num"), ("Swing time (s)", "swingTime", "num"),
+    ("Reach (studs)", "reach", "num"), ("Arc (deg)", "arc", "num"), ("Melee targets", "meleeTargets", "num"),
+    ("Melee pierces armour", "meleePiercesArmor", "yes"), ("Melee dino effect", "meleeEffect", "effect"),
+    ("Melee effect %", "meleeEffectPercent", "num"), ("Melee effect (s)", "meleeEffectSeconds", "num"),
+    ("Melee hunter effect", "meleeHunterEffect", "effect"), ("Melee hunter %", "meleeHunterPercent", "num"),
+    ("Melee hunter (s)", "meleeHunterSeconds", "num"),
+]
+KIT_LEVERS = ["TrainedReachMax", "KitHunterSlowMax", "KitHunterSlowMaxS", "PvPHunterDamage"]
+KIT_DINO_EFFECTS = ("none", "slow", "amp")  # amp: dinos take +% damage (a mark)
+KIT_HUNTER_EFFECTS = ("none", "slow")  # #368: no stun or knockback on hunters, ever
+
+
+def read_hunter_kit(ws):
+    """Hunter Kit: the KIT_COLUMNS found by header in row 4; one row per hunter from row 5
+    while Key is filled."""
+    columns = {}
+    for c in range(1, ws.max_column + 1):
+        head = v(ws, 4, c)
+        if head is not None:
+            columns[str(head).strip()] = c
+    for head, _, _ in KIT_COLUMNS:
+        if head not in columns:
+            sys.exit(f"Hunter Kit row 4: no '{head}' column (PLAN 10b)")
+    out = {}
+    r = 5
+    while v(ws, r, columns["Key"]):
+        row = {}
+        for head, field, kind in KIT_COLUMNS:
+            x = v(ws, r, columns[head])
+            if kind == "name":
+                row[field] = str(x or "").strip()
+            elif kind == "yes":
+                row[field] = yes(x)
+            elif kind == "effect":
+                row[field] = str(x or "none").strip().lower()
+            else:
+                row[field] = num(x, 0)
+        key = row.pop("key").upper()
+        if key in out:
+            sys.exit(f"Hunter Kit row {r}: {key} is listed twice")
+        out[key] = row
+        r += 1
+    return out
+
+
+def kit_effect_problems(where, label, kind, percent, seconds, allowed, t, hunter):
+    """One effect's columns. `hunter`: the hunter-side effect (#368: a slow at most, within the
+    Tuning caps).
+
+    >>> t = {"KitHunterSlowMax": 30, "KitHunterSlowMaxS": 2}
+    >>> kit_effect_problems("K", "Melee hunter", "slow", 30, 2, KIT_HUNTER_EFFECTS, t, True)
+    []
+    >>> kit_effect_problems("K", "Melee hunter", "stun", 0, 1, KIT_HUNTER_EFFECTS, t, True)
+    ["K: Melee hunter effect 'stun' isn't allowed on hunters (none / slow; #368: no stun or knockback on hunters)"]
+    >>> kit_effect_problems("K", "Grenade hunter", "slow", 35, 2.5, KIT_HUNTER_EFFECTS, t, True)
+    ['K: Grenade hunter slow 35 % for 2.5 s is past the cap (Kit hunter slow max 30 %, 2 s; #368)']
+    >>> kit_effect_problems("K", "Melee dino", "none", 10, 0, KIT_DINO_EFFECTS, t, False)
+    ['K: Melee dino effect is none, so its % and (s) must be 0 or blank']
+    """
+    if kind not in allowed:
+        why = " on hunters" if hunter else ""
+        tail = "; #368: no stun or knockback on hunters" if hunter else ""
+        return [f"{where}: {label} effect '{kind}' isn't allowed{why} ({' / '.join(allowed)}{tail})"]
+    if not isinstance(percent, (int, float)) or not isinstance(seconds, (int, float)):
+        return [f"{where}: {label} effect % and (s) must be numbers"]
+    if kind == "none":
+        return [] if percent == 0 and seconds == 0 else [f"{where}: {label} effect is none, so its % and (s) must be 0 or blank"]
+    if percent <= 0 or seconds <= 0 or (kind == "slow" and percent > 100):
+        return [f"{where}: {label} {kind} needs a % above 0 (a slow at most 100) and (s) above 0"]
+    if hunter and (percent > t["KitHunterSlowMax"] or seconds > t["KitHunterSlowMaxS"]):
+        return [f"{where}: {label} slow {percent:g} % for {seconds:g} s is past the cap"
+                f" (Kit hunter slow max {t['KitHunterSlowMax']:g} %, {t['KitHunterSlowMaxS']:g} s; #368)"]
+    return []
+
+
+def validate_kit(data, problems, notes):
+    """Every hunter has a kit row whose Hunter name matches Heroes; sane numbers; dino effects
+    none / slow / amp; hunter effects none or a capped slow (#368).
+
+    >>> t = {"TrainedReachMax": 20, "KitHunterSlowMax": 30, "KitHunterSlowMaxS": 2, "PvPHunterDamage": 0.5}
+    >>> row = {"display": "A", "meleeName": "Knife", "meleeDamage": 2, "swingTime": 0.4, "reach": 6, "arc": 50,
+    ...        "meleeTargets": 1, "meleePiercesArmor": False, "meleeEffect": "none", "meleeEffectPercent": 0,
+    ...        "meleeEffectSeconds": 0, "meleeHunterEffect": "none", "meleeHunterPercent": 0, "meleeHunterSeconds": 0}
+    >>> d = {"Tuning": t, "Heroes": {"A": {"display": "A"}}, "HunterKit": {"A": dict(row)}}
+    >>> p = []; validate_kit(d, p, []); p
+    []
+    >>> d["HunterKit"]["A"]["meleeHunterEffect"] = "knockback"; d["HunterKit"]["A"]["meleeHunterSeconds"] = 1
+    >>> p = []; validate_kit(d, p, []); p
+    ["Hunter Kit A: Melee hunter effect 'knockback' isn't allowed on hunters (none / slow; #368: no stun or knockback on hunters)"]
+    >>> d["HunterKit"]["A"] = dict(row, meleeTargets=1.5, swingTime=0)
+    >>> p = []; validate_kit(d, p, []); p
+    ['Hunter Kit A: Swing time (s) must be above 0', 'Hunter Kit A: Melee targets must be a whole number >= 1']
+    """
+    t = data["Tuning"]
+    missing = [k for k in KIT_LEVERS if k not in t]
+    for key in missing:
+        problems.append(f"Tuning is missing '{key}' (HUNTER KIT; Shared/HunterKit reads it by name)")
+    if missing:
+        return
+    kits, heroes = data["HunterKit"], data["Heroes"]
+    for key in heroes:
+        if key not in kits:
+            problems.append(f"Hunter Kit has no row for hero {key} ({heroes[key]['display']})")
+    if t["TrainedReachMax"] < 0:
+        problems.append("Tuning Trained reach max % must not be negative")
+    for key, row in kits.items():
+        where = f"Hunter Kit {key}"
+        if key not in heroes:
+            problems.append(f"{where}: not a hero key ({', '.join(heroes)})")
+            continue
+        if row["display"] != heroes[key]["display"]:
+            problems.append(f"{where}: Hunter '{row['display']}' is not the Heroes name '{heroes[key]['display']}'")
+        if not row["meleeName"]:
+            problems.append(f"{where}: the Melee needs a name (DINO_REVIEW Round 20)")
+        for head, field in (("Melee damage", "meleeDamage"), ("Swing time (s)", "swingTime"), ("Reach (studs)", "reach")):
+            if not isinstance(row[field], (int, float)) or row[field] <= 0:
+                problems.append(f"{where}: {head} must be above 0")
+        if not isinstance(row["arc"], (int, float)) or not 0 < row["arc"] <= 360:
+            problems.append(f"{where}: Arc (deg) must be above 0 and at most 360")
+        n = row["meleeTargets"]
+        if not isinstance(n, (int, float)) or n < 1 or n != int(n):
+            problems.append(f"{where}: Melee targets must be a whole number >= 1")
+        problems += kit_effect_problems(where, "Melee dino", row["meleeEffect"], row["meleeEffectPercent"],
+                                        row["meleeEffectSeconds"], KIT_DINO_EFFECTS, t, False)
+        problems += kit_effect_problems(where, "Melee hunter", row["meleeHunterEffect"], row["meleeHunterPercent"],
+                                        row["meleeHunterSeconds"], KIT_HUNTER_EFFECTS, t, True)
+    notes.append("hunter kit melee: " + ", ".join(
+        f"{k} {r['meleeName']} {r['meleeDamage']:g}/{r['swingTime']:g}s x{r['meleeTargets']:g} reach {r['reach']:g}"
+        for k, r in kits.items() if isinstance(r["swingTime"], (int, float)) and r["swingTime"] > 0))
+
+
 def validate_xp(data, problems, notes):
     """Hero XP levers (PLAN round 3 T32, DECISIONS #100-#101)."""
     tuning = data["Tuning"]
@@ -2281,6 +2416,7 @@ def validate(data):
     validate_rewards(data, problems, notes)
     validate_amber(data, problems, notes)
     validate_bodies(data, problems, notes)
+    validate_kit(data, problems, notes)
     validate_perks(data, problems, notes)
     validate_small_perks(data, problems)
     validate_xp(data, problems, notes)
@@ -2521,6 +2657,8 @@ def read_data(xlsx):
         "Arenas": read_arenas(wb["Arenas"]),
         "HunterStats": read_hunter_stats(wb["Hunter Stats"]) if "Hunter Stats" in wb.sheetnames
         else sys.exit("The spreadsheet has no 'Hunter Stats' sheet (PLAN 10a T135)"),
+        "HunterKit": read_hunter_kit(wb["Hunter Kit"]) if "Hunter Kit" in wb.sheetnames
+        else sys.exit("The spreadsheet has no 'Hunter Kit' sheet (PLAN 10b T136)"),
     }
     return data
 
