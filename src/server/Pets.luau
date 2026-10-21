@@ -28,8 +28,13 @@
 	                            (Main / Battle call roundCleared)
 	  Fetcher (fetch)           brings its hunter's side's Airdrop chests from its reach
 	                            (Server/Airdrops; a rival's chest is never taken)
-	  Honker (spotcamo)         nothing yet: the game has no hidden dinos (Director)
-	A blank Effect value (the sheet today) = the effect is off.
+	  Honker (honk, #407)       every Honk every (s) it honks at the nearest boss within Honk
+	                            reach of its hunter (else the dino there with the most HP
+	                            left; Shared/Pets.honkTarget) and marks it Honk mark (s) with
+	                            a small HONK! icon; its OWN hunter's gun, melee and grenade
+	                            hits on that dino deal + its % (Hero.petBonus). Own side's
+	                            dinos only, never a hunter; not a tower/dart mark (#106).
+	A blank Effect value = the effect is off.
 
 	HATCHLING PENS. Each player gets a Campsite (Shared/Outpost.assignCampsite) shown on its
 	sign; up to 3 pets from their Hatchling Pen stand in its pen.
@@ -42,12 +47,16 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local PetRules = require(Shared:WaitForChild("Pets"))
 local OutpostRules = require(Shared:WaitForChild("Outpost"))
+local BattleRules = require(Shared:WaitForChild("BattleRules"))
+local Sides = require(Shared:WaitForChild("Sides"))
 
 local Progression = require(script.Parent.Progression)
 local Health = require(script.Parent.Health)
 local Airdrops = require(script.Parent.Airdrops)
 local Economy = require(script.Parent.Economy)
 local Outpost = require(script.Parent.Outpost)
+local Enemies = require(script.Parent.Enemies)
+local Hero = require(script.Parent.Hero)
 
 local Pets = {}
 
@@ -77,6 +86,10 @@ local biteUsed: { [Player]: boolean } = {}
 local campsites: { [number]: Player } = {}
 local penModels: { [Player]: { Model } } = {}
 local downEvent: RemoteEvent
+local honks: { [Player]: PetRules.Honk } = {} -- each Honker's current honk
+local honkedAt: { [Player]: number } = {} -- when it last honked
+local honkIcons: { [Player]: BillboardGui } = {}
+local HONK_COLOUR = Color3.fromRGB(255, 220, 90)
 
 local function request(player: Player, action: unknown, a: unknown, b: unknown): (boolean, any)
 	if action == "view" then
@@ -204,6 +217,78 @@ function Pets.roundCleared(side: number, hunters: { Player })
 			Economy.earnFor(side, cash)
 		end
 	end
+end
+
+-- The Honker's honk (#407): ready every Honk every (s), at the first dino in reach.
+local function clearHonk(player: Player)
+	honks[player] = nil
+	local icon = honkIcons[player]
+	honkIcons[player] = nil
+	if icon then
+		icon:Destroy()
+	end
+end
+
+local function honkIcon(player: Player, enemy: any, seconds: number)
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "Honk"
+	gui.Size = UDim2.fromOffset(70, 26)
+	gui.StudsOffset = Vector3.new(0, 5, 0)
+	gui.AlwaysOnTop = true
+	gui.MaxDistance = 120
+	local text = Instance.new("TextLabel")
+	text.Size = UDim2.fromScale(1, 1)
+	text.BackgroundTransparency = 1
+	text.Font = Enum.Font.GothamBlack
+	text.TextScaled = true
+	text.TextColor3 = HONK_COLOUR
+	text.TextStrokeTransparency = 0.3
+	text.Text = "HONK!"
+	text.Parent = gui
+	gui.Parent = enemy.part
+	honkIcons[player] = gui
+	task.delay(seconds, function()
+		if honkIcons[player] == gui then
+			honkIcons[player] = nil
+		end
+		gui:Destroy()
+	end)
+end
+
+local function stepHonk(player: Player, now: number)
+	local effect, strength = Pets.effectOf(player)
+	if effect ~= "honk" or not strength then
+		clearHonk(player) -- off when its hunter is down, in camp or not in a match
+		return
+	end
+	if not PetRules.honkReady(honkedAt[player], now) then
+		return
+	end
+	local root = aliveRoot(player)
+	if not root then
+		return
+	end
+	local side = Sides.playerSide(player:GetAttribute("Side"), ReplicatedStorage:GetAttribute("Sides"))
+	local dinos, candidates = {}, {}
+	for _, enemy in BattleRules.ownDinos(Enemies.getLive(), side, "hunter") do
+		if enemy.alive then
+			table.insert(dinos, enemy)
+			table.insert(candidates, {
+				dino = true,
+				boss = enemy.def.boss == true,
+				hp = enemy.hp,
+				distance = (enemy.part.Position - root.Position).Magnitude,
+			})
+		end
+	end
+	local pick = PetRules.honkTarget(candidates)
+	if not pick then
+		return -- nothing in reach: it honks at the first chance
+	end
+	clearHonk(player)
+	honks[player] = PetRules.honk(player, dinos[pick], now)
+	honkedAt[player] = now
+	honkIcon(player, dinos[pick], honks[player].untilAt - now)
 end
 
 ------------------------------------------------------------------ Hatchling Pens
@@ -338,6 +423,10 @@ function Pets.init(remotes: Folder)
 		local effect, strength = Pets.effectOf(player)
 		return if effect == "fetch" then PetRules.fetchReach(strength) else 0
 	end)
+	Hero.setPetBonus(function(player: Player, enemy: any): number
+		local effect, strength = Pets.effectOf(player)
+		return PetRules.honkX(if effect == "honk" then strength else nil, honks[player], player, enemy, os.clock())
+	end)
 	ReplicatedStorage:GetAttributeChangedSignal("Round"):Connect(function()
 		table.clear(biteUsed) -- a Frill Guard takes one bite a round
 	end)
@@ -350,6 +439,8 @@ function Pets.init(remotes: Folder)
 		dropFollower(player)
 		freeCampsite(player)
 		biteUsed[player] = nil
+		clearHonk(player)
+		honkedAt[player] = nil
 	end)
 
 	local sinceRegen = 0
@@ -367,6 +458,15 @@ function Pets.init(remotes: Folder)
 			local from = model:GetPivot()
 			-- Snaps after a teleport (camp <-> match), glides otherwise.
 			model:PivotTo(if (goal.Position - from.Position).Magnitude > 40 then goal else from:Lerp(goal, math.clamp(dt * 8, 0, 1)))
+		end
+		local now = os.clock()
+		for player in followers do
+			stepHonk(player, now)
+		end
+		for player in honks do
+			if not followers[player] then
+				clearHonk(player) -- its hunter fell or left the match
+			end
 		end
 		sinceRegen += dt
 		if sinceRegen >= REGEN_TICK then

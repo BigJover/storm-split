@@ -49,8 +49,8 @@
 	  along(state)                  the pet taken along, or nil
 	  strength(pet, row?)           the effect strength: Effect value x rarity, nil if off
 	  inPlay(state, inOutpost, out, alive)   the pet is out with its hunter (T141)
-	  heal / absorb / roundCash / fetchReach   each effect's rule (T141); spotcamo has no
-	                                target yet: there are no hidden dinos (Director)
+	  heal / absorb / roundCash / fetchReach   each effect's rule (T141)
+	  honkTarget / honkReady / honk / honkX     the Honker's honk (T141b, #407)
 	  groups(state)                 the collection grouped by species + rarity, for the UI
 	  timerLine / fuseLine / downLine / fullLine   the Round 21 strings
 ]]
@@ -540,6 +540,56 @@ end
 --   fetch (Fetcher): how far (studs) it brings its hunter's side's Airdrop chests from
 function Pets.fetchReach(strength: number?): number
 	return strength or 0
+end
+
+--   honk (Honker, #407): every Honk every (s) it honks at one dino within Honk reach (studs)
+--   of its hunter — the nearest boss there, else the dino there with the most HP left (a tie:
+--   the nearer) — and marks it Honk mark (s). Dinos only, never a hunter. A honk is ready
+--   Honk every (s) after the last one and goes off at the first chance (a dino in reach).
+export type HonkCandidate = { dino: boolean, boss: boolean, hp: number, distance: number }
+export type Honk = { owner: any, target: any, untilAt: number }
+
+function Pets.honkTarget(candidates: { HonkCandidate }): number?
+	local reach = tuning().HonkReachStuds
+	local best: number?, bestBoss = nil, false
+	for i, c in candidates do
+		if not c.dino or c.distance > reach or c.hp <= 0 then
+			continue -- never a hunter (or anything not a dino), never out of reach
+		end
+		local b = best and candidates[best]
+		local better
+		if not b then
+			better = true
+		elseif c.boss ~= bestBoss then
+			better = c.boss
+		elseif c.boss then
+			better = c.distance < b.distance
+		else
+			better = c.hp > b.hp or (c.hp == b.hp and c.distance < b.distance)
+		end
+		if better then
+			best, bestBoss = i, c.boss
+		end
+	end
+	return best
+end
+
+function Pets.honkReady(lastAt: number?, now: number): boolean
+	return lastAt == nil or now - lastAt >= tuning().HonkEveryS
+end
+
+function Pets.honk(owner: any, target: any, now: number): Honk
+	return { owner = owner, target = target, untilAt = now + tuning().HonkMarkS }
+end
+
+-- x damage on one hit: 1 + strength % only when `attacker` is the honk's own hunter, `enemy`
+-- is the honked dino and the mark hasn't run out (callers: its gun, melee and grenade hits;
+-- strength nil = the pet isn't out, so nothing).
+function Pets.honkX(strength: number?, honk: Honk?, attacker: any, enemy: any, now: number): number
+	if not strength or not honk or attacker ~= honk.owner or enemy ~= honk.target or now >= honk.untilAt then
+		return 1
+	end
+	return 1 + strength / 100
 end
 
 function Pets.downLine(pet: { kind: string }): string

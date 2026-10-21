@@ -197,7 +197,7 @@ function Kit.hitDino(player: Player, enemy: any, damage: number, pierces: boolea
 	end
 	Kit.affectDino(enemy, effect)
 	Enemies.setSource("hunter")
-	local killed, gone, dropped = Enemies.damage(enemy, damage, pierces, HunterKit.BREAKS)
+	local killed, gone, dropped = Enemies.damage(enemy, damage * Hero.petBonus(player, enemy), pierces, HunterKit.BREAKS)
 	Enemies.setSource(nil)
 	Hero.kitCredit(player, killed, gone, dropped)
 	return killed

@@ -1926,9 +1926,9 @@ def validate_kit(data, problems, notes):
 
 # ---------------------------------------------------------------- pets (PLAN 10d T140/T141)
 
-PET_EFFECTS = ("spotcamo", "fetch", "regen", "roundcash", "absorb")  # #378: one per species
+PET_EFFECTS = ("honk", "fetch", "regen", "roundcash", "absorb")  # #378: one per species (#407: Honker = honk)
 PET_TUNING = ("PetInventoryCap", "Incubators", "HatchlingPenPets", "PetFuseCount",
-              "PetMythicOddsMax", "MasteryPerkWorthCap")
+              "PetMythicOddsMax", "MasteryPerkWorthCap", "HonkEveryS", "HonkMarkS", "HonkReachStuds")
 
 
 def _headed(ws, heads, where):
@@ -2020,7 +2020,8 @@ def validate_pets(data, problems, notes):
     ...      ("RARE", 1.5), ("EPIC", 1.75), ("LEGENDARY", 2), ("MYTHIC", 2.25))]
     >>> odds = {"COMMON": 55, "UNCOMMON": 25, "RARE": 12, "EPIC": 5, "LEGENDARY": 2.5, "MYTHIC": 0.5}
     >>> t = {"PetInventoryCap": 60, "Incubators": 1, "HatchlingPenPets": 3,
-    ...      "PetFuseCount": 3, "PetMythicOddsMax": 2, "MasteryPerkWorthCap": 40, "AmberScale": 1000}
+    ...      "PetFuseCount": 3, "PetMythicOddsMax": 2, "MasteryPerkWorthCap": 40, "AmberScale": 1000,
+    ...      "HonkEveryS": 10, "HonkMarkS": 3, "HonkReachStuds": 40}
     >>> pet = {"display": "Honker", "effect": "regen", "effectValue": 1, "worthRef": 10}
     >>> d = {"Tuning": t, "PetRarities": R, "Eggs": {"MUD": {"display": "Mud Egg", "hatchMinutes": 5,
     ...      "price": 5000, "odds": dict(odds)}}, "EggOrder": ["MUD"], "Pets": {"A": pet}, "PetOrder": ["A"]}
@@ -2039,7 +2040,9 @@ def validate_pets(data, problems, notes):
     >>> d["Pets"]["A"] = dict(pet, worthRef=None); p = []; validate_pets(d, p, []); p
     ['Pets A (Honker): Effect value is set but Worth ref is blank, so its worth cannot be measured (#378)']
     >>> d["Pets"]["A"] = dict(pet, effect="laser"); p = []; validate_pets(d, p, []); p
-    ["Pets A (Honker): effect 'laser' is not one of spotcamo, fetch, regen, roundcash, absorb (#378)"]
+    ["Pets A (Honker): effect 'laser' is not one of honk, fetch, regen, roundcash, absorb (#378)"]
+    >>> d["Pets"]["A"] = pet; del t["HonkReachStuds"]; p = []; validate_pets(d, p, []); p
+    ["Tuning is missing 'HonkReachStuds' (PETS; Shared/Pets reads it by name)"]
     """
     t = data["Tuning"]
     for key in PET_TUNING:

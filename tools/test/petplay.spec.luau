@@ -4,8 +4,8 @@
 	(one dino bite a round, never a hunter's shot), the worth cap, Campsites, and source
 	guards that no pet effect reaches an enemy hunter.
 
-	Effect values are blank on the sheet until the Director sets them (effect off), so the
-	per-rarity specs use a test row.
+	Effect values and Worth refs are the Director's (T141b, #408); the per-rarity specs also
+	use a test row. The Honker's honk (#407) has its own specs below.
 ]]
 local fs = require("@lune/fs")
 local Config = require(src.shared.Config)
@@ -15,20 +15,28 @@ local Outpost = require(src.shared.Outpost)
 local MULTS = { COMMON = 1, UNCOMMON = 1.25, RARE = 1.5, EPIC = 1.75, LEGENDARY = 2, MYTHIC = 2.25 }
 
 test("each species: one effect, scaled by rarity x1 .. x2.25; blank = off", function()
-	local want = { HONKER = "spotcamo", FETCHER = "fetch", FERN_MUNCHER = "regen", SHINY_SNATCHER = "roundcash", FRILL_GUARD = "absorb" }
+	local want = { HONKER = "honk", FETCHER = "fetch", FERN_MUNCHER = "regen", SHINY_SNATCHER = "roundcash", FRILL_GUARD = "absorb" }
+	-- #408: Common value / Worth ref; Mythic = x2.25, every Mythic worth <= the 40 % cap.
+	local values = { HONKER = { 5, 33 }, FETCHER = { 4, 25 }, FERN_MUNCHER = { 0.2, 3 }, SHINY_SNATCHER = { 8, 60 }, FRILL_GUARD = { 40, 250 } }
 	for kind, effect in want do
 		local row = (Config :: any).Pets[kind]
 		eq(row.effect, effect, `{kind}'s effect`)
-		local off, none = Pets.strength({ kind = kind, rarity = "MYTHIC" })
+		eq(row.effectValue, values[kind][1], `{kind}'s Common value`)
+		eq(row.worthRef, values[kind][2], `{kind}'s Worth ref`)
+		local e, mythic = Pets.strength({ kind = kind, rarity = "MYTHIC" })
+		eq(e, effect)
+		near(mythic :: number, values[kind][1] * 2.25, `{kind} Mythic`, 1e-9)
+		ok(100 * (mythic :: number) / row.worthRef <= Config.Tuning.MasteryPerkWorthCap, `{kind} Mythic worth <= the cap`)
+		local off, none = Pets.strength({ kind = kind, rarity = "MYTHIC" }, { effect = effect, effectValue = nil })
 		eq(off, effect)
-		eq(none, nil, `{kind}: blank Effect value = off until the Director sets it`)
+		eq(none, nil, `{kind}: a blank Effect value = off`)
 		for rarity, mult in MULTS do
 			local e, s = Pets.strength({ kind = kind, rarity = rarity }, { effect = effect, effectValue = 4 })
 			eq(e, effect)
 			eq(s, 4 * mult, `{kind} {rarity}`)
 		end
 	end
-	eq(select(2, Pets.strength({ kind = "HONKER", rarity = "SHINY" }, { effect = "spotcamo", effectValue = 4 })), nil, "unknown rarity: nothing")
+	eq(select(2, Pets.strength({ kind = "HONKER", rarity = "SHINY" }, { effect = "honk", effectValue = 4 })), nil, "unknown rarity: nothing")
 end)
 
 test("the effect rules: regen per second, one bite a round, whole round cash, fetch reach", function()
@@ -81,8 +89,11 @@ test("PvP guards: a pet never touches an enemy hunter, is never a target, works 
 	local health = fs.readFile("src/server/Health.luau")
 	local attacks = fs.readFile("src/server/DinoAttacks.luau")
 	local airdrops = fs.readFile("src/server/Airdrops.luau")
-	for _, banned in { "Health.damage", "Health.pvpHit", "Health.slow", "BattleRules.pvpDamage", "Enemies." } do
+	for _, banned in { "Health.damage", "Health.pvpHit", "Health.slow", "BattleRules.pvpDamage", "Enemies.mark", "Enemies.damage" } do
 		ok(not string.find(server, banned, 1, true), `Server/Pets never calls {banned}`)
+	end
+	for call in string.gmatch(server, "Enemies%.(%w+)") do
+		eq(call, "getLive", "Server/Pets only reads the dino list (the honk picks a dino; Hero/Kit deal the damage)")
 	end
 	ok(string.find(server, "p.CanQuery = false", 1, true) and string.find(server, "p.CanTouch = false", 1, true) and string.find(server, "p.CanCollide = false", 1, true), "pet parts can't be hit, touched or bumped")
 	ok(string.find(health, "if source and source.bite and biteGuard then", 1, true), "only a dino bite reaches the Frill Guard")
@@ -95,4 +106,59 @@ test("PvP guards: a pet never touches an enemy hunter, is never a target, works 
 	ok(string.find(fs.readFile("src/server/Battle.luau"), "Pets.roundCleared(side, huntersOf(side))", 1, true), "battles: each cleared side's own hunters")
 	ok(string.find(fs.readFile("src/server/Main.server.luau"), "Pets.roundCleared(1, hunters())", 1, true), "co-op: side 1")
 	ok(string.find(server, "local wasOut = followers[player] ~= nil and player:GetAttribute(\"InOutpost\") ~= true", 1, true), "dies with its hunter in a match")
+end)
+
+local function dino(boss: boolean, hp: number, distance: number)
+	return { dino = true, boss = boss, hp = hp, distance = distance }
+end
+
+test("honk target (#407): nearest boss in reach, else most HP left; never a hunter", function()
+	eq(Config.Tuning.HonkEveryS, 10)
+	eq(Config.Tuning.HonkMarkS, 3)
+	eq(Config.Tuning.HonkReachStuds, 40)
+	eq(Pets.honkTarget({ dino(false, 900, 5), dino(true, 100, 30), dino(true, 500, 20) }), 3, "the nearest boss, over a bigger plain dino")
+	eq(Pets.honkTarget({ dino(true, 5000, 41), dino(false, 50, 10), dino(false, 80, 39) }), 3, "a boss out of reach: the most HP left in reach")
+	eq(Pets.honkTarget({ dino(false, 80, 30), dino(false, 80, 12) }), 2, "a tie on HP: the nearer")
+	eq(Pets.honkTarget({ dino(false, 80, 40) }), 1, "40 studs is in reach")
+	eq(Pets.honkTarget({ dino(false, 80, 40.5), dino(true, 80, 60) }), nil, "nothing in reach: no honk")
+	eq(Pets.honkTarget({ { dino = false, boss = true, hp = 100, distance = 1 }, dino(false, 10, 30) }), 2, "a hunter is never honked")
+	eq(Pets.honkTarget({ { dino = false, boss = false, hp = 100, distance = 1 } }), nil, "only hunters near: no honk")
+	eq(Pets.honkTarget({ dino(true, 0, 2), dino(false, 10, 30) }), 2, "a dino with no HP left isn't picked")
+end)
+
+test("honk timing and bonus (#407): every 10 s, 3 s mark, own hunter only, off when down", function()
+	eq(Pets.honkReady(nil, 100), true, "the first honk is ready at once")
+	eq(Pets.honkReady(100, 109.9), false, "not before 10 s")
+	eq(Pets.honkReady(100, 110), true, "every 10 s")
+	local hunter, rival, target, other = {}, {}, {}, {}
+	local honk = Pets.honk(hunter, target, 100)
+	eq(honk.untilAt, 103, "marked 3 s")
+	local mythic = select(2, Pets.strength({ kind = "HONKER", rarity = "MYTHIC" })) :: number
+	near(mythic, 11.25, "Mythic Honker 11.25 %", 1e-9)
+	near(Pets.honkX(mythic, honk, hunter, target, 102.9), 1.1125, "its own hunter's hit on the honked dino", 1e-9)
+	eq(Pets.honkX(5, honk, hunter, target, 100), 1.05, "Common +5 %")
+	eq(Pets.honkX(5, honk, hunter, target, 103), 1, "the mark is over after 3 s")
+	eq(Pets.honkX(5, honk, rival, target, 101), 1, "anyone else's hit: no bonus (owner only)")
+	eq(Pets.honkX(5, honk, hunter, other, 101), 1, "another dino: no bonus")
+	eq(Pets.honkX(nil, honk, hunter, target, 101), 1, "its hunter down / in camp (effect off): no bonus")
+	eq(Pets.honkX(5, nil, hunter, target, 101), 1, "no honk yet: no bonus")
+end)
+
+test("honk wiring: gun, melee and grenade only; dinos of its hunter's side; not a tower or dart mark", function()
+	local server = fs.readFile("src/server/Pets.luau")
+	local hero = fs.readFile("src/server/Hero.luau")
+	local kit = fs.readFile("src/server/Kit.luau")
+	ok(string.find(hero, "Enemies.damage(enemy, damage * Hero.petBonus(player, enemy), stats.piercesArmor, breaks)", 1, true), "a gun round on its target")
+	ok(string.find(hero, "Enemies.damage(other, damage * Hero.petBonus(player, other), stats.piercesArmor)", 1, true), "a gun round's splash")
+	ok(string.find(kit, "Enemies.damage(enemy, damage * Hero.petBonus(player, enemy), pierces, HunterKit.BREAKS)", 1, true), "melee and grenade (Kit.hitDino)")
+	local _, uses = string.gsub(hero .. kit, "%* Hero%.petBonus%(player", "")
+	eq(uses, 3, "nowhere else (no ability, tower, burn or hunter hit)")
+	for _, file in { "Towers.luau", "Health.luau", "Hazards.luau" } do
+		ok(not string.find(fs.readFile("src/server/" .. file), "petBonus", 1, true), `{file} never reads the honk`)
+	end
+	ok(string.find(server, 'BattleRules.ownDinos(Enemies.getLive(), side, "hunter")', 1, true), "candidates: its hunter's own side's dinos")
+	ok(string.find(server, "dino = true,", 1, true), "only dinos are candidates")
+	ok(string.find(server, "clearHonk(player) -- off when its hunter is down, in camp or not in a match", 1, true), "off when down or in camp (effectOf is nil then)")
+	ok(string.find(server, "clearHonk(player) -- its hunter fell or left the match", 1, true), "a fallen hunter's honk ends")
+	ok(string.find(server, 'PetRules.honkX(if effect == "honk" then strength else nil, honks[player], player, enemy, os.clock())', 1, true), "the bonus asks the honk's own owner, live")
 end)

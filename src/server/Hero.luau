@@ -631,7 +631,7 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 		then Enemies.breaksFor(enemy, base, 1, true)
 		else 1
 	Enemies.setSource("hunter") -- a hunter's pop (a Bone Totem's Hunter charge x, PLAN 9h)
-	local killed, gone, dropped = Enemies.damage(enemy, damage, stats.piercesArmor, breaks)
+	local killed, gone, dropped = Enemies.damage(enemy, damage * Hero.petBonus(player, enemy), stats.piercesArmor, breaks)
 	Enemies.setSource(nil)
 	credit(player, killed, gone, dropped)
 	outcome.killed = outcome.killed or killed
@@ -640,7 +640,7 @@ local function impact(player: Player, stats: HeroStats.Stats, enemy: Enemies.Ene
 		for _, other in live do
 			if other ~= enemy and canHit(other, stats) and (other.part.Position - position).Magnitude <= stats.splashRadius then
 				Enemies.setSource("hunter")
-				local splashKill, splashGone = Enemies.damage(other, damage, stats.piercesArmor)
+				local splashKill, splashGone = Enemies.damage(other, damage * Hero.petBonus(player, other), stats.piercesArmor)
 				Enemies.setSource(nil)
 				credit(player, splashKill, splashGone)
 				outcome.killed = outcome.killed or splashKill
@@ -1150,6 +1150,16 @@ function Hero.kitScale(player: Player): number?
 		return nil
 	end
 	return levelScale(s)
+end
+
+-- A pet's damage bonus on one dino from this hunter's gun, melee or grenade hit (T141b: a
+-- Honker's honk, #407; Server/Pets sets it). 1 = none.
+local petBonus: ((Player, any) -> number)? = nil
+function Hero.setPetBonus(fn: (Player, any) -> number)
+	petBonus = fn
+end
+function Hero.petBonus(player: Player, enemy: any): number
+	return if petBonus then petBonus(player, enemy) else 1
 end
 
 function Hero.kitCredit(player: Player, killed: boolean, gone: string?, dropped: number?)

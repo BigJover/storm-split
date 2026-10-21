@@ -3,9 +3,9 @@
 	Round 21): Shared/Pets' odds, roll, fusing, timers, Amber warm-up, cap, take-along,
 	Hatchling Pen and the save round trip through Shared/Profile + SaveStore.
 
-	Prices and the warm price are blank on the sheet until the Director sets them (not for
-	sale), so the specs that buy or warm set a test price on Config's (unfrozen) egg row
-	and Tuning copy, and put it back.
+	The sheet's prices and warm price (T141b, #405/#406) are checked as they are; the specs
+	that need a blank or a round test number set it on Config's (unfrozen) egg row and Tuning
+	copy, and put it back.
 ]]
 local Config = require(src.shared.Config)
 local Pets = require(src.shared.Pets)
@@ -27,20 +27,20 @@ local function script(values: { number }): (number) -> number
 	end
 end
 
--- Runs `fn` with a test price on the Mud Egg (and optionally a warm price).
-local function priced(fn: () -> (), warm: number?)
+-- Runs `fn` with a test price on the Mud Egg and a test warm price (false = blank), then
+-- puts the sheet's back.
+local function priced(fn: () -> (), warm: (number | false)?)
 	local mud = (Config :: any).Eggs.MUD
 	local before = mud.price
 	mud.price = 5000
 	local tuning = Config.Tuning :: any
-	local okWarm = warm == nil or pcall(function()
-		tuning.EggWarmAmberPerMin = warm
-	end)
+	local warmBefore = tuning.EggWarmAmberPerMin
+	if warm ~= nil then
+		tuning.EggWarmAmberPerMin = if warm then warm else nil
+	end
 	local ok, err = pcall(fn)
 	mud.price = before
-	if warm ~= nil and okWarm then
-		tuning.EggWarmAmberPerMin = nil
-	end
+	tuning.EggWarmAmberPerMin = warmBefore
 	assert(ok, err)
 end
 
@@ -116,18 +116,37 @@ test("the hatch roll: six bands on rng(1000), the 0.5 % Mythic edge, species eve
 		eq(Pets.rollKind(script({ i })), kind, "species picked evenly by index")
 	end
 	eq(table.concat(kinds, ","), "HONKER,FETCHER,FERN_MUNCHER,SHINY_SNATCHER,FRILL_GUARD")
-	eq(Pets.rollRarity("SPECKLED", script({ 1000 })), "COMMON", "no odds yet: never rolls (and isn't for sale)")
+	-- #406: Speckled 40/30/17/8/4/1, Golden 20/30/25/14/9/2 -> band edges in tenths.
+	for _, case in { { "SPECKLED", 400, "COMMON" }, { "SPECKLED", 401, "UNCOMMON" }, { "SPECKLED", 990, "LEGENDARY" },
+		{ "SPECKLED", 991, "MYTHIC" }, { "GOLDEN", 200, "COMMON" }, { "GOLDEN", 750, "RARE" }, { "GOLDEN", 751, "EPIC" },
+		{ "GOLDEN", 980, "LEGENDARY" }, { "GOLDEN", 981, "MYTHIC" } } do
+		eq(Pets.rollRarity(case[1], script({ case[2] })), case[3], `{case[1]} roll {case[2]}`)
+	end
+	eq(Pets.oddsLine("GOLDEN"), "Hatch odds: Common 20 % · Uncommon 30 % · Rare 25 % · Epic 14 % · Legendary 9 % · Mythic 2 %")
+	local speckled = (Config :: any).Eggs.SPECKLED
+	local odds = speckled.odds
+	speckled.odds = nil
+	local blank = Pets.rollRarity("SPECKLED", script({ 1000 }))
+	local sale = select(2, Pets.canBuy(Pets.blank(), "SPECKLED"))
+	speckled.odds = odds
+	eq(blank, "COMMON", "no odds: never rolls")
+	eq(sale, "Not for sale yet", "and isn't for sale")
 end)
 
-test("buying: blank price = not for sale; one incubator; real-time timer (#396)", function()
+test("buying: the sheet's prices (#405); blank price = not for sale; one incubator; real-time timer (#396)", function()
 	local state = Pets.blank()
-	local price, why = Pets.canBuy(state, "MUD")
-	eq(price, nil)
-	eq(why, "Not for sale yet", "the sheet leaves prices blank until the Director sets them")
+	eq((Pets.canBuy(state, "MUD")), 20000, "Mud 20K Amber")
+	eq((Pets.canBuy(state, "SPECKLED")), 75000, "Speckled 75K")
+	eq((Pets.canBuy(state, "GOLDEN")), 200000, "Golden 200K")
 	eq(select(2, Pets.canBuy(state, "BOGUS")), "Unknown egg")
+	local mud = (Config :: any).Eggs.MUD
+	mud.price = nil
+	local price, why = Pets.canBuy(state, "MUD")
+	mud.price = 20000
+	eq(price, nil)
+	eq(why, "Not for sale yet", "a blank price is not for sale")
 	priced(function()
 		eq((Pets.canBuy(state, "MUD")), 5000)
-		eq(select(2, Pets.canBuy(state, "SPECKLED")), "Not for sale yet", "no odds = not for sale")
 		ok(Pets.buy(state, "MUD", NOON))
 		eq(Pets.remaining(state, 1, NOON), 300)
 		eq(Pets.timerLine(state, 1, NOON + 28), "Hatching… 4:32 left")
@@ -144,11 +163,20 @@ test("buying: blank price = not for sale; one incubator; real-time timer (#396)"
 end)
 
 test("Warm it up: Amber per remaining minute, rounded up; blank = no button", function()
+	eq(Config.Tuning.EggWarmAmberPerMin, 2000, "#405: 2,000 Amber a minute, like training")
+	priced(function()
+		local state = Pets.blank()
+		Pets.buy(state, "MUD", NOON)
+		eq(Pets.warmPrice(state, 1, NOON), 10000, "a whole Mud Egg (5 min) = 10K")
+		local golden = Pets.blank()
+		Pets.buy(golden, "GOLDEN", NOON)
+		eq(Pets.warmPrice(golden, 1, NOON), 240000, "a whole Golden Egg (120 min) = 240K, more than the egg")
+	end)
 	priced(function()
 		local state = Pets.blank()
 		Pets.buy(state, "MUD", NOON)
 		eq(Pets.warmPrice(state, 1, NOON), nil, "blank warm price: not for sale")
-	end)
+	end, false)
 	priced(function()
 		local state = Pets.blank()
 		Pets.buy(state, "MUD", NOON)

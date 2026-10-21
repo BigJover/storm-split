@@ -1338,6 +1338,9 @@ def hero_lines(data, rows, mixes):
                f" (floor + {lead}, the most hero XP allows); towers stay on the round level")
     findings = []
     lead_only = []  # T5 tower paths a hunter passes only at the ceiling: listed, not a finding
+    # A Mythic Honker's honk (PLAN 10d T141b, #407/#408): its hunter's gun, melee and grenade
+    # deal + its % to the honked dino; counted at full uptime (an upper bound, like the kit).
+    honk = 1 + mythic_honk(data) / 100
     for key in data["HeroOrder"]:
         h = data["Heroes"][key]
         base, _ = hero_dps(h, 0, 0)
@@ -1359,8 +1362,8 @@ def hero_lines(data, rows, mixes):
             # best tower at the round level.
             if peak * cs > best_tower:
                 findings.append(f"HERO: {h['display']} {h['paths'][best]['id']} T{top} at L{lv + lead} (ceiling, {peak * cs:.0f}) out-damages every T5 tower path's eDPS at round level {lv} ({best_tower:.0f})")
-            elif (peak + kit) * cs > best_tower:
-                findings.append(f"KIT: {h['display']} gun + melee + grenade at L{lv + lead} (ceiling, {(peak + kit) * cs:.0f}) out-damages every T5 tower path's eDPS at round level {lv} ({best_tower:.0f}; #369)")
+            elif (peak + kit) * honk * cs > best_tower:
+                findings.append(f"KIT: {h['display']} gun + melee + grenade x Mythic honk {honk:g} at L{lv + lead} (ceiling, {(peak + kit) * honk * cs:.0f}) out-damages every T5 tower path's eDPS at round level {lv} ({best_tower:.0f}; #369/#408)")
             for (tower_key, pi), e in t5.items():
                 if peak * hs <= e[b] * ts < peak * cs:
                     tower = data["Towers"][tower_key]
@@ -1372,13 +1375,30 @@ def hero_lines(data, rows, mixes):
             cs = (1 + hero_x) ** (lv + lead - 1)
             best_tower = max(e[b] for e in t5.values()) * (1 + tower_x) ** (lv - 1)
             out.append(f"  {'':<15} kit {kit_row['meleeName']} + {kit_row['grenadeName']} +{kit:.1f} DPS (L1); gun + kit at L{lv + lead}"
-                       f" {(peak + kit) * cs:.0f} vs best T5 tower {best_tower:.0f} ({(peak + kit) * cs / best_tower:.0%}, #369)")
+                       f" {(peak + kit) * cs:.0f} vs best T5 tower {best_tower:.0f} ({(peak + kit) * cs / best_tower:.0%}, #369);"
+                       f" x Mythic honk {honk:g} {(peak + kit) * honk * cs:.0f} ({(peak + kit) * honk * cs / best_tower:.0%}, #408)")
     if lead_only:
         out.append("  only at the ceiling does a hunter's peak pass these T5 tower paths (for the Director; not a finding, the rule is the best tower):")
         out += [f"    {line}" for line in lead_only]
     else:
         out.append("  the ceiling level passes no T5 tower path that the floor level doesn't")
     return out, findings
+
+
+def mythic_honk(data):
+    """The Mythic Honker's honk bonus in % (#407/#408): Effect value x the top rarity's Effect x;
+    0 when no pet honks or its value is blank.
+
+    >>> d = {"Pets": {"HONKER": {"effect": "honk", "effectValue": 5}, "F": {"effect": "fetch", "effectValue": 4}},
+    ...      "PetRarities": [{"mult": 1}, {"mult": 2.25}]}
+    >>> mythic_honk(d)
+    11.25
+    >>> d["Pets"]["HONKER"]["effectValue"] = None; mythic_honk(d)
+    0.0
+    """
+    rarities = data.get("PetRarities") or [{"mult": 1}]
+    values = [p.get("effectValue") or 0 for p in data.get("Pets", {}).values() if p.get("effect") == "honk"]
+    return max(values, default=0) * rarities[-1]["mult"]
 
 
 # ---------------------------------------------------------------- A/B/C options (PLAN T113)
