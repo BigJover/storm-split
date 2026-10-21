@@ -3,7 +3,8 @@
 
 	The server runs matches in a loop:
 
-	  Lobby     the home screen. No characters. The host (first player in the
+	  Lobby     the home screen, docked over the Hunters' Outpost (Server/Outpost, T138):
+	            everyone walks the camp in third person. The host (first player in the
 	            server) picks the mode, track and difficulty and presses Play.
 	  Building  everyone spawns on the track with the team's starting cash,
 	            picks a hero, places towers; anyone presses Start.
@@ -61,6 +62,7 @@ local Progression = require(script.Parent.Progression)
 local Health = require(script.Parent.Health)
 local DinoAttacks = require(script.Parent.DinoAttacks)
 local Battle = require(script.Parent.Battle)
+local Outpost = require(script.Parent.Outpost) -- the Hunters' Outpost (PLAN 10c T138)
 
 -- Testing only: the host's Studio-only "Start at round N" (Lobby ("startround", n), PLAN
 -- T91b). A live server always starts at round 1 (Shared/StudioOnly).
@@ -79,6 +81,7 @@ local STUDIO_TOWER_HIT = 0.5
 Players.CharacterAutoLoads = false -- the match loop decides when people spawn
 
 local map = MapBuilder.build()
+Outpost.init()
 
 local function setState(state: string)
 	ReplicatedStorage:SetAttribute("State", state)
@@ -483,7 +486,8 @@ local function watchCharacter(player: Player)
 		local beacon = rescueAt[player]
 		rescueAt[player] = nil
 		-- A battle hunter (re)spawns on their own side (T77); co-op is unchanged.
-		local battleHome = Battle.spawnPoint(player)
+		-- A camp arrival (Server/Outpost) stays in camp; it never goes to a battle side.
+		local battleHome = if Outpost.spawning(player) then nil else Battle.spawnPoint(player)
 		local at = if beacon then beacon + RESCUE_OFFSET elseif battleHome then battleHome + SPAWN_LIFT else nil
 		if at then
 			task.defer(function()
@@ -498,7 +502,9 @@ local function watchCharacter(player: Player)
 			-- Back in Action (Shared/SmallPerks) stacks with a Rescue Beacon's share.
 			local perk = SmallPerks.ofPlayer(player).respawnMult
 			task.delay(Config.Tuning.RespawnTime * (if base then share else 1) * perk, function()
-				if player.Character == character then
+				if player.Character == character and Outpost.inCamp(player) then
+					Outpost.enter(player) -- fell or reset in camp: back to camp
+				elseif player.Character == character then
 					local stillThere = Towers.rescueBeacon(sideOfPlayer(player)) -- still standing?
 					if stillThere then
 						rescueAt[player] = stillThere
@@ -537,10 +543,13 @@ Players.PlayerAdded:Connect(function(player)
 			local seated, why = Battle.lateJoin(player)
 			if not seated then
 				print(`[DinoHunters] {player.Name} waits for the next hunt: {why}`)
+				Outpost.enter(player) -- waits in the Hunters' Outpost (T138)
 			end
 		else
 			joinMatch(player) -- co-op: dropped in mid-match, straight onto the track
 		end
+	elseif ReplicatedStorage:GetAttribute("State") == "Lobby" then
+		Outpost.enter(player) -- between matches everyone stands in the Hunters' Outpost
 	end
 end)
 for _, player in Players:GetPlayers() do
@@ -839,6 +848,7 @@ while true do
 	resetBoard()
 	playPressed = false
 	setState("Lobby")
+	Outpost.enterAll() -- every character is new: everyone back to the Hunters' Outpost (T138)
 	while not playPressed or #Players:GetPlayers() == 0 do
 		task.wait(0.1)
 	end

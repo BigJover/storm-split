@@ -258,8 +258,9 @@ local function gameOver(): boolean
 end
 
 -- A spectator: their battle side is out (Server/Battle, PLAN T77). They deal no damage.
+-- Also anyone standing in the Hunters' Outpost (T138): no combat there, in or out.
 local function isOut(player: Player): boolean
-	return player:GetAttribute("Out") == true
+	return player:GetAttribute("Out") == true or player:GetAttribute("InOutpost") == true
 end
 
 -- The ability's cooldown per charge, with the mastery cooldown cut, / Ability tempo (#259).
@@ -313,7 +314,7 @@ end
 local function syncTool(player: Player)
 	local s = stateOf(player)
 	local tool = findTool(player)
-	if not s.hero then
+	if not s.hero or player:GetAttribute("InOutpost") == true then -- no gun in the Hunters' Outpost (T138)
 		if tool then
 			tool:Destroy()
 		end

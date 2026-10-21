@@ -292,7 +292,9 @@ local function mouseFree(): boolean
 end
 
 local function applyCamera()
-	local wantFirst = player:GetAttribute("Placing") ~= true
+	-- First person always, except while placing a tower and in the Hunters' Outpost (T138,
+	-- #383: no combat there, so you may see yourself).
+	local wantFirst = player:GetAttribute("Placing") ~= true and player:GetAttribute("InOutpost") ~= true
 	local free = mouseFree()
 	-- Crosshair only when the gun is up and the mouse is locked to it;
 	-- otherwise show the normal cursor.
@@ -319,6 +321,7 @@ local function applyCamera()
 end
 
 player:GetAttributeChangedSignal("Placing"):Connect(applyCamera)
+player:GetAttributeChangedSignal("InOutpost"):Connect(applyCamera)
 player:GetAttributeChangedSignal("PanelOpen"):Connect(applyCamera)
 player:GetAttributeChangedSignal("Hero"):Connect(applyCamera)
 ReplicatedStorage:GetAttributeChangedSignal("State"):Connect(applyCamera)

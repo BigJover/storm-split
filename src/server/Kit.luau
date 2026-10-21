@@ -95,7 +95,7 @@ end
 
 local function canAct(player: Player): boolean
 	local state = ReplicatedStorage:GetAttribute("State")
-	return state ~= "GameOver" and state ~= "Victory" and player:GetAttribute("Out") ~= true
+	return state ~= "GameOver" and state ~= "Victory" and player:GetAttribute("Out") ~= true and player:GetAttribute("InOutpost") ~= true -- no combat in the Hunters' Outpost (T138)
 end
 
 local function finite(v: Vector3): boolean
@@ -172,7 +172,7 @@ function Kit.foes(player: Player, mySide: number): { Foe }
 	end
 	for _, other in Players:GetPlayers() do
 		local body = root(other)
-		if other ~= player and body and other:GetAttribute("Out") ~= true and BattleRules.canDamage(mySide, sideOf(other), "hunter") then
+		if other ~= player and body and other:GetAttribute("Out") ~= true and other:GetAttribute("InOutpost") ~= true and BattleRules.canDamage(mySide, sideOf(other), "hunter") then
 			table.insert(foes, { position = body.Position, hunter = other })
 		end
 	end

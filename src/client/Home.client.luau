@@ -10,8 +10,11 @@
 	presses Play; everyone else sees them live and waits. Choices are only
 	requests to the server.
 
-	Behind it, the camera slowly circles the map. No character exists here;
-	the server spawns everyone when Play is pressed.
+	Hunters' Outpost (PLAN 10c T138): once your character stands in camp, the home screen
+	docks to the left over a clear view (third person, walk around) and a Hide menu / Menu
+	button folds it away or brings it back — always on screen (no-trap rule; Shared/Outpost
+	homeView). Before that (still spawning) the camera slowly circles the map behind the
+	full home screen. Play moves everyone to the match (Server/Outpost, Main).
 ]]
 
 local Players = game:GetService("Players")
@@ -25,6 +28,7 @@ local ProfileScreen = require(Shared:WaitForChild("ProfileScreen"))
 local HomeLayout = require(Shared:WaitForChild("HomeLayout"))
 local Modes = require(Shared:WaitForChild("Modes"))
 local Theme = require(Shared:WaitForChild("Theme"))
+local Outpost = require(Shared:WaitForChild("Outpost"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local lobby = remotes:WaitForChild("Lobby") :: RemoteEvent
@@ -45,6 +49,8 @@ local ORBIT_CENTRE = Vector3.new(-10, 0, 0)
 local ORBIT_RADIUS = 150
 local ORBIT_HEIGHT = 110
 local ORBIT_SPEED = 0.05 -- radians per second
+local DOCK_SCALE = 0.62 -- the docked home column's largest scale (Hunters' Outpost)
+local DOCK_MARGIN = 16 -- px from the left edge
 
 ------------------------------------------------------------------ layout
 
@@ -86,8 +92,10 @@ do
 		local content = layout.AbsoluteContentSize / math.max(columnScale.Scale, 0.01)
 		local tall = (viewport.Y - SCREEN_MARGIN * 2) / math.max(content.Y, 1)
 		local wide = (viewport.X - SCREEN_MARGIN * 2) / HomeLayout.COLUMN
-		columnScale.Scale = math.clamp(math.min(tall, wide), 0.4, 1)
+		local docked = column.AnchorPoint.X == 0
+		columnScale.Scale = math.clamp(math.min(tall, wide), 0.4, if docked then DOCK_SCALE else 1)
 	end
+	column:GetPropertyChangedSignal("AnchorPoint"):Connect(fit)
 	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fit)
 	camera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
 	task.defer(fit)
@@ -361,6 +369,22 @@ do
 	padding.Parent = waitBanner
 end
 
+-- Hunters' Outpost (T138): fold the docked home panel away to walk, bring it back.
+local collapsed = false
+local menuToggle = Instance.new("TextButton")
+menuToggle.Name = "OutpostMenu"
+menuToggle.AnchorPoint = Vector2.new(0, 0)
+menuToggle.Position = UDim2.fromOffset(DOCK_MARGIN, 64)
+menuToggle.Size = UDim2.fromOffset(150, 40)
+menuToggle.BackgroundColor3 = CARD
+menuToggle.AutoButtonColor = true
+menuToggle.Font = Enum.Font.GothamBold
+menuToggle.TextSize = 18
+menuToggle.TextColor3 = TEXT
+menuToggle.Visible = false
+menuToggle.Parent = gui
+corner(menuToggle, 8)
+
 ------------------------------------------------------------------ state
 
 local function isHost(): boolean
@@ -386,9 +410,19 @@ local function refresh()
 	local wait = waiting()
 	-- The Ready confirm closes on its X, on Ready and on every state change (no-trap rule).
 	confirmWanted = HomeLayout.confirmOpen(confirmWanted, ReplicatedStorage:GetAttribute("State"), ReplicatedStorage:GetAttribute("Mode"), ReplicatedStorage:GetAttribute("Ranked") == true, player:GetAttribute("Ready"))
+	local view = Outpost.homeView(ReplicatedStorage:GetAttribute("State"), player:GetAttribute("InOutpost") == true and player.Character ~= nil, collapsed, wait)
 	gui.Enabled = inLobby or wait
-	column.Visible = inLobby
-	waitBanner.Visible = wait
+	backdrop.BackgroundTransparency = if view.backdrop then 0.35 else 1
+	column.AnchorPoint = if view.docked then Vector2.new(0, 0.5) else Vector2.new(0.5, 0.5)
+	column.Position = if view.docked then UDim2.new(0, DOCK_MARGIN, 0.5, 30) else UDim2.fromScale(0.5, 0.5)
+	column.Visible = view.column
+	menuToggle.Visible = view.toggle
+	menuToggle.Text = if collapsed then "Menu" else "Hide menu"
+	waitBanner.Visible = view.banner ~= "none"
+	waitBanner.Modal = view.banner == "centre" -- in camp you walk (third person: the mouse is free anyway)
+	waitBanner.AnchorPoint = if view.banner == "top" then Vector2.new(0.5, 0) else Vector2.new(0.5, 0.5)
+	waitBanner.Position = if view.banner == "top" then UDim2.new(0.5, 0, 0, 12) else UDim2.fromScale(0.5, 0.5)
+	waitBanner.TextSize = if view.banner == "top" then 18 else 26
 	if not inLobby then
 		return
 	end
@@ -499,6 +533,10 @@ readyCard.Activated:Connect(function()
 	end
 	refresh()
 end)
+menuToggle.Activated:Connect(function()
+	collapsed = not collapsed
+	refresh()
+end)
 readyX.Activated:Connect(function()
 	confirmWanted = false
 	refresh()
@@ -508,7 +546,10 @@ for _, name in { "State", "Host", "Mode", "Track", "Difficulty", "BattleMode", "
 	ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refresh)
 end
 player.AttributeChanged:Connect(function(name)
-	if name == "Cores" or name == "Hero" or name == "RewardsClaimable" or name == "BattleSide" or name == "ReadyRefused" then
+	if name == "InOutpost" then
+		collapsed = false -- a fresh arrival in camp sees the menu
+		refresh()
+	elseif name == "Cores" or name == "Hero" or name == "RewardsClaimable" or name == "BattleSide" or name == "ReadyRefused" then
 		refresh()
 	end
 end)
@@ -522,13 +563,17 @@ end
 Players.PlayerAdded:Connect(watchReady)
 Players.PlayerAdded:Connect(refresh)
 Players.PlayerRemoving:Connect(refresh)
+player.CharacterAdded:Connect(function()
+	task.defer(refresh)
+end)
 
 ------------------------------------------------------------------ camera
 
 local orbiting = false
 RunService.RenderStepped:Connect(function()
 	local inLobby = ReplicatedStorage:GetAttribute("State") == "Lobby" or waiting()
-	if inLobby then
+	local inCamp = player:GetAttribute("InOutpost") == true and player.Character ~= nil
+	if inLobby and not inCamp then
 		orbiting = true
 		camera.CameraType = Enum.CameraType.Scriptable
 		local angle = os.clock() * ORBIT_SPEED
