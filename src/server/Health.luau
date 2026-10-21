@@ -1,8 +1,10 @@
 --[[
 	Health: the only thing that changes a player's HP (ARCHITECTURE.md §4).
 
-	The Humanoid is the one source of truth (DECISIONS #7): MaxHealth is Tuning
-	Player max health, Roblox's own regeneration is removed (the empty Health
+	The Humanoid is the one source of truth (DECISIONS #7): MaxHealth and WalkSpeed are
+	the picked hunter's body (Shared/HunterStats, the Hunter Stats sheet, PLAN 10a T135;
+	no hunter yet = Tuning Player max health / Player walk speed), set on spawn and again
+	when the hero pick changes (the same share of HP is kept). Roblox's own regeneration is removed (the empty Health
 	script in StarterCharacterScripts), and players heal only through here —
 	Heal per round when a round is cleared, and later the Field Medic and the
 	Field Hospital. On spawn a force field gives Spawn protection seconds of
@@ -21,7 +23,9 @@
 
 	Raider sting (PLAN 9d, #294; Shared/TowerPerks, applied by Towers): slow() holds a
 	hunter's walk speed down by a % for a few seconds (the strongest in effect wins; never a
-	stop: the exporter keeps it <= 30 %, <= 3 s), restoring it when it runs out.
+	stop: the exporter keeps it <= 30 %, <= 3 s), restoring it when it runs out. A slow
+	multiplies the hunter's class base (#365), and ends back on the class base of the
+	hunter picked by then.
 ]]
 
 local Players = game:GetService("Players")
@@ -31,6 +35,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Combat = require(Shared:WaitForChild("Combat"))
 local BattleRules = require(Shared:WaitForChild("BattleRules"))
+local HunterStats = require(Shared:WaitForChild("HunterStats"))
 
 local Health = {}
 
@@ -38,7 +43,7 @@ local Health = {}
 local resistOf: ((Player) -> { number })? = nil
 local hurtEvent: RemoteEvent? = nil
 local spawnedAt: { [Player]: number } = {} -- os.clock() of each hunter's latest spawn (Camo Cover)
-type Slow = { humanoid: Humanoid, percent: number, untilAt: number, base: number }
+type Slow = { humanoid: Humanoid, percent: number, untilAt: number }
 local slowed: { [Player]: Slow } = {} -- Raider sting slows in effect
 
 -- What hurt a hunter, for their private hit notice.
@@ -51,6 +56,40 @@ local function humanoidOf(player: Player): Humanoid?
 		return humanoid
 	end
 	return nil
+end
+
+-- This hunter's body now: the picked hero's row (Hero publishes the "Hero" attribute).
+-- Trained bonuses join in T139.
+local function bodyOf(player: Player): HunterStats.Body
+	return HunterStats.body(player:GetAttribute("Hero"))
+end
+
+local function walkSpeedOf(player: Player): number
+	local base = bodyOf(player).walkSpeed
+	local slow = slowed[player]
+	if slow and os.clock() < slow.untilAt then
+		return HunterStats.slowed(base, slow.percent)
+	end
+	return base
+end
+
+-- The hero pick changed: the new body on the living character, keeping its share of HP.
+function Health.applyBody(player: Player)
+	local humanoid = humanoidOf(player)
+	if not humanoid then
+		return
+	end
+	local body = bodyOf(player)
+	local health = HunterStats.carryHealth(humanoid.Health, humanoid.MaxHealth, body.maxHealth)
+	humanoid.MaxHealth = body.maxHealth
+	humanoid.Health = health
+	humanoid.WalkSpeed = walkSpeedOf(player)
+end
+
+local function watchHero(player: Player)
+	player:GetAttributeChangedSignal("Hero"):Connect(function()
+		Health.applyBody(player)
+	end)
 end
 
 export type Hooks = {
@@ -67,14 +106,24 @@ function Health.init(remotes: Folder, hooks: Hooks?)
 		spawnedAt[player] = nil
 		slowed[player] = nil
 	end)
+	Players.PlayerAdded:Connect(watchHero)
+	for _, player in Players:GetPlayers() do
+		watchHero(player)
+	end
 end
 
--- A fresh character: full health at the Tuning max, and a short force field.
+-- A fresh character: full health at its hunter's Max HP and Walk speed (unslowed), and a
+-- short force field.
 function Health.setUp(character: Model)
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
-	humanoid.MaxHealth = Config.Tuning.PlayerMaxHealth
-	humanoid.Health = humanoid.MaxHealth
 	local player = Players:GetPlayerFromCharacter(character)
+	local body = if player then bodyOf(player) else HunterStats.body(nil)
+	if player then
+		slowed[player] = nil -- a respawned character starts unslowed
+	end
+	humanoid.MaxHealth = body.maxHealth
+	humanoid.Health = humanoid.MaxHealth
+	humanoid.WalkSpeed = body.walkSpeed
 	if player then
 		spawnedAt[player] = os.clock()
 		if ReplicatedStorage:GetAttribute("BattleMode") ~= nil then
@@ -135,23 +184,21 @@ function Health.slow(player: Player, percent: number, seconds: number)
 	local now = os.clock()
 	local current = slowed[player]
 	if current and (current.humanoid ~= humanoid or now >= current.untilAt) then
-		if current.humanoid == humanoid then
-			humanoid.WalkSpeed = current.base
-		end
 		current = nil
 	end
 	local entry: Slow = {
 		humanoid = humanoid,
 		percent = if current then math.max(current.percent, percent) else percent,
 		untilAt = math.max(if current then current.untilAt else 0, now + seconds),
-		base = if current then current.base else humanoid.WalkSpeed,
 	}
 	slowed[player] = entry
-	humanoid.WalkSpeed = entry.base * (1 - entry.percent / 100)
+	humanoid.WalkSpeed = walkSpeedOf(player) -- the class base x the slow (#365)
 	task.delay(entry.untilAt - now, function()
 		if slowed[player] == entry then
 			slowed[player] = nil
-			humanoid.WalkSpeed = entry.base
+			if humanoid.Parent then
+				humanoid.WalkSpeed = bodyOf(player).walkSpeed -- back to the class base
+			end
 		end
 	end)
 end

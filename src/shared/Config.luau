@@ -255,6 +255,11 @@ return table.freeze({
 		WalkerCapTotal = 96,
 		CoOpLeakCapShare = 0.25,
 		AmberScale = 1000,
+		PlayerWalkSpeed = 16,
+		BodySpeedWeight = 1.5,
+		BodyParityMax = 1.15,
+		TrainedHealthMax = 10,
+		TrainedSpeedMax = 15,
 	},
 	Towers = {
 		SCOUT = {
@@ -183849,6 +183854,28 @@ return table.freeze({
 			display = "Rex Kingdom",
 			floor = 4000,
 			reward = "",
+		},
+	},
+	HunterStats = {
+		PISTOL = {
+			display = "Tracker",
+			maxHealth = 95,
+			walkSpeed = 17,
+		},
+		RIFLE = {
+			display = "Big Game Hunter",
+			maxHealth = 110,
+			walkSpeed = 15,
+		},
+		SHOTGUN = {
+			display = "Brush Beater",
+			maxHealth = 115,
+			walkSpeed = 15.5,
+		},
+		MEDIC = {
+			display = "Field Medic",
+			maxHealth = 100,
+			walkSpeed = 16.5,
 		},
 	},
 })

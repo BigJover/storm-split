@@ -17,6 +17,7 @@ local startGame = remotes:WaitForChild("StartGame") :: RemoteEvent
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Theme = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Theme"))
+local HunterStats = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HunterStats"))
 local TowerLook = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("TowerLook"))
 local HitNotice = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HitNotice"))
 local Bounties = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Bounties"))
@@ -636,7 +637,7 @@ local function showHealth(humanoid: Humanoid)
 	local health = math.max(0, humanoid.Health)
 	local frac = math.clamp(health / max, 0, 1)
 	hpFill.Size = UDim2.fromScale(frac, 1)
-	hpText.Text = `HP {math.ceil(health)} / {math.floor(max)}`
+	hpText.Text = HunterStats.hpText(health, max) -- the hunter's own Max HP (T135)
 	if health < lastHealth then
 		flashId += 1
 		local mine = flashId

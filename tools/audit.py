@@ -74,6 +74,7 @@ LADDER_EXTENSIONS = {
 DEAD_ALLOWED = {
     ("Tuning", "StartingLives"): "superseded by Difficulty -> Starting lives",
     ("Enemies", "cashValue"): "display column; the code pays maxHp x CashPerEffectiveHP, the same value unrounded",
+    ("Tuning", "BodyParityMax"): "an exporter bar (#365, PLAN 10a T135): validate_bodies refuses Hunter Stats past it",
     ("Bounties", "title"): "display text: the Hunt Board card and the in-match toast (PLAN round 2 T28/T29)",
     ("Bounties", "text"): "display text: the Hunt Board card (PLAN round 2 T29)",
     ("Tuning", "MasteryPerkWorthCap"): "an exporter rule, not a game number: every perk's worth is checked against it (DECISIONS #99)",

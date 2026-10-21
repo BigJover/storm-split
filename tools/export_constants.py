@@ -1556,6 +1556,110 @@ def validate_perks(data, problems, notes):
 XP_LEVERS = ["XPPerLevel", "XPPerPop", "PopXPCapPerRound", "TeamPopShare", "HeroLevelLeadCap"]
 
 
+# Hunter bodies (PLAN 10a T135, DECISIONS #364/#365): per-hunter Max HP and Walk speed.
+HUNTER_STATS_HEADERS = {"Key": "key", "Hunter": "display", "Max HP": "maxHealth", "Walk speed": "walkSpeed"}
+BODY_LEVERS = ["PlayerMaxHealth", "PlayerWalkSpeed", "BodySpeedWeight", "BodyParityMax",
+               "TrainedHealthMax", "TrainedSpeedMax"]
+
+
+def read_hunter_stats(ws):
+    """Hunter Stats: Key, Hunter, Max HP, Walk speed, found by header in row 4; one row per
+    hunter from row 5 while Key is filled. Body score (column E) is for reading only."""
+    columns = {}
+    for c in range(1, ws.max_column + 1):
+        head = v(ws, 4, c)
+        if head is not None and str(head).strip() in HUNTER_STATS_HEADERS:
+            columns[HUNTER_STATS_HEADERS[str(head).strip()]] = c
+    for head, field in HUNTER_STATS_HEADERS.items():
+        if field not in columns:
+            sys.exit(f"Hunter Stats row 4: no '{head}' column (PLAN T135)")
+    out = {}
+    r = 5
+    while v(ws, r, columns["key"]):
+        key = str(v(ws, r, columns["key"])).strip().upper()
+        if key in out:
+            sys.exit(f"Hunter Stats row {r}: {key} is listed twice")
+        out[key] = {
+            "display": str(v(ws, r, columns["display"]) or "").strip(),
+            "maxHealth": num(v(ws, r, columns["maxHealth"]), None),
+            "walkSpeed": num(v(ws, r, columns["walkSpeed"]), None),
+        }
+        r += 1
+    return out
+
+
+def body_score(t, row):
+    """HP / Player max health x (speed / Player walk speed) ^ Body speed weight (#365).
+
+    >>> t = {"PlayerMaxHealth": 100, "PlayerWalkSpeed": 16, "BodySpeedWeight": 1.5}
+    >>> round(body_score(t, {"maxHealth": 115, "walkSpeed": 15.5}), 4)
+    1.0965
+    >>> body_score(t, {"maxHealth": 100, "walkSpeed": 16})
+    1.0
+    """
+    return row["maxHealth"] / t["PlayerMaxHealth"] * (row["walkSpeed"] / t["PlayerWalkSpeed"]) ** t["BodySpeedWeight"]
+
+
+def validate_bodies(data, problems, notes):
+    """Every hunter has a body; none is simply better: best / worst body score <= Body parity
+    max (#365, the #235 bar).
+
+    >>> t = {"PlayerMaxHealth": 100, "PlayerWalkSpeed": 16, "BodySpeedWeight": 1.5, "BodyParityMax": 1.15,
+    ...      "TrainedHealthMax": 10, "TrainedSpeedMax": 15}
+    >>> heroes = {"A": {"display": "A"}, "B": {"display": "B"}}
+    >>> d = {"Tuning": t, "Heroes": heroes, "HunterStats": {"A": {"display": "A", "maxHealth": 95, "walkSpeed": 17},
+    ...      "B": {"display": "B", "maxHealth": 115, "walkSpeed": 15.5}}}
+    >>> p = []; validate_bodies(d, p, []); p
+    []
+    >>> d["HunterStats"]["B"]["maxHealth"] = 130
+    >>> p = []; validate_bodies(d, p, []); p
+    ['Hunter Stats: body parity B 1.240 / A 1.040 = 1.191 > Body parity max 1.15 (#365: no hunter is simply better)']
+    >>> d["HunterStats"]["B"]["walkSpeed"] = 0; p = []; validate_bodies(d, p, []); p
+    ['Hunter Stats B: Walk speed must be above 0']
+    """
+    t = data["Tuning"]
+    missing = [k for k in BODY_LEVERS if k not in t]
+    for key in missing:
+        problems.append(f"Tuning is missing '{key}' (HUNTER BODIES; Shared/HunterStats reads it by name)")
+    if missing:
+        return
+    bodies, heroes = data["HunterStats"], data["Heroes"]
+    for key in heroes:
+        if key not in bodies:
+            problems.append(f"Hunter Stats has no row for hero {key} ({heroes[key]['display']})")
+    scores = {}
+    for key, row in bodies.items():
+        where = f"Hunter Stats {key}"
+        if key not in heroes:
+            problems.append(f"{where}: not a hero key ({', '.join(heroes)})")
+            continue
+        if row["display"] != heroes[key]["display"]:
+            problems.append(f"{where}: Hunter '{row['display']}' is not the Heroes name '{heroes[key]['display']}'")
+        hp, speed = row["maxHealth"], row["walkSpeed"]
+        if not isinstance(hp, (int, float)) or hp <= 0 or hp != int(hp):
+            problems.append(f"{where}: Max HP must be a whole number above 0")
+            continue
+        if not isinstance(speed, (int, float)) or speed <= 0:
+            problems.append(f"{where}: Walk speed must be above 0")
+            continue
+        scores[key] = body_score(t, row)
+    for key in ("TrainedHealthMax", "TrainedSpeedMax"):
+        if t[key] < 0:
+            problems.append(f"Tuning {key} must not be negative")
+    if t["BodyParityMax"] < 1 or t["PlayerMaxHealth"] <= 0 or t["PlayerWalkSpeed"] <= 0:
+        problems.append("Tuning Body parity max must be >= 1; Player max health and Player walk speed above 0")
+        return
+    if len(scores) >= 2:
+        best = max(scores, key=scores.get)
+        worst = min(scores, key=scores.get)
+        ratio = scores[best] / scores[worst]
+        if ratio > t["BodyParityMax"]:
+            problems.append(f"Hunter Stats: body parity {best} {scores[best]:.3f} / {worst} {scores[worst]:.3f}"
+                            f" = {ratio:.3f} > Body parity max {t['BodyParityMax']:g} (#365: no hunter is simply better)")
+        notes.append("bodies: " + ", ".join(f"{k} {bodies[k]['maxHealth']:g} HP / {bodies[k]['walkSpeed']:g} = {scores[k]:.3f}" for k in scores)
+                     + f"; parity {ratio:.3f} (<= {t['BodyParityMax']:g})")
+
+
 def validate_xp(data, problems, notes):
     """Hero XP levers (PLAN round 3 T32, DECISIONS #100-#101)."""
     tuning = data["Tuning"]
@@ -2176,6 +2280,7 @@ def validate(data):
 
     validate_rewards(data, problems, notes)
     validate_amber(data, problems, notes)
+    validate_bodies(data, problems, notes)
     validate_perks(data, problems, notes)
     validate_small_perks(data, problems)
     validate_xp(data, problems, notes)
@@ -2414,6 +2519,8 @@ def read_data(xlsx):
         "BountyOrder": bounty_order,
         "Cosmetics": read_cosmetics(wb["Cosmetics"]),
         "Arenas": read_arenas(wb["Arenas"]),
+        "HunterStats": read_hunter_stats(wb["Hunter Stats"]) if "Hunter Stats" in wb.sheetnames
+        else sys.exit("The spreadsheet has no 'Hunter Stats' sheet (PLAN 10a T135)"),
     }
     return data
 
