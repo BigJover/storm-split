@@ -7,6 +7,10 @@
 	  hunter   a hunter skin for one hero (Tracker: Swamp Stalker · Night Prowler · Jungle Ghost …)
 	  weapon   a weapon skin for one hero's gun (Revolver: Snakeskin Grip · Silver Spur …)
 	  tower    a tower set (Treehouse, Stone Age, Brass Gear, Midnight, Gold Rush): fits every tower
+	  deco     a Campsite decoration (T143c, #415): Fire Pit, Stepping Stones, Hunter's Flag
+	           (by level), Wanted Poster, Hammock, Rope Swing, Dino Statue (Amber). Cosmetic
+	           only: placed on one of DECOR_SPOTS beside the Display Towers (`setDecor`), one
+	           of each kind, only ones you own; built inert by Shared/Decor, never in matches.
 	A skin is yours once it's in `owned` (bought with Amber, or from a bundle: Shared/Store) or
 	your player level reaches its Level (derived, never stored). A blank price = not in the
 	shop yet; a blank level = not on the ladder (the Director fills them in).
@@ -20,7 +24,8 @@
 	the range ring, crown/glow, HP bar, name tag and hitboxes are never touched (spec'd). No
 	skin material glows or is see-through (the exporter refuses Neon/Glass/ForceField).
 
-	Saved as { owned = { [key] = true }, wear = { [slot] = key }, deco = { towerKey, ... } }.
+	Saved as { owned = { [key] = true }, wear = { [slot] = key }, deco = { towerKey, ... },
+	decor = { decoKey or "", ... } }.
 	An owned key the sheet no longer lists is KEPT as stored (never lose a purchase), just
 	not shown or worn.
 ]]
@@ -30,8 +35,10 @@ local Theme = require(script.Parent.Theme)
 
 local Skins = {}
 
-Skins.KINDS = table.freeze({ "hunter", "weapon", "tower" })
-Skins.KIND_LABELS = table.freeze({ hunter = "Hunter skins", weapon = "Weapon skins", tower = "Tower sets" })
+Skins.KINDS = table.freeze({ "hunter", "weapon", "tower", "deco" })
+Skins.KIND_LABELS = table.freeze({ hunter = "Hunter skins", weapon = "Weapon skins", tower = "Tower sets", deco = "Decorations" })
+Skins.DECOR_SPOTS = 3 -- Campsite decoration spots (T143c), beside the 3 Display Towers
+Skins.DECOR_PREFIX = "Decor_" -- Decor_1 .. Decor_3: the decoration on each spot
 Skins.DECO_SLOTS = 3
 Skins.OWNED_MAX = 500 -- stored keys kept at most (a corrupt save can't grow without bound)
 Skins.ATTRIBUTE_PREFIX = "Skin_" -- Skin_hunter_PISTOL, Skin_weapon_PISTOL, Skin_tower_SCOUT
@@ -47,7 +54,7 @@ export type Row = {
 	accent: { number },
 	material: string,
 }
-export type State = { owned: { [string]: boolean }, wear: { [string]: string }, deco: { string } }
+export type State = { owned: { [string]: boolean }, wear: { [string]: string }, deco: { string }, decor: { string } }
 export type Look = { colour: Color3, accent: Color3, material: Enum.Material }
 
 -- The catalogue rows: Config.Skins, or (specs only) a stand-in so prices and levels can be
@@ -121,7 +128,7 @@ function Skins.catalogue(kind: string, hero: string?): { string }
 end
 
 function Skins.blank(): State
-	return { owned = {}, wear = {}, deco = {} }
+	return { owned = {}, wear = {}, deco = {}, decor = {} }
 end
 
 -- Any stored value -> a valid state. Owned keys are kept even when the sheet dropped them.
@@ -153,6 +160,14 @@ function Skins.sanitize(raw: unknown, level: number?): State
 			state.deco[i] = if isTower(key) then key else ""
 		end
 	end
+	-- Decorations: a known deco you own, each kind once (the first spot keeps it).
+	if type(r.decor) == "table" then
+		for i = 1, Skins.DECOR_SPOTS do
+			local key = r.decor[i]
+			local fine = Skins.isDecor(key) and Skins.owns(state, key, level or 0) and not table.find(state.decor, key)
+			state.decor[i] = if fine then key else ""
+		end
+	end
 	return state
 end
 
@@ -161,7 +176,11 @@ function Skins.toSave(state: State): { [string]: any }
 	for i = 1, Skins.DECO_SLOTS do
 		deco[i] = state.deco[i] or ""
 	end
-	return { owned = state.owned, wear = state.wear, deco = deco }
+	local decor = {}
+	for i = 1, Skins.DECOR_SPOTS do
+		decor[i] = state.decor[i] or ""
+	end
+	return { owned = state.owned, wear = state.wear, deco = deco, decor = decor }
 end
 
 -- Is skin `key` yours: bought / granted, or unlocked by your player level.
@@ -259,6 +278,46 @@ function Skins.setDeco(state: State, index: unknown, tower: unknown, ownsTower: 
 	end
 	state.deco[index] = tower :: string
 	return true, "On show at your Campsite"
+end
+
+-- Is `key` a Campsite decoration on the sheet?
+function Skins.isDecor(key: unknown): boolean
+	local row = Skins.row(key)
+	return row ~= nil and row.kind == "deco"
+end
+
+-- Put decoration `key` you own on spot `index` (1..DECOR_SPOTS), or clear it (""). One of
+-- each kind: a decoration already on another spot moves here (that spot empties).
+function Skins.setDecor(state: State, index: unknown, key: unknown, level: number): (boolean, string)
+	if type(index) ~= "number" or index ~= math.floor(index) or index < 1 or index > Skins.DECOR_SPOTS then
+		return false, "Unknown spot"
+	end
+	for i = #state.decor + 1, Skins.DECOR_SPOTS do
+		state.decor[i] = ""
+	end
+	if key == nil or key == "" then
+		state.decor[index] = ""
+		return true, "Spot cleared"
+	end
+	if not Skins.isDecor(key) then
+		return false, "Unknown decoration"
+	end
+	if not Skins.owns(state, key, level) then
+		return false, "Not yours yet"
+	end
+	for i = 1, Skins.DECOR_SPOTS do
+		if state.decor[i] == key then
+			state.decor[i] = ""
+		end
+	end
+	state.decor[index] = key :: string
+	return true, "On your Campsite"
+end
+
+-- What spot `index` shows: its decoration while it's still yours, else nil.
+function Skins.decorAt(state: State, index: number, level: number): string?
+	local key = state.decor[index]
+	return if key and key ~= "" and Skins.isDecor(key) and Skins.owns(state, key, level) then key else nil
 end
 
 ------------------------------------------------------------------ looks (visual only)

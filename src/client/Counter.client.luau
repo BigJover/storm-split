@@ -188,7 +188,7 @@ layout.Padding = UDim.new(0, 6)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 layout.Parent = list
 
-type View = { owned: { [string]: boolean }, wear: { [string]: string }, deco: { string }, level: number }
+type View = { owned: { [string]: boolean }, wear: { [string]: string }, deco: { string }, decor: { string }?, level: number }
 local view: View? = nil
 local open = false
 local tab = "hunter"
@@ -261,7 +261,7 @@ local function skinRow(v: View, key: string, slot: string)
 	local line = textLabel(f, 14, Enum.Font.Gotham, if owned then TEXT else TEXT_DIM)
 	line.Position = UDim2.fromOffset(46, 0)
 	line.Size = UDim2.new(1, -150, 1, 0)
-	line.Text = Skins.line({ owned = v.owned, wear = {}, deco = {} }, key, v.level)
+	line.Text = Skins.line({ owned = v.owned, wear = {}, deco = {}, decor = {} }, key, v.level)
 	local action: TextButton
 	if owned then
 		local wearing = v.wear[slot] == key
@@ -416,7 +416,7 @@ local function render()
 			local line = textLabel(f, 14, Enum.Font.Gotham, if owned then TEXT else TEXT_DIM)
 			line.Position = UDim2.fromOffset(46, 0)
 			line.Size = UDim2.new(1, -150, 1, 0)
-			line.Text = Skins.line({ owned = v.owned, wear = {}, deco = {} }, key, v.level)
+			line.Text = Skins.line({ owned = v.owned, wear = {}, deco = {}, decor = {} }, key, v.level)
 			local row = Skins.row(key)
 			if not owned and row and row.price then
 				local buy = button(f, `Buy {Theme.formatAmber(row.price)}`, AMBER, 90)
@@ -459,6 +459,39 @@ local function render()
 				return if def then def.display else "Empty"
 			end, function(key)
 				act("setDeco", i, key)
+			end)
+		end
+		-- Decorations (T143c, #415): earned by level or bought, then placed on a spot.
+		heading("Decorations — for show, one of each")
+		local mineDecor = { "" }
+		for _, key in Skins.catalogue("deco", nil) do
+			local f = card(32)
+			swatch(f, key)
+			local owned = v.owned[key] == true
+			if owned then
+				table.insert(mineDecor, key)
+			end
+			local line = textLabel(f, 14, Enum.Font.Gotham, if owned then TEXT else TEXT_DIM)
+			line.Position = UDim2.fromOffset(46, 0)
+			line.Size = UDim2.new(1, -150, 1, 0)
+			line.Text = Skins.line({ owned = v.owned, wear = {}, deco = {}, decor = {} }, key, v.level)
+			local row = Skins.row(key)
+			if not owned and row and row.price then
+				local buy = button(f, `Buy {Theme.formatAmber(row.price)}`, AMBER, 90)
+				buy.AnchorPoint = Vector2.new(1, 0.5)
+				buy.Position = UDim2.new(1, -8, 0.5, 0)
+				buy.Activated:Connect(function()
+					act("buySkin", key)
+				end)
+			end
+		end
+		heading("Decoration spots")
+		for i = 1, Skins.DECOR_SPOTS do
+			cycleRow(`Spot {i}`, (v.decor or {})[i] or "", mineDecor, function(key)
+				local row = Skins.row(key)
+				return if row then row.display else "Empty"
+			end, function(key)
+				act("setDecor", i, key)
 			end)
 		end
 	end

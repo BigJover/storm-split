@@ -21,6 +21,7 @@
 	  atHut(position)           standing at the Hatchery Hut (T140: E opens it), HUT_RADIUS
 	  atShop(position)          standing at the shop counter (T142: E opens it), SHOP_RADIUS
 	  DECO_SPOTS                a Campsite's three Display Tower spots (T142), in its frame
+	  DECOR_SPOTS               its three decoration spots (T143c), beside them, in its frame
   assignCampsite(taken)     the lowest free Campsite for a new arrival (T141), else nil
   spawnPoint(i)             where the i-th arrival appears (a ring by the camp fire)
 	  inside(position)          is this point over the camp's floor (and not far above it)
@@ -59,6 +60,8 @@ Outpost.CAMPSITE_SIZE = 22 -- each Campsite is a square this wide
 -- Display Towers (T142): three spots on each Campsite, in the Campsite's own frame (its
 -- Ground part faces the camp's centre, -Z), clear of the Hatchling Pen at (-6, 5).
 Outpost.DECO_SPOTS = table.freeze({ Vector3.new(6, 0, -6), Vector3.new(6, 0, 0), Vector3.new(6, 0, 6) })
+-- Decorations (T143c, #415): three spots beside the Display Towers, clear of them and the pen.
+Outpost.DECOR_SPOTS = table.freeze({ Vector3.new(0, 0, -6), Vector3.new(0, 0, 0), Vector3.new(0, 0, 6) })
 Outpost.SHOP_RADIUS = 8 -- how near the shop counter counts as "at" it (flat; T142: E opens it)
 Outpost.HATCHERY_HUT = Vector3.new(0, 0, 30)
 Outpost.SHOP = Vector3.new(-24, 0, 26)

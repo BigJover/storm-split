@@ -1999,7 +1999,7 @@ def read_pets(ws):
     return pets, order
 
 
-SKIN_KINDS = ("hunter", "weapon", "tower")
+SKIN_KINDS = ("hunter", "weapon", "tower", "deco")
 SKIN_MATERIALS = ("SmoothPlastic", "Plastic", "Fabric", "Wood", "WoodPlanks", "Metal", "DiamondPlate",
                   "Slate", "Concrete", "Brick", "Granite", "Marble", "Pebble", "Sand", "Grass", "Ice", "Leather")
 
@@ -2050,6 +2050,10 @@ def validate_skins(data, problems, notes):
     ['Skins A: colour [1, 2, 300] must be three whole numbers 0-255']
     >>> d["Skins"]["A"]["colour"] = [1, 2, 3]; d["Skins"]["A"]["kind"] = "tower"; p = []; validate_skins(d, p, []); p
     ['Skins A: a tower set fits every tower: For must be blank (got PISTOL)']
+    >>> d["Skins"]["A"].update(kind="deco", hero=None, price=None); p = []; validate_skins(d, p, []); p
+    ['Skins A: a decoration needs a Price or a Level (#415; never in bundles)']
+    >>> d["Skins"]["A"].update(hero="PISTOL", price=100000); p = []; validate_skins(d, p, []); p
+    ['Skins A: a Campsite decoration fits any Campsite: For must be blank (got PISTOL)']
     >>> d["Skins"]["A"].update(kind="hunter", level=15); p = []; validate_skins(d, p, []); p
     ['Skins A: a level skin is earned by level, never sold: Price must be blank (#409)']
     """
@@ -2066,6 +2070,11 @@ def validate_skins(data, problems, notes):
         if kind == "tower":
             if s["hero"] is not None:
                 problems.append(f"{where}: a tower set fits every tower: For must be blank (got {s['hero']})")
+        elif kind == "deco":
+            if s["hero"] is not None:
+                problems.append(f"{where}: a Campsite decoration fits any Campsite: For must be blank (got {s['hero']})")
+            if s["price"] is None and s["level"] is None:
+                problems.append(f"{where}: a decoration needs a Price or a Level (#415; never in bundles)")
         elif s["hero"] not in data["Heroes"]:
             problems.append(f"{where}: a {kind} skin needs For = a hero key (got {s['hero']})")
         if not s["display"]:

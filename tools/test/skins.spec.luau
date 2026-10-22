@@ -279,6 +279,9 @@ test("T143b numbers: level skins at 15/25/35/45/55/65 never sold; every other sk
 	local n = 0
 	for _, key in Config.SkinOrder do
 		local row = Skins.row(key) :: any
+		if row.kind == "deco" then
+			continue -- T143c (decor.spec)
+		end
 		n += 1
 		if levels[key] then
 			eq(row.level, levels[key], `{key} level`)

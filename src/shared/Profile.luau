@@ -8,6 +8,8 @@
 	same as Shared/Bounties.
 
 	  cores, owned, mastery, highestRound   Amber and unlocks (Server/Progression)
+	  bestClear         the hardest difficulty key this player has cleared (nil = none yet;
+	                    `recordClear`), for the Wanted Poster (T143c)
 	  rewards           the Hunt Board state (Shared/Bounties), saved as it is. nil = the
 	                    Hunt Board couldn't be read: the player plays on without it, every
 	                    Hunt Board call below answers "no", and a save writes the stored
@@ -95,6 +97,7 @@ export type Profile = {
 	owned: { [string]: boolean }, -- "tower:CHILLER", "hero:RIFLE"; free ones aren't stored
 	mastery: { [string]: number }, -- hero key -> level
 	highestRound: number,
+	bestClear: string?,
 	rewards: Bounties.State?,
 	rewardsRaw: any,
 	playerXp: number,
@@ -221,6 +224,9 @@ function Profile.sanitize(raw: any, now: number, rng: Bounties.Rng): Profile
 	if type(raw.highestRound) == "number" and raw.highestRound >= 0 then
 		profile.highestRound = math.floor(raw.highestRound)
 	end
+	if type(raw.bestClear) == "string" and table.find(Config.DifficultyOrder, raw.bestClear) then
+		profile.bestClear = raw.bestClear
+	end
 	profile.playerXp = PlayerLevel.whole(raw.playerXp) -- missing (an older save) or garbage: 0
 	-- Ranked (PLAN T80): older saves have none of these and load as 0 / nil.
 	profile.trophies = PlayerLevel.whole(raw.trophies)
@@ -288,6 +294,7 @@ function Profile.toSave(profile: Profile): { [string]: any }
 		owned = profile.owned,
 		mastery = profile.mastery,
 		highestRound = profile.highestRound,
+		bestClear = profile.bestClear,
 		playerXp = profile.playerXp,
 		equipped = profile.equipped,
 		trophies = profile.trophies,
@@ -587,6 +594,15 @@ function Profile.view(profile: Profile, now: number, seen: boolean?): View?
 		profile.lastResetPayout = 0
 	end
 	return view
+end
+
+-- A cleared match on `difficulty`: keeps the hardest one ever cleared (DifficultyOrder).
+function Profile.recordClear(profile: Profile, difficulty: unknown)
+	local new = if type(difficulty) == "string" then table.find(Config.DifficultyOrder, difficulty) else nil
+	local old = if profile.bestClear then table.find(Config.DifficultyOrder, profile.bestClear) else nil
+	if new and (not old or new > old) then
+		profile.bestClear = difficulty :: string
+	end
 end
 
 return Profile

@@ -214,6 +214,10 @@ local function publishSkins(player: Player)
 		local tower = profile.skins.deco[i]
 		player:SetAttribute(`{Skins.DECO_PREFIX}{i}`, if tower and tower ~= "" and owns(player, "tower", tower) then tower else nil)
 	end
+	for i = 1, Skins.DECOR_SPOTS do -- Campsite decorations (T143c)
+		player:SetAttribute(`{Skins.DECOR_PREFIX}{i}`, Skins.decorAt(profile.skins, i, level))
+	end
+	player:SetAttribute("BestClear", profile.bestClear) -- the Wanted Poster (T143c)
 	player:SetAttribute("SkinsVersion", ((player:GetAttribute("SkinsVersion") :: number?) or 0) + 1)
 end
 
@@ -601,6 +605,7 @@ function Progression.endMatch(result: MatchResult)
 		profile.cores += payout
 		profile.highestRound = math.max(profile.highestRound, result.roundReached)
 		if result.cleared then
+			Profile.recordClear(profile, result.difficulty) -- the Wanted Poster's best hunt
 			-- Straight in: the match state is already Victory.
 			bountyProgress(player, "clear", result.difficulty)
 		end
@@ -777,7 +782,8 @@ local function skinView(player: Player): (boolean, any)
 			owned[key] = true
 		end
 	end
-	return true, { owned = owned, wear = table.clone(profile.skins.wear), deco = Skins.toSave(profile.skins).deco, level = level }
+	local saved = Skins.toSave(profile.skins)
+	return true, { owned = owned, wear = table.clone(profile.skins.wear), deco = saved.deco, decor = saved.decor, level = level }
 end
 
 -- Buy (Amber), wear, Display Towers: between matches only (nothing bought mid-match, #389),
@@ -805,6 +811,8 @@ local function skinAction(player: Player, action: unknown, a: unknown, b: unknow
 		ok, message = Skins.buy(profile.skins, a), "It's yours!"
 	elseif action == "wearSkin" then
 		ok, message = Skins.wear(profile.skins, a, b, level)
+	elseif action == "setDecor" then
+		ok, message = Skins.setDecor(profile.skins, a, b, level)
 	elseif action == "setDeco" then
 		ok, message = Skins.setDeco(profile.skins, a, b, function(tower: string): boolean
 			return owns(player, "tower", tower)

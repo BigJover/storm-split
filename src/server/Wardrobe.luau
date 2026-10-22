@@ -17,6 +17,12 @@
 	(the Campsite attribute Server/Pets gives), wearing that player's tower set. Built by
 	Shared/TowerLook with no range ring, never registered as towers (they never fire, take
 	no hits and can't be clicked), and gone when the player leaves.
+
+	Campsite decorations (T143c, #415): the decoration on each of the Campsite's three
+	decoration spots (Decor_<i> attributes) built by Shared/Decor — inert (anchored, no
+	touch, no query, no scripts or seats), on Outpost Campsites only, so never in a match.
+	The Hunter's Flag wears the player's Tower flag colour; the Wanted Poster shows their
+	name and best hunt (BestClear, HighestRound).
 ]]
 
 local Players = game:GetService("Players")
@@ -27,6 +33,7 @@ local Cosmetics = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild(
 local Skins = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Skins"))
 local TowerLook = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("TowerLook"))
 local OutpostRules = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Outpost"))
+local Decor = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Decor"))
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Outpost = require(script.Parent.Outpost)
 
@@ -46,6 +53,7 @@ end
 local stashed: { [Player]: { Instance } } = {} -- the avatar's clothes hidden under a hunter skin
 local displays: { [Player]: { Model } } = {}
 local displayFolder: Folder? = nil
+local decorFolder: Folder? = nil
 
 local function isClothing(item: Instance): boolean
 	return item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic")
@@ -145,6 +153,30 @@ local function showDisplays(player: Player)
 			table.insert(displays[player], model)
 		end
 	end
+	if not decorFolder then
+		local folder = Instance.new("Folder")
+		folder.Name = "CampsiteDecor"
+		folder.Parent = workspace
+		decorFolder = folder
+	end
+	for i, spot in OutpostRules.DECOR_SPOTS do
+		local key = player:GetAttribute(`{Skins.DECOR_PREFIX}{i}`)
+		local look = if Skins.isDecor(key) then Skins.look(key) else nil
+		if look then
+			local flag = wearing(player, "towerFlag")
+			local cleared = player:GetAttribute("BestClear")
+			local def = if type(cleared) == "string" then (Config.Difficulties :: any)[cleared] else nil
+			local model = Decor.build(key :: string, look, ground.CFrame * CFrame.new(spot + Vector3.new(0, ground.Size.Y / 2, 0)), {
+				flag = if flag then Cosmetics.colour(flag) else nil,
+				poster = Decor.posterText(player.DisplayName, if def then def.display else nil, player:GetAttribute("HighestRound") :: number?),
+			})
+			if model then
+				model:SetAttribute("Owner", player.UserId)
+				model.Parent = decorFolder
+				table.insert(displays[player], model)
+			end
+		end
+	end
 end
 
 local function dress(player: Player)
@@ -215,7 +247,8 @@ function Wardrobe.init()
 			elseif name == "Hero" or string.sub(name, 1, #Skins.ATTRIBUTE_PREFIX + 7) == `{Skins.ATTRIBUTE_PREFIX}hunter_` then
 				paintHunter(player)
 			end
-			if name == "Campsite" or string.sub(name, 1, #Skins.DECO_PREFIX) == Skins.DECO_PREFIX or string.sub(name, 1, #Skins.ATTRIBUTE_PREFIX + 6) == `{Skins.ATTRIBUTE_PREFIX}tower_` then
+			if name == "Campsite" or string.sub(name, 1, #Skins.DECO_PREFIX) == Skins.DECO_PREFIX or string.sub(name, 1, #Skins.ATTRIBUTE_PREFIX + 6) == `{Skins.ATTRIBUTE_PREFIX}tower_`
+				or string.sub(name, 1, #Skins.DECOR_PREFIX) == Skins.DECOR_PREFIX or name == "BestClear" or name == "HighestRound" or name == "Equip_towerFlag" then
 				showDisplays(player)
 			end
 		end)
