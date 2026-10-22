@@ -116,7 +116,26 @@ src/
 │   ├── RangerLook.luau      Ranger walkers' looks (visual only)
 │   ├── RangerPosts.luau     The posts UI: "Move posts" in the tower panel, post ghost, set in third person with the gun away (#350)
 │   ├── DinoLook.luau        Blocky dino models per species and size (visual)
-│   ├── Theme.luau           Title, currency and display names (Dino Hunters theme)
+│   ├── Theme.luau           Title, currency and display names (Dino Hunters theme); `formatAmber` (K/M/B,
+│   │                        rounded down, Phase 10 T134)
+│   ├── HunterStats.luau     Phase 10: each hunter's body (Max HP, walk speed) + trained bonuses, caps; slows
+│   │                        multiply the class base; pure
+│   ├── HunterKit.luau       Each hunter's melee and grenade numbers right now (sheet + hunter level + trained
+│   │                        reach / grenade range); pure
+│   ├── Melee.luau           Melee hit rule: reach, arc, targets, cooldown; PvP ×0.5, no hard CC; pure
+│   ├── Grenade.luau         Grenade arc, landing, splash, charges + recharge, cloud; pure
+│   ├── Outpost.luau         Hunters' Outpost layout: Campsites, stations, Hatchery Hut, Counter; names; pure
+│   ├── Training.luau        The four trained stats: levels, accrual (online only, full at the station, half
+│   │                        elsewhere, tick clamp), slots, Finish price; pure
+│   ├── Pets.luau            Eggs and pets: buy, real-time hatch, Warm it up price, roll at hatch (6 rarities),
+│   │                        fuse 3→1, inventory, equip, pet effects incl. the Honker's honk target; pure
+│   ├── Skins.luau           Skin catalogue (hunter / weapon / tower set / deco): own by level or Amber, wear,
+│   │                        bundles, the gun-look order (mastery gold > weapon skin > set/tint); pure
+│   ├── Decor.luau           Campsite decoration models and footprints, the 3 spots (visual + pure checks)
+│   ├── Store.luau           Robux store: catalogue (blank id = hidden), pass effects, receipt ledger
+│   │                        (duplicate PurchaseId granted once), trainFinish credits; pure
+│   ├── SafeArea.luau        Where clickable UI may start: under Roblox's top bar and clear of the chat
+│   │                        window (F13/F13b); every panel and the home column use it
 │   └── HuntBoard.luau       What the Hunt Board screen draws: tiles, cards, button states, text, fit-to-window
 ├── server/   → ServerScriptService.Server
 │   ├── Main.server.luau     Entry point, wiring, and the match loop: Lobby → Building → Playing
@@ -152,6 +171,14 @@ src/
 │   ├── TrophyBoard.luau     The Trophy leaderboard: LevelBoard.start on its own store, remote and cache
 │   ├── Wardrobe.luau        The only adder/remover of worn cosmetics on characters (hat, sprint trail)
 │   ├── Walkers.luau         Owns every walker on the server: spawn/move/bite, the per-side walker cap, `walkers` Studio aid
+│   ├── Kit.luau             Phase 10: melee (V) and grenade (C) requests validated like shots; server-owned
+│   │                        grenade; dino effects through Enemies, hunters through Health.pvpHit, raids via Towers
+│   ├── Outpost.luau         Builds the Hunters' Outpost; sets `InOutpost` on camp arrivals (F12); third person
+│   │                        and no combat there
+│   ├── Training.luau        Ticks training for players in the server, stations (E), Finish now, `trainskip`
+│   ├── Pets.luau            Hatchery Hut requests, the follower pet in matches and its effect, Hatchling Pens
+│   ├── Store.luau           `ProcessReceipt` (save the PurchaseId through SaveStore before granting),
+│   │                        `UserOwnsGamePassAsync` (cached), `PolicyService`; unpublished = closed
 │   └── Shop.luau            The one validated RemoteFunction for build/sell; tower prompts
 ├── starter/StarterCharacterScripts → StarterPlayer.StarterCharacterScripts
 │   └── Health.server.luau   Empty on purpose: replaces Roblox's health regeneration
@@ -164,6 +191,9 @@ src/
     ├── HuntBoard.client.luau  Hunt Board (G, home screen): Daily Haul and bounties; claim and swap requests
     ├── Profile.client.luau  Profile screen (P, Lobby): player level, rewards, equip rows, Leaderboard tab
     ├── Looks.client.luau    Animated cosmetic sets on guns (visual only)
+    ├── Counter.client.luau  The Outpost's Counter: skins, Display Towers, Campsite decorations, Robux store tabs
+    ├── Training.client.luau Station prompt and training rows (Finish now)
+    ├── Pets.client.luau     Hatchery Hut: eggs with odds, timers, Warm it up, fuse, equip, Take along
     └── Hero.client.luau     Trigger (semi/auto/burst), reload, ammo, scope, camera, crosshair (requests only)
 ```
 
@@ -200,7 +230,7 @@ This dissolves most of the problems the UEFN plan was built around:
 | A tower's HP and trampled state | `Towers` | Call `damage()` / `heal()` / `repair()` (after paying); dinos pick from `targets()`; clients read the body's `HP` / `MaxHP` / `KO` attributes |
 | Walkers: the NPC units a tower sends along its own side's track (Raptor Pen raptors, Ranger Station rangers at posts): state, HP, target, the side cap (PLAN 9g, DECISIONS #315; rules in the pure `Shared/Walker`) | `Walkers` | Towers calls `sync()` after a place / upgrade / repair / trample, `clear()` when the tower goes and `step()` every frame; a walker's hit is handed back to its tower, which lands it through `Enemies` (rule 4); DinoAttacks asks `biteOn()` (a dino with a walker on it bites the walker instead); hunters never touch walkers |
 | Cash and lives (the Fence), one pot per side (co-op = side 1; arithmetic in the pure `Shared/Ledger`) | `Economy` | Call `trySpendFor(side)` / `earnFor(side)` / `loseFor(side)` (the side-less `trySpend()` / `earn()` / `lose()` are side 1); clients read their side's `Cash` / `Lives` attributes (`Shared/Sides.attr`: side 1 `Cash`, side n `Cash<n>`) |
-| Player HP (the Humanoid's Health / MaxHealth) | `Health` | Call `damage()` / `heal()` / `healAll()`; an enemy hunter's shot goes through `pvpHit()` (Hero, after `Shared/BattleRules.pvpDamage`, which is 0 under Camo Cover: `camoCover()`); clients read the Humanoid |
+| Player HP (the Humanoid's Health / MaxHealth, and WalkSpeed, set per hunter from `Shared/HunterStats` on spawn and hero pick since Phase 10) | `Health` | Call `damage()` / `heal()` / `healAll()`; an enemy hunter's shot goes through `pvpHit()` (Hero, after `Shared/BattleRules.pvpDamage`, which is 0 under Camo Cover: `camoCover()`); clients read the Humanoid |
 | What a tower cost (for refunds) | `Shop` | — |
 | Who built a tower, and its side | `Towers` (`tower.owner`, `tower.side`) | Shop reads them: only the builder sells; upgrades, repairs and sells only on your own side (`Sides.manageRefusal`); builds only in your zone with your side's cash |
 | Pops per player | `Scoreboard` | Towers report kills through the `onPop` hook |
@@ -217,6 +247,10 @@ This dissolves most of the problems the UEFN plan was built around:
 | Ranked state on the profile: `trophies`, `bestArena`, the Entry-fee `escrow` `{matchId, amount}` (taken at Building and saved at once; settled and cleared in one save; refunded on BindToClose or on a load that finds it unsettled); Practice Hunt Amber when unpublished | `Progression` (rules in the pure `Shared/Stakes`, `Shared/Trophies`, `Shared/Profile`) | `Battle` reports the result; the `Lobby` remote's `ready` is checked by `Stakes.canStake`; a Ranked leaver's forfeit and last-place Trophies land in one save; `TrophyBoard` reads the published Trophies; stand-ins and mid-battle joiners never touch it |
 | The Trophy leaderboard (OrderedDataStore, live rows) | `TrophyBoard` (rules in the pure `Shared/TrophyBoard`, on `LevelBoard`'s pattern) | Clients ask its remote; unpublished → "This server" |
 | Hunt Board state: Daily Haul day, active bounties, progress, swaps (the profile's `rewards` field) | `Progression` (rules in the pure `Shared/Bounties` and `Shared/Profile`) | Main, Shop and Hero report match events through `Progression.bountyEvent()`; the client asks with `getRewards` / claim / swap on `ProgressRequest` and reads `RewardsClaimable` / `RewardsVersion`; claims and swaps only in the Lobby |
+| Phase 10 saved fields on the profile: `amberScale` (Big Amber migration, once), `training` (levels, banked progress, what's training; no time stored, so a load credits nothing), `pets` (eggs, pets, equipped), `skins` (owned/worn hunter, weapon, tower-set skins, Display Towers, decorations), `store` (receipt ledger, paid Hatch now / Finish credits), `bestClear` (hardest difficulty cleared, #417) | `Progression` (rules in the pure `Shared/Profile`, `Training`, `Pets`, `Skins`, `Store`) | `Training`, `Pets`, `Store` and the Counter go through Progression; Health and Kit read stats via `HunterStats`; the Wanted Poster reads `bestClear` |
+| A trained stat's ticking (who is at a station) | `Training` (server) | Banks into Progression every 60 s, on leave and BindToClose |
+| The follower pet and its effect in a match | `Pets` (server) | Its effects land through `Enemies` (honk bonus), `Health` (regen, Frill Guard), `Economy` (round cash), `Airdrops` (Fetcher); never on a hunter of another side |
+| Robux receipts and pass ownership | `Store` (server) | Grants through Progression after the PurchaseId is saved; nothing granted in Studio or unpublished |
 | Which client panel is open | `Shop.client` (allowed states in `Shared/PanelRules`) | `Home.client`, `HuntBoard.client` and `Profile.client` ask through the `OpenPanel` attribute; `HuntBoard.client` shows its board while `HuntBoardOpen` is set, `Profile.client` the Profile screen while `ProfileOpen` is set |
 
 **Server authoritative, always.** On Roblox the client is untrusted — exploiters can fire any
@@ -337,7 +371,8 @@ second test client.
 | **Round 4** — Jovan's answers (`DIRECTION.md` 2026-10-02) | Renames (Bones, Fence, Big Bore); Linebreaker ×2; per-difficulty `Starting cash` (Hard 850); home-screen rows (`HomeLayout`); softer boss throws; one health pool + pierce-through (`SizeBreaks`) and the boss notched bar; Chaos = gun skill (towers ×0.6, hero ×1.5); mastery small perks (`SmallPerks`); hero tier 6 (`GunRules`); saved player level (`PlayerLevel`), cosmetics and titles (`Cosmetics`, `Wardrobe`, `Looks.client`), Profile screen (`ProfileScreen`, `Profile.client`), level leaderboard (`LevelBoard`, This-server fallback); four new towers (`StormCoil`, `Falcon`, `Ballista`, `TarPit`; can't-be-damaged and on-track placement in `Combat`/`Placement`); `value.py` worth bars and Tar Pit control line (`PLAN.md` round 4, `DECISIONS.md` #118–#206) | **Written 2026-10-02 → 10-06, statically checked + 406 headless specs**, not yet playtested (`RECAP.md`, "Round 4"); Studio playtests T31/T38/T60/T70 open |
 | **7** — battle modes | Camp Clash (team battle) and Bone Rush (battle royale): `Sides` (track copies, zones, crossing strip), per-side `Economy` (`Ledger`) and spawn queue (`SpawnQueue`), `BattleRules` (damage permission per source, PvP levers, Camo Cover, lockstep, results), `BattleFlow` + `Server/Battle` (seating, Studio stand-ins, elimination, Final Stampede), `Matchmaking` (one server, snake draft by Trophies), `Stakes` (Entry fee, escrow, Amber Hoard, Practice Hunt) and `Trophies` (arenas) applied by `Progression`, `TrophyBoard` (shared + server), `RoundFlow` (F4), home/HUD/results/Profile Trophies screens, value.py perk-parity bar (`PLAN.md` phase 7, `DECISIONS.md` #208–#243) | **Written 2026-10-06 → 10-08, 587 headless specs, playtested solo in Studio** (PLAYTEST Runs 2–3 with stand-in camps; Run 4 re-checks T86b). Multi-client steps: Jovan's script (`RECAP.md` "Phase 7"); real stakes, saved Trophies, world boards: need publishing |
 | **8** — ready to publish | Batch 1 (done): publish checklist + multi-client guide (`SETUP.md`); `StudioOnly` gate for every Studio cheat; `SaveStore` + session lock with a fake-store spec; `value.py --battle`; `Tuning!B143` battle rounds 60 → 120 s; Tectonic Slam ×34; Studio stand-in hunter (`StandInHunter`, `Server/StandInHunters`), Start at round N, Stand-ins hold. Batch 2 (done, replaces T98): match length and joiners — `Shared/Pace`, `Shared/BattleLoop`, paced co-op (fewer, tougher dinos), battle round lists (casual every 3rd, Ranked every 2nd), match clock 15:00 / 30:00, tie-break chain, casual late joiners with catch-up cash, Ranked seat lock, Ability tempo ×2, per-side live cap, battle Fence drain 4/s (§5.5–5.8, #249–#270). Waiting on Jovan: the 4×-Amber towers (T97, next), private publish + published smoke (T94–T95), lobby place with TeleportService + MemoryStore by Trophies (T96) (`PLAN.md` "Phase 8") | **Batch 1 built 2026-10-08 (619 specs; Run 5: 23 pass, 0 fail). Batch 2 built 2026-10-12 (682 specs; Run 7: 27 pass, F8 fixed; Run 7b: 9 pass, 0 fail).** Live saves, the lock, cross-server boards and a real late-joining client need Jovan / a published place |
-| **9** — the 4× towers and A/B/C upgrades | `OptionPick` (A/B/C pick in tower/hero panels; picks in match state, validated by `Towers`/`Hero`); `Option` + `PvP effect` sheet columns; `value.py --options` bars enforced by the exporter; 180 B/C options on the 11 towers and 12 hero paths; the seven 4× towers (`Resin`, `Raptor`, `Totem`, `Blimp`, `Meteor`, `Vent`, `Ranger` + `RangerPosts`) on `FourX`, `AutoFire` and the walker module (`Walker` + server `Walkers`, own cap: `Walker cap total` 96); `Pace.coopLeak` (co-op leak cap, #357); `tools/compile.luau` compile guard in `tools/test.sh` (F11) | **Built and released** (845 specs); **Studio Runs 8, 9, 10** pass (Run 10b pending); feel and multi-client effects need Jovan |
+| **9** — the 4× towers and A/B/C upgrades | `OptionPick` (A/B/C pick in tower/hero panels; picks in match state, validated by `Towers`/`Hero`); `Option` + `PvP effect` sheet columns; `value.py --options` bars enforced by the exporter; 180 B/C options on the 11 towers and 12 hero paths; the seven 4× towers (`Resin`, `Raptor`, `Totem`, `Blimp`, `Meteor`, `Vent`, `Ranger` + `RangerPosts`) on `FourX`, `AutoFire` and the walker module (`Walker` + server `Walkers`, own cap: `Walker cap total` 96); `Pace.coopLeak` (co-op leak cap, #357); `tools/compile.luau` compile guard in `tools/test.sh` (F11) | **Built and released** (845 specs); **Studio Runs 8, 9, 10, 10b** pass; feel and multi-client effects need Jovan |
+| **10** — bodies, kit, Outpost, training, pets, skins, store | Big Amber ×1000 (`tools/amber_rescale.py`, `Theme.formatAmber`, `amberScale` migration); `Hunter Stats` + `HunterStats` (parity ≤ 1.15); `Hunter Kit` + `HunterKit`, `Melee`, `Grenade`, server `Kit`; Hunters' Outpost (`Outpost` shared + server); `Training` (shared, server, client; online only); `Pets`/`Eggs` sheets + `Pets` (shared, server, client); `Skins` sheet + `Skins`, `Decor`, `Counter.client`; `Store` sheet + `Store` (shared, server); `SafeArea` (PLAN "Phase 10", DECISIONS #363–#420) | **Built** (967 specs); **Studio Runs 11–14** (Run 15 running); real purchases, multi-client kit/pets and live saves need Jovan / publishing |
 
 ---
 

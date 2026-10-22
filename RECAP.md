@@ -876,3 +876,126 @@ second real player still need you. Calls: `DECISIONS.md` #274–#362.
 
 1. Run 10b passed; nothing left open from it.
 2. Your answers above, your multi-client test and a private publish.
+
+# Phase 10 recap for Jovan: bodies, kit, the Outpost, training, pets, skins, store (2026-10-20 → 10-22)
+
+**Your words (2026-10-20):** "maxing out is on a good pace i want it to take a while and give
+impatient players something to use to get ahead with micro tranactions … weapon skins and
+hunter skins and tower skins i want to implement simple stats so that players have a reason to
+afk farm … add a melee for each hunter and a grenade … each hunter should have their own unique
+health stat, speed stat … punching bag for melee treadmil for speed, potion crafting/or vitamin
+making for health, then a grenade throwing range for grenade". Later the same day: training
+online only, six pet rarities with Mythic, Amber ×1000, the proposed Robux prices.
+
+**Honest status:** built, 967 headless specs green, and **played in Studio by the Tester** in
+Runs 11–14 (Run 11 stalled after 8 rows; its rest was re-done in Run 12). Every fail found is
+fixed except one narrow-window case (below). **Nothing you can buy with Robux works yet**: the
+store opens only after you publish and fill in the product ids. Calls: `DECISIONS.md` #363–#420.
+
+## What was built
+
+- **Amber ×1000.** Every price and payout went up together: a Normal clear is now 100,000,
+  unlocking everything is 5.3M. Amber shows short (12.5K, 1.2M) and rounds down, so it never
+  shows more than you have. Old saves are converted once.
+- **Hunter bodies.** Tracker 95 HP / speed 17, Big Game Hunter 110 / 15, Brush Beater
+  115 / 15.5, Field Medic 100 / 16.5 (was 100 / 16 for all). A check keeps them within 15 %
+  of each other overall.
+- **Melee (V) and grenade (C), one each per hunter:**
+  - Tracker: **Hunting Knife** (quick stabs) + **Stink Bomb** (a cloud; dinos in it take +20 %).
+  - Big Game Hunter: **Stock Swing** (slow, heavy) + **Safari Grenade** (the big plain blast).
+  - Brush Beater: **Brush Machete** (wide sweep, up to 3 dinos) + **Cherry Bomb** (slows 50 %).
+  - Field Medic: **Splint Stick** (slows dinos) + **Dozy Cloud** (slows dinos, and hunters 30 %).
+  One grenade charge, 20 s to recharge. Against hunters: half damage, never a stun or
+  knockback. They also hit rival towers in battles, like the gun. They can't hurt flyers or
+  armoured dinos, but their slows still land on armoured ground dinos. Gun + kit together stay
+  well under the best tower (the kit peaks at 27 % of it).
+- **Hunters' Outpost.** Between matches you walk around a camp (third person there only, no
+  fighting) instead of a home screen; Play and the menus sit in a panel that's always
+  reachable. 10 **Campsites**, one per player, each with 3 Display Towers, 3 decoration spots
+  and a Hatchling Pen.
+- **Training stations** (four stats, shared by all your hunters): Raptor Dummy → melee reach
+  (up to +20 %), Raptor Chase → speed (+15 %), Herb Kitchen → health (+10 %), Coconut Toss →
+  grenade range (+30 %). 10 levels each; level L takes 10·L minutes (about 9 h a stat, 37 h
+  for all four). **Online only**, as you asked: full speed at the station, half speed anywhere
+  else while you're in the game, nothing while logged off. **Finish now** costs 2,000 Amber
+  per minute left (a whole level 10 = 200K). Same caps for everyone.
+- **Eggs and pets** at the Hatchery Hut. Eggs: **Mud** 20K (5 min), **Speckled** 75K (30 min),
+  **Golden** 200K (2 h). Odds always shown (Common / Uncommon / Rare / Epic / Legendary /
+  Mythic): Mud 55/25/12/5/2.5/0.5, Speckled 40/30/17/8/4/1, Golden 20/30/25/14/9/2. **Warm it
+  up** = 2,000 Amber per minute left. Fuse 3 identical pets into the next rarity (3 Legendary
+  → Mythic). 60 pets max, one with you in matches; it dies and respawns with you and never
+  touches enemy hunters. Rarity scales the effect ×1 up to ×2.25 (Mythic):
+  - **Honker:** every 10 s honks at the nearest boss near you (else the biggest dino); your
+    own hits on it do +5 % for 3 s (Mythic +11 %).
+  - **Fetcher:** brings Airdrop chests to you from 4 studs (Mythic 9).
+  - **Fern Muncher:** heals you 0.2 HP/s (Mythic 0.45).
+  - **Shiny Snatcher:** +8 cash to your team each round cleared (Mythic 18).
+  - **Frill Guard:** takes 40 % of the round's first dino bite (Mythic 90 %).
+- **Skins and decorations** at the Counter (cosmetic only; towers and hunters stay readable):
+  - Earned by level, never sold: Swamp Stalker (Tracker) 15, Safari Classic (Big Game Hunter)
+    25, Bamboo Basher (Brush Beater) 35, Frontier Doc (Medic) 45, Walnut Classic (rifle) 55,
+    Snakeskin Grip (revolver) 65.
+  - Amber: more hunter skins 300K / 500K (Gold Rush Safari 900K); weapon skins 200K–400K
+    (Engraved Gold 600K); tower sets Treehouse 400K, Stone Age 400K, Brass Gear 600K,
+    Midnight 800K, Gold Rush 1.5M.
+  - Campsite decorations: Fire Pit (level 5), Stepping Stones (12), Hunter's Flag (18, your
+    flag colour), Wanted Poster 100K (your name, hardest difficulty cleared, best round),
+    Hammock 150K, Rope Swing 200K, Dino Statue 500K.
+- **The Robux store** (buys time, Amber and looks; never past a cap; never mid-match):
+  Amber Sack R$49 (150K), Crate R$199 (700K), Wagon R$799 (3M); passes 2× Training R$299,
+  Extra Training Spot R$199, Second Hatchery Hut R$199; Hatch now Speckled R$25, Golden R$79;
+  Finish this level R$25; bundles (tower set + hunter skin + weapon skin) Treehouse, Stone
+  Age, Brass Gear R$249, Midnight R$299, Gold Rush R$599. Each purchase is saved before it's
+  granted, so nobody pays twice or gets it twice.
+- **Clear of Roblox's own buttons.** No control sits under Roblox's top bar or the chat window
+  any more (Runs 13–14 found both).
+
+**Only works after you publish:** the store and every purchase, saving all of the above
+between sessions, the pass checks, hiding paid random items for accounts Roblox restricts,
+and the idle kick ending a training session.
+
+## How it was verified
+
+- **Headless:** 967 specs (Amber scaling and short numbers, bodies and the parity bar, kit hits
+  and PvP rules, training accrual incl. "nothing for time away", egg odds and fusing, pet
+  effects, skins and decorations, fake store receipts incl. duplicates and failed saves).
+- **Studio Run 11: 8 pass** (Amber ×1000 and K/M, bodies, the Medic's kit); then it stalled.
+- **Studio Run 12: 10 pass**, 3 fail + 3 blocked (all F12: the Outpost flag was lost on spawn
+  → fixed), 1 partial, 1 not tested. Kit and tower raids passed.
+- **Studio Run 13: 19 pass**, 2 fail (F13 top-bar clicks, F14 pet-down message → both
+  fixed), 3 not tested. The Outpost, training and pets passed.
+- **Studio Run 14: 17 pass**, 1 fail (F13b chat window → fixed, see narrow windows below), 1
+  partial, 1 not tested (Honker bonus: dino HP couldn't be read), 1 inconclusive (pets vs a
+  real enemy hunter). Skins and the closed store passed.
+- _Run 15: pending_
+
+## What I need from you
+
+1. **Publish privately and fill the store ids** (`SETUP.md`, "Open the Robux store"), then buy
+   one cheap item (Finish this level, R$25) to see it arrive once.
+2. **Try the feel:** each hunter's body and kit, a training session, an egg hatch, one skin.
+3. **Egg timers keep running while you're offline** (training doesn't, as you asked). OK? (#396)
+4. **Mud's "Hatch now" was dropped** (a 5-min egg; Warm it up costs 10K), and **Golden is
+   R$79, not 99.** OK? (#413)
+5. **Narrow windows:** under ~540 px wide, Start / H / M still sit partly under the chat
+   window; only their right end clicks. Fine until a phone test after publishing? (#419)
+6. **Multi-client:** kit and pets against a real second hunter (half damage, no stun, pets
+   never touch you).
+7. Anything else: pack sizes, bundle prices, no Robux-only skins (below).
+
+## Decisions you may want to overturn
+
+1. **#396 Egg timers run offline** (training is online only).
+2. **#413 No Hatch now for Mud; Golden R$79.**
+3. **#410 No Robux-only skins:** the premium sets are the dearest in Amber; bundles are the shortcut.
+4. **#411 Amber pack sizes:** 150K / 700K / 3M (bigger packs give a bit more per Robux).
+5. **#403 / #405 Finish now and Warm it up at 2,000 Amber a minute.**
+6. **#374 / #379 Trained stats and pets work in Ranked too.**
+7. **#367 No in-match melee/grenade upgrades;** the kit grows only through training.
+8. **#407 Honker = a damage honk** (there are no hidden dinos to spot, so "spots camo" became this).
+
+## What's next
+
+1. Tester Run 15, and fixes if it finds anything.
+2. Your answers above, a private publish with the store ids, then the published checks (T95)
+   and the lobby place (T96).

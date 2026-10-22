@@ -253,7 +253,7 @@ Phase 9, the 4× towers and A/B/C upgrades (2026-10-13 → 10-20, Jovan's 2026-1
 `DIRECTION.md`; calls `DECISIONS.md` #274–#360; summary `RECAP.md` "Phase 9"): **built and
 released**, 845 headless specs green, **playtested in Studio** (Run 8: 18 pass, F9 fixed;
 Run 9: 17 pass, cut off by a usage limit, F10 fixed; Run 10: 13 pass after the F11 boot fix,
-cut off after R10-15; Run 10b pending). What's in:
+cut off after R10-15; Run 10b passed). What's in:
 - **A/B/C picks** at tiers 4 and 5 of every tower and hero path (`Shared/OptionPick`, picks
   in match state, server-validated; hero tier 6 stays one capstone). 180 new B/C options on
   the existing paths (132 tower + 48 hero), plus the 4× towers' own; each held to
@@ -272,17 +272,42 @@ cut off after R10-15; Run 10b pending). What's in:
   runs `tools/compile.luau` (the real Luau compiler + a local-headroom check) first.
 Studio aids: `firenow <TOWER>`, `fossils`, `walkers`, `charge`, `standinpick`.
 
-Next: Tester Run 10b (T131 checks) → T132 (Run 10b fixes, if any). Then it waits on Jovan
-(`RECAP.md` "Phase 9", "What I need from you"): how the A/B/C builds feel, his multi-client
-script (Raider stings from hunter shots, hero gun effects, a real late joiner), a private
-publish per `SETUP.md` (then T95), the lobby place (T96), and a "go" on the brainstorm
-(pets / hub / AFK / bigger Amber numbers).
+Phase 10, bodies, kit, Hunters' Outpost, training, pets, skins, store (2026-10-20 → 10-22,
+Jovan's answers in `DIRECTION.md` "Phase 10 answers"; calls `DECISIONS.md` #363–#420; summary
+`RECAP.md` "Phase 10"): **built**, 967 headless specs green, **playtested in Studio** (Run 11:
+8 pass, stalled; Run 12: 10 pass, F12 fixed; Run 13: 19 pass, F13/F14 fixed; Run 14: 17 pass,
+F13b fixed except narrow windows; Run 15 running). What's in:
+- **Big Amber ×1000** (`tools/amber_rescale.py`, save migration stamped `amberScale`,
+  `Theme.formatAmber` K/M/B everywhere; exporter: every Amber cell a multiple of 1000).
+- **Hunter bodies** (`Hunter Stats` sheet, `Shared/HunterStats`, parity bar ≤ 1.15) and a
+  **melee (V) + grenade (C) per hunter** (`Hunter Kit` sheet, `Shared/HunterKit`, `Melee`,
+  `Grenade`, server `Kit`; PvP ×0.5, no stun/knockback on hunters; raids rival towers like the gun).
+- **Hunters' Outpost** (`Shared/Outpost`, server `Outpost`): the Lobby is a walkable camp, third
+  person there only, 10 Campsites, docked home panel. **Training** (`Shared/Training`, server
+  `Training`, `Training.client`): four account-wide stats at four stations, online only,
+  Finish now 2,000 Amber a minute.
+- **Eggs and pets** (`Pets`/`Eggs` sheets, `Shared/Pets`, server `Pets`, `Pets.client`): three
+  eggs, six rarities, fusing, five pet species with one small effect each; hatch timers run in
+  real time (#396).
+- **Skins + decorations** (`Skins` sheet, `Shared/Skins`, `Shared/Decor`, `Counter.client`):
+  hunter / weapon / tower-set skins, Display Towers, 7 Campsite decorations; `bestClear` saved
+  for the Wanted Poster (#417).
+- **Store** (`Store` sheet, `Shared/Store`, server `Store`): products + passes, idempotent
+  receipts; ids blank until publishing, so it shows "The store opens when the game is published".
+- **`Shared/SafeArea`** keeps every control clear of Roblox's top bar and chat window (F13/F13b).
+Studio aids: `trainskip`, `studiopet`, `studioSkins`.
+
+Next: Tester Run 15 → fixes if any. Then it waits on Jovan (`RECAP.md` "Phase 10", "What I
+need from you"): a private publish per `SETUP.md` with the Store ids filled, the feel of the
+kit / training / pets, his answers to the Phase 10 asks, his multi-client script, then T95/T96.
 
 ## Open issues
 
 - Leak cost is effective HP (BTD6-style); co-op non-boss leaks are now capped at 25% of the
   starting Fence (#357) — watch it in Run 10b and Jovan's play.
   Battle length is settled (batch 2): ≤ 15 min casual, ≤ 30 min Ranked, ~34 min co-op.
-- Unlocking everything = 5,325 Amber ≈ 29.8 h on Normal (#355): Jovan to confirm.
+- Unlocking everything = 5,325,000 Amber (×1000) ≈ 29.8 h on Normal: Jovan confirmed the pace.
+- Windows under ~540 px wide: Start / H / M sit partly under Roblox's chat window, only their
+  right end clickable (#419). Revisit on a real phone after publishing.
 - Scout Range path has range *and* its old damage/rate boosts — likely too strong; trim.
 - Folder is still named `~/Fortnite`.

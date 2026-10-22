@@ -147,8 +147,8 @@ batch ends with its Tester steps. Phase 8's Jovan-only leftovers don't block Pha
 **Status (2026-10-20):** built and released (9a–9k: T110–T131; 845 specs; calls #274–#360)
 and playtested in Studio (PLAYTEST Runs 8, 9 and 10; Runs 9 and 10 cut off by usage limits;
 F9–F11 fixed, F11 = the server boot crash, now caught by `tools/compile.luau`). Run 10b (T131
-checks) is running; T132 fixes whatever it finds. The recap is `RECAP.md` "Phase 9"; what's
-left needs Jovan (feel, multi-client, publish, the brainstorm "go").
+checks) passed. The recap is `RECAP.md` "Phase 9"; what's left needs Jovan (feel,
+multi-client, publish).
 
 ## Phase 10 scope (Jovan, 2026-10-20)
 
@@ -161,6 +161,12 @@ ask list #390 (defaults applied). Extra loop rules: the **Dino agent names befor
 (D1–D3)**; **no agent ever makes or simulates a real purchase** — the store is tested only
 for its unpublished message and with fake receipts in specs; Run 10b/T132 of Phase 9 still
 finish first.
+
+**Status (2026-10-22):** built (10a–10f: T134–T144, F12–F14 and F13b; 967 specs; calls
+#363–#420; 🦖 Rounds 20–23) and playtested in Studio (PLAYTEST Runs 11–14; Run 11 stalled
+after 8 rows; Run 15 running). The recap is `RECAP.md` "Phase 10". Known: on windows under
+~540 px wide, Start / H / M sit partly under the chat window (#419). What's left needs Jovan:
+a private publish with the Store ids, real purchases, the feel, multi-client kit/pets, his asks.
 
 ## Rules
 

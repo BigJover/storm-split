@@ -227,8 +227,31 @@ A/B/C picks at tiers 4 and 5 (PLAN 9f, DECISIONS #298–#302; A = the path table
 | **Muzzle** | 4 | Long Dose — Jaw Lock keeps a dino's jaws shut for longer | Quick Dose — Fire 12% faster; jaws locked 2.6 s | Strap Toss — Lock jumps 2 studs; hits slow dinos 40% |
 | **Muzzle** | 5 | Lullaby Rounds — Jaw Lock spreads to nearby dinos | Heavy Lids — Locked jaws stay shut 4.2 s | Drowsy Cloud — Lock spreads 4 studs; hits slow 40% for 2 s |
 
+## Bodies and kit (Phase 10, Jovan 2026-10-20)
+
+Each hunter has its **own body** and **its own melee (V) and grenade (C)**. Bodies are held to a
+parity bar (HP/100 × (speed/16)^1.5, best ÷ worst ≤ 1.15, DECISIONS #365); slows multiply the
+hunter's own speed. Kit damage grows with the hunter level like the gun; there are no kit
+upgrade tiers: the kit grows through the **trained stats** (reach +20 %, grenade range +30 %,
+speed +15 %, health +10 %, account-wide, trained in the Hunters' Outpost).
+
+| Hunter | Max HP | Walk speed | Melee (V) | Grenade (C) |
+|---|---|---|---|---|
+| Tracker | 95 | 17 | **Hunting Knife** — 2 dmg, 0.4 s swing, 6 studs | **Stink Bomb** — 8 dmg, 10-stud cloud for 6 s; dinos in it take +20 % damage |
+| Big Game Hunter | 110 | 15 | **Stock Swing** — 5 dmg, 1 s swing, 7 studs | **Safari Grenade** — 20 dmg, 12-stud blast |
+| Brush Beater | 115 | 15.5 | **Brush Machete** — 2.5 dmg, 0.75 s, 7 studs, a 120° sweep hitting up to 3 | **Cherry Bomb** — 12 dmg, 9-stud blast, slows dinos 50 % for 1.5 s |
+| Field Medic | 100 | 16.5 | **Splint Stick** — 1.5 dmg, 0.6 s, 6 studs, slows dinos 30 % for 1.5 s (dinos only, #401) | **Dozy Cloud** — 5 dmg, 10-stud cloud for 5 s; slows dinos 40 %, hunters 30 % for 2 s |
+
+Grenades: 1 charge, 20 s recharge, thrown on a fixed arc along your view, 40 studs base range.
+Rules (#366–#369, #400–#402): melee is checked by the server like a shot; the server owns the
+grenade. Against hunters: ×0.5, never a stun or knockback, a slow of at most 30 % for 2 s; no
+friendly fire. Kit raids rival towers under the gun's raid rules. Kit deals no damage to flyers
+or armoured dinos, but its slows and the Stink Bomb land on armoured ground dinos. Gun + melee +
+grenade together never out-damage the best tower (`value.py`; the kit peaks at 27 %).
+
 ## Where the numbers live
 
 Spreadsheet `Heroes` (base gun and ability per hero) and `Hero Upgrades` (one row per tier;
 effect columns cumulative per tier, like `Tower Upgrades`). Upgrade costs come from
-`Tuning` → HERO.
+`Tuning` → HERO. Bodies: `Hunter Stats`; melee and grenades: `Hunter Kit`; trained-stat caps:
+`Tuning` (`Trained … max`).

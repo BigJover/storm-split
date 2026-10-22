@@ -17,6 +17,11 @@ every batch ends with its Tester steps.**
 **Update (2026-10-21): 10b DONE: T136 53455ac (melee, V), T137 8f63f9e (grenade, C; E kept free for 10c); kit peak = 27 % of the best tower; 878 specs. Builder questions ruled #400–#402 → T137b, then Tester Run 11 (10a + 10b), then 🦖 D2 → 10c.**
 **Update (2026-10-21, later): 10c DONE: T137b 72b3875, T138 2ab2a7f (Hunters' Outpost), T139 27f122f (training, online only); 901 specs. 🦖 Round 21 pets 8233986. Ruled #403–#404 → **T139b** (one cell + spec). Tester Run 12 running; then Builder 10d (T140 + T141), T139b rides with T140's first commit.**
 **Update (2026-10-21, 10d): T140 9f97da8 + T141 6cdfed6 done (919 specs); blanks ruled #405–#408 → **T141b** (egg prices/odds, warm 2,000/min, pet values + worth refs, Honker = honk mark).**
+**Update (2026-10-22, 10d–10f): ALL BUILT.** T141b 747702b; Run 13 (19 pass; F13/F14 → eb2615c);
+T142 5c6ab49, T143 a274479 (937 → 947 specs); Run 14 (17 pass; F13b → f5a3b9c, narrow windows
+< ~540 px still overlap, #419); T143b 6609cef, T143c fa65bc9 (`bestClear`, #417), 🦖 Round 23
+0f7d3b7 → T144 5ffddcc; Honker line kept (#418). **T145 docs done (#420); 967 specs.** Next:
+Tester Run 15 (running) → fixes if any; then Jovan (`RECAP.md` "Phase 10").
 on Jovan only for the asks below; defaults are applied so nothing blocks.**
 
 **Jovan answered the asks (2026-10-20, #391–#395) — these override the defaults below:**

@@ -206,6 +206,14 @@ skins. Plan: `PLAN.md` "Phase 10"; calls `DECISIONS.md` #363–#390.
 - **Store:** Developer Products and Game Passes that buy time, Amber and cosmetics; same caps
   for everyone; live only once published.
 
+**Built (2026-10-22, `RECAP.md` "Phase 10", #391–#420).** What changed from the sketch above:
+Base Camp is the **Hunters' Outpost** with 10 **Campsites** (3 Display Towers, 3 decorations,
+a Hatchling Pen); stations Raptor Dummy / Raptor Chase / Herb Kitchen / Coconut Toss; training
+is **online only** (full at the station, half elsewhere in the game, nothing logged off); pets
+have **six rarities up to Mythic** (Mud / Speckled / Golden eggs; egg timers do run offline);
+Amber is **×1000** with K/M display; the store sells Amber packs, Hatch now, Finish this level,
+skin bundles and three passes, all hidden until the ids are filled after publishing.
+
 ## Future ideas — brainstorm (Jovan, 2026-10-13) — GO given 2026-10-20, planned as Phase 10
 
 Jovan wanted "some if not all of this"; on 2026-10-20 he said "yes" to all of it (above).

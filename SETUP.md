@@ -119,13 +119,33 @@ but keeps progress for the session only, and Ranked is a free **Practice Hunt**.
 4. **Keep it private** until the published smoke test (PLAN T95) passes. Don't make it public
    or share it yet.
 
+**Open the Robux store (after publishing; about 20 minutes).** Until the ids are filled the
+store shows "The store opens when the game is published" and sells nothing; a row with a blank
+id simply stays hidden, so you can fill them a few at a time.
+1. Keep **Enable Studio Access to API Services** on (step 2): the store's receipts are saved
+   through the same data store as Amber, and a receipt that can't be saved is never granted.
+2. create.roblox.com → **Creations** → the experience → **Monetization → Developer Products**
+   → **Create** one per `product` row of the `Store` sheet (11 rows: Amber Sack / Crate /
+   Wagon, Hatch now — Speckled / Golden, the five skin bundles, Finish this level). Name it
+   like the sheet's **Item** column and set the price to its **Robux** column (49, 199, 799,
+   25, 79, 249, 249, 249, 299, 599, 25). Copy each product's **ID**.
+3. **Monetization → Passes** → **Create** one per `pass` row (2× Training 299, Extra Training
+   Spot 199, Second Hatchery Hut 199); set it **On Sale** at that price; copy each pass **ID**.
+4. Paste every ID into the **Id** column (F) of the `Store` sheet on its row, save the sheet,
+   run `python3 tools/export_constants.py`, and publish again. The Robux column is a mirror for
+   the shop's labels: if you change a price on Creator Hub, change it on the sheet too.
+5. Test with one cheap item on your own account (Finish this level, R$25): the Amber, egg or
+   level arrives once, even if you rejoin. Then check the server Output for `[Store]` warnings.
+6. Players whose account settings forbid paid random items (Roblox's `PolicyService`) never
+   see the Hatch now items; everything else shows normally.
+
 **The saved-data names (never rename these).** The game stores data under these names; a
 renamed one starts everyone over from nothing. They are fixed in the code; just never type
 a new name into one:
 
 | Data store name | What it holds | Where in the code |
 |---|---|---|
-| `StormSplitProgress_v1` | each player's save: Amber, unlocks, mastery, player XP, Hunt Board, Trophies, an open Ranked Entry fee | `src/server/Progression.luau` (`STORE_NAME`) |
+| `StormSplitProgress_v1` | each player's save: Amber, unlocks, mastery, player XP, Hunt Board, Trophies, an open Ranked Entry fee; since Phase 10 also training, eggs and pets, skins and decorations, store receipts | `src/server/Progression.luau` (`STORE_NAME`) |
 | `DinoHuntersPlayerXp_v1` | the world level leaderboard | `src/shared/LevelBoard.luau` (`STORE`), used by `src/server/LevelBoard.luau` |
 | `DinoHuntersTrophies_v1` | the world Trophy board | `src/shared/TrophyBoard.luau` (`STORE`), used by `src/server/TrophyBoard.luau` |
 
