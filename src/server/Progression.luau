@@ -1190,7 +1190,8 @@ function Progression.init(
 	--             ("getRewards", boardIsOpen) -> true, Profile.View | false, message
 	-- Cosmetics:  ("equip", slot, itemId | "") -> ok, message
 	-- Skins (T142): ("skins") -> true, view | ("buySkin", key) | ("wearSkin", slot, key | "")
-	--             | ("setDeco", 1..3, towerKey | "") | ("studioSkins") Studio only -> ok, message
+	--             | ("setDeco", 1..3, towerKey | "") | ("setDecor", 1..3, decorKey | "")
+	--             | ("studioSkins") Studio only -> ok, message
 	request.OnServerInvoke = function(player: Player, action: unknown, a: unknown, b: unknown)
 		local ok, success, message, detail = pcall(function(): (boolean, any, any)
 			if action == "mastery" then
@@ -1209,7 +1210,13 @@ function Progression.init(
 				return equip(player, a, b)
 			elseif action == "skins" then
 				return skinView(player)
-			elseif action == "buySkin" or action == "wearSkin" or action == "setDeco" or action == "studioSkins" then
+			elseif
+				action == "buySkin"
+				or action == "wearSkin"
+				or action == "setDeco"
+				or action == "setDecor"
+				or action == "studioSkins"
+			then
 				return skinAction(player, action, a, b)
 			end
 			return false, "Unknown request"
