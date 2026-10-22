@@ -281,10 +281,10 @@ function Store.cardLine(
 	return row.line
 end
 
--- The price label: "R$ 49".
+-- The price label: "R$49" (Round 22/23 spelling).
 function Store.priceLabel(key: string): string
 	local row = Store.row(key)
-	return if row and row.robux then `R$ {row.robux}` else ""
+	return if row and row.robux then `R${row.robux}` else ""
 end
 
 return Store

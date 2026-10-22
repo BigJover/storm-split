@@ -42,8 +42,8 @@ test("Round 22 / #395 catalogue: names, tabs and Robux; every id blank, so nothi
 		TRAINING_2X = { "2× Training", "Passes", 299 },
 		EXTRA_TRAINING_SPOT = { "Extra Training Spot", "Hatchery", 199 },
 		SECOND_HATCHERY_HUT = { "Second Hatchery Hut", "Hatchery", 199 },
-		HATCH_NOW_SPECKLED = { "Hatch now", "Hatchery", 25 },
-		HATCH_NOW_GOLDEN = { "Hatch now", "Hatchery", 79 },
+		HATCH_NOW_SPECKLED = { "Hatch now — Speckled Egg", "Hatchery", 25 },
+		HATCH_NOW_GOLDEN = { "Hatch now — Golden Egg", "Hatchery", 79 },
 		FINISH_LEVEL = { "Finish this level", "Hatchery", 25 },
 	}
 	for key, w in want do
@@ -355,4 +355,18 @@ test("source guards: the credit finishes the next level started; Server/Store as
 	local server = fs.readFile("src/server/Store.luau")
 	ok(server:find("StoreRules.needsPick(active) and not", 1, true) ~= nil, "two training: a pick first")
 	ok(server:find("if #active == 0 then", 1, true) ~= nil, "nothing training: not prompted")
+end)
+
+test("T144 (Round 23): store wording — R$49, Hatch now rows name their egg", function()
+	eq(Store.priceLabel("AMBER_SACK"), "R$49", "no space after R$")
+	eq(Store.row("HATCH_NOW_SPECKLED").display, "Hatch now — Speckled Egg")
+	eq(Store.row("HATCH_NOW_GOLDEN").display, "Hatch now — Golden Egg")
+	local counter = fs.readFile("src/client/Counter.client.luau")
+	ok(counter:find("Buy {Theme.formatAmber(price)} {Theme.Currency}", 1, true) ~= nil, "Amber skin Buy says Amber")
+	ok(counter:find("`Buy {Theme.formatAmber(row.price)}`", 1, true) == nil, "no bare Amber number on a Buy")
+	ok(counter:find("\"Outpost Shop\"", 1, true) ~= nil, "header: Outpost Shop")
+	ok(fs.readFile("src/client/Training.client.luau"):find("`Finish now — {Theme.formatAmber(price)} {Theme.Currency}`", 1, true) ~= nil, "Finish now — 24K Amber")
+	ok(fs.readFile("src/client/Pets.client.luau"):find("Incubator (", 1, true) == nil, "no 'Incubator' heading")
+	ok(fs.readFile("src/client/Home.client.luau"):find("string.lower(Theme.Currency)", 1, true) == nil, "Amber capitalised")
+	ok(fs.readFile("src/client/Hero.client.luau"):find("`{kit.meleeName}  {math.ceil(meleeWait)}s`", 1, true) ~= nil, "melee cooldown shown")
 end)

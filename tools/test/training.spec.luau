@@ -258,10 +258,10 @@ test("display lines", function()
 	Training.start(state, "reach")
 	state.progress.reach = Training.levelSeconds(4) * 0.4
 	local rows = Training.view(state)
-	eq(Training.line(rows[1]), "Reach  Lv 3/10  +6% of +20%  training 40%")
+	eq(Training.line(rows[1]), "Reach  Lv 3/10  ·  +6% (max +20%)  training 40%")
 	state.levels.speed = 10
-	eq(Training.line(Training.view(state)[2]), "Speed  Lv 10/10  +15% of +15%  MAX")
-	eq(Training.line(Training.view(state)[3]), "Health  Lv 0/10  +0% of +10%")
+	eq(Training.line(Training.view(state)[2]), "Speed  Lv 10/10  ·  +15% (max +15%)  MAX")
+	eq(Training.line(Training.view(state)[3]), "Health  Lv 0/10  ·  +0% (max +10%)")
 	local back = Training.fromAttributes(function(name)
 		return ({ TrainLevel_reach = 3, TrainProgress_reach = 7, TrainActive = "reach" } :: any)[name]
 	end)

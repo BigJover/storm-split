@@ -1,6 +1,6 @@
 --[[
 	The shop counter in the Hunters' Outpost (PLAN 10e T142; names DINO_REVIEW Round 22).
-	Standing at the counter shows "Shop: press E" (also a button); E opens it. Everything is
+	Standing at the counter shows "Outpost Shop: press E" (also a button); E opens it. Everything is
 	a request; the server owns prices and what you own (Server/Progression, Shared/Skins).
 
 	  Hunter skins   per hunter: each skin with its price (or "yours" / "not for sale yet"),
@@ -88,7 +88,7 @@ local function button(parent: Instance, text: string, color: Color3, width: numb
 end
 
 -- Prompt at the counter, bottom centre (a button too, for touch).
-local prompt = button(gui, "Shop: press E", PANEL, 300)
+local prompt = button(gui, "Outpost Shop: press E", PANEL, 300)
 prompt.AnchorPoint = Vector2.new(0.5, 1)
 prompt.Position = UDim2.new(0.5, 0, 1, -150)
 prompt.Size = UDim2.fromOffset(300, 34)
@@ -151,7 +151,7 @@ end
 local header = textLabel(panel, 22, Enum.Font.GothamBold, AMBER)
 header.Position = UDim2.fromOffset(14, 8)
 header.Size = UDim2.new(1, -120, 0, 30)
-header.Text = "Shop"
+header.Text = "Outpost Shop"
 
 local close = button(panel, "X Close", GREY, 84)
 close.AnchorPoint = Vector2.new(1, 0)
@@ -272,7 +272,7 @@ local function skinRow(v: View, key: string, slot: string)
 	else
 		local row = Skins.row(key)
 		local price = row and row.price
-		action = button(f, if price then `Buy {Theme.formatAmber(price)}` else "—", if price then AMBER else GREY, 90)
+		action = button(f, if price then `Buy {Theme.formatAmber(price)} {Theme.Currency}` else "—", if price then AMBER else GREY, 90)
 		action.Active = price ~= nil
 		if price then
 			action.Activated:Connect(function()
@@ -331,8 +331,7 @@ local function renderStore(tabName: string)
 			local name = textLabel(f, 15, Enum.Font.GothamBold, TEXT)
 			name.Position = UDim2.fromOffset(10, 4)
 			name.Size = UDim2.new(1, -130, 0, 20)
-			local egg = if row.grant == "hatch" then (Config :: any).Eggs[row.items[1]] else nil
-			name.Text = if egg then `{row.display} — {egg.display}` else row.display
+			name.Text = row.display -- Hatch now rows name their egg on the sheet (Round 23)
 			local line = textLabel(f, 12, Enum.Font.Gotham, TEXT_DIM)
 			line.Position = UDim2.fromOffset(10, 24)
 			line.Size = UDim2.new(1, -130, 0, 26)
@@ -419,7 +418,7 @@ local function render()
 			line.Text = Skins.line({ owned = v.owned, wear = {}, deco = {}, decor = {} }, key, v.level)
 			local row = Skins.row(key)
 			if not owned and row and row.price then
-				local buy = button(f, `Buy {Theme.formatAmber(row.price)}`, AMBER, 90)
+				local buy = button(f, `Buy {Theme.formatAmber(row.price)} {Theme.Currency}`, AMBER, 90)
 				buy.AnchorPoint = Vector2.new(1, 0.5)
 				buy.Position = UDim2.new(1, -8, 0.5, 0)
 				buy.Activated:Connect(function()
@@ -477,7 +476,7 @@ local function render()
 			line.Text = Skins.line({ owned = v.owned, wear = {}, deco = {}, decor = {} }, key, v.level)
 			local row = Skins.row(key)
 			if not owned and row and row.price then
-				local buy = button(f, `Buy {Theme.formatAmber(row.price)}`, AMBER, 90)
+				local buy = button(f, `Buy {Theme.formatAmber(row.price)} {Theme.Currency}`, AMBER, 90)
 				buy.AnchorPoint = Vector2.new(1, 0.5)
 				buy.Position = UDim2.new(1, -8, 0.5, 0)
 				buy.Activated:Connect(function()

@@ -151,7 +151,7 @@ test("buying: the sheet's prices (#405); blank price = not for sale; one incubat
 		eq(Pets.remaining(state, 1, NOON), 300)
 		eq(Pets.timerLine(state, 1, NOON + 28), "Hatching… 4:32 left")
 		local busy, msg = Pets.buy(state, "MUD", NOON)
-		ok(not busy and msg == "Your incubator is busy", "one incubator (#377)")
+		ok(not busy and msg == "Your Hatchery Hut is full — hatch an egg first", "one incubator (#377)")
 		-- Saved and loaded an hour later: the egg kept warming offline.
 		local back = Pets.sanitize(Pets.toSave(state), NOON + 3600)
 		eq(Pets.remaining(back, 1, NOON + 3600), 0, "ready after time away")

@@ -35,7 +35,7 @@
 	                         to every training stat (Server/Training asks StudioOnly first)
 	  view(state)            what the Profile / Outpost UI shows, per stat
 	  NAMES                  the shown stat words (DINO_REVIEW Round 20): Reach, Speed, Health, Throw
-	  line(row)              one stat's text, e.g. "Reach  Lv 3/10  +6% of +20%  training 40%"
+	  line(row)              one stat's text, e.g. "Reach  Lv 3/10  ·  +6% (max +20%)  training 40%"
 	  fromAttributes(get)    a State rebuilt from the Player attributes Progression publishes
 	                         (TrainLevel_/TrainProgress_<stat>, TrainActive): the client's copy
 ]]
@@ -264,7 +264,7 @@ end
 Training.NAMES = table.freeze({ reach = "Reach", speed = "Speed", health = "Health", throw = "Throw" }) :: { [string]: string }
 
 function Training.line(row: Row): string
-	local head = `{Training.NAMES[row.stat] or row.stat}  Lv {row.level}/{row.max}  +{string.format("%g", row.percent)}% of +{string.format("%g", row.cap)}%`
+	local head = `{Training.NAMES[row.stat] or row.stat}  Lv {row.level}/{row.max}  ·  +{string.format("%g", row.percent)}% (max +{string.format("%g", row.cap)}%)`
 	if row.level >= row.max then
 		return `{head}  MAX`
 	end

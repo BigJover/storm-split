@@ -184843,7 +184843,7 @@ return table.freeze({
 		HATCH_NOW_SPECKLED = {
 			tab = "Hatchery",
 			["type"] = "product",
-			display = "Hatch now",
+			display = "Hatch now — Speckled Egg",
 			robux = 25,
 			id = nil,
 			grant = "hatch",
@@ -184857,7 +184857,7 @@ return table.freeze({
 		HATCH_NOW_GOLDEN = {
 			tab = "Hatchery",
 			["type"] = "product",
-			display = "Hatch now",
+			display = "Hatch now — Golden Egg",
 			robux = 79,
 			id = nil,
 			grant = "hatch",

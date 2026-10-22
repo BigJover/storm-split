@@ -260,7 +260,7 @@ local function render()
 		end
 	end
 
-	heading(`Incubator ({#state.eggs}/{player:GetAttribute("Incubators") or Pets.incubators()})`)
+	heading(`Warming eggs ({#state.eggs}/{player:GetAttribute("Incubators") or Pets.incubators()})`)
 	if #state.eggs == 0 then
 		local c = card(30)
 		local empty = textLabel(c, 13, Enum.Font.Gotham, TEXT_DIM)

@@ -302,7 +302,7 @@ function Pets.canBuy(state: State, egg: unknown, incubators: number?): (number?,
 		return nil, if eggRow(egg) then "Not for sale yet" else "Unknown egg"
 	end
 	if #state.eggs >= (incubators or Pets.incubators()) then
-		return nil, "Your incubator is busy"
+		return nil, "Your Hatchery Hut is full — hatch an egg first"
 	end
 	return price, ""
 end

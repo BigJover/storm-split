@@ -247,7 +247,7 @@ local function refresh()
 		local price = Training.finishPrice(current, row.stat)
 		ui.finish.Visible = price ~= nil
 		if price then
-			ui.finish.Text = `Finish {Theme.formatAmber(price)}`
+			ui.finish.Text = `Finish now — {Theme.formatAmber(price)} {Theme.Currency}`
 		end
 	end
 	local station = at and Outpost.station(at)

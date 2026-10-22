@@ -604,8 +604,9 @@ RunService.RenderStepped:Connect(function()
 	local kit = HunterKit.row(heroKey())
 	meleeButton.Visible = gun ~= nil and kit ~= nil
 	if kit then
-		local cooling = (player:GetAttribute("MeleeReadyAt") or 0) > workspace:GetServerTimeNow()
-		meleeButton.Text = `{kit.meleeName}  (V)`
+		local meleeWait = (player:GetAttribute("MeleeReadyAt") or 0) - workspace:GetServerTimeNow()
+		local cooling = meleeWait > 0
+		meleeButton.Text = if cooling then `{kit.meleeName}  {math.ceil(meleeWait)}s` else `{kit.meleeName}  (V)`
 		meleeButton.BackgroundColor3 = if cooling then WAITING else READY
 	end
 	grenadeButton.Visible = meleeButton.Visible

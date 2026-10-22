@@ -218,7 +218,7 @@ local difficultyCards: { [string]: TextButton } = {}
 for order, key in Config.DifficultyOrder do
 	local level = Config.Difficulties[key]
 	local button = card(difficultyRow, order, 170, 64)
-	button.Text = `{level.display}\n<font size="14" color="#aaa3bb">clear: {Theme.formatAmber(level.clearReward)} {string.lower(Theme.Currency)}</font>`
+	button.Text = `{level.display}\n<font size="14" color="#aaa3bb">clear: {Theme.formatAmber(level.clearReward)} {Theme.Currency}</font>`
 	button.Activated:Connect(function()
 		lobby:FireServer("difficulty", key)
 	end)
