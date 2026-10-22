@@ -67,20 +67,22 @@ end
 	usual safe line. The default box is that window plus CHAT_MARGIN; when the live
 	configuration is readable its box is added (the bigger of the two wins, so a moved or
 	resized window is covered and an unreadable one still is).
+
+	The chat input bar (PLAYTEST Run 15 F13c) sits right under that window and eats clicks
+	too: `ChatInputBarConfiguration` read screen y 210–258 under a 58 px bar (152–200 under
+	it), so the Menu/Hide toggle's top half was dead. The box covers the window and the
+	input bar together; live, both configurations are read and joined.
 ]]
 SafeArea.CHAT_MARGIN = 9
 SafeArea.CHAT_RIGHT = 300 -- screen x: 8 + 283 + margin
-SafeArea.CHAT_BELOW_BAR = 162 -- px under the top bar: 12 + 141 + margin (screen y 220 on 58)
+SafeArea.CHAT_BELOW_BAR = 209 -- px under the top bar: input bar bottom 200 + margin (screen y 267 on 58)
 
 export type ChatRect = { x: number, y: number, w: number, h: number } -- under the top bar
 
--- The live chat window from a TextChatService (or nil when it can't be read). Never errors.
-function SafeArea.liveChat(service: any): ChatRect?
-	if service == nil then
-		return nil
-	end
+-- One configuration's box (ChatWindowConfiguration / ChatInputBarConfiguration), or nil.
+local function readRect(service: any, name: string): ChatRect?
 	local okRead, rect = pcall(function()
-		local config = service.ChatWindowConfiguration
+		local config = service[name]
 		if config == nil or config.Enabled == false then
 			return nil
 		end
@@ -91,6 +93,22 @@ function SafeArea.liveChat(service: any): ChatRect?
 		return { x = pos.X, y = pos.Y, w = size.X, h = size.Y }
 	end)
 	return if okRead then rect else nil
+end
+
+-- The live chat window and input bar from a TextChatService, joined into one box (or nil
+-- when neither can be read). Never errors.
+function SafeArea.liveChat(service: any): ChatRect?
+	if service == nil then
+		return nil
+	end
+	local window, input = readRect(service, "ChatWindowConfiguration"), readRect(service, "ChatInputBarConfiguration")
+	if window == nil or input == nil then
+		return window or input
+	end
+	local x, y = math.min(window.x, input.x), math.min(window.y, input.y)
+	local x2 = math.max(window.x + window.w, input.x + input.w)
+	local y2 = math.max(window.y + window.h, input.y + input.h)
+	return { x = x, y = y, w = x2 - x, h = y2 - y }
 end
 
 -- The chat box's right edge and bottom, screen coordinates (margin included).
@@ -104,7 +122,7 @@ function SafeArea.chatBox(insetY: number?, live: ChatRect?): (number, number)
 	return right, bottom
 end
 
--- The first clickable row under the chat box (screen): 230 on today's top bar.
+-- The first clickable row under the chat box (screen): 277 on today's top bar.
 function SafeArea.chatTop(insetY: number?, live: ChatRect?): number
 	local _, bottom = SafeArea.chatBox(insetY, live)
 	return math.max(SafeArea.top(insetY), bottom + SafeArea.GAP)

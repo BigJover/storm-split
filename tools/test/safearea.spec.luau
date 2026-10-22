@@ -82,9 +82,11 @@ end)
 
 -- PLAYTEST Run 14 F13b: Roblox's chat window (top left, (8, 12) 283x141 under a 58 px bar =
 -- screen x 8-291, y 70-211) eats clicks even when it looks empty.
+-- Run 15 F13c: the chat input bar under it (ChatInputBarConfiguration, screen y 210-258) too.
 local CHAT = { x1 = 8, x2 = 291, y1 = 70, y2 = 211 }
+local INPUT = { x1 = 8, x2 = 291, y1 = 210, y2 = 258 }
 local function inChat(x: number, y: number): boolean
-	return x >= CHAT.x1 and x <= CHAT.x2 and y >= CHAT.y1 and y <= CHAT.y2
+	return x >= CHAT.x1 and x <= CHAT.x2 and y >= CHAT.y1 and y <= INPUT.y2
 end
 
 test("the chat box covers the measured chat window (no live config, every top bar)", function()
@@ -94,7 +96,26 @@ test("the chat box covers the measured chat window (no live config, every top ba
 		ok(bottom > math.max(inset, 58) + 12 + 141, `inset {inset}: bottom {bottom} under the window`)
 		ok(SafeArea.chatTop(inset) > bottom and SafeArea.chatTop(inset) >= SafeArea.top(inset), `inset {inset}: chatTop under both`)
 	end
-	eq(SafeArea.chatTop(58), 230, "today's top bar: 230")
+	eq(SafeArea.chatTop(58), 277, "today's top bar: 277 (under the input bar)")
+	ok(SafeArea.chatBox(58) > INPUT.x2 and select(2, SafeArea.chatBox(58)) > INPUT.y2, "the box covers the input bar")
+end)
+
+test("Run 15 F13c: the Menu/Hide toggle clears the chat input bar", function()
+	-- Run 15: the toggle at screen (16, 230) 150x40; clicks at 232 and 243 hit CoreGui.
+	ok(not SafeArea.clickableAt(16, 230, 58), "the old top 230 is in the input bar")
+	local y = SafeArea.topFor(16, 58)
+	ok(y > INPUT.y2 and SafeArea.clickableAt(16, y, 58), `the toggle now starts at {y}, under 258`)
+	-- live: the window and the input bar are joined into one box
+	local live = SafeArea.liveChat({
+		ChatWindowConfiguration = { Enabled = true, AbsolutePosition = { X = 8, Y = 12 }, AbsoluteSize = { X = 283, Y = 141 } },
+		ChatInputBarConfiguration = { Enabled = true, AbsolutePosition = { X = 8, Y = 152 }, AbsoluteSize = { X = 283, Y = 248 } },
+	})
+	ok(live ~= nil and live.y == 12 and live.h == 388 and live.w == 283, "window + input bar joined")
+	local _, bottom = SafeArea.chatBox(58, live)
+	ok(bottom >= 58 + 152 + 248, "a tall live input bar is covered")
+	local onlyInput = SafeArea.liveChat({ ChatInputBarConfiguration = { Enabled = true, AbsolutePosition = { X = 8, Y = 152 }, AbsoluteSize = { X = 600, Y = 48 } } })
+	ok(onlyInput ~= nil and onlyInput.w == 600, "the input bar alone when the window can't be read")
+	eq(SafeArea.liveChat({ ChatInputBarConfiguration = { Enabled = false } }), nil, "input bar off, no window")
 end)
 
 test("the live chat window wins when it is bigger or moved; an unreadable one falls back", function()
