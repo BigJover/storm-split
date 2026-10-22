@@ -967,7 +967,7 @@ and the idle kick ending a training session.
 - **Studio Run 14: 17 pass**, 1 fail (F13b chat window → fixed, see narrow windows below), 1
   partial, 1 not tested (Honker bonus: dino HP couldn't be read), 1 inconclusive (pets vs a
   real enemy hunter). Skins and the closed store passed.
-- _Run 15: pending_
+- **Run 15: 15 pass, 2 fail** (F15 decorations couldn't be placed — the server never routed the request; F13c the Menu/Hide toggle's top was under the chat input bar). Both fixed (39fe166, 91252ca), plus a spec that every client request is handled. **Run 15b: all re-checks pass** — buying, placing, swapping and removing decorations; free ones locked by level; decorations cosmetic only; the Wanted Poster's best-clear line; Menu/Hide clickable; the losing side sees "GAME OVER" and "Camp Clash — 2nd place". No game errors.
 
 ## What I need from you
 
@@ -996,6 +996,6 @@ and the idle kick ending a training session.
 
 ## What's next
 
-1. Tester Run 15, and fixes if it finds anything.
+1. Run 15/15b done; nothing left open from them.
 2. Your answers above, a private publish with the store ids, then the published checks (T95)
    and the lobby place (T96).
