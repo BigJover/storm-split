@@ -20,10 +20,13 @@
 	  PolicyService    a player whose policy restricts paid random items never sees or can
 	                   prompt "Hatch now" (a hatch rolls a rarity). A failed policy check
 	                   counts as restricted.
-	  StoreRequest     ("view") -> { open, restricted, passes, credits } ; ("buy", key) ->
-	                   ok, message: the server checks the row is shown to this player, it's
-	                   between matches (nothing bought mid-match, #389), a pass isn't owned
-	                   yet and a Hatch now has an egg of its kind warming, then prompts.
+	  StoreRequest     ("view") -> { open, restricted, passes, credits, trainCredits } ;
+	                   ("buy", key, stat?) -> ok, message: the server checks the row is shown
+	                   to this player, it's between matches (nothing bought mid-match, #389),
+	                   a pass isn't owned yet, a Hatch now has an egg of its kind warming and
+	                   "Finish this level" has a stat training (with two training, `stat`
+	                   names which: #414), then prompts. The pick is remembered for this
+	                   player and goes with the next receipt for that product.
 ]]
 
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -39,6 +42,8 @@ local Store = {}
 
 local owned: { [Player]: { [string]: boolean } } = {}
 local restricted: { [Player]: boolean } = {}
+local finishPick: { [Player]: string } = {} -- "Finish this level": the stat picked at the prompt
+local pickOf: { [string]: string } = {} -- PurchaseId -> that pick (a retried receipt keeps it)
 
 local function checkPlayer(player: Player, open: boolean)
 	local passes = {}
@@ -72,7 +77,7 @@ local function betweenMatches(player: Player): boolean
 	return ReplicatedStorage:GetAttribute("State") == "Lobby" or player:GetAttribute("InOutpost") == true
 end
 
-local function buy(player: Player, open: boolean, key: unknown): (boolean, string)
+local function buy(player: Player, open: boolean, key: unknown, stat: unknown): (boolean, string)
 	if not open then
 		return false, StoreRules.CLOSED_LINE
 	end
@@ -93,6 +98,16 @@ local function buy(player: Player, open: boolean, key: unknown): (boolean, strin
 	if row.grant == "hatch" and not Progression.hasWarmingEgg(player, row.items[1]) then
 		return false, "No egg of that kind is warming"
 	end
+	if row.grant == "trainFinish" then
+		local active = Progression.trainingActive(player)
+		if #active == 0 then
+			return false, "Nothing is training"
+		end
+		if StoreRules.needsPick(active) and not (type(stat) == "string" and table.find(active, stat)) then
+			return false, "Pick which stat to finish"
+		end
+		finishPick[player] = StoreRules.finishTarget(active, stat) :: string
+	end
 	MarketplaceService:PromptProductPurchase(player, row.id :: number)
 	return true, ""
 end
@@ -103,7 +118,7 @@ function Store.init(remotes: Folder)
 
 	local request = Instance.new("RemoteFunction")
 	request.Name = "StoreRequest"
-	request.OnServerInvoke = function(player: Player, action: unknown, key: unknown)
+	request.OnServerInvoke = function(player: Player, action: unknown, key: unknown, b: unknown)
 		local ok, success, message = pcall(function(): (any, any)
 			if action == "view" then
 				local passes = {}
@@ -115,9 +130,10 @@ function Store.init(remotes: Folder)
 					restricted = restricted[player] ~= false,
 					passes = passes,
 					credits = Progression.storeView(player),
+					trainCredits = Progression.trainCredits(player),
 				}
 			elseif action == "buy" then
-				return buy(player, open, key)
+				return buy(player, open, key, b)
 			end
 			return false, "Unknown request"
 		end)
@@ -138,6 +154,7 @@ function Store.init(remotes: Folder)
 	Players.PlayerRemoving:Connect(function(player)
 		owned[player] = nil
 		restricted[player] = nil
+		finishPick[player] = nil
 	end)
 
 	if not open then
@@ -161,7 +178,16 @@ function Store.init(remotes: Folder)
 		if not key then
 			warn(`[Store] Receipt for product {receipt.ProductId} matches no Store row; kept for later`)
 		end
-		local decision = Progression.storeReceipt(player, tostring(receipt.PurchaseId), key)
+		local purchaseId = tostring(receipt.PurchaseId)
+		local row = key and StoreRules.row(key)
+		if row and row.grant == "trainFinish" and not pickOf[purchaseId] and finishPick[player] then
+			pickOf[purchaseId] = finishPick[player]
+			finishPick[player] = nil
+		end
+		local decision = Progression.storeReceipt(player, purchaseId, key, pickOf[purchaseId])
+		if decision == StoreRules.GRANTED then
+			pickOf[purchaseId] = nil
+		end
 		return if decision == StoreRules.GRANTED
 			then Enum.ProductPurchaseDecision.PurchaseGranted
 			else Enum.ProductPurchaseDecision.NotProcessedYet

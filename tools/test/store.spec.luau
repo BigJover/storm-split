@@ -42,9 +42,9 @@ test("Round 22 / #395 catalogue: names, tabs and Robux; every id blank, so nothi
 		TRAINING_2X = { "2× Training", "Passes", 299 },
 		EXTRA_TRAINING_SPOT = { "Extra Training Spot", "Hatchery", 199 },
 		SECOND_HATCHERY_HUT = { "Second Hatchery Hut", "Hatchery", 199 },
-		HATCH_NOW_MUD = { "Hatch now", "Hatchery", 25 },
-		HATCH_NOW_SPECKLED = { "Hatch now", "Hatchery", 49 },
-		HATCH_NOW_GOLDEN = { "Hatch now", "Hatchery", 99 },
+		HATCH_NOW_SPECKLED = { "Hatch now", "Hatchery", 25 },
+		HATCH_NOW_GOLDEN = { "Hatch now", "Hatchery", 79 },
+		FINISH_LEVEL = { "Finish this level", "Hatchery", 25 },
 	}
 	for key, w in want do
 		local row = Store.row(key)
@@ -71,15 +71,16 @@ test("Round 22 / #395 catalogue: names, tabs and Robux; every id blank, so nothi
 end)
 
 test("a row shows only with an id AND what it grants; Hatch now is hidden for restricted players", function()
-	withRows({ AMBER_SACK = { id = 111 } }, function()
+	withRows({ AMBER_SACK = { id = 111, amount = 0 } }, function()
+		Store.rowsOverride.AMBER_SACK.amount = nil -- a blank Amount
 		eq(Store.shown("AMBER_SACK", false), false, "id but no Amber amount: hidden")
 	end)
-	withRows({ AMBER_SACK = { id = 111, amount = 50000 }, HATCH_NOW_MUD = { id = 222 } }, function()
+	withRows({ AMBER_SACK = { id = 111, amount = 50000, line = "" }, HATCH_NOW_SPECKLED = { id = 222 } }, function()
 		eq(Store.shown("AMBER_SACK", false), true, "complete")
 		eq(Store.byId("product", 111), "AMBER_SACK", "receipt id -> row")
 		eq(Store.byId("pass", 111), nil, "a product id is not a pass id")
-		eq(Store.shown("HATCH_NOW_MUD", false), true)
-		eq(Store.shown("HATCH_NOW_MUD", true), false, "paid random item hidden when restricted")
+		eq(Store.shown("HATCH_NOW_SPECKLED", false), true)
+		eq(Store.shown("HATCH_NOW_SPECKLED", true), false, "paid random item hidden when restricted")
 		eq(Store.shown("AMBER_SACK", true), true, "Amber isn't random")
 		eq(Store.cardLine("AMBER_SACK", function() return nil end, function() return nil end), "50,000 Amber", "the exact Amber")
 	end)
@@ -236,7 +237,8 @@ test("source guards: Server/Store grants nothing itself, sets ProcessReceipt onl
 	for _, banned in { ".cores", "profiles[", "Skins.grant", "SaveStore" } do
 		ok(server:find(banned, 1, true) == nil, `Server/Store never touches {banned}`)
 	end
-	ok(server:find("Progression.storeReceipt(player, tostring(receipt.PurchaseId), key)", 1, true) ~= nil, "receipts go to Progression")
+	ok(server:find("Progression.storeReceipt(player, purchaseId, key, pickOf[purchaseId])", 1, true) ~= nil, "receipts go to Progression")
+	ok(server:find("local purchaseId = tostring(receipt.PurchaseId)", 1, true) ~= nil, "keyed by the PurchaseId")
 	ok(server:find("ArePaidRandomItemsRestricted", 1, true) ~= nil, "PolicyService checked")
 	ok(server:find("UserOwnsGamePassAsync", 1, true) ~= nil, "passes checked")
 	local progression = fs.readFile("src/server/Progression.luau")
@@ -246,4 +248,111 @@ test("source guards: Server/Store grants nothing itself, sets ProcessReceipt onl
 	local client = fs.readFile("src/client/Counter.client.luau")
 	ok(client:find("heading(StoreRules.CLOSED_LINE)", 1, true) ~= nil, "the closed store says so")
 	ok(client:find("PromptProductPurchase", 1, true) == nil and client:find("ProcessReceipt", 1, true) == nil, "the client never prompts or grants itself")
+end)
+
+-- PLAN T143b (#411-#414).
+test("T143b numbers: Amber packs, bundles, Hatch now (Mud gone), Finish this level", function()
+	local packs = {
+		AMBER_SACK = { 150000, "150,000 Amber — about 50 minutes of Normal hunting." },
+		AMBER_CRATE = { 700000, "700,000 Amber — about 4 hours of Normal hunting." },
+		AMBER_WAGON = { 3000000, "3,000,000 Amber — about 17 hours of Normal hunting." },
+	}
+	for key, w in packs do
+		eq(Store.row(key).amount, w[1], `{key} Amber`)
+		eq(Store.cardLine(key, function() return nil end, function() return nil end), w[2], `{key} card`)
+	end
+	local bundles = {
+		TREEHOUSE_BUNDLE = { "TREEHOUSE,JUNGLE_GHOST,BAMBOO_BOOMSTICK", 249 },
+		STONE_AGE_BUNDLE = { "STONE_AGE,CROC_HIDE_CRUSHER,CROC_HIDE", 249 },
+		BRASS_GEAR_BUNDLE = { "BRASS_GEAR,MOUNTAIN_RESCUE,BRASS_SADDLE", 249 },
+		MIDNIGHT_BUNDLE = { "MIDNIGHT,NIGHT_PROWLER,SILVER_SPUR", 299 },
+		GOLD_RUSH_BUNDLE = { "GOLD_RUSH,GOLD_RUSH_SAFARI,ENGRAVED_GOLD", 599 },
+	}
+	for key, w in bundles do
+		eq(table.concat(Store.row(key).items, ","), w[1], `{key} items`)
+		eq(Store.row(key).robux, w[2], `{key} Robux`)
+		ok(Store.ready(Store.row(key) :: any), `{key} complete (only the id missing)`)
+	end
+	eq(Store.row("HATCH_NOW_MUD"), nil, "Mud's Hatch now removed (#413)")
+	local finish = Store.row("FINISH_LEVEL") :: any
+	eq(finish.grant, "trainFinish")
+	eq(finish.type, "product")
+	eq(finish.random, false, "not a random item")
+	eq(finish.line, "Finishes the level you're training now. Same max for everyone.")
+	ok(Store.ready(finish), "complete (only the id missing)")
+end)
+
+test("a bundle you partly own: still sold, lists what's new, saves only the unowned Amber", function()
+	local Skins = require(src.shared.Skins)
+	local function name(k: string): string?
+		local r = Skins.row(k)
+		return r and r.display
+	end
+	local function price(k: string): number?
+		local r = Skins.row(k)
+		return r and r.price
+	end
+	eq(Store.cardLine("MIDNIGHT_BUNDLE", name, price), "Inside: Midnight, Night Prowler, Silver Spur · saves 1,350,000 Amber", "own none")
+	eq(Store.cardLine("MIDNIGHT_BUNDLE", name, price, function(k: string)
+		return k == "NIGHT_PROWLER"
+	end), "New for you: Midnight, Silver Spur (you have Night Prowler) · saves 1,050,000 Amber", "own one")
+	eq(Store.cardLine("MIDNIGHT_BUNDLE", name, price, function()
+		return true
+	end), "You have everything inside: Midnight, Night Prowler, Silver Spur", "own all: no saving claimed")
+end)
+
+test("#414 Finish this level: the pick, the only stat, a credit when nothing trains, never past a cap, a receipt once", function()
+	eq(Store.finishTarget({ "reach", "speed" }, "speed"), "speed", "two training: the pick")
+	eq(Store.finishTarget({ "reach" }, nil), "reach", "one training: that one")
+	eq(Store.finishTarget({ "reach", "speed" }, "health"), "reach", "a pick that isn't training: not that one")
+	eq(Store.finishTarget({}, "reach"), nil, "nothing training: a credit")
+	ok(Store.needsPick({ "reach", "speed" }) and not Store.needsPick({ "reach" }), "the pick is asked only with two")
+	-- The grant as Progression runs it, on a real training state.
+	local function grant(state: any, t: any, pick: string?): boolean
+		local stat = Store.finishTarget(t.active, pick)
+		if stat then
+			Training.finish(t, stat)
+		else
+			state.trainCredits += 1
+		end
+		return true
+	end
+	local state, t = Store.blank(), Training.blank()
+	Training.start(t, "reach", 2)
+	Training.start(t, "speed", 2)
+	local saves = 0
+	local function save(): boolean
+		saves += 1
+		return true
+	end
+	eq(Store.processReceipt(true, state, "P1", "FINISH_LEVEL", function() return grant(state, t, "speed") end, save), Store.GRANTED)
+	eq(t.levels.speed, 1, "the picked stat levelled")
+	eq(t.levels.reach, 0, "the other didn't")
+	eq(Store.processReceipt(true, state, "P1", "FINISH_LEVEL", function() return grant(state, t, "speed") end, save), Store.GRANTED)
+	eq(t.levels.speed, 1, "the same PurchaseId never finishes a second level")
+	-- At the cap: a maxed stat leaves training, so a later receipt finds nothing of it.
+	for _ = 1, Training.levels() do
+		Training.finish(t, "reach")
+	end
+	eq(t.levels.reach, Training.levels(), "reach maxed")
+	eq(table.find(t.active, "reach"), nil, "and no longer training")
+	eq(Store.processReceipt(true, state, "P2", "FINISH_LEVEL", function() return grant(state, t, "reach") end, save), Store.GRANTED)
+	eq(t.levels.reach, Training.levels(), "never past the cap")
+	eq(t.levels.speed, 2, "the pick fell back to the stat still training")
+	-- Nothing training: a saved credit, kept by the save.
+	local idle = Training.blank()
+	eq(Store.processReceipt(true, state, "P3", "FINISH_LEVEL", function() return grant(state, idle, nil) end, save), Store.GRANTED)
+	eq(state.trainCredits, 1, "a credit")
+	eq(Store.sanitize(Store.toSave(state)).trainCredits, 1, "saved")
+	eq(Store.sanitize({ trainCredits = -3 }).trainCredits, 0, "garbage refused")
+	eq(Store.sanitize({}).trainCredits, 0, "an older save: none")
+end)
+
+test("source guards: the credit finishes the next level started; Server/Store asks for a pick with two training", function()
+	local prog = fs.readFile("src/server/Progression.luau")
+	ok(prog:find("if ok and not was and profile.store.trainCredits > 0 and Training.finish(profile.training, stat) then", 1, true) ~= nil, "trainStart uses a credit")
+	ok(prog:find("local stat = StoreRules.finishTarget(p.training.active, pick)", 1, true) ~= nil, "the receipt grant")
+	local server = fs.readFile("src/server/Store.luau")
+	ok(server:find("StoreRules.needsPick(active) and not", 1, true) ~= nil, "two training: a pick first")
+	ok(server:find("if #active == 0 then", 1, true) ~= nil, "nothing training: not prompted")
 end)

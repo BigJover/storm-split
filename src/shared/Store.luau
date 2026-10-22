@@ -18,9 +18,14 @@
 	  passEffects(owned)          training speed, training slots, incubators: the base from the
 	                              sheet plus each owned pass. Same caps for everyone (#389).
 
+	  finishTarget(active, pick)  which training stat a paid "Finish this level" (#414) finishes:
+	                              the one picked (two training) or the only one; nil = nothing
+	                              training, so the receipt saves a credit instead.
+
 	Saved per profile as { receipts = { PurchaseId, ... } (newest last, at most LEDGER_MAX),
-	hatchCredits = { [egg] = n } } — a paid "Hatch now" that found no egg of its kind waiting
-	is kept as a credit and used on the next one, never lost.
+	hatchCredits = { [egg] = n }, trainCredits = n } — a paid "Hatch now" that found no egg of
+	its kind waiting is kept as a credit and used on the next one; a paid "Finish this level"
+	that found nothing training finishes the next level started. Never lost.
 ]]
 
 local Config = require(script.Parent.Config)
@@ -46,7 +51,7 @@ export type Row = {
 	random: boolean,
 	line: string,
 }
-export type State = { receipts: { string }, hatchCredits: { [string]: number } }
+export type State = { receipts: { string }, hatchCredits: { [string]: number }, trainCredits: number }
 export type Effects = { trainRate: number, trainSlots: number, incubators: number }
 
 -- Specs only: a stand-in catalogue (ids can't be on the sheet before publishing).
@@ -79,6 +84,8 @@ function Store.ready(row: Row): boolean
 		return row.amount ~= nil
 	elseif g == "hatch" or g == "skins" then
 		return #row.items > 0
+	elseif g == "trainFinish" then
+		return true
 	end
 	return false
 end
@@ -105,7 +112,7 @@ function Store.byId(kind: string, id: unknown): string?
 end
 
 function Store.blank(): State
-	return { receipts = {}, hatchCredits = {} }
+	return { receipts = {}, hatchCredits = {}, trainCredits = 0 }
 end
 
 function Store.sanitize(raw: unknown): State
@@ -131,11 +138,18 @@ function Store.sanitize(raw: unknown): State
 			end
 		end
 	end
+	if type(r.trainCredits) == "number" and r.trainCredits >= 1 and r.trainCredits < 1e6 then
+		state.trainCredits = math.floor(r.trainCredits)
+	end
 	return state
 end
 
 function Store.toSave(state: State): { [string]: any }
-	return { receipts = table.clone(state.receipts), hatchCredits = table.clone(state.hatchCredits) }
+	return {
+		receipts = table.clone(state.receipts),
+		hatchCredits = table.clone(state.hatchCredits),
+		trainCredits = state.trainCredits,
+	}
 end
 
 function Store.ledgerHas(state: State, purchaseId: string): boolean
@@ -210,18 +224,46 @@ function Store.maxTrainingSlots(): number
 	return Store.passEffects(all).trainSlots
 end
 
--- What a product row's card says (Round 22: the exact Amber; a bundle lists every item
--- and says "saves X Amber" only when every item is sold for Amber, so the figure is true).
-function Store.cardLine(key: string, skinName: (string) -> string?, skinPrice: (string) -> number?): string
+-- "Finish this level" (#414): the stat a paid finish goes to. `active`: the stats training
+-- now; `pick`: the stat the buyer chose (asked only when two are training). The pick wins
+-- while it is still training; else the only stat training, else the first; nil when nothing
+-- is training (the grant saves a credit). Never a maxed stat: a maxed stat isn't training.
+function Store.finishTarget(active: { string }, pick: unknown): string?
+	if type(pick) == "string" and table.find(active, pick) then
+		return pick
+	end
+	return active[1]
+end
+
+-- Does buying "Finish this level" need the buyer to pick a stat first (two training)?
+function Store.needsPick(active: { string }): boolean
+	return #active >= 2
+end
+
+-- What a product row's card says (Round 22: the exact Amber; #412: a bundle you partly own
+-- is still sold, the card lists what you'd get new, and "saves X Amber" counts only the
+-- unowned items, and only when each of them is sold for Amber, so the figure is true).
+-- `owns` (optional): is that skin already yours.
+function Store.cardLine(
+	key: string,
+	skinName: (string) -> string?,
+	skinPrice: (string) -> number?,
+	owns: ((string) -> boolean)?
+): string
 	local row = Store.row(key)
 	if not row then
 		return ""
 	end
 	if row.grant == "amber" and row.amount then
-		return `{Theme.amberExact(row.amount)} {Theme.Currency}`
+		-- The sheet's line starts with the exact Amber (the exporter checks, #411).
+		return if row.line ~= "" then row.line else `{Theme.amberExact(row.amount)} {Theme.Currency}`
 	elseif row.grant == "skins" then
-		local names, total, all = {}, 0, true
+		local names, have, total, all = {}, {}, 0, true
 		for _, item in row.items do
+			if owns and owns(item) then
+				table.insert(have, skinName(item) or item)
+				continue
+			end
 			table.insert(names, skinName(item) or item)
 			local price = skinPrice(item)
 			if price then
@@ -230,7 +272,10 @@ function Store.cardLine(key: string, skinName: (string) -> string?, skinPrice: (
 				all = false
 			end
 		end
-		local line = `Inside: {table.concat(names, ", ")}`
+		if #names == 0 then
+			return `You have everything inside: {table.concat(have, ", ")}`
+		end
+		local line = if #have > 0 then `New for you: {table.concat(names, ", ")} (you have {table.concat(have, ", ")})` else `Inside: {table.concat(names, ", ")}`
 		return if all and total > 0 then `{line} · saves {Theme.amberExact(total)} {Theme.Currency}` else line
 	end
 	return row.line

@@ -49,9 +49,12 @@ end)
 
 test("owning: blank price = not for sale, a price sells it, a level unlocks it, a bundle grants it", function()
 	local state = Skins.blank()
-	local price, why = Skins.canBuy(state, "NIGHT_PROWLER", 1)
-	eq(price, nil)
-	eq(why, "Not for sale yet")
+	withRow("NIGHT_PROWLER", { price = 0 }, function()
+		Skins.rowsOverride.NIGHT_PROWLER.price = nil -- a blank price
+		local price, why = Skins.canBuy(state, "NIGHT_PROWLER", 1)
+		eq(price, nil)
+		eq(why, "Not for sale yet")
+	end)
 	withRow("NIGHT_PROWLER", { price = 25000 }, function()
 		local p = Skins.canBuy(state, "NIGHT_PROWLER", 1)
 		eq(p, 25000, "priced")
@@ -250,8 +253,8 @@ test("a hunter skin paints torso, arms and legs only; never the head, root or a 
 		ok(apply:find("." .. banned .. " =", 1, true) == nil, `applySkin never sets {banned}`)
 	end
 	local hero = fs.readFile("src/server/Hero.luau")
-	ok(hero:find("handle.Color = if skin then skin.colour else look.colour", 1, true) ~= nil, "weapon skin: colour")
-	ok(hero:find("if maxed then nil else Skins.look", 1, true) ~= nil, "mastery 20 gold stays its own")
+	ok(hero:find("local colour, material, set = Skins.gunPaint(skin, look, maxed)", 1, true) ~= nil, "Hero paints the gun through Skins.gunPaint")
+	ok(hero:find("handle.Color = colour", 1, true) ~= nil, "weapon skin: colour")
 end)
 
 test("Display Towers are inert: no ring, never registered as towers, not clickable", function()
@@ -261,4 +264,59 @@ test("Display Towers are inert: no ring, never registered as towers, not clickab
 	ok(wardrobe:find("part.CanQuery = false", 1, true) ~= nil, "can't be clicked or hit")
 	local model = TowerLook.build("SCOUT", 0, Vector3.zero)
 	eq(model:FindFirstChild("Range"), nil, "no ring at range 0")
+end)
+
+-- PLAN T143b (#409): the ladder and the Amber prices, exactly.
+test("T143b numbers: level skins at 15/25/35/45/55/65 never sold; every other skin's Amber price", function()
+	local levels = { SWAMP_STALKER = 15, SAFARI_CLASSIC = 25, BAMBOO_BASHER = 35, FRONTIER_DOC = 45, WALNUT_CLASSIC = 55, SNAKESKIN_GRIP = 65 }
+	local prices = {
+		NIGHT_PROWLER = 300000, JUNGLE_GHOST = 500000, SAFARI_CHIEF = 300000, GOLD_RUSH_SAFARI = 900000,
+		SWAMP_SMASHER = 300000, CROC_HIDE_CRUSHER = 500000, MOUNTAIN_RESCUE = 300000, LIFELINE = 500000,
+		SILVER_SPUR = 250000, ENGRAVED_GOLD = 600000, BAMBOO_BOOMSTICK = 200000, CROC_HIDE = 250000,
+		BRASS_SADDLE = 250000, LIFESAVER = 400000,
+		TREEHOUSE = 400000, STONE_AGE = 400000, BRASS_GEAR = 600000, MIDNIGHT = 800000, GOLD_RUSH = 1500000,
+	}
+	local n = 0
+	for _, key in Config.SkinOrder do
+		local row = Skins.row(key) :: any
+		n += 1
+		if levels[key] then
+			eq(row.level, levels[key], `{key} level`)
+			eq(row.price, nil, `{key} never sold`)
+		else
+			eq(row.price, prices[key], `{key} price`)
+			eq(row.level, nil, `{key} not on the ladder`)
+		end
+	end
+	eq(n, 25, "25 skins")
+end)
+
+test("a level-15 profile owns Swamp Stalker without buying; level 14 is told when", function()
+	local state = Skins.blank()
+	ok(not Skins.owns(state, "SWAMP_STALKER", 14), "level 14")
+	local price, why = Skins.canBuy(state, "SWAMP_STALKER", 14)
+	eq(price, nil, "never sold")
+	eq(why, "Reach level 15")
+	eq(Skins.line(state, "SWAMP_STALKER", 14), "Swamp Stalker — Reach level 15")
+	ok(Skins.owns(state, "SWAMP_STALKER", 15), "level 15: yours")
+	ok((Skins.wear(state, "hunter:PISTOL", "SWAMP_STALKER", 15)), "and wearable")
+	eq(state.owned.SWAMP_STALKER, nil, "derived, not stored")
+end)
+
+test("#414 the gun: mastery-20 gold beats a weapon skin; a weapon skin beats sets and tints", function()
+	local gold = Color3.fromRGB(250, 200, 60)
+	local skin = Skins.look("ENGRAVED_GOLD") :: any
+	local set = { colour = Color3.new(0, 0, 1), material = Enum.Material.SmoothPlastic, set = { id = "AURORA" } }
+	local tint = { colour = Color3.new(1, 0, 0), material = Enum.Material.SmoothPlastic, set = nil }
+	local goldLook = { colour = gold, material = Enum.Material.Neon, set = nil }
+	local c, m, s = Skins.gunPaint(skin, goldLook, true)
+	ok(c == gold and m == Enum.Material.Neon and s == nil, "maxed: gold, even with a skin")
+	c, m, s = Skins.gunPaint(skin, set, false)
+	ok(c == skin.colour and m == skin.material and s == nil, "skin over an animated set (set dropped)")
+	c, m, s = Skins.gunPaint(skin, tint, false)
+	ok(c == skin.colour and m == skin.material, "skin over a tint")
+	c, m, s = Skins.gunPaint(nil, set, false)
+	ok(c == set.colour and s == "AURORA", "no skin: the set, animated")
+	c, m, s = Skins.gunPaint(nil, tint, false)
+	ok(c == tint.colour and s == nil, "no skin: the tint")
 end)

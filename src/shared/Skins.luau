@@ -186,7 +186,7 @@ function Skins.canBuy(state: State, key: unknown, level: number): (number?, stri
 		return nil, "Already yours"
 	end
 	if row.price == nil then
-		return nil, "Not for sale yet"
+		return nil, if row.level then `Reach level {row.level}` else "Not for sale yet"
 	end
 	return row.price, `Buy — {Theme.amberExact(row.price)} {Theme.Currency}`
 end
@@ -324,8 +324,20 @@ function Skins.hunterPaint(partName: string, look: Look): (Color3?, Enum.Materia
 	return if which == "colour" then look.colour else look.accent, look.material
 end
 
+-- The gun's paint (#414): mastery 20's gold beats everything; else a worn weapon skin beats
+-- the Cosmetics gun look (an animated set, or tint + pattern); else that look. Returns the
+-- colour, material and the animated set id to keep (nil when the skin or gold covers it).
+-- `cosmetic` is Shared/Cosmetics.gunLook's answer (already gold when `maxed`).
+function Skins.gunPaint(skin: Look?, cosmetic: { colour: Color3, material: Enum.Material, set: any }, maxed: boolean): (Color3, Enum.Material, string?)
+	if maxed or not skin then
+		local set = if maxed or not cosmetic.set then nil else cosmetic.set.id
+		return cosmetic.colour, cosmetic.material, set
+	end
+	return skin.colour, skin.material, nil
+end
+
 -- The shop line for one skin: "Swamp Stalker — 25K Amber" / "— yours" / "— not for sale yet"
--- / "— player level 12".
+-- / "— Reach level 15" (a level skin: earned, never sold, #409).
 function Skins.line(state: State, key: string, level: number): string
 	local row = Skins.row(key)
 	if not row then
@@ -336,7 +348,7 @@ function Skins.line(state: State, key: string, level: number): string
 	elseif row.price then
 		return `{row.display} — {Theme.formatAmber(row.price)} {Theme.Currency}`
 	elseif row.level then
-		return `{row.display} — player level {row.level}`
+		return `{row.display} — Reach level {row.level}`
 	end
 	return `{row.display} — not for sale yet`
 end

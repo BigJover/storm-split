@@ -2050,6 +2050,8 @@ def validate_skins(data, problems, notes):
     ['Skins A: colour [1, 2, 300] must be three whole numbers 0-255']
     >>> d["Skins"]["A"]["colour"] = [1, 2, 3]; d["Skins"]["A"]["kind"] = "tower"; p = []; validate_skins(d, p, []); p
     ['Skins A: a tower set fits every tower: For must be blank (got PISTOL)']
+    >>> d["Skins"]["A"].update(kind="hunter", level=15); p = []; validate_skins(d, p, []); p
+    ['Skins A: a level skin is earned by level, never sold: Price must be blank (#409)']
     """
     scale = amber_scale(data)
     seen = {}
@@ -2087,11 +2089,13 @@ def validate_skins(data, problems, notes):
             ladder += 1
             if level < 1 or level != int(level):
                 problems.append(f"{where}: level {level:g} must be a whole number >= 1")
+            if price is not None:
+                problems.append(f"{where}: a level skin is earned by level, never sold: Price must be blank (#409)")
     notes.append(f"skins: {len(data['SkinOrder'])} ({sold} in the Amber shop, {ladder} on the level ladder; blank = not yet)")
 
 
 STORE_TABS = ("Amber", "Passes", "Hatchery", "Skins")
-STORE_GRANTS = {"amber": "product", "hatch": "product", "skins": "product",
+STORE_GRANTS = {"amber": "product", "hatch": "product", "skins": "product", "trainFinish": "product",
                 "trainRate": "pass", "trainSlots": "pass", "incubators": "pass"}
 
 
@@ -2130,6 +2134,8 @@ def store_ready(row):
         return row["amount"] is not None
     if g in ("hatch", "skins"):
         return len(row["items"]) > 0
+    if g == "trainFinish":
+        return True
     return False
 
 
@@ -2147,9 +2153,9 @@ def validate_store(data, problems, notes):
     []
     >>> d["Store"]["A"]["id"] = 123; p = []; validate_store(d, p, []); p
     ['Store A: has an id but is not complete yet (Robux, Amount or Items blank): it would show half a product']
-    >>> d["Store"]["A"]["amount"] = 2500; p = []; validate_store(d, p, []); p
+    >>> d["Store"]["A"].update(amount=2500, line="2,500 Amber"); p = []; validate_store(d, p, []); p
     ['Store A: 2500 Amber is not a whole multiple of the Amber scale 1,000 (#386)']
-    >>> d["Store"]["A"]["amount"] = 50000; d["Store"]["A"]["type"] = "pass"; p = []; validate_store(d, p, []); p
+    >>> d["Store"]["A"].update(amount=50000, line="50,000 Amber", type="pass"); p = []; validate_store(d, p, []); p
     ['Store A: grant amber is a product, not a pass']
     >>> d["Store"]["A"].update(type="product", grant="hatch", items=["NOPE"]); p = []; validate_store(d, p, []); p
     ['Store A: hatch item NOPE is not an egg', 'Store A: a hatch is a paid random item: Random must be yes (#388)']
@@ -2197,7 +2203,80 @@ def validate_store(data, problems, notes):
                 problems.append(f"{where}: skin {item} is not on the Skins sheet")
         if g == "hatch" and not row["random"]:
             problems.append(f"{where}: a hatch is a paid random item: Random must be yes (#388)")
+        if g == "amber" and amount is not None and not row["line"].startswith(f"{int(amount):,} {CURRENCY_WORD}"):
+            problems.append(f"{where}: the card line must start with the exact Amber ('{int(amount):,} {CURRENCY_WORD}', #411)")
+        if g == "skins" and row["items"]:
+            validate_bundle(data, key, row, problems)
+    validate_packs(data, problems)
     notes.append(f"store: {len(data['StoreOrder'])} rows, {shown} with an id (blank id = hidden until published)")
+
+
+CURRENCY_WORD = "Amber"
+
+
+def best_amber_per_robux(data):
+    """The most Amber one Robux buys in any Amber pack (None while no pack is priced)."""
+    rates = [r["amount"] / r["robux"] for r in data["Store"].values()
+             if r["grant"] == "amber" and r["amount"] and r["robux"]]
+    return max(rates) if rates else None
+
+
+def validate_bundle(data, key, row, problems):
+    """A bundle (#412) = one tower set + one hunter skin + one weapon skin, each sold for Amber
+    (level skins never in bundles), and never dearer than buying its items with Amber from the
+    best pack (no trap).
+
+    >>> d = {"Skins": {"T": {"kind": "tower", "price": 400000, "level": None},
+    ...      "H": {"kind": "hunter", "price": 500000, "level": None},
+    ...      "W": {"kind": "weapon", "price": 200000, "level": None},
+    ...      "L": {"kind": "weapon", "price": None, "level": 15}},
+    ...      "Store": {"P": {"grant": "amber", "amount": 3000000, "robux": 799}}}
+    >>> p = []; validate_bundle(d, "B", {"items": ["T", "H", "W"], "robux": 249}, p); p
+    []
+    >>> p = []; validate_bundle(d, "B", {"items": ["T", "H", "L"], "robux": 249}, p); p
+    ['Store B: bundle item L is a level skin (earned, never sold, #409)', 'Store B: bundle item L has no Amber price']
+    >>> p = []; validate_bundle(d, "B", {"items": ["T", "H"], "robux": 249}, p); p
+    ['Store B: a bundle is one tower set + one hunter skin + one weapon skin (#412), got tower, hunter']
+    >>> p = []; validate_bundle(d, "B", {"items": ["T", "H", "W"], "robux": 300}, p); p
+    ['Store B: R$300 buys 1,126,408 Amber in the best pack, more than its items cost (1,100,000): a trap']
+    """
+    kinds, total, before = [], 0, len(problems)
+    for item in row["items"]:
+        s = data["Skins"].get(item)
+        if s is None:
+            continue
+        kinds.append(s["kind"])
+        if s["level"] is not None:
+            problems.append(f"Store {key}: bundle item {item} is a level skin (earned, never sold, #409)")
+        if s["price"] is None:
+            problems.append(f"Store {key}: bundle item {item} has no Amber price")
+        else:
+            total += s["price"]
+    if sorted(kinds) != ["hunter", "tower", "weapon"]:
+        problems.append(f"Store {key}: a bundle is one tower set + one hunter skin + one weapon skin (#412), got {', '.join(kinds)}")
+    rate = best_amber_per_robux(data)
+    if len(problems) == before and rate and row["robux"] and row["robux"] * rate > total:
+        problems.append(f"Store {key}: R${int(row['robux'])} buys {int(row['robux'] * rate):,} Amber in the best pack, "
+                        f"more than its items cost ({total:,}): a trap")
+
+
+def validate_packs(data, problems):
+    """Amber packs (#411): a bigger pack never gives less Amber per Robux (no trap).
+
+    >>> d = {"StoreOrder": ["S", "C"], "Store": {"S": {"grant": "amber", "amount": 150000, "robux": 49},
+    ...      "C": {"grant": "amber", "amount": 400000, "robux": 199}}}
+    >>> p = []; validate_packs(d, p); p
+    ['Store C: 2,010 Amber per Robux, less than a smaller pack (3,061): a bigger pack must never be a worse deal']
+    """
+    packs = sorted((r["robux"], r["amount"], k) for k, r in ((k, data["Store"][k]) for k in data["StoreOrder"])
+                   if r["grant"] == "amber" and r["amount"] and r["robux"])
+    best = 0
+    for robux, amount, key in packs:
+        rate = amount / robux
+        if rate < best:
+            problems.append(f"Store {key}: {int(rate):,} Amber per Robux, less than a smaller pack ({int(best):,}): "
+                            "a bigger pack must never be a worse deal")
+        best = max(best, rate)
 
 
 def pet_worth(pet, mult):

@@ -857,6 +857,17 @@ function Progression.hasWarmingEgg(player: Player, egg: string): boolean
 end
 
 -- What the store shows this player besides the catalogue: paid Hatch now credits.
+function Progression.trainCredits(player: Player): number
+	local profile = profiles[player]
+	return if profile then profile.store.trainCredits else 0
+end
+
+-- The stats training now (Server/Store's "Finish this level" check).
+function Progression.trainingActive(player: Player): { string }
+	local profile = profiles[player]
+	return if profile then table.clone(profile.training.active) else {}
+end
+
 function Progression.storeView(player: Player): { [string]: number }
 	local profile = profiles[player]
 	return if profile then table.clone(profile.store.hatchCredits) else {}
@@ -865,7 +876,8 @@ end
 -- A Developer Product receipt (Server/Store's ProcessReceipt). Only a profile that loaded
 -- and may be saved gets a grant; the PurchaseId is granted once; PurchaseGranted only
 -- after the save went through (Shared/Store.processReceipt).
-function Progression.storeReceipt(player: Player, purchaseId: string, key: string?): string
+-- `pick`: the stat a "Finish this level" buyer chose (Server/Store), if any.
+function Progression.storeReceipt(player: Player, purchaseId: string, key: string?, pick: string?): string
 	local profile = profiles[player]
 	local row = StoreRules.row(key)
 	local decision = StoreRules.processReceipt(
@@ -888,6 +900,16 @@ function Progression.storeReceipt(player: Player, purchaseId: string, key: strin
 				end
 			elseif r.grant == "skins" then
 				Skins.grant(p.skins, r.items)
+			elseif r.grant == "trainFinish" then
+				-- #414: the picked (or only) stat training; nothing training = a credit for
+				-- the next level started. Never past a cap (a maxed stat isn't training).
+				local stat = StoreRules.finishTarget(p.training.active, pick)
+				if stat then
+					Training.finish(p.training, stat)
+					publishTraining(player)
+				else
+					p.store.trainCredits += 1
+				end
 			else
 				return false
 			end
@@ -934,7 +956,14 @@ do
 		if not profile then
 			return false, "Still loading your progress"
 		end
+		local was = table.find(profile.training.active, stat :: any) ~= nil
 		local ok, message = Training.start(profile.training, stat, effectsOf(player).trainSlots)
+		-- A paid "Finish this level" that found nothing training (#414) finishes this one.
+		if ok and not was and profile.store.trainCredits > 0 and Training.finish(profile.training, stat) then
+			profile.store.trainCredits -= 1
+			message = "Your paid Finish this level was used: level done!"
+			task.spawn(save, player)
+		end
 		if ok then
 			dirty[player] = true
 			publishTraining(player)

@@ -351,11 +351,12 @@ local function syncTool(player: Player)
 		local look = Cosmetics.gunLook(worn(player), HERO_COLORS[s.hero] or Color3.new(1, 1, 1), maxed, MASTERY_GOLD)
 		-- A weapon skin for this hero's gun (T142) wins over sets and tints; mastery 20's
 		-- gold stays its own. Colour and material only: the gun's size never changes.
-		local skin = if maxed then nil else Skins.look(player:GetAttribute(Skins.attribute(Skins.slot("weapon", s.hero))))
-		handle.Color = if skin then skin.colour else look.colour
-		handle.Material = if skin then skin.material else look.material
+		local skin = Skins.look(player:GetAttribute(Skins.attribute(Skins.slot("weapon", s.hero))))
+		local colour, material, set = Skins.gunPaint(skin, look, maxed)
+		handle.Color = colour
+		handle.Material = material
 		-- Looks.client animates a set's colour on every screen.
-		handle:SetAttribute("CosmeticSet", if look.set and not skin then look.set.id else nil)
+		handle:SetAttribute("CosmeticSet", set)
 	end
 end
 

@@ -36,6 +36,7 @@ local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local request = remotes:WaitForChild("ProgressRequest") :: RemoteFunction
 local storeRequest = remotes:WaitForChild("StoreRequest") :: RemoteFunction
 local StoreRules = require(Shared:WaitForChild("Store"))
+local Training = require(Shared:WaitForChild("Training"))
 
 local player = Players.LocalPlayer
 
@@ -195,7 +196,7 @@ local order = 0
 
 local TABS = { { "hunter", "Hunter skins" }, { "weapon", "Weapon skins" }, { "tower", "Tower sets" }, { "campsite", "Campsite" } }
 local STORE_TABS = { { "store:Amber", "Amber" }, { "store:Passes", "Passes" }, { "store:Hatchery", "Hatchery" }, { "store:Skins", "Skins" } }
-type StoreView = { open: boolean, restricted: boolean, passes: { [string]: boolean }, credits: { [string]: number } }
+type StoreView = { open: boolean, restricted: boolean, passes: { [string]: boolean }, credits: { [string]: number }, trainCredits: number? }
 local storeView: StoreView? = nil
 local tabButtons: { [string]: TextButton } = {}
 
@@ -312,9 +313,19 @@ local function renderStore(tabName: string)
 		return
 	end
 	local any = false
+	-- "Finish this level" (#414) shows only while a stat is training.
+	local active = Training.fromAttributes(function(name: string): any
+		return player:GetAttribute(name)
+	end).active
+	local function storeBuy(key: string, stat: string?)
+		local ok, message = storeRequest:InvokeServer("buy", key, stat)
+		if not ok then
+			say(tostring(message))
+		end
+	end
 	for _, key in StoreRules.order() do
 		local row = StoreRules.row(key)
-		if row and row.tab == tabName and StoreRules.shown(key, sv.restricted) then
+		if row and row.tab == tabName and StoreRules.shown(key, sv.restricted) and (row.grant ~= "trainFinish" or #active > 0) then
 			any = true
 			local f = card(52)
 			local name = textLabel(f, 15, Enum.Font.GothamBold, TEXT)
@@ -331,23 +342,37 @@ local function renderStore(tabName: string)
 			end, function(item)
 				local r = Skins.row(item)
 				return r and r.price
+			end, function(item)
+				return view ~= nil and view.owned[item] == true
 			end)
 			local mine = row.type == "pass" and sv.passes[key] == true
 			local b = button(f, if mine then "Yours" else `Buy {StoreRules.priceLabel(key)}`, if mine then GREY else AMBER, 110)
 			b.AnchorPoint = Vector2.new(1, 0.5)
 			b.Position = UDim2.new(1, -8, 0.5, 0)
-			if not mine then
+			if not mine and row.grant == "trainFinish" and StoreRules.needsPick(active) then
+				-- Two stats training: pick which one first (#414), then the prompt.
+				b.Visible = false
+				local pick = card(36)
+				for i, stat in active do
+					local s = button(pick, `{Training.NAMES[stat] or stat} · {StoreRules.priceLabel(key)}`, AMBER, 150)
+					s.AnchorPoint = Vector2.new(0, 0.5)
+					s.Position = UDim2.new(0, 10 + (i - 1) * 160, 0.5, 0)
+					s.Activated:Connect(function()
+						storeBuy(key, stat)
+					end)
+				end
+			elseif not mine then
 				b.Activated:Connect(function()
-					local ok, message = storeRequest:InvokeServer("buy", key)
-					if not ok then
-						say(tostring(message))
-					end
+					storeBuy(key)
 				end)
 			end
 		end
 	end
 	if not any then
 		heading("Nothing here yet")
+	end
+	if (sv.trainCredits or 0) > 0 then
+		heading(`Paid Finish this level waiting: {sv.trainCredits} (used on the next level you start)`)
 	end
 	for egg, n in sv.credits do
 		local def = (Config :: any).Eggs[egg]
