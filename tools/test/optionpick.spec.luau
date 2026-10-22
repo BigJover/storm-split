@@ -6,6 +6,7 @@
 ]]
 local Config = require(src.shared.Config)
 local OptionPick = require(src.shared.OptionPick)
+local SafeArea = require(src.shared.SafeArea)
 local Upgrades = require(src.shared.Upgrades)
 
 -- A made-up path with all three options at tier 4 (B/C don't exist in Config yet).
@@ -212,13 +213,16 @@ end)
 test("a short window scrolls the cards before it scales the panel", function()
 	-- Room for the fixed parts and one card but not three stacked: it scrolls, no scale.
 	local fixed = OptionPick.PAD * 2 + OptionPick.HEADER + OptionPick.CONFIRM + OptionPick.MESSAGE + OptionPick.GAP * 3
-	local y = OptionPick.TOP + OptionPick.BOTTOM + fixed + OptionPick.CARD_FLAT + 20
+	-- 375 wide: the panel's left edge is in the chat window, so it starts under it (F13b).
+	local top = OptionPick.top(2000, nil, 375)
+	eq(top, SafeArea.chatTop(nil), "under the chat window")
+	local y = top + OptionPick.BOTTOM + fixed + OptionPick.CARD_FLAT + 20
 	local shape = OptionPick.layout(375, y, 3)
 	eq(shape.stacked, true, "stacked")
 	eq(shape.scale, 1, "not scaled yet")
 	ok(shape.listHeight < shape.content, "it scrolls")
 	-- Too short for even one card: now it scales.
-	local tiny = OptionPick.layout(375, OptionPick.TOP + OptionPick.BOTTOM + fixed, 3)
+	local tiny = OptionPick.layout(375, top + OptionPick.BOTTOM + fixed, 3)
 	ok(tiny.scale < 1, `scaled ({tiny.scale})`)
 end)
 
@@ -235,7 +239,6 @@ test("N20 (T120b, no-trap rule): with Choose hero / Unlocks & Mastery up, the pa
 	-- The buttons' bottoms as Shop.client places them (SafeArea.buildHud, Run 13 F13).
 	local shop = require("@lune/fs").readFile("src/client/Shop.client.luau")
 	ok(shop:find("SafeArea.buildHud(inset)", 1, true) ~= nil, "Shop.client places H and M from SafeArea.buildHud")
-	local SafeArea = require(src.shared.SafeArea)
 	local hud = SafeArea.buildHud(nil)
 	local function bottom(name: string): number
 		return if name == "heroButton" then hud.hero + SafeArea.HERO_H else hud.mastery + SafeArea.MASTERY_H

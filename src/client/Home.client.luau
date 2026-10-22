@@ -21,6 +21,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local GuiService = game:GetService("GuiService")
+local TextChatService = game:GetService("TextChatService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
@@ -96,7 +97,13 @@ do
 	local function fit()
 		local viewport = camera.ViewportSize
 		local docked = column.AnchorPoint.X == 0
-		local top, bottom = SafeArea.band(viewport.Y, GuiService:GetGuiInset().Y, SCREEN_MARGIN)
+		local inset = GuiService:GetGuiInset().Y
+		local live = SafeArea.liveChat(TextChatService)
+		local _, bottom = SafeArea.band(viewport.Y, inset, SCREEN_MARGIN)
+		-- Clear of the chat window too (Run 14 F13b): docked it sits top left under the
+		-- Menu button; centred, it moves under the chat box when its left edge is in it.
+		local left = if docked then DOCK_MARGIN else (viewport.X - HomeLayout.COLUMN * columnScale.Scale) / 2
+		local top = math.min(SafeArea.topFor(left, inset, live), bottom - 1)
 		if docked then
 			top = math.min(top + TOGGLE_H + 8, bottom - 1)
 		end
@@ -386,7 +393,12 @@ local collapsed = false
 local menuToggle = Instance.new("TextButton")
 menuToggle.Name = "OutpostMenu"
 menuToggle.AnchorPoint = Vector2.new(0, 0)
-menuToggle.Position = UDim2.fromOffset(DOCK_MARGIN, SafeArea.top(GuiService:GetGuiInset().Y)) -- clickable (Run 13 F13)
+-- Top left, under the CoreGui band and the chat window (Run 13 F13, Run 14 F13b).
+local function placeToggle()
+	menuToggle.Position = UDim2.fromOffset(DOCK_MARGIN, SafeArea.topFor(DOCK_MARGIN, GuiService:GetGuiInset().Y, SafeArea.liveChat(TextChatService)))
+end
+placeToggle()
+camera:GetPropertyChangedSignal("ViewportSize"):Connect(placeToggle)
 menuToggle.Size = UDim2.fromOffset(150, TOGGLE_H)
 menuToggle.BackgroundColor3 = CARD
 menuToggle.AutoButtonColor = true

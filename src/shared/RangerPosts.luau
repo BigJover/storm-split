@@ -68,12 +68,12 @@ export type Layout = { width: number, listHeight: number, height: number, top: n
 -- and message never scroll.
 function RangerPosts.layout(viewportX: number, viewportY: number, rows: number, buildHud: boolean?): Layout
 	local content = rows * RangerPosts.ROW + math.max(0, rows - 1) * RangerPosts.ROW_GAP
-	local listHeight = OptionPick.listHeight(viewportY, content, buildHud)
+	local listHeight = OptionPick.listHeight(viewportY, content, buildHud, viewportX)
 	return {
 		width = math.min(OptionPick.WIDTH, viewportX - OptionPick.EDGE * 2),
 		listHeight = listHeight,
 		height = OptionPick.CHROME + listHeight,
-		top = OptionPick.top(viewportY, buildHud),
+		top = OptionPick.top(viewportY, buildHud, viewportX),
 	}
 end
 

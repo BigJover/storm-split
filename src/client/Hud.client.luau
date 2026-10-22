@@ -11,6 +11,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local GuiService = game:GetService("GuiService")
+local TextChatService = game:GetService("TextChatService")
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -57,7 +58,20 @@ labelPadding.Parent = label
 local startButton = Instance.new("TextButton")
 startButton.Name = "Start"
 startButton.AnchorPoint = Vector2.new(0.5, 0)
-startButton.Position = UDim2.new(0.5, 0, 0, SafeArea.localTop(GuiService:GetGuiInset().Y)) -- under the CoreGui band (Run 13 F13)
+-- Under the CoreGui band (Run 13 F13); pushed right, clear of the chat window, on a
+-- window narrow enough that its left edge would be in it (Run 14 F13b).
+local function placeStart()
+	local camera = workspace.CurrentCamera
+	local inset = GuiService:GetGuiInset().Y
+	local live = SafeArea.liveChat(TextChatService)
+	local viewX = if camera then camera.ViewportSize.X else 800
+	local x = SafeArea.centreX(viewX, SafeArea.HUD_W, inset, live)
+	startButton.Position = UDim2.new(0, x, 0, SafeArea.localTop(inset))
+end
+placeStart()
+if workspace.CurrentCamera then
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(placeStart)
+end
 startButton.Size = UDim2.fromOffset(220, SafeArea.START_H)
 startButton.BackgroundColor3 = Color3.fromRGB(70, 180, 110)
 startButton.TextColor3 = Color3.new(1, 1, 1)
@@ -215,8 +229,10 @@ local battleResults = Instance.new("Frame")
 battleResults.Name = "BattleResults"
 -- Its top (and the X) under the CoreGui band that eats clicks (Run 13 F13), inside any window.
 battleResults.AnchorPoint = Vector2.new(0.5, 0)
-battleResults.Position = UDim2.new(0.5, 0, 0, SafeArea.localTop(GuiService:GetGuiInset().Y))
-battleResults.Size = UDim2.new(1, -32, 1, -(SafeArea.localTop(GuiService:GetGuiInset().Y) + 16))
+-- Full width, so its left edge is always in the chat window: it starts under it (Run 14 F13b).
+local RESULTS_TOP = SafeArea.topFor(16, GuiService:GetGuiInset().Y, SafeArea.liveChat(TextChatService)) - GuiService:GetGuiInset().Y
+battleResults.Position = UDim2.new(0.5, 0, 0, RESULTS_TOP)
+battleResults.Size = UDim2.new(1, -32, 1, -(RESULTS_TOP + 16))
 battleResults.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
 battleResults.BackgroundTransparency = 0.1
 battleResults.Visible = false
@@ -555,7 +571,7 @@ if studioCash and studioCash:IsA("RemoteEvent") then
 	local button = Instance.new("TextButton")
 	button.Name = "StudioCash"
 	button.AnchorPoint = Vector2.new(0, 0)
-	button.Position = UDim2.new(0, 12, 0, SafeArea.localTop(GuiService:GetGuiInset().Y)) -- clickable (Run 13 F13)
+	button.Position = UDim2.new(0, 12, 0, SafeArea.topFor(12, GuiService:GetGuiInset().Y, SafeArea.liveChat(TextChatService)) - GuiService:GetGuiInset().Y) -- clickable: under the band and the chat window (Run 13 F13, Run 14 F13b)
 	button.Size = UDim2.fromOffset(130, 34)
 	button.BackgroundColor3 = Color3.fromRGB(60, 140, 80)
 	button.TextColor3 = Color3.new(1, 1, 1)
@@ -890,7 +906,7 @@ campStroke.Parent = label
 
 local campsBoard = Instance.new("TextLabel")
 campsBoard.Name = "CampsBoard"
-campsBoard.Position = UDim2.new(0, 12, 0, SafeArea.localTop(GuiService:GetGuiInset().Y) + 44) -- under Studio's +1000 cash button
+campsBoard.Position = UDim2.new(0, 12, 0, SafeArea.topFor(12, GuiService:GetGuiInset().Y) - GuiService:GetGuiInset().Y + 44) -- under Studio's +1000 cash button
 campsBoard.Size = UDim2.new(0.3, 0, 0.42, 0) -- shrinks with the window, never off screen
 campsBoard.BackgroundColor3 = Color3.fromRGB(24, 20, 34)
 campsBoard.BackgroundTransparency = 0.3

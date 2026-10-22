@@ -26,6 +26,7 @@
 ]]
 
 local GuiService = game:GetService("GuiService")
+local TextChatService = game:GetService("TextChatService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -277,6 +278,12 @@ local function fit()
 	end
 	local top, bottom = band()
 	local layout = ProfileScreen.layout(gui.AbsoluteSize.X, top, bottom, listContent)
+	-- Its left edge in the chat window: start under it (Run 14 F13b, the Profile tab).
+	local clear = SafeArea.topFor((gui.AbsoluteSize.X - layout.width * layout.scale) / 2, GuiService:GetGuiInset().Y, SafeArea.liveChat(TextChatService))
+	if clear > top then
+		top = math.min(clear, bottom - 1)
+		layout = ProfileScreen.layout(gui.AbsoluteSize.X, top, bottom, listContent)
+	end
 	boardScale.Scale = layout.scale
 	board.Position = UDim2.new(0.5, 0, 0, top)
 	board.Size = UDim2.fromOffset(layout.width, layout.height)

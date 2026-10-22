@@ -21,6 +21,7 @@ local Outpost = require(Shared:WaitForChild("Outpost"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local SafeArea = require(Shared:WaitForChild("SafeArea"))
 local GuiService = game:GetService("GuiService")
+local TextChatService = game:GetService("TextChatService")
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local request = remotes:WaitForChild("Training") :: RemoteFunction
@@ -136,6 +137,26 @@ foldButton.Text = "Training"
 foldButton.Visible = false
 foldButton.Parent = gui
 corner(foldButton, 8)
+
+-- Top right; on a window narrow enough that its left edge reaches the chat window, both
+-- move under it (Run 14 F13b).
+do
+	local function place()
+		local camera = workspace.CurrentCamera
+		if camera then
+			local inset = GuiService:GetGuiInset().Y
+			local live = SafeArea.liveChat(TextChatService)
+			local scale = panel:FindFirstChildOfClass("UIScale")
+			local width = WIDTH * (if scale then scale.Scale else 1)
+			panel.Position = UDim2.new(1, -16, 0, SafeArea.topFor(camera.ViewportSize.X - 16 - width, inset, live) - inset)
+			foldButton.Position = UDim2.new(1, -16, 0, SafeArea.topFor(camera.ViewportSize.X - 16 - 110, inset, live) - inset)
+		end
+	end
+	place()
+	if workspace.CurrentCamera then
+		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(place)
+	end
+end
 
 local closeButton = Instance.new("TextButton")
 closeButton.AnchorPoint = Vector2.new(1, 0)

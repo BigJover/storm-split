@@ -22,6 +22,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
+local TextChatService = game:GetService("TextChatService")
 local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -129,10 +130,15 @@ do
 	local limit = Instance.new("UISizeConstraint")
 	limit.MaxSize = Vector2.new(WIDTH, 640)
 	limit.Parent = panel
+	-- Under the CoreGui band, and under the chat window when its left edge is in it (Run 14 F13b).
 	local function fitWidth()
 		local camera = workspace.CurrentCamera
 		if camera then
-			panel.Size = UDim2.new(0, math.min(WIDTH, camera.ViewportSize.X - 16), 1, -(SafeArea.localTop(GuiService:GetGuiInset().Y) + 16))
+			local inset = GuiService:GetGuiInset().Y
+			local width = math.min(WIDTH, camera.ViewportSize.X - 16)
+			local top = SafeArea.topFor((camera.ViewportSize.X - width) / 2, inset, SafeArea.liveChat(TextChatService)) - inset
+			panel.Position = UDim2.new(0.5, 0, 0, top)
+			panel.Size = UDim2.new(0, width, 1, -(top + 16))
 		end
 	end
 	fitWidth()

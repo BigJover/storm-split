@@ -40,6 +40,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
+local TextChatService = game:GetService("TextChatService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Combat = require(Shared:WaitForChild("Combat"))
@@ -164,9 +165,13 @@ corner(masteryButton, 8)
 do
 	local function place()
 		local inset = GuiService:GetGuiInset().Y
+		-- In line with Start, which moves right, clear of the chat window (Run 14 F13b).
+		local live = SafeArea.liveChat(TextChatService)
+		local viewX = workspace.CurrentCamera.ViewportSize.X
 		local hud = SafeArea.buildHud(inset)
-		heroButton.Position = UDim2.new(0.5, 0, 0, hud.hero - inset)
-		masteryButton.Position = UDim2.new(0.5, 0, 0, hud.mastery - inset)
+		local x = SafeArea.centreX(viewX, SafeArea.HUD_W, inset, live)
+		heroButton.Position = UDim2.new(0, x, 0, hud.hero - inset)
+		masteryButton.Position = UDim2.new(0, x, 0, hud.mastery - inset)
 	end
 	place()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(place)
@@ -434,7 +439,7 @@ local function fit()
 	end
 	panelScale.Scale = 1
 	-- Capped at LIST_MAX_SCREEN of the window and kept under Choose hero / Unlocks (N20).
-	list.Size = UDim2.new(1, 0, 0, OptionPick.listHeight(viewport.Y, listLayout.AbsoluteContentSize.Y, buildHud()))
+	list.Size = UDim2.new(1, 0, 0, OptionPick.listHeight(viewport.Y, listLayout.AbsoluteContentSize.Y, buildHud(), viewport.X))
 	-- Narrow screens (a phone held upright): keep the X on screen too.
 	panel.Size = UDim2.fromOffset(math.min(PANEL_WIDTH, viewport.X - PANEL_EDGE * 2), 0)
 end

@@ -175,7 +175,10 @@ end
 
 -- Where a panel's top may start on a `viewportY` window: under the build-phase buttons
 -- while they show (`buildHud`, N20), else under Roblox's top bar.
-function OptionPick.top(viewportY: number, buildHud: boolean?): number
+-- With `viewportX`: a window narrow enough that the centred panel's left edge is in the
+-- chat window keeps the panel under it too (Run 14 F13b), unless that leaves a tiny window
+-- no row.
+function OptionPick.top(viewportY: number, buildHud: boolean?, viewportX: number?): number
 	if buildHud and viewportY - OptionPick.BUILD_HUD_BOTTOM - OptionPick.BOTTOM - OptionPick.CHROME >= OptionPick.LIST_ROOM_MIN then
 		return OptionPick.BUILD_HUD_BOTTOM
 	end
@@ -184,14 +187,21 @@ function OptionPick.top(viewportY: number, buildHud: boolean?): number
 	if viewportY - OptionPick.TOP - OptionPick.BOTTOM - OptionPick.CHROME < OptionPick.TINY_ROOM then
 		return SafeArea.TOP_BAR
 	end
+	if viewportX then
+		local width = math.min(OptionPick.WIDTH, viewportX - OptionPick.EDGE * 2)
+		local top = SafeArea.topFor((viewportX - width) / 2, nil)
+		if viewportY - top - OptionPick.BOTTOM - OptionPick.CHROME >= OptionPick.TINY_ROOM then
+			return math.max(top, OptionPick.TOP)
+		end
+	end
 	return OptionPick.TOP
 end
 
 -- The scroll box's height for a panel (no pick) whose rows are `content` px tall: all of
 -- them, capped at LIST_MAX_SCREEN of the window and at the room under `top` (N20).
-function OptionPick.listHeight(viewportY: number, content: number, buildHud: boolean?): number
+function OptionPick.listHeight(viewportY: number, content: number, buildHud: boolean?, viewportX: number?): number
 	local cap = math.floor(viewportY * OptionPick.LIST_MAX_SCREEN)
-	local room = viewportY - OptionPick.top(viewportY, buildHud) - OptionPick.BOTTOM - OptionPick.CHROME
+	local room = viewportY - OptionPick.top(viewportY, buildHud, viewportX) - OptionPick.BOTTOM - OptionPick.CHROME
 	return math.max(0, math.min(content, cap, room))
 end
 
@@ -202,7 +212,7 @@ end
 function OptionPick.layout(viewportX: number, viewportY: number, count: number, buildHud: boolean?): Layout
 	local fixed = OptionPick.PAD * 2 + OptionPick.HEADER + OptionPick.CONFIRM + OptionPick.MESSAGE + OptionPick.GAP * 3
 	local availX = math.max(viewportX - OptionPick.EDGE * 2, 1)
-	local availY = math.max(viewportY - OptionPick.top(viewportY, buildHud) - OptionPick.BOTTOM, 1)
+	local availY = math.max(viewportY - OptionPick.top(viewportY, buildHud, viewportX) - OptionPick.BOTTOM, 1)
 	local n = math.max(count, 1)
 
 	local function shape(width: number)

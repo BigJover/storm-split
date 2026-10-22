@@ -20,6 +20,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
+local TextChatService = game:GetService("TextChatService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
@@ -133,6 +134,22 @@ corner(panel, 12)
 local sizeLimit = Instance.new("UISizeConstraint")
 sizeLimit.MaxSize = Vector2.new(WIDTH, 640)
 sizeLimit.Parent = panel
+-- Under the chat window too when its left edge is in it (Run 14 F13b).
+do
+	local function fit()
+		local camera = workspace.CurrentCamera
+		if camera then
+			local inset = GuiService:GetGuiInset().Y
+			local top = SafeArea.topFor((camera.ViewportSize.X - WIDTH) / 2, inset, SafeArea.liveChat(TextChatService)) - inset
+			panel.Position = UDim2.new(0.5, 0, 0, top)
+			panel.Size = UDim2.new(0, WIDTH, 1, -(top + 16))
+		end
+	end
+	fit()
+	if workspace.CurrentCamera then
+		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
+	end
+end
 
 local header = textLabel(panel, 22, Enum.Font.GothamBold, AMBER)
 header.Position = UDim2.fromOffset(14, 8)

@@ -32,7 +32,8 @@ function SafeArea.localTop(insetY: number?): number
 	return SafeArea.top(insetY) - (insetY or 0)
 end
 
--- Can a control whose top edge is at screen y `y` be clicked all the way up?
+-- Can a control whose top edge is at screen y `y` be clicked all the way up? (Right of
+-- the chat window; left of it, use `clickableAt`.)
 function SafeArea.clickable(y: number, insetY: number?): boolean
 	return y >= SafeArea.top(insetY)
 end
@@ -57,12 +58,93 @@ function SafeArea.centerOffset(viewportY: number, insetY: number?, margin: numbe
 	return math.floor((top + bottom) / 2 - viewportY / 2)
 end
 
+--[[
+	The chat window (PLAYTEST Run 14 F13b). Roblox's chat window sits top left under the
+	top bar and eats every click on it even when it looks empty: the Tester read
+	`TextChatService.ChatWindowConfiguration` at (8, 12) 283×141 under a 58 px top bar =
+	screen x 8–291, y 70–211. So a control whose left edge is left of `chat.right` must
+	start at or below `chatTop` (the box's bottom + GAP); one further right only needs the
+	usual safe line. The default box is that window plus CHAT_MARGIN; when the live
+	configuration is readable its box is added (the bigger of the two wins, so a moved or
+	resized window is covered and an unreadable one still is).
+]]
+SafeArea.CHAT_MARGIN = 9
+SafeArea.CHAT_RIGHT = 300 -- screen x: 8 + 283 + margin
+SafeArea.CHAT_BELOW_BAR = 162 -- px under the top bar: 12 + 141 + margin (screen y 220 on 58)
+
+export type ChatRect = { x: number, y: number, w: number, h: number } -- under the top bar
+
+-- The live chat window from a TextChatService (or nil when it can't be read). Never errors.
+function SafeArea.liveChat(service: any): ChatRect?
+	if service == nil then
+		return nil
+	end
+	local okRead, rect = pcall(function()
+		local config = service.ChatWindowConfiguration
+		if config == nil or config.Enabled == false then
+			return nil
+		end
+		local pos, size = config.AbsolutePosition, config.AbsoluteSize
+		if size.X <= 0 or size.Y <= 0 then
+			return nil
+		end
+		return { x = pos.X, y = pos.Y, w = size.X, h = size.Y }
+	end)
+	return if okRead then rect else nil
+end
+
+-- The chat box's right edge and bottom, screen coordinates (margin included).
+function SafeArea.chatBox(insetY: number?, live: ChatRect?): (number, number)
+	local bar = math.max(insetY or 0, SafeArea.TOP_BAR)
+	local right, bottom = SafeArea.CHAT_RIGHT, bar + SafeArea.CHAT_BELOW_BAR
+	if live then
+		right = math.max(right, live.x + live.w + SafeArea.CHAT_MARGIN)
+		bottom = math.max(bottom, (insetY or 0) + live.y + live.h + SafeArea.CHAT_MARGIN)
+	end
+	return right, bottom
+end
+
+-- The first clickable row under the chat box (screen): 230 on today's top bar.
+function SafeArea.chatTop(insetY: number?, live: ChatRect?): number
+	local _, bottom = SafeArea.chatBox(insetY, live)
+	return math.max(SafeArea.top(insetY), bottom + SafeArea.GAP)
+end
+
+-- The first clickable row (screen) for a control or panel whose left edge is at screen x
+-- `left`: under the chat box when it starts left of the box's right edge, else the safe line.
+function SafeArea.topFor(left: number, insetY: number?, live: ChatRect?): number
+	local right = SafeArea.chatBox(insetY, live)
+	return if left < right then SafeArea.chatTop(insetY, live) else SafeArea.top(insetY)
+end
+
+-- Can a control at screen (x, y) be clicked all the way: under the CoreGui band, and
+-- either right of the chat box or under it.
+function SafeArea.clickableAt(x: number, y: number, insetY: number?, live: ChatRect?): boolean
+	local right, bottom = SafeArea.chatBox(insetY, live)
+	return y >= SafeArea.top(insetY) and (x >= right or y >= bottom)
+end
+
+-- Centre x (screen) for a `w`-wide button at the top centre of a `viewportX` window: the
+-- middle, or pushed right just clear of the chat box when the middle would put its left
+-- edge in it (never past the window's right edge minus 8).
+function SafeArea.centreX(viewportX: number, w: number, insetY: number?, live: ChatRect?): number
+	local right = SafeArea.chatBox(insetY, live)
+	local mid = viewportX / 2
+	if mid - w / 2 >= right then
+		return mid
+	end
+	return math.max(mid, math.min(right + SafeArea.GAP + w / 2, viewportX - 8 - w / 2))
+end
+
 -- The build-phase buttons top centre (Hud.client's Start; Shop.client's Choose hero and
 -- Unlocks & Mastery), screen coordinates, top edges and the lowest bottom. Start sits on
--- the safe line; the other two keep their old spacing under it (PLAYTEST N20).
+-- the safe line; the other two keep their old spacing under it (PLAYTEST N20). Their x is
+-- `centreX` (Run 14 F13b): clear of the chat window on windows ≥ ~540 px wide; narrower
+-- (phone-sized) ones keep the stack where N20 needs it and only its right part clears.
 SafeArea.START_H = 44
 SafeArea.HERO_H = 44
 SafeArea.MASTERY_H = 40
+SafeArea.HUD_W = 220 -- Start / Choose hero / Unlocks & Mastery width
 function SafeArea.buildHud(insetY: number?): { start: number, hero: number, mastery: number, bottom: number }
 	local start = SafeArea.top(insetY)
 	local hero = start + 96
