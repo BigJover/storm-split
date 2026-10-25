@@ -189,3 +189,15 @@ a private publish with the Store ids, real purchases, the feel, multi-client kit
 - **Log every design call** in `DECISIONS.md`: what was decided, why (which preference), and
   how to reverse it.
 - Keep `CLAUDE.md` status, `ARCHITECTURE.md` phase table and the design docs current.
+
+## Phase 11 art batches (2026-10-25, `PLAN.md` Phase 11, #421–#432)
+
+- **Builder** writes bpy scripts under `tools/art/`, runs `tools/art/build.sh` (Blender
+  headless), commits scripts + preview PNGs (never `tools/art/out/` or a key). Never
+  changes a gameplay part's size, collision or a gameplay number; `artslot.spec.luau` must pass.
+- **Coordinator** shows Jovan the batch's preview contact sheet before any upload; uploads
+  run (`upload.py`) only after his OK, or Jovan bulk-imports in Studio and an agent harvests ids.
+- **Tester** screenshots each model in Studio next to its blocky look (`artoff`), checks
+  effects/rings/bars still show, and runs the perf gate (#432).
+- **🦖 Dino agent** reviews the contact sheet (species read at a glance, silhouettes distinct
+  at the smallest size, kid-friendly) and the Studio screenshots.

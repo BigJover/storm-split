@@ -212,6 +212,23 @@ What this adds to his taste (applied in DECISIONS #363–#390, PLAN "Phase 10"):
 What this adds: he wants AFK progress to need **being in the game** (presence, not idle
 time away), **a rarer top tier** to chase, and **really big numbers** (millions) read at a glance.
 
+## Art pass before publishing (Jovan, 2026-10-25)
+
+"Building is done" — before publishing he wants an **art pass to make the models look
+better**. His answers:
+- **Route: agents script Blender.** Blender 5.2.3 is installed (`/Applications/Blender.app`,
+  headless: `/Applications/Blender.app/Contents/MacOS/Blender --background --python x.py`).
+  Agents write Python (bpy) that builds stylised low-poly models procedurally, versioned in
+  the repo (`tools/art/`).
+- **Priority:** 1) dinos and hunters (+ their guns), 2) towers, 3) skins as real
+  texture/mesh variants (not just recolours). Pets and Outpost props after.
+- Visuals only: gameplay (hitboxes, sizes, collision, range rings, HP bars, per-size dino
+  scaling, hunter visibility) must not change. Pipeline and plan: `PLAN.md` Phase 11,
+  `DECISIONS.md` #421–#432.
+
+What this adds: he judges by **looks now that play is done**; he wants it agent-built and
+reproducible (scripts, not hand-sculpting), and he'll approve from preview images.
+
 ## Economy (his numbers)
 
 - Casual: solo pays only on a track clear (Easy 50 / Normal 100 / Hard 150 / Chaos 200

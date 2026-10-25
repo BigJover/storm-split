@@ -1,3 +1,108 @@
+# Plan — Phase 11: Art pass — Blender-scripted models (Director, 2026-10-25)
+
+Jovan (2026-10-25, `DIRECTION.md` "Art pass before publishing"): building is done; before
+publishing, **make the models look better**. Route: **agents script Blender 5.2.3 headless**
+(`/Applications/Blender.app/Contents/MacOS/Blender --background --python x.py`); priority
+**dinos + hunters (+ guns)** → towers → skins as real variants → pets/Outpost. Calls:
+`DECISIONS.md` #421–#432. Phase 7–10 rules hold (one task = one commit, pushed;
+check/export/test + `tools/compile.luau` green; co-op specs re-run every task; no publish, no
+DataStore writes). **Visuals only:** no gameplay number, hitbox, collision, range ring, HP bar,
+name tag or hunter visibility changes (#426). Fresh Builder per batch; every batch ends with
+Tester screenshots + 🦖 style review.
+
+**Status (2026-10-25): planned. Next: Jovan's asks (below) → Builder 11a (T146–T148).**
+Defaults apply so 11a can start now: flat-shaded low-poly (#427), avatar + hero outfit (#428),
+route (b) imports until an API key exists (#423).
+
+**Pipeline (#422–#425):** Blender script → FBX + preview PNG → **primary** Open Cloud upload
+from the terminal (`tools/art/upload.py`, needs Jovan's API key) → ids in generated
+`src/shared/ArtIds.luau` → server `InsertService:LoadAsset` once at boot →
+`ReplicatedStorage.Art` templates → looks clone them. **Fallback** Jovan bulk-imports the
+batch's FBXs in Studio's 3D Importer; an agent harvests the MeshIds via the Studio MCP into
+the same `ArtIds.luau`. **Runtime fallback** = today's blocky looks whenever an id is blank,
+pending moderation or fails. EditableMesh rejected (no replication, memory budget, opt-in /
+ID-verification; #424).
+
+### What needs Jovan
+1. **Style:** low-poly **flat-shaded** (default) or smooth/rounded? Keep today's colours per
+   species (default yes — readability)?
+2. **API key** (route c): Creator Hub → Open Cloud → API Keys, scope **Assets: read + write**,
+   for the account or group that **owns the game**; give it via env `ROBLOX_API_KEY` or the
+   keychain (never pasted in chat/repo) plus the creator id. Without it: one bulk import in
+   Studio per batch (route b).
+3. **Hunters:** keep the player's avatar + add a hero outfit (default) or full hero bodies?
+4. Approve each batch's previews (the coordinator shows the PNGs) before upload.
+
+### Batch 11a — pipeline (Builder; T146 → T148)
+- **T146 Blender framework (`tools/art/`).** `lowpoly.py` (primitives, extrude/bevel helpers,
+  flat shading, paint groups = named objects `body/belly/accent/dark/eye`, fit-to-box,
+  tri counter, FBX export with +Y up / −Z forward, studs = metres, apply transforms),
+  `render.py` (512 px 3/4-view PNG, Workbench flat, neutral background, one per model + a
+  contact sheet per batch), `build.sh [kind] [key]` (runs Blender headless; non-zero exit on a
+  script error or budget miss), `manifest.json` (key, file hash, tris, bounds, asset id).
+  Proof model: Compy (HUSK) fitted to `DinoLook` HUSK body box. Accept: `build.sh dino HUSK`
+  writes `tools/art/out/dino/HUSK.fbx` + `previews/dino/HUSK.png`; re-run is byte-stable or
+  hash-stable; budgets enforced (#427). Out files git-ignored; previews committed.
+- **T147 Upload / harvest.** `upload.py` (Open Cloud Assets v1: create Model asset from FBX,
+  poll operation, write id; skip unchanged hashes; key from env/keychain; **verify the
+  endpoint and fields live on first use and log what was true in #422**) and `harvest.luau`
+  (MCP `execute_luau`: walk the Studio-imported folder, read each MeshPart's MeshId + size per
+  paint group, print JSON) → `tools/art/write_ids.py` regenerates `src/shared/ArtIds.luau`
+  (`{ [kind]: { [key]: { model = id?, parts = { [group]: {mesh, size} } } } }`). Accept: HUSK
+  id in `ArtIds.luau` by either route; ids file is generated with a "do not edit" header.
+- **T148 Art slots + guard spec.** Server `Art` loads every id once at boot (pcall, retries,
+  into `ReplicatedStorage.Art`, never yields gameplay start); `Shared/ArtSlot`:
+  `dress(model, kind, key, scale, gameplayPart)` → clones templates, sizes × scale, welds to the
+  gameplay part, colours paint groups from the look's colours; returns false → caller builds
+  the blocky look as today. Status effects (`setSedated`, `setMuzzled`, `setAsleep`,
+  `flashHead`, `flashHit`, `setKnockedOut`, `applySkin`) find art by paint-group/role
+  attributes (`ArtRole = "head"` etc.) and named Attachments (`Head`, `Mouth`, `Muzzle`,
+  `Crown`) baked by `lowpoly.py`, so every effect still shows. Spec
+  `tools/test/artslot.spec.luau` (fake templates): Root/base Size, CFrame, CanCollide,
+  CanQuery, CanTouch, Massless unchanged with art on vs off; all art parts Massless + no
+  collide/query/touch + no scripts; range ring, HP/pool bar, tier label, crown, flag, name
+  tag present and unchanged; per-size scale applied; blank id → blocky look identical to
+  today; Studio aid `artoff` toggles art for A/B screenshots. Accept: 967+ specs green;
+  HUSK shows as a mesh in Studio.
+- **Tester Run 16 (11a):** HUSK at every size next to a blocky HUSK (`artoff`), sedated /
+  muzzled / asleep / hit flashes visible on the mesh, hitbox unchanged (selection box),
+  130-dino + 10-hunter perf scene art on/off (#432).
+
+### Batch 11b — dinos (Builder; T149) — the 10 species
+Scripts + previews for every dino species (HUSK Compy, BRUTE Raptor, SHIELD Pachy, ARMOR
+Ankylosaur, STORM Gallimimus, LLAMA Pteranodon, ZEP Triceratops, BARGE T-Rex — 8 in `DinoLook`'s
+SPECIES today; the Builder confirms the full 10 from `Config` enemies — plus `RaptorLook`'s pen raptor), each fitted to its own body box, eye +
+mouth attachments, size shrinking via `DinoLook.scale`; dino projectiles keep their current
+look unless trivial. 🦖 style review of the contact sheet **before** upload; Jovan sees it.
+Tester Run 17: every species at largest/smallest size, flyers, bosses with the notched pool
+bar, perf gate.
+
+### Batch 11c — hunters, guns, kit (Builder; T150–T151)
+- **T150** 4 hero outfits (Tracker, Big Game Hunter, Brush Beater, Field Medic): hat/hood,
+  vest or pack, one signature piece; Wardrobe-style accessories (massless, no collide, never
+  hide head or name tag; worn with skins). Stand-in hunters wear them.
+- **T151** Guns: the 4 heroes' guns (keys from `Config` Heroes / `Server/Hero`; dual /
+  scoped / belt-fed variants as attachment parts), each hunter's melee and grenade prop;
+  `Muzzle` attachment keeps tracers where they are; first-person view model checked.
+- Tester Run 18 (first person + third person, Outpost + match, PvP stand-in), 🦖 review.
+
+### Batch 11d — towers (Builder; T152–T154)
+18 towers × their model-swap tier looks (`TowerLook`): T152 the 7 starter/early towers,
+T153 the 4 Round-4 towers + Chiller/Quartermaster/Hospital/Armory, T154 the 7 4× towers
+(incl. Blimp and Ranger bodies). Base footprint = today's body box; crown / tier-5 glow /
+flag / HP bar / Trampled tip-over / Display Towers all still work. Tester Run 19 + 🦖.
+
+### Batch 11e — skins as real variants (Builder; T155)
+Each `Skins` entry gets a mesh and/or texture variant (palette texture or extra paint groups)
+on top of #427 models; recolour stays the fallback. Uploading textures = image assets
+(moderation). Tester Run 20.
+
+### Batch 11f — pets + Outpost props (Builder; T156)
+5 pet species × 6 rarities (rarity by accent/material), eggs, Incubators, the four training
+stations, Campsite decorations. Tester Run 21, 🦖 final style pass, then `RECAP.md` "Phase 11".
+
+---
+
 # Plan — Phase 10: hunter bodies, Hunters' Outpost, AFK training, pets, skins, big Amber, store (Director, 2026-10-20)
 
 Jovan's answers (verbatim in `DIRECTION.md` "Phase 10 answers"): ~30 h to unlock all is right;
