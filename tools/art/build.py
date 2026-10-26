@@ -27,6 +27,7 @@ sys.path.insert(0, str(ART))
 
 import lowpoly  # noqa: E402
 import render  # noqa: E402
+import srchash  # noqa: E402
 
 
 def load(kind, key):
@@ -81,7 +82,7 @@ def main(kind, key):
             "batch": model["batch"],
             "budget": model["budget"],
             "tris": total,
-            "hash": lowpoly.geometry_hash(pieces),
+            "hash": srchash.source_hash(kind, key),  # #440: repeatable, unlike the geometry
             "box": [list(lo), list(hi)],
             "colors": colors,
             "pieces": {

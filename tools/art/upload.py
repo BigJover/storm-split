@@ -5,7 +5,7 @@
     python3 tools/art/upload.py              # upload approved, changed models
 
 For each manifest model whose batch is in manifest["approved"] (Jovan approves a batch's
-previews first, #438) and whose geometry hash differs from the one last uploaded:
+previews first, #438) and whose source hash (srchash.py, #440) differs from the one last uploaded:
 create a Model asset from out/<kind>/<key>.fbx (or a new version of its existing asset),
 poll the operation until done, store the asset id + hash in manifest.json, then regenerate
 src/shared/ArtIds.luau (write_ids.py). Unapproved or unchanged models are skipped.

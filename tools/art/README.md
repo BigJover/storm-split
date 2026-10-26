@@ -10,11 +10,11 @@ python3 tools/art/write_ids.py [--check] # regenerate src/shared/ArtIds.luau
 
 | File | Role |
 |---|---|
-| `lowpoly.py` | bpy helpers: skin skeletons, ellipsoids, cones, decimate-to-target, fit-to-box, smooth + weighted normals, budgets (#433), geometry hash, FBX export |
+| `lowpoly.py` | bpy helpers: skin skeletons, ellipsoids, cones, decimate-to-target, fit-to-box, smooth + weighted normals, budgets (#433), FBX export |
 | `render.py` | 512 px Workbench 3/4 preview (studio light, grey background, ortho camera framed on bounds); contact sheet |
 | `build.py` / `build.sh` | headless entry; Blender log in `$ART_LOG` (default `$TMPDIR/dinohunters-art.log`), 300 s timeout |
 | `models/<kind>/<key>.py` | one script per model: `build(lp)` returns batch, budget class, Roblox box, pieces, colours per paint group (authored = preview and in-game colour, #439) |
-| `manifest.json` | per model: batch, tris, geometry hash, box, pieces (paint group, ArtRole), colors (authored RGB per paint group, carried into `ArtIds`), asset id, uploaded hash; `approved` = batches Jovan approved |
+| `manifest.json` | per model: batch, tris, source hash (#440), box, pieces (paint group, ArtRole), colors (authored RGB per paint group, carried into `ArtIds`), asset id, uploaded hash; `approved` = batches Jovan approved |
 | `out/` | exported FBX (git-ignored, rebuilt) |
 | `previews/` | committed PNGs |
 
@@ -27,12 +27,11 @@ hitbox and blocks are. One object per paint group (`body belly accent dark eye g
 preview colour and, via `manifest.json` → `write_ids.py` → `ArtIds` `colors`, the in-game colour —
 `ArtSlot` paints each piece its group's authored colour, falling back to the look's colours for a
 group without one; group `glow` is Neon in game, everything else SmoothPlastic.
-The geometry hash is over geometry, not the file bytes (FBX embeds a timestamp). **Caveat (found
-2026-10-26):** it is *not* reproducible across Blender processes today — collapse-decimate and some
-mesh conversions give slightly different vertices / loop order run to run (even with `-t 1` and a
-fixed `PYTHONHASHSEED`), so a rebuild changes the hash although nothing was edited. Don't treat a
-hash change on a plain rebuild as a geometry change; restore the committed hash if only colours or
-metadata changed.
+The manifest `hash` is a **source hash** (`srchash.py`, #440): the model's script, its kind's
+shared `_*.py` helpers and `lowpoly.py`. Blender's collapse-decimate isn't reproducible run to run,
+so a geometry hash changed on every plain rebuild; the source hash only changes when the code that
+makes the model changes, and `upload.py` re-uploads exactly those (a shared-helper edit marks every
+model of that kind, the safe side).
 
 ## What is verified vs assumed (2026-10-26)
 
