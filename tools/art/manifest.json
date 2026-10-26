@@ -1,5 +1,9 @@
 {
-  "approved": [],
+  "approved": [
+    "11a",
+    "11b",
+    "11c"
+  ],
   "models": {
     "dino/ARMOR": {
       "asset": null,
