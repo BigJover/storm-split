@@ -33,6 +33,40 @@ so a geometry hash changed on every plain rebuild; the source hash only changes 
 makes the model changes, and `upload.py` re-uploads exactly those (a shared-helper edit marks every
 model of that kind, the safe side).
 
+## Hunter hero bodies (kind `hunter`, PLAN 11c T150, #434)
+
+```sh
+tools/art/build.sh hunter PISTOL        # FBX + 3 previews (3/4 front, side, 3/4 back) + manifest
+tools/art/build.sh --sheet hunter 11c   # contact sheet
+```
+
+Keys are the `HunterStats` keys: `PISTOL` Tracker, `RIFLE` Big Game Hunter, `SHOTGUN` Brush Beater,
+`MEDIC` Field Medic. Budget class `hero` (≤ 6,000 tris, #433). A model returns `"rig": "r15"` and
+`build.py` takes the rig path (`main_rig`):
+
+- **Pieces are named `<R15Part>__<group>`**, e.g. `Head__skin`, `UpperTorso__accent`,
+  `LeftLowerLeg__dark`. The part is one of the 15 R15 part names; the group is the paint group.
+  Each piece is one MeshPart; the runtime welds every `<Part>__*` piece to that R15 part and
+  paints it `colors[group]`. One piece per (part, group) keeps it to ~30–35 MeshParts a body.
+  Groups used: `skin hair eye shirt pants gear gear2 accent light dark` plus a few per class
+  (`sock`, `pad`, `glove`, `metal`); the class colour from `Server/Hero` `HERO_COLORS` is `accent`
+  (Tracker red, Big Game Hunter yellow) or `gear` (Brush Beater orange vest, Field Medic green).
+- **No fit-to-box.** `models/hunter/_body.py` authors in Roblox studs about the HumanoidRootPart's
+  centre (ground y −3.0) on the default R15 block rig at scale 1 (`R15` part centres/sizes,
+  `JOINTS` pivots). The rest pose is exported (arms straight down); previews only swing the arms
+  12° out from the shoulders (`preview_pose`). Limbs are capsules, so joints read as ball joints
+  when the rig bends.
+- **Manifest** (per hunter): `rig`, `parts[<R15Part>]` = `r15` (default centre + size), `box`
+  (the art's bounds, Roblox axes) and `groups`; `pieces[<name>]` = part, group, tris. The build
+  prints art box vs default size per part. Hit parts never change (#434): the art is visual only.
+- `_body.finish` decimates big smooth pieces (> 260 tris) evenly when a body is over 5,300, so
+  small details stay crisp.
+- `write_ids.py` skips kind `hunter` (`PENDING_KINDS`) until the T150 runtime reads it.
+
+**Unverified:** the `R15` layout is our reading of the default rig's attachments (Head centre
++1.5, shoulders ±1 / +0.763, hips ±0.5 / −1.0, …); the runtime task checks it against a live
+character in Studio and fixes `_body.R15` / `JOINTS` only if a joint differs.
+
 ## What is verified vs assumed (2026-10-26)
 
 Verified here: Blender 5.2.3 headless runs these scripts; the FBX is written with +Y up / −Z forward,

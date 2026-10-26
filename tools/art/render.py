@@ -18,6 +18,7 @@ BACKGROUND = (0.62, 0.64, 0.66)
 
 THREE_QUARTER = (-0.9, 1.0, 0.65)
 SIDE = (-1.0, 0.0, 0.05)  # the model's right flank, near eye level: proportions
+BACK = (0.9, -1.0, 0.45)  # 3/4 from behind (hunters: backpacks, sheaths, hair)
 
 
 def render(path, objs, view=THREE_QUARTER):

@@ -20,6 +20,9 @@ ROOT = Path(__file__).resolve().parents[2]
 ART = ROOT / "tools" / "art"
 OUT = ROOT / "src" / "shared" / "ArtIds.luau"
 KINDS = ("dino", "tower")
+# Built and previewed, but no runtime reader yet: hunter hero bodies (T150) reach ArtIds with
+# the T150 runtime task (Bodies / Wardrobe), after Jovan approves the 11c previews.
+PENDING_KINDS = ("hunter",)
 
 HEADER = """--!strict
 --[[
@@ -52,6 +55,8 @@ def collect(manifest, harvest):
     ids = {kind: {} for kind in KINDS}
     for name, entry in manifest.get("models", {}).items():
         kind, key = name.split("/", 1)
+        if kind in PENDING_KINDS:
+            continue
         if entry.get("asset"):
             ids.setdefault(kind, {}).setdefault(key, {})["model"] = int(entry["asset"])
         if entry.get("colors"):
