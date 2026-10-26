@@ -1,6 +1,172 @@
 {
   "approved": [],
   "models": {
+    "dino/ARMOR": {
+      "asset": null,
+      "batch": "11b",
+      "box": [
+        [
+          -1.65,
+          -1.35,
+          -2.31
+        ],
+        [
+          1.65,
+          0.825,
+          3.85
+        ]
+      ],
+      "budget": "big",
+      "hash": "3836f1b8734fe5e8",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 466
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 110
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 980
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 212
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 72
+        },
+        "head": {
+          "group": "body",
+          "role": "head",
+          "tris": 160
+        }
+      },
+      "tris": 2000,
+      "uploadedHash": null
+    },
+    "dino/BARGE": {
+      "asset": null,
+      "batch": "11a",
+      "box": [
+        [
+          -2.25,
+          -6.25,
+          -7.8
+        ],
+        [
+          2.25,
+          3.525,
+          9.1
+        ]
+      ],
+      "budget": "boss",
+      "hash": "f57386ce67e6fa17",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 76
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 110
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 1400
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 1200
+        },
+        "head": {
+          "group": "body",
+          "role": "head",
+          "tris": 448
+        },
+        "jaw": {
+          "group": "body",
+          "role": "jaw",
+          "tris": 260
+        }
+      },
+      "tris": 3638,
+      "uploadedHash": null
+    },
+    "dino/BRUTE": {
+      "asset": null,
+      "batch": "11b",
+      "box": [
+        [
+          -0.55,
+          -1.7,
+          -2.12
+        ],
+        [
+          0.55,
+          0.95,
+          2.86
+        ]
+      ],
+      "budget": "mid",
+      "hash": "2e68217294821afe",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 270
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 80
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 740
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 92
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 72
+        },
+        "head": {
+          "group": "body",
+          "role": "head",
+          "tris": 218
+        }
+      },
+      "tris": 1472,
+      "uploadedHash": null
+    },
     "dino/HUSK": {
       "asset": null,
       "batch": "11a",
@@ -46,6 +212,224 @@
         }
       },
       "tris": 790,
+      "uploadedHash": null
+    },
+    "dino/LLAMA": {
+      "asset": null,
+      "batch": "11a",
+      "box": [
+        [
+          -3.7,
+          -0.35,
+          -2.1
+        ],
+        [
+          3.7,
+          1.01,
+          0.9
+        ]
+      ],
+      "budget": "mid",
+      "hash": "714aeacea2a4ca9c",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 480
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 70
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 470
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 110
+        },
+        "head": {
+          "group": "body",
+          "role": "head",
+          "tris": 190
+        }
+      },
+      "tris": 1464,
+      "uploadedHash": null
+    },
+    "dino/SHIELD": {
+      "asset": null,
+      "batch": "11b",
+      "box": [
+        [
+          -0.7,
+          -1.95,
+          -2.05
+        ],
+        [
+          0.7,
+          1.36,
+          2.86
+        ]
+      ],
+      "budget": "mid",
+      "hash": "5912605b769b5827",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 190
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 80
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 700
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 132
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 72
+        },
+        "head": {
+          "group": "body",
+          "role": "head",
+          "tris": 220
+        }
+      },
+      "tris": 1394,
+      "uploadedHash": null
+    },
+    "dino/STORM": {
+      "asset": null,
+      "batch": "11b",
+      "box": [
+        [
+          -0.6,
+          -2.75,
+          -1.65
+        ],
+        [
+          0.6,
+          2.15,
+          2.6
+        ]
+      ],
+      "budget": "mid",
+      "hash": "9e91bd31bcae6ff1",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 260
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 80
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 739
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 136
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 72
+        },
+        "head": {
+          "group": "body",
+          "role": "head",
+          "tris": 200
+        }
+      },
+      "tris": 1487,
+      "uploadedHash": null
+    },
+    "dino/ZEP": {
+      "asset": null,
+      "batch": "11a",
+      "box": [
+        [
+          -2.1,
+          -3.1,
+          -6.3
+        ],
+        [
+          2.1,
+          2.9,
+          7.15
+        ]
+      ],
+      "budget": "big",
+      "hash": "848f14491748a959",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 296
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 110
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 782
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 82
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 176
+        },
+        "head": {
+          "group": "body",
+          "role": "head",
+          "tris": 520
+        }
+      },
+      "tris": 2038,
       "uploadedHash": null
     }
   }
