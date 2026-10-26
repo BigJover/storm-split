@@ -370,12 +370,12 @@
           255
         ]
       },
-      "hash": "9a79a6b2fba9d53f",
+      "hash": "1b5d43a39f8293be",
       "pieces": {
         "accent": {
           "group": "accent",
           "role": null,
-          "tris": 480
+          "tris": 470
         },
         "belly": {
           "group": "belly",
@@ -400,15 +400,15 @@
         "glow": {
           "group": "glow",
           "role": null,
-          "tris": 110
+          "tris": 108
         },
         "head": {
           "group": "body",
           "role": "head",
-          "tris": 190
+          "tris": 200
         }
       },
-      "tris": 1464,
+      "tris": 1462,
       "uploadedHash": null
     },
     "dino/SHIELD": {
