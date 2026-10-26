@@ -21,6 +21,7 @@
 ]]
 
 local Skins = require(script.Parent.Skins)
+local ArtSlot = require(script.Parent.ArtSlot)
 
 local TowerLook = {}
 
@@ -392,7 +393,16 @@ function TowerLook.build(key: string, range: number, base: Vector3): Model
 	if key == "TARPIT" then
 		body.CanCollide = false -- a hole in the track: hunters walk over it, like the dinos
 	end
-	if silhouette then
+	-- Uploaded art (PLAN 11a T148, #426; towers come in 11d) takes the silhouette's place,
+	-- anchored like it; none loaded = the blocks below, exactly as before.
+	local dressed, art = ArtSlot.dress(model, "tower", key, 1, body, ArtSlot.paints(color), { anchored = true })
+	if dressed then
+		body.Transparency = 1
+		for _, part in art do
+			part:SetAttribute("LookMaterial", part.Material.Name) -- the tier-5 glow restores it
+		end
+		model:SetAttribute("LookTop", ArtSlot.top(art, CFrame.new(base)))
+	elseif silhouette then
 		body.Transparency = 1 -- the silhouette is the look; the body stays the hitbox
 		local blocks = silhouette(color)
 		for _, b in blocks do

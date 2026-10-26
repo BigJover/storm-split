@@ -83,6 +83,7 @@ Players.CharacterAutoLoads = false -- the match loop decides when people spawn
 
 local map = MapBuilder.build()
 Outpost.init()
+require(script.Parent.Art).init() -- uploaded art, loaded in the background (PLAN 11a T148)
 
 local function setState(state: string)
 	ReplicatedStorage:SetAttribute("State", state)

@@ -10,6 +10,8 @@
 	Local axes: the dino faces -Z (the way CFrame.lookAt points), up is +Y.
 ]]
 
+local ArtSlot = require(script.Parent.ArtSlot)
+
 local DinoLook = {}
 
 local MIN_SCALE = 0.5
@@ -179,6 +181,16 @@ local SPECIES: { [string]: Species } = {
 }
 local DEFAULT: Species = SPECIES.HUSK
 
+-- The art's accent paint: the first block colour that isn't the body's or a tooth's.
+local function accentOf(species: Species): Color3?
+	for _, spec in species.parts do
+		if spec.color and spec.color ~= species.color and spec.color ~= TOOTH then
+			return spec.color
+		end
+	end
+	return nil
+end
+
 -- The species' body colour (for effects like the bite).
 function DinoLook.colorOf(key: string): Color3
 	return (SPECIES[key] or DEFAULT).color
@@ -216,6 +228,14 @@ function DinoLook.build(key: string, scale: number, cframe: CFrame): (Model, num
 	root.CFrame = cframe
 	root.Parent = model
 	model.PrimaryPart = root
+	local height = (species.legLength + species.body.Y / 2) * scale
+
+	-- Uploaded art (PLAN 11a T148, #426) dresses the same Root; none loaded = the blocks.
+	-- It needs a head piece so the throw cue (flashHead) and Jaw Lock still show.
+	if ArtSlot.dress(model, "dino", key, scale, root, ArtSlot.paints(species.color, accentOf(species)), { roles = { "head" } }) then
+		root.Transparency = 1
+		return model, height
+	end
 
 	for _, spec in species.parts do
 		local part = Instance.new("Part")
@@ -236,7 +256,7 @@ function DinoLook.build(key: string, scale: number, cframe: CFrame): (Model, num
 		part.Parent = model
 	end
 
-	return model, (species.legLength + species.body.Y / 2) * scale
+	return model, height
 end
 
 -- Visuals only.
