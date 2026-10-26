@@ -184,7 +184,8 @@ def smooth(obj, weighted=True):
 
 
 def paint(obj, rgb):
-    """Preview colour (Workbench object colour). Roblox recolours by paint group at runtime."""
+    """Preview colour (Workbench object colour). The same authored colour per paint group goes
+    to manifest.json -> ArtIds and is what ArtSlot paints in game (#439)."""
     obj.color = (rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1.0)
 
 

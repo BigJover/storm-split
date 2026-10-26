@@ -9,9 +9,12 @@ Loads tools/art/models/<kind>/<key>.py, whose build(lp) returns a model dict:
     pieces  [obj, ...]                  one object per paint group / role piece
     groups  {name: paint group}         pieces whose name isn't their group (e.g. head -> body)
     roles   {name: ArtRole}             e.g. {"head": "head"}
-    colors  {group: (r, g, b)}          preview colours only
+    colors  {group: (r, g, b)}          the authored colour per paint group (#439): the preview
+                                        colour AND the runtime colour (manifest -> ArtIds ->
+                                        ArtSlot; group "glow" renders Neon in game)
 Then fits the pieces to box, smooths them, checks the budget (exit 1 on a miss), exports
-out/<kind>/<key>.fbx, renders previews/<kind>/<key>.png and updates manifest.json.
+out/<kind>/<key>.fbx, renders previews/<kind>/<key>.png and updates manifest.json (pieces with
+their paint group / role, and colors = the authored colour of every group the pieces use).
 """
 
 import importlib.util
@@ -48,6 +51,9 @@ def main(kind, key):
         group = model.get("groups", {}).get(o.name, o.name)
         lowpoly.paint(o, model["colors"].get(group, (200, 200, 200)))
 
+    groups = sorted({model.get("groups", {}).get(o.name, o.name) for o in pieces})
+    colors = {g: [int(round(c)) for c in model["colors"][g]] for g in groups if g in model.get("colors", {})}
+
     counts = {o.name: lowpoly.tris(o) for o in pieces}
     total = sum(counts.values())
     budget = lowpoly.BUDGETS[model["budget"]]
@@ -77,6 +83,7 @@ def main(kind, key):
             "tris": total,
             "hash": lowpoly.geometry_hash(pieces),
             "box": [list(lo), list(hi)],
+            "colors": colors,
             "pieces": {
                 o.name: {
                     "group": model.get("groups", {}).get(o.name, o.name),

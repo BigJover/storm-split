@@ -11,7 +11,10 @@
 	Massless, CanCollide / CanQuery / CanTouch off, no scripts or joints of its own, welded to
 	the gameplay part (or anchored where the look anchors, towers). Pieces are coloured by
 	paint group (attribute PaintGroup, else the piece's name: body / belly / accent / dark /
-	eye) from the look's colours. A piece with attribute ArtRole = "head" / "jaw" is named
+	eye / glow). The art's authored colour for that group wins (ArtIds entry.colors, from the
+	Blender model, #439: dino colours by tier); a group without one takes the look's colours
+	(paints(), so towers and future skins still work). Group "glow" is Neon (lava, crests),
+	everything else SmoothPlastic. A piece with attribute ArtRole = "head" / "jaw" is named
 	Head / Jaw, so the status effects that find those (flashHead, setMuzzled) still show;
 	a look can require roles, and a template missing one falls back to blocky.
 
@@ -61,6 +64,13 @@ function ArtSlot.id(kind: string, key: string): number?
 	return entry and entry.model or nil
 end
 
+-- The art's authored colour per paint group for kind/key (#439), or nil (use the look's).
+function ArtSlot.colors(kind: string, key: string): { [string]: Color3 }?
+	local byKey = ids[kind]
+	local entry = byKey and byKey[key]
+	return entry and entry.colors or nil
+end
+
 -- The loaded template for kind/key, or nil: no id, not loaded (yet), loaded for another id,
 -- or art switched off (attribute ArtOff on the Art folder, for A/B looks).
 function ArtSlot.template(kind: string, key: string): Model?
@@ -85,7 +95,8 @@ local function warnOnce(kind: string, key: string, why: string)
 	end
 end
 
--- The paint group colours for a look: its body colour and an optional accent.
+-- The paint group colours for a look: its body colour and an optional accent. The fallback
+-- for groups the art has no authored colour for (#439).
 local WHITE = Color3.new(1, 1, 1)
 local BLACK = Color3.new(0, 0, 0)
 local EYE = Color3.fromRGB(25, 20, 20)
@@ -120,6 +131,7 @@ function ArtSlot.dress(
 		return false, {}
 	end
 	local opts: Options = options or {}
+	local authored: { [string]: Color3 } = ArtSlot.colors(kind, key) or {}
 	local pieces: { BasePart } = {}
 	for _, d in template:GetDescendants() do
 		if d:IsA("BasePart") then
@@ -162,8 +174,8 @@ function ArtSlot.dress(
 		local rel = piece.CFrame -- authored about the origin = the gameplay part's centre
 		part.Size = piece.Size * scale
 		part.CFrame = gameplay.CFrame * CFrame.new(rel.Position * scale) * rel.Rotation
-		part.Color = paints[group :: string] or paints.body or piece.Color
-		part.Material = Enum.Material.SmoothPlastic
+		part.Color = authored[group :: string] or paints[group :: string] or paints.body or piece.Color
+		part.Material = if group == "glow" then Enum.Material.Neon else Enum.Material.SmoothPlastic
 		part.Anchored = opts.anchored == true
 		part.Massless = true
 		part.CanCollide = false

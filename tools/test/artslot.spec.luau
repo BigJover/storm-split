@@ -111,16 +111,21 @@ local function sameAsSnapshot(what: string)
 	ok(count > 0, "snapshot has looks")
 end
 
-test("real ArtIds: generated header, and blank everywhere today", function()
+test("real ArtIds: generated header, and no model id anywhere today (colours only)", function()
 	local text = fs.readFile("src/shared/ArtIds.luau")
 	ok(string.find(text, "GENERATED", 1, true) and string.find(text, "DO NOT EDIT", 1, true), "do-not-edit header")
 	ok(string.find(text, "tools/art", 1, true), "names its writer")
 	local ArtIds = require(src.shared.ArtIds)
 	for kind, byKey in ArtIds do
-		for key in byKey do
-			ok(false, `{kind}/{key} has an id: re-check the fallback snapshot by hand`)
+		for key, entry in byKey do
+			ok(entry.model == nil, `{kind}/{key} has an id: re-check the fallback snapshot by hand`)
+			for group, c in entry.colors or {} do
+				ok(typeof(c) == "Color3", `{kind}/{key} colour {group} is a Color3`)
+			end
 		end
 	end
+	local llama = ArtIds.dino.LLAMA
+	ok(llama and llama.colors and llama.colors.glow ~= nil, "LLAMA carries its authored glow colour (#439)")
 end)
 
 test("empty ArtIds: every dino at every size and every tower builds exactly as before", function()
@@ -365,5 +370,88 @@ test("tower art is visual only: Body, ring, tier label, HP bar, crown and flag u
 			eq(got[i], line, `{key} overlay {i}`)
 		end
 		ok(model:FindFirstChild("Crown") and model:FindFirstChild("Range"), `{key} crown + ring present`)
+	end
+end)
+
+-- #439: the art's authored colour per paint group wins; groups without one take the look's
+-- paints; group "glow" is Neon; the gameplay part is untouched.
+test("authored colours: per group, look paints as fallback, glow is Neon, gameplay part untouched", function()
+	local art = Instance.new("Folder")
+	art.Name = "Art"
+	local dinos = Instance.new("Folder")
+	dinos.Name = "dino"
+	dinos.Parent = art
+	local model = template("LLAMA", Vector3.new(1.5, 1.2, 2.5), Vector3.zero)
+	local glow = Instance.new("MeshPart")
+	glow.Name = "glow"
+	glow.Size = Vector3.new(0.3, 0.6, 0.8)
+	glow.CFrame = CFrame.new(0, 1, -1)
+	glow.Parent = model
+	local belly = Instance.new("MeshPart")
+	belly.Name = "belly"
+	belly.Size = Vector3.new(1, 0.4, 2)
+	belly.CFrame = CFrame.new(0, -0.5, 0)
+	belly.Parent = model
+	model.Parent = dinos
+	local BODY, ACCENT, GLOW = Color3.fromRGB(70, 55, 150), Color3.fromRGB(225, 50, 170), Color3.fromRGB(90, 245, 255)
+	local ids = { dino = { LLAMA = { model = ID, colors = { body = BODY, accent = ACCENT, glow = GLOW } } }, tower = {} }
+	local paints = ArtSlot.paints(Color3.fromRGB(200, 10, 10), Color3.fromRGB(10, 200, 10))
+
+	local root = Instance.new("Part")
+	root.Name = "Root"
+	root.Size = Vector3.new(2, 2, 3)
+	root.CFrame = AT
+	root.Anchored = true
+	root.CanCollide = true
+	root.CanQuery = true
+	root.CanTouch = true
+	root.Color = Color3.fromRGB(1, 2, 3)
+	root.Material = Enum.Material.Plastic
+	local before = root:Clone()
+	local host = Instance.new("Model")
+	root.Parent = host
+
+	local dressed, made
+	withArt(art, ids, function()
+		eq(ArtSlot.colors("dino", "LLAMA"), ids.dino.LLAMA.colors, "colors() reads the entry")
+		eq(ArtSlot.colors("dino", "HUSK"), nil, "no entry, no authored colours")
+		dressed, made = ArtSlot.dress(host, "dino", "LLAMA", 1.5, root, paints, { roles = { "head" } })
+	end)
+	ok(dressed, "dressed")
+	eq(#made, 5, "body, head, eye, glow, belly")
+	local byGroup: { [string]: BasePart } = {}
+	for _, p in made do
+		byGroup[p:GetAttribute("PaintGroup") :: string] = p
+	end
+	eq(byGroup.body.Color, BODY, "authored body colour beats the look's")
+	eq(byGroup.accent.Color, ACCENT, "authored accent on the head piece (group accent)")
+	eq(byGroup.accent.Name, "Head", "head role still named Head")
+	eq(byGroup.glow.Color, GLOW, "authored glow colour")
+	eq(byGroup.glow.Material, Enum.Material.Neon, "glow is Neon")
+	eq(byGroup.belly.Color, paints.belly, "no authored belly: the look's belly paint")
+	eq(byGroup.eye.Color, paints.eye, "no authored eye: the look's eye paint")
+	for group, p in byGroup do
+		if group ~= "glow" then
+			eq(p.Material, Enum.Material.SmoothPlastic, `{group} SmoothPlastic`)
+		end
+	end
+	artPieces(host, root, false, "authored")
+	samePhysics(root, before, "Root")
+	eq(root.Color, before.Color, "Root colour untouched")
+	eq(root.Material, before.Material, "Root material untouched")
+	eq(root.Transparency, before.Transparency, "Root transparency untouched by dress()")
+
+	-- No authored colours (towers today, future skins): the look's paints, glow still Neon.
+	local plainHost = Instance.new("Model")
+	local plainRoot = root:Clone()
+	plainRoot.Parent = plainHost
+	withArt(art, { dino = { LLAMA = { model = ID } }, tower = {} }, function()
+		dressed, made = ArtSlot.dress(plainHost, "dino", "LLAMA", 1, plainRoot, paints, { roles = { "head" } })
+	end)
+	ok(dressed, "dressed without colours")
+	for _, p in made do
+		local group = p:GetAttribute("PaintGroup") :: string
+		eq(p.Color, paints[group] or paints.body, `{group} falls back to the look's paints`)
+		eq(p.Material, if group == "glow" then Enum.Material.Neon else Enum.Material.SmoothPlastic, `{group} material`)
 	end
 end)

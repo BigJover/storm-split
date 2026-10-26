@@ -13,17 +13,26 @@ python3 tools/art/write_ids.py [--check] # regenerate src/shared/ArtIds.luau
 | `lowpoly.py` | bpy helpers: skin skeletons, ellipsoids, cones, decimate-to-target, fit-to-box, smooth + weighted normals, budgets (#433), geometry hash, FBX export |
 | `render.py` | 512 px Workbench 3/4 preview (studio light, grey background, ortho camera framed on bounds); contact sheet |
 | `build.py` / `build.sh` | headless entry; Blender log in `$ART_LOG` (default `$TMPDIR/dinohunters-art.log`), 300 s timeout |
-| `models/<kind>/<key>.py` | one script per model: `build(lp)` returns batch, budget class, Roblox box, pieces, colours |
-| `manifest.json` | per model: batch, tris, geometry hash, box, pieces (paint group, ArtRole), asset id, uploaded hash; `approved` = batches Jovan approved |
+| `models/<kind>/<key>.py` | one script per model: `build(lp)` returns batch, budget class, Roblox box, pieces, colours per paint group (authored = preview and in-game colour, #439) |
+| `manifest.json` | per model: batch, tris, geometry hash, box, pieces (paint group, ArtRole), colors (authored RGB per paint group, carried into `ArtIds`), asset id, uploaded hash; `approved` = batches Jovan approved |
 | `out/` | exported FBX (git-ignored, rebuilt) |
 | `previews/` | committed PNGs |
 
 **Conventions.** 1 Blender unit = 1 stud. Scripts give points in Roblox studs through `lp.rbx(x, y, z)`
 (Blender x, y, z = Roblox x, −z, y). The origin is the gameplay part's centre (a dino's Root); the build
 scales the pieces per axis onto the blocky look's bounds (`box`), so the art sits where today's
-hitbox and blocks are. One object per paint group (`body belly accent dark eye`) plus role pieces
+hitbox and blocks are. One object per paint group (`body belly accent dark eye glow`) plus role pieces
 (`head`: paint group body, ArtRole head — recorded in the manifest, since FBX can't carry attributes).
-The geometry hash (not the file bytes: FBX embeds a timestamp) is stable across re-runs.
+**Colours are authored per model (#439, dino colour by tier):** `colors` in the model script is the
+preview colour and, via `manifest.json` → `write_ids.py` → `ArtIds` `colors`, the in-game colour —
+`ArtSlot` paints each piece its group's authored colour, falling back to the look's colours for a
+group without one; group `glow` is Neon in game, everything else SmoothPlastic.
+The geometry hash is over geometry, not the file bytes (FBX embeds a timestamp). **Caveat (found
+2026-10-26):** it is *not* reproducible across Blender processes today — collapse-decimate and some
+mesh conversions give slightly different vertices / loop order run to run (even with `-t 1` and a
+fixed `PYTHONHASHSEED`), so a rebuild changes the hash although nothing was edited. Don't treat a
+hash change on a plain rebuild as a geometry change; restore the committed hash if only colours or
+metadata changed.
 
 ## What is verified vs assumed (2026-10-26)
 

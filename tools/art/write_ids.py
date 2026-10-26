@@ -4,6 +4,8 @@ that file: this is its only writer.
 
 Sources, merged per kind/key:
   * tools/art/manifest.json  models[<kind>/<key>].asset   -> model = <asset id>   (upload.py)
+  * tools/art/manifest.json  models[<kind>/<key>].colors  -> colors = { [group]: Color3 }
+                             (the authored colour per paint group, build.py; DECISIONS #439)
   * tools/art/harvest.json   {kind: {key: {group: {mesh, size: [x, y, z]}}}}       (Studio import)
 
     python3 tools/art/write_ids.py           # write the file
@@ -25,14 +27,18 @@ HEADER = """--!strict
 	upload, or write_ids.py after a Studio-import harvest; PLAN 11a T147, DECISIONS #422/#423).
 
 	The art asset ids per kind and key (DinoLook / TowerLook keys):
-	  { [kind]: { [key]: { model: number?, parts: { [group]: { mesh: string, size: Vector3 } }? } } }
-	A blank or missing entry means that look builds as its blocky fallback (#425).
+	  { [kind]: { [key]: { model: number?, parts: { [group]: { mesh: string, size: Vector3 } }?,
+	    colors: { [group]: Color3 }? } } }
+	A blank or missing model id means that look builds as its blocky fallback (#425).
+	colors = the authored colour per paint group (#439); ArtSlot paints the art with them
+	(a group without one takes the look's colours).
 	Asset ids are not secrets (#431).
 ]]
 
 export type Entry = {
 	model: number?,
 	parts: { [string]: { mesh: string, size: Vector3 } }?,
+	colors: { [string]: Color3 }?,
 }
 
 """
@@ -48,6 +54,8 @@ def collect(manifest, harvest):
         kind, key = name.split("/", 1)
         if entry.get("asset"):
             ids.setdefault(kind, {}).setdefault(key, {})["model"] = int(entry["asset"])
+        if entry.get("colors"):
+            ids.setdefault(kind, {}).setdefault(key, {})["colors"] = entry["colors"]
     for kind, keys in harvest.items():
         for key, groups in keys.items():
             ids.setdefault(kind, {}).setdefault(key, {})["parts"] = groups
@@ -73,6 +81,11 @@ def render(ids):
                     for g, p in sorted(entry["parts"].items())
                 )
                 fields.append(f"parts = {{ {parts} }}")
+            if "colors" in entry:
+                colors = ", ".join(
+                    f"{g} = Color3.fromRGB({', '.join(str(int(v)) for v in rgb)})" for g, rgb in sorted(entry["colors"].items())
+                )
+                fields.append(f"colors = {{ {colors} }}")
             lines.append(f"\t\t{key} = {{ {', '.join(fields)} }},")
         lines.append("\t},")
     lines += ["}", "", "return ArtIds", ""]
