@@ -17,7 +17,7 @@
         ]
       ],
       "budget": "small",
-      "hash": "398838becb6b6f4d",
+      "hash": "4e84f445dc4e1d84",
       "pieces": {
         "belly": {
           "group": "belly",
@@ -27,12 +27,12 @@
         "body": {
           "group": "body",
           "role": null,
-          "tris": 430
+          "tris": 414
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 40
+          "tris": 84
         },
         "eye": {
           "group": "eye",
@@ -45,7 +45,7 @@
           "tris": 150
         }
       },
-      "tris": 762,
+      "tris": 790,
       "uploadedHash": null
     }
   }

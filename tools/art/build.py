@@ -63,6 +63,7 @@ def main(kind, key):
     png.parent.mkdir(parents=True, exist_ok=True)
     lowpoly.export_fbx(fbx, pieces)
     render.render(png, pieces)
+    render.render(png.with_name(f"{key}_side.png"), pieces, render.SIDE)
 
     manifest_path = ART / "manifest.json"
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}

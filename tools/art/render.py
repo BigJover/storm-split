@@ -1,6 +1,6 @@
 """Preview renders for the art pass (PLAN 11a T146, #430). Runs inside Blender only.
 
-One 512 px 3/4 front view per model: Workbench, studio light so smooth shading reads,
+One 512 px 3/4 front view per model (plus a side view, `<key>_side.png`): Workbench, studio light so smooth shading reads,
 object colours = the paint-group preview colours, neutral grey background, orthographic
 camera framed on the model's bounds (the same framing rule for every model).
 """
@@ -16,7 +16,11 @@ SIZE = 512
 BACKGROUND = (0.62, 0.64, 0.66)
 
 
-def render(path, objs):
+THREE_QUARTER = (-0.9, 1.0, 0.65)
+SIDE = (-1.0, 0.0, 0.05)  # the model's right flank, near eye level: proportions
+
+
+def render(path, objs, view=THREE_QUARTER):
     scene = bpy.context.scene
     scene.render.engine = "BLENDER_WORKBENCH"
     scene.render.resolution_x = SIZE
@@ -40,10 +44,10 @@ def render(path, objs):
     centre = Vector((lo + hi) / 2)
     extent = max(hi - lo)
     # 3/4 view: front (+Y), the model's left (-X... its right faces the camera), from above
-    direction = Vector((-0.9, 1.0, 0.65)).normalized()
+    direction = Vector(view).normalized()
     cam_data = bpy.data.cameras.new("preview")
     cam_data.type = "ORTHO"
-    cam_data.ortho_scale = extent * 0.95
+    cam_data.ortho_scale = extent * (0.95 if view == THREE_QUARTER else 1.1)  # side: whole length
     cam_data.clip_end = extent * 20
     cam = bpy.data.objects.new("preview", cam_data)
     scene.collection.objects.link(cam)
