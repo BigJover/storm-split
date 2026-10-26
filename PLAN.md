@@ -10,9 +10,11 @@ DataStore writes). **Visuals only:** no gameplay number, hitbox, collision, rang
 name tag or hunter visibility changes (#426). Fresh Builder per batch; every batch ends with
 Tester screenshots + 🦖 style review.
 
-**Status (2026-10-25): planned. Next: Jovan's asks (below) → Builder 11a (T146–T148).**
-Defaults apply so 11a can start now: flat-shaded low-poly (#427), avatar + hero outfit (#428),
-route (b) imports until an API key exists (#423).
+**Status (2026-10-26): plan committed (4f55fe8); Jovan answered (#433–#438). Next: Builder 11a
+(T146–T148).** Style **smooth stylised** (#433); **full hero bodies** replace the avatar (#434–#436);
+API key coming (`~/.config/dinohunters/opencloud_key` + `creator_id`, #437); **he approves each
+batch's previews before upload** (#438). 11a must work before the key exists: previews and the
+blocky fallback first, upload when the key file appears.
 
 **Pipeline (#422–#425):** Blender script → FBX + preview PNG → **primary** Open Cloud upload
 from the terminal (`tools/art/upload.py`, needs Jovan's API key) → ids in generated
@@ -23,28 +25,34 @@ the same `ArtIds.luau`. **Runtime fallback** = today's blocky looks whenever an 
 pending moderation or fails. EditableMesh rejected (no replication, memory budget, opt-in /
 ID-verification; #424).
 
-### What needs Jovan
-1. **Style:** low-poly **flat-shaded** (default) or smooth/rounded? Keep today's colours per
-   species (default yes — readability)?
-2. **API key** (route c): Creator Hub → Open Cloud → API Keys, scope **Assets: read + write**,
-   for the account or group that **owns the game**; give it via env `ROBLOX_API_KEY` or the
-   keychain (never pasted in chat/repo) plus the creator id. Without it: one bulk import in
-   Studio per batch (route b).
-3. **Hunters:** keep the player's avatar + add a hero outfit (default) or full hero bodies?
-4. Approve each batch's previews (the coordinator shows the PNGs) before upload.
+### What needs Jovan (answered 2026-10-26 — `DIRECTION.md`)
+1. ~~Style~~ → smooth stylised (#433). 2. ~~Hunters~~ → full hero bodies (#434).
+3. **API key** → he'll create it (Assets read + write, for the account that owns the game) at
+   `~/.config/dinohunters/opencloud_key` and his user id at `~/.config/dinohunters/creator_id`
+   (#437). Still open until the files exist.
+4. **Approve each batch's preview contact sheet** before upload (#438).
+
+**Smooth-style budgets (#433):** dino small ≤ 800 tris / mid ≤ 1,500 / big ≤ 2,500 / boss ≤
+4,000 (130 live ≈ 200k tris worst case); gun ≤ 1,200; tower tier ≤ 3,000; hero body ≤ 6,000.
+Shapes: subdivided + bevelled primitives, decimated to budget; smooth shading with auto/weighted
+normals **exported in the FBX** (normals + smoothing on, triangulated on export); RenderFidelity
+Automatic; the #432 perf gate overrides the numbers.
 
 ### Batch 11a — pipeline (Builder; T146 → T148)
 - **T146 Blender framework (`tools/art/`).** `lowpoly.py` (primitives, extrude/bevel helpers,
-  flat shading, paint groups = named objects `body/belly/accent/dark/eye`, fit-to-box,
+  smooth shading (subdivide → decimate, weighted normals), paint groups = named objects `body/belly/accent/dark/eye`, fit-to-box,
   tri counter, FBX export with +Y up / −Z forward, studs = metres, apply transforms),
-  `render.py` (512 px 3/4-view PNG, Workbench flat, neutral background, one per model + a
+  `render.py` (512 px 3/4-view PNG, EEVEE or Workbench studio-lit so smooth shading reads, neutral background, one per model + a
   contact sheet per batch), `build.sh [kind] [key]` (runs Blender headless; non-zero exit on a
   script error or budget miss), `manifest.json` (key, file hash, tris, bounds, asset id).
   Proof model: Compy (HUSK) fitted to `DinoLook` HUSK body box. Accept: `build.sh dino HUSK`
   writes `tools/art/out/dino/HUSK.fbx` + `previews/dino/HUSK.png`; re-run is byte-stable or
-  hash-stable; budgets enforced (#427). Out files git-ignored; previews committed.
+  hash-stable; budgets enforced (#433); FBX carries normals. Out files git-ignored; previews committed.
 - **T147 Upload / harvest.** `upload.py` (Open Cloud Assets v1: create Model asset from FBX,
-  poll operation, write id; skip unchanged hashes; key from env/keychain; **verify the
+  poll operation, write id; skip unchanged hashes; key + creator id from env
+  (`ROBLOX_API_KEY`, `ROBLOX_CREATOR_ID`) or `~/.config/dinohunters/{opencloud_key,creator_id}`
+  (folder must be mode 700; never printed/logged/committed; #437); **no key file → exit 0 with
+  "no key yet — previews only"**; uploads only a batch marked approved in `manifest.json` (#438); **verify the
   endpoint and fields live on first use and log what was true in #422**) and `harvest.luau`
   (MCP `execute_luau`: walk the Studio-imported folder, read each MeshPart's MeshId + size per
   paint group, print JSON) → `tools/art/write_ids.py` regenerates `src/shared/ArtIds.luau`
@@ -77,14 +85,27 @@ look unless trivial. 🦖 style review of the contact sheet **before** upload; J
 Tester Run 17: every species at largest/smallest size, flyers, bosses with the notched pool
 bar, perf gate.
 
-### Batch 11c — hunters, guns, kit (Builder; T150–T151)
-- **T150** 4 hero outfits (Tracker, Big Game Hunter, Brush Beater, Field Medic): hat/hood,
-  vest or pack, one signature piece; Wardrobe-style accessories (massless, no collide, never
-  hide head or name tag; worn with skins). Stand-in hunters wear them.
+### Batch 11c — full hero bodies, guns, kit (Builder; T150–T151b) — #434–#436
+- **T150 Hero bodies.** One character per class (Tracker, Big Game Hunter, Brush Beater,
+  Field Medic), **R15-compatible**: the 15 R15 part names, R15 Motor6D/attachment names and
+  positions, so default R15 animations, Tools (RightGripAttachment), name tag and the Phase 10
+  melee/grenade work unchanged. First try: rigid MeshParts per R15 part (uploaded Model);
+  skinned bones only if rigid looks wrong. Applied by server `Wardrobe` (or a new `Bodies`)
+  on CharacterAdded in matches and the Outpost: hide the avatar's clothes, accessories and
+  body parts, swap each R15 part's look; **HumanoidRootPart + hit parts keep today's default
+  R15 sizes (scale 1) for every class** (PvP parity bar ≤ 1.15 unchanged); Humanoid MaxHealth
+  / WalkSpeed still come only from `Hunter Stats`. Hunters are never hidden (name tag, HP).
+  Stand-in hunters use the same bodies. Spec `tools/test/bodies.spec.luau`: hit envelope,
+  HP/speed and part names identical across classes and with art off.
+- **T150b Skins as body variants (#436):** each hunter skin = variant pieces + paint inside
+  the same envelope; blocky/paint fallback if a variant id is blank.
+- **T151b First-person viewmodel (#435):** client-only class arms + gun on the camera while
+  first person; the third-person body for everyone else; tracers from `Muzzle`.
 - **T151** Guns: the 4 heroes' guns (keys from `Config` Heroes / `Server/Hero`; dual /
   scoped / belt-fed variants as attachment parts), each hunter's melee and grenade prop;
   `Muzzle` attachment keeps tracers where they are; first-person view model checked.
-- Tester Run 18 (first person + third person, Outpost + match, PvP stand-in), 🦖 review.
+- Tester Run 18: each class in first + third person, Outpost + match, animations (walk,
+  jump, melee, grenade), hit size vs a stand-in (PvP), avatar fully hidden, skins; 🦖 review.
 
 ### Batch 11d — towers (Builder; T152–T154)
 18 towers × their model-swap tier looks (`TowerLook`): T152 the 7 starter/early towers,
@@ -93,8 +114,8 @@ T153 the 4 Round-4 towers + Chiller/Quartermaster/Hospital/Armory, T154 the 7 4�
 flag / HP bar / Trampled tip-over / Display Towers all still work. Tester Run 19 + 🦖.
 
 ### Batch 11e — skins as real variants (Builder; T155)
-Each `Skins` entry gets a mesh and/or texture variant (palette texture or extra paint groups)
-on top of #427 models; recolour stays the fallback. Uploading textures = image assets
+Weapon and tower `Skins` entries (hunter skins are done in T150b) get a mesh and/or texture variant (palette texture or extra paint groups)
+on top of #433 models; recolour stays the fallback. Uploading textures = image assets
 (moderation). Tester Run 20.
 
 ### Batch 11f — pets + Outpost props (Builder; T156)

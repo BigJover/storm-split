@@ -226,6 +226,16 @@ better**. His answers:
   scaling, hunter visibility) must not change. Pipeline and plan: `PLAN.md` Phase 11,
   `DECISIONS.md` #421–#432.
 
+### Art pass asks answered (Jovan, 2026-10-26)
+1. Style: **smooth stylised** — rounder cartoon shapes, smooth shading (not flat low-poly).
+2. Hunters: **full hero bodies** — every player becomes their class's own character model
+   (the player's avatar is hidden); hunter skins become body variants.
+3. API key: **yes, he'll make one**, kept outside the repo at
+   `~/.config/dinohunters/opencloud_key` (folder mode 700) and his Roblox user id at
+   `~/.config/dinohunters/creator_id`; never logged or committed.
+4. **Approve previews per batch**: each batch's Blender renders go to him before upload.
+Calls: `DECISIONS.md` #433–#438.
+
 What this adds: he judges by **looks now that play is done**; he wants it agent-built and
 reproducible (scripts, not hand-sculpting), and he'll approve from preview images.
 
