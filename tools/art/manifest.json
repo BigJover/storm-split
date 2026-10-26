@@ -1,0 +1,52 @@
+{
+  "approved": [],
+  "models": {
+    "dino/HUSK": {
+      "asset": null,
+      "batch": "11a",
+      "box": [
+        [
+          -0.45,
+          -1.1,
+          -1.38
+        ],
+        [
+          0.45,
+          0.635,
+          1.82
+        ]
+      ],
+      "budget": "small",
+      "hash": "398838becb6b6f4d",
+      "pieces": {
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 70
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 430
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 72
+        },
+        "head": {
+          "group": "body",
+          "role": "head",
+          "tris": 150
+        }
+      },
+      "tris": 762,
+      "uploadedHash": null
+    }
+  }
+}
