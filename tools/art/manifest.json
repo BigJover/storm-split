@@ -3596,7 +3596,7 @@
           56
         ]
       },
-      "hash": "d833587df000120d",
+      "hash": "4d0bfa210f61c684",
       "pieces": {
         "body": {
           "group": "body",
@@ -3692,7 +3692,7 @@
           56
         ]
       },
-      "hash": "0db6641b69f7b093",
+      "hash": "e55c224579e58c97",
       "pieces": {
         "body": {
           "group": "body",
@@ -3808,7 +3808,7 @@
           56
         ]
       },
-      "hash": "b55d85906281c64b",
+      "hash": "a7b7ae148125b60a",
       "pieces": {
         "body": {
           "group": "body",
@@ -3914,7 +3914,7 @@
           124
         ]
       },
-      "hash": "e7e2e757c1045eca",
+      "hash": "cde8b25d4f6ca44d",
       "pieces": {
         "body": {
           "group": "body",
@@ -4000,7 +4000,7 @@
           56
         ]
       },
-      "hash": "1ae24e0c4be933d2",
+      "hash": "540e3b6c59480814",
       "pieces": {
         "body": {
           "group": "body",
@@ -4111,7 +4111,7 @@
           56
         ]
       },
-      "hash": "9635f946977ee34f",
+      "hash": "1814290bd849fc30",
       "pieces": {
         "body": {
           "group": "body",
@@ -4174,6 +4174,349 @@
       "tris": 2780,
       "uploadedHash": null
     },
+    "tower/HOSPITAL": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.4500000476837158,
+          -2.5,
+          -1.4199999570846558
+        ],
+        [
+          1.4500000476837158,
+          0.15999984741210938,
+          1.3799999952316284
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          235,
+          232,
+          220
+        ],
+        "canvas2": [
+          214,
+          206,
+          186
+        ],
+        "dark": [
+          52,
+          46,
+          40
+        ],
+        "glow": [
+          60,
+          190,
+          90
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "sheet": [
+          120,
+          110,
+          90
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "5e3a8c99cd4874a1",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 176
+        },
+        "canvas2": {
+          "group": "canvas2",
+          "role": null,
+          "tris": 56
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 176
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 36
+        },
+        "sheet": {
+          "group": "sheet",
+          "role": null,
+          "tris": 44
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 132
+        }
+      },
+      "stage": 0,
+      "tower": "HOSPITAL",
+      "tris": 664,
+      "uploadedHash": null
+    },
+    "tower/HOSPITAL_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.4500000476837158,
+          -2.5,
+          -1.4399999380111694
+        ],
+        [
+          1.4500000476837158,
+          0.15999984741210938,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          235,
+          232,
+          220
+        ],
+        "canvas2": [
+          214,
+          206,
+          186
+        ],
+        "dark": [
+          52,
+          46,
+          40
+        ],
+        "drab": [
+          112,
+          116,
+          78
+        ],
+        "glow": [
+          60,
+          190,
+          90
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "sheet": [
+          120,
+          110,
+          90
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "eb61d55e1471070c",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 220
+        },
+        "canvas2": {
+          "group": "canvas2",
+          "role": null,
+          "tris": 56
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 352
+        },
+        "drab": {
+          "group": "drab",
+          "role": null,
+          "tris": 44
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 264
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 192
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 36
+        },
+        "sheet": {
+          "group": "sheet",
+          "role": null,
+          "tris": 44
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 396
+        }
+      },
+      "stage": 1,
+      "tower": "HOSPITAL",
+      "tris": 1604,
+      "uploadedHash": null
+    },
+    "tower/HOSPITAL_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.4500000476837158,
+          -2.509999990463257,
+          -1.475000023841858
+        ],
+        [
+          1.4500000476837158,
+          0.28510570526123047,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          235,
+          232,
+          220
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "canvas2": [
+          214,
+          206,
+          186
+        ],
+        "dark": [
+          52,
+          46,
+          40
+        ],
+        "drab": [
+          112,
+          116,
+          78
+        ],
+        "glow": [
+          60,
+          190,
+          90
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "sheet": [
+          120,
+          110,
+          90
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "4e3c33b1932fd095",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 264
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 412
+        },
+        "canvas2": {
+          "group": "canvas2",
+          "role": null,
+          "tris": 112
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 352
+        },
+        "drab": {
+          "group": "drab",
+          "role": null,
+          "tris": 44
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 264
+        },
+        "lantern": {
+          "group": "glow",
+          "role": null,
+          "tris": 64
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 192
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 36
+        },
+        "sheet": {
+          "group": "sheet",
+          "role": null,
+          "tris": 44
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 396
+        }
+      },
+      "stage": 2,
+      "tower": "HOSPITAL",
+      "tris": 2180,
+      "uploadedHash": null
+    },
     "tower/QUARTERMASTER": {
       "asset": null,
       "batch": "11d",
@@ -4217,7 +4560,7 @@
           72
         ]
       },
-      "hash": "03bb7232e9d90387",
+      "hash": "d895b5bd26cff046",
       "pieces": {
         "body": {
           "group": "body",
@@ -4303,7 +4646,7 @@
           72
         ]
       },
-      "hash": "c7dffe63c7a2b1eb",
+      "hash": "b97463fb99a2f5c5",
       "pieces": {
         "body": {
           "group": "body",
@@ -4409,7 +4752,7 @@
           72
         ]
       },
-      "hash": "e4411405b24fdb3c",
+      "hash": "3d257d08bef6c2f6",
       "pieces": {
         "body": {
           "group": "body",
@@ -4525,7 +4868,7 @@
           56
         ]
       },
-      "hash": "e34384f86fb7230e",
+      "hash": "a64a8566147d3950",
       "pieces": {
         "body": {
           "group": "body",
@@ -4651,7 +4994,7 @@
           56
         ]
       },
-      "hash": "33ce7f6764cb731a",
+      "hash": "12047c8df808558d",
       "pieces": {
         "body": {
           "group": "body",
@@ -4807,7 +5150,7 @@
           56
         ]
       },
-      "hash": "8a9432c30ee69e77",
+      "hash": "f074f7f4b98106df",
       "pieces": {
         "body": {
           "group": "body",
@@ -4933,7 +5276,7 @@
           56
         ]
       },
-      "hash": "204be2a567723329",
+      "hash": "78243c571be3bce3",
       "pieces": {
         "body": {
           "group": "body",
@@ -5034,7 +5377,7 @@
           56
         ]
       },
-      "hash": "0b2034ad8fcc9ab8",
+      "hash": "7395d1256788007d",
       "pieces": {
         "body": {
           "group": "body",
@@ -5170,7 +5513,7 @@
           56
         ]
       },
-      "hash": "f7aee28dc1e5b31f",
+      "hash": "a3b2ca36b521e44f",
       "pieces": {
         "body": {
           "group": "body",

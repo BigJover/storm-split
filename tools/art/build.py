@@ -170,7 +170,7 @@ def tower_frame(objs, margin=0.72):
     import bpy
 
     lo, hi = lowpoly.bounds(objs)
-    centre, half = (lo + hi) / 2, (hi[2] - lo[2]) * margin
+    centre, half = (lo + hi) / 2, max((hi[2] - lo[2]) * margin, 2.5)  # 2.5: a low tower's footprint
     mesh = bpy.data.meshes.new("frame")
     mesh.from_pydata([tuple(centre - half), tuple(centre + half)], [], [])
     obj = bpy.data.objects.new("frame", mesh)
