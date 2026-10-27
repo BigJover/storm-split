@@ -258,12 +258,18 @@ def main(kind, key):
 
 if __name__ == "__main__":
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    if len(argv) == 3 and argv[0] == "--sheet":  # --sheet <kind> <batch>: contact sheet
+    if len(argv) in (3, 5) and argv[0] == "--sheet":  # --sheet <kind> <batch> [<suffix> <TOWER,..>]
         kind, batch = argv[1], argv[2]
         manifest = json.loads((ART / "manifest.json").read_text())
         keys = sorted(k for k, m in manifest["models"].items() if m["batch"] == batch and k.startswith(kind + "/"))
-        pngs = [ART / "previews" / f"{k}.png" for k in keys]
         out = ART / "previews" / f"sheet_{batch}_{kind}.png"
+        if len(argv) == 5:  # a part of a batch (a sheet too tall otherwise): the listed towers only
+            only = argv[4].split(",")
+            tower = {k: manifest["models"][k].get("tower", k.split("/")[1]) for k in keys}
+            keys = sorted((k for k in keys if tower[k] in only),  # a row per listed tower, in order
+                          key=lambda k: (only.index(tower[k]), manifest["models"][k].get("stage", 0)))
+            out = out.with_name(f"sheet_{batch}_{kind}_{argv[3]}.png")
+        pngs = [ART / "previews" / f"{k}.png" for k in keys]
         render.contact_sheet(out, pngs, columns=3 if kind == "tower" else 4)  # towers: a row per tower, its 3 stages
         print(f"ART OK sheet {out.relative_to(ART)} ({len(pngs)} models)")
     elif len(argv) == 2:

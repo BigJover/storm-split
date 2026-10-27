@@ -91,6 +91,23 @@ Budget class `tower` (<= 3,000 tris, #433; `_kit.Kit.finish` aims under 2,700).
   (Scout, Sniper, Grenadier, Chiller). The crown needs none (TowerLook puts it on `LookTop` = the
   art's top). Every model keeps the back-right corner (x 1.2, z 1.2, the owner flag's pole) low and
   clear; Hospital also keeps the front-right (x 1.25, z -1.25, the Rescue Beacon).
+- **T153 / T154 (the other 11 towers):** `COIL FALCON BALLISTA TARPIT` (Round 4) and `RESIN RAPTOR
+  TOTEM BLIMP METEOR VENT RANGER` (4x), 3 stages each, all on the 3 x 5 x 3 Body (every tower's
+  Body is `BODY_SIZE`). Muzzles on `COIL` (the spark ball's cap), `BALLISTA`, `RESIN` and
+  `BLIMP_AIR` (the door gun). `TARPIT` stays under ~0.8 studs (it lies on the track). `TOTEM`'s
+  base stays under 0.35 (setCharge's ring). `VENT`'s Fire Mountain cone (setVentCone, 2.2 wide,
+  up to y 2.8) still covers the art's middle when on.
+- **`BLIMP_AIR`** (+`_S1`/`_S2`, manifest `tower` = `BLIMP_AIR`) is the flying blimp
+  (`TowerLook.buildBlimp`), not a Body look: its script widens its own `_kit` instance's bounds
+  (x +-9.6, z +-3.5, height 9) and authors with the envelope's centre at y 4.5, so the art origin
+  = the `Envelope` PrimaryPart, nose +X. Pieces sit where buildBlimp's Gondola / Gun / Lamp are;
+  piece `lamp` (ArtRole `lamp`) is the searchlight, for the beam.
+- Not modelled (walkers, built by Server/Towers): raptors (`RaptorLook`), rangers / heavy / legend
+  and the Patrol Jeep (`RangerLook`), Paratroopers (`TowerLook.buildRanger`).
+- Sheets: `--sheet tower 11d <suffix> <TOWER,...>` makes `sheet_11d_tower_<suffix>.png` with a row
+  per listed tower in that order: `a` would be the T152 seven (`sheet_11d_tower.png` is that
+  sheet, made before the filter existed; an unfiltered `--sheet tower 11d` now takes all 22 rows: 7 + 4 + 8 + BLIMP_AIR),
+  `b` = `COIL,FALCON,BALLISTA,TARPIT`, `c` = `RESIN,RAPTOR,TOTEM,BLIMP,BLIMP_AIR,METEOR,VENT,RANGER`.
 - **Runtime not wired yet** (a src/ task): `TowerLook.build` dresses `ArtSlot.dress(.., key, ..)`
   once; it must pick `<KEY>` / `_S1` / `_S2` from the stage in `setStage` (re-dress on a stage
   change), keep the stage-2 glow from turning every art piece Neon (or accept it), and point
