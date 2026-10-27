@@ -6202,6 +6202,384 @@
       "tris": 2766,
       "uploadedHash": null
     },
+    "tower/RESIN": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3100000619888306,
+          -2.494999885559082,
+          -1.4673449993133545
+        ],
+        [
+          1.3100000619888306,
+          -0.42590808868408203,
+          1.440000057220459
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          240,
+          150,
+          40
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "gun": [
+          64,
+          68,
+          74
+        ],
+        "hose": [
+          58,
+          46,
+          36
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "9a7e769d08cbad8b",
+      "pieces": {
+        "bands": {
+          "group": "metal",
+          "role": null,
+          "tris": 224
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 148
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 288
+        },
+        "glob": {
+          "group": "body",
+          "role": null,
+          "tris": 136
+        },
+        "gun": {
+          "group": "gun",
+          "role": null,
+          "tris": 272
+        },
+        "hose": {
+          "group": "hose",
+          "role": null,
+          "tris": 40
+        },
+        "hubs": {
+          "group": "metal",
+          "role": null,
+          "tris": 232
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 452
+        },
+        "muzzle": {
+          "group": "dark",
+          "role": "muzzle",
+          "tris": 96
+        },
+        "reservoir": {
+          "group": "body",
+          "role": null,
+          "tris": 144
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 572
+        }
+      },
+      "stage": 0,
+      "tower": "RESIN",
+      "tris": 2604,
+      "uploadedHash": null
+    },
+    "tower/RESIN_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3100000619888306,
+          -2.494999885559082,
+          -1.4673449993133545
+        ],
+        [
+          1.3100000619888306,
+          -0.4297429621219635,
+          1.4431580305099487
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          240,
+          150,
+          40
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "deep": [
+          196,
+          104,
+          24
+        ],
+        "gun": [
+          64,
+          68,
+          74
+        ],
+        "hose": [
+          58,
+          46,
+          36
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "44827e98bd30120b",
+      "pieces": {
+        "bands": {
+          "group": "metal",
+          "role": null,
+          "tris": 200
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 148
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 298
+        },
+        "deep": {
+          "group": "deep",
+          "role": null,
+          "tris": 80
+        },
+        "glob": {
+          "group": "body",
+          "role": null,
+          "tris": 136
+        },
+        "gun": {
+          "group": "gun",
+          "role": null,
+          "tris": 200
+        },
+        "hose": {
+          "group": "hose",
+          "role": null,
+          "tris": 40
+        },
+        "hubs": {
+          "group": "metal",
+          "role": null,
+          "tris": 200
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 474
+        },
+        "muzzle": {
+          "group": "dark",
+          "role": "muzzle",
+          "tris": 96
+        },
+        "reservoir": {
+          "group": "body",
+          "role": null,
+          "tris": 144
+        },
+        "shot": {
+          "group": "body",
+          "role": null,
+          "tris": 230
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 526
+        }
+      },
+      "stage": 1,
+      "tower": "RESIN",
+      "tris": 2772,
+      "uploadedHash": null
+    },
+    "tower/RESIN_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3100000619888306,
+          -2.494999885559082,
+          -1.4673449993133545
+        ],
+        [
+          1.3100000619888306,
+          -0.4297429621219635,
+          1.4431580305099487
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          240,
+          150,
+          40
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "deep": [
+          196,
+          104,
+          24
+        ],
+        "glow": [
+          255,
+          214,
+          110
+        ],
+        "gun": [
+          64,
+          68,
+          74
+        ],
+        "hose": [
+          58,
+          46,
+          36
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "2d7d8b9993f18407",
+      "pieces": {
+        "bands": {
+          "group": "brass",
+          "role": null,
+          "tris": 200
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 148
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 288
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 316
+        },
+        "deep": {
+          "group": "deep",
+          "role": null,
+          "tris": 80
+        },
+        "glob": {
+          "group": "glow",
+          "role": null,
+          "tris": 136
+        },
+        "gun": {
+          "group": "gun",
+          "role": null,
+          "tris": 200
+        },
+        "hose": {
+          "group": "hose",
+          "role": null,
+          "tris": 40
+        },
+        "hubs": {
+          "group": "brass",
+          "role": null,
+          "tris": 200
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 392
+        },
+        "muzzle": {
+          "group": "dark",
+          "role": "muzzle",
+          "tris": 96
+        },
+        "reservoir": {
+          "group": "glow",
+          "role": null,
+          "tris": 144
+        },
+        "shot": {
+          "group": "body",
+          "role": null,
+          "tris": 200
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 434
+        }
+      },
+      "stage": 2,
+      "tower": "RESIN",
+      "tris": 2874,
+      "uploadedHash": null
+    },
     "tower/SCOUT": {
       "asset": null,
       "batch": "11d",
