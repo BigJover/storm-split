@@ -4164,6 +4164,329 @@
       "tris": 2716,
       "uploadedHash": null
     },
+    "tower/COIL": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.2166621685028076,
+          -2.5,
+          -1.2940068244934082
+        ],
+        [
+          1.1417255401611328,
+          2.0999999046325684,
+          1.25
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          190,
+          110,
+          50
+        ],
+        "cable": [
+          40,
+          40,
+          42
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "porcelain": [
+          226,
+          222,
+          210
+        ],
+        "spark": [
+          78,
+          98,
+          128
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "b4546fa4deb4a74b",
+      "pieces": {
+        "ball": {
+          "group": "spark",
+          "role": null,
+          "tris": 144
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 640
+        },
+        "cable": {
+          "group": "cable",
+          "role": null,
+          "tris": 40
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 176
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 784
+        },
+        "muzzle": {
+          "group": "metal",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "porcelain": {
+          "group": "porcelain",
+          "role": null,
+          "tris": 348
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 264
+        }
+      },
+      "stage": 0,
+      "tower": "COIL",
+      "tris": 2460,
+      "uploadedHash": null
+    },
+    "tower/COIL_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.293580412864685,
+          -2.5,
+          -1.2940068244934082
+        ],
+        [
+          1.1417255401611328,
+          2.3000001907348633,
+          1.25
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          190,
+          110,
+          50
+        ],
+        "cable": [
+          40,
+          40,
+          42
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "porcelain": [
+          226,
+          222,
+          210
+        ],
+        "spark": [
+          78,
+          98,
+          128
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "5bc375dbcda84c71",
+      "pieces": {
+        "ball": {
+          "group": "spark",
+          "role": null,
+          "tris": 144
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 508
+        },
+        "cable": {
+          "group": "cable",
+          "role": null,
+          "tris": 156
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 200
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 760
+        },
+        "muzzle": {
+          "group": "metal",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "porcelain": {
+          "group": "porcelain",
+          "role": null,
+          "tris": 496
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 394
+        }
+      },
+      "stage": 1,
+      "tower": "COIL",
+      "tris": 2722,
+      "uploadedHash": null
+    },
+    "tower/COIL_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.2897841930389404,
+          -2.5,
+          -1.2917288541793823
+        ],
+        [
+          1.1446980237960815,
+          2.3000001907348633,
+          1.25
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          190,
+          110,
+          50
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "cable": [
+          40,
+          40,
+          42
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "glow": [
+          110,
+          225,
+          255
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "porcelain": [
+          226,
+          222,
+          210
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "249201affd76e91d",
+      "pieces": {
+        "arcs": {
+          "group": "glow",
+          "role": null,
+          "tris": 108
+        },
+        "ball": {
+          "group": "glow",
+          "role": null,
+          "tris": 144
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 408
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 410
+        },
+        "cable": {
+          "group": "cable",
+          "role": null,
+          "tris": 156
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 200
+        },
+        "gauge": {
+          "group": "glow",
+          "role": null,
+          "tris": 116
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 432
+        },
+        "muzzle": {
+          "group": "metal",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "porcelain": {
+          "group": "porcelain",
+          "role": null,
+          "tris": 398
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 316
+        }
+      },
+      "stage": 2,
+      "tower": "COIL",
+      "tris": 2752,
+      "uploadedHash": null
+    },
     "tower/GRENADIER": {
       "asset": null,
       "batch": "11d",
