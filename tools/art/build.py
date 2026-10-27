@@ -264,7 +264,7 @@ if __name__ == "__main__":
         keys = sorted(k for k, m in manifest["models"].items() if m["batch"] == batch and k.startswith(kind + "/"))
         pngs = [ART / "previews" / f"{k}.png" for k in keys]
         out = ART / "previews" / f"sheet_{batch}_{kind}.png"
-        render.contact_sheet(out, pngs)
+        render.contact_sheet(out, pngs, columns=3 if kind == "tower" else 4)  # towers: a row per tower, its 3 stages
         print(f"ART OK sheet {out.relative_to(ART)} ({len(pngs)} models)")
     elif len(argv) == 2:
         main(*argv)

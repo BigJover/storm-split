@@ -67,6 +67,35 @@ Keys are the `HunterStats` keys: `PISTOL` Tracker, `RIFLE` Big Game Hunter, `SHO
 +1.5, shoulders ±1 / +0.763, hips ±0.5 / −1.0, …); the runtime task checks it against a live
 character in Studio and fixes `_body.R15` / `JOINTS` only if a joint differs.
 
+## Towers (kind `tower`, PLAN 11d T152-T154, batch `11d`)
+
+```sh
+tools/art/build.sh tower SCOUT_S1      # FBX + 3 previews (3/4, side, `_top` = the game camera's high angle)
+tools/art/build.sh --sheet tower 11d   # contact sheet, one row per tower (its 3 stages)
+```
+
+One model per TowerLook model-swap stage (`setStage`): `<KEY>` = stage 0 (tiers 0-2), `<KEY>_S1` =
+stage 1 (a path at tier 3, the crown), `<KEY>_S2` = stage 2 (tier 5, the glow); higher stages add
+gear, stage 2 adds brass. The manifest entry carries `tower` (the TowerLook key) and `stage`.
+Budget class `tower` (<= 3,000 tris, #433; `_kit.Kit.finish` aims under 2,700).
+- `models/tower/_kit.py`: rounded camp-gear primitives (rbox, cyl, rod, bar, ring, sandbag, pillow,
+  crate) **authored in Roblox studs from the tower's base (y 0), front = -Z**, like TowerLook's
+  silhouette blocks; `finish` lowers by the Body's half height (art origin = Body centre) and fails
+  if anything leaves the 3 x 5 x 3 Body. It returns the art's real bounds as `box`, so fit-to-box
+  is a no-op (scale 1.00). Each tower's design is `models/tower/_<tower>.py` `build(lp, stage)`;
+  `<KEY>.py` / `<KEY>_S1.py` / `<KEY>_S2.py` are three-line wrappers (the source hash covers every
+  `_*.py`, so a helper edit marks every tower).
+- Paint groups are per tower (`body` = the TowerLook colour, `wood dark metal brass rope sand
+  canvas ...`, `glow` = Neon); all colours authored.
+- Anchors: piece `muzzle` (ArtRole `muzzle`, the firing point: its centre) on the towers that shoot
+  (Scout, Sniper, Grenadier, Chiller). The crown needs none (TowerLook puts it on `LookTop` = the
+  art's top). Every model keeps the back-right corner (x 1.2, z 1.2, the owner flag's pole) low and
+  clear; Hospital also keeps the front-right (x 1.25, z -1.25, the Rescue Beacon).
+- **Runtime not wired yet** (a src/ task): `TowerLook.build` dresses `ArtSlot.dress(.., key, ..)`
+  once; it must pick `<KEY>` / `_S1` / `_S2` from the stage in `setStage` (re-dress on a stage
+  change), keep the stage-2 glow from turning every art piece Neon (or accept it), and point
+  `pulseCross` at the Hospital's `Art_glow` (art parts aren't named Cross*).
+
 ## What is verified vs assumed (2026-10-26)
 
 Verified here: Blender 5.2.3 headless runs these scripts; the FBX is written with +Y up / −Z forward,
