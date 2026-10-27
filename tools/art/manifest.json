@@ -6875,6 +6875,474 @@
       "tris": 2180,
       "uploadedHash": null
     },
+    "tower/METEOR": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3119089603424072,
+          -2.5,
+          -1.399999976158142
+        ],
+        [
+          1.3119089603424072,
+          2.2759809494018555,
+          1.3119089603424072
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          70,
+          95,
+          130
+        ],
+        "crack": [
+          120,
+          60,
+          34
+        ],
+        "dark": [
+          44,
+          46,
+          50
+        ],
+        "dial": [
+          232,
+          226,
+          200
+        ],
+        "dishin": [
+          150,
+          162,
+          176
+        ],
+        "flare": [
+          150,
+          52,
+          40
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rock": [
+          52,
+          46,
+          44
+        ],
+        "steel": [
+          78,
+          82,
+          88
+        ],
+        "stone": [
+          100,
+          96,
+          90
+        ]
+      },
+      "hash": "be7b1199126fe13a",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 248
+        },
+        "cracks": {
+          "group": "crack",
+          "role": null,
+          "tris": 24
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 156
+        },
+        "dials": {
+          "group": "dial",
+          "role": null,
+          "tris": 348
+        },
+        "dishin": {
+          "group": "dishin",
+          "role": null,
+          "tris": 96
+        },
+        "dishrim": {
+          "group": "steel",
+          "role": null,
+          "tris": 108
+        },
+        "flarepot": {
+          "group": "flare",
+          "role": null,
+          "tris": 140
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 100
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 64
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 508
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 180
+        }
+      },
+      "stage": 0,
+      "tower": "METEOR",
+      "tris": 1972,
+      "uploadedHash": null
+    },
+    "tower/METEOR_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3119089603424072,
+          -2.5,
+          -1.399999976158142
+        ],
+        [
+          1.3119089603424072,
+          2.2759809494018555,
+          1.3119089603424072
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          70,
+          95,
+          130
+        ],
+        "chart": [
+          34,
+          42,
+          70
+        ],
+        "crack": [
+          120,
+          60,
+          34
+        ],
+        "dark": [
+          44,
+          46,
+          50
+        ],
+        "dial": [
+          232,
+          226,
+          200
+        ],
+        "dishin": [
+          150,
+          162,
+          176
+        ],
+        "flare": [
+          150,
+          52,
+          40
+        ],
+        "gen": [
+          92,
+          104,
+          72
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rock": [
+          52,
+          46,
+          44
+        ],
+        "steel": [
+          78,
+          82,
+          88
+        ],
+        "stone": [
+          100,
+          96,
+          90
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "30bb57f07280a316",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 320
+        },
+        "chart": {
+          "group": "chart",
+          "role": null,
+          "tris": 44
+        },
+        "cracks": {
+          "group": "crack",
+          "role": null,
+          "tris": 24
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 204
+        },
+        "dials": {
+          "group": "dial",
+          "role": null,
+          "tris": 348
+        },
+        "dishin": {
+          "group": "dishin",
+          "role": null,
+          "tris": 96
+        },
+        "dishrim": {
+          "group": "steel",
+          "role": null,
+          "tris": 108
+        },
+        "flarepot": {
+          "group": "flare",
+          "role": null,
+          "tris": 140
+        },
+        "gen": {
+          "group": "gen",
+          "role": null,
+          "tris": 44
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 204
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 64
+        },
+        "stars": {
+          "group": "dial",
+          "role": null,
+          "tris": 64
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 520
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 180
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 24
+        }
+      },
+      "stage": 1,
+      "tower": "METEOR",
+      "tris": 2384,
+      "uploadedHash": null
+    },
+    "tower/METEOR_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3119089603424072,
+          -2.5,
+          -1.399999976158142
+        ],
+        [
+          1.3119089603424072,
+          2.2759809494018555,
+          1.3119089603424072
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          70,
+          95,
+          130
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "chart": [
+          34,
+          42,
+          70
+        ],
+        "dark": [
+          44,
+          46,
+          50
+        ],
+        "dial": [
+          232,
+          226,
+          200
+        ],
+        "dishin": [
+          150,
+          162,
+          176
+        ],
+        "gen": [
+          92,
+          104,
+          72
+        ],
+        "glow": [
+          255,
+          90,
+          50
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rock": [
+          52,
+          46,
+          44
+        ],
+        "steel": [
+          78,
+          82,
+          88
+        ],
+        "stone": [
+          100,
+          96,
+          90
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "bb9d5cd703967891",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 320
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 160
+        },
+        "chart": {
+          "group": "chart",
+          "role": null,
+          "tris": 44
+        },
+        "cracks": {
+          "group": "glow",
+          "role": null,
+          "tris": 24
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 204
+        },
+        "dials": {
+          "group": "dial",
+          "role": null,
+          "tris": 348
+        },
+        "dishin": {
+          "group": "dishin",
+          "role": null,
+          "tris": 96
+        },
+        "dishrim": {
+          "group": "brass",
+          "role": null,
+          "tris": 108
+        },
+        "flarepot": {
+          "group": "glow",
+          "role": null,
+          "tris": 140
+        },
+        "gen": {
+          "group": "gen",
+          "role": null,
+          "tris": 44
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 204
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 64
+        },
+        "stars": {
+          "group": "dial",
+          "role": null,
+          "tris": 64
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 520
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 180
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 24
+        }
+      },
+      "stage": 2,
+      "tower": "METEOR",
+      "tris": 2544,
+      "uploadedHash": null
+    },
     "tower/QUARTERMASTER": {
       "asset": null,
       "batch": "11d",
