@@ -108,8 +108,8 @@ bar, perf gate.
   jump, melee, grenade), hit size vs a stand-in (PvP), avatar fully hidden, skins; 🦖 review.
 
 ### Batch 11d — towers (Builder; T152–T154)
-18 towers × their model-swap tier looks (`TowerLook`): T152 the 7 starter/early towers,
-T153 the 4 Round-4 towers + Chiller/Quartermaster/Hospital/Armory, T154 the 7 4× towers
+18 towers × their model-swap tier looks (`TowerLook`): T152 the 7 early towers (Scout, Sniper, Grenadier, Chiller, Quartermaster, Hospital, Armory; done 40ad4c2),
+T153 the 4 Round-4 towers (Storm Coil, Falcon Roost, Harpoon Ballista, Tar Pit), T154 the 7 4× towers
 (incl. Blimp and Ranger bodies). Base footprint = today's body box; crown / tier-5 glow /
 flag / HP bar / Trampled tip-over / Display Towers all still work. Tester Run 19 + 🦖.
 
