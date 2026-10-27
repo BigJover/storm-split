@@ -7636,6 +7636,389 @@
       "tris": 2766,
       "uploadedHash": null
     },
+    "tower/RANGER": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.375,
+          -2.5027873516082764,
+          -1.4949501752853394
+        ],
+        [
+          1.4197354316711426,
+          1.1449999809265137,
+          1.399999976158142
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          176,
+          160,
+          110
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "log": [
+          126,
+          90,
+          56
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "plank": [
+          150,
+          112,
+          72
+        ],
+        "sign": [
+          196,
+          174,
+          124
+        ],
+        "stone": [
+          120,
+          114,
+          104
+        ],
+        "window": [
+          44,
+          52,
+          60
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "490613fb28f418b1",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 220
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 104
+        },
+        "log": {
+          "group": "log",
+          "role": null,
+          "tris": 576
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 56
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 308
+        },
+        "sign": {
+          "group": "sign",
+          "role": null,
+          "tris": 44
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 88
+        },
+        "windows": {
+          "group": "window",
+          "role": null,
+          "tris": 88
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 224
+        }
+      },
+      "stage": 0,
+      "tower": "RANGER",
+      "tris": 1708,
+      "uploadedHash": null
+    },
+    "tower/RANGER_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.375,
+          -2.5027873516082764,
+          -1.4949501752853394
+        ],
+        [
+          1.4197354316711426,
+          1.1449999809265137,
+          1.399999976158142
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          176,
+          160,
+          110
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "firewood": [
+          176,
+          140,
+          96
+        ],
+        "log": [
+          126,
+          90,
+          56
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "plank": [
+          150,
+          112,
+          72
+        ],
+        "sign": [
+          196,
+          174,
+          124
+        ],
+        "stone": [
+          120,
+          114,
+          104
+        ],
+        "window": [
+          44,
+          52,
+          60
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "5195673f4f802a25",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 220
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 104
+        },
+        "firewood": {
+          "group": "firewood",
+          "role": null,
+          "tris": 120
+        },
+        "log": {
+          "group": "log",
+          "role": null,
+          "tris": 576
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 156
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 352
+        },
+        "sign": {
+          "group": "sign",
+          "role": null,
+          "tris": 44
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 88
+        },
+        "windows": {
+          "group": "window",
+          "role": null,
+          "tris": 88
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 224
+        }
+      },
+      "stage": 1,
+      "tower": "RANGER",
+      "tris": 1972,
+      "uploadedHash": null
+    },
+    "tower/RANGER_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.375,
+          -2.5027873516082764,
+          -1.4949501752853394
+        ],
+        [
+          1.4197354316711426,
+          1.1449999809265137,
+          1.399999976158142
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          176,
+          160,
+          110
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "firewood": [
+          176,
+          140,
+          96
+        ],
+        "glow": [
+          255,
+          206,
+          120
+        ],
+        "log": [
+          126,
+          90,
+          56
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "plank": [
+          150,
+          112,
+          72
+        ],
+        "sign": [
+          196,
+          174,
+          124
+        ],
+        "stone": [
+          120,
+          114,
+          104
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "c49b6990787b35e6",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 220
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 300
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 104
+        },
+        "firewood": {
+          "group": "firewood",
+          "role": null,
+          "tris": 120
+        },
+        "lamp": {
+          "group": "glow",
+          "role": null,
+          "tris": 64
+        },
+        "log": {
+          "group": "log",
+          "role": null,
+          "tris": 576
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 156
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 352
+        },
+        "sign": {
+          "group": "sign",
+          "role": null,
+          "tris": 44
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 88
+        },
+        "windows": {
+          "group": "glow",
+          "role": null,
+          "tris": 88
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 224
+        }
+      },
+      "stage": 2,
+      "tower": "RANGER",
+      "tris": 2336,
+      "uploadedHash": null
+    },
     "tower/RAPTOR": {
       "asset": null,
       "batch": "11d",
