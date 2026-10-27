@@ -106,7 +106,7 @@ Budget class `tower` (<= 3,000 tris, #433; `_kit.Kit.finish` aims under 2,700).
   and the Patrol Jeep (`RangerLook`), Paratroopers (`TowerLook.buildRanger`).
 - Sheets: `--sheet tower 11d <suffix> <TOWER,...>` makes `sheet_11d_tower_<suffix>.png` with a row
   per listed tower in that order: `a` would be the T152 seven (`sheet_11d_tower.png` is that
-  sheet, made before the filter existed; an unfiltered `--sheet tower 11d` now takes all 22 rows: 7 + 4 + 8 + BLIMP_AIR),
+  sheet, made before the filter existed; an unfiltered `--sheet tower 11d` now takes all 19 rows: 7 + 4 + 7 + BLIMP_AIR),
   `b` = `COIL,FALCON,BALLISTA,TARPIT`, `c` = `RESIN,RAPTOR,TOTEM,BLIMP,BLIMP_AIR,METEOR,VENT,RANGER`.
 - **Runtime not wired yet** (a src/ task): `TowerLook.build` dresses `ArtSlot.dress(.., key, ..)`
   once; it must pick `<KEY>` / `_S1` / `_S2` from the stage in `setStage` (re-dress on a stage
