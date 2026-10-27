@@ -193,6 +193,22 @@ def pillow(centre, length=0.7, yaw=0.0, h=0.28, w=0.4, segments=8, rings=4):
     return _place(bag, centre, (0, yaw, 0))
 
 
+def crate(centre, size, yaw=0.0):
+    """A framed crate: (core, frame) objects - a plank core and its edge battens (corner posts
+    and top / bottom rims), for two paint groups."""
+    sx, sy, sz = size
+    core = rbox((0, 0, 0), (sx * 0.96, sy * 0.96, sz * 0.96), bevel=0.04)
+    t = min(sx, sy, sz) * 0.09
+    frame = [rbox((x * (sx - t) / 2, 0, z * (sz - t) / 2), (t, sy, t), bevel=0.015)
+             for x in (-1, 1) for z in (-1, 1)]
+    frame += [rbox((0, y * (sy - t) / 2, 0), (sx, t, sz), bevel=0.015) for y in (-1, 1)]
+    frame += [rbox((0, 0, 0), (sx, t * 0.8, sz), bevel=0.015)]  # middle band
+    out = []
+    for o in [core] + frame:
+        out.append(_place(o, centre, (0, yaw, 0)))
+    return out[0], out[1:]
+
+
 def along(p, q, t):
     return tuple(a + (b - a) * t for a, b in zip(p, q))
 

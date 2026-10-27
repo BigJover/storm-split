@@ -3596,7 +3596,7 @@
           56
         ]
       },
-      "hash": "0684dde329d92d2b",
+      "hash": "d833587df000120d",
       "pieces": {
         "body": {
           "group": "body",
@@ -3692,7 +3692,7 @@
           56
         ]
       },
-      "hash": "3648ca1cdf4175ef",
+      "hash": "0db6641b69f7b093",
       "pieces": {
         "body": {
           "group": "body",
@@ -3808,7 +3808,7 @@
           56
         ]
       },
-      "hash": "6252a67fd4d10071",
+      "hash": "b55d85906281c64b",
       "pieces": {
         "body": {
           "group": "body",
@@ -3914,7 +3914,7 @@
           124
         ]
       },
-      "hash": "97cfd262875e5144",
+      "hash": "e7e2e757c1045eca",
       "pieces": {
         "body": {
           "group": "body",
@@ -4000,7 +4000,7 @@
           56
         ]
       },
-      "hash": "f16b71c45a9eadbe",
+      "hash": "1ae24e0c4be933d2",
       "pieces": {
         "body": {
           "group": "body",
@@ -4111,7 +4111,7 @@
           56
         ]
       },
-      "hash": "d0f39a2558d89ff6",
+      "hash": "9635f946977ee34f",
       "pieces": {
         "body": {
           "group": "body",
@@ -4174,6 +4174,299 @@
       "tris": 2780,
       "uploadedHash": null
     },
+    "tower/QUARTERMASTER": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3474183082580566,
+          -2.5,
+          -1.3499999046325684
+        ],
+        [
+          1.1826329231262207,
+          1.8000001907348633,
+          1.2481623888015747
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          230,
+          150,
+          50
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "wood": [
+          160,
+          118,
+          72
+        ]
+      },
+      "hash": "03bb7232e9d90387",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 132
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 944
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 192
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 88
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 272
+        }
+      },
+      "stage": 0,
+      "tower": "QUARTERMASTER",
+      "tris": 1628,
+      "uploadedHash": null
+    },
+    "tower/QUARTERMASTER_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3474183082580566,
+          -2.516885757446289,
+          -1.437859058380127
+        ],
+        [
+          1.207554817199707,
+          1.8000001907348633,
+          1.2481623888015747
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          230,
+          150,
+          50
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "deck": [
+          128,
+          96,
+          62
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "sack": [
+          196,
+          180,
+          140
+        ],
+        "wood": [
+          160,
+          118,
+          72
+        ]
+      },
+      "hash": "c7dffe63c7a2b1eb",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 132
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 1292
+        },
+        "deck": {
+          "group": "deck",
+          "role": null,
+          "tris": 220
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 192
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 336
+        },
+        "sack": {
+          "group": "sack",
+          "role": null,
+          "tris": 200
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 316
+        }
+      },
+      "stage": 1,
+      "tower": "QUARTERMASTER",
+      "tris": 2688,
+      "uploadedHash": null
+    },
+    "tower/QUARTERMASTER_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3855950832366943,
+          -2.516885757446289,
+          -1.437859058380127
+        ],
+        [
+          1.207554817199707,
+          1.9455952644348145,
+          1.2481623888015747
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          230,
+          150,
+          50
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "deck": [
+          128,
+          96,
+          62
+        ],
+        "glow": [
+          255,
+          170,
+          40
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "sack": [
+          196,
+          180,
+          140
+        ],
+        "wood": [
+          160,
+          118,
+          72
+        ]
+      },
+      "hash": "e4411405b24fdb3c",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 132
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 388
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 946
+        },
+        "deck": {
+          "group": "deck",
+          "role": null,
+          "tris": 200
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 200
+        },
+        "lantern": {
+          "group": "glow",
+          "role": null,
+          "tris": 64
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 192
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 230
+        },
+        "sack": {
+          "group": "sack",
+          "role": null,
+          "tris": 200
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 214
+        }
+      },
+      "stage": 2,
+      "tower": "QUARTERMASTER",
+      "tris": 2766,
+      "uploadedHash": null
+    },
     "tower/SCOUT": {
       "asset": null,
       "batch": "11d",
@@ -4232,7 +4525,7 @@
           56
         ]
       },
-      "hash": "c2a77349b90aad92",
+      "hash": "e34384f86fb7230e",
       "pieces": {
         "body": {
           "group": "body",
@@ -4358,7 +4651,7 @@
           56
         ]
       },
-      "hash": "8b0dc1a1840f9c0c",
+      "hash": "33ce7f6764cb731a",
       "pieces": {
         "body": {
           "group": "body",
@@ -4514,7 +4807,7 @@
           56
         ]
       },
-      "hash": "43355bfabdc5d4fa",
+      "hash": "8a9432c30ee69e77",
       "pieces": {
         "body": {
           "group": "body",
@@ -4640,7 +4933,7 @@
           56
         ]
       },
-      "hash": "971bbc6708ffe50a",
+      "hash": "204be2a567723329",
       "pieces": {
         "body": {
           "group": "body",
@@ -4741,7 +5034,7 @@
           56
         ]
       },
-      "hash": "edf5c91462c95ddd",
+      "hash": "0b2034ad8fcc9ab8",
       "pieces": {
         "body": {
           "group": "body",
@@ -4877,7 +5170,7 @@
           56
         ]
       },
-      "hash": "2bee52f74fab7f8d",
+      "hash": "f7aee28dc1e5b31f",
       "pieces": {
         "body": {
           "group": "body",
