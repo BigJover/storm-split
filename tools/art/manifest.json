@@ -10003,6 +10003,359 @@
       "tower": "TOTEM",
       "tris": 2760,
       "uploadedHash": null
+    },
+    "tower/VENT": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3799443244934082,
+          -2.5,
+          -1.4800000190734863
+        ],
+        [
+          1.3239305019378662,
+          0.17950010299682617,
+          1.335514783859253
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "ash": [
+          112,
+          90,
+          74
+        ],
+        "body": [
+          75,
+          60,
+          55
+        ],
+        "crust": [
+          44,
+          36,
+          34
+        ],
+        "lava": [
+          192,
+          76,
+          30
+        ],
+        "smoke": [
+          150,
+          145,
+          140
+        ]
+      },
+      "hash": "a7f17d3678cee844",
+      "pieces": {
+        "ash": {
+          "group": "ash",
+          "role": null,
+          "tris": 304
+        },
+        "blobs": {
+          "group": "lava",
+          "role": null,
+          "tris": 96
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 476
+        },
+        "crust": {
+          "group": "crust",
+          "role": null,
+          "tris": 240
+        },
+        "pool": {
+          "group": "lava",
+          "role": null,
+          "tris": 164
+        },
+        "runs": {
+          "group": "lava",
+          "role": null,
+          "tris": 164
+        },
+        "smoke": {
+          "group": "smoke",
+          "role": null,
+          "tris": 400
+        }
+      },
+      "stage": 0,
+      "tower": "VENT",
+      "tris": 1844,
+      "uploadedHash": null
+    },
+    "tower/VENT_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3799443244934082,
+          -2.5,
+          -1.4800000190734863
+        ],
+        [
+          1.3239305019378662,
+          0.5039999485015869,
+          1.335514783859253
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "ash": [
+          112,
+          90,
+          74
+        ],
+        "body": [
+          75,
+          60,
+          55
+        ],
+        "crust": [
+          44,
+          36,
+          34
+        ],
+        "dial": [
+          232,
+          226,
+          200
+        ],
+        "lava": [
+          192,
+          76,
+          30
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "obsidian": [
+          30,
+          28,
+          36
+        ],
+        "smoke": [
+          150,
+          145,
+          140
+        ]
+      },
+      "hash": "f2669595cc398b3a",
+      "pieces": {
+        "ash": {
+          "group": "ash",
+          "role": null,
+          "tris": 300
+        },
+        "blobs": {
+          "group": "lava",
+          "role": null,
+          "tris": 96
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 470
+        },
+        "crust": {
+          "group": "crust",
+          "role": null,
+          "tris": 236
+        },
+        "dial": {
+          "group": "dial",
+          "role": null,
+          "tris": 116
+        },
+        "gauge": {
+          "group": "metal",
+          "role": null,
+          "tris": 116
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 160
+        },
+        "obsidian": {
+          "group": "obsidian",
+          "role": null,
+          "tris": 36
+        },
+        "pool": {
+          "group": "lava",
+          "role": null,
+          "tris": 164
+        },
+        "runs": {
+          "group": "lava",
+          "role": null,
+          "tris": 324
+        },
+        "smoke": {
+          "group": "smoke",
+          "role": null,
+          "tris": 592
+        },
+        "wheel": {
+          "group": "metal",
+          "role": null,
+          "tris": 84
+        }
+      },
+      "stage": 1,
+      "tower": "VENT",
+      "tris": 2694,
+      "uploadedHash": null
+    },
+    "tower/VENT_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3799443244934082,
+          -2.5,
+          -1.4800000190734863
+        ],
+        [
+          1.316920280456543,
+          0.6499998569488525,
+          1.335514783859253
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "ash": [
+          112,
+          90,
+          74
+        ],
+        "body": [
+          75,
+          60,
+          55
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "crust": [
+          44,
+          36,
+          34
+        ],
+        "dial": [
+          232,
+          226,
+          200
+        ],
+        "glow": [
+          255,
+          140,
+          40
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "obsidian": [
+          30,
+          28,
+          36
+        ],
+        "smoke": [
+          150,
+          145,
+          140
+        ]
+      },
+      "hash": "0dbc4472def5dabd",
+      "pieces": {
+        "ash": {
+          "group": "ash",
+          "role": null,
+          "tris": 262
+        },
+        "blobs": {
+          "group": "glow",
+          "role": null,
+          "tris": 96
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 412
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 96
+        },
+        "crust": {
+          "group": "crust",
+          "role": null,
+          "tris": 206
+        },
+        "dial": {
+          "group": "dial",
+          "role": null,
+          "tris": 116
+        },
+        "embers": {
+          "group": "glow",
+          "role": null,
+          "tris": 144
+        },
+        "gauge": {
+          "group": "brass",
+          "role": null,
+          "tris": 116
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 160
+        },
+        "obsidian": {
+          "group": "obsidian",
+          "role": null,
+          "tris": 36
+        },
+        "pool": {
+          "group": "glow",
+          "role": null,
+          "tris": 164
+        },
+        "runs": {
+          "group": "glow",
+          "role": null,
+          "tris": 284
+        },
+        "smoke": {
+          "group": "smoke",
+          "role": null,
+          "tris": 518
+        },
+        "wheel": {
+          "group": "brass",
+          "role": null,
+          "tris": 84
+        }
+      },
+      "stage": 2,
+      "tower": "VENT",
+      "tris": 2694,
+      "uploadedHash": null
     }
   }
 }
