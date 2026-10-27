@@ -4179,6 +4179,514 @@
       "tris": 2694,
       "uploadedHash": null
     },
+    "tower/BLIMP": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.350000023841858,
+          -2.5,
+          -1.350000023841858
+        ],
+        [
+          1.350000023841858,
+          2.2846407890319824,
+          1.350000023841858
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          205,
+          195,
+          170
+        ],
+        "cable": [
+          40,
+          40,
+          42
+        ],
+        "canvas": [
+          236,
+          232,
+          222
+        ],
+        "canvasdark": [
+          120,
+          112,
+          88
+        ],
+        "concrete": [
+          150,
+          146,
+          138
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "gas": [
+          170,
+          60,
+          50
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "plate": [
+          118,
+          122,
+          126
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "sock": [
+          230,
+          120,
+          40
+        ],
+        "steel": [
+          78,
+          84,
+          92
+        ]
+      },
+      "hash": "6b5766d9238ab9fe",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 140
+        },
+        "cable": {
+          "group": "cable",
+          "role": null,
+          "tris": 24
+        },
+        "canvas": {
+          "group": "canvas",
+          "role": null,
+          "tris": 76
+        },
+        "canvasdark": {
+          "group": "canvasdark",
+          "role": null,
+          "tris": 44
+        },
+        "concrete": {
+          "group": "concrete",
+          "role": null,
+          "tris": 176
+        },
+        "conering": {
+          "group": "metal",
+          "role": null,
+          "tris": 72
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 48
+        },
+        "gas": {
+          "group": "gas",
+          "role": null,
+          "tris": 290
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 806
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 44
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 152
+        },
+        "sock": {
+          "group": "sock",
+          "role": null,
+          "tris": 56
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 770
+        }
+      },
+      "stage": 0,
+      "tower": "BLIMP",
+      "tris": 2698,
+      "uploadedHash": null
+    },
+    "tower/BLIMP_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3515788316726685,
+          -2.5,
+          -1.4500000476837158
+        ],
+        [
+          1.3515788316726685,
+          2.2846407890319824,
+          1.3515788316726685
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          205,
+          195,
+          170
+        ],
+        "cable": [
+          40,
+          40,
+          42
+        ],
+        "canvas": [
+          236,
+          232,
+          222
+        ],
+        "canvasdark": [
+          120,
+          112,
+          88
+        ],
+        "concrete": [
+          150,
+          146,
+          138
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "gas": [
+          170,
+          60,
+          50
+        ],
+        "lens": [
+          220,
+          220,
+          200
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "plate": [
+          118,
+          122,
+          126
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "sand": [
+          196,
+          174,
+          124
+        ],
+        "sock": [
+          230,
+          120,
+          40
+        ],
+        "steel": [
+          78,
+          84,
+          92
+        ]
+      },
+      "hash": "45e7add02d1e624f",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 140
+        },
+        "cable": {
+          "group": "cable",
+          "role": null,
+          "tris": 24
+        },
+        "canvas": {
+          "group": "canvas",
+          "role": null,
+          "tris": 76
+        },
+        "canvasdark": {
+          "group": "canvasdark",
+          "role": null,
+          "tris": 88
+        },
+        "concrete": {
+          "group": "concrete",
+          "role": null,
+          "tris": 176
+        },
+        "conering": {
+          "group": "metal",
+          "role": null,
+          "tris": 72
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 200
+        },
+        "gas": {
+          "group": "gas",
+          "role": null,
+          "tris": 354
+        },
+        "lens": {
+          "group": "lens",
+          "role": null,
+          "tris": 116
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 626
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 88
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 152
+        },
+        "sand": {
+          "group": "sand",
+          "role": null,
+          "tris": 96
+        },
+        "sock": {
+          "group": "sock",
+          "role": null,
+          "tris": 56
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 538
+        }
+      },
+      "stage": 1,
+      "tower": "BLIMP",
+      "tris": 2802,
+      "uploadedHash": null
+    },
+    "tower/BLIMP_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3515788316726685,
+          -2.5,
+          -1.4500000476837158
+        ],
+        [
+          1.3515788316726685,
+          2.473637104034424,
+          1.350000023841858
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          205,
+          195,
+          170
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "cable": [
+          40,
+          40,
+          42
+        ],
+        "canvas": [
+          236,
+          232,
+          222
+        ],
+        "canvasdark": [
+          120,
+          112,
+          88
+        ],
+        "concrete": [
+          150,
+          146,
+          138
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "gas": [
+          170,
+          60,
+          50
+        ],
+        "glow": [
+          255,
+          90,
+          60
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "plate": [
+          118,
+          122,
+          126
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "sand": [
+          196,
+          174,
+          124
+        ],
+        "sock": [
+          230,
+          120,
+          40
+        ],
+        "steel": [
+          78,
+          84,
+          92
+        ]
+      },
+      "hash": "681c6b59c5f5698b",
+      "pieces": {
+        "beacon": {
+          "group": "glow",
+          "role": null,
+          "tris": 64
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 140
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 200
+        },
+        "cable": {
+          "group": "cable",
+          "role": null,
+          "tris": 24
+        },
+        "canvas": {
+          "group": "canvas",
+          "role": null,
+          "tris": 76
+        },
+        "canvasdark": {
+          "group": "canvasdark",
+          "role": null,
+          "tris": 88
+        },
+        "concrete": {
+          "group": "concrete",
+          "role": null,
+          "tris": 176
+        },
+        "conering": {
+          "group": "brass",
+          "role": null,
+          "tris": 72
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 200
+        },
+        "gas": {
+          "group": "gas",
+          "role": null,
+          "tris": 354
+        },
+        "lens": {
+          "group": "glow",
+          "role": null,
+          "tris": 116
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 528
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 88
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 152
+        },
+        "sand": {
+          "group": "sand",
+          "role": null,
+          "tris": 96
+        },
+        "sock": {
+          "group": "sock",
+          "role": null,
+          "tris": 56
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 454
+        }
+      },
+      "stage": 2,
+      "tower": "BLIMP",
+      "tris": 2884,
+      "uploadedHash": null
+    },
     "tower/CHILLER": {
       "asset": null,
       "batch": "11d",
