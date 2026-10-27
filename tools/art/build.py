@@ -158,9 +158,23 @@ TOWER_TOP = (-0.45, 0.6, 1.6)  # towers: steep 3/4 from above, near the game cam
 def tower_ground(lo):
     """Preview only (after the FBX export): a dirt disc under a tower's 3x3 footprint, so a
     piece that floats or a leg that misses the ground shows. `lo` = the Roblox box's low corner."""
-    disc = lowpoly.ellipsoid("ground", (0, 0, lo[1] - 0.02), (2.1, 2.1, 0.02), 32, 4)
+    disc = lowpoly.ellipsoid("ground", (0, 0, lo[1] - 0.02), (2.3, 2.3, 0.02), 32, 4)
     disc.color = (0.45, 0.42, 0.36, 1.0)
     return disc
+
+
+def tower_frame(objs, margin=1.45):
+    """Preview only: two loose vertices (no faces, so nothing renders) spanning objs' bounds
+    grown by `margin` on every axis, so the 3/4 camera fits a tall tower whole."""
+    import bpy
+
+    lo, hi = lowpoly.bounds(objs)
+    centre, half = (lo + hi) / 2, max(hi - lo) / 2 * margin
+    mesh = bpy.data.meshes.new("frame")
+    mesh.from_pydata([tuple(centre - half), tuple(centre + half)], [], [])
+    obj = bpy.data.objects.new("frame", mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    return obj
 
 
 def main(kind, key):
@@ -197,11 +211,15 @@ def main(kind, key):
     png.parent.mkdir(parents=True, exist_ok=True)
     lowpoly.export_fbx(fbx, pieces)
     ground = tower_ground(lo) if kind == "tower" else None
-    framed = pieces + [ground] if ground is not None else pieces  # towers: frame the footprint too
-    render.render(png, framed)
+    if ground is not None:  # towers: frame the footprint too, with room for a tall tower's
+        framed = pieces + [ground]  # diagonal (a faceless frame mesh renders nothing)
+        wide = framed + [tower_frame(framed)]
+    else:
+        framed = wide = pieces
+    render.render(png, wide)
     render.render(png.with_name(f"{key}_side.png"), framed, render.SIDE)
     if ground is not None:  # towers: also the game camera's high angle (PLAN 11d)
-        render.render(png.with_name(f"{key}_top.png"), framed, TOWER_TOP)
+        render.render(png.with_name(f"{key}_top.png"), wide, TOWER_TOP)
         import bpy
 
         bpy.data.objects.remove(ground)

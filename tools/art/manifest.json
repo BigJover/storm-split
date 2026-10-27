@@ -3606,7 +3606,7 @@
           56
         ]
       },
-      "hash": "e9f7baf7cdf9985d",
+      "hash": "98f509d27827acbd",
       "pieces": {
         "body": {
           "group": "body",
@@ -3732,7 +3732,7 @@
           56
         ]
       },
-      "hash": "959f3f16d743895e",
+      "hash": "87f4e7e6e6899073",
       "pieces": {
         "body": {
           "group": "body",
@@ -3888,7 +3888,7 @@
           56
         ]
       },
-      "hash": "fdc21bcf4cedd6d7",
+      "hash": "4364c68f00cd4518",
       "pieces": {
         "body": {
           "group": "body",
@@ -3969,6 +3969,359 @@
       "stage": 2,
       "tower": "SCOUT",
       "tris": 2778,
+      "uploadedHash": null
+    },
+    "tower/SNIPER": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.4398975372314453,
+          -2.5069761276245117,
+          -1.489153504371643
+        ],
+        [
+          1.4398975372314453,
+          2.4700002670288086,
+          1.475000023841858
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          200,
+          180,
+          130
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "deck": [
+          150,
+          112,
+          72
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "64c93cd6fbb22ed0",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 108
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 444
+        },
+        "deck": {
+          "group": "deck",
+          "role": null,
+          "tris": 308
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 56
+        },
+        "muzzle": {
+          "group": "metal",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 296
+        }
+      },
+      "stage": 0,
+      "tower": "SNIPER",
+      "tris": 1276,
+      "uploadedHash": null
+    },
+    "tower/SNIPER_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.4747101068496704,
+          -2.5069761276245117,
+          -1.489153504371643
+        ],
+        [
+          1.4747101068496704,
+          2.4700002670288086,
+          1.475000023841858
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          200,
+          180,
+          130
+        ],
+        "canvas": [
+          150,
+          140,
+          96
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "deck": [
+          150,
+          112,
+          72
+        ],
+        "leaf": [
+          88,
+          128,
+          60
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "sand": [
+          196,
+          174,
+          124
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "8892086f99c5ac3f",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 108
+        },
+        "canvas": {
+          "group": "canvas",
+          "role": null,
+          "tris": 132
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 488
+        },
+        "deck": {
+          "group": "deck",
+          "role": null,
+          "tris": 308
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 192
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 96
+        },
+        "muzzle": {
+          "group": "metal",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 512
+        },
+        "sand": {
+          "group": "sand",
+          "role": null,
+          "tris": 324
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 296
+        }
+      },
+      "stage": 1,
+      "tower": "SNIPER",
+      "tris": 2520,
+      "uploadedHash": null
+    },
+    "tower/SNIPER_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.486056923866272,
+          -2.506573438644409,
+          -1.4900000095367432
+        ],
+        [
+          1.478971242904663,
+          2.494999885559082,
+          1.475000023841858
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          200,
+          180,
+          130
+        ],
+        "bone": [
+          228,
+          218,
+          192
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "canvas": [
+          150,
+          140,
+          96
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "deck": [
+          150,
+          112,
+          72
+        ],
+        "glow": [
+          255,
+          196,
+          90
+        ],
+        "leaf": [
+          88,
+          128,
+          60
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "sand": [
+          196,
+          174,
+          124
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "7ca78bd7fdd96aeb",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 108
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 188
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 442
+        },
+        "canvas": {
+          "group": "canvas",
+          "role": null,
+          "tris": 132
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 390
+        },
+        "deck": {
+          "group": "deck",
+          "role": null,
+          "tris": 224
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 64
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 192
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 68
+        },
+        "muzzle": {
+          "group": "metal",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 372
+        },
+        "sand": {
+          "group": "sand",
+          "role": null,
+          "tris": 236
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 214
+        }
+      },
+      "stage": 2,
+      "tower": "SNIPER",
+      "tris": 2694,
       "uploadedHash": null
     }
   }
