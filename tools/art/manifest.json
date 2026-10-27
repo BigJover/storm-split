@@ -3548,6 +3548,299 @@
       "tris": 5898,
       "uploadedHash": null
     },
+    "tower/ARMORY": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.4700000286102295,
+          -2.490000009536743,
+          -1.409999966621399
+        ],
+        [
+          1.4199999570846558,
+          0.7721502780914307,
+          1.409999966621399
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          115,
+          125,
+          140
+        ],
+        "dark": [
+          60,
+          44,
+          30
+        ],
+        "deck": [
+          150,
+          112,
+          72
+        ],
+        "metal": [
+          78,
+          82,
+          88
+        ],
+        "wall": [
+          92,
+          66,
+          44
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "15f25907777c67fe",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 108
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 176
+        },
+        "deck": {
+          "group": "deck",
+          "role": null,
+          "tris": 220
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 160
+        },
+        "wall": {
+          "group": "wall",
+          "role": null,
+          "tris": 264
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 192
+        }
+      },
+      "stage": 0,
+      "tower": "ARMORY",
+      "tris": 1120,
+      "uploadedHash": null
+    },
+    "tower/ARMORY_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.4700000286102295,
+          -2.490000009536743,
+          -1.409999966621399
+        ],
+        [
+          1.4199999570846558,
+          0.7721502780914307,
+          1.409999966621399
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          115,
+          125,
+          140
+        ],
+        "dark": [
+          60,
+          44,
+          30
+        ],
+        "deck": [
+          150,
+          112,
+          72
+        ],
+        "metal": [
+          78,
+          82,
+          88
+        ],
+        "wall": [
+          92,
+          66,
+          44
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "aef3739812554b8f",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 240
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 484
+        },
+        "deck": {
+          "group": "deck",
+          "role": null,
+          "tris": 220
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 584
+        },
+        "wall": {
+          "group": "wall",
+          "role": null,
+          "tris": 264
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 436
+        }
+      },
+      "stage": 1,
+      "tower": "ARMORY",
+      "tris": 2228,
+      "uploadedHash": null
+    },
+    "tower/ARMORY_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.4700000286102295,
+          -2.5080623626708984,
+          -1.4105069637298584
+        ],
+        [
+          1.4199999570846558,
+          0.7721502780914307,
+          1.409999966621399
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          115,
+          125,
+          140
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          60,
+          44,
+          30
+        ],
+        "deck": [
+          150,
+          112,
+          72
+        ],
+        "glow": [
+          255,
+          140,
+          50
+        ],
+        "helmet": [
+          226,
+          214,
+          180
+        ],
+        "metal": [
+          78,
+          82,
+          88
+        ],
+        "wall": [
+          92,
+          66,
+          44
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "7312ea140a73972d",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 200
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 574
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 372
+        },
+        "deck": {
+          "group": "deck",
+          "role": null,
+          "tris": 200
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 192
+        },
+        "helmet": {
+          "group": "helmet",
+          "role": null,
+          "tris": 380
+        },
+        "lantern": {
+          "group": "glow",
+          "role": null,
+          "tris": 64
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 276
+        },
+        "wall": {
+          "group": "wall",
+          "role": null,
+          "tris": 200
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 314
+        }
+      },
+      "stage": 2,
+      "tower": "ARMORY",
+      "tris": 2772,
+      "uploadedHash": null
+    },
     "tower/CHILLER": {
       "asset": null,
       "batch": "11d",
@@ -3596,7 +3889,7 @@
           56
         ]
       },
-      "hash": "4d0bfa210f61c684",
+      "hash": "6e956c8db438f8a1",
       "pieces": {
         "body": {
           "group": "body",
@@ -3692,7 +3985,7 @@
           56
         ]
       },
-      "hash": "e55c224579e58c97",
+      "hash": "dbfdea322820b56f",
       "pieces": {
         "body": {
           "group": "body",
@@ -3808,7 +4101,7 @@
           56
         ]
       },
-      "hash": "a7b7ae148125b60a",
+      "hash": "5acb4f1ff2e9ce7e",
       "pieces": {
         "body": {
           "group": "body",
@@ -3914,7 +4207,7 @@
           124
         ]
       },
-      "hash": "cde8b25d4f6ca44d",
+      "hash": "34582f4bd3e04b48",
       "pieces": {
         "body": {
           "group": "body",
@@ -4000,7 +4293,7 @@
           56
         ]
       },
-      "hash": "540e3b6c59480814",
+      "hash": "ad6e406d75b6794b",
       "pieces": {
         "body": {
           "group": "body",
@@ -4111,7 +4404,7 @@
           56
         ]
       },
-      "hash": "1814290bd849fc30",
+      "hash": "066e474e06cbe567",
       "pieces": {
         "body": {
           "group": "body",
@@ -4227,7 +4520,7 @@
           56
         ]
       },
-      "hash": "5e3a8c99cd4874a1",
+      "hash": "6f97e3bcf099f708",
       "pieces": {
         "body": {
           "group": "body",
@@ -4333,7 +4626,7 @@
           56
         ]
       },
-      "hash": "eb61d55e1471070c",
+      "hash": "fa5053323232b026",
       "pieces": {
         "body": {
           "group": "body",
@@ -4454,7 +4747,7 @@
           56
         ]
       },
-      "hash": "4e3c33b1932fd095",
+      "hash": "32520a9498ad616c",
       "pieces": {
         "body": {
           "group": "body",
@@ -4560,7 +4853,7 @@
           72
         ]
       },
-      "hash": "d895b5bd26cff046",
+      "hash": "61930e956b80e92e",
       "pieces": {
         "body": {
           "group": "body",
@@ -4646,7 +4939,7 @@
           72
         ]
       },
-      "hash": "b97463fb99a2f5c5",
+      "hash": "161d273784ffc194",
       "pieces": {
         "body": {
           "group": "body",
@@ -4752,7 +5045,7 @@
           72
         ]
       },
-      "hash": "3d257d08bef6c2f6",
+      "hash": "8c144459195c5c27",
       "pieces": {
         "body": {
           "group": "body",
@@ -4868,7 +5161,7 @@
           56
         ]
       },
-      "hash": "a64a8566147d3950",
+      "hash": "54cd551f62e36cee",
       "pieces": {
         "body": {
           "group": "body",
@@ -4994,7 +5287,7 @@
           56
         ]
       },
-      "hash": "12047c8df808558d",
+      "hash": "be17069e57638eb3",
       "pieces": {
         "body": {
           "group": "body",
@@ -5150,7 +5443,7 @@
           56
         ]
       },
-      "hash": "f074f7f4b98106df",
+      "hash": "7cdfbe9d17782bbe",
       "pieces": {
         "body": {
           "group": "body",
@@ -5276,7 +5569,7 @@
           56
         ]
       },
-      "hash": "78243c571be3bce3",
+      "hash": "6fb9912732111662",
       "pieces": {
         "body": {
           "group": "body",
@@ -5377,7 +5670,7 @@
           56
         ]
       },
-      "hash": "7395d1256788007d",
+      "hash": "ed87e4d8fb5dfe97",
       "pieces": {
         "body": {
           "group": "body",
@@ -5513,7 +5806,7 @@
           56
         ]
       },
-      "hash": "a3b2ca36b521e44f",
+      "hash": "3c8b463e93888aab",
       "pieces": {
         "body": {
           "group": "body",
