@@ -6977,6 +6977,379 @@
       "tower": "SNIPER",
       "tris": 2694,
       "uploadedHash": null
+    },
+    "tower/TARPIT": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.4624228477478027,
+          -2.50203537940979,
+          -1.409999966621399
+        ],
+        [
+          1.409999966621399,
+          -1.647964596748352,
+          1.409999966621399
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          35,
+          28,
+          24
+        ],
+        "bone": [
+          225,
+          215,
+          190
+        ],
+        "bubble": [
+          70,
+          60,
+          52
+        ],
+        "earth": [
+          96,
+          74,
+          52
+        ],
+        "sheen": [
+          62,
+          54,
+          48
+        ],
+        "sign": [
+          196,
+          174,
+          124
+        ],
+        "tar": [
+          24,
+          20,
+          18
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "918f88bb1b08cef4",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 236
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 140
+        },
+        "bubbles": {
+          "group": "bubble",
+          "role": null,
+          "tris": 240
+        },
+        "earth": {
+          "group": "earth",
+          "role": null,
+          "tris": 276
+        },
+        "sheen": {
+          "group": "sheen",
+          "role": null,
+          "tris": 180
+        },
+        "sign": {
+          "group": "sign",
+          "role": null,
+          "tris": 44
+        },
+        "tar": {
+          "group": "tar",
+          "role": null,
+          "tris": 24
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 20
+        }
+      },
+      "stage": 0,
+      "tower": "TARPIT",
+      "tris": 1160,
+      "uploadedHash": null
+    },
+    "tower/TARPIT_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.4624228477478027,
+          -2.50203537940979,
+          -1.409999966621399
+        ],
+        [
+          1.409999966621399,
+          -1.647964596748352,
+          1.409999966621399
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          35,
+          28,
+          24
+        ],
+        "bone": [
+          225,
+          215,
+          190
+        ],
+        "bubble": [
+          70,
+          60,
+          52
+        ],
+        "earth": [
+          96,
+          74,
+          52
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "sheen": [
+          62,
+          54,
+          48
+        ],
+        "sign": [
+          196,
+          174,
+          124
+        ],
+        "stone": [
+          112,
+          106,
+          98
+        ],
+        "tar": [
+          24,
+          20,
+          18
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "bc13c7817e9b4a62",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 236
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 512
+        },
+        "bubbles": {
+          "group": "bubble",
+          "role": null,
+          "tris": 400
+        },
+        "earth": {
+          "group": "earth",
+          "role": null,
+          "tris": 276
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 48
+        },
+        "sheen": {
+          "group": "sheen",
+          "role": null,
+          "tris": 300
+        },
+        "sign": {
+          "group": "sign",
+          "role": null,
+          "tris": 44
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 240
+        },
+        "tar": {
+          "group": "tar",
+          "role": null,
+          "tris": 72
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 40
+        }
+      },
+      "stage": 1,
+      "tower": "TARPIT",
+      "tris": 2168,
+      "uploadedHash": null
+    },
+    "tower/TARPIT_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.4624228477478027,
+          -2.509999990463257,
+          -1.409999966621399
+        ],
+        [
+          1.409999966621399,
+          -1.647964596748352,
+          1.409999966621399
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          35,
+          28,
+          24
+        ],
+        "bone": [
+          225,
+          215,
+          190
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "earth": [
+          96,
+          74,
+          52
+        ],
+        "glow": [
+          255,
+          120,
+          40
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "sheen": [
+          62,
+          54,
+          48
+        ],
+        "sign": [
+          196,
+          174,
+          124
+        ],
+        "stone": [
+          112,
+          106,
+          98
+        ],
+        "tar": [
+          24,
+          20,
+          18
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "aad2d45c0e05b8c3",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 236
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 512
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 184
+        },
+        "bubbles": {
+          "group": "glow",
+          "role": null,
+          "tris": 400
+        },
+        "earth": {
+          "group": "earth",
+          "role": null,
+          "tris": 276
+        },
+        "embers": {
+          "group": "glow",
+          "role": null,
+          "tris": 96
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 48
+        },
+        "sheen": {
+          "group": "sheen",
+          "role": null,
+          "tris": 300
+        },
+        "sign": {
+          "group": "sign",
+          "role": null,
+          "tris": 44
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 240
+        },
+        "tar": {
+          "group": "tar",
+          "role": null,
+          "tris": 72
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 156
+        }
+      },
+      "stage": 2,
+      "tower": "TARPIT",
+      "tris": 2564,
+      "uploadedHash": null
     }
   }
 }
