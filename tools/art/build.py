@@ -158,18 +158,19 @@ TOWER_TOP = (-0.45, 0.6, 1.6)  # towers: steep 3/4 from above, near the game cam
 def tower_ground(lo):
     """Preview only (after the FBX export): a dirt disc under a tower's 3x3 footprint, so a
     piece that floats or a leg that misses the ground shows. `lo` = the Roblox box's low corner."""
-    disc = lowpoly.ellipsoid("ground", (0, 0, lo[1] - 0.02), (2.3, 2.3, 0.02), 32, 4)
+    disc = lowpoly.ellipsoid("ground", (0, 0, lo[1] - 0.02), (2.0, 2.0, 0.02), 32, 4)
     disc.color = (0.45, 0.42, 0.36, 1.0)
     return disc
 
 
-def tower_frame(objs, margin=1.45):
-    """Preview only: two loose vertices (no faces, so nothing renders) spanning objs' bounds
-    grown by `margin` on every axis, so the 3/4 camera fits a tall tower whole."""
+def tower_frame(objs, margin=0.72):
+    """Preview only: two loose vertices (no faces, so nothing renders) about objs' centre,
+    `margin` x the tower's height out on every axis, so the 3/4 camera fits a tall tower
+    whole (a low tower is framed by its ground disc as before)."""
     import bpy
 
     lo, hi = lowpoly.bounds(objs)
-    centre, half = (lo + hi) / 2, max(hi - lo) / 2 * margin
+    centre, half = (lo + hi) / 2, (hi[2] - lo[2]) * margin
     mesh = bpy.data.meshes.new("frame")
     mesh.from_pydata([tuple(centre - half), tuple(centre + half)], [], [])
     obj = bpy.data.objects.new("frame", mesh)
@@ -213,7 +214,7 @@ def main(kind, key):
     ground = tower_ground(lo) if kind == "tower" else None
     if ground is not None:  # towers: frame the footprint too, with room for a tall tower's
         framed = pieces + [ground]  # diagonal (a faceless frame mesh renders nothing)
-        wide = framed + [tower_frame(framed)]
+        wide = framed + [tower_frame(pieces)]
     else:
         framed = wide = pieces
     render.render(png, wide)

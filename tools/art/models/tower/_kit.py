@@ -181,9 +181,16 @@ def ring_along(a, b, radius, thickness, segments=12, minor=5):
     return obj
 
 
-def sandbag(centre, length=0.62, yaw=0.0, h=0.24, w=0.34):
-    """A plump sandbag: a squashed rounded box, slightly pinched at the tied ends."""
-    return rbox(centre, (length, h, w), bevel=0.1, segments=2, rot=(0, yaw, 0), taper=(0.92, 0.85))
+def sandbag(centre, length=0.62, yaw=0.0, h=0.24, w=0.34, segments=2):
+    """A plump sandbag: a squashed rounded box, slightly pinched at the tied ends.
+    (segments=1 for a ring of many bags: about half the triangles.)"""
+    return rbox(centre, (length, h, w), bevel=0.1, segments=segments, rot=(0, yaw, 0), taper=(0.92, 0.85))
+
+
+def pillow(centre, length=0.7, yaw=0.0, h=0.28, w=0.4, segments=8, rings=4):
+    """A light sandbag for walls of many bags: a squashed ellipsoid (~50 triangles)."""
+    bag = ell((0, 0, 0), (length / 2, h / 2, w / 2), segments, rings)
+    return _place(bag, centre, (0, yaw, 0))
 
 
 def along(p, q, t):
