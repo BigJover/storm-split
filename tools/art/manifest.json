@@ -3841,6 +3841,344 @@
       "tris": 2772,
       "uploadedHash": null
     },
+    "tower/BALLISTA": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3673322200775146,
+          -2.5,
+          -1.4708800315856934
+        ],
+        [
+          1.3673322200775146,
+          0.07070803642272949,
+          1.3041765689849854
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          125,
+          90,
+          55
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "leather": [
+          180,
+          60,
+          45
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "string": [
+          205,
+          190,
+          150
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "e0acdd5cf4928778",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 220
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 472
+        },
+        "harpoonhead": {
+          "group": "metal",
+          "role": null,
+          "tris": 60
+        },
+        "leather": {
+          "group": "leather",
+          "role": null,
+          "tris": 88
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 576
+        },
+        "muzzle": {
+          "group": "dark",
+          "role": "muzzle",
+          "tris": 80
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 140
+        },
+        "string": {
+          "group": "string",
+          "role": null,
+          "tris": 40
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 220
+        }
+      },
+      "stage": 0,
+      "tower": "BALLISTA",
+      "tris": 1896,
+      "uploadedHash": null
+    },
+    "tower/BALLISTA_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3673322200775146,
+          -2.5,
+          -1.4708800315856934
+        ],
+        [
+          1.3673322200775146,
+          0.07070803642272949,
+          1.3041765689849854
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          125,
+          90,
+          55
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "leather": [
+          180,
+          60,
+          45
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "string": [
+          205,
+          190,
+          150
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "df712fa247d5ca8a",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 220
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 536
+        },
+        "harpoonhead": {
+          "group": "metal",
+          "role": null,
+          "tris": 60
+        },
+        "leather": {
+          "group": "leather",
+          "role": null,
+          "tris": 88
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 856
+        },
+        "muzzle": {
+          "group": "dark",
+          "role": "muzzle",
+          "tris": 80
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 160
+        },
+        "string": {
+          "group": "string",
+          "role": null,
+          "tris": 40
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 440
+        }
+      },
+      "stage": 1,
+      "tower": "BALLISTA",
+      "tris": 2480,
+      "uploadedHash": null
+    },
+    "tower/BALLISTA_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.4641268253326416,
+          -2.5,
+          -1.4708800315856934
+        ],
+        [
+          1.4641268253326416,
+          0.11020541191101074,
+          1.3047467470169067
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          125,
+          90,
+          55
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "glow": [
+          255,
+          196,
+          90
+        ],
+        "leather": [
+          180,
+          60,
+          45
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "string": [
+          205,
+          190,
+          150
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "cb831e1c96cb4721",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 200
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 444
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 488
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 64
+        },
+        "harpoonhead": {
+          "group": "brass",
+          "role": null,
+          "tris": 60
+        },
+        "leather": {
+          "group": "leather",
+          "role": null,
+          "tris": 88
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 634
+        },
+        "muzzle": {
+          "group": "dark",
+          "role": "muzzle",
+          "tris": 80
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 160
+        },
+        "string": {
+          "group": "string",
+          "role": null,
+          "tris": 40
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 436
+        }
+      },
+      "stage": 2,
+      "tower": "BALLISTA",
+      "tris": 2694,
+      "uploadedHash": null
+    },
     "tower/CHILLER": {
       "asset": null,
       "batch": "11d",
