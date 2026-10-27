@@ -152,6 +152,17 @@ def main_rig(kind, key, model):
     print(f"ART OK {kind}/{key} -> {fbx.relative_to(ART)} {png.relative_to(ART)}")
 
 
+TOWER_TOP = (-0.45, 0.6, 1.6)  # towers: steep 3/4 from above, near the game camera's angle
+
+
+def tower_ground(lo):
+    """Preview only (after the FBX export): a dirt disc under a tower's 3x3 footprint, so a
+    piece that floats or a leg that misses the ground shows. `lo` = the Roblox box's low corner."""
+    disc = lowpoly.ellipsoid("ground", (0, 0, lo[1] - 0.02), (2.1, 2.1, 0.02), 32, 4)
+    disc.color = (0.45, 0.42, 0.36, 1.0)
+    return disc
+
+
 def main(kind, key):
     lowpoly.reset_scene()
     model = load(kind, key).build(lowpoly)
@@ -185,8 +196,15 @@ def main(kind, key):
     fbx.parent.mkdir(parents=True, exist_ok=True)
     png.parent.mkdir(parents=True, exist_ok=True)
     lowpoly.export_fbx(fbx, pieces)
-    render.render(png, pieces)
-    render.render(png.with_name(f"{key}_side.png"), pieces, render.SIDE)
+    ground = tower_ground(lo) if kind == "tower" else None
+    framed = pieces + [ground] if ground is not None else pieces  # towers: frame the footprint too
+    render.render(png, framed)
+    render.render(png.with_name(f"{key}_side.png"), framed, render.SIDE)
+    if ground is not None:  # towers: also the game camera's high angle (PLAN 11d)
+        render.render(png.with_name(f"{key}_top.png"), framed, TOWER_TOP)
+        import bpy
+
+        bpy.data.objects.remove(ground)
 
     manifest_path = ART / "manifest.json"
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
@@ -211,6 +229,8 @@ def main(kind, key):
             },
         }
     )
+    if kind == "tower":  # which TowerLook tower and model-swap stage this look is (PLAN 11d)
+        entry.update({"tower": model["tower"], "stage": model["stage"]})
     entry.setdefault("asset", None)  # set by upload.py
     entry.setdefault("uploadedHash", None)
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")

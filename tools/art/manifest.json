@@ -3547,6 +3547,429 @@
       "rig": "r15",
       "tris": 5898,
       "uploadedHash": null
+    },
+    "tower/SCOUT": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3600000143051147,
+          -2.5067625045776367,
+          -1.4302270412445068
+        ],
+        [
+          1.3600000143051147,
+          0.05874300003051758,
+          1.3700000047683716
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          100,
+          140,
+          70
+        ],
+        "camo": [
+          62,
+          88,
+          46
+        ],
+        "canvas": [
+          214,
+          200,
+          160
+        ],
+        "leaf": [
+          74,
+          116,
+          50
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "slit": [
+          30,
+          30,
+          24
+        ],
+        "thatch": [
+          178,
+          154,
+          96
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "e9f7baf7cdf9985d",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 108
+        },
+        "camo": {
+          "group": "camo",
+          "role": null,
+          "tris": 384
+        },
+        "canvas": {
+          "group": "canvas",
+          "role": null,
+          "tris": 44
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 320
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 28
+        },
+        "muzzle": {
+          "group": "metal",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "slit": {
+          "group": "slit",
+          "role": null,
+          "tris": 176
+        },
+        "thatch": {
+          "group": "thatch",
+          "role": null,
+          "tris": 108
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 180
+        }
+      },
+      "stage": 0,
+      "tower": "SCOUT",
+      "tris": 1412,
+      "uploadedHash": null
+    },
+    "tower/SCOUT_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.493246078491211,
+          -2.5067625045776367,
+          -1.4522693157196045
+        ],
+        [
+          1.493246078491211,
+          0.5299999713897705,
+          1.3700000047683716
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          100,
+          140,
+          70
+        ],
+        "camo": [
+          62,
+          88,
+          46
+        ],
+        "canvas": [
+          214,
+          200,
+          160
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "leaf": [
+          74,
+          116,
+          50
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "sand": [
+          196,
+          174,
+          124
+        ],
+        "slit": [
+          30,
+          30,
+          24
+        ],
+        "thatch": [
+          178,
+          154,
+          96
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "959f3f16d743895e",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 108
+        },
+        "camo": {
+          "group": "camo",
+          "role": null,
+          "tris": 366
+        },
+        "canvas": {
+          "group": "canvas",
+          "role": null,
+          "tris": 44
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 426
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 128
+        },
+        "muzzle": {
+          "group": "metal",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 236
+        },
+        "sand": {
+          "group": "sand",
+          "role": null,
+          "tris": 720
+        },
+        "slit": {
+          "group": "slit",
+          "role": null,
+          "tris": 176
+        },
+        "thatch": {
+          "group": "thatch",
+          "role": null,
+          "tris": 108
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 274
+        }
+      },
+      "stage": 1,
+      "tower": "SCOUT",
+      "tris": 2694,
+      "uploadedHash": null
+    },
+    "tower/SCOUT_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.4931297302246094,
+          -2.506891965866089,
+          -1.4546445608139038
+        ],
+        [
+          1.4993575811386108,
+          0.5299999713897705,
+          1.3700000047683716
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          100,
+          140,
+          70
+        ],
+        "bone": [
+          228,
+          218,
+          192
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "camo": [
+          62,
+          88,
+          46
+        ],
+        "canvas": [
+          214,
+          200,
+          160
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "glow": [
+          255,
+          196,
+          90
+        ],
+        "leaf": [
+          74,
+          116,
+          50
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "sand": [
+          196,
+          174,
+          124
+        ],
+        "slit": [
+          30,
+          30,
+          24
+        ],
+        "thatch": [
+          178,
+          154,
+          96
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "fdc21bcf4cedd6d7",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 108
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 188
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 390
+        },
+        "camo": {
+          "group": "camo",
+          "role": null,
+          "tris": 244
+        },
+        "canvas": {
+          "group": "canvas",
+          "role": null,
+          "tris": 44
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 64
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 286
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 156
+        },
+        "muzzle": {
+          "group": "metal",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 200
+        },
+        "sand": {
+          "group": "sand",
+          "role": null,
+          "tris": 482
+        },
+        "slit": {
+          "group": "slit",
+          "role": null,
+          "tris": 200
+        },
+        "thatch": {
+          "group": "thatch",
+          "role": null,
+          "tris": 108
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 200
+        }
+      },
+      "stage": 2,
+      "tower": "SCOUT",
+      "tris": 2778,
+      "uploadedHash": null
     }
   }
 }
