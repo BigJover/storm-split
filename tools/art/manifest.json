@@ -4330,6 +4330,464 @@
       "tris": 2698,
       "uploadedHash": null
     },
+    "tower/BLIMP_AIR": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -9.090773582458496,
+          -4.266295909881592,
+          -3.4000000953674316
+        ],
+        [
+          9.537764549255371,
+          3.4000000953674316,
+          3.4000000953674316
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          205,
+          195,
+          170
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "fin": [
+          70,
+          50,
+          32
+        ],
+        "gondola": [
+          110,
+          80,
+          50
+        ],
+        "lamp": [
+          255,
+          245,
+          200
+        ],
+        "pod": [
+          96,
+          100,
+          106
+        ],
+        "seam": [
+          170,
+          158,
+          128
+        ],
+        "steel": [
+          70,
+          72,
+          75
+        ],
+        "window": [
+          40,
+          46,
+          52
+        ]
+      },
+      "hash": "12aa2bada5de1311",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 502
+        },
+        "fin": {
+          "group": "fin",
+          "role": null,
+          "tris": 334
+        },
+        "gondola": {
+          "group": "gondola",
+          "role": null,
+          "tris": 200
+        },
+        "hubs": {
+          "group": "steel",
+          "role": null,
+          "tris": 72
+        },
+        "lamp": {
+          "group": "lamp",
+          "role": "lamp",
+          "tris": 80
+        },
+        "muzzle": {
+          "group": "dark",
+          "role": "muzzle",
+          "tris": 48
+        },
+        "nosecap": {
+          "group": "steel",
+          "role": null,
+          "tris": 100
+        },
+        "pod": {
+          "group": "pod",
+          "role": null,
+          "tris": 160
+        },
+        "rail": {
+          "group": "steel",
+          "role": null,
+          "tris": 44
+        },
+        "seam": {
+          "group": "seam",
+          "role": null,
+          "tris": 410
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 368
+        },
+        "windows": {
+          "group": "window",
+          "role": null,
+          "tris": 376
+        }
+      },
+      "stage": 0,
+      "tower": "BLIMP_AIR",
+      "tris": 2694,
+      "uploadedHash": null
+    },
+    "tower/BLIMP_AIR_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -9.090773582458496,
+          -4.266295909881592,
+          -3.4050002098083496
+        ],
+        [
+          9.537764549255371,
+          3.4050002098083496,
+          3.4050002098083496
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          205,
+          195,
+          170
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "fin": [
+          70,
+          50,
+          32
+        ],
+        "gondola": [
+          110,
+          80,
+          50
+        ],
+        "lamp": [
+          255,
+          245,
+          200
+        ],
+        "plate": [
+          112,
+          118,
+          124
+        ],
+        "pod": [
+          96,
+          100,
+          106
+        ],
+        "sand": [
+          196,
+          174,
+          124
+        ],
+        "seam": [
+          170,
+          158,
+          128
+        ],
+        "steel": [
+          70,
+          72,
+          75
+        ],
+        "window": [
+          40,
+          46,
+          52
+        ]
+      },
+      "hash": "551167f7c72ded35",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 334
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 192
+        },
+        "fin": {
+          "group": "fin",
+          "role": null,
+          "tris": 278
+        },
+        "gondola": {
+          "group": "gondola",
+          "role": null,
+          "tris": 206
+        },
+        "hubs": {
+          "group": "steel",
+          "role": null,
+          "tris": 108
+        },
+        "lamp": {
+          "group": "lamp",
+          "role": "lamp",
+          "tris": 80
+        },
+        "muzzle": {
+          "group": "dark",
+          "role": "muzzle",
+          "tris": 48
+        },
+        "nosecap": {
+          "group": "steel",
+          "role": null,
+          "tris": 100
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 200
+        },
+        "pod": {
+          "group": "pod",
+          "role": null,
+          "tris": 200
+        },
+        "rail": {
+          "group": "steel",
+          "role": null,
+          "tris": 44
+        },
+        "sand": {
+          "group": "sand",
+          "role": null,
+          "tris": 192
+        },
+        "seam": {
+          "group": "seam",
+          "role": null,
+          "tris": 274
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 266
+        },
+        "windows": {
+          "group": "window",
+          "role": null,
+          "tris": 250
+        }
+      },
+      "stage": 1,
+      "tower": "BLIMP_AIR",
+      "tris": 2772,
+      "uploadedHash": null
+    },
+    "tower/BLIMP_AIR_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -9.096029281616211,
+          -4.266295909881592,
+          -3.4699997901916504
+        ],
+        [
+          9.537764549255371,
+          3.4700002670288086,
+          3.4699997901916504
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          205,
+          195,
+          170
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "fin": [
+          70,
+          50,
+          32
+        ],
+        "glow": [
+          255,
+          214,
+          120
+        ],
+        "gondola": [
+          110,
+          80,
+          50
+        ],
+        "lamp": [
+          255,
+          245,
+          200
+        ],
+        "plate": [
+          112,
+          118,
+          124
+        ],
+        "pod": [
+          96,
+          100,
+          106
+        ],
+        "sand": [
+          196,
+          174,
+          124
+        ],
+        "seam": [
+          170,
+          158,
+          128
+        ],
+        "steel": [
+          70,
+          72,
+          75
+        ]
+      },
+      "hash": "c451caf6d7bdc498",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 304
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 72
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 192
+        },
+        "fin": {
+          "group": "fin",
+          "role": null,
+          "tris": 252
+        },
+        "gondola": {
+          "group": "gondola",
+          "role": null,
+          "tris": 200
+        },
+        "hubs": {
+          "group": "brass",
+          "role": null,
+          "tris": 108
+        },
+        "lamp": {
+          "group": "lamp",
+          "role": "lamp",
+          "tris": 80
+        },
+        "lights": {
+          "group": "glow",
+          "role": null,
+          "tris": 108
+        },
+        "muzzle": {
+          "group": "dark",
+          "role": "muzzle",
+          "tris": 48
+        },
+        "nosecap": {
+          "group": "brass",
+          "role": null,
+          "tris": 100
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 200
+        },
+        "pod": {
+          "group": "pod",
+          "role": null,
+          "tris": 200
+        },
+        "rail": {
+          "group": "brass",
+          "role": null,
+          "tris": 44
+        },
+        "sand": {
+          "group": "sand",
+          "role": null,
+          "tris": 192
+        },
+        "seam": {
+          "group": "seam",
+          "role": null,
+          "tris": 248
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 242
+        },
+        "windows": {
+          "group": "glow",
+          "role": null,
+          "tris": 228
+        }
+      },
+      "stage": 2,
+      "tower": "BLIMP_AIR",
+      "tris": 2818,
+      "uploadedHash": null
+    },
     "tower/BLIMP_S1": {
       "asset": null,
       "batch": "11d",
