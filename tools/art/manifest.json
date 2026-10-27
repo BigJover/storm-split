@@ -8131,6 +8131,444 @@
       "tower": "TARPIT",
       "tris": 2564,
       "uploadedHash": null
+    },
+    "tower/TOTEM": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.2589350938796997,
+          -2.5057499408721924,
+          -1.246270775794983
+        ],
+        [
+          1.275941252708435,
+          2.499114751815796,
+          1.2797999382019043
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          235,
+          225,
+          200
+        ],
+        "earth": [
+          100,
+          80,
+          58
+        ],
+        "feather": [
+          210,
+          70,
+          50
+        ],
+        "horn": [
+          216,
+          200,
+          168
+        ],
+        "ochre": [
+          176,
+          74,
+          50
+        ],
+        "paint": [
+          60,
+          140,
+          136
+        ],
+        "pole": [
+          118,
+          86,
+          56
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "socket": [
+          36,
+          32,
+          30
+        ],
+        "stone": [
+          110,
+          104,
+          96
+        ]
+      },
+      "hash": "1600e947f3cb52e7",
+      "pieces": {
+        "bands": {
+          "group": "paint",
+          "role": null,
+          "tris": 180
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 468
+        },
+        "earth": {
+          "group": "earth",
+          "role": null,
+          "tris": 188
+        },
+        "eyes": {
+          "group": "socket",
+          "role": null,
+          "tris": 96
+        },
+        "feather": {
+          "group": "feather",
+          "role": null,
+          "tris": 96
+        },
+        "frillspots": {
+          "group": "ochre",
+          "role": null,
+          "tris": 120
+        },
+        "horn": {
+          "group": "horn",
+          "role": null,
+          "tris": 76
+        },
+        "ochre": {
+          "group": "ochre",
+          "role": null,
+          "tris": 160
+        },
+        "pole": {
+          "group": "pole",
+          "role": null,
+          "tris": 960
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 48
+        },
+        "runes": {
+          "group": "socket",
+          "role": null,
+          "tris": 96
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 208
+        }
+      },
+      "stage": 0,
+      "tower": "TOTEM",
+      "tris": 2696,
+      "uploadedHash": null
+    },
+    "tower/TOTEM_S1": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3270659446716309,
+          -2.5057499408721924,
+          -1.3270658254623413
+        ],
+        [
+          1.3270659446716309,
+          2.499114751815796,
+          1.3270659446716309
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          235,
+          225,
+          200
+        ],
+        "earth": [
+          100,
+          80,
+          58
+        ],
+        "feather": [
+          210,
+          70,
+          50
+        ],
+        "horn": [
+          216,
+          200,
+          168
+        ],
+        "ochre": [
+          176,
+          74,
+          50
+        ],
+        "paint": [
+          60,
+          140,
+          136
+        ],
+        "pole": [
+          118,
+          86,
+          56
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "socket": [
+          36,
+          32,
+          30
+        ],
+        "stone": [
+          110,
+          104,
+          96
+        ]
+      },
+      "hash": "fe7ba4445a560057",
+      "pieces": {
+        "bands": {
+          "group": "paint",
+          "role": null,
+          "tris": 180
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 642
+        },
+        "earth": {
+          "group": "earth",
+          "role": null,
+          "tris": 188
+        },
+        "eyes": {
+          "group": "socket",
+          "role": null,
+          "tris": 96
+        },
+        "feather": {
+          "group": "feather",
+          "role": null,
+          "tris": 96
+        },
+        "frillspots": {
+          "group": "ochre",
+          "role": null,
+          "tris": 120
+        },
+        "horn": {
+          "group": "horn",
+          "role": null,
+          "tris": 76
+        },
+        "ochre": {
+          "group": "ochre",
+          "role": null,
+          "tris": 160
+        },
+        "pole": {
+          "group": "pole",
+          "role": null,
+          "tris": 754
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 96
+        },
+        "runes": {
+          "group": "socket",
+          "role": null,
+          "tris": 96
+        },
+        "socket": {
+          "group": "socket",
+          "role": null,
+          "tris": 32
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 200
+        }
+      },
+      "stage": 1,
+      "tower": "TOTEM",
+      "tris": 2736,
+      "uploadedHash": null
+    },
+    "tower/TOTEM_S2": {
+      "asset": null,
+      "batch": "11d",
+      "box": [
+        [
+          -1.3270659446716309,
+          -2.5057499408721924,
+          -1.3270658254623413
+        ],
+        [
+          1.3270659446716309,
+          2.4982147216796875,
+          1.3270659446716309
+        ]
+      ],
+      "budget": "tower",
+      "colors": {
+        "body": [
+          235,
+          225,
+          200
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "earth": [
+          100,
+          80,
+          58
+        ],
+        "feather": [
+          210,
+          70,
+          50
+        ],
+        "glow": [
+          150,
+          230,
+          255
+        ],
+        "horn": [
+          216,
+          200,
+          168
+        ],
+        "ochre": [
+          176,
+          74,
+          50
+        ],
+        "paint": [
+          60,
+          140,
+          136
+        ],
+        "pole": [
+          118,
+          86,
+          56
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "socket": [
+          36,
+          32,
+          30
+        ],
+        "stone": [
+          110,
+          104,
+          96
+        ]
+      },
+      "hash": "de92caaeeef5b21f",
+      "pieces": {
+        "bands": {
+          "group": "paint",
+          "role": null,
+          "tris": 180
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 552
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 200
+        },
+        "crystal": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "earth": {
+          "group": "earth",
+          "role": null,
+          "tris": 188
+        },
+        "eyes": {
+          "group": "glow",
+          "role": null,
+          "tris": 96
+        },
+        "feather": {
+          "group": "feather",
+          "role": null,
+          "tris": 96
+        },
+        "frillspots": {
+          "group": "ochre",
+          "role": null,
+          "tris": 120
+        },
+        "horn": {
+          "group": "horn",
+          "role": null,
+          "tris": 76
+        },
+        "ochre": {
+          "group": "ochre",
+          "role": null,
+          "tris": 160
+        },
+        "pole": {
+          "group": "pole",
+          "role": null,
+          "tris": 648
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 96
+        },
+        "runes": {
+          "group": "glow",
+          "role": null,
+          "tris": 96
+        },
+        "socket": {
+          "group": "socket",
+          "role": null,
+          "tris": 32
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 200
+        }
+      },
+      "stage": 2,
+      "tower": "TOTEM",
+      "tris": 2760,
+      "uploadedHash": null
     }
   }
 }
