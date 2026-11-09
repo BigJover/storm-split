@@ -8858,7 +8858,7 @@
           56
         ]
       },
-      "hash": "54cd551f62e36cee",
+      "hash": "f3cdbfe019cfa2f0",
       "pieces": {
         "body": {
           "group": "body",
@@ -8916,13 +8916,13 @@
       "batch": "11d",
       "box": [
         [
-          -1.493246078491211,
+          -1.4228473901748657,
           -2.5067625045776367,
           -1.4522693157196045
         ],
         [
-          1.493246078491211,
-          0.5299999713897705,
+          1.3600000143051147,
+          1.2902112007141113,
           1.3700000047683716
         ]
       ],
@@ -8943,11 +8943,6 @@
           200,
           160
         ],
-        "dark": [
-          74,
-          54,
-          36
-        ],
         "leaf": [
           74,
           116,
@@ -8957,11 +8952,6 @@
           78,
           82,
           86
-        ],
-        "rope": [
-          176,
-          150,
-          100
         ],
         "sand": [
           196,
@@ -8984,72 +8974,62 @@
           56
         ]
       },
-      "hash": "be17069e57638eb3",
+      "hash": "22721aecfd723af0",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 108
+          "tris": 152
         },
         "camo": {
           "group": "camo",
           "role": null,
-          "tris": 366
+          "tris": 476
         },
         "canvas": {
           "group": "canvas",
           "role": null,
           "tris": 44
         },
-        "dark": {
-          "group": "dark",
-          "role": null,
-          "tris": 44
-        },
         "leaf": {
           "group": "leaf",
           "role": null,
-          "tris": 426
+          "tris": 364
         },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 128
+          "tris": 84
         },
         "muzzle": {
           "group": "metal",
           "role": "muzzle",
           "tris": 64
         },
-        "rope": {
-          "group": "rope",
-          "role": null,
-          "tris": 236
-        },
         "sand": {
           "group": "sand",
           "role": null,
-          "tris": 720
+          "tris": 750
         },
         "slit": {
           "group": "slit",
           "role": null,
-          "tris": 176
+          "tris": 218
         },
         "thatch": {
           "group": "thatch",
           "role": null,
-          "tris": 108
+          "tris": 152
         },
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 274
+          "tris": 392
         }
       },
       "stage": 1,
       "tower": "SCOUT",
-      "tris": 2694,
+      "tris": 2696,
       "uploadedHash": null
     },
     "tower/SCOUT_S2": {
@@ -9057,13 +9037,13 @@
       "batch": "11d",
       "box": [
         [
-          -1.4931297302246094,
-          -2.506891965866089,
+          -1.4228473901748657,
+          -2.5067625045776367,
           -1.4546445608139038
         ],
         [
-          1.4993575811386108,
-          0.5299999713897705,
+          1.3600000143051147,
+          2.4600000381469727,
           1.3700000047683716
         ]
       ],
@@ -9094,15 +9074,10 @@
           200,
           160
         ],
-        "dark": [
-          74,
-          54,
-          36
-        ],
         "glow": [
           255,
-          196,
-          90
+          160,
+          50
         ],
         "leaf": [
           74,
@@ -9113,11 +9088,6 @@
           78,
           82,
           86
-        ],
-        "rope": [
-          176,
-          150,
-          100
         ],
         "sand": [
           196,
@@ -9140,12 +9110,12 @@
           56
         ]
       },
-      "hash": "7cdfbe9d17782bbe",
+      "hash": "e00e2f1c1b1c5996",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 108
+          "tris": 152
         },
         "bone": {
           "group": "bone",
@@ -9155,52 +9125,42 @@
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 390
+          "tris": 364
         },
         "camo": {
           "group": "camo",
           "role": null,
-          "tris": 244
+          "tris": 326
         },
         "canvas": {
           "group": "canvas",
           "role": null,
           "tris": 44
         },
-        "dark": {
-          "group": "dark",
-          "role": null,
-          "tris": 44
-        },
         "glow": {
           "group": "glow",
           "role": null,
-          "tris": 64
+          "tris": 108
         },
         "leaf": {
           "group": "leaf",
           "role": null,
-          "tris": 286
+          "tris": 228
         },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 156
+          "tris": 84
         },
         "muzzle": {
           "group": "metal",
           "role": "muzzle",
           "tris": 64
         },
-        "rope": {
-          "group": "rope",
-          "role": null,
-          "tris": 200
-        },
         "sand": {
           "group": "sand",
           "role": null,
-          "tris": 482
+          "tris": 514
         },
         "slit": {
           "group": "slit",
@@ -9210,17 +9170,17 @@
         "thatch": {
           "group": "thatch",
           "role": null,
-          "tris": 108
+          "tris": 152
         },
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 200
+          "tris": 270
         }
       },
       "stage": 2,
       "tower": "SCOUT",
-      "tris": 2778,
+      "tris": 2694,
       "uploadedHash": null
     },
     "tower/SNIPER": {

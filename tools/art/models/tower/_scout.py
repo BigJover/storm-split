@@ -3,11 +3,12 @@ round, a thatch-and-leaf roof, a canvas awning over the front slit and a rifle p
 it. Authored from the base (y 0) in Roblox studs; front = -Z (_kit conventions).
 
 Stage 0 (tiers 0-2): the hide, camo patches, slits, corner poles, awning, thatch, one rifle.
-Stage 1 (tier 3):    sandbags banked along the front, a second rifle out of the left slit,
-                     branch bundles lashed to the front corners, a roof hatch with a periscope,
-                     a coil of rope.
-Stage 2 (tier 5):    brass-framed slits, brass scopes on three rifles, a horned dino-skull
-                     trophy on the roof's front edge, a glowing lantern on the front-left pole.
+Stage 1 (tier 3):    a second storey - a camo lookout box on the roof with its own slit,
+                     rifle, ladder and thatch roof; sandbags banked along the front, a second
+                     rifle out of the left slit.
+Stage 2 (tier 5):    a taller lookout under a peaked brass-trimmed thatch roof crowned by a
+                     glowing signal brazier, a big horned dino skull on its front, brass-framed
+                     slits and brass scopes.
 """
 
 import importlib.util
@@ -83,15 +84,53 @@ def build(lp, stage):
     # thatch roof with leafy clumps (kept off the back-right corner: the owner flag's)
     roof_y = H + 0.1
     k.add("thatch", K.rbox((0, roof_y, Z0), (2.72, 0.22, 2.5), bevel=0.1, segments=2))
-    clumps = ((-0.62, -0.55, 0.46), (0.55, -0.45, 0.42), (-0.6, 0.65, 0.4), (0.15, 0.15, 0.36))
+    if stage == 0:
+        clumps = ((-0.62, -0.55, 0.46), (0.55, -0.45, 0.42), (-0.6, 0.65, 0.4), (0.15, 0.15, 0.36))
+    else:  # the lookout stands on the roof's left: the clumps go round it
+        clumps = ((0.85, -0.55, 0.36), (0.8, 0.25, 0.3), (-1.0, 0.95, 0.3))
     k.add("leaf", *[K.ell((x, roof_y + 0.14, Z0 + z), (s, s * 0.5, s * 0.85), 10, 5) for x, z, s in clumps])
 
     # rifles poking out of the slits; the first one's muzzle is the firing point
     rifles = [((0.42, sy, front_z(sy) + 0.4), (0.42, sy + 0.03, -1.4))]
     if stage >= 1:
         rifles.append(((-side_x(sy) + 0.4, sy, Z0 - 0.25), (-1.42, sy + 0.03, Z0 - 0.25)))
-    if stage >= 2:
-        rifles.append(((-0.42, sy, front_z(sy) + 0.4), (-0.42, sy + 0.03, -1.4)))
+
+    # stage 1+: a second storey - a camo lookout box on the roof's left half, its own slit,
+    # rifle and thatch roof; stage 2 builds it taller and crowns it with a peaked roof
+    LX, LZ, LW, LD = -0.3, Z0 - 0.15, 1.5, 1.4
+    ly0 = roof_y + 0.11
+    LH = 1.05 if stage == 1 else 1.12
+    ly1 = ly0 + LH
+    if stage >= 1:
+        k.add("body", K.rbox((LX, ly0 + LH / 2, LZ), (LW, LH, LD), bevel=0.14, segments=1, taper=(0.9, 0.9)))
+        k.add("camo", *[K.ell((LX + u, ly0 + v, LZ - LD / 2 * (1 - 0.1 * v / LH) - 0.005), (0.26, 0.16, 0.05), 8, 3)
+                        for u, v in ((-0.42, 0.3), (0.45, 0.22))],
+              *[K.ell((LX - LW / 2 * (1 - 0.1 * v / LH) - 0.005, ly0 + v, LZ + u), (0.05, 0.16, 0.26), 8, 3)
+                for u, v in ((0.3, 0.32),)])
+        lsy = ly0 + LH * 0.62
+        k.add("slit", K.rbox((LX, lsy, LZ - LD / 2 * 0.95), (1.1, 0.24, 0.1), bevel=0.04))
+        rifles.append(((LX + 0.25, lsy, LZ - 0.2), (LX + 0.25, lsy + 0.02, -1.25)))
+        # corner poles of the lookout, a ladder up its right side
+        lp_ = []
+        for sx in (-1, 1):
+            for sz in (-1, 1):
+                x, z = LX + sx * (LW / 2 - 0.02), LZ + sz * (LD / 2 - 0.02)
+                lp_.append(K.rod((x, ly0 - 0.05, z), (x, ly1 + 0.1, z), 0.07, 6))
+        for dz in (-0.25, 0.25):
+            lp_.append(K.rod((LX + LW / 2 + 0.12, roof_y + 0.1, LZ + dz), (LX + LW / 2 + 0.12, ly1 - 0.1, LZ + dz), 0.035, 5))
+        lp_ += [K.rod((LX + LW / 2 + 0.12, y, LZ - 0.25), (LX + LW / 2 + 0.12, y, LZ + 0.25), 0.03, 5)
+                for y in (ly0 + 0.25, ly0 + 0.6, ly0 + 0.95)]
+        k.add("wood", *lp_)
+        # sandbags banked along the front wall, two courses
+        bags = [K.sandbag((x, 0.13, -1.28), 0.6, yaw=(i % 2) * 8 - 4) for i, x in enumerate((-0.96, -0.32, 0.32, 0.96))]
+        bags += [K.sandbag((x, 0.36, -1.22), 0.58, yaw=4 - 4 * i) for i, x in enumerate((-0.64, 0.0, 0.64))]
+        k.add("sand", *bags)
+    if stage == 1:
+        # a flat thatch roof with a leafy clump
+        k.add("thatch", K.rbox((LX, ly1 + 0.1, LZ), (LW + 0.3, 0.2, LD + 0.3), bevel=0.08, segments=1))
+        k.add("leaf", K.ell((LX - 0.2, ly1 + 0.24, LZ - 0.1), (0.42, 0.2, 0.38), 10, 5),
+              K.ell((LX + 0.35, ly1 + 0.22, LZ + 0.3), (0.3, 0.16, 0.28), 8, 4))
+
     k.add("metal", *[K.rod(a, b, 0.06, 8) for a, b in rifles])
     stocks = [K.rod(K.along(a, b, 0.35), K.along(a, b, 0.62), 0.085, 8) for a, b in rifles]  # forestocks
     k.add("wood", *stocks)
@@ -99,59 +138,42 @@ def build(lp, stage):
     k.add("metal", K.ring_along(b, K.along(b, a, -1), 0.065, 0.028, 8, 4), piece="muzzle", role="muzzle")
 
     brass = []
-    if stage >= 1:
-        # sandbags banked along the front wall, two courses
-        bags = [K.sandbag((x, 0.13, -1.28), 0.6, yaw=(i % 2) * 8 - 4) for i, x in enumerate((-0.96, -0.32, 0.32, 0.96))]
-        bags += [K.sandbag((x, 0.36, -1.22), 0.58, yaw=4 - 4 * i) for i, x in enumerate((-0.64, 0.0, 0.64))]
-        k.add("sand", *bags)
-        # branch bundles lashed to the front corners, rope ties
-        sticks, tufts, ties = [], [], []
-        for sx in (-1, 1):
-            for dx in (-0.07, 0.07):
-                sticks.append(K.rod((sx * 1.38 + dx, 0.02, -1.0), (sx * 1.2 + dx, 2.5, -0.92), 0.05, 6))
-            tufts.append(K.ell((sx * 1.2, 2.5, -0.92), (0.24, 0.2, 0.22), 8, 5))
-            ties.append(K.ring((sx * 1.29, 1.2, -0.96), 0.12, 0.03, 8, 4))
-        k.add("wood", *sticks)
-        k.add("leaf", *tufts)
-        # a coil of rope hung on the left wall
-        ties.append(K.ring((-side_x(0.9) - 0.03, 0.9, Z0 + 0.55), 0.22, 0.05, 12, 5, rot=(0, 0, 90)))
-        k.add("rope", *ties)
-        # roof hatch with a periscope
-        k.add("dark", K.rbox((0.45, roof_y + 0.2, Z0 + 0.1), (0.7, 0.22, 0.7), bevel=0.07))
-        k.add("metal", K.rod((0.45, roof_y + 0.28, Z0 + 0.1), (0.45, roof_y + 0.72, Z0 + 0.1), 0.07, 8),
-              K.rbox((0.45, roof_y + 0.74, Z0 + 0.02), (0.18, 0.18, 0.3), bevel=0.05))
-
     if stage >= 2:
-        # brass frames round the slits
+        # a peaked thatch roof on the lookout, brass-capped, a glowing signal brazier on its point
+        ry = ly1 + 0.05
+        k.add("thatch", K.rbox((LX, ry + 0.4, LZ), (LW + 0.4, 0.8, LD + 0.4), bevel=0.08, segments=1, taper=(0.12, 0.12)))
+        k.add("leaf", *[K.ell((LX + dx, ry + 0.22, LZ + dz), (0.24, 0.14, 0.22), 8, 4)
+                        for dx, dz in ((-0.65, -0.6), (0.6, -0.55))])
+        tip = ry + 0.8
+        brass += [K.rbox((LX, ry + 0.06, LZ), (LW + 0.46, 0.08, LD + 0.46), bevel=0.03),  # eave trim
+                  K.rod((LX, tip - 0.05, LZ), (LX, tip + 0.15, LZ), 0.12, 8, top=1.0),
+                  K.cyl((LX, tip + 0.2, LZ), 0.24, 0.16, 10, top=1.45, bevel=0.04)]  # brazier bowl
+        k.add("glow", K.ell((LX, tip + 0.36, LZ), (0.3, 0.22, 0.3), 10, 5),
+              K.rod((LX, tip + 0.4, LZ), (LX, tip + 0.68, LZ), 0.2, 8, top=0.1))
+        # brass frames round the slits, upper and lower
         for zf, w in ((front_z(sy) - 0.02, 1.8), (back_z(sy) + 0.02, 1.4)):
             brass += [K.rbox((0, sy + dy, zf), (w, 0.06, 0.06), bevel=0.02) for dy in (-0.18, 0.18)]
-        for sx in (-1, 1):
-            brass += [K.rbox((sx * (side_x(sy) + 0.02), sy + dy, Z0), (0.06, 0.06, 1.4), bevel=0.02) for dy in (-0.18, 0.18)]
+        brass += [K.rbox((LX, lsy + dy, LZ - LD / 2 * 0.95 - 0.03), (1.2, 0.06, 0.06), bevel=0.02) for dy in (-0.16, 0.16)]
         # brass scopes on every rifle
         for a, b in rifles:
             lift = (0, 0.12, 0)
             pa = tuple(p + q for p, q in zip(K.along(a, b, 0.3), lift))
             pb = tuple(p + q for p, q in zip(K.along(a, b, 0.7), lift))
             brass.append(K.rod(pa, pb, 0.045, 8))
-        brass.append(K.ring((0.45, roof_y + 0.5, Z0 + 0.1), 0.08, 0.025, 8, 4))  # periscope band
-        # horned skull trophy on the roof's front edge
-        sz = front_z(H) - 0.02
+        # a big horned dino-skull trophy on the lookout's front
+        sz, syk = LZ - LD / 2 - 0.12, ly0 + 0.2  # sits on the lower roof
         k.add("bone",
-              K.ell((0, roof_y + 0.22, sz), (0.28, 0.2, 0.2), 10, 6),
-              K.ell((0, roof_y + 0.14, sz - 0.14), (0.18, 0.1, 0.12), 8, 4),
-              K.rod((-0.2, roof_y + 0.32, sz), (-0.5, roof_y + 0.6, sz - 0.08), 0.055, 6, top=0.2),
-              K.rod((0.2, roof_y + 0.32, sz), (0.5, roof_y + 0.6, sz - 0.08), 0.055, 6, top=0.2))
-        k.add("slit", *[K.ell((s * 0.11, roof_y + 0.25, sz - 0.18), (0.06, 0.05, 0.03), 6, 4) for s in (-1, 1)])
-        # a lantern on the front-left pole (the flag owns the back-right)
-        lx, lz = -side_x(1.9) - 0.12, front_z(1.9) + 0.02
-        brass += [K.cyl((lx, 2.02, lz), 0.1, 0.06, 8), K.rod((lx, 2.05, lz), (lx + 0.12, 2.05, lz + 0.05), 0.02, 6)]
-        k.add("glow", K.ell((lx, 1.86, lz), (0.11, 0.14, 0.11), 8, 5))
+              K.ell((LX - 0.3, syk, sz), (0.3, 0.22, 0.2), 10, 6),
+              K.ell((LX - 0.3, syk - 0.1, sz - 0.16), (0.2, 0.11, 0.13), 8, 4),
+              K.rod((LX - 0.52, syk + 0.1, sz), (-1.35, syk + 0.45, sz - 0.1), 0.065, 6, top=0.2),
+              K.rod((LX - 0.08, syk + 0.1, sz), (LX + 0.25, syk + 0.45, sz - 0.1), 0.065, 6, top=0.2))
+        k.add("slit", *[K.ell((LX - 0.3 + s * 0.12, syk + 0.03, sz - 0.19), (0.065, 0.055, 0.03), 6, 4) for s in (-1, 1)])
     if brass:
         k.add("brass", *brass)
 
     colors = {
         "body": GREEN, "camo": CAMO, "slit": SLIT, "wood": K.WOOD, "thatch": THATCH, "leaf": LEAF,
         "canvas": K.CANVAS, "metal": K.METAL, "sand": K.SAND, "rope": K.ROPE, "dark": K.DARK,
-        "brass": K.BRASS, "bone": BONE, "glow": K.GLOW,
+        "brass": K.BRASS, "bone": BONE, "glow": (255, 160, 50),
     }
     return k.model("11d", colors, "SCOUT", stage)
