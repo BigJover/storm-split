@@ -942,7 +942,7 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 		side = side or 1,
 		base = base,
 		position = base + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0),
-		muzzle = base + Vector3.new(0, TowerLook.BODY_HEIGHT - 0.5, 0),
+		muzzle = TowerLook.muzzle(model) or base + Vector3.new(0, TowerLook.BODY_HEIGHT - 0.5, 0), -- art: its muzzle piece (11d)
 		pathTiers = pathTiers,
 		pathPicks = { "", "", "" },
 		stats = stats,
@@ -1096,6 +1096,10 @@ function Towers.upgrade(tower: Tower, pathIndex: number, option: string?): boole
 	tower.hp = math.min(maxHp, tower.hp + (maxHp - tower.maxHp))
 	tower.maxHp = maxHp
 	TowerLook.refresh(tower.model, ringRange(tower.def, tower.stats), tower.pathTiers, swapStage(tower), OptionPick.tierLabel(tower.pathTiers, tower.pathPicks))
+	tower.muzzle = TowerLook.muzzle(tower.model) or tower.muzzle -- a new stage's art fires from its own muzzle
+	if tower.blimp then
+		TowerLook.setBlimpStage(tower.blimp.model, swapStage(tower)) -- the flying blimp follows the stage (#443)
+	end
 	showPool(tower) -- Wide Pool / Tar Lake lengthen it
 	TowerLook.setLantern(tower.model, tower.stats.rescueRespawnMult > 0) -- Rescue Beacon
 	showHealth(tower)
@@ -2520,8 +2524,8 @@ do -- block-scoped locals: the main chunk must stay under Luau's 200-register li
 		local below = Enemies.pointAt(state.at, tower.side)
 		local air = below + Vector3.new(0, Blimp.HEIGHT, 0)
 		tower.position = ground + Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0)
-		tower.muzzle = air - Vector3.new(0, 4, 0)
 		TowerLook.poseBlimp(state.model, air, Enemies.pointAt(state.at + state.dir, tower.side) - below, ground, stats.range)
+		tower.muzzle = TowerLook.muzzle(state.model) or air - Vector3.new(0, 4, 0) -- art: the door gun's muzzle
 		if hasAura(stats) then
 			auraDirty = true -- its auras move with it (refreshed at most every AURA_REFRESH s)
 		end

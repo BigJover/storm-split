@@ -32,7 +32,8 @@ src/
 │   ├── Path.luau            Distance-along-path math
 │   ├── Placement.luau       Where a tower may stand (off track, no overlap) — client ghost + server
 │   ├── TowerLook.luau       Tower models, shared by real towers and the placement ghost;
-│   │                        upgrade visuals (ring size, tier label, crown/glow swaps)
+│   │                        upgrade visuals (ring size, tier label, crown/glow swaps); art per stage
+│   │                        (KEY / _S1 / _S2, #447), the art's muzzle, the blimp's BLIMP_AIR art
 │   ├── Upgrades.luau        The crossover rule, shared so the client greys out what the server refuses;
 │   │                        A/B/C picks: a path's composed row for its picks (`row`, `line`, `tierCount`),
 │   │                        the options on offer and `stepFor`'s refusals (Phase 9, T110-T111)

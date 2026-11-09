@@ -18,6 +18,14 @@
 	way depends on where it stands), dark Slate, a dust cloud, a few Slate debris blocks at its base, no range ring, and a
 	TRAMPLED label (DECISIONS #9/#21). All of it undoes on repair.
 	flashHit() tints a bitten tower red for a moment.
+
+	Art (PLAN 11d, DECISIONS #443/#447): with a tower's art loaded (Shared/ArtSlot, kind
+	"tower"), the look is KEY at stage 0 (tiers 0-2), KEY_S1 at stage 1 (tier 3) and KEY_S2
+	at stage 2 (tier 5), re-dressed when the stage changes (a missing stage keeps the highest
+	loaded one below it; no KEY art = today's blocks at every stage). With art the crown is a
+	small gold marker on the art's top, and stage 2 never turns the art Neon (the art carries
+	its own `glow` group). `muzzle()` is the art's `muzzle` piece centre; the flying blimp
+	(buildBlimp) dresses as BLIMP_AIR / _S1 / _S2 and aims its beam from the `lamp` piece.
 ]]
 
 local Skins = require(script.Parent.Skins)
@@ -48,6 +56,15 @@ TowerLook.COLORS = table.freeze({
 
 TowerLook.BODY_HEIGHT = 5
 local BODY_SIZE = Vector3.new(3, TowerLook.BODY_HEIGHT, 3)
+local ART_KIND = "tower"
+local BLIMP_ART = "BLIMP_AIR" -- the flying blimp's art key (+ _S1 / _S2)
+local STAGE_SUFFIX = { "_S1", "_S2" }
+local ART_CROWN = Vector3.new(1.1, 0.4, 1.1) -- with art, the tier-3 crown is a small marker (#443)
+-- Which tower key a built look is (models get renamed: Display_KEY), and its tower set, so a
+-- stage change can re-dress it. Weak: a destroyed model is forgotten. No attributes, so the
+-- blocky look stays byte-identical.
+local lookKeys: { [Model]: string } = setmetatable({}, { __mode = "k" }) :: any
+local lookSkins: { [Model]: Skins.Look } = setmetatable({}, { __mode = "k" }) :: any
 local RING_MAX_RANGE = 200 -- Sniper's "global" 999 range would draw a 2000-stud disc
 local RING_TRANSPARENCY = 0.85
 
@@ -373,6 +390,70 @@ local function silhouetteTop(blocks: { Block }): number
 	return top
 end
 
+-- The art key for a tower key at a stage: KEY / KEY_S1 / KEY_S2 when loaded, else the highest
+-- loaded stage below it; nil when KEY itself has no loaded art (the blocky look).
+function TowerLook.artKey(key: string, stage: number): string?
+	if not ArtSlot.template(ART_KIND, key) then
+		return nil
+	end
+	for s = math.clamp(stage, 0, 2), 1, -1 do
+		local staged = key .. STAGE_SUFFIX[s]
+		if ArtSlot.template(ART_KIND, staged) then
+			return staged
+		end
+	end
+	return key
+end
+
+-- Dress `model` in `artKey`'s art around `gameplay` (anchored, like the blocks).
+local function dressArt(model: Model, artKey: string, gameplay: BasePart, color: Color3): { BasePart }?
+	local dressed, art = ArtSlot.dress(model, ART_KIND, artKey, 1, gameplay, ArtSlot.paints(color), { anchored = true })
+	if not dressed then
+		return nil
+	end
+	for _, part in art do
+		part:SetAttribute("LookMaterial", part.Material.Name) -- what a hit flash / trample restores
+	end
+	return art
+end
+
+local function clearArt(model: Model)
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") and part:GetAttribute("ArtPiece") then
+			part:Destroy()
+		end
+	end
+end
+
+-- A tower set's paint on these look parts (colour and material only, #381).
+local function paintSet(parts: { Instance }, look: Skins.Look, towerColour: Color3)
+	for _, part in parts do
+		if part:IsA("BasePart") and part.Name ~= "Body" and typeof(part:GetAttribute("LookMaterial")) == "string" then
+			local colour, material = Skins.paintTower(look, part.Color, towerColour)
+			part.Color = colour
+			part.Material = material
+			part:SetAttribute("LookMaterial", material.Name)
+		end
+	end
+end
+
+-- The art piece with this ArtRole (towers: "muzzle"; the blimp: "lamp", "muzzle"), or nil.
+local function artRole(model: Model, role: string): BasePart?
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") and part:GetAttribute("ArtPiece") and part:GetAttribute("ArtRole") == role then
+			return part
+		end
+	end
+	return nil
+end
+
+-- Where the tower fires from: its art's `muzzle` piece centre (world), or nil (blocky: the
+-- caller keeps its own point).
+function TowerLook.muzzle(model: Model): Vector3?
+	local piece = artRole(model, "muzzle")
+	return if piece then piece.CFrame.Position else nil
+end
+
 -- Builds the model with its base centred on `base`. PrimaryPart is "Body".
 function TowerLook.build(key: string, range: number, base: Vector3): Model
 	local model = Instance.new("Model")
@@ -395,12 +476,11 @@ function TowerLook.build(key: string, range: number, base: Vector3): Model
 	end
 	-- Uploaded art (PLAN 11a T148, #426; towers come in 11d) takes the silhouette's place,
 	-- anchored like it; none loaded = the blocks below, exactly as before.
-	local dressed, art = ArtSlot.dress(model, "tower", key, 1, body, ArtSlot.paints(color), { anchored = true })
-	if dressed then
+	-- Stage 0 = KEY; setStage re-dresses as KEY_S1 / KEY_S2 (PLAN 11d).
+	lookKeys[model] = key
+	local art = dressArt(model, key, body, color)
+	if art then
 		body.Transparency = 1
-		for _, part in art do
-			part:SetAttribute("LookMaterial", part.Material.Name) -- the tier-5 glow restores it
-		end
 		model:SetAttribute("LookTop", ArtSlot.top(art, CFrame.new(base)))
 	elseif silhouette then
 		body.Transparency = 1 -- the silhouette is the look; the body stays the hitbox
@@ -438,22 +518,18 @@ function TowerLook.applySkin(model: Model, look: Skins.Look?)
 	if not look then
 		return
 	end
-	local towerColour = TowerLook.COLORS[model.Name] or Color3.new(1, 1, 1)
-	for _, part in model:GetChildren() do
-		if part:IsA("BasePart") and part.Name ~= "Body" and typeof(part:GetAttribute("LookMaterial")) == "string" then
-			local colour, material = Skins.paintTower(look, part.Color, towerColour)
-			part.Color = colour
-			part.Material = material
-			part:SetAttribute("LookMaterial", material.Name)
-		end
-	end
+	local towerColour = TowerLook.COLORS[lookKeys[model] or model.Name] or Color3.new(1, 1, 1)
+	paintSet(model:GetChildren(), look, towerColour)
+	lookSkins[model] = look -- worn again by the next stage's art
 	model:SetAttribute("TowerSkin", true)
 end
 
 -- The Spotter Blimp itself (PLAN 9h T125b, visual only): an envelope with fins, a gondola
 -- with the door gun, and the searchlight's beam and circle (`range`, on the ground below it;
 -- Towers moves the model and stretches the beam). PrimaryPart is "Envelope".
-function TowerLook.buildBlimp(color: Color3): Model
+-- With BLIMP_AIR art loaded (stage 0..2, following the tower's stage) the envelope wears it and
+-- the blocky envelope parts aren't built; the beam and its circle stay.
+function TowerLook.buildBlimp(color: Color3, stage: number?): Model
 	local model = Instance.new("Model")
 	model.Name = "Blimp"
 	local function piece(name: string, size: Vector3, cf: CFrame, c: Color3, material: Enum.Material, shape: Enum.PartType?): BasePart
@@ -475,14 +551,20 @@ function TowerLook.buildBlimp(color: Color3): Model
 	end
 	local envelope = piece("Envelope", Vector3.new(14, 5, 5), CFrame.new(), color, Enum.Material.Fabric, Enum.PartType.Cylinder)
 	model.PrimaryPart = envelope
-	piece("NoseCap", Vector3.new(5, 5, 5), CFrame.new(7, 0, 0), color, Enum.Material.Fabric, Enum.PartType.Ball)
-	piece("TailCap", Vector3.new(4, 4, 4), CFrame.new(-7, 0, 0), color, Enum.Material.Fabric, Enum.PartType.Ball)
-	piece("FinTop", Vector3.new(2.5, 2.5, 0.2), CFrame.new(-8, 2.2, 0), DARK_WOOD, Enum.Material.Fabric)
-	piece("FinL", Vector3.new(2.5, 0.2, 2.5), CFrame.new(-8, 0, -2.2), DARK_WOOD, Enum.Material.Fabric)
-	piece("FinR", Vector3.new(2.5, 0.2, 2.5), CFrame.new(-8, 0, 2.2), DARK_WOOD, Enum.Material.Fabric)
-	piece("Gondola", Vector3.new(4, 1.4, 1.8), CFrame.new(0.5, -3.2, 0), WOOD, Enum.Material.Wood)
-	piece("Gun", Vector3.new(1.6, 0.3, 0.3), CFrame.new(1.5, -3.9, 1), STEEL, Enum.Material.Metal)
-	piece("Lamp", Vector3.new(0.8, 0.8, 0.8), CFrame.new(-1, -4, 0), Color3.fromRGB(255, 245, 200), Enum.Material.Neon, Enum.PartType.Ball)
+	local artKey = TowerLook.artKey(BLIMP_ART, stage or 0)
+	if artKey and dressArt(model, artKey, envelope, color) then
+		lookKeys[model] = BLIMP_ART
+		envelope.Transparency = 1 -- the art is the look; the envelope stays the PrimaryPart
+	else
+		piece("NoseCap", Vector3.new(5, 5, 5), CFrame.new(7, 0, 0), color, Enum.Material.Fabric, Enum.PartType.Ball)
+		piece("TailCap", Vector3.new(4, 4, 4), CFrame.new(-7, 0, 0), color, Enum.Material.Fabric, Enum.PartType.Ball)
+		piece("FinTop", Vector3.new(2.5, 2.5, 0.2), CFrame.new(-8, 2.2, 0), DARK_WOOD, Enum.Material.Fabric)
+		piece("FinL", Vector3.new(2.5, 0.2, 2.5), CFrame.new(-8, 0, -2.2), DARK_WOOD, Enum.Material.Fabric)
+		piece("FinR", Vector3.new(2.5, 0.2, 2.5), CFrame.new(-8, 0, 2.2), DARK_WOOD, Enum.Material.Fabric)
+		piece("Gondola", Vector3.new(4, 1.4, 1.8), CFrame.new(0.5, -3.2, 0), WOOD, Enum.Material.Wood)
+		piece("Gun", Vector3.new(1.6, 0.3, 0.3), CFrame.new(1.5, -3.9, 1), STEEL, Enum.Material.Metal)
+		piece("Lamp", Vector3.new(0.8, 0.8, 0.8), CFrame.new(-1, -4, 0), Color3.fromRGB(255, 245, 200), Enum.Material.Neon, Enum.PartType.Ball)
+	end
 	local beam = piece("Beam", Vector3.new(1, 1, 1), CFrame.new(), Color3.fromRGB(255, 245, 200), Enum.Material.Neon, Enum.PartType.Cylinder)
 	beam.Transparency = 0.9
 	beam.CastShadow = false
@@ -490,6 +572,19 @@ function TowerLook.buildBlimp(color: Color3): Model
 	circle.Transparency = 0.85
 	circle.CastShadow = false
 	return model
+end
+
+-- The flying blimp follows its tower's stage (#443): re-dress as BLIMP_AIR / _S1 / _S2 where it
+-- is now. Blocky blimps don't change (today's blimp has no stages).
+function TowerLook.setBlimpStage(model: Model, stage: number)
+	local envelope = model.PrimaryPart
+	local current = model:GetAttribute("ArtKey")
+	local want = TowerLook.artKey(BLIMP_ART, stage)
+	if not envelope or lookKeys[model] ~= BLIMP_ART or type(current) ~= "string" or not want or want == current then
+		return
+	end
+	clearArt(model)
+	dressArt(model, want, envelope, TowerLook.COLORS.BLIMP)
 end
 
 -- A Paratroopers ranger (PLAN 9h T125b, visual only): khaki body, a camp-colour scarf, a rifle.
@@ -519,6 +614,11 @@ function TowerLook.buildRanger(camp: Color3): Model
 	return model
 end
 
+-- The searchlight the beam leaves from: the art's `lamp` piece, else the blocky Lamp.
+function TowerLook.blimpLamp(model: Model): BasePart?
+	return artRole(model, "lamp") or model:FindFirstChild("Lamp") :: BasePart?
+end
+
 -- Moves the blimp to `air` facing `heading` (a flat direction) and points its light at
 -- `ground` with a circle of `range` (visual only).
 function TowerLook.poseBlimp(model: Model, air: Vector3, heading: Vector3, ground: Vector3, range: number)
@@ -526,7 +626,7 @@ function TowerLook.poseBlimp(model: Model, air: Vector3, heading: Vector3, groun
 	local look = if flat.Magnitude > 1e-3 then CFrame.lookAt(air, air + flat) else CFrame.new(air)
 	-- The envelope's cylinder runs along X: turn the model so its nose (+X) faces the heading.
 	model:PivotTo(look * CFrame.Angles(0, math.rad(90), 0))
-	local lamp = model:FindFirstChild("Lamp") :: BasePart?
+	local lamp = TowerLook.blimpLamp(model)
 	local beam = model:FindFirstChild("Beam") :: BasePart?
 	local circle = model:FindFirstChild("Light") :: BasePart?
 	if lamp and beam then
@@ -613,6 +713,61 @@ local function setTierLabel(model: Model, tiers: { number }, text: string?)
 	textLabel.Text = text or `{tiers[1]} · {tiers[2]} · {tiers[3]}`
 end
 
+-- Art towers: re-dress for this stage's art key (KEY / _S1 / _S2) when it differs from the
+-- one worn: the old art goes, the new art takes the tower set, the crown and owner flag move
+-- to its top. A trampled tower is stood up first; returns true so setStage tips it again.
+local function restage(model: Model, body: BasePart, stage: number): boolean
+	local key = lookKeys[model]
+	local current = model:GetAttribute("ArtKey")
+	local want = if key and type(current) == "string" then TowerLook.artKey(key, stage) else nil
+	if not key or not want or want == current then
+		return false
+	end
+	TowerLook.endHitFlash(model)
+	local trampled = model:GetAttribute("Trampled") == true
+	if trampled then
+		TowerLook.setKnockedOut(model, false)
+	end
+	clearArt(model)
+	local color = TowerLook.COLORS[key] or Color3.new(1, 1, 1)
+	local art = dressArt(model, want, body, color)
+	if art then
+		model:SetAttribute("LookTop", ArtSlot.top(art, body.CFrame * CFrame.new(0, -body.Size.Y / 2, 0)))
+		local skin = lookSkins[model]
+		if skin then
+			paintSet(art, skin, color)
+		end
+	end
+	local crown = model:FindFirstChild("Crown")
+	if crown then
+		crown:Destroy() -- set again on the new top below
+	end
+	local pole, cloth = model:FindFirstChild(TowerLook.FLAG_POLE), model:FindFirstChild(TowerLook.FLAG_CLOTH)
+	if pole and cloth and cloth:IsA("BasePart") then
+		local flagColour = cloth.Color
+		pole:Destroy()
+		cloth:Destroy()
+		TowerLook.addFlag(model, flagColour)
+	end
+	return trampled
+end
+
+-- With art, the crown is a small marker standing on the art's highest piece.
+local function artCrownAt(model: Model, body: BasePart): CFrame
+	local top, x, z = -body.Size.Y / 2, 0, 0
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") and part:GetAttribute("ArtPiece") then
+			local rel = body.CFrame:ToObjectSpace(part.CFrame)
+			local half = part.Size / 2
+			local reach = math.abs(rel.XVector.Y) * half.X + math.abs(rel.YVector.Y) * half.Y + math.abs(rel.ZVector.Y) * half.Z
+			if rel.Position.Y + reach > top then
+				top, x, z = rel.Position.Y + reach, rel.Position.X, rel.Position.Z
+			end
+		end
+	end
+	return body.CFrame * CFrame.new(math.clamp(x, -1, 1), top + ART_CROWN.Y / 2, math.clamp(z, -1, 1))
+end
+
 -- `stage` counts model swaps reached: 0 plain, 1 crowned, 2 crowned and glowing.
 local function setStage(model: Model, stage: number)
 	local body = model.PrimaryPart
@@ -620,14 +775,16 @@ local function setStage(model: Model, stage: number)
 		return
 	end
 	model:SetAttribute("Stage", stage)
+	local retrample = restage(model, body, stage)
+	local art = model:GetAttribute("ArtKey") ~= nil
 	local crown = model:FindFirstChild("Crown")
 	if stage >= 1 and not crown then
 		local part = Instance.new("Part")
 		part.Name = "Crown"
-		part.Size = Vector3.new(3, 0.8, 3) -- no wider than the body (Track.TowerRadius)
+		part.Size = if art then ART_CROWN else Vector3.new(3, 0.8, 3) -- no wider than the body (Track.TowerRadius)
 		-- on top of the silhouette (or of the body, for a tower without one)
 		local top = model:GetAttribute("LookTop") or body.Size.Y
-		part.CFrame = body.CFrame * CFrame.new(0, top - body.Size.Y / 2 + 0.4, 0)
+		part.CFrame = if art then artCrownAt(model, body) else body.CFrame * CFrame.new(0, top - body.Size.Y / 2 + 0.4, 0)
 		part.Color = Color3.fromRGB(250, 205, 80)
 		part.Material = Enum.Material.Metal
 		part.Anchored = true
@@ -644,11 +801,16 @@ local function setStage(model: Model, stage: number)
 		local material = part:GetAttribute("LookMaterial")
 		if part:IsA("BasePart") and typeof(material) == "string" then
 			lookParts += 1
-			part.Material = if glow then Enum.Material.Neon else (Enum.Material :: any)[material]
+			-- art carries its own glow group: stage 2 never turns it Neon (#443)
+			local neon = glow and not part:GetAttribute("ArtPiece")
+			part.Material = if neon then Enum.Material.Neon else (Enum.Material :: any)[material]
 		end
 	end
 	if lookParts == 0 then
 		body.Material = if glow then Enum.Material.Neon else Enum.Material.SmoothPlastic
+	end
+	if retrample then
+		TowerLook.setKnockedOut(model, true)
 	end
 end
 
@@ -795,10 +957,12 @@ function TowerLook.flashSaved(model: Model)
 	end)
 end
 
--- The hospital whose Last Stand just fired: its green "+" pulses bright.
+-- The hospital whose Last Stand just fired: its green "+" pulses bright (with art: its
+-- `glow` pieces, the crosses).
 function TowerLook.pulseCross(model: Model)
 	for _, part in model:GetChildren() do
-		if part:IsA("BasePart") and part.Name:sub(1, 5) == "Cross" and part:GetAttribute("PulseColor") == nil then
+		local cross = part.Name:sub(1, 5) == "Cross" or (part:GetAttribute("ArtPiece") and part:GetAttribute("PaintGroup") == "glow")
+		if part:IsA("BasePart") and cross and part:GetAttribute("PulseColor") == nil then
 			part:SetAttribute("PulseColor", part.Color)
 			part.Color = CROSS_PULSE_COLOR
 			task.delay(SAVED_FLASH, function()
@@ -948,7 +1112,7 @@ function TowerLook.setKnockedOut(model: Model, on: boolean)
 			if typeof(material) == "string" then
 				part.Material = (Enum.Material :: any)[material]
 			end
-			if glow and part:GetAttribute("LookMaterial") ~= nil then
+			if glow and part:GetAttribute("LookMaterial") ~= nil and not part:GetAttribute("ArtPiece") then
 				part.Material = Enum.Material.Neon
 			end
 		end
@@ -1058,7 +1222,7 @@ function TowerLook.setVentCone(model: Model, on: boolean)
 		part.Shape = Enum.PartType.Cylinder
 		part.Material = Enum.Material.Basalt
 		part.Color = TowerLook.COLORS.VENT
-		local base = if body then body.Position - Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0) else Vector3.zero
+		local base = if body then body.CFrame.Position - Vector3.new(0, TowerLook.BODY_HEIGHT / 2, 0) else Vector3.zero
 		part.CFrame = CFrame.new(base + Vector3.new(0, 1.1, 0)) * CFrame.Angles(0, 0, math.rad(90))
 		part.Parent = model
 	elseif cone and not on then

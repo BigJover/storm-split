@@ -321,6 +321,9 @@ local function overlays(model: Model): string
 		if inst:IsA("BasePart") and inst ~= model.PrimaryPart and inst:GetAttribute("LookMaterial") ~= nil then
 			return -- a silhouette block or an art piece
 		end
+		if inst.Name == "Crown" then
+			return -- with art the crown is a small marker on the art's top (#443): checked on its own
+		end
 		local lines = {}
 		describe(inst, depth, lines)
 		local line = lines[1]
@@ -370,6 +373,10 @@ test("tower art is visual only: Body, ring, tier label, HP bar, crown and flag u
 			eq(got[i], line, `{key} overlay {i}`)
 		end
 		ok(model:FindFirstChild("Crown") and model:FindFirstChild("Range"), `{key} crown + ring present`)
+		local crown, blockyCrown = model:FindFirstChild("Crown") :: BasePart, blocky:FindFirstChild("Crown") :: BasePart
+		ok(crown.Size.X < blockyCrown.Size.X and crown.Size.Y < blockyCrown.Size.Y, `{key} crown is a small marker with art (#443)`)
+		eq(num(crown.CFrame.Position.Y - crown.Size.Y / 2), num(BASE.Y + (model:GetAttribute("LookTop") :: number)), `{key} crown stands on the art's top`)
+		eq(crown.Color, blockyCrown.Color, `{key} crown gold`)
 	end
 end)
 
@@ -454,4 +461,249 @@ test("authored colours: per group, look paints as fallback, glow is Neon, gamepl
 		eq(p.Color, paints[group] or paints.body, `{group} falls back to the look's paints`)
 		eq(p.Material, if group == "glow" then Enum.Material.Neon else Enum.Material.SmoothPlastic, `{group} material`)
 	end
+end)
+
+------------------------------------------------------------------ 11d: tower art stages
+
+-- A stage template: a body block (taller per stage), a glow piece and a muzzle piece whose
+-- group/role come from the ids entry's `pieces` (#445), like an uploaded FBX.
+local function stageTemplate(key: string, height: number): Model
+	local model = Instance.new("Model")
+	model.Name = key
+	model:SetAttribute("ArtId", ID)
+	local function piece(name: string, size: Vector3, at: Vector3)
+		local p = Instance.new("MeshPart")
+		p.Name = name
+		p.Size = size
+		p.CFrame = CFrame.new(at)
+		p.Parent = model
+	end
+	piece("body", Vector3.new(2.4, height, 2.4), Vector3.new(0, -2.5 + height / 2, 0))
+	piece("glow", Vector3.new(0.4, 0.4, 0.4), Vector3.new(0.5, -2.5 + height - 0.3, 0))
+	piece("gunbarrel", Vector3.new(0.2, 0.2, 0.8), Vector3.new(0.3, -2.5 + height * 0.6, -1 + height * 0.01))
+	return model
+end
+
+local STAGE_HEIGHT = { 2, 3, 4.5 }
+local function stageArt(key: string, stages: { number }): (Instance, any)
+	local art = Instance.new("Folder")
+	art.Name = "Art"
+	local towers = Instance.new("Folder")
+	towers.Name = "tower"
+	towers.Parent = art
+	local ids = { dino = {}, tower = {} }
+	local entry = function()
+		return { model = ID, colors = { body = Color3.fromRGB(9, 9, 9), glow = Color3.fromRGB(60, 190, 90) }, pieces = { gunbarrel = { group = "metal", role = "muzzle" } } }
+	end
+	for _, s in stages do
+		local k = if s == 0 then key elseif s == 1 then key .. "_S1" else key .. "_S2"
+		stageTemplate(k, STAGE_HEIGHT[s + 1]).Parent = towers
+		ids.tower[k] = entry()
+	end
+	return art, ids
+end
+
+local function artParts(model: Instance): { BasePart }
+	local out = {}
+	for _, p in model:GetChildren() do
+		if p:IsA("BasePart") and p:GetAttribute("ArtPiece") then
+			table.insert(out, p)
+		end
+	end
+	return out
+end
+
+local function stage(model: Model, s: number)
+	TowerLook.refresh(model, RANGE, { if s == 2 then 5 elseif s == 1 then 3 else 0, 1, 0 }, s, nil)
+end
+
+test("tower stages: KEY / KEY_S1 / KEY_S2 re-dress, old art cleared, small crown on the new top, no Neon at stage 2", function()
+	local art, ids = stageArt("SCOUT", { 0, 1, 2 })
+	withArt(art, ids, function()
+		local model = TowerLook.build("SCOUT", RANGE, BASE)
+		eq(model:GetAttribute("ArtKey"), "SCOUT", "stage 0 = KEY")
+		local tops = {}
+		for s = 0, 2 do
+			stage(model, s)
+			local want = if s == 0 then "SCOUT" elseif s == 1 then "SCOUT_S1" else "SCOUT_S2"
+			eq(model:GetAttribute("ArtKey"), want, `stage {s} art`)
+			eq(#artParts(model), 3, `stage {s}: only the new stage's pieces`)
+			eq(num(model:GetAttribute("LookTop") :: number), num(STAGE_HEIGHT[s + 1]), `stage {s} LookTop`)
+			tops[s] = model:GetAttribute("LookTop")
+			local crown = model:FindFirstChild("Crown") :: BasePart?
+			if s == 0 then
+				ok(crown == nil, "no crown at stage 0")
+			else
+				ok(crown ~= nil and crown.Size.X <= 1.2, `stage {s} small crown`)
+				eq(num((crown :: BasePart).CFrame.Position.Y - (crown :: BasePart).Size.Y / 2), num(BASE.Y + STAGE_HEIGHT[s + 1]), `stage {s} crown on the art's top`)
+			end
+			for _, p in artParts(model) do
+				local group = p:GetAttribute("PaintGroup")
+				eq(p.Material, if group == "glow" then Enum.Material.Neon else Enum.Material.SmoothPlastic, `stage {s} {group}: art keeps its own materials (#443)`)
+			end
+			eq((model.PrimaryPart :: BasePart).Material, Enum.Material.SmoothPlastic, `stage {s} Body never Neon under art`)
+			eq((model.PrimaryPart :: BasePart).Transparency, 1, `stage {s} Body hidden`)
+		end
+		ok(tops[2] > tops[1] and tops[1] > tops[0], "each stage taller (the fake)")
+	end)
+end)
+
+test("tower stages: a missing stage keeps the highest loaded one below; no KEY art = blocky at every stage", function()
+	local art, ids = stageArt("SNIPER", { 0, 1 })
+	withArt(art, ids, function()
+		local model = TowerLook.build("SNIPER", RANGE, BASE)
+		stage(model, 2)
+		eq(model:GetAttribute("ArtKey"), "SNIPER_S1", "no _S2: _S1")
+		eq(TowerLook.artKey("SNIPER", 2), "SNIPER_S1", "artKey falls back")
+	end)
+	local art2, ids2 = stageArt("SNIPER", { 0, 2 })
+	withArt(art2, ids2, function()
+		eq(TowerLook.artKey("SNIPER", 1), "SNIPER", "no _S1: KEY at stage 1")
+		eq(TowerLook.artKey("SNIPER", 2), "SNIPER_S2", "_S2 at stage 2")
+	end)
+	-- Only the upgrade stages loaded: the blocky look throughout, exactly as with no art.
+	local art3, ids3 = stageArt("GRENADIER", { 1, 2 })
+	local blocky = TowerLook.build("GRENADIER", RANGE, BASE)
+	local model
+	withArt(art3, ids3, function()
+		model = TowerLook.build("GRENADIER", RANGE, BASE)
+		eq(TowerLook.artKey("GRENADIER", 2), nil, "no KEY art: no art key")
+		for s = 1, 2 do
+			stage(model, s)
+		end
+	end)
+	for s = 1, 2 do
+		stage(blocky, s)
+	end
+	eq(fingerprint(model), fingerprint(blocky), "blocky stages identical (crown 3 x 0.8 x 3, Neon glow)")
+end)
+
+test("no ids: every tower through stages 0-2 builds exactly the blocky look (crown, glow)", function()
+	for _, key in Config.TowerOrder do
+		local a, b = TowerLook.build(key, RANGE, BASE), TowerLook.build(key, RANGE, BASE)
+		local art, ids = stageArt("NOT_THIS_TOWER", { 0, 1, 2 })
+		withArt(art, ids, function()
+			for s = 0, 2 do
+				stage(a, s)
+			end
+		end)
+		for s = 0, 2 do
+			stage(b, s)
+		end
+		eq(fingerprint(a), fingerprint(b), `{key} blocky through the stages`)
+		eq(TowerLook.muzzle(a), nil, `{key} blocky: no art muzzle`)
+		eq(a:GetAttribute("ArtKey"), nil, `{key} not dressed`)
+	end
+end)
+
+test("tower stages: muzzle from the art's muzzle role, skin, flag, Trampled and hit flash follow the re-dress", function()
+	local art, ids = stageArt("COIL", { 0, 1, 2 })
+	withArt(art, ids, function()
+		local model = TowerLook.build("COIL", RANGE, BASE)
+		local look = { colour = Color3.fromRGB(200, 0, 0), accent = Color3.fromRGB(0, 0, 200), material = Enum.Material.Wood }
+		TowerLook.applySkin(model, look)
+		TowerLook.addFlag(model, Color3.fromRGB(1, 200, 1))
+		local muzzle0 = TowerLook.muzzle(model)
+		ok(muzzle0 ~= nil, "art muzzle found through the ids' pieces role")
+		eq(vec(muzzle0 :: Vector3), vec(Vector3.new(40.3, 4.5 - 2.5 + STAGE_HEIGHT[1] * 0.6, -30 - 1 + STAGE_HEIGHT[1] * 0.01)), "muzzle = the piece's centre")
+		TowerLook.setKnockedOut(model, true)
+		stage(model, 2)
+		eq(model:GetAttribute("ArtKey"), "COIL_S2", "re-dressed while trampled")
+		eq(model:GetAttribute("Trampled"), true, "still trampled")
+		for _, p in artParts(model) do
+			eq(p.Material, Enum.Material.Slate, `{p.Name} trampled slate`)
+			ok(typeof(p:GetAttribute("UprightCFrame")) == "CFrame", `{p.Name} tipped (restorable)`)
+		end
+		TowerLook.setKnockedOut(model, false)
+		local muzzle2 = TowerLook.muzzle(model) :: Vector3
+		ok(muzzle2.Y > (muzzle0 :: Vector3).Y, "the S2 muzzle (taller fake) is the new firing point")
+		for _, p in artParts(model) do
+			local group = p:GetAttribute("PaintGroup")
+			if group == "glow" then
+				eq(p.Material, Enum.Material.Wood, "repaired at stage 2: art not turned Neon (skin material kept)")
+			end
+			eq(p.Material, look.material, `{p.Name} wears the tower set after the re-dress`)
+		end
+		local pole = model:FindFirstChild(TowerLook.FLAG_POLE) :: BasePart
+		local cloth = model:FindFirstChild(TowerLook.FLAG_CLOTH) :: BasePart
+		ok(pole and cloth, "flag kept")
+		eq(num(pole.Size.Y), num(STAGE_HEIGHT[3] + 1.4), "flag pole over the new top")
+		eq(cloth.Color, Color3.fromRGB(1, 200, 1), "flag colour kept")
+		TowerLook.flashHit(model)
+		for _, p in artParts(model) do
+			eq(p.Color, Color3.fromRGB(255, 60, 60), `{p.Name} hit flash`)
+		end
+		TowerLook.endHitFlash(model)
+		TowerLook.setVentCone(model, true)
+		ok(model:FindFirstChild("VentCone") ~= nil, "a Vent cone column still shows over art")
+		ok(model:FindFirstChild("Range") and model:FindFirstChild("Tiers", true), "ring + tier label")
+	end)
+end)
+
+test("Hospital art: pulseCross pulses the art's glow crosses", function()
+	local art, ids = stageArt("HOSPITAL", { 0 })
+	withArt(art, ids, function()
+		local model = TowerLook.build("HOSPITAL", RANGE, BASE)
+		TowerLook.pulseCross(model)
+		local pulsed = 0
+		for _, p in artParts(model) do
+			if p:GetAttribute("PaintGroup") == "glow" then
+				ok(typeof(p:GetAttribute("PulseColor")) == "Color3", "glow piece pulsing")
+				pulsed += 1
+			else
+				eq(p:GetAttribute("PulseColor"), nil, `{p.Name} not pulsed`)
+			end
+		end
+		eq(pulsed, 1, "the cross pulsed")
+	end)
+end)
+
+test("BLIMP_AIR: the flying blimp wears its stage art, beam from the lamp role; blocky without", function()
+	local blocky = TowerLook.buildBlimp(TowerLook.COLORS.BLIMP)
+	for _, name in { "Envelope", "NoseCap", "TailCap", "FinTop", "Gondola", "Gun", "Lamp", "Beam", "Light" } do
+		ok(blocky:FindFirstChild(name) ~= nil, `blocky blimp {name}`)
+	end
+	local again = TowerLook.buildBlimp(TowerLook.COLORS.BLIMP, 2)
+	eq(fingerprint(again), fingerprint(blocky), "no ids: any stage = today's blimp")
+	TowerLook.setBlimpStage(again, 1)
+	eq(fingerprint(again), fingerprint(blocky), "no ids: stage change does nothing")
+
+	local art = Instance.new("Folder")
+	art.Name = "Art"
+	local towers = Instance.new("Folder")
+	towers.Name = "tower"
+	towers.Parent = art
+	local ids = { tower = {} }
+	for i, k in { "BLIMP_AIR", "BLIMP_AIR_S1", "BLIMP_AIR_S2" } do
+		local m = Instance.new("Model")
+		m.Name = k
+		m:SetAttribute("ArtId", ID)
+		for _, spec in { { "body", Vector3.new(14, 5, 5), Vector3.zero }, { "lamp", Vector3.new(0.5, 0.5, 0.5), Vector3.new(-1, -4 - i * 0.1, 0) }, { "muzzle", Vector3.new(0.2, 0.2, 0.6), Vector3.new(1.5, -3.9, 1) } } do
+			local p = Instance.new("MeshPart")
+			p.Name = spec[1]
+			p.Size = spec[2]
+			p.CFrame = CFrame.new(spec[3])
+			p.Parent = m
+		end
+		m.Parent = towers
+		ids.tower[k] = { model = ID, pieces = { lamp = { group = "lamp", role = "lamp" }, muzzle = { group = "dark", role = "muzzle" } } }
+	end
+	withArt(art, ids, function()
+		local blimp = TowerLook.buildBlimp(TowerLook.COLORS.BLIMP)
+		eq(blimp:GetAttribute("ArtKey"), "BLIMP_AIR", "stage 0 art")
+		eq(blimp.PrimaryPart and blimp.PrimaryPart.Name, "Envelope", "Envelope still the PrimaryPart")
+		eq((blimp.PrimaryPart :: BasePart).Transparency, 1, "envelope hidden under the art")
+		ok(blimp:FindFirstChild("NoseCap") == nil and blimp:FindFirstChild("Lamp") == nil, "no blocky envelope parts")
+		ok(blimp:FindFirstChild("Beam") and blimp:FindFirstChild("Light"), "beam and circle kept")
+		-- (poseBlimp's PivotTo needs Studio; the beam starts at blimpLamp)
+		local lamp = TowerLook.blimpLamp(blimp)
+		ok(lamp ~= nil and lamp:GetAttribute("ArtPiece") and lamp:GetAttribute("ArtRole") == "lamp", "the beam leaves from the art's lamp piece")
+		eq(TowerLook.blimpLamp(blocky), blocky:FindFirstChild("Lamp"), "blocky: the Lamp ball")
+		ok(TowerLook.muzzle(blimp) ~= nil, "door gun muzzle")
+		TowerLook.setBlimpStage(blimp, 2)
+		eq(blimp:GetAttribute("ArtKey"), "BLIMP_AIR_S2", "follows the tower's stage")
+		eq(#artParts(blimp), 3, "old stage cleared")
+		local s2 = TowerLook.buildBlimp(TowerLook.COLORS.BLIMP, 1)
+		eq(s2:GetAttribute("ArtKey"), "BLIMP_AIR_S1", "built at a stage")
+	end)
 end)

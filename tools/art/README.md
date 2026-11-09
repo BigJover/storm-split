@@ -117,10 +117,12 @@ Budget class `tower` (<= 3,000 tris, #433; `_kit.Kit.finish` aims under 2,700).
   per listed tower in that order: `a` would be the T152 seven (`sheet_11d_tower.png` is that
   sheet, made before the filter existed; an unfiltered `--sheet tower 11d` now takes all 19 rows: 7 + 4 + 7 + BLIMP_AIR),
   `b` = `COIL,FALCON,BALLISTA,TARPIT`, `c` = `RESIN,RAPTOR,TOTEM,BLIMP,BLIMP_AIR,METEOR,VENT,RANGER`.
-- **Runtime not wired yet** (a src/ task): `TowerLook.build` dresses `ArtSlot.dress(.., key, ..)`
-  once; it must pick `<KEY>` / `_S1` / `_S2` from the stage in `setStage` (re-dress on a stage
-  change), keep the stage-2 glow from turning every art piece Neon (or accept it), and point
-  `pulseCross` at the Hospital's `Art_glow` (art parts aren't named Cross*).
+- **Runtime (11d, #447):** `TowerLook.build` dresses `KEY`; `setStage` re-dresses as `KEY_S1` (tier 3) /
+  `KEY_S2` (tier 5), keeping the highest loaded stage below a missing one; no `KEY` art = blocky at every
+  stage. With art the crown is a small gold marker on the art's top and stage 2 never turns art Neon;
+  `TowerLook.muzzle` = the `muzzle` piece centre (Towers' firing point, Coil's lightning); `pulseCross`
+  pulses the Hospital's `glow` pieces; `buildBlimp` / `setBlimpStage` dress `BLIMP_AIR` (+ stages) and the
+  beam leaves from the `lamp` piece. Specs in `tools/test/artslot.spec.luau`.
 
 ## What is verified vs assumed (2026-10-26)
 
