@@ -4418,7 +4418,7 @@
           52
         ]
       },
-      "hash": "12aa2bada5de1311",
+      "hash": "f5b981e20b9292ab",
       "pieces": {
         "body": {
           "group": "body",
@@ -4491,14 +4491,14 @@
       "batch": "11d",
       "box": [
         [
-          -9.090773582458496,
+          -9.5,
           -4.266295909881592,
-          -3.4050002098083496
+          -3.450000047683716
         ],
         [
           9.537764549255371,
-          3.4050002098083496,
-          3.4050002098083496
+          3.700000762939453,
+          3.450000047683716
         ]
       ],
       "budget": "tower",
@@ -4538,11 +4538,6 @@
           100,
           106
         ],
-        "sand": [
-          196,
-          174,
-          124
-        ],
         "seam": [
           170,
           158,
@@ -4553,33 +4548,33 @@
           72,
           75
         ],
+        "stripe": [
+          176,
+          58,
+          44
+        ],
         "window": [
           40,
           46,
           52
         ]
       },
-      "hash": "551167f7c72ded35",
+      "hash": "84d020e1b0a2317c",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 334
-        },
-        "dark": {
-          "group": "dark",
-          "role": null,
-          "tris": 192
+          "tris": 360
         },
         "fin": {
           "group": "fin",
           "role": null,
-          "tris": 278
+          "tris": 120
         },
         "gondola": {
           "group": "gondola",
           "role": null,
-          "tris": 206
+          "tris": 244
         },
         "hubs": {
           "group": "steel",
@@ -4604,42 +4599,47 @@
         "plate": {
           "group": "plate",
           "role": null,
-          "tris": 200
+          "tris": 72
         },
         "pod": {
           "group": "pod",
           "role": null,
-          "tris": 200
+          "tris": 144
         },
         "rail": {
           "group": "steel",
           "role": null,
           "tris": 44
         },
-        "sand": {
-          "group": "sand",
+        "rudders": {
+          "group": "stripe",
           "role": null,
-          "tris": 192
+          "tris": 48
         },
         "seam": {
           "group": "seam",
           "role": null,
-          "tris": 274
+          "tris": 192
         },
         "steel": {
           "group": "steel",
           "role": null,
-          "tris": 266
+          "tris": 408
+        },
+        "stripes": {
+          "group": "stripe",
+          "role": null,
+          "tris": 40
         },
         "windows": {
           "group": "window",
           "role": null,
-          "tris": 250
+          "tris": 108
         }
       },
       "stage": 1,
       "tower": "BLIMP_AIR",
-      "tris": 2772,
+      "tris": 2116,
       "uploadedHash": null
     },
     "tower/BLIMP_AIR_S2": {
@@ -4647,14 +4647,14 @@
       "batch": "11d",
       "box": [
         [
-          -9.096029281616211,
+          -9.5,
           -4.266295909881592,
-          -3.4699997901916504
+          -3.4499998092651367
         ],
         [
           9.537764549255371,
-          3.4700002670288086,
-          3.4699997901916504
+          4.306007385253906,
+          3.4499998092651367
         ]
       ],
       "budget": "tower",
@@ -4704,48 +4704,43 @@
           100,
           106
         ],
-        "sand": [
-          196,
-          174,
-          124
-        ],
-        "seam": [
-          170,
-          158,
-          128
-        ],
         "steel": [
           70,
           72,
           75
+        ],
+        "stripe": [
+          176,
+          58,
+          44
         ]
       },
-      "hash": "c451caf6d7bdc498",
+      "hash": "9aefec40824624ef",
       "pieces": {
+        "beacon": {
+          "group": "glow",
+          "role": null,
+          "tris": 80
+        },
         "body": {
           "group": "body",
           "role": null,
-          "tris": 304
+          "tris": 360
         },
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 72
-        },
-        "dark": {
-          "group": "dark",
-          "role": null,
-          "tris": 192
+          "tris": 340
         },
         "fin": {
           "group": "fin",
           "role": null,
-          "tris": 252
+          "tris": 120
         },
         "gondola": {
           "group": "gondola",
           "role": null,
-          "tris": 200
+          "tris": 324
         },
         "hubs": {
           "group": "brass",
@@ -4760,7 +4755,7 @@
         "lights": {
           "group": "glow",
           "role": null,
-          "tris": 108
+          "tris": 72
         },
         "muzzle": {
           "group": "dark",
@@ -4775,42 +4770,47 @@
         "plate": {
           "group": "plate",
           "role": null,
-          "tris": 200
+          "tris": 72
         },
         "pod": {
           "group": "pod",
           "role": null,
-          "tris": 200
+          "tris": 144
         },
         "rail": {
           "group": "brass",
           "role": null,
           "tris": 44
         },
-        "sand": {
-          "group": "sand",
+        "rudders": {
+          "group": "stripe",
           "role": null,
-          "tris": 192
-        },
-        "seam": {
-          "group": "seam",
-          "role": null,
-          "tris": 248
+          "tris": 48
         },
         "steel": {
           "group": "steel",
           "role": null,
-          "tris": 242
+          "tris": 456
+        },
+        "stripes": {
+          "group": "stripe",
+          "role": null,
+          "tris": 40
         },
         "windows": {
           "group": "glow",
           "role": null,
-          "tris": 228
+          "tris": 108
+        },
+        "windows2": {
+          "group": "glow",
+          "role": null,
+          "tris": 72
         }
       },
       "stage": 2,
       "tower": "BLIMP_AIR",
-      "tris": 2818,
+      "tris": 2616,
       "uploadedHash": null
     },
     "tower/BLIMP_S1": {
