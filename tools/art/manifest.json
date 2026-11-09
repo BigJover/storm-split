@@ -3894,7 +3894,7 @@
           56
         ]
       },
-      "hash": "e0acdd5cf4928778",
+      "hash": "9413e26fd39f0a8c",
       "pieces": {
         "body": {
           "group": "body",
@@ -3952,14 +3952,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.3673322200775146,
+          -1.4616434574127197,
           -2.5,
           -1.4708800315856934
         ],
         [
-          1.3673322200775146,
-          0.07070803642272949,
-          1.3041765689849854
+          1.4616434574127197,
+          0.3207080364227295,
+          1.309999942779541
         ]
       ],
       "budget": "tower",
@@ -4000,42 +4000,42 @@
           56
         ]
       },
-      "hash": "df712fa247d5ca8a",
+      "hash": "d2eaefb672fdf89f",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 220
+          "tris": 308
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 536
+          "tris": 280
         },
         "harpoonhead": {
           "group": "metal",
           "role": null,
-          "tris": 60
+          "tris": 120
         },
         "leather": {
           "group": "leather",
           "role": null,
-          "tris": 88
+          "tris": 48
         },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 856
+          "tris": 696
         },
         "muzzle": {
           "group": "dark",
           "role": "muzzle",
-          "tris": 80
+          "tris": 160
         },
         "rope": {
           "group": "rope",
           "role": null,
-          "tris": 160
+          "tris": 180
         },
         "string": {
           "group": "string",
@@ -4045,12 +4045,12 @@
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 440
+          "tris": 92
         }
       },
       "stage": 1,
       "tower": "BALLISTA",
-      "tris": 2480,
+      "tris": 1924,
       "uploadedHash": null
     },
     "tower/BALLISTA_S2": {
@@ -4058,14 +4058,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.4641268253326416,
+          -1.4726585149765015,
           -2.5,
           -1.4708800315856934
         ],
         [
-          1.4641268253326416,
-          0.11020541191101074,
-          1.3047467470169067
+          1.4726585149765015,
+          1.3114755153656006,
+          1.309999942779541
         ]
       ],
       "budget": "tower",
@@ -4087,8 +4087,8 @@
         ],
         "glow": [
           255,
-          196,
-          90
+          150,
+          70
         ],
         "leather": [
           180,
@@ -4116,52 +4116,52 @@
           56
         ]
       },
-      "hash": "cb831e1c96cb4721",
+      "hash": "9802e27c61ff908f",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 200
+          "tris": 308
         },
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 444
+          "tris": 572
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 488
-        },
-        "glow": {
-          "group": "glow",
-          "role": null,
-          "tris": 64
+          "tris": 408
         },
         "harpoonhead": {
-          "group": "brass",
+          "group": "glow",
           "role": null,
-          "tris": 60
+          "tris": 120
         },
         "leather": {
           "group": "leather",
           "role": null,
-          "tris": 88
+          "tris": 48
         },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 634
+          "tris": 480
         },
         "muzzle": {
           "group": "dark",
           "role": "muzzle",
-          "tris": 80
+          "tris": 160
         },
         "rope": {
           "group": "rope",
           "role": null,
-          "tris": 160
+          "tris": 180
+        },
+        "sight": {
+          "group": "glow",
+          "role": null,
+          "tris": 48
         },
         "string": {
           "group": "string",
@@ -4171,12 +4171,12 @@
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 436
+          "tris": 104
         }
       },
       "stage": 2,
       "tower": "BALLISTA",
-      "tris": 2694,
+      "tris": 2468,
       "uploadedHash": null
     },
     "tower/BLIMP": {
