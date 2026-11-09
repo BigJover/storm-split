@@ -6853,7 +6853,7 @@
           90
         ]
       },
-      "hash": "be7b1199126fe13a",
+      "hash": "dc77d6f728eef825",
       "pieces": {
         "body": {
           "group": "body",
@@ -6921,14 +6921,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.3119089603424072,
+          -1.4887112379074097,
           -2.5,
           -1.399999976158142
         ],
         [
-          1.3119089603424072,
+          1.3200000524520874,
           2.2759809494018555,
-          1.3119089603424072
+          1.452993392944336
         ]
       ],
       "budget": "tower",
@@ -6937,11 +6937,6 @@
           70,
           95,
           130
-        ],
-        "chart": [
-          34,
-          42,
-          70
         ],
         "crack": [
           120,
@@ -6968,11 +6963,6 @@
           52,
           40
         ],
-        "gen": [
-          92,
-          104,
-          72
-        ],
         "metal": [
           78,
           82,
@@ -6992,24 +6982,14 @@
           100,
           96,
           90
-        ],
-        "wood": [
-          122,
-          88,
-          56
         ]
       },
-      "hash": "30bb57f07280a316",
+      "hash": "c27f5d61619479aa",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 320
-        },
-        "chart": {
-          "group": "chart",
-          "role": null,
-          "tris": 44
+          "tris": 360
         },
         "cracks": {
           "group": "crack",
@@ -7019,67 +6999,52 @@
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 204
+          "tris": 156
         },
         "dials": {
           "group": "dial",
           "role": null,
-          "tris": 348
+          "tris": 108
         },
         "dishin": {
           "group": "dishin",
           "role": null,
-          "tris": 96
+          "tris": 152
         },
         "dishrim": {
           "group": "steel",
           "role": null,
-          "tris": 108
+          "tris": 204
         },
         "flarepot": {
           "group": "flare",
           "role": null,
           "tris": 140
         },
-        "gen": {
-          "group": "gen",
-          "role": null,
-          "tris": 44
-        },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 204
+          "tris": 168
         },
         "rock": {
           "group": "rock",
           "role": null,
           "tris": 64
         },
-        "stars": {
-          "group": "dial",
-          "role": null,
-          "tris": 64
-        },
         "steel": {
           "group": "steel",
           "role": null,
-          "tris": 520
+          "tris": 612
         },
         "stone": {
           "group": "stone",
           "role": null,
           "tris": 180
-        },
-        "wood": {
-          "group": "wood",
-          "role": null,
-          "tris": 24
         }
       },
       "stage": 1,
       "tower": "METEOR",
-      "tris": 2384,
+      "tris": 2168,
       "uploadedHash": null
     },
     "tower/METEOR_S2": {
@@ -7087,14 +7052,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.3119089603424072,
+          -1.4887112379074097,
           -2.5,
           -1.399999976158142
         ],
         [
-          1.3119089603424072,
-          2.2759809494018555,
-          1.3119089603424072
+          1.3200000524520874,
+          2.484640598297119,
+          1.452993392944336
         ]
       ],
       "budget": "tower",
@@ -7107,11 +7072,6 @@
         "brass": [
           214,
           168,
-          70
-        ],
-        "chart": [
-          34,
-          42,
           70
         ],
         "dark": [
@@ -7128,11 +7088,6 @@
           150,
           162,
           176
-        ],
-        "gen": [
-          92,
-          104,
-          72
         ],
         "glow": [
           255,
@@ -7158,99 +7113,79 @@
           100,
           96,
           90
-        ],
-        "wood": [
-          122,
-          88,
-          56
         ]
       },
-      "hash": "bb9d5cd703967891",
+      "hash": "5f1732567dc942a4",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 320
+          "tris": 360
         },
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 160
-        },
-        "chart": {
-          "group": "chart",
-          "role": null,
-          "tris": 44
+          "tris": 336
         },
         "cracks": {
           "group": "glow",
           "role": null,
-          "tris": 24
+          "tris": 64
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 204
+          "tris": 156
         },
         "dials": {
           "group": "dial",
           "role": null,
-          "tris": 348
+          "tris": 108
         },
         "dishin": {
           "group": "dishin",
           "role": null,
-          "tris": 96
+          "tris": 152
         },
         "dishrim": {
           "group": "brass",
           "role": null,
-          "tris": 108
+          "tris": 204
         },
         "flarepot": {
           "group": "glow",
           "role": null,
-          "tris": 140
+          "tris": 100
         },
-        "gen": {
-          "group": "gen",
+        "lights": {
+          "group": "glow",
           "role": null,
-          "tris": 44
+          "tris": 192
         },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 204
+          "tris": 168
         },
         "rock": {
           "group": "rock",
           "role": null,
-          "tris": 64
-        },
-        "stars": {
-          "group": "dial",
-          "role": null,
-          "tris": 64
+          "tris": 48
         },
         "steel": {
           "group": "steel",
           "role": null,
-          "tris": 520
+          "tris": 388
         },
         "stone": {
           "group": "stone",
           "role": null,
           "tris": 180
-        },
-        "wood": {
-          "group": "wood",
-          "role": null,
-          "tris": 24
         }
       },
       "stage": 2,
       "tower": "METEOR",
-      "tris": 2544,
+      "tris": 2456,
       "uploadedHash": null
     },
     "tower/QUARTERMASTER": {
