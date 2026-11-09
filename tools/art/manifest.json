@@ -9181,7 +9181,7 @@
           56
         ]
       },
-      "hash": "6fb9912732111662",
+      "hash": "044329551dafd2d1",
       "pieces": {
         "body": {
           "group": "body",
@@ -9224,13 +9224,13 @@
       "batch": "11d",
       "box": [
         [
-          -1.4747101068496704,
+          -1.457792043685913,
           -2.5069761276245117,
-          -1.489153504371643
+          -1.475000023841858
         ],
         [
-          1.4747101068496704,
-          2.4700002670288086,
+          1.457792043685913,
+          2.4889707565307617,
           1.475000023841858
         ]
       ],
@@ -9240,11 +9240,6 @@
           200,
           180,
           130
-        ],
-        "canvas": [
-          150,
-          140,
-          96
         ],
         "dark": [
           74,
@@ -9266,15 +9261,20 @@
           82,
           86
         ],
+        "plate": [
+          96,
+          102,
+          108
+        ],
         "rope": [
           176,
           150,
           100
         ],
-        "sand": [
-          196,
-          174,
-          124
+        "wall": [
+          112,
+          82,
+          52
         ],
         "wood": [
           122,
@@ -9282,22 +9282,17 @@
           56
         ]
       },
-      "hash": "ed87e4d8fb5dfe97",
+      "hash": "2197f99320284300",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
           "tris": 108
         },
-        "canvas": {
-          "group": "canvas",
-          "role": null,
-          "tris": 132
-        },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 488
+          "tris": 516
         },
         "deck": {
           "group": "deck",
@@ -9307,37 +9302,42 @@
         "leaf": {
           "group": "leaf",
           "role": null,
-          "tris": 192
+          "tris": 288
         },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 96
+          "tris": 288
         },
         "muzzle": {
           "group": "metal",
           "role": "muzzle",
           "tris": 64
         },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 88
+        },
         "rope": {
           "group": "rope",
           "role": null,
-          "tris": 512
+          "tris": 304
         },
-        "sand": {
-          "group": "sand",
+        "wall": {
+          "group": "wall",
           "role": null,
-          "tris": 324
+          "tris": 132
         },
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 296
+          "tris": 236
         }
       },
       "stage": 1,
       "tower": "SNIPER",
-      "tris": 2520,
+      "tris": 2332,
       "uploadedHash": null
     },
     "tower/SNIPER_S2": {
@@ -9345,14 +9345,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.486056923866272,
-          -2.506573438644409,
-          -1.4900000095367432
+          -1.4733011722564697,
+          -2.5069761276245117,
+          -1.4799998998641968
         ],
         [
-          1.478971242904663,
-          2.494999885559082,
-          1.475000023841858
+          1.4733011722564697,
+          2.439999580383301,
+          1.4799998998641968
         ]
       ],
       "budget": "tower",
@@ -9372,11 +9372,6 @@
           168,
           70
         ],
-        "canvas": [
-          150,
-          140,
-          96
-        ],
         "dark": [
           74,
           54,
@@ -9389,28 +9384,28 @@
         ],
         "glow": [
           255,
-          196,
-          90
-        ],
-        "leaf": [
-          88,
-          128,
-          60
+          160,
+          50
         ],
         "metal": [
           78,
           82,
           86
         ],
+        "plate": [
+          96,
+          102,
+          108
+        ],
         "rope": [
           176,
           150,
           100
         ],
-        "sand": [
-          196,
-          174,
-          124
+        "wall": [
+          112,
+          82,
+          52
         ],
         "wood": [
           122,
@@ -9418,12 +9413,12 @@
           56
         ]
       },
-      "hash": "3c8b463e93888aab",
+      "hash": "b10445cdeec447ac",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 108
+          "tris": 44
         },
         "bone": {
           "group": "bone",
@@ -9433,62 +9428,57 @@
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 442
-        },
-        "canvas": {
-          "group": "canvas",
-          "role": null,
-          "tris": 132
+          "tris": 372
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 390
+          "tris": 460
         },
         "deck": {
           "group": "deck",
           "role": null,
-          "tris": 224
+          "tris": 308
         },
-        "glow": {
+        "lantern": {
           "group": "glow",
           "role": null,
-          "tris": 64
-        },
-        "leaf": {
-          "group": "leaf",
-          "role": null,
-          "tris": 192
+          "tris": 44
         },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 68
+          "tris": 260
         },
         "muzzle": {
           "group": "metal",
           "role": "muzzle",
           "tris": 64
         },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 88
+        },
         "rope": {
           "group": "rope",
           "role": null,
-          "tris": 372
+          "tris": 256
         },
-        "sand": {
-          "group": "sand",
+        "wall": {
+          "group": "wall",
           "role": null,
-          "tris": 236
+          "tris": 132
         },
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 214
+          "tris": 236
         }
       },
       "stage": 2,
       "tower": "SNIPER",
-      "tris": 2694,
+      "tris": 2452,
       "uploadedHash": null
     },
     "tower/TARPIT": {

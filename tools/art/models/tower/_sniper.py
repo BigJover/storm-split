@@ -3,10 +3,12 @@ a plank deck railed on three sides, a khaki canvas roof and a long rifle over th
 Authored from the base (y 0) in Roblox studs; front = -Z (_kit conventions).
 
 Stage 0 (tiers 0-2): stilts with cross braces, ladder, deck, rails, canvas roof, one rifle.
-Stage 1 (tier 3):    canvas side screens on the rails, sandbags on the deck's front edge, rope
-                     lashings on the stilts, an ammo box, a bipod under the rifle.
-Stage 2 (tier 5):    a brass spotting telescope on a tripod, a brass-scoped rifle, brass bands
-                     on the stilts, a brass roof finial, a glowing lantern under the roof.
+Stage 1 (tier 3):    an armoured cabin (plank walls round the deck, a riveted steel plate across
+                     the front), a heavy elephant gun with a muzzle brake and bipod, a camo net
+                     over the whole roof, rope lashings on the stilts.
+Stage 2 (tier 5):    a hipped roof with brass hip ribs crowned by a glowing brass lantern
+                     cupola, brass trim on the eaves and cabin walls,
+                     a brass-scoped gun, a horned trophy skull on the front plate.
 """
 
 import importlib.util
@@ -66,27 +68,40 @@ def build(lp, stage):
     planks += [K.rbox((0, DECK_Y - 0.24, z), (2.8, 0.16, 0.18), bevel=0.04) for z in (-1.2, 1.2)]
     k.add("deck", *planks)
 
+    # stage 2 lowers the roof a little for its hipped roof and lantern cupola (the 5-stud cap)
+    roof_y = ROOF_Y if stage < 2 else 4.02
+
     # rails (left, right, back) on short posts; the front stays open for the rifle
     rails = []
     for sx, sz in corners:
         x, z = stilt(sx, sz, DECK_Y)
-        rails.append(K.rod((x, DECK_Y, z), (x, ROOF_Y, z), 0.07, 6))  # roof posts
-    rails += [K.rod((sx * 1.2, DECK_Y + 0.5, -1.2), (sx * 1.2, DECK_Y + 0.5, 1.2), 0.07, 6) for sx in (-1, 1)]
-    rails.append(K.rod((-1.2, DECK_Y + 0.5, 1.2), (1.2, DECK_Y + 0.5, 1.2), 0.07, 6))
+        rails.append(K.rod((x, DECK_Y, z), (x, roof_y, z), 0.07, 6))  # roof posts
+    if stage == 0:
+        rails += [K.rod((sx * 1.2, DECK_Y + 0.5, -1.2), (sx * 1.2, DECK_Y + 0.5, 1.2), 0.07, 6) for sx in (-1, 1)]
+        rails.append(K.rod((-1.2, DECK_Y + 0.5, 1.2), (1.2, DECK_Y + 0.5, 1.2), 0.07, 6))
     k.add("wood", *rails)
 
-    # canvas roof: a low pitched tent, ridge front to back
-    k.add("body", K.rbox((0, ROOF_Y + 0.2, 0), (2.95, 0.4, 2.95), bevel=0.1, segments=2, taper=(0.12, 1.0)))
-    k.add("dark", K.rod((0, ROOF_Y + 0.37, -1.45), (0, ROOF_Y + 0.37, 1.45), 0.05, 6))  # ridge pole
+    if stage < 2:
+        # canvas roof: a low pitched tent, ridge front to back
+        k.add("body", K.rbox((0, ROOF_Y + 0.2, 0), (2.95, 0.4, 2.95), bevel=0.1, segments=2, taper=(0.12, 1.0)))
+        k.add("dark", K.rod((0, ROOF_Y + 0.37, -1.45), (0, ROOF_Y + 0.37, 1.45), 0.05, 6))  # ridge pole
+    else:
+        # a hipped roof (four slopes) with a glowing lantern cupola on its peak
+        k.add("body", K.rbox((0, roof_y + 0.26, 0), (2.98, 0.52, 2.98), bevel=0.08, segments=1, taper=(0.22, 0.22)))
+        # brass ribs down the four hips
+        hips = [K.rod((sx * 1.4, roof_y + 0.08, sz * 1.4), (sx * 0.3, roof_y + 0.53, sz * 0.3), 0.05, 6) for sx in (-1, 1) for sz in (-1, 1)]
 
     # the rifle over the front rail, angled down at the ground; its muzzle is the firing point
-    rear, tip = (0.35, DECK_Y + 0.62, 0.3), (0.4, DECK_Y + 0.42, -1.45)
-    k.add("metal", K.rod(K.along(rear, tip, 0.35), tip, 0.07, 8))
-    k.add("wood", K.bar(rear, K.along(rear, tip, 0.45), 0.14, 0.2, bevel=0.05))  # stock
-    k.add("metal", K.ring_along(tip, K.along(tip, rear, -1), 0.08, 0.03, 8, 4), piece="muzzle", role="muzzle")
-    scope_a = tuple(p + q for p, q in zip(K.along(rear, tip, 0.32), (0, 0.13, 0)))
-    scope_b = tuple(p + q for p, q in zip(K.along(rear, tip, 0.55), (0, 0.13, 0)))
-    scope = K.rod(scope_a, scope_b, 0.05 if stage < 2 else 0.065, 8)
+    # (stage 1+: a heavy elephant gun - a fatter barrel with a muzzle brake)
+    gy = DECK_Y + (0.0 if stage < 2 else -0.14)  # stage 2: the gun sits lower, under the lower roof
+    rear, tip = (0.35, gy + 0.62, 0.3), (0.4, gy + 0.42, -1.45 if stage == 0 else -1.4)
+    br = 0.07 if stage == 0 else 0.1
+    k.add("metal", K.rod(K.along(rear, tip, 0.35), tip, br, 8))
+    k.add("wood", K.bar(rear, K.along(rear, tip, 0.45), 0.14 if stage == 0 else 0.2, 0.2 if stage == 0 else 0.26, bevel=0.05))  # stock
+    k.add("metal", K.ring_along(tip, K.along(tip, rear, -1), br + 0.01, 0.03 if stage == 0 else 0.05, 8, 4), piece="muzzle", role="muzzle")
+    scope_a = tuple(p + q for p, q in zip(K.along(rear, tip, 0.32), (0, 0.13 if stage == 0 else 0.17, 0)))
+    scope_b = tuple(p + q for p, q in zip(K.along(rear, tip, 0.55), (0, 0.13 if stage == 0 else 0.17, 0)))
+    scope = K.rod(scope_a, scope_b, (0.05, 0.065, 0.085)[stage], 8)
 
     brass = []
     if stage < 2:
@@ -95,58 +110,65 @@ def build(lp, stage):
         brass.append(scope)
 
     if stage >= 1:
-        # canvas screens on the side and back rails
-        screens = [K.rbox((sx * 1.22, DECK_Y + 0.3, 0.05), (0.06, 0.5, 2.3), bevel=0.02) for sx in (-1, 1)]
-        screens.append(K.rbox((-0.2, DECK_Y + 0.3, 1.22), (1.9, 0.5, 0.06), bevel=0.02))
-        k.add("canvas", *screens)
-        # sandbags along the deck's front edge either side of the rifle
-        k.add("sand", *[K.sandbag((x, DECK_Y + 0.12, -1.18), 0.55, yaw=y) for x, y in ((-0.85, 4), (-0.32, -3), (0.95, 3))])
+        # an armoured cabin: plank walls round the deck's sides and back, a steel plate across
+        # the front with a notch for the gun
+        wall_h = 0.85 if stage == 1 else 0.55
+        ph = wall_h - 0.09  # the front plates
+        wy = DECK_Y + wall_h / 2
+        walls = [K.rbox((sx * 1.24, wy, 0.0), (0.12, wall_h, 2.6), bevel=0.04) for sx in (-1, 1)]
+        walls.append(K.rbox((0.0, wy, 1.24), (2.6, wall_h, 0.12), bevel=0.04))
+        k.add("wall", *walls)
+        k.add("dark", *[K.rbox((sx * 1.31, DECK_Y + y, 0.0), (0.04, 0.06, 2.62), bevel=0) for sx in (-1, 1) for y in (0.28, 0.58)[:1 + (stage == 1)]],
+              *[K.rbox((0.0, DECK_Y + y, 1.31), (2.62, 0.06, 0.04), bevel=0) for y in (0.28, 0.58)[:1 + (stage == 1)]])
+        plates = [K.rbox((-0.62, DECK_Y + ph / 2, -1.27), (1.2, ph, 0.1), bevel=0.05),
+                  K.rbox((1.0, DECK_Y + ph / 2, -1.27), (0.6, ph, 0.1), bevel=0.05)]
+        k.add("plate", *plates)
+        k.add("metal", *[K.ell((x, DECK_Y + y, -1.33), (0.045, 0.045, 0.03), 6, 3)
+                         for x in (-1.1, -0.15, 0.82, 1.18) for y in (0.15, ph - 0.14)])
         # rope lashings where the braces meet the stilts
         ropes = []
         for sx, sz in corners:
-            for y in (0.5, 2.9):
+            for y in (2.9,):
                 x, z = stilt(sx, sz, y)
                 ropes.append(K.ring((x, y, z), 0.14, 0.035, 8, 4))
         k.add("rope", *ropes)
-        # leafy camo patches tied onto both roof slopes (they read from the top-down camera)
-        k.add("leaf", *[K.ell((sx * x, roof_at(x) + 0.03, z), (0.36, 0.06, r), 8, 4, rot=(0, 0, -sx * SLOPE))
-                        for sx in (-1, 1) for x, z, r in ((0.75, -0.7, 0.42), (0.95, 0.55, 0.36))])
-        # an ammo box on the deck, a bipod under the barrel
-        k.add("dark", K.rbox((-0.6, DECK_Y + 0.15, 0.55), (0.5, 0.3, 0.35), bevel=0.05))
+        # a bipod under the barrel
         bip = K.along(rear, tip, 0.72)
-        k.add("metal", *[K.rod(bip, (bip[0] + d, DECK_Y, bip[2] - 0.12), 0.025, 6) for d in (-0.15, 0.15)])
+        k.add("metal", *[K.rod(bip, (bip[0] + d, DECK_Y, bip[2] - 0.12), 0.03, 6) for d in (-0.15, 0.15)])
+
+    if stage == 1:
+        # a camo net thrown over the whole roof: big leafy patches down both slopes
+        k.add("leaf", *[K.ell((sx * x, roof_at(x) + 0.03, z), (0.42, 0.07, r), 8, 4, rot=(0, 0, -sx * SLOPE))
+                        for sx in (-1, 1) for x, z, r in ((0.62, -0.85, 0.5), (0.85, 0.1, 0.45), (0.6, 0.95, 0.42))])
+        k.add("rope", *[K.rod((sx * 1.45, ROOF_Y + 0.02, z), (0, ROOF_Y + 0.41, z), 0.03, 4) for sx in (-1, 1) for z in (-0.4, 0.55)])
 
     if stage >= 2:
-        # brass spotting telescope on a tripod at the back-left of the deck
-        base = (-0.65, DECK_Y + 0.55, 0.45)
-        k.add("dark", *[K.rod(base, (base[0] + dx, DECK_Y, base[2] + dz), 0.025, 5)
-                        for dx, dz in ((-0.2, 0.1), (0.2, 0.1), (0, -0.2))])
-        brass.append(K.rod((base[0], base[1] + 0.05, base[2] + 0.25), (base[0] + 0.05, base[1] + 0.2, base[2] - 0.5), 0.07, 8, top=0.7))
-        # brass bands on the stilts, a finial on the ridge
-        for sx, sz in corners:
-            for y in (1.7,):
-                x, z = stilt(sx, sz, y)
-                brass.append(K.ring((x, y, z), 0.125, 0.035, 10, 4))
-        brass.append(K.ell((0, ROOF_Y + 0.33, -1.3), (0.1, 0.1, 0.1), 8, 5))
-        # brass trim along the eaves and the ridge
-        brass += [K.rod((sx * 1.44, ROOF_Y + 0.04, -1.45), (sx * 1.44, ROOF_Y + 0.04, 1.45), 0.045, 6) for sx in (-1, 1)]
-        brass.append(K.rod((0, ROOF_Y + 0.39, -1.42), (0, ROOF_Y + 0.39, 1.42), 0.055, 6))
-        # a horned trophy skull on the front gable
+        # the lantern cupola: brass posts and cap round a glowing core, the crown
+        brass += hips
+        cy = roof_y + 0.5
+        k.add("glow", K.rbox((0, cy + 0.22, 0), (0.7, 0.4, 0.7), bevel=0.08, taper=(0.85, 0.85)), piece="lantern")
+        brass += [K.rbox((0, cy + 0.02, 0), (0.86, 0.06, 0.86), bevel=0),
+                  *[K.bar((-0.38, cy + 0.38, sz * 0.38), (0.38, cy + 0.38, sz * 0.38), 0.07, 0.07, bevel=0) for sz in (-1, 1)],
+                  *[K.bar((sx * 0.38, cy + 0.38, -0.38), (sx * 0.38, cy + 0.38, 0.38), 0.07, 0.07, bevel=0) for sx in (-1, 1)]]
+        brass += [K.rod((sx * 0.37, cy, sz * 0.37), (sx * 0.37, cy + 0.36, sz * 0.37), 0.045, 5) for sx in (-1, 1) for sz in (-1, 1)]
+        # brass eave trim round the roof, brass caps on the cabin walls
+        e = 1.43
+        brass += [K.rod((-e, roof_y + 0.03, sz * e), (e, roof_y + 0.03, sz * e), 0.05, 6) for sz in (-1, 1)]
+        brass += [K.rod((sx * e, roof_y + 0.03, -e), (sx * e, roof_y + 0.03, e), 0.05, 6) for sx in (-1, 1)]
+        brass += [K.rbox((sx * 1.24, DECK_Y + wall_h + 0.02, 0.0), (0.18, 0.06, 2.64), bevel=0) for sx in (-1, 1)]
+        brass.append(K.rbox((0.0, DECK_Y + wall_h + 0.02, 1.24), (2.64, 0.06, 0.18), bevel=0))
+        brass += [K.rbox((x, DECK_Y + ph + 0.02, -1.27), (w + 0.04, 0.06, 0.14), bevel=0) for x, w in ((-0.62, 1.2), (1.0, 0.6))]
+        # a horned trophy skull on the front plate
         k.add("bone",
-              K.ell((0, ROOF_Y + 0.16, -1.42), (0.24, 0.17, 0.07), 10, 6),
-              K.ell((0, ROOF_Y + 0.04, -1.44), (0.15, 0.08, 0.05), 8, 4),
-              K.rod((-0.17, ROOF_Y + 0.22, -1.44), (-0.46, ROOF_Y + 0.42, -1.45), 0.045, 6, top=0.2),
-              K.rod((0.17, ROOF_Y + 0.22, -1.44), (0.46, ROOF_Y + 0.42, -1.45), 0.045, 6, top=0.2))
-        # a lantern hanging under the roof at the front-left post
-        lx, lz = stilt(-1, -1, DECK_Y)
-        lx, lz = lx + 0.2, lz + 0.2
-        brass += [K.cyl((lx, ROOF_Y - 0.12, lz), 0.09, 0.06, 8), K.rod((lx, ROOF_Y - 0.1, lz), (lx, ROOF_Y, lz), 0.015, 5)]
-        k.add("glow", K.ell((lx, ROOF_Y - 0.3, lz), (0.1, 0.13, 0.1), 8, 5))
+              K.ell((-0.62, DECK_Y + 0.26, -1.36), (0.26, 0.19, 0.08), 10, 6),
+              K.ell((-0.62, DECK_Y + 0.14, -1.4), (0.16, 0.09, 0.06), 8, 4),
+              K.rod((-0.8, DECK_Y + 0.34, -1.38), (-1.15, DECK_Y + 0.58, -1.42), 0.05, 6, top=0.2),
+              K.rod((-0.44, DECK_Y + 0.34, -1.38), (-0.09, DECK_Y + 0.58, -1.42), 0.05, 6, top=0.2))
     if brass:
         k.add("brass", *brass)
 
     colors = {
         "body": KHAKI, "wood": K.WOOD, "dark": K.DARK, "deck": (150, 112, 72), "metal": K.METAL,
-        "canvas": (150, 140, 96), "leaf": (88, 128, 60), "bone": (228, 218, 192), "sand": K.SAND, "rope": K.ROPE, "brass": K.BRASS, "glow": K.GLOW,
+        "canvas": (150, 140, 96), "wall": (112, 82, 52), "plate": (96, 102, 108), "leaf": (88, 128, 60), "bone": (228, 218, 192), "sand": K.SAND, "rope": K.ROPE, "brass": K.BRASS, "glow": (255, 160, 50),
     }
     return k.model("11d", colors, "SNIPER", stage)

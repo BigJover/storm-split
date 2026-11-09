@@ -88,7 +88,8 @@ def build(lp, stage):
         clumps = ((-0.62, -0.55, 0.46), (0.55, -0.45, 0.42), (-0.6, 0.65, 0.4), (0.15, 0.15, 0.36))
     else:  # the lookout stands on the roof's left: the clumps go round it
         clumps = ((0.85, -0.55, 0.36), (0.8, 0.25, 0.3), (-1.0, 0.95, 0.3))
-    k.add("leaf", *[K.ell((x, roof_y + 0.14, Z0 + z), (s, s * 0.5, s * 0.85), 10, 5) for x, z, s in clumps])
+    seg = (10, 5) if stage == 0 else (8, 4)
+    k.add("leaf", *[K.ell((x, roof_y + 0.14, Z0 + z), (s, s * 0.5, s * 0.85), *seg) for x, z, s in clumps])
 
     # rifles poking out of the slits; the first one's muzzle is the firing point
     rifles = [((0.42, sy, front_z(sy) + 0.4), (0.42, sy + 0.03, -1.4))]
@@ -103,10 +104,6 @@ def build(lp, stage):
     ly1 = ly0 + LH
     if stage >= 1:
         k.add("body", K.rbox((LX, ly0 + LH / 2, LZ), (LW, LH, LD), bevel=0.14, segments=1, taper=(0.9, 0.9)))
-        k.add("camo", *[K.ell((LX + u, ly0 + v, LZ - LD / 2 * (1 - 0.1 * v / LH) - 0.005), (0.26, 0.16, 0.05), 8, 3)
-                        for u, v in ((-0.42, 0.3), (0.45, 0.22))],
-              *[K.ell((LX - LW / 2 * (1 - 0.1 * v / LH) - 0.005, ly0 + v, LZ + u), (0.05, 0.16, 0.26), 8, 3)
-                for u, v in ((0.3, 0.32),)])
         lsy = ly0 + LH * 0.62
         k.add("slit", K.rbox((LX, lsy, LZ - LD / 2 * 0.95), (1.1, 0.24, 0.1), bevel=0.04))
         rifles.append(((LX + 0.25, lsy, LZ - 0.2), (LX + 0.25, lsy + 0.02, -1.25)))
@@ -122,8 +119,8 @@ def build(lp, stage):
                 for y in (ly0 + 0.25, ly0 + 0.6, ly0 + 0.95)]
         k.add("wood", *lp_)
         # sandbags banked along the front wall, two courses
-        bags = [K.sandbag((x, 0.13, -1.28), 0.6, yaw=(i % 2) * 8 - 4) for i, x in enumerate((-0.96, -0.32, 0.32, 0.96))]
-        bags += [K.sandbag((x, 0.36, -1.22), 0.58, yaw=4 - 4 * i) for i, x in enumerate((-0.64, 0.0, 0.64))]
+        bags = [K.sandbag((x, 0.13, -1.28), 0.6, yaw=(i % 2) * 8 - 4, segments=1) for i, x in enumerate((-0.96, -0.32, 0.32, 0.96))]
+        bags += [K.sandbag((x, 0.36, -1.22), 0.58, yaw=4 - 4 * i, segments=1) for i, x in enumerate((-0.64, 0.0, 0.64))]
         k.add("sand", *bags)
     if stage == 1:
         # a flat thatch roof with a leafy clump
@@ -142,8 +139,6 @@ def build(lp, stage):
         # a peaked thatch roof on the lookout, brass-capped, a glowing signal brazier on its point
         ry = ly1 + 0.05
         k.add("thatch", K.rbox((LX, ry + 0.4, LZ), (LW + 0.4, 0.8, LD + 0.4), bevel=0.08, segments=1, taper=(0.12, 0.12)))
-        k.add("leaf", *[K.ell((LX + dx, ry + 0.22, LZ + dz), (0.24, 0.14, 0.22), 8, 4)
-                        for dx, dz in ((-0.65, -0.6), (0.6, -0.55))])
         tip = ry + 0.8
         brass += [K.rbox((LX, ry + 0.06, LZ), (LW + 0.46, 0.08, LD + 0.46), bevel=0.03),  # eave trim
                   K.rod((LX, tip - 0.05, LZ), (LX, tip + 0.15, LZ), 0.12, 8, top=1.0),
@@ -151,9 +146,8 @@ def build(lp, stage):
         k.add("glow", K.ell((LX, tip + 0.36, LZ), (0.3, 0.22, 0.3), 10, 5),
               K.rod((LX, tip + 0.4, LZ), (LX, tip + 0.68, LZ), 0.2, 8, top=0.1))
         # brass frames round the slits, upper and lower
-        for zf, w in ((front_z(sy) - 0.02, 1.8), (back_z(sy) + 0.02, 1.4)):
-            brass += [K.rbox((0, sy + dy, zf), (w, 0.06, 0.06), bevel=0.02) for dy in (-0.18, 0.18)]
-        brass += [K.rbox((LX, lsy + dy, LZ - LD / 2 * 0.95 - 0.03), (1.2, 0.06, 0.06), bevel=0.02) for dy in (-0.16, 0.16)]
+        brass += [K.rbox((0, sy + dy, front_z(sy) - 0.02), (1.8, 0.06, 0.06), bevel=0) for dy in (-0.18, 0.18)]
+        brass += [K.rbox((LX, lsy + dy, LZ - LD / 2 * 0.95 - 0.03), (1.2, 0.06, 0.06), bevel=0) for dy in (-0.16, 0.16)]
         # brass scopes on every rifle
         for a, b in rifles:
             lift = (0, 0.12, 0)
