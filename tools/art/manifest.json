@@ -2,7 +2,8 @@
   "approved": [
     "11a",
     "11b",
-    "11c"
+    "11c",
+    "11d"
   ],
   "models": {
     "dino/ARMOR": {
