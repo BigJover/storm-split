@@ -61,7 +61,16 @@ Keys are the `HunterStats` keys: `PISTOL` Tracker, `RIFLE` Big Game Hunter, `SHO
   prints art box vs default size per part. Hit parts never change (#434): the art is visual only.
 - `_body.finish` decimates big smooth pieces (> 260 tris) evenly when a body is over 5,300, so
   small details stay crisp.
-- `write_ids.py` skips kind `hunter` (`PENDING_KINDS`) until the T150 runtime reads it.
+- **Runtime (T150, `Shared/HunterBody`, #446):** `write_ids.py` writes each hunter's colours to `ArtIds`
+  (blank id until upload). With the template loaded, Server/Wardrobe hides the avatar's visuals (R15
+  parts, face, accessories; sizes, collision and the Humanoid untouched), clones each `<Part>__<group>`
+  piece and welds it to that R15 part with C0 = the part's rest CFrame (from the live Motor6D C0/C1)
+  inverted × the piece's authored CFrame; `skin` = the avatar's BodyColors (class tone fallback).
+  Hunter skins: template `hunter/<skin key>` if loaded, else `shirt`/`pants` recoloured.
+  Stand-in dummies wear the Tracker body welded to their Body. Spec `tools/test/bodies.spec.luau`.
+- **Piece info in `ArtIds` (#445):** an uploaded FBX carries no attributes, so `write_ids.py` also
+  writes `pieces = { name = { group, role } }` for every dino/tower piece whose name isn't its paint
+  group or that has an ArtRole (`head`, `jaw`, `muzzle`, `lamp`); `ArtSlot` reads it.
 
 **Unverified:** the `R15` layout is our reading of the default rig's attachments (Head centre
 +1.5, shoulders ±1 / +0.763, hips ±0.5 / −1.0, …); the runtime task checks it against a live

@@ -18,8 +18,13 @@
 	Head / Jaw, so the status effects that find those (flashHead, setMuzzled) still show;
 	a look can require roles, and a template missing one falls back to blocky.
 
+	An uploaded FBX carries no attributes, so a piece's paint group and ArtRole also come from
+	its ArtIds entry (`pieces[name]`, written by tools/art/write_ids.py from the manifest,
+	#445); an attribute on the template piece still wins. Every clone carries PaintGroup and,
+	when it has one, ArtRole (towers find `muzzle` / `lamp` by it).
+
 	Kinds: "dino" (DinoLook), "tower" (TowerLook). Hunters get full R15 bodies in 11c (#434),
-	a different mechanism, not this slot.
+	a different mechanism (Shared/HunterBody), reading `template` and `colors` from here.
 ]]
 
 local ArtIds = require(script.Parent.ArtIds)
@@ -69,6 +74,23 @@ function ArtSlot.colors(kind: string, key: string): { [string]: Color3 }?
 	local byKey = ids[kind]
 	local entry = byKey and byKey[key]
 	return entry and entry.colors or nil
+end
+
+-- The paint group and ArtRole of a template piece: its attributes, else the ArtIds entry's
+-- `pieces` (#445), else the piece's name as its group.
+function ArtSlot.pieceInfo(kind: string, key: string, piece: Instance): (string, string?)
+	local byKey = ids[kind]
+	local entry = byKey and byKey[key]
+	local info = entry and entry.pieces and entry.pieces[piece.Name]
+	local group = piece:GetAttribute("PaintGroup")
+	if type(group) ~= "string" then
+		group = if info then info.group else piece.Name
+	end
+	local role = piece:GetAttribute("ArtRole")
+	if type(role) ~= "string" then
+		role = if info then info.role else nil
+	end
+	return group :: string, role :: string?
 end
 
 -- The loaded template for kind/key, or nil: no id, not loaded (yet), loaded for another id,
@@ -146,7 +168,8 @@ function ArtSlot.dress(
 	for _, role in roles do
 		local found = false
 		for _, piece in pieces do
-			found = found or piece:GetAttribute("ArtRole") == role
+			local _, has = ArtSlot.pieceInfo(kind, key, piece)
+			found = found or has == role
 		end
 		if not found then
 			warnOnce(kind, key, `no piece with ArtRole '{role}'`)
@@ -159,11 +182,7 @@ function ArtSlot.dress(
 	for _, piece in pieces do
 		local part = piece:Clone()
 		strip(part)
-		local group = piece:GetAttribute("PaintGroup")
-		if type(group) ~= "string" then
-			group = piece.Name
-		end
-		local role = piece:GetAttribute("ArtRole")
+		local group, role = ArtSlot.pieceInfo(kind, key, piece)
 		local roleName = if role == "head" then "Head" elseif role == "jaw" then "Jaw" else nil
 		if roleName and not named[roleName] then
 			named[roleName] = true
@@ -174,7 +193,7 @@ function ArtSlot.dress(
 		local rel = piece.CFrame -- authored about the origin = the gameplay part's centre
 		part.Size = piece.Size * scale
 		part.CFrame = gameplay.CFrame * CFrame.new(rel.Position * scale) * rel.Rotation
-		part.Color = authored[group :: string] or paints[group :: string] or paints.body or piece.Color
+		part.Color = authored[group] or paints[group] or paints.body or piece.Color
 		part.Material = if group == "glow" then Enum.Material.Neon else Enum.Material.SmoothPlastic
 		part.Anchored = opts.anchored == true
 		part.Massless = true
@@ -183,6 +202,9 @@ function ArtSlot.dress(
 		part.CanTouch = false
 		part.CastShadow = opts.castShadow == true
 		part:SetAttribute("PaintGroup", group)
+		if role then
+			part:SetAttribute("ArtRole", role)
+		end
 		part:SetAttribute("ArtPiece", true)
 		if not part.Anchored then
 			local weld = Instance.new("WeldConstraint")

@@ -6,6 +6,11 @@ Sources, merged per kind/key:
   * tools/art/manifest.json  models[<kind>/<key>].asset   -> model = <asset id>   (upload.py)
   * tools/art/manifest.json  models[<kind>/<key>].colors  -> colors = { [group]: Color3 }
                              (the authored colour per paint group, build.py; DECISIONS #439)
+  * tools/art/manifest.json  models[<kind>/<key>].pieces  -> pieces = { [name]: { group, role? } }
+                             for each piece whose name isn't its paint group or that has an
+                             ArtRole (FBX can't carry attributes, so ArtSlot reads them here;
+                             DECISIONS #445). Hunter pieces are named `<R15Part>__<group>` and
+                             need no entry.
   * tools/art/harvest.json   {kind: {key: {group: {mesh, size: [x, y, z]}}}}       (Studio import)
 
     python3 tools/art/write_ids.py           # write the file
@@ -19,22 +24,20 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 ART = ROOT / "tools" / "art"
 OUT = ROOT / "src" / "shared" / "ArtIds.luau"
-KINDS = ("dino", "tower")
-# Built and previewed, but no runtime reader yet: hunter hero bodies (T150) reach ArtIds with
-# the T150 runtime task (Bodies / Wardrobe), after Jovan approves the 11c previews.
-PENDING_KINDS = ("hunter",)
+KINDS = ("dino", "tower", "hunter")
 
 HEADER = """--!strict
 --[[
 	GENERATED — DO NOT EDIT. tools/art writes this file (upload.py after an Open Cloud
 	upload, or write_ids.py after a Studio-import harvest; PLAN 11a T147, DECISIONS #422/#423).
 
-	The art asset ids per kind and key (DinoLook / TowerLook keys):
+	The art asset ids per kind and key (DinoLook / TowerLook keys; hunter = HunterStats keys):
 	  { [kind]: { [key]: { model: number?, parts: { [group]: { mesh: string, size: Vector3 } }?,
-	    colors: { [group]: Color3 }? } } }
+	    colors: { [group]: Color3 }?, pieces: { [name]: { group: string, role: string? } }? } } }
 	A blank or missing model id means that look builds as its blocky fallback (#425).
 	colors = the authored colour per paint group (#439); ArtSlot paints the art with them
-	(a group without one takes the look's colours).
+	(a group without one takes the look's colours). pieces = the paint group and ArtRole of
+	each piece whose name doesn't say it (#445). Hunter pieces are `<R15Part>__<group>`.
 	Asset ids are not secrets (#431).
 ]]
 
@@ -42,9 +45,19 @@ export type Entry = {
 	model: number?,
 	parts: { [string]: { mesh: string, size: Vector3 } }?,
 	colors: { [string]: Color3 }?,
+	pieces: { [string]: { group: string, role: string? } }?,
 }
 
 """
+
+
+LUAU_KEYWORDS = set("and break do else elseif end false for function if in local nil not or repeat return then true until while continue".split())
+
+
+def _key(name):
+    """A table key: bare when it's a plain identifier, else ["..."]."""
+    plain = name.isidentifier() and name.isascii() and name not in LUAU_KEYWORDS
+    return name if plain else f"[{json.dumps(name)}]"
 
 
 def _num(x):
@@ -55,12 +68,17 @@ def collect(manifest, harvest):
     ids = {kind: {} for kind in KINDS}
     for name, entry in manifest.get("models", {}).items():
         kind, key = name.split("/", 1)
-        if kind in PENDING_KINDS:
-            continue
         if entry.get("asset"):
             ids.setdefault(kind, {}).setdefault(key, {})["model"] = int(entry["asset"])
         if entry.get("colors"):
             ids.setdefault(kind, {}).setdefault(key, {})["colors"] = entry["colors"]
+        odd = {
+            n: {"group": p["group"], **({"role": p["role"]} if p.get("role") else {})}
+            for n, p in entry.get("pieces", {}).items()
+            if kind != "hunter" and (n != p["group"] or p.get("role"))
+        }
+        if odd:
+            ids.setdefault(kind, {}).setdefault(key, {})["pieces"] = odd
     for kind, keys in harvest.items():
         for key, groups in keys.items():
             ids.setdefault(kind, {}).setdefault(key, {})["parts"] = groups
@@ -91,6 +109,14 @@ def render(ids):
                     f"{g} = Color3.fromRGB({', '.join(str(int(v)) for v in rgb)})" for g, rgb in sorted(entry["colors"].items())
                 )
                 fields.append(f"colors = {{ {colors} }}")
+            if "pieces" in entry:
+                pieces = ", ".join(
+                    f"{_key(n)} = {{ group = {json.dumps(p['group'])}"
+                    + (f", role = {json.dumps(p['role'])}" if p.get("role") else "")
+                    + " }"
+                    for n, p in sorted(entry["pieces"].items())
+                )
+                fields.append(f"pieces = {{ {pieces} }}")
             lines.append(f"\t\t{key} = {{ {', '.join(fields)} }},")
         lines.append("\t},")
     lines += ["}", "", "return ArtIds", ""]

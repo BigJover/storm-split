@@ -8,6 +8,10 @@
 	and clears them with the camp (out) or the match (reset). Hero offers them as foes to an
 	enemy hunter's shots. A dummy isn't a Player: it is never saved, paid or ranked, dinos
 	don't target it, and it never shoots.
+
+	Hunter bodies (PLAN 11c T150, #434): once the Tracker's body art is loaded
+	(Shared/HunterBody), the dummy wears it, welded to its Body; Body and Head stay as its
+	hit and billboard parts, hidden. No art = the blocks as before.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -18,6 +22,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local BattleFlow = require(Shared:WaitForChild("BattleFlow"))
 local StandInHunter = require(Shared:WaitForChild("StandInHunter"))
 local StudioOnly = require(Shared:WaitForChild("StudioOnly"))
+local HunterBody = require(Shared:WaitForChild("HunterBody"))
 
 local StandInHunters = {}
 
@@ -29,6 +34,7 @@ export type Entry = {
 	body: BasePart,
 	head: BasePart,
 	label: TextLabel,
+	dressed: boolean, -- wears a hunter body (Shared/HunterBody)
 }
 
 local entries: { [number]: Entry } = {} -- by side
@@ -85,8 +91,12 @@ local function place(entry: Entry)
 	entry.body.CFrame = CFrame.new(base)
 		* (if down then CFrame.Angles(0, 0, math.rad(90)) * CFrame.new(-BODY.Y / 2 + 0.6, 0, 0) else CFrame.identity)
 	entry.head.CFrame = entry.body.CFrame * CFrame.new(0, (BODY.Y + HEAD.Y) / 2, 0)
-	entry.body.Transparency = if down then 0.5 else 0
-	entry.head.Transparency = entry.body.Transparency
+	if entry.dressed then
+		HunterBody.fade(entry.model, if down then 0.5 else 0) -- Body and Head stay hidden
+	else
+		entry.body.Transparency = if down then 0.5 else 0
+		entry.head.Transparency = entry.body.Transparency
+	end
 end
 
 local function refresh(entry: Entry)
@@ -107,7 +117,8 @@ function StandInHunters.spawn(side: number, spawnAt: Vector3, camp: string)
 	end
 	local home = spawnAt + Vector3.new(6, 0, 0)
 	local model, body, head, label = build(side, camp)
-	local entry: Entry = { dummy = StandInHunter.new(side, now()), home = home, camp = camp, model = model, body = body, head = head, label = label }
+	local dressed = HunterBody.applyStandIn(model, body, head, HunterBody.DEFAULT) ~= nil
+	local entry: Entry = { dummy = StandInHunter.new(side, now()), home = home, camp = camp, model = model, body = body, head = head, label = label, dressed = dressed }
 	entries[side] = entry
 	place(entry)
 	refresh(entry)

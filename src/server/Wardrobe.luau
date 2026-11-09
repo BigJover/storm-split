@@ -13,6 +13,13 @@
 	material only: the head and name tag, accessories, sizes, transparency and the root
 	part are never touched (#381; spec: tools/test/skins.spec.luau).
 
+	Hunter bodies (PLAN 11c T150 + T150b, #434/#436/#442): when the hero's body art is loaded
+	(Shared/HunterBody; no hero yet = the starter's), the character wears it over hidden avatar
+	visuals; R15 parts, the Humanoid and hitboxes never change. A worn hunter skin is its own
+	body variant if loaded, else recolours the body (shirt colour, pants accent). Re-dressed on
+	spawn, appearance load, hero / skin change and when the art arrives; no art = the avatar
+	(and the skin paint above) exactly as before. Spec: tools/test/bodies.spec.luau.
+
 	Display Towers (T142, #384): the towers a player put on show stand on their Campsite
 	(the Campsite attribute Server/Pets gives), wearing that player's tower set. Built by
 	Shared/TowerLook with no range ring, never registered as towers (they never fire, take
@@ -34,6 +41,7 @@ local Skins = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Ski
 local TowerLook = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("TowerLook"))
 local OutpostRules = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Outpost"))
 local Decor = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Decor"))
+local HunterBody = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HunterBody"))
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Outpost = require(script.Parent.Outpost)
 
@@ -65,6 +73,20 @@ local function hunterLook(player: Player): Skins.Look?
 		return nil
 	end
 	return Skins.look(player:GetAttribute(Skins.attribute(Skins.slot("hunter", hero))))
+end
+
+-- The hero body art over the avatar (or the avatar, with no art).
+local function wearBody(player: Player)
+	local character = player.Character
+	if not character then
+		return
+	end
+	local hero = player:GetAttribute("Hero")
+	local skinKey = if type(hero) == "string" then player:GetAttribute(Skins.attribute(Skins.slot("hunter", hero))) else nil
+	HunterBody.apply(character, HunterBody.key(hero), {
+		look = hunterLook(player),
+		variant = if type(skinKey) == "string" and skinKey ~= "" then skinKey else nil,
+	})
 end
 
 -- Paint (or unpaint) this hunter's body for the hunter skin they wear with their hero.
@@ -112,6 +134,7 @@ local function paintHunter(player: Player)
 		end
 		stashed[player] = {}
 	end
+	wearBody(player)
 end
 
 -- The Display Towers on this player's Campsite, rebuilt from their Deco_ attributes.
@@ -234,9 +257,14 @@ end
 
 function Wardrobe.init()
 	local function watch(player: Player)
-		player.CharacterAdded:Connect(function()
+		player.CharacterAdded:Connect(function(character)
 			stashed[player] = {} -- a new body: its clothes are its own
 			task.defer(dress, player) -- once the head and root are in
+			character.ChildAdded:Connect(function(child)
+				if child:IsA("Accoutrement") and HunterBody.worn(character) then
+					task.defer(HunterBody.hideAvatar, character) -- an accessory that loaded late
+				end
+			end)
 		end)
 		player.CharacterAppearanceLoaded:Connect(function()
 			paintHunter(player) -- clothes that arrived after the body
@@ -259,6 +287,17 @@ function Wardrobe.init()
 	for _, player in Players:GetPlayers() do
 		watch(player)
 	end
+	-- Body art arrives in the background (Server/Art): re-dress everyone when it does.
+	task.spawn(function()
+		local art = ReplicatedStorage:WaitForChild("Art")
+		art.DescendantAdded:Connect(function(added)
+			if added:IsA("Model") and added.Parent and added.Parent.Name == HunterBody.KIND then
+				for _, player in Players:GetPlayers() do
+					wearBody(player)
+				end
+			end
+		end)
+	end)
 	Players.PlayerRemoving:Connect(function(player)
 		for _, model in (displays[player] or {}) :: { Model } do
 			model:Destroy()
