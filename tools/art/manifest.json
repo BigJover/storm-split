@@ -3919,7 +3919,7 @@
           56
         ]
       },
-      "hash": "9413e26fd39f0a8c",
+      "hash": "0063c522dcb9f2f7",
       "pieces": {
         "body": {
           "group": "body",
@@ -4025,7 +4025,7 @@
           56
         ]
       },
-      "hash": "d2eaefb672fdf89f",
+      "hash": "2136bda471515fbd",
       "pieces": {
         "body": {
           "group": "body",
@@ -4141,7 +4141,7 @@
           56
         ]
       },
-      "hash": "9802e27c61ff908f",
+      "hash": "769c19f9f5d3d1ee",
       "pieces": {
         "body": {
           "group": "body",
@@ -4282,7 +4282,7 @@
           92
         ]
       },
-      "hash": "e56bc568a00f2a85",
+      "hash": "4c6f1d2f28067873",
       "pieces": {
         "cable": {
           "group": "cable",
@@ -4418,7 +4418,7 @@
           52
         ]
       },
-      "hash": "f5b981e20b9292ab",
+      "hash": "2df5a44c0bfe2dc8",
       "pieces": {
         "body": {
           "group": "body",
@@ -4559,7 +4559,7 @@
           52
         ]
       },
-      "hash": "84d020e1b0a2317c",
+      "hash": "1e53d68d034ac536",
       "pieces": {
         "body": {
           "group": "body",
@@ -4715,7 +4715,7 @@
           44
         ]
       },
-      "hash": "9aefec40824624ef",
+      "hash": "51aaac4e1804dec8",
       "pieces": {
         "beacon": {
           "group": "glow",
@@ -4901,7 +4901,7 @@
           92
         ]
       },
-      "hash": "2b611419532d0394",
+      "hash": "db6f6392deae6d66",
       "pieces": {
         "cable": {
           "group": "cable",
@@ -5077,7 +5077,7 @@
           92
         ]
       },
-      "hash": "1bdb917fc24756ef",
+      "hash": "03d63539904ed191",
       "pieces": {
         "beacon": {
           "group": "glow",
@@ -5521,7 +5521,7 @@
           56
         ]
       },
-      "hash": "adf496879e3530d8",
+      "hash": "0735bde471375118",
       "pieces": {
         "ball": {
           "group": "spark",
@@ -5622,7 +5622,7 @@
           56
         ]
       },
-      "hash": "8e3a8eb0294e86e0",
+      "hash": "e20b95c94681fe55",
       "pieces": {
         "ball": {
           "group": "spark",
@@ -5728,7 +5728,7 @@
           56
         ]
       },
-      "hash": "c7f5740b1b36db2e",
+      "hash": "60ed97dc9fef85de",
       "pieces": {
         "arcs": {
           "group": "glow",
@@ -5854,7 +5854,7 @@
           56
         ]
       },
-      "hash": "b1c227cd41a29289",
+      "hash": "fab83a3ef8a13d55",
       "pieces": {
         "beak": {
           "group": "beak",
@@ -5980,7 +5980,7 @@
           56
         ]
       },
-      "hash": "d8f1ccdb50bf9316",
+      "hash": "1c7c3a9643bd07b8",
       "pieces": {
         "beak": {
           "group": "beak",
@@ -6000,7 +6000,7 @@
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 384
+          "tris": 352
         },
         "eye": {
           "group": "eye",
@@ -6035,7 +6035,7 @@
       },
       "stage": 1,
       "tower": "FALCON",
-      "tris": 2264,
+      "tris": 2232,
       "uploadedHash": null
     },
     "tower/FALCON_S2": {
@@ -6116,7 +6116,7 @@
           56
         ]
       },
-      "hash": "e72d45f0dfb5476b",
+      "hash": "d18e0996e96d5295",
       "pieces": {
         "beak": {
           "group": "beak",
@@ -6853,7 +6853,7 @@
           90
         ]
       },
-      "hash": "dc77d6f728eef825",
+      "hash": "ead733698e3623f4",
       "pieces": {
         "body": {
           "group": "body",
@@ -6984,7 +6984,7 @@
           90
         ]
       },
-      "hash": "c27f5d61619479aa",
+      "hash": "bd7050b3acca16db",
       "pieces": {
         "body": {
           "group": "body",
@@ -7115,7 +7115,7 @@
           90
         ]
       },
-      "hash": "5f1732567dc942a4",
+      "hash": "882e63442a1c4e70",
       "pieces": {
         "body": {
           "group": "body",
@@ -7660,7 +7660,7 @@
           56
         ]
       },
-      "hash": "21e0859e1abafa53",
+      "hash": "9967c530e9e53fdb",
       "pieces": {
         "body": {
           "group": "body",
@@ -7672,11 +7672,6 @@
           "role": null,
           "tris": 152
         },
-        "finial": {
-          "group": "metal",
-          "role": null,
-          "tris": 36
-        },
         "log": {
           "group": "log",
           "role": null,
@@ -7685,7 +7680,7 @@
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 84
+          "tris": 120
         },
         "plank": {
           "group": "plank",
@@ -7927,7 +7922,7 @@
           56
         ]
       },
-      "hash": "e9d40565901f6911",
+      "hash": "18a4d25e54be395f",
       "pieces": {
         "body": {
           "group": "body",
@@ -8038,7 +8033,7 @@
           56
         ]
       },
-      "hash": "8fec60fecb735216",
+      "hash": "2f39edf3829fe979",
       "pieces": {
         "body": {
           "group": "body",
@@ -8169,7 +8164,7 @@
           56
         ]
       },
-      "hash": "ca6d036dd7a94856",
+      "hash": "9262a00caeb6823a",
       "pieces": {
         "body": {
           "group": "body",
@@ -8285,7 +8280,7 @@
           56
         ]
       },
-      "hash": "c888f8e7e135bd0f",
+      "hash": "76c3880497c23b04",
       "pieces": {
         "bands": {
           "group": "metal",
@@ -8396,7 +8391,7 @@
           56
         ]
       },
-      "hash": "aebb228cd4200fcd",
+      "hash": "c5d28c2efdcde440",
       "pieces": {
         "bands": {
           "group": "metal",
@@ -8522,7 +8517,7 @@
           56
         ]
       },
-      "hash": "a92360af8571508f",
+      "hash": "9d9eb93ed9a92d23",
       "pieces": {
         "bands": {
           "group": "brass",
@@ -9384,7 +9379,7 @@
           56
         ]
       },
-      "hash": "14f45d98d2be1a27",
+      "hash": "2928c2a27fc4ca62",
       "pieces": {
         "body": {
           "group": "body",
@@ -9500,7 +9495,7 @@
           56
         ]
       },
-      "hash": "6b04e695592c9900",
+      "hash": "b7f6a2237f96d92c",
       "pieces": {
         "body": {
           "group": "body",
@@ -9636,7 +9631,7 @@
           56
         ]
       },
-      "hash": "13dbd063fa9cf4c7",
+      "hash": "ff9fd8bdead9dc61",
       "pieces": {
         "body": {
           "group": "body",
@@ -9777,7 +9772,7 @@
           96
         ]
       },
-      "hash": "5b7e34009c0517a3",
+      "hash": "e838b465f1009fae",
       "pieces": {
         "bands": {
           "group": "paint",
@@ -9903,7 +9898,7 @@
           96
         ]
       },
-      "hash": "1bfbf3b15d2674d9",
+      "hash": "32c625d1e11d4915",
       "pieces": {
         "bands": {
           "group": "paint",
@@ -10034,7 +10029,7 @@
           96
         ]
       },
-      "hash": "151f380e18c12c66",
+      "hash": "e91da2cc8e7f31fd",
       "pieces": {
         "body": {
           "group": "body",
@@ -10140,7 +10135,7 @@
           140
         ]
       },
-      "hash": "77f3ed3a77ca17e2",
+      "hash": "fdfd5fcd140227da",
       "pieces": {
         "ash": {
           "group": "ash",
@@ -10241,7 +10236,7 @@
           140
         ]
       },
-      "hash": "5293452873bf7a83",
+      "hash": "fa0cc164a2c3eaef",
       "pieces": {
         "ash": {
           "group": "ash",
@@ -10372,7 +10367,7 @@
           140
         ]
       },
-      "hash": "d506cc7094e3f973",
+      "hash": "1e5861a22e85c085",
       "pieces": {
         "ash": {
           "group": "ash",
