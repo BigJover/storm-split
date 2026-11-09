@@ -9857,7 +9857,7 @@
           96
         ]
       },
-      "hash": "1600e947f3cb52e7",
+      "hash": "5b7e34009c0517a3",
       "pieces": {
         "bands": {
           "group": "paint",
@@ -9930,14 +9930,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.3270659446716309,
-          -2.5057499408721924,
-          -1.3270658254623413
+          -1.420522928237915,
+          -2.5,
+          -1.2248106002807617
         ],
         [
-          1.3270659446716309,
-          2.499114751815796,
-          1.3270659446716309
+          1.420522928237915,
+          2.4950551986694336,
+          1.2620105743408203
         ]
       ],
       "budget": "tower",
@@ -9951,11 +9951,6 @@
           100,
           80,
           58
-        ],
-        "feather": [
-          210,
-          70,
-          50
         ],
         "horn": [
           216,
@@ -9977,11 +9972,6 @@
           86,
           56
         ],
-        "rope": [
-          176,
-          150,
-          100
-        ],
         "socket": [
           36,
           32,
@@ -9993,7 +9983,7 @@
           96
         ]
       },
-      "hash": "fe7ba4445a560057",
+      "hash": "1bfbf3b15d2674d9",
       "pieces": {
         "bands": {
           "group": "paint",
@@ -10003,22 +9993,27 @@
         "body": {
           "group": "body",
           "role": null,
-          "tris": 642
+          "tris": 486
         },
         "earth": {
           "group": "earth",
           "role": null,
-          "tris": 188
+          "tris": 60
         },
         "eyes": {
           "group": "socket",
           "role": null,
-          "tris": 96
+          "tris": 136
         },
-        "feather": {
-          "group": "feather",
+        "feathers": {
+          "group": "paint",
           "role": null,
-          "tris": 96
+          "tris": 72
+        },
+        "feathers2": {
+          "group": "ochre",
+          "role": null,
+          "tris": 48
         },
         "frillspots": {
           "group": "ochre",
@@ -10028,7 +10023,7 @@
         "horn": {
           "group": "horn",
           "role": null,
-          "tris": 76
+          "tris": 116
         },
         "ochre": {
           "group": "ochre",
@@ -10038,32 +10033,22 @@
         "pole": {
           "group": "pole",
           "role": null,
-          "tris": 754
-        },
-        "rope": {
-          "group": "rope",
-          "role": null,
-          "tris": 96
+          "tris": 472
         },
         "runes": {
           "group": "socket",
           "role": null,
           "tris": 96
         },
-        "socket": {
-          "group": "socket",
-          "role": null,
-          "tris": 32
-        },
         "stone": {
           "group": "stone",
           "role": null,
-          "tris": 200
+          "tris": 216
         }
       },
       "stage": 1,
       "tower": "TOTEM",
-      "tris": 2736,
+      "tris": 2162,
       "uploadedHash": null
     },
     "tower/TOTEM_S2": {
@@ -10071,14 +10056,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.3270659446716309,
-          -2.5057499408721924,
-          -1.3270658254623413
+          -1.4268889427185059,
+          -2.5,
+          -1.2248106002807617
         ],
         [
-          1.3270659446716309,
-          2.4982147216796875,
-          1.3270659446716309
+          1.4268889427185059,
+          2.4950551986694336,
+          1.2620105743408203
         ]
       ],
       "budget": "tower",
@@ -10097,11 +10082,6 @@
           100,
           80,
           58
-        ],
-        "feather": [
-          210,
-          70,
-          50
         ],
         "glow": [
           150,
@@ -10128,38 +10108,23 @@
           86,
           56
         ],
-        "rope": [
-          176,
-          150,
-          100
-        ],
-        "socket": [
-          36,
-          32,
-          30
-        ],
         "stone": [
           110,
           104,
           96
         ]
       },
-      "hash": "de92caaeeef5b21f",
+      "hash": "151f380e18c12c66",
       "pieces": {
-        "bands": {
-          "group": "paint",
-          "role": null,
-          "tris": 180
-        },
         "body": {
           "group": "body",
           "role": null,
-          "tris": 552
+          "tris": 690
         },
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 200
+          "tris": 348
         },
         "crystal": {
           "group": "glow",
@@ -10169,62 +10134,47 @@
         "earth": {
           "group": "earth",
           "role": null,
-          "tris": 188
+          "tris": 60
         },
         "eyes": {
           "group": "glow",
           "role": null,
-          "tris": 96
+          "tris": 216
         },
-        "feather": {
-          "group": "feather",
-          "role": null,
-          "tris": 96
-        },
-        "frillspots": {
-          "group": "ochre",
+        "feathers": {
+          "group": "paint",
           "role": null,
           "tris": 120
+        },
+        "feathers2": {
+          "group": "ochre",
+          "role": null,
+          "tris": 96
         },
         "horn": {
           "group": "horn",
           "role": null,
-          "tris": 76
-        },
-        "ochre": {
-          "group": "ochre",
-          "role": null,
-          "tris": 160
+          "tris": 196
         },
         "pole": {
           "group": "pole",
           "role": null,
-          "tris": 648
-        },
-        "rope": {
-          "group": "rope",
-          "role": null,
-          "tris": 96
+          "tris": 492
         },
         "runes": {
           "group": "glow",
           "role": null,
           "tris": 96
         },
-        "socket": {
-          "group": "socket",
-          "role": null,
-          "tris": 32
-        },
         "stone": {
           "group": "stone",
           "role": null,
-          "tris": 200
+          "tris": 216
         }
       },
       "stage": 2,
       "tower": "TOTEM",
-      "tris": 2760,
+      "tris": 2550,
       "uploadedHash": null
     },
     "tower/VENT": {
