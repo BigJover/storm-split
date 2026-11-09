@@ -12,6 +12,8 @@ ART = Path(__file__).resolve().parent
 def source_hash(kind, key):
     files = [ART / "models" / kind / f"{key}.py", ART / "lowpoly.py"]
     files += sorted((ART / "models" / kind).glob("_*.py"))
+    if kind == "kit":  # kit props are built with the gun helpers (models/gun/_gun.py)
+        files += sorted((ART / "models" / "gun").glob("_gun.py"))
     h = hashlib.sha256()
     for f in files:
         h.update(f.name.encode())

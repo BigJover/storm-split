@@ -211,8 +211,13 @@ def main(kind, key):
     fbx.parent.mkdir(parents=True, exist_ok=True)
     png.parent.mkdir(parents=True, exist_ok=True)
     lowpoly.export_fbx(fbx, pieces)
+    context = model.get("context", [])  # preview-only pieces (gun attachments: the base gun)
+    for o in context:
+        lowpoly.smooth(o)
     ground = tower_ground(lo) if kind == "tower" else None
-    if ground is not None:  # towers: frame the footprint too, with room for a tall tower's
+    if context:
+        framed = wide = pieces + context
+    elif ground is not None:  # towers: frame the footprint too, with room for a tall tower's
         framed = pieces + [ground]  # diagonal (a faceless frame mesh renders nothing)
         wide = framed + [tower_frame(pieces)]
     else:
@@ -250,6 +255,8 @@ def main(kind, key):
     )
     if kind == "tower":  # which TowerLook tower and model-swap stage this look is (PLAN 11d)
         entry.update({"tower": model["tower"], "stage": model["stage"]})
+    if model.get("meta"):  # guns / kit (11c2): base gun of an attachment, the stat that shows it, ...
+        entry.update(model["meta"])
     entry.setdefault("asset", None)  # set by upload.py
     entry.setdefault("uploadedHash", None)
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
