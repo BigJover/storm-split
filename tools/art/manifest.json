@@ -7544,7 +7544,7 @@
           56
         ]
       },
-      "hash": "490613fb28f418b1",
+      "hash": "f4ff4b1c362111f8",
       "pieces": {
         "body": {
           "group": "body",
@@ -7608,7 +7608,7 @@
         ],
         [
           1.4197354316711426,
-          1.1449999809265137,
+          1.8000001907348633,
           1.399999976158142
         ]
       ],
@@ -7623,11 +7623,6 @@
           74,
           54,
           36
-        ],
-        "firewood": [
-          176,
-          140,
-          96
         ],
         "log": [
           126,
@@ -7665,7 +7660,7 @@
           56
         ]
       },
-      "hash": "5195673f4f802a25",
+      "hash": "21e0859e1abafa53",
       "pieces": {
         "body": {
           "group": "body",
@@ -7675,27 +7670,27 @@
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 104
+          "tris": 152
         },
-        "firewood": {
-          "group": "firewood",
+        "finial": {
+          "group": "metal",
           "role": null,
-          "tris": 120
+          "tris": 36
         },
         "log": {
           "group": "log",
           "role": null,
-          "tris": 576
+          "tris": 572
         },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 156
+          "tris": 84
         },
         "plank": {
           "group": "plank",
           "role": null,
-          "tris": 352
+          "tris": 332
         },
         "sign": {
           "group": "sign",
@@ -7705,22 +7700,27 @@
         "stone": {
           "group": "stone",
           "role": null,
-          "tris": 88
+          "tris": 24
         },
         "windows": {
           "group": "window",
           "role": null,
           "tris": 88
         },
+        "windows2": {
+          "group": "window",
+          "role": null,
+          "tris": 36
+        },
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 224
+          "tris": 228
         }
       },
       "stage": 1,
       "tower": "RANGER",
-      "tris": 1972,
+      "tris": 1816,
       "uploadedHash": null
     },
     "tower/RANGER_S2": {
@@ -7729,17 +7729,22 @@
       "box": [
         [
           -1.375,
-          -2.5027873516082764,
-          -1.4949501752853394
+          -2.5020480155944824,
+          -1.4949731826782227
         ],
         [
           1.4197354316711426,
-          1.1449999809265137,
+          1.9950003623962402,
           1.399999976158142
         ]
       ],
       "budget": "tower",
       "colors": {
+        "antler": [
+          226,
+          214,
+          186
+        ],
         "body": [
           176,
           160,
@@ -7754,11 +7759,6 @@
           74,
           54,
           36
-        ],
-        "firewood": [
-          176,
-          140,
-          96
         ],
         "glow": [
           255,
@@ -7796,8 +7796,13 @@
           56
         ]
       },
-      "hash": "c49b6990787b35e6",
+      "hash": "f312fc82b880cbd0",
       "pieces": {
+        "antler": {
+          "group": "antler",
+          "role": null,
+          "tris": 128
+        },
         "body": {
           "group": "body",
           "role": null,
@@ -7806,22 +7811,17 @@
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 300
+          "tris": 196
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 104
-        },
-        "firewood": {
-          "group": "firewood",
-          "role": null,
-          "tris": 120
+          "tris": 152
         },
         "lamp": {
           "group": "glow",
           "role": null,
-          "tris": 64
+          "tris": 28
         },
         "log": {
           "group": "log",
@@ -7831,12 +7831,17 @@
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 156
+          "tris": 124
         },
         "plank": {
           "group": "plank",
           "role": null,
-          "tris": 352
+          "tris": 332
+        },
+        "porchlamp": {
+          "group": "glow",
+          "role": null,
+          "tris": 36
         },
         "sign": {
           "group": "sign",
@@ -7846,22 +7851,27 @@
         "stone": {
           "group": "stone",
           "role": null,
-          "tris": 88
+          "tris": 24
         },
         "windows": {
           "group": "glow",
           "role": null,
           "tris": 88
         },
+        "windows2": {
+          "group": "glow",
+          "role": null,
+          "tris": 36
+        },
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 224
+          "tris": 240
         }
       },
       "stage": 2,
       "tower": "RANGER",
-      "tris": 2336,
+      "tris": 2224,
       "uploadedHash": null
     },
     "tower/RAPTOR": {
