@@ -178,6 +178,20 @@ def tower_frame(objs, margin=0.72):
     return obj
 
 
+def pad_frame(objs, pad):
+    """Preview only: two loose vertices `pad` x the largest extent outside objs' bounds (renders
+    nothing; widens the ortho framing)."""
+    import bpy
+
+    lo, hi = lowpoly.bounds(objs)
+    d = max(hi - lo) * pad
+    mesh = bpy.data.meshes.new("frame")
+    mesh.from_pydata([tuple(lo - d), tuple(hi + d)], [], [])
+    obj = bpy.data.objects.new("frame", mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    return obj
+
+
 def main(kind, key):
     lowpoly.reset_scene()
     model = load(kind, key).build(lowpoly)
@@ -215,7 +229,9 @@ def main(kind, key):
     for o in context:
         lowpoly.smooth(o)
     ground = tower_ground(lo) if kind == "tower" else None
-    if context:
+    if kind == "kit":  # kit props: a little room round a squat grenade so the 3/4 view doesn't crop it
+        framed = wide = pieces + [pad_frame(pieces, 0.12)]
+    elif context:
         framed = wide = pieces + context
     elif ground is not None:  # towers: frame the footprint too, with room for a tall tower's
         framed = pieces + [ground]  # diagonal (a faceless frame mesh renders nothing)
@@ -279,6 +295,15 @@ if __name__ == "__main__":
         pngs = [ART / "previews" / f"{k}.png" for k in keys]
         render.contact_sheet(out, pngs, columns=3 if kind == "tower" else 4)  # towers: a row per tower, its 3 stages
         print(f"ART OK sheet {out.relative_to(ART)} ({len(pngs)} models)")
+    elif len(argv) == 4 and argv[0] == "--sheet":  # --sheet <kind,kind> <batch> <name>: 3/4 + side of each
+        kinds, batch, name = argv[1].split(","), argv[2], argv[3]
+        manifest = json.loads((ART / "manifest.json").read_text())
+        keys = [k for kind in kinds for k in sorted(k for k, m in manifest["models"].items()
+                                                   if m["batch"] == batch and k.startswith(kind + "/"))]
+        pngs = [ART / "previews" / f"{k}{v}.png" for k in keys for v in ("", "_side")]
+        out = ART / "previews" / f"sheet_{name}.png"
+        render.contact_sheet(out, pngs, columns=4)  # two models a row: 3/4, side, 3/4, side
+        print(f"ART OK sheet {out.relative_to(ART)} ({len(keys)} models)")
     elif len(argv) == 2:
         main(*argv)
     else:

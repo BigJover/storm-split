@@ -4138,6 +4138,612 @@
       "tris": 5898,
       "uploadedHash": null
     },
+    "kit/MEDIC_GRENADE": {
+      "asset": null,
+      "batch": "11c2",
+      "box": [
+        [
+          -0.22889414429664612,
+          -0.35999998450279236,
+          -0.24700000882148743
+        ],
+        [
+          0.22889414429664612,
+          0.41558846831321716,
+          0.22889414429664612
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "accent": [
+          110,
+          230,
+          140
+        ],
+        "body": [
+          176,
+          160,
+          214
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "cloth": [
+          226,
+          218,
+          196
+        ],
+        "steel": [
+          64,
+          72,
+          86
+        ]
+      },
+      "display": "Dozy Cloud",
+      "hash": "b32b899be22e6082",
+      "hero": "MEDIC",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 88
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 140
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 60
+        },
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 140
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 108
+        }
+      },
+      "prop": "grenade",
+      "tris": 536,
+      "uploadedHash": null
+    },
+    "kit/MEDIC_MELEE": {
+      "asset": null,
+      "batch": "11c2",
+      "box": [
+        [
+          -0.0949999988079071,
+          -0.10000000149011612,
+          -1.2100000381469727
+        ],
+        [
+          0.0949999988079071,
+          0.10000000149011612,
+          0.23000000417232513
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "accent": [
+          110,
+          230,
+          140
+        ],
+        "cloth": [
+          226,
+          218,
+          196
+        ],
+        "wood": [
+          168,
+          118,
+          72
+        ]
+      },
+      "display": "Splint Stick",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "hash": "7ba5a17b9209d8ec",
+      "hero": "MEDIC",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 108
+        },
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 132
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 88
+        }
+      },
+      "prop": "melee",
+      "tris": 328,
+      "uploadedHash": null
+    },
+    "kit/PISTOL_GRENADE": {
+      "asset": null,
+      "batch": "11c2",
+      "box": [
+        [
+          -0.3217261731624603,
+          -0.3924783170223236,
+          -0.3388516306877136
+        ],
+        [
+          0.3217261731624603,
+          0.4399999976158142,
+          0.33000001311302185
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "accent": [
+          255,
+          90,
+          110
+        ],
+        "cloth": [
+          226,
+          218,
+          196
+        ],
+        "cork": [
+          176,
+          136,
+          90
+        ],
+        "glass": [
+          150,
+          176,
+          84
+        ]
+      },
+      "display": "Stink Bomb",
+      "hash": "e1eef7a6df685ad7",
+      "hero": "PISTOL",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 44
+        },
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 124
+        },
+        "cork": {
+          "group": "cork",
+          "role": null,
+          "tris": 36
+        },
+        "glass": {
+          "group": "glass",
+          "role": null,
+          "tris": 180
+        }
+      },
+      "prop": "grenade",
+      "tris": 384,
+      "uploadedHash": null
+    },
+    "kit/PISTOL_MELEE": {
+      "asset": null,
+      "batch": "11c2",
+      "box": [
+        [
+          -0.06499999016523361,
+          -0.11999999731779099,
+          -0.909485399723053
+        ],
+        [
+          0.06499999761581421,
+          0.10000000149011612,
+          0.3400000035762787
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "accent": [
+          255,
+          90,
+          110
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "steel": [
+          150,
+          156,
+          164
+        ],
+        "wood": [
+          132,
+          86,
+          50
+        ]
+      },
+      "display": "Hunting Knife",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "hash": "ecdcb71638dce451",
+      "hero": "PISTOL",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 36
+        },
+        "blade": {
+          "group": "steel",
+          "role": null,
+          "tris": 80
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 92
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 36
+        }
+      },
+      "prop": "melee",
+      "tris": 244,
+      "uploadedHash": null
+    },
+    "kit/RIFLE_GRENADE": {
+      "asset": null,
+      "batch": "11c2",
+      "box": [
+        [
+          -0.3149999976158142,
+          -0.4000000059604645,
+          -0.3149999976158142
+        ],
+        [
+          0.3149999976158142,
+          0.4417908787727356,
+          0.3149999976158142
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "accent": [
+          255,
+          220,
+          90
+        ],
+        "body": [
+          118,
+          116,
+          70
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          44,
+          40,
+          38
+        ],
+        "steel": [
+          64,
+          72,
+          86
+        ]
+      },
+      "display": "Safari Grenade",
+      "hash": "a1d06d980fdcdb23",
+      "hero": "RIFLE",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 72
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 168
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 148
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 144
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 28
+        }
+      },
+      "prop": "grenade",
+      "tris": 560,
+      "uploadedHash": null
+    },
+    "kit/RIFLE_MELEE": {
+      "asset": null,
+      "batch": "11c2",
+      "box": [
+        [
+          -0.08739230036735535,
+          -0.2800000011920929,
+          -1.0449999570846558
+        ],
+        [
+          0.07999999821186066,
+          0.1599999964237213,
+          0.3799999952316284
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "accent": [
+          255,
+          220,
+          90
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          44,
+          40,
+          38
+        ],
+        "steel": [
+          64,
+          72,
+          86
+        ],
+        "wood": [
+          132,
+          86,
+          50
+        ]
+      },
+      "display": "Stock Swing",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "hash": "696bca09a9f2dd09",
+      "hero": "RIFLE",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 32
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 20
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 80
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 116
+        }
+      },
+      "prop": "melee",
+      "tris": 292,
+      "uploadedHash": null
+    },
+    "kit/SHOTGUN_GRENADE": {
+      "asset": null,
+      "batch": "11c2",
+      "box": [
+        [
+          -0.36000001430511475,
+          -0.3700000047683716,
+          -0.36000001430511475
+        ],
+        [
+          0.36000001430511475,
+          0.550000011920929,
+          0.36000001430511475
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "accent": [
+          255,
+          140,
+          50
+        ],
+        "body": [
+          196,
+          36,
+          44
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          44,
+          40,
+          38
+        ],
+        "glow": [
+          255,
+          196,
+          90
+        ]
+      },
+      "display": "Cherry Bomb",
+      "hash": "a8ab51cc30921a9b",
+      "hero": "SHOTGUN",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 72
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 168
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 28
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 24
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 36
+        }
+      },
+      "prop": "grenade",
+      "tris": 328,
+      "uploadedHash": null
+    },
+    "kit/SHOTGUN_MELEE": {
+      "asset": null,
+      "batch": "11c2",
+      "box": [
+        [
+          -0.04999999701976776,
+          -0.19942951202392578,
+          -1.5441875457763672
+        ],
+        [
+          0.04999999701976776,
+          0.09961932897567749,
+          0.46799999475479126
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "accent": [
+          255,
+          140,
+          50
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "steel": [
+          150,
+          156,
+          164
+        ],
+        "wood": [
+          168,
+          118,
+          72
+        ]
+      },
+      "display": "Brush Machete",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "hash": "6cf2a83f0db4d1c1",
+      "hero": "SHOTGUN",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 48
+        },
+        "blade": {
+          "group": "steel",
+          "role": null,
+          "tris": 80
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 84
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 136
+        }
+      },
+      "prop": "melee",
+      "tris": 348,
+      "uploadedHash": null
+    },
     "tower/ARMORY": {
       "asset": null,
       "batch": "11d",
