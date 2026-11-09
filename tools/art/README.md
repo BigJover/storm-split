@@ -125,6 +125,64 @@ Budget class `tower` (<= 3,000 tris, #433; `_kit.Kit.finish` aims under 2,700).
   pulses the Hospital's `glow` pieces; `buildBlimp` / `setBlimpStage` dress `BLIMP_AIR` (+ stages) and the
   beam leaves from the `lamp` piece. Specs in `tools/test/artslot.spec.luau`.
 
+## Guns and kit (kinds `gun` and `kit`, PLAN 11c T151, batch `11c2`) — models only, runtime not built
+
+```sh
+tools/art/build.sh gun RIFLE                      # FBX + 3/4 + side previews + manifest
+tools/art/build.sh kit SHOTGUN_GRENADE
+tools/art/build.sh --sheet gun,kit 11c2 11c_guns  # previews/sheet_11c_guns.png: 3/4 + side of each, 2 models a row
+```
+
+| Key | Display name (Config) | Tris | Notes |
+|---|---|---|---|
+| `gun/PISTOL` | Tracker — Revolver | 844 | Dual Pistols (`guns` ≥ 2) = a second PISTOL in the left hand, no extra model |
+| `gun/PISTOL_SCOPE` | Scope (Marksman T3) | 320 | attachment; shows when `HeroStats.scope` |
+| `gun/RIFLE` | Big Game Hunter — Hunting Rifle | 864 | sling on the right, class badge on the butt's left |
+| `gun/RIFLE_BELT` | Belt Fed (Heavy T3) | 336 | attachment: drum under the fore-end + brass belt on the left; `beltFed` |
+| `gun/SHOTGUN` | Brush Beater — Shotgun | 836 | side saddle of class-orange shells (left) |
+| `gun/SHOTGUN_DOUBLE` | Double Barrel (Point Blank T3) | 188 | attachment: second barrel on the left + piece `muzzle2`; `shotsPerTrigger` ≥ 2 |
+| `gun/SHOTGUN_DRUM` | Thicket Sweeper (Buckshot T5) | 144 | attachment: drum under the receiver; `fireMode == "auto"` |
+| `gun/MEDIC` | Field Medic — Lever-Action Carbine | 972 | no variants (no Medic path changes the gun's look) |
+| `kit/<HERO>_MELEE` | Hunting Knife / Stock Swing / Brush Machete / Splint Stick | 244–348 | |
+| `kit/<HERO>_GRENADE` | Stink Bomb / Safari Grenade / Cherry Bomb / Dozy Cloud | 328–560 | Cherry Bomb's lit fuse tip is group `glow` (Neon) |
+
+Conventions (the contract for the runtime task):
+- **Grip origin.** Guns and melee are authored in Roblox studs about **today's Tool Handle origin**
+  (`Server/Hero` `syncTool`: a 0.4×0.5×2 Part held with the default `Tool.Grip`, so its centre sits on
+  the RightHand's `RightGripAttachment`). The hand closes round (0, 0, 0); barrel / blade point
+  **−Z** (the Handle's LookVector), **+Y** up, +X the gun's right. Weld the art to the Handle at
+  identity (or make the art's root the Handle) and the holding stays exactly as today.
+- **Muzzle.** Piece `muzzle` (ArtRole `muzzle`) is a ring at the barrel's tip; its centre = the
+  firing point (manifest `muzzle`): PISTOL (0, 0.25, −0.85), RIFLE (0, 0.25, −1.73), SHOTGUN
+  (0, 0.25, −1.51), MEDIC (0, 0.25, −1.43). **Today there is no Muzzle attachment**: tracers leave
+  from `handle.Position` (the grip) ± `DUAL_GUN_OFFSET` sideways, so a `Muzzle` attachment at the
+  `muzzle` centre moves the tracer start forward to the real tip (0.85–1.7 studs).
+  `SHOTGUN_DOUBLE` adds `muzzle2` (ArtRole `muzzle2`, the left barrel) for alternating, if wanted.
+- **Size.** The art is the real size, not fitted to the old box: guns are 0.2–0.5 wide, the
+  revolver 1.1 long, the long guns 2.5–2.8 (stock behind the hand to z ≈ +1.0, the old Handle
+  reached +1.0 too). Grenades are about today's 0.9 ball (0.65–0.9 across); kit origin = the
+  ball's centre, upright.
+- **Attachments** (`<GUN>_<VARIANT>`) are authored in the gun's own frame and are purely additive:
+  weld at identity on top of the base gun when the stat in manifest `shows` is on. Every gun plus
+  any one attachment is ≤ 1,200 tris (`_gun.GUN_CAP`, checked at build); SHOTGUN + both
+  attachments (possible at mastery 20's 6/3) = 1,168. Previews draw an attachment on its base gun
+  (preview-only `context` pieces in build.py; only the attachment is exported).
+- **Paint groups:** `wood steel brass leather dark cloth glass cork body` authored; `accent` =
+  the class colour (`HERO_COLORS`: the revolver's grip medallion, the rifle's butt badge, the
+  shotgun's shells, the carbine's green cross; the kit's band / label / wrap). Suggested runtime
+  rule: a weapon skin or a cosmetic tint recolours `accent` (and maybe `wood`), mastery gold paints
+  `steel` + `brass` gold; the rest keeps its authored colour. Kit props: blade pieces are named
+  `blade` (group `steel`).
+- **Manifest extras** (`meta`): guns `gun`, `grip`, `muzzle`, `dual` (PISTOL); attachments
+  `attach` (base key) and `shows` (the stat); kit `hero`, `prop` (`melee` / `grenade`), `display`,
+  `grip` or `centre`. Budget classes: guns `gun` (1,200), kit `small` (800; `_prop.CAP` holds 600).
+- **Helpers:** `models/gun/_gun.py` (primitives incl. `slab` profiles and `strap`s, `Gun` envelope +
+  tri checks); `models/kit/_prop.py` builds on it, so `srchash.py` hashes `gun/_gun.py` for kind
+  `kit` too. Kit previews pad the frame a little (`build.pad_frame`) so squat grenades aren't cropped.
+- **Not done (runtime task):** `write_ids.py` `KINDS` doesn't list `gun` / `kit` yet; running it
+  will add them to `ArtIds` (colours + `pieces` roles) — do it with the runtime commit
+  (`write_ids.py --check` reports the difference until then). Nothing is uploaded or approved.
+
 ## What is verified vs assumed (2026-10-26)
 
 Verified here: Blender 5.2.3 headless runs these scripts; the FBX is written with +Y up / −Z forward,
