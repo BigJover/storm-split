@@ -6227,7 +6227,7 @@
           124
         ]
       },
-      "hash": "34582f4bd3e04b48",
+      "hash": "5df973f227b1ac07",
       "pieces": {
         "body": {
           "group": "body",
@@ -6276,7 +6276,7 @@
         ],
         [
           1.4197258949279785,
-          -0.19073700904846191,
+          -0.2267904281616211,
           1.4197258949279785
         ]
       ],
@@ -6313,17 +6313,17 @@
           56
         ]
       },
-      "hash": "ad6e406d75b6794b",
+      "hash": "2c5608a489e6ec15",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 44
+          "tris": 88
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 88
+          "tris": 120
         },
         "dirt": {
           "group": "dirt",
@@ -6333,7 +6333,7 @@
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 554
+          "tris": 436
         },
         "muzzle": {
           "group": "dark",
@@ -6343,22 +6343,22 @@
         "sand": {
           "group": "sand",
           "role": null,
-          "tris": 1598
+          "tris": 1440
         },
         "shellheads": {
           "group": "body",
           "role": null,
-          "tris": 200
+          "tris": 96
         },
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 64
+          "tris": 44
         }
       },
       "stage": 1,
       "tower": "GRENADIER",
-      "tris": 2704,
+      "tris": 2380,
       "uploadedHash": null
     },
     "tower/GRENADIER_S2": {
@@ -6366,13 +6366,13 @@
       "batch": "11d",
       "box": [
         [
-          -1.4197258949279785,
+          -1.4385194778442383,
           -2.5,
           -1.4197258949279785
         ],
         [
           1.4197258949279785,
-          -0.19073700904846191,
+          1.1699998378753662,
           1.4197258949279785
         ]
       ],
@@ -6398,11 +6398,6 @@
           112,
           72
         ],
-        "dirt": [
-          112,
-          92,
-          66
-        ],
         "glow": [
           255,
           150,
@@ -6424,67 +6419,62 @@
           56
         ]
       },
-      "hash": "066e474e06cbe567",
+      "hash": "75d4bd46fafc5537",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 44
+          "tris": 56
+        },
+        "bore": {
+          "group": "glow",
+          "role": null,
+          "tris": 108
         },
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 416
+          "tris": 616
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 88
+          "tris": 24
         },
         "deck": {
           "group": "deck",
           "role": null,
-          "tris": 200
-        },
-        "dirt": {
-          "group": "dirt",
-          "role": null,
           "tris": 60
-        },
-        "glow": {
-          "group": "glow",
-          "role": null,
-          "tris": 64
         },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 240
+          "tris": 88
         },
         "muzzle": {
           "group": "dark",
           "role": "muzzle",
-          "tris": 96
+          "tris": 112
         },
         "sand": {
           "group": "sand",
           "role": null,
-          "tris": 1288
+          "tris": 1440
         },
         "shellheads": {
           "group": "glow",
           "role": null,
-          "tris": 200
+          "tris": 96
         },
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 84
+          "tris": 64
         }
       },
       "stage": 2,
       "tower": "GRENADIER",
-      "tris": 2780,
+      "tris": 2664,
       "uploadedHash": null
     },
     "tower/HOSPITAL": {
