@@ -10130,7 +10130,7 @@
           140
         ]
       },
-      "hash": "a7f17d3678cee844",
+      "hash": "77f3ed3a77ca17e2",
       "pieces": {
         "ash": {
           "group": "ash",
@@ -10180,12 +10180,12 @@
         [
           -1.3799443244934082,
           -2.5,
-          -1.4800000190734863
+          -1.3832159042358398
         ],
         [
-          1.3239305019378662,
-          0.5039999485015869,
-          1.335514783859253
+          1.3405914306640625,
+          1.4078476428985596,
+          1.3527041673660278
         ]
       ],
       "budget": "tower",
@@ -10231,12 +10231,12 @@
           140
         ]
       },
-      "hash": "f2669595cc398b3a",
+      "hash": "5293452873bf7a83",
       "pieces": {
         "ash": {
           "group": "ash",
           "role": null,
-          "tris": 300
+          "tris": 304
         },
         "blobs": {
           "group": "lava",
@@ -10246,47 +10246,47 @@
         "body": {
           "group": "body",
           "role": null,
-          "tris": 470
+          "tris": 140
         },
         "crust": {
           "group": "crust",
           "role": null,
-          "tris": 236
+          "tris": 240
         },
         "dial": {
           "group": "dial",
           "role": null,
-          "tris": 116
+          "tris": 36
         },
         "gauge": {
           "group": "metal",
           "role": null,
-          "tris": 116
+          "tris": 36
         },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 160
+          "tris": 68
         },
         "obsidian": {
           "group": "obsidian",
           "role": null,
-          "tris": 36
+          "tris": 48
         },
         "pool": {
           "group": "lava",
           "role": null,
-          "tris": 164
+          "tris": 52
         },
         "runs": {
           "group": "lava",
           "role": null,
-          "tris": 324
+          "tris": 144
         },
         "smoke": {
           "group": "smoke",
           "role": null,
-          "tris": 592
+          "tris": 448
         },
         "wheel": {
           "group": "metal",
@@ -10296,7 +10296,7 @@
       },
       "stage": 1,
       "tower": "VENT",
-      "tris": 2694,
+      "tris": 1696,
       "uploadedHash": null
     },
     "tower/VENT_S2": {
@@ -10304,14 +10304,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.3799443244934082,
+          -1.3832157850265503,
           -2.5,
-          -1.4800000190734863
+          -1.3832159042358398
         ],
         [
-          1.316920280456543,
-          0.6499998569488525,
-          1.335514783859253
+          1.350000023841858,
+          1.807847499847412,
+          1.3579812049865723
         ]
       ],
       "budget": "tower",
@@ -10362,12 +10362,12 @@
           140
         ]
       },
-      "hash": "0dbc4472def5dabd",
+      "hash": "d506cc7094e3f973",
       "pieces": {
         "ash": {
           "group": "ash",
           "role": null,
-          "tris": 262
+          "tris": 304
         },
         "blobs": {
           "group": "glow",
@@ -10377,57 +10377,62 @@
         "body": {
           "group": "body",
           "role": null,
-          "tris": 412
+          "tris": 140
+        },
+        "bombs": {
+          "group": "glow",
+          "role": null,
+          "tris": 256
         },
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 96
+          "tris": 180
         },
         "crust": {
           "group": "crust",
           "role": null,
-          "tris": 206
+          "tris": 240
         },
         "dial": {
           "group": "dial",
           "role": null,
-          "tris": 116
-        },
-        "embers": {
-          "group": "glow",
-          "role": null,
-          "tris": 144
+          "tris": 36
         },
         "gauge": {
           "group": "brass",
           "role": null,
-          "tris": 116
+          "tris": 36
         },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 160
+          "tris": 68
         },
         "obsidian": {
           "group": "obsidian",
           "role": null,
-          "tris": 36
+          "tris": 48
         },
         "pool": {
           "group": "glow",
           "role": null,
-          "tris": 164
+          "tris": 52
         },
         "runs": {
           "group": "glow",
           "role": null,
-          "tris": 284
+          "tris": 288
         },
         "smoke": {
           "group": "smoke",
           "role": null,
-          "tris": 518
+          "tris": 448
+        },
+        "tips": {
+          "group": "glow",
+          "role": null,
+          "tris": 120
         },
         "wheel": {
           "group": "brass",
@@ -10437,7 +10442,7 @@
       },
       "stage": 2,
       "tower": "VENT",
-      "tris": 2694,
+      "tris": 2396,
       "uploadedHash": null
     }
   }
