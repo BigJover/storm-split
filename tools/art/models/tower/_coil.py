@@ -4,10 +4,12 @@ base (y 0) in Roblox studs; front = -Z (_kit conventions).
 
 Stage 0 (tiers 0-2): plank pad, tripod with insulator feet, the coil (copper rings), the
                      storm-ring, the spark ball, a cable to a battery crate.
-Stage 1 (tier 3):    a taller coil with a second storm-ring, porcelain insulators on the legs,
-                     three lightning-rod spikes round the ring, a cable drum.
-Stage 2 (tier 5):    brass bands and a brass crown on the column, a glowing spark ball, glowing
-                     arc crystals on the rods and a glowing charge gauge on the battery.
+Stage 1 (tier 3):    TWIN COILS - the main coil grows taller with a wide arcing ring (three
+                     lightning rods) round it, and a second, smaller coil tower stands at the
+                     back-left with its own spark ball, cabled to the hub.
+Stage 2 (tier 5):    a THIRD coil at the front-right, a big glowing spark ball in a brass crown,
+                     brass rings and flanges, and glowing lightning arcs jumping from both side
+                     coils to the main column.
 """
 
 import importlib.util
@@ -27,86 +29,113 @@ HUB = 1.45  # tripod hub height
 LEG_ANGLES = (-90, 30, 150)  # front, back-right-ish (kept low), back-left
 
 
+def side_coil(k, cx, cz, h, stage):
+    """A smaller coil tower: a copper drum wound with dark bands, a toroid and a spark ball."""
+    k.add("dark", K.cyl((cx, 0.1, cz), 0.38, 0.2, 8, bevel=0))
+    k.add("body", K.cyl((cx, 0.2 + (h - 0.2) / 2, cz), 0.3, h - 0.2, 10, top=0.7, bevel=0))
+    k.add("dark", *[K.cyl((cx, 0.6 + i * (h - 0.95) / 2, cz), 0.33 - 0.03 * i, 0.09, 10, top=0.95, bevel=0)
+                    for i in range(3)])
+    k.add("metal", K.ring((cx, h + 0.02, cz), 0.25, 0.08, 8, 3), K.rod((cx, h, cz), (cx, h + 0.15, cz), 0.06, 6))
+    k.add("brass" if stage >= 2 else "metal", K.cyl((cx, 0.24, cz), 0.42, 0.06, 10, bevel=0))
+    k.add("glow" if stage >= 2 else "spark", K.ell((cx, h + 0.3, cz), (0.21, 0.21, 0.21), 8, 5), piece="ball")
+    return (cx, h + 0.3, cz)
+
+
+def zigzag(a, b, n=4, amp=0.16):
+    """A lightning bolt from a to b: a jagged chain of thin rods."""
+    pts = [a]
+    for i in range(1, n):
+        t = i / n
+        p = K.along(a, b, t)
+        s = amp if i % 2 else -amp
+        pts.append((p[0] + s * 0.6, p[1] + s, p[2] - s * 0.6))
+    pts.append(b)
+    return [K.rod(pts[i], pts[i + 1], 0.065, 5) for i in range(n)]
+
+
 def build(lp, stage):
     k = K.Kit(lp)
-    top = 3.65 if stage == 0 else 3.85  # top of the coil
-    ball_y = top + 0.58
+    lean = stage >= 1  # the upgrades spend their triangles on big shapes: plain edges on the small base parts
+    top = (3.65, 3.95, 3.8)[stage]  # top of the coil
+    ball_r = (0.34, 0.34, 0.42)[stage]
+    ball_y = top + 0.3 + ball_r * 0.85
 
     # plank pad under the tripod
-    k.add("wood", *[K.rbox((x, 0.05, 0.0), (0.42, 0.1, 2.5), bevel=0.03) for x in (-0.88, -0.44, 0.0, 0.44, 0.88)])
-    k.add("dark", *[K.rbox((0, 0.12, z), (2.2, 0.06, 0.16), bevel=0.02) for z in (-0.85, 0.85)])
+    k.add("wood", *[K.rbox((x, 0.05, 0.0), (0.42, 0.1, 2.5), bevel=0 if lean else 0.03) for x in (-0.88, -0.44, 0.0, 0.44, 0.88)])
+    k.add("dark", *[K.rbox((0, 0.12, z), (2.2, 0.06, 0.16), bevel=0 if lean else 0.02) for z in (-0.85, 0.85)])
 
     # tripod legs from the hub to insulator feet
     metal, porcelain = [], []
-    feet = []
     for a in LEG_ANGLES:
         fx, fz = math.cos(math.radians(a)) * 1.15, math.sin(math.radians(a)) * 1.15
-        feet.append((fx, fz))
-        metal.append(K.rod((fx, 0.22, fz), (fx * 0.22, HUB, fz * 0.22), 0.07, 8))
-        porcelain.append(K.cyl((fx, 0.17, fz), 0.16, 0.14, 10, top=0.8))
-        if stage >= 1:  # porcelain insulator stack on each leg
-            m = K.along((fx, 0.22, fz), (fx * 0.22, HUB, fz * 0.22), 0.45)
-            porcelain.append(K.cyl(m, 0.13, 0.24, 8, top=0.7, bevel=0.04))
-    metal.append(K.cyl((0, HUB, 0), 0.42, 0.26, 12, bevel=0.06))  # hub
-    metal.append(K.rod((0, HUB, 0), (0, top + 0.1, 0), 0.2, 12))  # the column
+        metal.append(K.rod((fx, 0.22, fz), (fx * 0.22, HUB, fz * 0.22), 0.07 if stage == 0 else 0.09, 8))
+        porcelain.append(K.cyl((fx, 0.17, fz), 0.16, 0.14, 8, top=0.8, bevel=0 if lean else 0.03))
+    metal.append(K.cyl((0, HUB, 0), 0.42, 0.26, 12, bevel=0 if lean else 0.06))  # hub
+    metal.append(K.rod((0, HUB, 0), (0, top + 0.1, 0), 0.2 if stage == 0 else 0.24, 10))  # the column
     k.add("metal", *metal)
     k.add("porcelain", *porcelain)
 
     # the copper coil: tight rings up the column, narrowing toward the top
     n = 8
+    r0 = 0.62 if stage == 0 else 0.7
     coil = []
     for i in range(n):
         t = i / (n - 1)
         y = HUB + 0.3 + t * (top - HUB - 0.45)
-        coil.append(K.ring((0, y, 0), 0.62 - 0.22 * t, 0.08, 10, 4))
-    flange = K.cyl((0, HUB + 0.2, 0), 0.7, 0.1, 14, bevel=0.03)  # coil base flange
+        coil.append(K.ring((0, y, 0), r0 - 0.24 * t, 0.08 if stage == 0 else 0.09, 8 if lean else 10, 3 if lean else 4))
+    flange = K.cyl((0, HUB + 0.2, 0), r0 + 0.08, 0.1, 12, bevel=0 if lean else 0.03)  # coil base flange
     k.add("body", *coil)
     k.add("brass" if stage >= 2 else "metal", flange)
 
     # storm-ring (toroid) at the top, the spark ball above it; the muzzle cap on the ball
-    rings = [K.ring((0, top + 0.15, 0), 0.5, 0.15, 14, 5)]
-    if stage >= 1:
-        k.add("brass" if stage >= 2 else "metal", K.ring((0, top - 0.55, 0), 0.72, 0.08, 14, 4))
-    k.add("metal", *rings, K.rod((0, top + 0.1, 0), (0, ball_y - 0.2, 0), 0.08, 8))
-    k.add("glow" if stage >= 2 else "spark", K.ell((0, ball_y, 0), (0.34, 0.34, 0.34), 12, 7), piece="ball")
-    k.add("metal", K.ring((0, ball_y + 0.33, 0), 0.1, 0.04, 8, 4), piece="muzzle", role="muzzle")
+    tor = K.ring((0, top + 0.15, 0), 0.5 if stage == 0 else 0.56, 0.15 if stage == 0 else 0.17, 14, 5 if stage == 0 else 4)
+    k.add("metal", tor, K.rod((0, top + 0.1, 0), (0, ball_y - 0.2, 0), 0.08, 8))
+    k.add("glow" if stage >= 2 else "spark", K.ell((0, ball_y, 0), (ball_r,) * 3, 10 if lean else 12, 6 if lean else 7), piece="ball")
+    k.add("metal", K.ring((0, ball_y + ball_r - 0.01, 0), 0.1, 0.04, 8, 4), piece="muzzle", role="muzzle")
 
     # battery crate at the front-left, cable up to the hub
     bx, bz = -0.85, -0.75
     k.add("wood", K.rbox((bx, 0.36, bz), (0.62, 0.5, 0.48), bevel=0.05, rot=(0, 10, 0)))
     k.add("dark", *[K.rbox((bx, y, bz), (0.66, 0.07, 0.52), bevel=0.02, rot=(0, 10, 0)) for y in (0.2, 0.52)])
-    k.add("metal", *[K.cyl((bx + dx, 0.66, bz), 0.07, 0.1, 8) for dx in (-0.15, 0.15)])  # terminals
+    k.add("metal", *[K.cyl((bx + dx, 0.66, bz), 0.07, 0.1, 8, bevel=0 if lean else 0.03) for dx in (-0.15, 0.15)])  # terminals
     cable = [K.rod((bx + 0.15, 0.7, bz), (-0.35, 0.18, -0.35), 0.035, 6),
              K.rod((-0.35, 0.18, -0.35), (-0.1, HUB - 0.05, -0.1), 0.035, 6)]
-    k.add("cable", *cable)
 
-    brass = []
     if stage >= 1:
-        # lightning-rod spikes on the lower ring
-        rods = []
+        # the wide arcing ring on three spokes, three lightning rods standing up from it
+        ry, rr = top - 0.7, 1.12
+        trim = "brass" if stage >= 2 else "metal"
+        k.add(trim, K.ring((0, ry, 0), rr, 0.07, 16, 3))
+        spokes, rods = [], []
         for a in (-90, 30, 150):
-            cx, cz = math.cos(math.radians(a)) * 0.72, math.sin(math.radians(a)) * 0.72
-            y0 = top - 0.55
-            rods.append(K.rod((cx, y0, cz), (cx * 1.3, y0 + 0.7, cz * 1.3), 0.045, 6, top=0.25))
-        k.add("metal", *rods)
-        # a cable drum at the back-left
-        k.add("wood", *[K.cyl((-0.95, 0.42, 0.75 + dz), 0.36, 0.06, 10, rot=(90, 0, 0)) for dz in (-0.2, 0.2)])
-        k.add("cable", K.cyl((-0.95, 0.42, 0.75), 0.24, 0.36, 10, rot=(90, 0, 0)))
-        k.add("dark", K.rbox((-0.95, 0.07, 0.75), (0.5, 0.14, 0.6), bevel=0.04))
-
-    if stage >= 2:
-        brass += [K.ring((0, y, 0), 0.24, 0.05, 12, 4) for y in (HUB + 0.12, top + 0.02)]
-        brass += [K.rod((math.cos(math.radians(a)) * 0.38, top + 0.2, math.sin(math.radians(a)) * 0.38),
-                        (math.cos(math.radians(a)) * 0.2, ball_y - 0.1, math.sin(math.radians(a)) * 0.2), 0.035, 6)
-                  for a in (0, 120, 240)]  # brass crown claws round the ball
-        brass.append(K.cyl((-0.85, 0.66, -0.98), 0.12, 0.05, 10, rot=(90, 0, 0)))  # gauge bezel
-        k.add("glow", K.cyl((-0.85, 0.66, -1.0), 0.09, 0.03, 10, rot=(90, 0, 0)), piece="gauge")
-        crystals = []
-        for a in (-90, 30, 150):
-            cx, cz = math.cos(math.radians(a)) * 0.72 * 1.3, math.sin(math.radians(a)) * 0.72 * 1.3
-            crystals.append(K.ell((cx, top + 0.18, cz), (0.08, 0.13, 0.08), 6, 4))
-        k.add("glow", *crystals, piece="arcs")
-        k.add("brass", *brass)
+            ca, sa = math.cos(math.radians(a)), math.sin(math.radians(a))
+            spokes.append(K.rod((ca * 0.3, ry, sa * 0.3), (ca * rr, ry, sa * rr), 0.04, 5))
+            rods.append(K.rod((ca * rr, ry, sa * rr), (ca * rr * 1.06, ry + 0.95, sa * rr * 1.06), 0.06, 6, top=0.2))
+        k.add("metal", *spokes, *rods)
+        # the twin coil at the back-left, cabled to the hub
+        sb = side_coil(k, -0.92, 0.88, 2.55 if stage == 1 else 2.85, stage)
+        cable.append(K.rod((-0.92, 0.3, 0.6), (-0.15, HUB - 0.05, 0.15), 0.04, 6))
+        balls = [sb]
+        if stage >= 2:
+            sf = side_coil(k, 0.95, -0.92, 2.5, stage)
+            cable.append(K.rod((0.92, 0.3, -0.62), (0.15, HUB - 0.05, -0.15), 0.04, 6))
+            balls.append(sf)
+            # lightning arcs from each side coil's ball to the main column
+            arcs = []
+            for b in balls:
+                arcs += zigzag(b, (0.0, top - 0.25, 0.0), 4, 0.17)
+            # glowing tips on the three lightning rods
+            for a in (-90, 30, 150):
+                ca, sa = math.cos(math.radians(a)), math.sin(math.radians(a))
+                arcs.append(K.ell((ca * rr * 1.06, ry + 1.0, sa * rr * 1.06), (0.1, 0.16, 0.1), 6, 4))
+            k.add("glow", *arcs, piece="arcs")
+            # the brass crown: a band round the column top and claws round the big ball
+            brass = [K.cyl((0, top + 0.02, 0), 0.32, 0.12, 10, bevel=0)]
+            brass += [K.rod((math.cos(math.radians(a)) * 0.45, top + 0.2, math.sin(math.radians(a)) * 0.45),
+                            (math.cos(math.radians(a)) * 0.3, ball_y + 0.05, math.sin(math.radians(a)) * 0.3), 0.045, 6)
+                      for a in (0, 90, 180, 270)]
+            k.add("brass", *brass)
+    k.add("cable", *cable)
 
     colors = {
         "body": COPPER, "metal": K.METAL, "spark": SPARK, "wood": K.WOOD, "dark": K.DARK,
