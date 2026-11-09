@@ -4282,13 +4282,8 @@
           92
         ]
       },
-      "hash": "6b5766d9238ab9fe",
+      "hash": "e56bc568a00f2a85",
       "pieces": {
-        "body": {
-          "group": "body",
-          "role": null,
-          "tris": 140
-        },
         "cable": {
           "group": "cable",
           "role": null,
@@ -4308,6 +4303,11 @@
           "group": "concrete",
           "role": null,
           "tris": 176
+        },
+        "cone": {
+          "group": "body",
+          "role": null,
+          "tris": 140
         },
         "conering": {
           "group": "metal",
@@ -4818,14 +4818,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.3515788316726685,
+          -1.350000023841858,
           -2.5,
-          -1.4500000476837158
+          -1.350000023841858
         ],
         [
-          1.3515788316726685,
+          1.350000023841858,
           2.2846407890319824,
-          1.3515788316726685
+          1.350000023841858
         ]
       ],
       "budget": "tower",
@@ -4860,6 +4860,11 @@
           54,
           36
         ],
+        "deck": [
+          150,
+          108,
+          64
+        ],
         "gas": [
           170,
           60,
@@ -4885,11 +4890,6 @@
           150,
           100
         ],
-        "sand": [
-          196,
-          174,
-          124
-        ],
         "sock": [
           230,
           120,
@@ -4901,13 +4901,8 @@
           92
         ]
       },
-      "hash": "45e7add02d1e624f",
+      "hash": "2b611419532d0394",
       "pieces": {
-        "body": {
-          "group": "body",
-          "role": null,
-          "tris": 140
-        },
         "cable": {
           "group": "cable",
           "role": null,
@@ -4921,12 +4916,17 @@
         "canvasdark": {
           "group": "canvasdark",
           "role": null,
-          "tris": 88
+          "tris": 12
         },
         "concrete": {
           "group": "concrete",
           "role": null,
-          "tris": 176
+          "tris": 48
+        },
+        "cone": {
+          "group": "body",
+          "role": null,
+          "tris": 140
         },
         "conering": {
           "group": "metal",
@@ -4936,37 +4936,42 @@
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 200
+          "tris": 84
+        },
+        "deck": {
+          "group": "deck",
+          "role": null,
+          "tris": 28
         },
         "gas": {
           "group": "gas",
           "role": null,
-          "tris": 354
+          "tris": 204
         },
         "lens": {
           "group": "lens",
           "role": null,
-          "tris": 116
+          "tris": 36
         },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 626
+          "tris": 312
         },
         "plate": {
           "group": "plate",
           "role": null,
-          "tris": 88
+          "tris": 12
+        },
+        "rail": {
+          "group": "metal",
+          "role": null,
+          "tris": 144
         },
         "rope": {
           "group": "rope",
           "role": null,
-          "tris": 152
-        },
-        "sand": {
-          "group": "sand",
-          "role": null,
-          "tris": 96
+          "tris": 188
         },
         "sock": {
           "group": "sock",
@@ -4976,12 +4981,12 @@
         "steel": {
           "group": "steel",
           "role": null,
-          "tris": 538
+          "tris": 808
         }
       },
       "stage": 1,
       "tower": "BLIMP",
-      "tris": 2802,
+      "tris": 2244,
       "uploadedHash": null
     },
     "tower/BLIMP_S2": {
@@ -4989,23 +4994,18 @@
       "batch": "11d",
       "box": [
         [
-          -1.3515788316726685,
+          -1.350000023841858,
           -2.5,
-          -1.4500000476837158
+          -1.350000023841858
         ],
         [
-          1.3515788316726685,
-          2.473637104034424,
+          1.350000023841858,
+          2.25,
           1.350000023841858
         ]
       ],
       "budget": "tower",
       "colors": {
-        "body": [
-          205,
-          195,
-          170
-        ],
         "brass": [
           214,
           168,
@@ -5036,6 +5036,11 @@
           54,
           36
         ],
+        "deck": [
+          150,
+          108,
+          64
+        ],
         "gas": [
           170,
           60,
@@ -5061,11 +5066,6 @@
           150,
           100
         ],
-        "sand": [
-          196,
-          174,
-          124
-        ],
         "sock": [
           230,
           120,
@@ -5077,22 +5077,17 @@
           92
         ]
       },
-      "hash": "681c6b59c5f5698b",
+      "hash": "1bdb917fc24756ef",
       "pieces": {
         "beacon": {
           "group": "glow",
           "role": null,
-          "tris": 64
-        },
-        "body": {
-          "group": "body",
-          "role": null,
-          "tris": 140
+          "tris": 128
         },
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 200
+          "tris": 96
         },
         "cable": {
           "group": "cable",
@@ -5107,52 +5102,57 @@
         "canvasdark": {
           "group": "canvasdark",
           "role": null,
-          "tris": 88
+          "tris": 12
         },
         "concrete": {
           "group": "concrete",
           "role": null,
-          "tris": 176
+          "tris": 48
         },
-        "conering": {
+        "cone": {
           "group": "brass",
           "role": null,
-          "tris": 72
+          "tris": 140
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 200
+          "tris": 120
+        },
+        "deck": {
+          "group": "deck",
+          "role": null,
+          "tris": 28
         },
         "gas": {
           "group": "gas",
           "role": null,
-          "tris": 354
+          "tris": 204
         },
         "lens": {
           "group": "glow",
           "role": null,
-          "tris": 116
+          "tris": 72
         },
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 528
+          "tris": 312
         },
         "plate": {
           "group": "plate",
           "role": null,
-          "tris": 88
+          "tris": 12
+        },
+        "rail": {
+          "group": "brass",
+          "role": null,
+          "tris": 144
         },
         "rope": {
           "group": "rope",
           "role": null,
-          "tris": 152
-        },
-        "sand": {
-          "group": "sand",
-          "role": null,
-          "tris": 96
+          "tris": 188
         },
         "sock": {
           "group": "sock",
@@ -5162,12 +5162,12 @@
         "steel": {
           "group": "steel",
           "role": null,
-          "tris": 454
+          "tris": 864
         }
       },
       "stage": 2,
       "tower": "BLIMP",
-      "tris": 2884,
+      "tris": 2524,
       "uploadedHash": null
     },
     "tower/CHILLER": {
