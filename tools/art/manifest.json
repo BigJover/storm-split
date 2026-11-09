@@ -5218,7 +5218,7 @@
           56
         ]
       },
-      "hash": "6e956c8db438f8a1",
+      "hash": "83762aa0fc3af51f",
       "pieces": {
         "body": {
           "group": "body",
@@ -5268,12 +5268,12 @@
         [
           -1.350000023841858,
           -2.5,
-          -1.446983814239502
+          -1.4492062330245972
         ],
         [
           1.350000023841858,
-          0.7199997901916504,
-          1.100000023841858
+          1.8899998664855957,
+          1.0600000619888306
         ]
       ],
       "budget": "tower",
@@ -5282,11 +5282,6 @@
           70,
           190,
           180
-        ],
-        "canvas": [
-          214,
-          200,
-          160
         ],
         "dark": [
           50,
@@ -5314,27 +5309,22 @@
           56
         ]
       },
-      "hash": "dbfdea322820b56f",
+      "hash": "ef29350917190e52",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 508
-        },
-        "canvas": {
-          "group": "canvas",
-          "role": null,
-          "tris": 224
+          "tris": 712
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 248
+          "tris": 168
         },
         "fletch": {
           "group": "fletch",
           "role": null,
-          "tris": 504
+          "tris": 120
         },
         "glow": {
           "group": "glow",
@@ -5344,7 +5334,7 @@
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 556
+          "tris": 764
         },
         "muzzle": {
           "group": "dark",
@@ -5354,12 +5344,12 @@
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 320
+          "tris": 364
         }
       },
       "stage": 1,
       "tower": "CHILLER",
-      "tris": 2624,
+      "tris": 2392,
       "uploadedHash": null
     },
     "tower/CHILLER_S2": {
@@ -5367,14 +5357,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.416519045829773,
+          -1.4383623600006104,
           -2.5,
-          -1.446983814239502
+          -1.4492062330245972
         ],
         [
-          1.4260329008102417,
-          0.720077395439148,
-          1.254140853881836
+          1.4409987926483154,
+          2.4499998092651367,
+          1.2706142663955688
         ]
       ],
       "budget": "tower",
@@ -5389,11 +5379,6 @@
           168,
           70
         ],
-        "canvas": [
-          214,
-          200,
-          160
-        ],
         "dark": [
           50,
           54,
@@ -5404,15 +5389,10 @@
           225,
           210
         ],
-        "glass": [
-          235,
-          240,
-          235
-        ],
         "glow": [
-          60,
-          210,
-          190
+          150,
+          236,
+          255
         ],
         "ice": [
           190,
@@ -5430,42 +5410,37 @@
           56
         ]
       },
-      "hash": "5acb4f1ff2e9ce7e",
+      "hash": "6efefc3cf8935790",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 416
+          "tris": 712
         },
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 568
+          "tris": 580
         },
-        "canvas": {
-          "group": "canvas",
+        "crystal": {
+          "group": "glow",
           "role": null,
-          "tris": 200
+          "tris": 92
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 238
+          "tris": 168
         },
         "fletch": {
           "group": "fletch",
           "role": null,
-          "tris": 412
-        },
-        "glass": {
-          "group": "glass",
-          "role": null,
-          "tris": 44
+          "tris": 96
         },
         "glow": {
           "group": "glow",
           "role": null,
-          "tris": 216
+          "tris": 156
         },
         "ice": {
           "group": "ice",
@@ -5475,7 +5450,7 @@
         "metal": {
           "group": "metal",
           "role": null,
-          "tris": 200
+          "tris": 324
         },
         "muzzle": {
           "group": "dark",
@@ -5485,12 +5460,12 @@
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 262
+          "tris": 344
         }
       },
       "stage": 2,
       "tower": "CHILLER",
-      "tris": 2716,
+      "tris": 2632,
       "uploadedHash": null
     },
     "tower/COIL": {
