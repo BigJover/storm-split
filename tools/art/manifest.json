@@ -7982,7 +7982,7 @@
           56
         ]
       },
-      "hash": "0915c613cb400db9",
+      "hash": "e9d40565901f6911",
       "pieces": {
         "body": {
           "group": "body",
@@ -8035,14 +8035,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.4339231252670288,
+          -1.4550000429153442,
           -2.5,
           -1.4700000286102295
         ],
         [
-          1.4339231252670288,
-          0.6947218179702759,
-          1.4502854347229004
+          1.444126844406128,
+          0.8499999046325684,
+          1.4550000429153442
         ]
       ],
       "budget": "tower",
@@ -8072,20 +8072,10 @@
           62,
           52
         ],
-        "metal": [
-          78,
-          82,
-          86
-        ],
         "rope": [
           176,
           150,
           100
-        ],
-        "sign": [
-          196,
-          174,
-          124
         ],
         "socket": [
           40,
@@ -8103,22 +8093,22 @@
           56
         ]
       },
-      "hash": "61b61286f41bf7fa",
+      "hash": "8fec60fecb735216",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 44
+          "tris": 48
         },
         "bone": {
           "group": "bone",
           "role": null,
-          "tris": 490
+          "tris": 364
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 292
+          "tris": 268
         },
         "eyes": {
           "group": "socket",
@@ -8128,27 +8118,22 @@
         "log": {
           "group": "log",
           "role": null,
-          "tris": 666
+          "tris": 720
         },
         "meat": {
           "group": "meat",
           "role": null,
           "tris": 64
         },
-        "metal": {
-          "group": "metal",
+        "roof": {
+          "group": "body",
           "role": null,
-          "tris": 120
+          "tris": 12
         },
         "rope": {
           "group": "rope",
           "role": null,
           "tris": 12
-        },
-        "sign": {
-          "group": "sign",
-          "role": null,
-          "tris": 88
         },
         "socket": {
           "group": "socket",
@@ -8158,17 +8143,17 @@
         "straw": {
           "group": "straw",
           "role": null,
-          "tris": 172
+          "tris": 12
         },
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 644
+          "tris": 600
         }
       },
       "stage": 1,
       "tower": "RAPTOR",
-      "tris": 2696,
+      "tris": 2204,
       "uploadedHash": null
     },
     "tower/RAPTOR_S2": {
@@ -8176,14 +8161,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.4339231252670288,
+          -1.4550000429153442,
           -2.5,
           -1.4700000286102295
         ],
         [
-          1.4339231252670288,
-          0.6907071471214294,
-          1.4500000476837158
+          1.444126844406128,
+          2.1999998092651367,
+          1.4550000429153442
         ]
       ],
       "budget": "tower",
@@ -8213,30 +8198,15 @@
           90,
           50
         ],
+        "hide": [
+          128,
+          52,
+          40
+        ],
         "log": [
           118,
           86,
           56
-        ],
-        "meat": [
-          165,
-          62,
-          52
-        ],
-        "metal": [
-          78,
-          82,
-          86
-        ],
-        "rope": [
-          176,
-          150,
-          100
-        ],
-        "sign": [
-          196,
-          174,
-          124
         ],
         "socket": [
           40,
@@ -8254,62 +8224,52 @@
           56
         ]
       },
-      "hash": "ed59c543a203d72a",
+      "hash": "ca6d036dd7a94856",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 44
+          "tris": 48
         },
         "bone": {
           "group": "bone",
           "role": null,
-          "tris": 394
+          "tris": 348
         },
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 332
+          "tris": 376
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 234
+          "tris": 268
         },
         "eyes": {
           "group": "glow",
           "role": null,
           "tris": 72
         },
-        "lantern": {
+        "fire": {
           "group": "glow",
           "role": null,
-          "tris": 64
+          "tris": 72
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 24
         },
         "log": {
           "group": "log",
           "role": null,
-          "tris": 534
+          "tris": 720
         },
-        "meat": {
-          "group": "meat",
-          "role": null,
-          "tris": 64
-        },
-        "metal": {
-          "group": "metal",
-          "role": null,
-          "tris": 132
-        },
-        "rope": {
-          "group": "rope",
+        "roof": {
+          "group": "body",
           "role": null,
           "tris": 12
-        },
-        "sign": {
-          "group": "sign",
-          "role": null,
-          "tris": 88
         },
         "socket": {
           "group": "socket",
@@ -8319,17 +8279,17 @@
         "straw": {
           "group": "straw",
           "role": null,
-          "tris": 172
+          "tris": 12
         },
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 518
+          "tris": 600
         }
       },
       "stage": 2,
       "tower": "RAPTOR",
-      "tris": 2692,
+      "tris": 2584,
       "uploadedHash": null
     },
     "tower/RESIN": {
