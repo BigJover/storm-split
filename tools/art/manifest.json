@@ -5854,7 +5854,7 @@
           56
         ]
       },
-      "hash": "2899971a4935a735",
+      "hash": "b1c227cd41a29289",
       "pieces": {
         "beak": {
           "group": "beak",
@@ -5917,14 +5917,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.4725244045257568,
+          -1.5,
           -2.5,
-          -1.3476393222808838
+          -1.3600000143051147
         ],
         [
           1.2999999523162842,
           2.4000000953674316,
-          1.434999942779541
+          1.4700000286102295
         ]
       ],
       "budget": "tower",
@@ -5959,11 +5959,6 @@
           62,
           38
         ],
-        "meat": [
-          160,
-          60,
-          50
-        ],
         "metal": [
           78,
           82,
@@ -5979,18 +5974,13 @@
           62,
           44
         ],
-        "rope": [
-          176,
-          150,
-          100
-        ],
         "wood": [
           122,
           88,
           56
         ]
       },
-      "hash": "a5cbfb5c10f7c204",
+      "hash": "d8f1ccdb50bf9316",
       "pieces": {
         "beak": {
           "group": "beak",
@@ -6000,32 +5990,27 @@
         "body": {
           "group": "body",
           "role": null,
-          "tris": 624
+          "tris": 704
         },
         "cream": {
           "group": "cream",
           "role": null,
-          "tris": 200
+          "tris": 128
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 368
+          "tris": 384
         },
         "eye": {
           "group": "eye",
           "role": null,
-          "tris": 72
+          "tris": 144
         },
         "leather": {
           "group": "leather",
           "role": null,
-          "tris": 220
-        },
-        "meat": {
-          "group": "meat",
-          "role": null,
-          "tris": 48
+          "tris": 136
         },
         "metal": {
           "group": "metal",
@@ -6035,27 +6020,22 @@
         "plank": {
           "group": "plank",
           "role": null,
-          "tris": 88
+          "tris": 44
         },
         "roof": {
           "group": "roof",
           "role": null,
-          "tris": 44
-        },
-        "rope": {
-          "group": "rope",
-          "role": null,
-          "tris": 80
+          "tris": 132
         },
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 644
+          "tris": 516
         }
       },
       "stage": 1,
       "tower": "FALCON",
-      "tris": 2464,
+      "tris": 2264,
       "uploadedHash": null
     },
     "tower/FALCON_S2": {
@@ -6063,14 +6043,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.4725244045257568,
-          -2.5001895427703857,
-          -1.3476393222808838
+          -1.5,
+          -2.5,
+          -1.3600000143051147
         ],
         [
-          1.3700000047683716,
-          2.4000000953674316,
-          1.434999942779541
+          1.4619468450546265,
+          2.059999942779541,
+          1.4700000286102295
         ]
       ],
       "budget": "tower",
@@ -6115,11 +6095,6 @@
           62,
           38
         ],
-        "meat": [
-          160,
-          60,
-          50
-        ],
         "metal": [
           78,
           82,
@@ -6135,18 +6110,13 @@
           62,
           44
         ],
-        "rope": [
-          176,
-          150,
-          100
-        ],
         "wood": [
           122,
           88,
           56
         ]
       },
-      "hash": "868063fb57fe7739",
+      "hash": "e72d45f0dfb5476b",
       "pieces": {
         "beak": {
           "group": "beak",
@@ -6156,42 +6126,37 @@
         "body": {
           "group": "body",
           "role": null,
-          "tris": 506
+          "tris": 556
         },
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 520
+          "tris": 408
         },
         "cream": {
           "group": "cream",
           "role": null,
-          "tris": 200
+          "tris": 152
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 298
+          "tris": 340
         },
         "eye": {
           "group": "eye",
           "role": null,
-          "tris": 72
+          "tris": 144
         },
         "glow": {
           "group": "glow",
           "role": null,
-          "tris": 64
+          "tris": 92
         },
         "leather": {
           "group": "leather",
           "role": null,
-          "tris": 200
-        },
-        "meat": {
-          "group": "meat",
-          "role": null,
-          "tris": 48
+          "tris": 136
         },
         "metal": {
           "group": "metal",
@@ -6201,27 +6166,22 @@
         "plank": {
           "group": "plank",
           "role": null,
-          "tris": 88
+          "tris": 44
         },
         "roof": {
           "group": "roof",
           "role": null,
-          "tris": 44
-        },
-        "rope": {
-          "group": "rope",
-          "role": null,
-          "tris": 80
+          "tris": 132
         },
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 522
+          "tris": 516
         }
       },
       "stage": 2,
       "tower": "FALCON",
-      "tris": 2718,
+      "tris": 2596,
       "uploadedHash": null
     },
     "tower/GRENADIER": {
