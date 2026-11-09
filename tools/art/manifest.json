@@ -6530,7 +6530,7 @@
           56
         ]
       },
-      "hash": "6f97e3bcf099f708",
+      "hash": "ff60466a478f6720",
       "pieces": {
         "body": {
           "group": "body",
@@ -6578,14 +6578,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.4500000476837158,
+          -1.4580422639846802,
           -2.5,
-          -1.4399999380111694
+          -1.4550000429153442
         ],
         [
           1.4500000476837158,
-          0.15999984741210938,
-          1.5
+          1.8499999046325684,
+          1.4323606491088867
         ]
       ],
       "budget": "tower",
@@ -6605,20 +6605,10 @@
           46,
           40
         ],
-        "drab": [
-          112,
-          116,
-          78
-        ],
         "glow": [
           60,
           190,
           90
-        ],
-        "metal": [
-          78,
-          82,
-          86
         ],
         "rope": [
           176,
@@ -6636,42 +6626,32 @@
           56
         ]
       },
-      "hash": "fa5053323232b026",
+      "hash": "de2b0d52fa2932ee",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 220
+          "tris": 396
         },
         "canvas2": {
           "group": "canvas2",
           "role": null,
-          "tris": 56
+          "tris": 68
         },
         "dark": {
           "group": "dark",
           "role": null,
           "tris": 352
         },
-        "drab": {
-          "group": "drab",
-          "role": null,
-          "tris": 44
-        },
         "glow": {
           "group": "glow",
           "role": null,
-          "tris": 264
-        },
-        "metal": {
-          "group": "metal",
-          "role": null,
-          "tris": 192
+          "tris": 224
         },
         "rope": {
           "group": "rope",
           "role": null,
-          "tris": 36
+          "tris": 24
         },
         "sheet": {
           "group": "sheet",
@@ -6681,12 +6661,12 @@
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 396
+          "tris": 220
         }
       },
       "stage": 1,
       "tower": "HOSPITAL",
-      "tris": 1604,
+      "tris": 1328,
       "uploadedHash": null
     },
     "tower/HOSPITAL_S2": {
@@ -6694,14 +6674,14 @@
       "batch": "11d",
       "box": [
         [
-          -1.4500000476837158,
-          -2.509999990463257,
-          -1.475000023841858
+          -1.4580422639846802,
+          -2.5,
+          -1.4800000190734863
         ],
         [
           1.4500000476837158,
-          0.28510570526123047,
-          1.5
+          2.299999713897705,
+          1.4323606491088867
         ]
       ],
       "budget": "tower",
@@ -6726,20 +6706,10 @@
           46,
           40
         ],
-        "drab": [
-          112,
-          116,
-          78
-        ],
         "glow": [
           60,
           190,
           90
-        ],
-        "metal": [
-          78,
-          82,
-          86
         ],
         "rope": [
           176,
@@ -6757,17 +6727,22 @@
           56
         ]
       },
-      "hash": "32520a9498ad616c",
+      "hash": "816b750cc49b219b",
       "pieces": {
+        "beacon": {
+          "group": "glow",
+          "role": null,
+          "tris": 88
+        },
         "body": {
           "group": "body",
           "role": null,
-          "tris": 264
+          "tris": 396
         },
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 412
+          "tris": 472
         },
         "canvas2": {
           "group": "canvas2",
@@ -6779,30 +6754,20 @@
           "role": null,
           "tris": 352
         },
-        "drab": {
-          "group": "drab",
-          "role": null,
-          "tris": 44
-        },
         "glow": {
           "group": "glow",
           "role": null,
-          "tris": 264
+          "tris": 224
         },
         "lantern": {
           "group": "glow",
           "role": null,
           "tris": 64
         },
-        "metal": {
-          "group": "metal",
-          "role": null,
-          "tris": 192
-        },
         "rope": {
           "group": "rope",
           "role": null,
-          "tris": 36
+          "tris": 24
         },
         "sheet": {
           "group": "sheet",
@@ -6812,12 +6777,12 @@
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 396
+          "tris": 220
         }
       },
       "stage": 2,
       "tower": "HOSPITAL",
-      "tris": 2180,
+      "tris": 1996,
       "uploadedHash": null
     },
     "tower/METEOR": {
