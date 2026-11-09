@@ -66,7 +66,7 @@ local SKIN_AVATAR = Color3.fromRGB(90, 60, 40)
 
 -- A fake R15 avatar: parts, Motor6Ds, Humanoid, clothes, a hat accessory, a face, BodyColors,
 -- a name billboard. `skip` leaves one part out (not R15).
-local function character(opts: { bodyColors: boolean?, skip: string? }?): Model
+local function character(opts: { bodyColors: boolean?, skip: string?, constraints: boolean? }?): Model
 	local o = opts or {}
 	local model = Instance.new("Model")
 	model.Name = "Hunter"
@@ -89,7 +89,22 @@ local function character(opts: { bodyColors: boolean?, skip: string? }?): Model
 	model.PrimaryPart = parts.HumanoidRootPart
 	for name, joint in JOINT do
 		local p0, p1 = parts[joint[1]], parts[name]
-		if p0 and p1 then
+		if p0 and p1 and o.constraints then
+			-- Roblox's upgraded avatar joints: AnimationConstraint between rig attachments
+			local a0 = Instance.new("Attachment")
+			a0.Name = name .. "RigAttachment"
+			a0.CFrame = CFrame.new(joint[2] - CENTRE[joint[1]])
+			a0.Parent = p0
+			local a1 = Instance.new("Attachment")
+			a1.Name = name .. "RigAttachment"
+			a1.CFrame = CFrame.new(joint[2] - CENTRE[name])
+			a1.Parent = p1
+			local constraint = Instance.new("AnimationConstraint")
+			constraint.Name = name
+			constraint.Attachment0 = a0
+			constraint.Attachment1 = a1
+			constraint.Parent = p1
+		elseif p0 and p1 then
 			local motor = Instance.new("Motor6D")
 			motor.Name = name .. "Joint"
 			motor.Part0 = p0
@@ -579,4 +594,24 @@ test("ArtSlot reads piece groups and roles from ArtIds (FBX has no attributes, #
 	eq(byName["metal:muzzle"].Color, Color3.fromRGB(1, 2, 3), "painted its group's colour")
 	ok(byName["steel:nil"] ~= nil and byName["steel:nil"].Color == Color3.fromRGB(4, 5, 6), "hubs painted steel")
 	ok(byName["body:nil"] ~= nil, "a piece named by its group needs no entry")
+end)
+
+test("upgraded avatar joints (AnimationConstraint, as live in Studio): same rest pose, same welds", function()
+	local art, ids = fakeArt()
+	local model = character({ constraints = true })
+	ok(model:FindFirstChildWhichIsA("Motor6D", true) == nil, "no Motor6Ds in this rig")
+	local rest = HunterBody.restPose(model)
+	for _, name in HunterBody.PARTS do
+		ok(rest[name] and closeCf(rest[name], CFrame.new(CENTRE[name])), `{name} rest from the AnimationConstraint chain`)
+	end
+	local before = fingerprint(model)
+	withArt(art, ids, function()
+		eq(HunterBody.apply(model, "SHOTGUN", {}), true, "dressed")
+	end)
+	eq(avatarOnly(model), before, "rig untouched")
+	local root = model.HumanoidRootPart :: BasePart
+	for _, p in pieces(model) do
+		local partName = HunterBody.parse(p.Name) :: string
+		ok(closeCf(p.CFrame, root.CFrame * CFrame.new(CENTRE[partName]) * OFFSET), `{p.Name} at its authored place`)
+	end
 end)

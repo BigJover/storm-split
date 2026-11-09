@@ -12,7 +12,8 @@
 	  * each template piece `<R15Part>__<group>` (tools/art/models/hunter/_body.py) is cloned
 	    and welded to that R15 part. Pieces are authored about the HumanoidRootPart's centre in
 	    the rest pose, so the weld's C0 is the piece's offset from the part's REST CFrame,
-	    derived from the live rig's Motor6D C0 / C1 (never from the current, animated pose);
+	    derived from the live rig's joints — Motor6D C0 / C1 or AnimationConstraint attachments
+	    (never from the current, animated pose);
 	  * paint per group: the authored colour (ArtIds), except `skin` = the avatar's own skin
 	    colour (BodyColors, #442; the class tone when there is none, e.g. stand-ins);
 	  * pieces are Massless, no collide / query / touch, no shadows, no scripts.
@@ -86,14 +87,23 @@ function HunterBody.template(key: string, variant: string?): (Model?, string?)
 	return t, if t then key else nil
 end
 
--- Each R15 part's REST CFrame relative to the HumanoidRootPart, from the rig's Motor6Ds
--- (Part1 = Part0 * C0 * C1:Inverse(), Transform ignored): animation never moves it.
+-- Each R15 part's REST CFrame relative to the HumanoidRootPart, from the rig's joints:
+-- Motor6Ds (Part1 = Part0 * C0 * C1:Inverse(), Transform ignored) or, on avatars with
+-- Roblox's upgraded joints (seen in Studio 2026-11-09), AnimationConstraints (Attachment0's
+-- part * Attachment0.CFrame * Attachment1.CFrame:Inverse()). Animation never moves it.
+type Link = { part0: BasePart, c0: CFrame, c1: CFrame }
 function HunterBody.restPose(character: Instance): { [string]: CFrame }
 	local root = character:FindFirstChild("HumanoidRootPart")
-	local links: { [BasePart]: Motor6D } = {}
+	local links: { [BasePart]: Link } = {}
 	for _, d in character:GetDescendants() do
 		if d:IsA("Motor6D") and d.Part0 and d.Part1 then
-			links[d.Part1 :: BasePart] = d
+			links[d.Part1 :: BasePart] = { part0 = d.Part0 :: BasePart, c0 = d.C0, c1 = d.C1 }
+		elseif d:IsA("AnimationConstraint") then
+			local a0, a1 = d.Attachment0, d.Attachment1
+			local p0, p1 = a0 and a0.Parent, a1 and a1.Parent
+			if a0 and a1 and p0 and p1 and p0:IsA("BasePart") and p1:IsA("BasePart") then
+				links[p1] = { part0 = p0, c0 = a0.CFrame, c1 = a1.CFrame }
+			end
 		end
 	end
 	local rest: { [string]: CFrame } = {}
@@ -101,12 +111,12 @@ function HunterBody.restPose(character: Instance): { [string]: CFrame }
 		if part == root then
 			return CFrame.identity
 		end
-		local motor = links[part]
-		if not motor or depth > 20 then
+		local link = links[part]
+		if not link or depth > 20 then
 			return nil
 		end
-		local parent = resolve(motor.Part0 :: BasePart, depth + 1)
-		return if parent then parent * motor.C0 * motor.C1:Inverse() else nil
+		local parent = resolve(link.part0, depth + 1)
+		return if parent then parent * link.c0 * link.c1:Inverse() else nil
 	end
 	for _, name in HunterBody.PARTS do
 		local part = character:FindFirstChild(name)

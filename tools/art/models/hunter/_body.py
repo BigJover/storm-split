@@ -12,9 +12,13 @@ joined pieces into Blender axes at the end. No fit-to-box: the R15 rest layout b
 frame, so a piece's offset from its part's centre is exact.
 
 R15 rest layout = the default R15 block rig at scale 1 (5.2 studs: legs 2, LowerTorso 0.4,
-UpperTorso 1.6, Head 1.2), built from the rig attachment offsets. It is our best reading of
-the default rig, not yet checked in Studio: the T150 runtime task compares it with a live
-character and, if a joint differs, fixes it here only (every body follows).
+UpperTorso 1.6, Head 1.2). Checked in Studio 2026-11-09 (T150 runtime, DECISIONS #448):
+Players:CreateHumanoidModelFromDescription(a blank HumanoidDescription with BodyTypeScale 0
+and ProportionScale 0, the classic block rig, HipHeight 2) gives these part sizes, and its
+rest pose (from the rig's AnimationConstraint attachments) these part centres and joint
+pivots. The first reading had the Head, lower arms, hands, lower legs, wrists and ankles off
+by 0.01-0.09 studs; fixed here. The runtime (Shared/HunterBody) welds every piece from the
+live rig's own joints, so this layout only frames the authoring and the manifest.
 """
 
 import math
@@ -35,16 +39,16 @@ GROUND = -3.0
 
 # part -> (centre, size), Roblox studs about the HumanoidRootPart's centre, rest pose
 R15 = {
-    "Head": ((0, 1.5, 0), (1.2, 1.2, 1.2)),
+    "Head": ((0, 1.586, 0), (1.2, 1.2, 1.2)),
     "UpperTorso": ((0, 0.2, 0), (2, 1.6, 1)),
     "LowerTorso": ((0, -0.8, 0), (2, 0.4, 1)),
 }
 for _s, _side in ((-1, "Left"), (1, "Right")):
     R15[f"{_side}UpperArm"] = ((1.5 * _s, 0.369, 0), (1, 1.169, 1))
-    R15[f"{_side}LowerArm"] = ((1.5 * _s, -0.157, 0), (1, 1.052, 1))
-    R15[f"{_side}Hand"] = ((1.5 * _s, -0.783, 0), (1, 0.3, 1))
+    R15[f"{_side}LowerArm"] = ((1.5 * _s, -0.224, 0), (1, 1.052, 1))
+    R15[f"{_side}Hand"] = ((1.5 * _s, -0.85, 0), (1, 0.3, 1))
     R15[f"{_side}UpperLeg"] = ((0.5 * _s, -1.421, 0), (1, 1.217, 1))
-    R15[f"{_side}LowerLeg"] = ((0.5 * _s, -2.215, 0), (1, 1.193, 1))
+    R15[f"{_side}LowerLeg"] = ((0.5 * _s, -2.201, 0), (1, 1.193, 1))
     R15[f"{_side}Foot"] = ((0.5 * _s, -2.85, 0), (1, 0.3, 1))
 
 # joint pivots (Roblox studs): where the Motor6Ds bend in the rest pose
@@ -52,10 +56,10 @@ JOINTS = {"Neck": (0, 1.0, 0), "Waist": (0, -0.6, 0)}
 for _s, _side in ((-1, "Left"), (1, "Right")):
     JOINTS[f"{_side}Shoulder"] = (1.0 * _s, 0.763, 0)
     JOINTS[f"{_side}Elbow"] = (1.5 * _s, 0.035, 0)
-    JOINTS[f"{_side}Wrist"] = (1.5 * _s, -0.658, 0)
+    JOINTS[f"{_side}Wrist"] = (1.5 * _s, -0.725, 0)
     JOINTS[f"{_side}Hip"] = (0.5 * _s, -1.0, 0)
-    JOINTS[f"{_side}Knee"] = (0.5 * _s, -1.821, 0)
-    JOINTS[f"{_side}Ankle"] = (0.5 * _s, -2.762, 0)
+    JOINTS[f"{_side}Knee"] = (0.5 * _s, -1.822, 0)
+    JOINTS[f"{_side}Ankle"] = (0.5 * _s, -2.748, 0)
 
 SIDES = ((-1, "Left"), (1, "Right"))
 

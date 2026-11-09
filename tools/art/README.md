@@ -72,9 +72,10 @@ Keys are the `HunterStats` keys: `PISTOL` Tracker, `RIFLE` Big Game Hunter, `SHO
   writes `pieces = { name = { group, role } }` for every dino/tower piece whose name isn't its paint
   group or that has an ArtRole (`head`, `jaw`, `muzzle`, `lamp`); `ArtSlot` reads it.
 
-**Unverified:** the `R15` layout is our reading of the default rig's attachments (Head centre
-+1.5, shoulders ±1 / +0.763, hips ±0.5 / −1.0, …); the runtime task checks it against a live
-character in Studio and fixes `_body.R15` / `JOINTS` only if a joint differs.
+**Checked in Studio (2026-11-09, #448):** `_body.R15` / `JOINTS` match the classic default R15 block rig
+(`CreateHumanoidModelFromDescription`, BodyTypeScale 0, ProportionScale 0, HipHeight 2) after fixing the
+Head, lower arm, hand, lower leg, wrist and ankle values (0.01–0.09 studs). Live avatars use Roblox's
+upgraded joints (AnimationConstraints, no Motor6Ds); `HunterBody` reads either.
 
 ## Towers (kind `tower`, PLAN 11d T152-T154, batch `11d`)
 
