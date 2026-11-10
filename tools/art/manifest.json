@@ -4745,6 +4745,506 @@
       "tris": 348,
       "uploadedHash": null
     },
+    "prop/STATION_HEALTH": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -3.0,
+          0.0,
+          -5.899999618530273
+        ],
+        [
+          3.0,
+          6.199999809265137,
+          -2.5
+        ]
+      ],
+      "budget": "big",
+      "cap": 2500,
+      "colors": {
+        "cork": [
+          190,
+          150,
+          100
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "herb": [
+          150,
+          160,
+          80
+        ],
+        "jarg": [
+          120,
+          170,
+          120
+        ],
+        "jarr": [
+          190,
+          90,
+          80
+        ],
+        "leaf": [
+          60,
+          140,
+          70
+        ],
+        "metal": [
+          80,
+          80,
+          90
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "smoothie": [
+          120,
+          200,
+          90
+        ],
+        "stone": [
+          128,
+          124,
+          116
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "display": "Herb Kitchen",
+      "hash": "82d147fe47b23dea",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "cork": {
+          "group": "cork",
+          "role": null,
+          "tris": 168
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 220
+        },
+        "herb": {
+          "group": "herb",
+          "role": null,
+          "tris": 168
+        },
+        "jarg": {
+          "group": "jarg",
+          "role": null,
+          "tris": 160
+        },
+        "jarr": {
+          "group": "jarr",
+          "role": null,
+          "tris": 80
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 400
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 364
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 188
+        },
+        "smoothie": {
+          "group": "smoothie",
+          "role": null,
+          "tris": 60
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 136
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 484
+        }
+      },
+      "prop": "station",
+      "replaces": "Server/Outpost buildStation health: Table, Leg x2, Pot, Ferns",
+      "station": "health",
+      "tris": 2428,
+      "uploadedHash": null
+    },
+    "prop/STATION_REACH": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -1.600000023841858,
+          0.0,
+          -7.730310440063477
+        ],
+        [
+          1.600000023841858,
+          7.79595947265625,
+          -0.5799999237060547
+        ]
+      ],
+      "budget": "big",
+      "cap": 2500,
+      "colors": {
+        "body": [
+          150,
+          170,
+          80
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "eye": [
+          240,
+          236,
+          220
+        ],
+        "rope": [
+          196,
+          170,
+          120
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "display": "Raptor Dummy",
+      "hash": "9d3f70506205523c",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 616
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 616
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 224
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 632
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 124
+        }
+      },
+      "prop": "station",
+      "replaces": "Server/Outpost buildStation reach: Post, Body, Head, Padding",
+      "station": "reach",
+      "tris": 2212,
+      "uploadedHash": null
+    },
+    "prop/STATION_SPEED": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -3.049999952316284,
+          -2.2351741790771484e-07,
+          -7.0
+        ],
+        [
+          3.049999952316284,
+          3.0199999809265137,
+          8.46810245513916
+        ]
+      ],
+      "budget": "big",
+      "cap": 2500,
+      "colors": {
+        "body": [
+          150,
+          170,
+          80
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "chalk": [
+          236,
+          230,
+          214
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "dirt": [
+          128,
+          98,
+          66
+        ],
+        "eye": [
+          240,
+          236,
+          220
+        ],
+        "flag": [
+          220,
+          90,
+          60
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "display": "Raptor Chase",
+      "hash": "67851c26d07d2995",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 500
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 652
+        },
+        "chalk": {
+          "group": "chalk",
+          "role": null,
+          "tris": 36
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 672
+        },
+        "dirt": {
+          "group": "dirt",
+          "role": null,
+          "tris": 108
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 128
+        },
+        "flag": {
+          "group": "flag",
+          "role": null,
+          "tris": 96
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 44
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 56
+        }
+      },
+      "prop": "station",
+      "replaces": "Server/Outpost buildStation speed: Lane, Raptor, Key",
+      "station": "speed",
+      "tris": 2292,
+      "uploadedHash": null
+    },
+    "prop/STATION_THROW": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -4.203922748565674,
+          0.0,
+          1.75
+        ],
+        [
+          4.203922748565674,
+          1.5499999523162842,
+          3.9261815547943115
+        ]
+      ],
+      "budget": "big",
+      "cap": 2500,
+      "colors": {
+        "chalk": [
+          236,
+          230,
+          214
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "nut": [
+          110,
+          76,
+          44
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "display": "Coconut Toss",
+      "hash": "011477da2f184341",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "chalk": {
+          "group": "chalk",
+          "role": null,
+          "tris": 12
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 348
+        },
+        "nut": {
+          "group": "nut",
+          "role": null,
+          "tris": 560
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 252
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "prop": "station",
+      "replaces": "Server/Outpost buildStation throw: Line, Coconut (Targets = THROW_TARGET x3)",
+      "station": "throw",
+      "tris": 1244,
+      "uploadedHash": null
+    },
+    "prop/THROW_TARGET": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -1.6200000047683716,
+          -0.044321537017822266,
+          -1.6983871459960938
+        ],
+        [
+          1.6200000047683716,
+          3.697274684906006,
+          1.7999999523162842
+        ]
+      ],
+      "budget": "mid",
+      "cap": 1500,
+      "colors": {
+        "nut": [
+          110,
+          76,
+          44
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "target": [
+          220,
+          70,
+          60
+        ],
+        "white": [
+          240,
+          234,
+          220
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "display": "Coconut Toss target",
+      "hash": "861fdb6a2f0ed866",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "nut": {
+          "group": "nut",
+          "role": null,
+          "tris": 240
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 80
+        },
+        "target": {
+          "group": "target",
+          "role": null,
+          "tris": 308
+        },
+        "white": {
+          "group": "white",
+          "role": null,
+          "tris": 240
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 316
+        }
+      },
+      "prop": "station",
+      "replaces": "Server/Outpost buildStation throw: Target (x3, one model each)",
+      "station": "throw",
+      "tris": 1184,
+      "uploadedHash": null
+    },
     "tower/ARMORY": {
       "asset": null,
       "batch": "11d",
