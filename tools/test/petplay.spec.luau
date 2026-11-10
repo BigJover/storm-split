@@ -95,7 +95,9 @@ test("PvP guards: a pet never touches an enemy hunter, is never a target, works 
 	for call in string.gmatch(server, "Enemies%.(%w+)") do
 		eq(call, "getLive", "Server/Pets only reads the dino list (the honk picks a dino; Hero/Kit deal the damage)")
 	end
-	ok(string.find(server, "p.CanQuery = false", 1, true) and string.find(server, "p.CanTouch = false", 1, true) and string.find(server, "p.CanCollide = false", 1, true), "pet parts can't be hit, touched or bumped")
+	local look = fs.readFile("src/shared/PetLook.luau") -- the pet's blocks + art (PLAN 11f; art ghosts: petart.spec)
+	ok(string.find(server, "PetLook.build(", 1, true), "Server/Pets builds pets with Shared/PetLook")
+	ok(string.find(look, "p.CanQuery = false", 1, true) and string.find(look, "p.CanTouch = false", 1, true) and string.find(look, "p.CanCollide = false", 1, true), "pet parts can't be hit, touched or bumped")
 	ok(string.find(health, "if source and source.bite and biteGuard then", 1, true), "only a dino bite reaches the Frill Guard")
 	ok(string.find(health, "local dealt = Health.damage(player, amount, nil)", 1, true), "a hunter's shot passes no source")
 	local _, bites = string.gsub(attacks, "bite = true", "")

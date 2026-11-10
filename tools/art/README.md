@@ -183,7 +183,7 @@ Conventions (the contract for the runtime task):
   will add them to `ArtIds` (colours + `pieces` roles) — do it with the runtime commit
   (`write_ids.py --check` reports the difference until then). Nothing is uploaded or approved.
 
-## Pets, eggs, incubator (kinds `pet` and `egg`, PLAN 11f T156, batch `11f`) — models only, runtime not built
+## Pets, eggs, incubator (kinds `pet` and `egg`, PLAN 11f T156, batch `11f`) — runtime: `Shared/PetLook` (#451)
 
 ```sh
 tools/art/build.sh pet HONKER                 # FBX + 3/4 (Common), side, _rare, _legendary, _mythic previews
@@ -232,8 +232,12 @@ Conventions (the contract for the runtime task):
   400, incubator 1,500). Egg patterns use a fixed R2 layout (no RNG). Manifest meta: pets `pet`,
   `display`, `species`, `origin`, `views`, `rarityGroups` (+ `flies`); eggs `egg`, `display`,
   `origin`, `cap`; the incubator `eggSeat`, `lamp`, `front`.
-- **Not done (runtime task):** `write_ids.py` `KINDS` doesn't list `pet` / `egg`; nothing uploaded
-  or approved.
+- **Runtime (#451, `Shared/PetLook`, spec `tools/test/petart.spec.luau`):** the rule above as written
+  (accent = rarity colour; glow authored / rarity / rarity + Neon; Mythic sparkle, Rate 4); the
+  invisible Body is the pivot on the ground; follow height = the hunter's HipHeight + half the root
+  (3 on the default rig); pen pets stand on the HatchlingPen part's top; blocky = today exactly.
+  Incubators: client-only, the local player's own slots beside the hut door (`INCUBATOR_SPOTS`
+  (∓4.4, 0, −8) from the hut's floor spot), egg at `EGG_SEAT`, bulb Neon only while warming.
 
 ## Outpost props (kind `prop`, PLAN 11f T156, batch `11f`) — models only, runtime not built
 

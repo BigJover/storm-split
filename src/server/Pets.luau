@@ -14,6 +14,9 @@
 	  Studio only (StudioOnly pets): ("studioegg", egg), ("hatchnow"), ("studiopet", "<PET> <RARITY>", n)
 	Server -> client: "PetDown" (text) when your pet runs back to camp.
 
+	LOOKS (PLAN 11f): Shared/PetLook — today's blocks, or the species' art when it's loaded
+	(standing on the ground, rarity on the bandana and markings); rebuilt when art arrives.
+
 	PETS IN PLAY (T141). The pet taken along follows its hunter as a small model (in camp and
 	in matches). It is never a target: its parts can't be hit, touched or queried, and no
 	dino or hunter ever aims at it. When its hunter falls in a match it "ran back to camp —
@@ -49,6 +52,7 @@ local PetRules = require(Shared:WaitForChild("Pets"))
 local OutpostRules = require(Shared:WaitForChild("Outpost"))
 local BattleRules = require(Shared:WaitForChild("BattleRules"))
 local Sides = require(Shared:WaitForChild("Sides"))
+local PetLook = require(Shared:WaitForChild("PetLook"))
 
 local Progression = require(script.Parent.Progression)
 local Health = require(script.Parent.Health)
@@ -60,24 +64,6 @@ local Hero = require(script.Parent.Hero)
 
 local Pets = {}
 
--- Visuals only.
-local LOOKS: { [string]: { body: Color3, size: Vector3, flies: boolean } } = {
-	HONKER = { body = Color3.fromRGB(120, 150, 90), size = Vector3.new(1.4, 1.4, 2), flies = false },
-	FETCHER = { body = Color3.fromRGB(150, 110, 80), size = Vector3.new(1, 0.8, 1.4), flies = true },
-	FERN_MUNCHER = { body = Color3.fromRGB(90, 160, 110), size = Vector3.new(1.6, 1.4, 2.2), flies = false },
-	SHINY_SNATCHER = { body = Color3.fromRGB(220, 140, 70), size = Vector3.new(1.2, 1.3, 1.8), flies = false },
-	FRILL_GUARD = { body = Color3.fromRGB(200, 170, 120), size = Vector3.new(1.6, 1.3, 2.2), flies = false },
-}
-local RARITY_COLOURS = { -- collar colour (cosmetic, DINO_REVIEW Round 21)
-	COMMON = Color3.fromRGB(170, 170, 170),
-	UNCOMMON = Color3.fromRGB(90, 200, 100),
-	RARE = Color3.fromRGB(80, 150, 255),
-	EPIC = Color3.fromRGB(180, 100, 240),
-	LEGENDARY = Color3.fromRGB(250, 200, 60),
-	MYTHIC = Color3.fromRGB(240, 70, 70),
-}
-local LEAF = Color3.fromRGB(60, 150, 70)
-local FOLLOW = Vector3.new(3, -1.6, 2.5) -- beside and behind its hunter
 local REGEN_TICK = 0.5
 
 local folder: Folder
@@ -100,61 +86,18 @@ end
 
 ------------------------------------------------------------------ the model
 
-local function block(name: string, size: Vector3, cframe: CFrame, color: Color3, parent: Instance): Part
-	local p = Instance.new("Part")
-	p.Name = name
-	p.Size = size
-	p.CFrame = cframe
-	p.Color = color
-	p.Material = Enum.Material.SmoothPlastic
-	p.Anchored = true
-	p.CanCollide = false
-	p.CanTouch = false -- never picks up a chest or trips a Touched
-	p.CanQuery = false -- never hit by a ray: it can't be targeted
-	p.CastShadow = false
-	p.Parent = parent
-	return p
+-- The pet's look (Shared/PetLook: today's blocks, or its art when loaded, PLAN 11f).
+local function build(pet: PetRules.Pet, at: CFrame, label: boolean): Model
+	return PetLook.build(pet, at, label)
 end
 
--- A small hatchling: body, head, collar in its rarity's colour and a leaf tag (Round 21).
-local function build(pet: PetRules.Pet, at: CFrame, label: boolean): Model
-	local look = LOOKS[pet.kind] or LOOKS.HONKER
-	local model = Instance.new("Model")
-	model.Name = PetRules.name(pet)
-	local s = look.size
-	local body = block("Body", s, at, look.body, model)
-	model.PrimaryPart = body
-	local head = block("Head", Vector3.new(s.X * 0.8, s.Y * 0.7, s.Z * 0.45), at * CFrame.new(0, s.Y * 0.55, -s.Z * 0.6), look.body, model)
-	block("Collar", Vector3.new(s.X * 0.85, s.Y * 0.2, s.Z * 0.15), at * CFrame.new(0, s.Y * 0.3, -s.Z * 0.42), RARITY_COLOURS[pet.rarity] or LEAF, model)
-	block("LeafTag", Vector3.new(0.3, 0.4, 0.1), at * CFrame.new(0, s.Y * 0.05, -s.Z * 0.5), LEAF, model)
-	if pet.kind == "HONKER" then
-		block("Crest", Vector3.new(0.3, 0.3, 1.2), head.CFrame * CFrame.new(0, 0.5, 0.6) * CFrame.Angles(math.rad(30), 0, 0), look.body:Lerp(Color3.new(1, 1, 1), 0.2), model)
-	elseif pet.kind == "FETCHER" then
-		for _, x in { -1, 1 } do
-			block("Wing", Vector3.new(1.6, 0.1, 0.8), at * CFrame.new(x * (s.X / 2 + 0.7), 0.2, 0), look.body:Lerp(Color3.new(0, 0, 0), 0.2), model)
-		end
-	elseif pet.kind == "FERN_MUNCHER" then
-		block("Neck", Vector3.new(0.5, 1.4, 0.5), at * CFrame.new(0, s.Y * 0.9, -s.Z * 0.45), look.body, model)
-	elseif pet.kind == "FRILL_GUARD" then
-		block("Frill", Vector3.new(s.X * 1.4, s.Y, 0.2), head.CFrame * CFrame.new(0, 0.3, 0.4), look.body:Lerp(Color3.fromRGB(200, 90, 60), 0.4), model)
-	end
-	if label then
-		local gui = Instance.new("BillboardGui")
-		gui.Size = UDim2.fromOffset(150, 22)
-		gui.StudsOffset = Vector3.new(0, s.Y + 0.8, 0)
-		gui.MaxDistance = 45
-		local text = Instance.new("TextLabel")
-		text.Size = UDim2.fromScale(1, 1)
-		text.BackgroundTransparency = 1
-		text.Font = Enum.Font.GothamBold
-		text.TextScaled = true
-		text.TextColor3 = RARITY_COLOURS[pet.rarity] or Color3.new(1, 1, 1)
-		text.TextStrokeTransparency = 0.4
-		text.Text = model.Name
-		text.Parent = gui
-		gui.Parent = body
-	end
-	return model
+-- Where a follower stands beside its hunter: blocky floats as before; art stands on the
+-- ground under the hunter's feet (#450); fliers hover above that spot.
+local function followAt(root: BasePart, model: Model, kind: string): CFrame
+	local character = root.Parent
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local offset = PetLook.follow(model, PetLook.groundBelow(root, humanoid))
+	return root.CFrame * CFrame.new(offset + Vector3.new(0, PetLook.hover(kind, os.clock()), 0))
 end
 
 ------------------------------------------------------------------ in play
@@ -221,7 +164,8 @@ local function placeFollower(player: Player)
 	if not pet or not root then
 		return
 	end
-	local model = build(pet, root.CFrame * CFrame.new(FOLLOW), true)
+	local model = build(pet, root.CFrame * CFrame.new(PetLook.FOLLOW), true)
+	model:PivotTo(followAt(root, model, pet.kind))
 	model.Parent = folder
 	followers[player] = model
 end
@@ -353,8 +297,8 @@ local function showPen(player: Player)
 		text.Text = `{player.DisplayName}'s Hatchling Pen`
 	end
 	for i, pet in Progression.petPen(player) do
-		local spot = pen.CFrame * CFrame.new((i - 2) * 2.2, 1, 0) * CFrame.Angles(0, math.rad(180), 0)
-		local model = build(pet, spot, true)
+		local model = build(pet, pen.CFrame, true)
+		model:PivotTo(PetLook.penSpot(pen, i, model))
 		model.Parent = folder
 		table.insert(penModels[player], model)
 	end
@@ -449,6 +393,24 @@ function Pets.init(remotes: Folder)
 	for _, player in Players:GetPlayers() do
 		watch(player)
 	end
+	-- Pet art arrives in the background (Server/Art, PLAN 11f): rebuild followers and pens.
+	task.spawn(function()
+		local art = ReplicatedStorage:WaitForChild("Art")
+		local function redress()
+			for _, player in Players:GetPlayers() do
+				if followers[player] then
+					placeFollower(player)
+				end
+				showPen(player)
+			end
+		end
+		art.DescendantAdded:Connect(function(added)
+			if added:IsA("Model") and added.Parent and added.Parent.Name == PetLook.KIND then
+				redress()
+			end
+		end)
+		art:GetAttributeChangedSignal("ArtOff"):Connect(redress)
+	end)
 	Players.PlayerRemoving:Connect(function(player)
 		dropFollower(player)
 		freeCampsite(player)
@@ -469,9 +431,7 @@ function Pets.init(remotes: Folder)
 				dropFollower(player)
 				continue
 			end
-			local look = LOOKS[pet.kind]
-			local lift = if look and look.flies then 3.5 + math.sin(os.clock() * 3) * 0.3 else 0
-			local goal = root.CFrame * CFrame.new(FOLLOW + Vector3.new(0, lift, 0))
+			local goal = followAt(root, model, pet.kind)
 			local from = model:GetPivot()
 			-- Snaps after a teleport (camp <-> match), glides otherwise.
 			model:PivotTo(if (goal.Position - from.Position).Magnitude > 40 then goal else from:Lerp(goal, math.clamp(dt * 8, 0, 1)))

@@ -8,7 +8,7 @@
 	    :FindFirstChild("X")) resolve to the sibling file X.luau / X.server.luau /
 	    X.client.luau or to the folder X, the way Rojo lays them out.
 	  - `require(shim)` loads that file once and caches it, like Roblox's require.
-	  - Vector3, Vector2, CFrame, Color3, ColorSequence, NumberSequence, UDim, UDim2, Enum
+	  - Vector3, Vector2, CFrame, Color3, ColorSequence, NumberSequence, NumberRange, UDim, UDim2, Enum
 	    and Instance come from @lune/roblox, so visual builders (TowerLook, DinoLook) can build real instances;
 	    `task` is @lune/task.
 	Only pure modules work this way (the shared ones); anything that calls game:GetService
@@ -135,6 +135,7 @@ local function environment(path: string, extra: { [string]: any }?): { [string]:
 		Color3 = roblox.Color3,
 		ColorSequence = roblox.ColorSequence,
 		NumberSequence = roblox.NumberSequence,
+		NumberRange = roblox.NumberRange,
 		UDim = roblox.UDim,
 		UDim2 = roblox.UDim2,
 		Enum = roblox.Enum,

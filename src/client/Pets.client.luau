@@ -12,6 +12,9 @@
 	  - Your pets (n/60): one row per pet + rarity with its effect x, Take along / Taking
 	    along, Show in your Hatchling Pen, and Fuse ("Fuse — 3 Rare Honkers → 1 Epic Honker").
 	  - A pet that ran back to camp (its hunter fell) says so (the "PetDown" event).
+	Your incubators (PLAN 11f, art only): when the Incubator art is loaded, you see your own
+	warming slots by the hut's door (Shared/PetLook.incubators: your eggs in them, the bulb lit
+	while one warms). Client-only, so each player sees theirs; with no art nothing is shown.
 	No-trap rule: the hut always has its Close button (which also frees the mouse), it
 	closes when you leave camp, and the prompt only shows at the hut.
 ]]
@@ -28,6 +31,8 @@ local Pets = require(Shared:WaitForChild("Pets"))
 local Outpost = require(Shared:WaitForChild("Outpost"))
 local Theme = require(Shared:WaitForChild("Theme"))
 local SafeArea = require(Shared:WaitForChild("SafeArea"))
+local ArtSlot = require(Shared:WaitForChild("ArtSlot"))
+local PetLook = require(Shared:WaitForChild("PetLook"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local request = remotes:WaitForChild("Pets") :: RemoteFunction
@@ -374,6 +379,36 @@ local function render()
 	end
 end
 
+-- Your own incubators by the hut door (art only; see the header).
+local shownIncubators: Model? = nil
+local shownLit = ""
+local function litKey(): string
+	local v = view
+	local key = ""
+	for slot = 1, #PetLook.INCUBATOR_SPOTS do
+		key ..= if v and (Pets.remaining(v.state, slot, now()) or 0) > 0 then "1" else "0"
+	end
+	return key
+end
+local function showIncubators()
+	if shownIncubators then
+		shownIncubators:Destroy()
+		shownIncubators = nil
+	end
+	local v = view
+	if not v or not ArtSlot.template(PetLook.EGG_KIND, PetLook.INCUBATOR) then
+		return
+	end
+	local slots = player:GetAttribute("Incubators")
+	local anchor = CFrame.new(Outpost.CENTRE + Outpost.HATCHERY_HUT + Vector3.new(0, Outpost.FLOOR_TOP, 0))
+	local model = PetLook.incubators(v.state.eggs, now(), if type(slots) == "number" then slots else Pets.incubators(), anchor)
+	if model then
+		model.Parent = workspace
+		shownIncubators = model
+		shownLit = litKey()
+	end
+end
+
 load = function()
 	local ok, result = request:InvokeServer("view")
 	if ok and type(result) == "table" then
@@ -387,6 +422,16 @@ load = function()
 	end
 	if open then
 		render()
+	end
+	showIncubators()
+end
+
+-- Only asks the server when there is Incubator art to show (blank ids: no extra requests).
+local function refreshIncubators()
+	if ArtSlot.template(PetLook.EGG_KIND, PetLook.INCUBATOR) then
+		task.spawn(load)
+	elseif shownIncubators then
+		showIncubators()
 	end
 end
 
@@ -427,6 +472,8 @@ end)
 player.AttributeChanged:Connect(function(name)
 	if name == "PetsVersion" and open then
 		load()
+	elseif name == "PetsVersion" or name == "Incubators" then
+		refreshIncubators()
 	elseif name == "InOutpost" and player:GetAttribute("InOutpost") ~= true and open then
 		setOpen(false) -- the hut is a camp thing: never left open in a match
 	end
@@ -436,6 +483,9 @@ task.spawn(function()
 	while true do
 		task.wait(0.5)
 		prompt.Visible = atHut() and not open
+		if shownIncubators and litKey() ~= shownLit then
+			showIncubators() -- an egg finished warming: its bulb goes off
+		end
 		local v = view
 		if open and v then
 			-- Timers tick on the client from the server clock it was sent; a finished
@@ -453,6 +503,18 @@ task.spawn(function()
 			end
 		end
 	end
+end)
+
+-- Incubator / egg art arrives in the background (Server/Art).
+task.spawn(function()
+	local art = ReplicatedStorage:WaitForChild("Art")
+	art.DescendantAdded:Connect(function(added)
+		if added:IsA("Model") and added.Parent and added.Parent.Name == PetLook.EGG_KIND then
+			refreshIncubators()
+		end
+	end)
+	art:GetAttributeChangedSignal("ArtOff"):Connect(refreshIncubators)
+	refreshIncubators()
 end)
 
 gui.Parent = player:WaitForChild("PlayerGui")
