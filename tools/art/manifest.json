@@ -664,6 +664,273 @@
       "tris": 2038,
       "uploadedHash": null
     },
+    "egg/GOLDEN": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -0.6078523993492126,
+          0.0,
+          -0.689609169960022
+        ],
+        [
+          0.6081843972206116,
+          1.399999976158142,
+          0.612514317035675
+        ]
+      ],
+      "budget": "small",
+      "cap": 400,
+      "colors": {
+        "band": [
+          178,
+          104,
+          24
+        ],
+        "glow": [
+          255,
+          140,
+          40
+        ],
+        "shell": [
+          255,
+          190,
+          30
+        ]
+      },
+      "display": "Golden Egg",
+      "egg": "GOLDEN",
+      "hash": "71d393830854f70c",
+      "origin": "base",
+      "pieces": {
+        "band": {
+          "group": "band",
+          "role": null,
+          "tris": 80
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 96
+        },
+        "shell": {
+          "group": "shell",
+          "role": null,
+          "tris": 220
+        }
+      },
+      "tris": 396,
+      "uploadedHash": null
+    },
+    "egg/INCUBATOR": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -1.1278208494186401,
+          -2.9802322387695312e-08,
+          -1.1329903602600098
+        ],
+        [
+          1.1278208494186401,
+          3.3523457050323486,
+          1.2400000095367432
+        ]
+      ],
+      "budget": "mid",
+      "colors": {
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          70,
+          52,
+          36
+        ],
+        "glow": [
+          255,
+          170,
+          80
+        ],
+        "metal": [
+          84,
+          92,
+          88
+        ],
+        "shade": [
+          88,
+          128,
+          60
+        ],
+        "straw": [
+          222,
+          192,
+          112
+        ],
+        "wood": [
+          150,
+          104,
+          62
+        ]
+      },
+      "display": "Incubator (Hatchery Hut)",
+      "eggSeat": [
+        0,
+        0.88,
+        0
+      ],
+      "front": "-Z (dial)",
+      "hash": "42ba6fbd8b7baae0",
+      "lamp": "glow",
+      "origin": "ground",
+      "pieces": {
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 76
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 170
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 60
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 220
+        },
+        "shade": {
+          "group": "shade",
+          "role": null,
+          "tris": 60
+        },
+        "straw": {
+          "group": "straw",
+          "role": null,
+          "tris": 420
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 92
+        }
+      },
+      "tris": 1098,
+      "uploadedHash": null
+    },
+    "egg/MUD": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -0.5167117714881897,
+          0.0,
+          -0.5299999713897705
+        ],
+        [
+          0.5167117714881897,
+          1.399999976158142,
+          0.5299999117851257
+        ]
+      ],
+      "budget": "small",
+      "cap": 400,
+      "colors": {
+        "grass": [
+          92,
+          140,
+          60
+        ],
+        "mud": [
+          96,
+          70,
+          46
+        ],
+        "shell": [
+          176,
+          150,
+          112
+        ]
+      },
+      "display": "Mud Egg",
+      "egg": "MUD",
+      "hash": "3035c34eff5e1dd5",
+      "origin": "base",
+      "pieces": {
+        "grass": {
+          "group": "grass",
+          "role": null,
+          "tris": 30
+        },
+        "mud": {
+          "group": "mud",
+          "role": null,
+          "tris": 140
+        },
+        "shell": {
+          "group": "shell",
+          "role": null,
+          "tris": 220
+        }
+      },
+      "tris": 390,
+      "uploadedHash": null
+    },
+    "egg/SPECKLED": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -0.5167117714881897,
+          0.0,
+          -0.5341537594795227
+        ],
+        [
+          0.5199127197265625,
+          1.399999976158142,
+          0.5299999117851257
+        ]
+      ],
+      "budget": "small",
+      "cap": 400,
+      "colors": {
+        "shell": [
+          255,
+          242,
+          208
+        ],
+        "spot": [
+          196,
+          96,
+          52
+        ]
+      },
+      "display": "Speckled Egg",
+      "egg": "SPECKLED",
+      "hash": "cc1f37cdd7f614f5",
+      "origin": "base",
+      "pieces": {
+        "shell": {
+          "group": "shell",
+          "role": null,
+          "tris": 200
+        },
+        "spot": {
+          "group": "spot",
+          "role": null,
+          "tris": 190
+        }
+      },
+      "tris": 390,
+      "uploadedHash": null
+    },
     "gun/MEDIC": {
       "asset": null,
       "batch": "11c2",
