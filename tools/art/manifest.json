@@ -14351,6 +14351,384 @@
       "tris": 2396,
       "uploadedHash": null
     },
+    "walker/PARATROOPER": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -0.5599038600921631,
+          -1.100000023841858,
+          -1.1773204803466797
+        ],
+        [
+          0.6550000309944153,
+          1.49727463722229,
+          0.3799999952316284
+        ]
+      ],
+      "budget": "mid",
+      "colors": {
+        "boot": [
+          70,
+          50,
+          32
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "camp": [
+          13,
+          105,
+          172
+        ],
+        "eye": [
+          28,
+          22,
+          20
+        ],
+        "gun": [
+          70,
+          72,
+          75
+        ],
+        "helmet": [
+          70,
+          110,
+          50
+        ],
+        "pack": [
+          66,
+          90,
+          48
+        ],
+        "pants": [
+          148,
+          128,
+          89
+        ],
+        "skin": [
+          205,
+          160,
+          120
+        ],
+        "strap": [
+          52,
+          46,
+          38
+        ],
+        "suit": [
+          190,
+          170,
+          120
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "display": "Paratrooper",
+      "hash": "085fbc4aaf47166d",
+      "kind": "paratrooper",
+      "look": "TowerLook.buildRanger",
+      "lookBox": [
+        [
+          -0.5,
+          -1.1,
+          -1.2
+        ],
+        [
+          0.675,
+          1.55,
+          0.3
+        ]
+      ],
+      "pieces": {
+        "boot": {
+          "group": "boot",
+          "role": null,
+          "tris": 88
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 12
+        },
+        "camp": {
+          "group": "camp",
+          "role": null,
+          "tris": 60
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 40
+        },
+        "gun": {
+          "group": "gun",
+          "role": null,
+          "tris": 76
+        },
+        "head": {
+          "group": "skin",
+          "role": "head",
+          "tris": 100
+        },
+        "helmet": {
+          "group": "helmet",
+          "role": null,
+          "tris": 142
+        },
+        "muzzle": {
+          "group": "gun",
+          "role": "muzzle",
+          "tris": 36
+        },
+        "pack": {
+          "group": "pack",
+          "role": null,
+          "tris": 88
+        },
+        "pants": {
+          "group": "pants",
+          "role": null,
+          "tris": 88
+        },
+        "skin": {
+          "group": "skin",
+          "role": null,
+          "tris": 120
+        },
+        "strap": {
+          "group": "strap",
+          "role": null,
+          "tris": 124
+        },
+        "suit": {
+          "group": "suit",
+          "role": null,
+          "tris": 184
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 88
+        }
+      },
+      "scale": 1.0,
+      "tris": 1246,
+      "uploadedHash": null,
+      "walker": "paratrooper"
+    },
+    "walker/PARATROOPER_CHUTE": {
+      "asset": null,
+      "attach": "PARATROOPER",
+      "batch": "11d2",
+      "box": [
+        [
+          -2.5299999713897705,
+          0.546859622001648,
+          -2.5299999713897705
+        ],
+        [
+          2.5299999713897705,
+          6.360000133514404,
+          2.5299999713897705
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "camp": [
+          13,
+          105,
+          172
+        ],
+        "canvas": [
+          226,
+          214,
+          180
+        ],
+        "rope": [
+          150,
+          140,
+          110
+        ]
+      },
+      "display": "Paratrooper's canopy",
+      "hash": "cfb40d668745736b",
+      "kind": "chute",
+      "lookBox": [
+        [
+          -2.7,
+          0.4,
+          -2.7
+        ],
+        [
+          2.7,
+          6.5,
+          2.7
+        ]
+      ],
+      "pieces": {
+        "camp": {
+          "group": "camp",
+          "role": null,
+          "tris": 96
+        },
+        "canvas": {
+          "group": "canvas",
+          "role": null,
+          "tris": 308
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 88
+        }
+      },
+      "scale": 1.0,
+      "tris": 492,
+      "uploadedHash": null,
+      "walker": "paratrooper"
+    },
+    "walker/PATROL_JEEP": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -1.6710000038146973,
+          -0.8792945146560669,
+          -2.5199999809265137
+        ],
+        [
+          1.6710000038146973,
+          1.6899999380111694,
+          2.450000047683716
+        ]
+      ],
+      "budget": "big",
+      "colors": {
+        "body": [
+          176,
+          160,
+          110
+        ],
+        "camp": [
+          13,
+          105,
+          172
+        ],
+        "dark": [
+          45,
+          42,
+          38
+        ],
+        "glass": [
+          170,
+          200,
+          215
+        ],
+        "hood": [
+          120,
+          105,
+          70
+        ],
+        "lamp": [
+          250,
+          240,
+          200
+        ],
+        "metal": [
+          88,
+          90,
+          92
+        ],
+        "seat": [
+          96,
+          64,
+          40
+        ],
+        "tyre": [
+          38,
+          36,
+          34
+        ]
+      },
+      "display": "Patrol Jeep",
+      "hash": "895d4afd631e4cb8",
+      "kind": "jeep",
+      "look": "RangerLook.buildJeep",
+      "lookBox": [
+        [
+          -1.7,
+          -0.9,
+          -2.5
+        ],
+        [
+          1.7,
+          1.7,
+          2.5
+        ]
+      ],
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 264
+        },
+        "camp": {
+          "group": "camp",
+          "role": null,
+          "tris": 100
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 192
+        },
+        "glass": {
+          "group": "glass",
+          "role": null,
+          "tris": 12
+        },
+        "hood": {
+          "group": "hood",
+          "role": null,
+          "tris": 44
+        },
+        "lamp": {
+          "group": "lamp",
+          "role": null,
+          "tris": 72
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 524
+        },
+        "seat": {
+          "group": "seat",
+          "role": null,
+          "tris": 264
+        },
+        "spotlight": {
+          "group": "lamp",
+          "role": null,
+          "tris": 28
+        },
+        "tyre": {
+          "group": "tyre",
+          "role": null,
+          "tris": 700
+        }
+      },
+      "scale": 1.0,
+      "tris": 2200,
+      "uploadedHash": null,
+      "walker": "jeep"
+    },
     "walker/RANGER": {
       "asset": null,
       "batch": "11d2",
