@@ -240,6 +240,12 @@ def main(kind, key):
         framed = wide = pieces
     render.render(png, wide)
     render.render(png.with_name(f"{key}_side.png"), framed, render.SIDE)
+    for name, recolor in model.get("variants", {}).items():  # preview-only recolours (11f pet rarities)
+        for o in pieces:
+            group = model.get("groups", {}).get(o.name, o.name)
+            if group in recolor:
+                lowpoly.paint(o, recolor[group])
+        render.render(png.with_name(f"{key}_{name}.png"), wide)
     if ground is not None:  # towers: also the game camera's high angle (PLAN 11d)
         render.render(png.with_name(f"{key}_top.png"), wide, TOWER_TOP)
         import bpy
@@ -300,7 +306,8 @@ if __name__ == "__main__":
         manifest = json.loads((ART / "manifest.json").read_text())
         keys = [k for kind in kinds for k in sorted(k for k, m in manifest["models"].items()
                                                    if m["batch"] == batch and k.startswith(kind + "/"))]
-        pngs = [ART / "previews" / f"{k}{v}.png" for k in keys for v in ("", "_side")]
+        pngs = [ART / "previews" / f"{k}{v}.png" for k in keys  # meta `views` (11f pets: rarity row)
+                for v in manifest["models"][k].get("views", ("", "_side"))]
         out = ART / "previews" / f"sheet_{name}.png"
         render.contact_sheet(out, pngs, columns=4)  # two models a row: 3/4, side, 3/4, side
         print(f"ART OK sheet {out.relative_to(ART)} ({len(keys)} models)")

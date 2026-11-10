@@ -4745,6 +4745,577 @@
       "tris": 348,
       "uploadedHash": null
     },
+    "pet/FERN_MUNCHER": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -0.5522192716598511,
+          0.00044034712482243776,
+          -1.292296051979065
+        ],
+        [
+          0.5522192716598511,
+          2.2893364429473877,
+          1.696252465248108
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "accent": [
+          170,
+          170,
+          170
+        ],
+        "belly": [
+          175,
+          200,
+          156
+        ],
+        "body": [
+          90,
+          160,
+          110
+        ],
+        "eye": [
+          30,
+          24,
+          28
+        ],
+        "glow": [
+          63,
+          120,
+          83
+        ],
+        "leaf": [
+          60,
+          150,
+          70
+        ],
+        "shine": [
+          250,
+          250,
+          250
+        ]
+      },
+      "display": "Fern Muncher",
+      "hash": "182ce94c5cd707a3",
+      "origin": "ground",
+      "pet": "FERN_MUNCHER",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 90
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 80
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 400
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 40
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 110
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 50
+        },
+        "shine": {
+          "group": "shine",
+          "role": null,
+          "tris": 16
+        }
+      },
+      "rarityGroups": {
+        "accent": "rarity colour",
+        "glow": "markings: plain < Rare, rarity colour, Neon >= Legendary"
+      },
+      "species": "baby longneck",
+      "tris": 786,
+      "uploadedHash": null,
+      "views": [
+        "",
+        "_rare",
+        "_legendary",
+        "_mythic"
+      ]
+    },
+    "pet/FETCHER": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -1.684065580368042,
+          0.001178730628453195,
+          -1.0557328462600708
+        ],
+        [
+          1.6898813247680664,
+          1.529319405555725,
+          1.5685384273529053
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "accent": [
+          170,
+          170,
+          170
+        ],
+        "belly": [
+          203,
+          176,
+          140
+        ],
+        "body": [
+          150,
+          110,
+          80
+        ],
+        "eye": [
+          30,
+          24,
+          28
+        ],
+        "glow": [
+          110,
+          78,
+          58
+        ],
+        "leaf": [
+          60,
+          150,
+          70
+        ],
+        "shine": [
+          250,
+          250,
+          250
+        ],
+        "wing": [
+          186,
+          137,
+          98
+        ]
+      },
+      "display": "Fetcher",
+      "flies": true,
+      "hash": "6c4c87b0142fcc1d",
+      "origin": "ground",
+      "pet": "FETCHER",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 90
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 110
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 320
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 40
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 70
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 20
+        },
+        "shine": {
+          "group": "shine",
+          "role": null,
+          "tris": 16
+        },
+        "wing": {
+          "group": "wing",
+          "role": null,
+          "tris": 120
+        }
+      },
+      "rarityGroups": {
+        "accent": "rarity colour",
+        "glow": "markings: plain < Rare, rarity colour, Neon >= Legendary"
+      },
+      "species": "tiny Dimorphodon",
+      "tris": 786,
+      "uploadedHash": null,
+      "views": [
+        "",
+        "_rare",
+        "_legendary",
+        "_mythic"
+      ]
+    },
+    "pet/FRILL_GUARD": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -0.6434524059295654,
+          0.00040038314182311296,
+          -1.1732505559921265
+        ],
+        [
+          0.6434524059295654,
+          1.785147786140442,
+          1.484911322593689
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "accent": [
+          170,
+          170,
+          170
+        ],
+        "belly": [
+          225,
+          206,
+          167
+        ],
+        "body": [
+          200,
+          170,
+          120
+        ],
+        "eye": [
+          30,
+          24,
+          28
+        ],
+        "frill": [
+          200,
+          138,
+          96
+        ],
+        "glow": [
+          150,
+          94,
+          66
+        ],
+        "leaf": [
+          60,
+          150,
+          70
+        ],
+        "shine": [
+          250,
+          250,
+          250
+        ]
+      },
+      "display": "Frill Guard",
+      "hash": "93c01ec10e0ad71b",
+      "origin": "ground",
+      "pet": "FRILL_GUARD",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 90
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 80
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 360
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 40
+        },
+        "frill": {
+          "group": "frill",
+          "role": null,
+          "tris": 90
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 80
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 20
+        },
+        "shine": {
+          "group": "shine",
+          "role": null,
+          "tris": 16
+        }
+      },
+      "rarityGroups": {
+        "accent": "rarity colour",
+        "glow": "markings: plain < Rare, rarity colour, Neon >= Legendary"
+      },
+      "species": "baby Protoceratops",
+      "tris": 776,
+      "uploadedHash": null,
+      "views": [
+        "",
+        "_rare",
+        "_legendary",
+        "_mythic"
+      ]
+    },
+    "pet/HONKER": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -0.5413039922714233,
+          0.00046440857113339007,
+          -1.0998386144638062
+        ],
+        [
+          0.5413039922714233,
+          2.116286039352417,
+          1.3017456531524658
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "accent": [
+          170,
+          170,
+          170
+        ],
+        "belly": [
+          197,
+          199,
+          148
+        ],
+        "body": [
+          120,
+          150,
+          90
+        ],
+        "eye": [
+          30,
+          24,
+          28
+        ],
+        "glow": [
+          93,
+          114,
+          68
+        ],
+        "leaf": [
+          60,
+          150,
+          70
+        ],
+        "shine": [
+          250,
+          250,
+          250
+        ]
+      },
+      "display": "Honker",
+      "hash": "8f8a17e1ce94d71c",
+      "origin": "ground",
+      "pet": "HONKER",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 90
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 80
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 400
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 40
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 140
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 20
+        },
+        "shine": {
+          "group": "shine",
+          "role": null,
+          "tris": 16
+        }
+      },
+      "rarityGroups": {
+        "accent": "rarity colour",
+        "glow": "markings: plain < Rare, rarity colour, Neon >= Legendary"
+      },
+      "species": "baby Parasaurolophus",
+      "tris": 786,
+      "uploadedHash": null,
+      "views": [
+        "",
+        "_rare",
+        "_legendary",
+        "_mythic"
+      ]
+    },
+    "pet/SHINY_SNATCHER": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -0.481145441532135,
+          0.001413268269971013,
+          -0.8631382584571838
+        ],
+        [
+          0.4811454713344574,
+          2.1068618297576904,
+          1.0582504272460938
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "accent": [
+          170,
+          170,
+          170
+        ],
+        "belly": [
+          235,
+          194,
+          142
+        ],
+        "body": [
+          220,
+          140,
+          70
+        ],
+        "eye": [
+          30,
+          24,
+          28
+        ],
+        "glow": [
+          170,
+          100,
+          52
+        ],
+        "gold": [
+          245,
+          195,
+          60
+        ],
+        "leaf": [
+          60,
+          150,
+          70
+        ],
+        "shine": [
+          250,
+          250,
+          250
+        ]
+      },
+      "display": "Shiny Snatcher",
+      "hash": "ea56af9d0d17a7de",
+      "origin": "ground",
+      "pet": "SHINY_SNATCHER",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 90
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 80
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 380
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 40
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 110
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 50
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 20
+        },
+        "shine": {
+          "group": "shine",
+          "role": null,
+          "tris": 16
+        }
+      },
+      "rarityGroups": {
+        "accent": "rarity colour",
+        "glow": "markings: plain < Rare, rarity colour, Neon >= Legendary"
+      },
+      "species": "baby Oviraptor",
+      "tris": 786,
+      "uploadedHash": null,
+      "views": [
+        "",
+        "_rare",
+        "_legendary",
+        "_mythic"
+      ]
+    },
     "prop/STATION_HEALTH": {
       "asset": null,
       "batch": "11f",
