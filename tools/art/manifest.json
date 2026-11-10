@@ -5583,6 +5583,376 @@
         "_mythic"
       ]
     },
+    "projectile/CAPSULE": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -0.3207007646560669,
+          -0.20439721643924713,
+          -0.9200000166893005
+        ],
+        [
+          0.3207007646560669,
+          0.20439721643924713,
+          0.9200000166893005
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "bone": [
+          230,
+          225,
+          210
+        ],
+        "marrow": [
+          206,
+          183,
+          162
+        ]
+      },
+      "display": "Bone Spit bone",
+      "hash": "43501f7dcbbc0240",
+      "look": "DinoLook.buildProjectile",
+      "lookBox": [
+        [
+          -0.32,
+          -0.32,
+          -1.12
+        ],
+        [
+          0.32,
+          0.32,
+          1.12
+        ]
+      ],
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 204
+        },
+        "marrow": {
+          "group": "marrow",
+          "role": null,
+          "tris": 96
+        }
+      },
+      "projectile": "capsule",
+      "scale": 1.0,
+      "tris": 300,
+      "uploadedHash": null
+    },
+    "projectile/DROP": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -0.5568801164627075,
+          -0.3513970375061035,
+          -0.5871196985244751
+        ],
+        [
+          0.4964514970779419,
+          0.3885129690170288,
+          0.4950000047683716
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "layer": [
+          136,
+          124,
+          111
+        ],
+        "rock": [
+          108,
+          99,
+          92
+        ]
+      },
+      "display": "Stone Drop slate",
+      "hash": "0daca684201a1952",
+      "look": "DinoLook.buildProjectile",
+      "lookBox": [
+        [
+          -0.6,
+          -0.6,
+          -0.6
+        ],
+        [
+          0.6,
+          0.6,
+          0.6
+        ]
+      ],
+      "pieces": {
+        "layer": {
+          "group": "layer",
+          "role": null,
+          "tris": 48
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 64
+        }
+      },
+      "projectile": "drop",
+      "scale": 1.0,
+      "tris": 112,
+      "uploadedHash": null
+    },
+    "projectile/GRAVEL": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -0.9075180888175964,
+          -0.3747384548187256,
+          -0.31059616804122925
+        ],
+        [
+          1.0153447389602661,
+          0.4565158188343048,
+          0.8457106351852417
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "pebble": [
+          149,
+          122,
+          90
+        ],
+        "sand": [
+          170,
+          140,
+          100
+        ]
+      },
+      "display": "Gravel Spray pebbles",
+      "hash": "dd98024dcf43adf6",
+      "look": "DinoLook.buildProjectile",
+      "lookBox": [
+        [
+          -0.925,
+          -0.475,
+          -0.375
+        ],
+        [
+          1.075,
+          0.525,
+          0.875
+        ]
+      ],
+      "pieces": {
+        "pebble": {
+          "group": "pebble",
+          "role": null,
+          "tris": 64
+        },
+        "sand": {
+          "group": "sand",
+          "role": null,
+          "tris": 128
+        }
+      },
+      "projectile": "gravel",
+      "scale": 1.0,
+      "tris": 192,
+      "uploadedHash": null
+    },
+    "projectile/LOB": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -0.37731263041496277,
+          -0.37289562821388245,
+          -0.3653848171234131
+        ],
+        [
+          0.3874092698097229,
+          0.3757578730583191,
+          0.3664760887622833
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "chip": [
+          144,
+          131,
+          116
+        ],
+        "rock": [
+          120,
+          105,
+          90
+        ]
+      },
+      "display": "Skull Toss stone",
+      "hash": "a7bf91c7e99372cf",
+      "look": "DinoLook.buildProjectile",
+      "lookBox": [
+        [
+          -0.4,
+          -0.4,
+          -0.4
+        ],
+        [
+          0.4,
+          0.4,
+          0.4
+        ]
+      ],
+      "pieces": {
+        "chip": {
+          "group": "chip",
+          "role": null,
+          "tris": 64
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 120
+        }
+      },
+      "projectile": "lob",
+      "scale": 1.0,
+      "tris": 184,
+      "uploadedHash": null
+    },
+    "projectile/ROLL": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -1.1656895875930786,
+          -1.2596317529678345,
+          -1.2716280221939087
+        ],
+        [
+          1.1841198205947876,
+          1.1956661939620972,
+          1.2076988220214844
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "chip": [
+          125,
+          115,
+          103
+        ],
+        "moss": [
+          88,
+          112,
+          62
+        ],
+        "rock": [
+          95,
+          85,
+          75
+        ]
+      },
+      "display": "Horn Toss boulder",
+      "hash": "d333aecd1ad66738",
+      "look": "DinoLook.buildProjectile",
+      "lookBox": [
+        [
+          -1.25,
+          -1.25,
+          -1.25
+        ],
+        [
+          1.25,
+          1.25,
+          1.25
+        ]
+      ],
+      "pieces": {
+        "chip": {
+          "group": "chip",
+          "role": null,
+          "tris": 84
+        },
+        "moss": {
+          "group": "moss",
+          "role": null,
+          "tris": 42
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 168
+        }
+      },
+      "projectile": "roll",
+      "scale": 1.0,
+      "tris": 294,
+      "uploadedHash": null
+    },
+    "projectile/SPIKE": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -0.15348201990127563,
+          -0.16836687922477722,
+          -0.7005314826965332
+        ],
+        [
+          0.14499999582767487,
+          0.13491950929164886,
+          0.672389566898346
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "base": [
+          194,
+          182,
+          160
+        ],
+        "bone": [
+          230,
+          225,
+          210
+        ]
+      },
+      "display": "Spike Flick spike",
+      "hash": "dc68f35fcd6c2962",
+      "look": "DinoLook.buildProjectile",
+      "lookBox": [
+        [
+          -0.15,
+          -0.15,
+          -0.7
+        ],
+        [
+          0.15,
+          0.15,
+          0.7
+        ]
+      ],
+      "pieces": {
+        "base": {
+          "group": "base",
+          "role": null,
+          "tris": 112
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 56
+        }
+      },
+      "projectile": "spike",
+      "scale": 1.0,
+      "tris": 168,
+      "uploadedHash": null
+    },
     "prop/CAMPFIRE": {
       "asset": null,
       "batch": "11f",
