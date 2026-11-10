@@ -35,6 +35,8 @@ local GunRules = require(Shared:WaitForChild("GunRules"))
 local HunterKit = require(Shared:WaitForChild("HunterKit"))
 local Grenade = require(Shared:WaitForChild("Grenade"))
 local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
+local GunArt = require(Shared:WaitForChild("GunArt"))
+local Viewmodel = require(Shared:WaitForChild("Viewmodel"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local heroRequest = remotes:WaitForChild("HeroRequest") :: RemoteFunction
@@ -330,6 +332,41 @@ player.CharacterAdded:Connect(function()
 end)
 applyCamera()
 
+------------------------------------------------------------------ first-person viewmodel
+
+-- T151b (#435): with gun art, first person shows the class's arms holding the gun on the
+-- camera (Shared/Viewmodel); the third-person gun is hidden on this screen only. No gun art =
+-- nothing here (today's view). Hidden while scoped, placing, in camp, dead, or while the
+-- Stock Swing swings the rifle itself.
+local vm: Viewmodel.VM? = nil
+local viewmodelHiddenUntil = 0
+
+local function dropViewmodel()
+	if vm then
+		Viewmodel.destroy(vm)
+		vm = nil
+	end
+end
+
+RunService.RenderStepped:Connect(function(dt)
+	local gun = equippedGun()
+	local character = player.Character
+	local key = heroKey()
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local want = inFirstPerson == true and not scoped and gun ~= nil and key ~= nil and humanoid ~= nil and humanoid.Health > 0
+	if vm and (not want or Viewmodel.stale(vm, gun, character)) then
+		dropViewmodel()
+	end
+	if want and not vm and gun and character and key then
+		vm = Viewmodel.build(gun, character, key)
+	end
+	if vm then
+		Viewmodel.hideTool(vm.tool, true)
+		vm.model.Parent = if os.clock() < viewmodelHiddenUntil then nil else camera
+		Viewmodel.step(vm, camera.CFrame, dt)
+	end
+end)
+
 ------------------------------------------------------------------ trigger
 
 local holding = false
@@ -360,6 +397,9 @@ local function pull(stats: HeroStats.Stats): string
 	local origin, direction = aimRay()
 	heroFire:FireServer(origin, direction, scoped)
 	addRecoil(stats)
+	if vm then
+		Viewmodel.kick(vm)
+	end
 	return "fired"
 end
 
@@ -471,9 +511,26 @@ local function swingLook(key: string)
 	if not look then
 		return
 	end
-	local item = Instance.new("Part")
-	item.Anchored, item.CanCollide, item.CanQuery, item.CanTouch, item.CastShadow = true, false, false, false, false
-	item.Size, item.Color, item.Material = look[1], look[2], look[3]
+	-- Art (T151, #449): the Big Game Hunter's Stock Swing swings the rifle itself, butt first
+	-- (the viewmodel's rifle steps aside meanwhile); the others swing their kit prop. No art =
+	-- today's block.
+	local gun = equippedGun()
+	local art = if key == "RIFLE" and gun then GunArt.copy(gun) else nil
+	local turn = CFrame.identity
+	if art then
+		turn = CFrame.Angles(0, math.pi, 0)
+		viewmodelHiddenUntil = os.clock() + MELEE_SWEEP
+	else
+		art = GunArt.prop(key, "melee")
+	end
+	local item: any
+	if art then
+		item = art
+	else
+		item = Instance.new("Part")
+		item.Anchored, item.CanCollide, item.CanQuery, item.CanTouch, item.CastShadow = true, false, false, false, false
+		item.Size, item.Color, item.Material = look[1], look[2], look[3]
+	end
 	item.Parent = camera
 	local started = os.clock()
 	local step
@@ -484,7 +541,12 @@ local function swingLook(key: string)
 			item:Destroy()
 			return
 		end
-		item.CFrame = camera.CFrame * CFrame.new(0.9 - 1.6 * t, -0.7, -2.2) * CFrame.Angles(0, math.rad(50 - 100 * t), math.rad(-30))
+		local at = camera.CFrame * CFrame.new(0.9 - 1.6 * t, -0.7, -2.2) * CFrame.Angles(0, math.rad(50 - 100 * t), math.rad(-30))
+		if art then
+			art:PivotTo(at * turn)
+		else
+			item.CFrame = at
+		end
 	end)
 end
 

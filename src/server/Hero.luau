@@ -74,6 +74,7 @@ local Cosmetics = require(Shared:WaitForChild("Cosmetics"))
 local Skins = require(Shared:WaitForChild("Skins"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local BattleRules = require(Shared:WaitForChild("BattleRules"))
+local GunArt = require(Shared:WaitForChild("GunArt"))
 
 local Economy = require(script.Parent.Economy)
 local Progression = require(script.Parent.Progression)
@@ -339,6 +340,10 @@ local function syncTool(player: Player)
 		handle.Massless = true
 		handle.Parent = tool
 		tool.Parent = backpack
+		-- Dual Pistols' left gun welds to the hand holding it now (T151): re-dress on equip.
+		tool.Equipped:Connect(function()
+			task.defer(syncTool, player)
+		end)
 	end
 	local hero = Config.Heroes[s.hero]
 	local maxed = Progression.masteryLevel(player, s.hero) >= #Config.Mastery
@@ -357,6 +362,23 @@ local function syncTool(player: Player)
 		handle.Material = material
 		-- Looks.client animates a set's colour on every screen.
 		handle:SetAttribute("CosmeticSet", set)
+		-- Gun art (T151, #449): welded to the Handle at the grip; `accent` takes this paint
+		-- (at max mastery the skin's / class colour, and steel + brass go gold). No art loaded
+		-- = the Handle above, unchanged. Stats decide the attachments; never the gun's hits.
+		if s.stats then
+			local accent, accentMaterial = colour, material
+			if maxed then
+				accent = if skin then skin.colour else HERO_COLORS[s.hero] or colour
+				accentMaterial = if skin then skin.material else Enum.Material.SmoothPlastic
+			end
+			local character = player.Character
+			local leftHand = character and character:FindFirstChild("LeftHand")
+			GunArt.dressTool(tool, handle, s.hero, s.stats, {
+				accent = accent,
+				accentMaterial = accentMaterial,
+				gold = if maxed then MASTERY_GOLD else nil,
+			}, if leftHand and leftHand:IsA("BasePart") then leftHand else nil)
+		end
 	end
 end
 
@@ -811,6 +833,9 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 		s.gunSide = -s.gunSide
 		muzzle += body.CFrame.RightVector * DUAL_GUN_OFFSET * s.gunSide
 	end
+	-- Gun art (T151): tracers leave from the art's muzzle (the double barrel alternates its
+	-- two); no art = the origin above. Visual only.
+	local barrels = GunArt.muzzles(tool, if stats.guns > 1 then s.gunSide else 1)
 	local color = Cosmetics.tracerColour(worn(player), HERO_COLORS[s.hero or ""] or Color3.new(1, 1, 1))
 	-- Your own side's dinos only (Shared/BattleRules, #228): pierce, ricochet, splash, muzzle
 	-- rounds and burns all pick from this list. Co-op: every dino.
@@ -825,7 +850,8 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 	end
 	local pelletDamage = stats.damage * levelScale(s)
 
-	for _ = 1, stats.shotsPerTrigger do
+	for shot = 1, stats.shotsPerTrigger do
+		local from = if barrels then barrels[(s.shotsFired + shot) % #barrels + 1] else muzzle
 		for _ = 1, stats.pellets do
 			local pelletDirection = scatter(direction, cone)
 			local struck = alongRay(origin, pelletDirection, body.Position, stats, live, stats.pierce)
@@ -835,12 +861,12 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 			local dinoAlong = if #struck > 0 then (struck[1].part.Position - origin):Dot(pelletDirection) else math.huge
 			if foeIndex and foeAlong and foeAlong < dinoAlong then
 				local foe = foes[foeIndex]
-				Effects.tracer(muzzle, foe.position, color)
+				Effects.tracer(from, foe.position, color)
 				hitFoe(player, mySide, foe, pelletDamage, outcome)
 			elseif #struck == 0 then
-				Effects.tracer(muzzle, origin + pelletDirection * ((muzzle - origin).Magnitude + stats.range), color)
+				Effects.tracer(from, origin + pelletDirection * ((from - origin).Magnitude + stats.range), color)
 			else
-				Effects.tracer(muzzle, struck[#struck].part.Position, color)
+				Effects.tracer(from, struck[#struck].part.Position, color)
 				local hit: { [any]: boolean } = {}
 				for _, enemy in struck do
 					hit[enemy] = true
@@ -1309,6 +1335,21 @@ function Hero.init(remotes: Folder, hooks: Hooks?)
 	for _, player in Players:GetPlayers() do
 		setUp(player)
 	end
+	-- Gun art arrives in the background (Server/Art) or is switched off (ArtOff): redraw guns.
+	task.spawn(function()
+		local art = ReplicatedStorage:WaitForChild("Art")
+		local function redraw()
+			for _, player in Players:GetPlayers() do
+				syncTool(player)
+			end
+		end
+		art.DescendantAdded:Connect(function(added)
+			if added:IsA("Model") and added.Parent and added.Parent.Name == GunArt.KIND then
+				redraw()
+			end
+		end)
+		art:GetAttributeChangedSignal("ArtOff"):Connect(redraw)
+	end)
 	Players.PlayerRemoving:Connect(function(player)
 		-- Leaving drops the hunter's pending pops, for them and for the team share.
 		local s = states[player]

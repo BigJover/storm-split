@@ -47,6 +47,7 @@ local BattleRules = require(Shared:WaitForChild("BattleRules"))
 local HunterKit = require(Shared:WaitForChild("HunterKit"))
 local Melee = require(Shared:WaitForChild("Melee"))
 local Grenade = require(Shared:WaitForChild("Grenade"))
+local GunArt = require(Shared:WaitForChild("GunArt"))
 
 local Enemies = require(script.Parent.Enemies)
 local Effects = require(script.Parent.Effects)
@@ -66,6 +67,7 @@ local KIT_COLORS = {
 	MEDIC = Color3.fromRGB(110, 230, 140),
 }
 local SWING_SHOW = 0.12 -- s the swing's flash shows
+local TUMBLE = 4 * math.pi -- radians a grenade prop turns over its flight
 local HEAD_UP = 1.5 -- studs above the root part the line-of-sight check starts
 local RAY_ORIGIN_SLACK = 20 -- studs beyond max camera zoom a ray may start from (Server/Hero)
 
@@ -417,8 +419,19 @@ local function throw(player: Player, rayOrigin: unknown, rayDirection: unknown)
 	end
 	local start = from + Vector3.new(0, HEAD_UP, 0)
 	local flight = Grenade.flightTime(start, landing)
-	local ball = Effects.part(Vector3.new(0.9, 0.9, 0.9), CFrame.new(start), KIT_COLORS[key :: string] or Color3.new(1, 1, 1), flight + 0.1, Enum.PartType.Ball)
-	ball.Material = Enum.Material.SmoothPlastic
+	-- The hunter's grenade art (T151, kind "kit") when loaded, tumbling; else today's ball.
+	local prop = GunArt.prop(key :: string, "grenade")
+	local ball: Instance
+	if prop then
+		prop:PivotTo(CFrame.new(start))
+		prop.Parent = workspace
+		task.delay(flight + 0.1, prop.Destroy, prop)
+		ball = prop
+	else
+		local part = Effects.part(Vector3.new(0.9, 0.9, 0.9), CFrame.new(start), KIT_COLORS[key :: string] or Color3.new(1, 1, 1), flight + 0.1, Enum.PartType.Ball)
+		part.Material = Enum.Material.SmoothPlastic
+		ball = part
+	end
 	local mySide = sideOf(player)
 	task.spawn(function()
 		local thrown = os.clock()
@@ -427,7 +440,12 @@ local function throw(player: Player, rayOrigin: unknown, rayDirection: unknown)
 			if u >= 1 then
 				break
 			end
-			ball.CFrame = CFrame.new(Grenade.arcPoint(start, landing, u))
+			local at = CFrame.new(Grenade.arcPoint(start, landing, u))
+			if prop then
+				prop:PivotTo(at * CFrame.Angles(u * TUMBLE, 0, u * TUMBLE * 0.4))
+			elseif ball:IsA("BasePart") then
+				ball.CFrame = at
+			end
 			RunService.Heartbeat:Wait()
 		end
 		ball:Destroy()

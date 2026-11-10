@@ -19,6 +19,14 @@ RunService.RenderStepped:Connect(function()
 			local set = Cosmetics.item(handle:GetAttribute("CosmeticSet"))
 			if set and set.kind == "set" then
 				handle.Color = Cosmetics.animatedColour(set, t)
+				-- Gun art (T151): the set paints the art's `accent` pieces (both guns of a pair).
+				if handle:GetAttribute("GunArt") then
+					for _, d in tool:GetDescendants() do
+						if d:IsA("BasePart") and d:GetAttribute("PaintGroup") == "accent" then
+							d.Color = handle.Color
+						end
+					end
+				end
 			end
 		end
 	end

@@ -125,7 +125,7 @@ Budget class `tower` (<= 3,000 tris, #433; `_kit.Kit.finish` aims under 2,700).
   pulses the Hospital's `glow` pieces; `buildBlimp` / `setBlimpStage` dress `BLIMP_AIR` (+ stages) and the
   beam leaves from the `lamp` piece. Specs in `tools/test/artslot.spec.luau`.
 
-## Guns and kit (kinds `gun` and `kit`, PLAN 11c T151, batch `11c2`) — models only, runtime not built
+## Guns and kit (kinds `gun` and `kit`, PLAN 11c T151, batch `11c2`)
 
 ```sh
 tools/art/build.sh gun RIFLE                      # FBX + 3/4 + side previews + manifest
@@ -179,9 +179,16 @@ Conventions (the contract for the runtime task):
 - **Helpers:** `models/gun/_gun.py` (primitives incl. `slab` profiles and `strap`s, `Gun` envelope +
   tri checks); `models/kit/_prop.py` builds on it, so `srchash.py` hashes `gun/_gun.py` for kind
   `kit` too. Kit previews pad the frame a little (`build.pad_frame`) so squat grenades aren't cropped.
-- **Not done (runtime task):** `write_ids.py` `KINDS` doesn't list `gun` / `kit` yet; running it
-  will add them to `ArtIds` (colours + `pieces` roles) — do it with the runtime commit
-  (`write_ids.py --check` reports the difference until then). Nothing is uploaded or approved.
+- **Runtime (T151 + T151b, `Shared/GunArt` + `Shared/Viewmodel`, #453):** Server/Hero dresses the gun
+  Tool: the art (+ the attachments its stats show) welded to the Handle at identity, the Handle hidden;
+  `accent` = the gun paint (class colour / weapon skin / cosmetic, animated sets via Looks.client), max
+  mastery = `steel` + `brass` gold; Dual Pistols = a second PISTOL welded to the LeftHand's
+  LeftGripAttachment. `Muzzle` / `Muzzle2` Attachments on the Handle; tracers leave from them (the
+  double barrel alternates, the left gun from its own `muzzle`); no art = today's origin. Server/Kit
+  throws `<HERO>_GRENADE` (tumbling) instead of the ball; Hero.client swings `<HERO>_MELEE` (Stock Swing
+  swings the rifle art, butt first; `RIFLE_MELEE` without it). First person: `Viewmodel` = copies of the
+  Tool's gun pieces + the worn body's arm pieces on the camera (left arm on two-handed guns / Dual
+  Pistols), sway + recoil kick; the third-person gun hidden locally. Spec `tools/test/gunart.spec.luau`.
 
 ## Pets, eggs, incubator (kinds `pet` and `egg`, PLAN 11f T156, batch `11f`) — runtime: `Shared/PetLook` (#451)
 
