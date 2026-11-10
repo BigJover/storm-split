@@ -5316,6 +5316,492 @@
         "_mythic"
       ]
     },
+    "prop/DECOR_DINO_STATUE": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -1.5,
+          0.0,
+          -1.899999976158142
+        ],
+        [
+          1.5,
+          4.210000038146973,
+          1.9500000476837158
+        ]
+      ],
+      "budget": "mid",
+      "cap": 1200,
+      "colors": {
+        "accent": [
+          88,
+          128,
+          60
+        ],
+        "body": [
+          150,
+          146,
+          138
+        ],
+        "dark": [
+          70,
+          66,
+          60
+        ]
+      },
+      "decor": "DINO_STATUE",
+      "hash": "8de0c2cf116f2fdd",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 112
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 784
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "prop": "decor",
+      "replaces": "Shared/Decor DINO_STATUE",
+      "tris": 944,
+      "uploadedHash": null
+    },
+    "prop/DECOR_FIRE_PIT": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -1.898117184638977,
+          0.009999997913837433,
+          -1.968689203262329
+        ],
+        [
+          1.849443793296814,
+          1.9000000953674316,
+          1.8406641483306885
+        ]
+      ],
+      "budget": "mid",
+      "cap": 1200,
+      "colors": {
+        "accent": [
+          255,
+          140,
+          50
+        ],
+        "body": [
+          128,
+          124,
+          116
+        ],
+        "dark": [
+          60,
+          52,
+          46
+        ],
+        "glow": [
+          255,
+          200,
+          90
+        ],
+        "wood": [
+          100,
+          70,
+          45
+        ]
+      },
+      "decor": "FIRE_PIT",
+      "hash": "9330ef28d93c3579",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 84
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 576
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 52
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 64
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 120
+        }
+      },
+      "prop": "decor",
+      "replaces": "Shared/Decor FIRE_PIT",
+      "tris": 896,
+      "uploadedHash": null
+    },
+    "prop/DECOR_HAMMOCK": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -0.6399999856948853,
+          0.0,
+          -2.5
+        ],
+        [
+          0.6399999856948853,
+          3.106602430343628,
+          2.5
+        ]
+      ],
+      "budget": "mid",
+      "cap": 1200,
+      "colors": {
+        "accent": [
+          122,
+          88,
+          56
+        ],
+        "body": [
+          200,
+          90,
+          60
+        ],
+        "canvas": [
+          214,
+          200,
+          160
+        ],
+        "dark": [
+          90,
+          80,
+          70
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ]
+      },
+      "decor": "HAMMOCK",
+      "hash": "bdec66b22cd285cd",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 256
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 264
+        },
+        "canvas": {
+          "group": "canvas",
+          "role": null,
+          "tris": 28
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 56
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 168
+        }
+      },
+      "prop": "decor",
+      "replaces": "Shared/Decor HAMMOCK",
+      "tris": 772,
+      "uploadedHash": null
+    },
+    "prop/DECOR_HUNTERS_FLAG": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -1.234985589981079,
+          0.0,
+          -0.42000001668930054
+        ],
+        [
+          1.1655662059783936,
+          6.490211486816406,
+          0.44999998807907104
+        ]
+      ],
+      "budget": "mid",
+      "cap": 1200,
+      "colors": {
+        "body": [
+          122,
+          88,
+          56
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "cloth": [
+          200,
+          60,
+          50
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "stone": [
+          128,
+          124,
+          116
+        ]
+      },
+      "decor": "HUNTERS_FLAG",
+      "hash": "57aa0de0b91e7da6",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 28
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 160
+        },
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 220
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 96
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 210
+        }
+      },
+      "prop": "decor",
+      "replaces": "Shared/Decor HUNTERS_FLAG",
+      "tris": 714,
+      "uploadedHash": null
+    },
+    "prop/DECOR_ROPE_SWING": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -1.9499998092651367,
+          -0.028142929077148438,
+          -0.9973358511924744
+        ],
+        [
+          1.9499998092651367,
+          4.75,
+          0.9973358511924744
+        ]
+      ],
+      "budget": "mid",
+      "cap": 1200,
+      "colors": {
+        "accent": [
+          176,
+          150,
+          100
+        ],
+        "body": [
+          122,
+          88,
+          56
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ]
+      },
+      "decor": "ROPE_SWING",
+      "hash": "37f34228167c25c1",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 128
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 280
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 96
+        }
+      },
+      "prop": "decor",
+      "replaces": "Shared/Decor ROPE_SWING",
+      "tris": 504,
+      "uploadedHash": null
+    },
+    "prop/DECOR_STEPPING_STONES": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -1.298100233078003,
+          -0.01036633551120758,
+          -2.349327564239502
+        ],
+        [
+          1.2905726432800293,
+          0.3075449466705322,
+          2.36256742477417
+        ]
+      ],
+      "budget": "mid",
+      "cap": 1200,
+      "colors": {
+        "accent": [
+          150,
+          140,
+          120
+        ],
+        "body": [
+          128,
+          124,
+          116
+        ],
+        "leaf": [
+          88,
+          128,
+          60
+        ]
+      },
+      "decor": "STEPPING_STONES",
+      "hash": "2ddd810b3d186aa1",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 344
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 344
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 252
+        }
+      },
+      "prop": "decor",
+      "replaces": "Shared/Decor STEPPING_STONES",
+      "tris": 940,
+      "uploadedHash": null
+    },
+    "prop/DECOR_WANTED_POSTER": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -1.4604192972183228,
+          0.0,
+          -0.46564731001853943
+        ],
+        [
+          1.4604192972183228,
+          3.9919772148132324,
+          0.46564731001853943
+        ]
+      ],
+      "budget": "mid",
+      "cap": 1200,
+      "colors": {
+        "accent": [
+          110,
+          76,
+          46
+        ],
+        "body": [
+          150,
+          110,
+          70
+        ],
+        "dark": [
+          60,
+          50,
+          40
+        ],
+        "face": [
+          232,
+          214,
+          170
+        ]
+      },
+      "decor": "WANTED_POSTER",
+      "faces": {
+        "face": "Front + Back: Decor's poster SurfaceGuis (CanvasSize 230 x 220)"
+      },
+      "hash": "2825d9596c3ba2f5",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 232
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 44
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 248
+        },
+        "face": {
+          "group": "face",
+          "role": null,
+          "tris": 12
+        }
+      },
+      "prop": "decor",
+      "replaces": "Shared/Decor WANTED_POSTER",
+      "tris": 536,
+      "uploadedHash": null
+    },
     "prop/STATION_HEALTH": {
       "asset": null,
       "batch": "11f",
