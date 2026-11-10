@@ -291,6 +291,56 @@ Runtime contract (for the runtime task, after Jovan approves):
   `origin`, `faces`, `optional`. Budget classes `big` (2,500), `mid` (decorations, capped 1,200 by
   `_camp`), `small`. `write_ids.py` `KINDS` doesn't list `prop` yet (add it with the runtime commit).
 
+## Walkers and dino projectiles (kinds `walker` and `projectile`, PLAN 11d2) — models only, runtime not built
+
+```sh
+tools/art/build.sh walker RAPTOR                              # FBX + 3/4 + side previews + manifest
+tools/art/build.sh projectile ROLL
+tools/art/build.sh --sheet walker,projectile 11d2 11d2_walkers  # previews/sheet_11d2_walkers.png
+```
+
+| Key | Today's look | Tris | Notes |
+|---|---|---|---|
+| `walker/RAPTOR` | `RaptorLook.build("raptor")` | 895 | the pack raptor |
+| `walker/RAPTOR_ALPHA` | `"alpha"` (×1.6) | 1,345 | darker hide, dark scutes, feather crest, studded collar, saddlebags, camp pennant |
+| `walker/RAPTOR_REX` | `"rex"` (×1.9) | 1,400 | Rex Tamer's tamed T. rex: bridle round the snout, studded collar, saddle |
+| `walker/RAPTOR_SWARM` | `"swarm"` (×0.6) | 700 | juvenile, lighter; collar + bandana knot, no saddle |
+| `walker/RANGER` / `_HEAVY` / `_LEGEND` | `RangerLook.build(kind)` (×1 / 1.1 / 1.35) | 1,144 / 1,318 / 1,394 | heavy: jacketed barrel, ammo belt + pack; legend: long coat, bandolier, feather, star |
+| `walker/PATROL_JEEP` | `RangerLook.buildJeep` | 2,200 | |
+| `walker/PARATROOPER` | `TowerLook.buildRanger` | 1,246 | |
+| `walker/PARATROOPER_CHUTE` | — (no drop today) | 492 | additive canopy in the trooper's frame |
+| `projectile/LOB SPIKE GRAVEL DROP ROLL CAPSULE` | `DinoLook.buildProjectile` by `PROJECTILE_STYLE` | 112–300 | |
+
+Conventions (the contract for the runtime task):
+- **Origin = the look's PrimaryPart centre** (`Body` for walkers, `Shot` for projectiles), front −Z,
+  at the look's own scale: RaptorLook / RangerLook multiply positions and sizes by `KINDS[kind]`, and so
+  does the art (`meta.scale`), so each variant is its own model at its final size — weld at identity to
+  the Body (or make the art the PrimaryPart) and `Walkers.place`'s `PivotTo` works unchanged.
+  `models/walker/_walker.py` `Walk.finish` fails a build that leaves today's blocky box (`meta.lookBox`,
+  + 0.12 × scale slack), and returns the real bounds as `box` (fit-to-box scale 1.00).
+- **Walkers are ghosts** like today: Anchored, CanCollide / CanTouch / CanQuery false, CastShadow false
+  (24 a side).
+- **Paint group `camp`** = the camp colour (`campColour(tower)` = `BattleFlow.campColor(side)`): the
+  raptors' collar / saddle blanket / tail band / pennant, the rangers' hat band + scarf (+ legend
+  feather), the jeep's hood stripe / waist band / jerrycan, the paratrooper's scarf and the canopy's
+  alternate gores. The authored `camp` colour (blue) is preview only; the runtime must paint `camp`
+  with the camp colour. Every other group keeps its authored colour (RaptorLook HIDE / REX_HIDE,
+  RangerLook KHAKI / DARK_KHAKI, TowerLook SAND / LEAF ...).
+- **Roles:** `head` (ArtRole head) on every raptor and figure (raptor: the head piece, group body;
+  figures: group skin) for a hit flash; `muzzle` (ArtRole muzzle; its centre = the barrel tip) on the
+  three rangers and the paratrooper — today's ranger / para shots have no muzzle, so this is new.
+  The jeep's searchlight is piece `spotlight` (group lamp, no role).
+- **Projectiles** are authored at `buildProjectile`'s `s = 1` minimum size (LOB 0.8 ball, SPIKE
+  0.3 × 0.3 × 1.4, GRAVEL Shot 0.75 + pebbles at today's offsets, DROP 1.2, ROLL 2.5, CAPSULE 1.6 × 0.64
+  along Z): the runtime scales the art to the live `Shot` size (`model:ScaleTo(shot.Size.Y / authored)`;
+  `Height` attribute unchanged). SPIKE and CAPSULE lie along Z like today's pivot (spike point −Z).
+  `_shot.CAP` = 300 tris each.
+- `srchash.py` hashes `tower/_kit.py` (the primitives) for both kinds and `walker/_*.py` for
+  `projectile`. Manifest `meta`: `walker`, `look`, `kind`, `display`, `lookBox`, `scale` (projectiles:
+  `projectile` = the style). Previews pad the frame (preview-only `context`) so hats and tails aren't cropped.
+- **Not done (runtime task):** `write_ids.py` `KINDS` doesn't list `walker` / `projectile`; nothing is
+  uploaded or approved; no code reads these yet.
+
 ## What is verified vs assumed (2026-10-26)
 
 Verified here: Blender 5.2.3 headless runs these scripts; the FBX is written with +Y up / −Z forward,

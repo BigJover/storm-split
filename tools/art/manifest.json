@@ -15666,7 +15666,7 @@
         ]
       },
       "display": "Raptor",
-      "hash": "f9eafaf86027721c",
+      "hash": "ce7b86dfae305fe7",
       "kind": "raptor",
       "look": "RaptorLook",
       "lookBox": [
@@ -15792,7 +15792,7 @@
         ]
       },
       "display": "Alpha Raptor",
-      "hash": "d263649a4f998467",
+      "hash": "c0fa98b06793d69b",
       "kind": "alpha",
       "look": "RaptorLook",
       "lookBox": [
@@ -15923,7 +15923,7 @@
         ]
       },
       "display": "Tamed Rex",
-      "hash": "0d1ac4b7a338c7be",
+      "hash": "e0b34358dbd6f529",
       "kind": "rex",
       "look": "RaptorLook",
       "lookBox": [
@@ -16044,7 +16044,7 @@
         ]
       },
       "display": "Swarm Raptor",
-      "hash": "2c41c727fd339872",
+      "hash": "7cc8896d927ede21",
       "kind": "swarm",
       "look": "RaptorLook",
       "lookBox": [
