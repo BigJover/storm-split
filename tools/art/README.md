@@ -235,6 +235,62 @@ Conventions (the contract for the runtime task):
 - **Not done (runtime task):** `write_ids.py` `KINDS` doesn't list `pet` / `egg`; nothing uploaded
   or approved.
 
+## Outpost props (kind `prop`, PLAN 11f T156, batch `11f`) — models only, runtime not built
+
+```sh
+tools/art/build.sh prop HATCHERY_HUT              # FBX + 3/4 + side previews + manifest
+tools/art/build.sh --sheet prop 11f 11f_props     # previews/sheet_11f_props.png: 3/4 + side of each, 2 a row
+```
+
+Every blocky Hunters' Outpost build (Server/Outpost, Shared/Decor) as a model; nothing in `src/`
+changed. Helper `models/prop/_camp.py` (the tower `_kit` primitives, copied so a tower edit doesn't
+re-hash every prop, + `plank_floor`, `flame`, `face`, `Camp.model(batch, colors, cap, footprint)`:
+fails over its tri cap or outside its footprint; preview-only ground + framing as `context`).
+
+**Origin = the prop's ANCHOR on the ground (y 0), not a part centre**: the CFrame the blocky code builds
+from. Place the model so its origin sits on the anchor (fit-to-box is a no-op, scale 1.00).
+
+| Key | Replaces (anchor) | Tris | Notes |
+|---|---|---|---|
+| `STATION_REACH` | Raptor Dummy: Post, Body, Head, Padding (`buildStation` `base`) | 2,212 | raptor faces +Z as the blocks |
+| `STATION_SPEED` | Raptor Chase: Lane 4×14, Raptor, Key (`base`) | 2,292 | wind-up raptor at z 6.5, key +X |
+| `STATION_HEALTH` | Herb Kitchen: Table, Legs, Pot, Ferns (`base`) | 2,428 | table top y 3.25 at z −4; drying rack behind (−Z) |
+| `STATION_THROW` | Coconut Toss: Line, Coconut (`base`) | 1,244 | the throwing end only |
+| `THROW_TARGET` | Coconut Toss: each Target (`base` × (−3,0,−10) / (0,0,−16) / (3,0,−22)) | 1,184 | one model placed 3×; board centre y 2, faces +Z, painted both sides |
+| `CAMPFIRE` | CampFire Neon ball (`CENTRE + (0,0,12)`) | 1,556 | hang the PointLight + Outpost sign on piece `glow` |
+| `FENCE_POST` | FencePost ×48 (post foot) | 328 | |
+| `FENCE_RAIL` | Rail ×48 (span middle, y 0; span along the Rail's X) | 288 | 15.25 long, rails at y 3.5 + 1.8; the invisible Fence walls stay |
+| `HATCHERY_HUT` | HatcheryHut + HutRoof (`CENTRE + HATCHERY_HUT`) | 2,224 | door −Z (toward the camp centre) |
+| `SHOP_STALL` | ShopCounter (`CENTRE + SHOP`) | 2,264 | counter 8×3×2.5 as today, awning, customers at −Z |
+| `HATCHLING_PEN` | HatchlingPen + 4 PenPosts (`facing * (−6, 0, 5)`, Campsite frame) | 1,344 | floor top y 0.3 (pets stand at x −2.2/0/2.2), gate −Z |
+| `DECOR_FIRE_PIT` … `DECOR_DINO_STATUE` | the 7 `Shared/Decor` models (the decoration spot `at`) | 504–944 | inside `Decor.SIZE` each, ≤ 1,200 |
+| `CAMPSITE_TENT` | *optional, new* (proposed Campsite frame (−6, 0, −5)) | 948 | |
+| `CAMPSITE_MARKER` | *optional, new* signpost for the Campsite name (proposed (0, 0, −10)) | 388 | |
+| `HUNT_BOARD` | *optional, new* camp notice board (proposed `CENTRE + (0,0,−2)`, facing +Z) | 580 | |
+| `DISPLAY_PEDESTAL` | *optional, new* deck under a Display Tower (DECO_SPOT) | 528 | the tower would sit 0.3 higher |
+
+Runtime contract (for the runtime task, after Jovan approves):
+- **Interaction stays where it is.** There are no ProximityPrompts in the Outpost today: stations, the
+  Hatchery Hut and the shop are distance checks on `Shared/Outpost` centres (`STATION_RADIUS`,
+  `HUT_RADIUS`, `SHOP_RADIUS`); the art keeps those centres and changes none of them. Keep the
+  station sand **Pad** (attribute `Station`, the sign's adornee), the Campsite **Ground**, the
+  **HatchlingPen** part (pets + owner sign anchor), **HatcheryHut** and **ShopCounter** as today's parts
+  (Transparency 1 where the art replaces them) so collision, attributes and BillboardGuis are unchanged;
+  the art is visual (CanCollide/CanQuery/CanTouch false), like towers.
+- **Sign faces** = pieces named `face` (group `face`, thin boxes): put the SurfaceGui on the piece,
+  Face = **Front** (−Z of the piece = the prop's front): `DECOR_WANTED_POSTER` (Front **and** Back:
+  Decor's poster text, CanvasSize 230×220, centre (0, 2.3, 0)), `HATCHERY_HUT` (4×1 over the door),
+  `SHOP_STALL` (5×1.1 on the awning), and the optional `CAMPSITE_MARKER`, `HUNT_BOARD`, `DISPLAY_PEDESTAL`.
+  Manifest `faces` lists them.
+- **Decoration colours:** on the `DECOR_*` models group `body` = the Skins look colour and `accent` =
+  its accent, in the look's material (what `Decor.build` does with c / a); `cloth` (Hunter's Flag) =
+  the worn Tower flag colour, else the accent; the rest keeps its authored colour. The Fire Pit's flames
+  are `accent` (as Decor's Flame) round a small `glow` core.
+- Group `glow` = Neon (fires, lit windows, lanterns); everything else SmoothPlastic, authored colours.
+- Manifest `meta`: `prop` (`station` / `decor` / `camp`), `station` / `decor` key, `replaces`, `cap`,
+  `origin`, `faces`, `optional`. Budget classes `big` (2,500), `mid` (decorations, capped 1,200 by
+  `_camp`), `small`. `write_ids.py` `KINDS` doesn't list `prop` yet (add it with the runtime commit).
+
 ## What is verified vs assumed (2026-10-26)
 
 Verified here: Blender 5.2.3 headless runs these scripts; the FBX is written with +Y up / −Z forward,

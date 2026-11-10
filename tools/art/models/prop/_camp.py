@@ -284,7 +284,7 @@ class Camp:
         disc.data.update()
         disc.color = (0.45, 0.42, 0.36, 1.0)
         # preview-only framing: two loose vertices (render nothing) a little outside the art
-        d = max(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) * 0.1
+        d = max(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) * 0.16
         mesh = bpy.data.meshes.new("frame")
         mesh.from_pydata([(lo[0] - d, -hi[2] - d, lo[1] - d), (hi[0] + d, -lo[2] + d, hi[1] + d)], [], [])
         frame = bpy.data.objects.new("frame", mesh)

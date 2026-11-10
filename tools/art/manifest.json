@@ -5583,6 +5583,285 @@
         "_mythic"
       ]
     },
+    "prop/CAMPFIRE": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -2.8230810165405273,
+          -0.0350649356842041,
+          -2.903081178665161
+        ],
+        [
+          2.8230810165405273,
+          4.135065078735352,
+          2.903081178665161
+        ]
+      ],
+      "budget": "big",
+      "cap": 2500,
+      "colors": {
+        "dark": [
+          60,
+          52,
+          46
+        ],
+        "glow": [
+          255,
+          140,
+          50
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "stone": [
+          128,
+          124,
+          116
+        ],
+        "wood": [
+          100,
+          70,
+          45
+        ]
+      },
+      "hash": "64975f940f247031",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 128
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 248
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 220
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 768
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 192
+        }
+      },
+      "prop": "camp",
+      "replaces": "Server/Outpost CampFire (Neon ball)",
+      "tris": 1556,
+      "uploadedHash": null
+    },
+    "prop/CAMPSITE_MARKER": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -1.350000023841858,
+          0.0,
+          -0.20000001788139343
+        ],
+        [
+          1.350000023841858,
+          3.5999999046325684,
+          0.4000000059604645
+        ]
+      ],
+      "budget": "small",
+      "cap": 800,
+      "colors": {
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "face": [
+          232,
+          214,
+          170
+        ],
+        "glow": [
+          255,
+          200,
+          110
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "faces": {
+        "face": "Front: Campsite name"
+      },
+      "hash": "c551e85b0e76f345",
+      "optional": true,
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "face": {
+          "group": "face",
+          "role": null,
+          "tris": 12
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 28
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 184
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 48
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 44
+        }
+      },
+      "prop": "camp",
+      "replaces": "(new) Campsite N label",
+      "tris": 388,
+      "uploadedHash": null
+    },
+    "prop/CAMPSITE_TENT": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -2.0730748176574707,
+          -0.03577709197998047,
+          -3.1377193927764893
+        ],
+        [
+          1.9900000095367432,
+          2.950000047683716,
+          2.5299999713897705
+        ]
+      ],
+      "budget": "big",
+      "cap": 2500,
+      "colors": {
+        "accent": [
+          200,
+          90,
+          60
+        ],
+        "canvas": [
+          196,
+          182,
+          140
+        ],
+        "canvas2": [
+          176,
+          160,
+          120
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "glow": [
+          255,
+          200,
+          110
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "hash": "8da8238d57af1889",
+      "optional": true,
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 92
+        },
+        "canvas": {
+          "group": "canvas",
+          "role": null,
+          "tris": 88
+        },
+        "canvas2": {
+          "group": "canvas2",
+          "role": null,
+          "tris": 36
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 356
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 28
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 196
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 48
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 104
+        }
+      },
+      "prop": "camp",
+      "replaces": "(new) Campsite tent",
+      "tris": 948,
+      "uploadedHash": null
+    },
     "prop/DECOR_DINO_STATUE": {
       "asset": null,
       "batch": "11f",
@@ -5618,7 +5897,7 @@
         ]
       },
       "decor": "DINO_STATUE",
-      "hash": "8de0c2cf116f2fdd",
+      "hash": "0b52c0f69e2beefb",
       "origin": "anchor on the ground (y 0), front -Z",
       "pieces": {
         "accent": {
@@ -5687,7 +5966,7 @@
         ]
       },
       "decor": "FIRE_PIT",
-      "hash": "9330ef28d93c3579",
+      "hash": "fd770ff7b3b49cf6",
       "origin": "anchor on the ground (y 0), front -Z",
       "pieces": {
         "accent": {
@@ -5766,7 +6045,7 @@
         ]
       },
       "decor": "HAMMOCK",
-      "hash": "bdec66b22cd285cd",
+      "hash": "9014ed730fee394d",
       "origin": "anchor on the ground (y 0), front -Z",
       "pieces": {
         "accent": {
@@ -5845,7 +6124,7 @@
         ]
       },
       "decor": "HUNTERS_FLAG",
-      "hash": "57aa0de0b91e7da6",
+      "hash": "a0bcf2a9ffa80095",
       "origin": "anchor on the ground (y 0), front -Z",
       "pieces": {
         "body": {
@@ -5914,7 +6193,7 @@
         ]
       },
       "decor": "ROPE_SWING",
-      "hash": "37f34228167c25c1",
+      "hash": "e5f654dfdc5abd88",
       "origin": "anchor on the ground (y 0), front -Z",
       "pieces": {
         "accent": {
@@ -5973,7 +6252,7 @@
         ]
       },
       "decor": "STEPPING_STONES",
-      "hash": "2ddd810b3d186aa1",
+      "hash": "067175fa4d6cbef5",
       "origin": "anchor on the ground (y 0), front -Z",
       "pieces": {
         "accent": {
@@ -6040,7 +6319,7 @@
       "faces": {
         "face": "Front + Back: Decor's poster SurfaceGuis (CanvasSize 230 x 220)"
       },
-      "hash": "2825d9596c3ba2f5",
+      "hash": "3a04709210d2901b",
       "origin": "anchor on the ground (y 0), front -Z",
       "pieces": {
         "accent": {
@@ -6067,6 +6346,607 @@
       "prop": "decor",
       "replaces": "Shared/Decor WANTED_POSTER",
       "tris": 536,
+      "uploadedHash": null
+    },
+    "prop/DISPLAY_PEDESTAL": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -1.8767406940460205,
+          0.0,
+          -1.8799999952316284
+        ],
+        [
+          1.8767406940460205,
+          0.5606217980384827,
+          1.8799999952316284
+        ]
+      ],
+      "budget": "small",
+      "cap": 800,
+      "colors": {
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          110,
+          76,
+          46
+        ],
+        "face": [
+          90,
+          70,
+          40
+        ],
+        "wood": [
+          150,
+          110,
+          70
+        ]
+      },
+      "faces": {
+        "face": "Front: tower name plaque"
+      },
+      "hash": "938bc9c7b40331f4",
+      "optional": true,
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 44
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 252
+        },
+        "face": {
+          "group": "face",
+          "role": null,
+          "tris": 12
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 220
+        }
+      },
+      "prop": "camp",
+      "replaces": "(new) Display Tower pedestal",
+      "tris": 528,
+      "uploadedHash": null
+    },
+    "prop/FENCE_POST": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -0.47631391882896423,
+          -0.023923039436340332,
+          -0.550000011920929
+        ],
+        [
+          0.47631391882896423,
+          5.300000190734863,
+          0.550000011920929
+        ]
+      ],
+      "budget": "small",
+      "cap": 400,
+      "colors": {
+        "dark": [
+          90,
+          70,
+          50
+        ],
+        "rope": [
+          196,
+          170,
+          120
+        ],
+        "wood": [
+          120,
+          84,
+          52
+        ]
+      },
+      "hash": "cb3eed8598ecba2e",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 32
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 240
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 56
+        }
+      },
+      "prop": "camp",
+      "replaces": "Server/Outpost FencePost (x48)",
+      "tris": 328,
+      "uploadedHash": null
+    },
+    "prop/FENCE_RAIL": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -7.553098678588867,
+          1.50453519821167,
+          -0.28999999165534973
+        ],
+        [
+          7.553098678588867,
+          3.7899999618530273,
+          0.28999999165534973
+        ]
+      ],
+      "budget": "small",
+      "cap": 400,
+      "colors": {
+        "rope": [
+          196,
+          170,
+          120
+        ],
+        "wood": [
+          120,
+          84,
+          52
+        ]
+      },
+      "hash": "fd86e6d61e23c796",
+      "length": 15.25,
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 192
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 96
+        }
+      },
+      "prop": "camp",
+      "replaces": "Server/Outpost Rail (x48)",
+      "tris": 288,
+      "uploadedHash": null
+    },
+    "prop/HATCHERY_HUT": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -6.110109329223633,
+          -1.1920928955078125e-07,
+          -6.400000095367432
+        ],
+        [
+          6.110109329223633,
+          11.178689002990723,
+          5.0
+        ]
+      ],
+      "budget": "big",
+      "cap": 2500,
+      "colors": {
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          110,
+          76,
+          46
+        ],
+        "egg": [
+          240,
+          226,
+          190
+        ],
+        "egg2": [
+          170,
+          200,
+          150
+        ],
+        "face": [
+          232,
+          214,
+          170
+        ],
+        "glow": [
+          255,
+          200,
+          110
+        ],
+        "leaf": [
+          110,
+          140,
+          70
+        ],
+        "straw": [
+          214,
+          186,
+          110
+        ],
+        "wood": [
+          170,
+          130,
+          80
+        ]
+      },
+      "faces": {
+        "face": "Front: 'Hatchery Hut' sign"
+      },
+      "hash": "6685396b2e03a870",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 36
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 756
+        },
+        "egg": {
+          "group": "egg",
+          "role": null,
+          "tris": 200
+        },
+        "egg2": {
+          "group": "egg2",
+          "role": null,
+          "tris": 160
+        },
+        "face": {
+          "group": "face",
+          "role": null,
+          "tris": 12
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 24
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 216
+        },
+        "straw": {
+          "group": "straw",
+          "role": null,
+          "tris": 148
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 672
+        }
+      },
+      "prop": "camp",
+      "replaces": "Server/Outpost HatcheryHut + HutRoof",
+      "tris": 2224,
+      "uploadedHash": null
+    },
+    "prop/HATCHLING_PEN": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -3.740000009536743,
+          0.0,
+          -4.05385160446167
+        ],
+        [
+          3.740000009536743,
+          2.106602430343628,
+          3.740000009536743
+        ]
+      ],
+      "budget": "big",
+      "cap": 2500,
+      "colors": {
+        "dark": [
+          120,
+          84,
+          52
+        ],
+        "straw": [
+          214,
+          186,
+          110
+        ],
+        "water": [
+          90,
+          150,
+          190
+        ],
+        "wood": [
+          150,
+          120,
+          80
+        ]
+      },
+      "hash": "76d8479e640ce4e4",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 332
+        },
+        "straw": {
+          "group": "straw",
+          "role": null,
+          "tris": 120
+        },
+        "water": {
+          "group": "water",
+          "role": null,
+          "tris": 12
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 880
+        }
+      },
+      "prop": "camp",
+      "replaces": "Server/Outpost HatchlingPen + PenPost x4 (per Campsite)",
+      "tris": 1344,
+      "uploadedHash": null
+    },
+    "prop/HUNT_BOARD": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -3.1500000953674316,
+          0.0,
+          -0.7505170106887817
+        ],
+        [
+          3.1500000953674316,
+          5.827041149139404,
+          0.7505170106887817
+        ]
+      ],
+      "budget": "mid",
+      "cap": 1500,
+      "colors": {
+        "accent": [
+          200,
+          60,
+          50
+        ],
+        "dark": [
+          74,
+          54,
+          36
+        ],
+        "face": [
+          232,
+          214,
+          170
+        ],
+        "note": [
+          240,
+          230,
+          200
+        ],
+        "note2": [
+          220,
+          200,
+          150
+        ],
+        "roof": [
+          110,
+          76,
+          46
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "faces": {
+        "face": "Front: board SurfaceGui"
+      },
+      "hash": "648b346c219e49f2",
+      "optional": true,
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 144
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 100
+        },
+        "face": {
+          "group": "face",
+          "role": null,
+          "tris": 12
+        },
+        "note": {
+          "group": "note",
+          "role": null,
+          "tris": 24
+        },
+        "note2": {
+          "group": "note2",
+          "role": null,
+          "tris": 24
+        },
+        "roof": {
+          "group": "roof",
+          "role": null,
+          "tris": 88
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 188
+        }
+      },
+      "prop": "camp",
+      "replaces": "(new) Hunt Board in camp",
+      "tris": 580,
+      "uploadedHash": null
+    },
+    "prop/SHOP_STALL": {
+      "asset": null,
+      "batch": "11f",
+      "box": [
+        [
+          -4.376623153686523,
+          0.0,
+          -1.7350000143051147
+        ],
+        [
+          4.0,
+          7.649999618530273,
+          2.6837382316589355
+        ]
+      ],
+      "budget": "big",
+      "cap": 2500,
+      "colors": {
+        "accent": [
+          200,
+          90,
+          60
+        ],
+        "canvas": [
+          214,
+          200,
+          160
+        ],
+        "cloth2": [
+          80,
+          120,
+          170
+        ],
+        "dark": [
+          110,
+          76,
+          46
+        ],
+        "egg": [
+          240,
+          226,
+          190
+        ],
+        "face": [
+          232,
+          214,
+          170
+        ],
+        "glow": [
+          255,
+          200,
+          110
+        ],
+        "metal": [
+          78,
+          82,
+          86
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "wood": [
+          150,
+          110,
+          70
+        ]
+      },
+      "faces": {
+        "face": "Front: 'Outpost Shop' sign"
+      },
+      "hash": "0dce179be8ea7e90",
+      "origin": "anchor on the ground (y 0), front -Z",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 316
+        },
+        "canvas": {
+          "group": "canvas",
+          "role": null,
+          "tris": 316
+        },
+        "cloth2": {
+          "group": "cloth2",
+          "role": null,
+          "tris": 92
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 668
+        },
+        "egg": {
+          "group": "egg",
+          "role": null,
+          "tris": 168
+        },
+        "face": {
+          "group": "face",
+          "role": null,
+          "tris": 12
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 28
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 196
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 116
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 352
+        }
+      },
+      "prop": "camp",
+      "replaces": "Server/Outpost ShopCounter",
+      "tris": 2264,
       "uploadedHash": null
     },
     "prop/STATION_HEALTH": {
@@ -6144,7 +7024,7 @@
         ]
       },
       "display": "Herb Kitchen",
-      "hash": "82d147fe47b23dea",
+      "hash": "0afa41334224d0ea",
       "origin": "anchor on the ground (y 0), front -Z",
       "pieces": {
         "cork": {
@@ -6254,7 +7134,7 @@
         ]
       },
       "display": "Raptor Dummy",
-      "hash": "9d3f70506205523c",
+      "hash": "2636f35985e5947e",
       "origin": "anchor on the ground (y 0), front -Z",
       "pieces": {
         "body": {
@@ -6354,7 +7234,7 @@
         ]
       },
       "display": "Raptor Chase",
-      "hash": "67851c26d07d2995",
+      "hash": "cbc8a8486c0885b4",
       "origin": "anchor on the ground (y 0), front -Z",
       "pieces": {
         "body": {
@@ -6454,7 +7334,7 @@
         ]
       },
       "display": "Coconut Toss",
-      "hash": "011477da2f184341",
+      "hash": "93dd532620301856",
       "origin": "anchor on the ground (y 0), front -Z",
       "pieces": {
         "chalk": {
@@ -6534,7 +7414,7 @@
         ]
       },
       "display": "Coconut Toss target",
-      "hash": "861fdb6a2f0ed866",
+      "hash": "f6b18eaa9133130d",
       "origin": "anchor on the ground (y 0), front -Z",
       "pieces": {
         "nut": {
