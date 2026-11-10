@@ -24,7 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 ART = ROOT / "tools" / "art"
 OUT = ROOT / "src" / "shared" / "ArtIds.luau"
-KINDS = ("dino", "tower", "hunter")
+KINDS = ("dino", "tower", "hunter", "gun", "kit", "walker", "projectile", "pet", "egg", "prop")
 
 HEADER = """--!strict
 --[[
