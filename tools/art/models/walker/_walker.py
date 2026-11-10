@@ -60,6 +60,19 @@ class Walk:
         self.lp_n = getattr(self, "lp_n", 0) + 1
         return self.lp.cone(f"cone{self.lp_n}", Vector(base), Vector(tip), radius, segments)
 
+    def frame(self, objs, pad):
+        """Two loose vertices `pad` x the largest extent outside objs' bounds: build.py renders
+        `context` pieces in the preview only, so the 3/4 view doesn't crop a hat or a tail."""
+        import bpy
+
+        lo, hi = self.lp.bounds(objs)
+        d = max(hi - lo) * pad
+        mesh = bpy.data.meshes.new("frame")
+        mesh.from_pydata([tuple(lo - d), tuple(hi + d)], [], [])
+        obj = bpy.data.objects.new("frame", mesh)
+        bpy.context.scene.collection.objects.link(obj)
+        return obj
+
     def finish(self, target, keep=120):
         lp, out = self.lp, []
         m = K.to_blender_matrix() @ Matrix.Scale(self.scale, 4)
@@ -95,7 +108,7 @@ class Walk:
         print(f"ART look box {[round(v, 3) for v in llo]} .. {[round(v, 3) for v in lhi]}")
         return out, (lo, hi)
 
-    def model(self, budget, colors, meta, target, batch="11d2"):
+    def model(self, budget, colors, meta, target, batch="11d2", pad=0.1):
         pieces, box = self.finish(target)
         meta = dict(meta)
         meta["lookBox"] = [[round(v * self.scale, 3) for v in self.look[0]],
@@ -106,6 +119,7 @@ class Walk:
             "budget": budget,
             "box": box,
             "pieces": pieces,
+            "context": [self.frame(pieces, pad)],  # preview only: room round the model (renders nothing)
             "groups": dict(self.groups),
             "roles": dict(self.roles),
             "colors": colors,
@@ -234,63 +248,64 @@ def ranger(lp, kind):
     heavy, legend = kind == "heavy", kind == "legend"
     w = Walk(lp, HEAVY_LOOK if heavy else RANGER_LOOK, scale)
     # torso, belt, legs, boots
-    w.add("shirt", rbox((0, 0.0, 0), (0.86 if heavy else 0.8, 1.04, 0.46), bevel=0.14, segments=2))
-    w.add("leather", rbox((0, -0.45, 0), (0.86 if heavy else 0.82, 0.12, 0.5), bevel=0.04))
+    w.add("shirt", rbox((0, 0.0, 0), (0.78 if heavy else 0.72, 1.04, 0.46), bevel=0.14, segments=1))
+    w.add("leather", rbox((0, -0.45, 0), (0.8 if heavy else 0.74, 0.12, 0.5), bevel=0.04))
     w.add("brass", rbox((0, -0.45, -0.255), (0.1, 0.08, 0.02), bevel=0.01))
     for s in (-1, 1):
         w.add("pants", rbox((0.2 * s, -0.9, 0), (0.32, 0.76, 0.36), bevel=0.1))
         w.add("boot", rbox((0.2 * s, -1.38, -0.05), (0.34, 0.24, 0.46), bevel=0.08))
     # arms (sleeves = shirt, hands = skin): right on the grip, left under the fore-end
-    for sh, el, ha in (((0.47, 0.36, 0), (0.55, 0.0, 0.06), (0.43, 0.06, -0.2)),
-                       ((-0.47, 0.36, 0), (-0.36, 0.02, -0.34), (0.3, 0.14, -0.7))):
-        w.add("shirt", ell(sh, (0.15, 0.15, 0.15), 8, 5))
-        w.add("shirt", rod(sh, el, 0.12, 8, top=0.85))
-        w.add("shirt", rod(el, ha, 0.1, 8, top=0.85))
+    for sh, el, ha in (((0.41, 0.34, 0), (0.46, 0.0, 0.06), (0.4, 0.06, -0.2)),
+                       ((-0.41, 0.34, 0), (-0.34, 0.02, -0.32), (0.3, 0.14, -0.7))):
+        w.add("shirt", ell(sh, (0.14, 0.14, 0.14), 6, 4))
+        w.add("shirt", rod(sh, el, 0.12, 6, top=0.85))
+        w.add("shirt", rod(el, ha, 0.1, 6, top=0.85))
         w.add("skin", ell(ha, (0.1, 0.1, 0.1), 6, 4))
     # head, eyes, nose, neck
-    w.add("skin", ell((0, 0.82, 0), (0.28, 0.27, 0.26), 12, 7), piece="head", role="head")
+    w.add("skin", ell((0, 0.82, 0), (0.28, 0.27, 0.26), 10, 6), piece="head", role="head")
     w.add("skin", cyl((0, 0.58, 0), 0.12, 0.14, 8, bevel=0))
     w.add("skin", ell((0, 0.78, -0.26), (0.05, 0.05, 0.04), 5, 3))
     w.add("eye", *[ell((0.1 * s, 0.86, -0.235), (0.035, 0.05, 0.02), 5, 3) for s in (-1, 1)])
     # campaign hat: brim, pinched crown, camp band
     w.add("hat", cyl((0, 1.07, 0), 0.47, 0.05, 14, bevel=0))
-    w.add("hat", cyl((0, 1.18, 0), 0.25, 0.2, 10, top=0.78, bevel=0.03))
-    w.add("camp", ring((0, 1.12, 0), 0.25, 0.035, 12, 3))
+    w.add("hat", cyl((0, 1.18, 0), 0.25, 0.2, 10, top=0.78, bevel=0))
+    w.add("camp", ring((0, 1.12, 0), 0.25, 0.035, 10, 3))
     # scarf (camp): a ring round the neck + the knot at the front
-    w.add("camp", ring((0, 0.53, 0), 0.22, 0.06, 10, 4))
-    w.add("camp", rbox((0, 0.44, -0.25), (0.16, 0.16, 0.07), bevel=0.03, rot=(0, 0, 45)))
+    w.add("camp", ring((0, 0.53, 0), 0.21, 0.06, 8, 3))
+    w.add("camp", rbox((0, 0.44, -0.25), (0.16, 0.16, 0.07), bevel=0, rot=(0, 0, 45)))
     # rifle along -Z at x 0.4: stock, receiver, fore-end, barrel, muzzle ring (role muzzle)
     x, y = 0.42, 0.14
     tip = -1.47 if heavy else -1.22
     w.add("wood", rbox((x, y - 0.03, 0.02), (0.08, 0.14, 0.34), bevel=0.03, rot=(-8, 0, 0)))
     w.add("gun", rbox((x, y, -0.3), (0.09, 0.12, 0.32), bevel=0.02))
     if heavy:  # Heavy Rifle: a thick barrel with a cooling jacket, a drum magazine
-        w.add("gun", rod((x, y + 0.01, -0.45), (x, y + 0.01, tip + 0.05), 0.075, 8))
-        w.add("gun", *[ring_along((x, y + 0.01, z), (x, y + 0.01, z - 1), 0.08, 0.018, 8, 3) for z in (-0.7, -0.95, -1.2)])
+        w.add("gun", rod((x, y + 0.01, -0.45), (x, y + 0.01, -1.1), 0.085, 8))  # cooling jacket
+        w.add("gun", rod((x, y + 0.01, -1.1), (x, y + 0.01, tip + 0.02), 0.045, 6))
+        w.add("dark", *[rod((x, y + 0.01, z), (x, y + 0.01, z - 0.04), 0.095, 8) for z in (-0.6, -0.85)])
         w.add("gun", cyl((x, y - 0.14, -0.38), 0.12, 0.1, 10, rot=(0, 0, 90), bevel=0.02))
-        w.add("brass", bar((-0.38, 0.42, -0.24), (0.36, -0.3, -0.25), 0.1, 0.03))  # ammo belt
+        w.add("brass", bar((-0.34, 0.42, -0.26), (0.34, -0.32, -0.27), 0.13, 0.04))  # ammo belt
         w.add("pack", rbox((0, 0.05, 0.3), (0.56, 0.6, 0.2), bevel=0.06))  # ammo pack on the back
     else:
         w.add("wood", rbox((x, y - 0.02, -0.65), (0.08, 0.07, 0.42), bevel=0.02))
         w.add("gun", rod((x, y + 0.02, -0.5), (x, y + 0.02, tip + 0.02), 0.03, 6))
-    w.add("gun", ring_along((x, y + 0.01 if heavy else y + 0.02, tip), (x, y, tip - 1),
-                            0.08 if heavy else 0.035, 0.02, 8, 3), piece="muzzle", role="muzzle")
-    if not heavy:  # canteen on the left hip
-        w.add("gun", cyl((-0.45, -0.5, 0.05), 0.1, 0.24, 8, rot=(0, 0, 90), bevel=0.02))
+    w.add("gun", ring_along((x, y + 0.01 if heavy else y + 0.02, tip), (x, y + 0.01 if heavy else y + 0.02, tip - 1),
+                            0.05 if heavy else 0.035, 0.02, 6, 3), piece="muzzle", role="muzzle")
+    if kind == "ranger":  # canteen on the left hip
+        w.add("gun", cyl((-0.26, -0.5, 0.29), 0.1, 0.2, 8, rot=(90, 0, 0), bevel=0))
     if legend:  # the long coat (split at the back), bandolier, hat feather, sheriff-style star
         w.add("coat", rbox((0, -0.55, 0.02), (0.88, 0.75, 0.5), bevel=0.1, taper=(0.93, 0.92), rot=(0, 0, 0)))
         w.add("coat", *[rbox((0.16 * s, -0.25, -0.24), (0.18, 0.5, 0.04), bevel=0.02, rot=(0, 0, -12 * s)) for s in (-1, 1)])
-        w.add("leather", bar((-0.38, 0.45, -0.24), (0.36, -0.32, -0.26), 0.12, 0.03))
-        w.add("brass", *[ell((-0.38 + 0.74 * t, 0.45 - 0.77 * t, -0.275), (0.025, 0.05, 0.02), 4, 3)
+        w.add("leather", bar((-0.34, 0.45, -0.26), (0.34, -0.32, -0.27), 0.13, 0.04))
+        w.add("brass", *[ell((-0.34 + 0.68 * t, 0.45 - 0.77 * t, -0.29), (0.025, 0.05, 0.02), 4, 3)
                          for t in (0.15, 0.3, 0.45, 0.6, 0.75)])
         w.add("brass", ell((-0.22, 0.25, -0.24), (0.07, 0.07, 0.02), 6, 3))
         w.add("camp", w.cone((0.2, 1.15, 0.12), (0.36, 1.32, 0.3), 0.04, 4))
     colors = {"shirt": KHAKI, "pants": DARK_KHAKI, "hat": DARK_KHAKI, "skin": SKIN, "eye": EYE, "camp": CAMP,
               "leather": LEATHER, "boot": BOOT, "gun": GUN, "wood": WOOD, "brass": BRASS,
-              "pack": DARK_KHAKI, "coat": mix(DARK_KHAKI, (80, 60, 40), 0.4)}
+              "pack": DARK_KHAKI, "dark": (35, 32, 30), "coat": (98, 72, 46)}
     name = {"ranger": "Ranger", "heavy": "Heavy Rifle Ranger", "legend": "Legend Ranger"}[kind]
     return w.model("mid", colors, {"walker": "ranger", "look": "RangerLook", "kind": kind, "display": name},
-                   1150 if legend else 1050)
+                   1400 if legend else 1320 if heavy else 1150)
 
 
 # RaptorLook "rex" (Rex Tamer, scale 1.9) at scale 1: Head 1 x 0.9 x 1.3 at (0, 0.75, -1.3), tiny

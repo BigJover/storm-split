@@ -13204,6 +13204,519 @@
       "tris": 2396,
       "uploadedHash": null
     },
+    "walker/RANGER": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -0.5312435626983643,
+          -1.5,
+          -1.2373205423355103
+        ],
+        [
+          0.5548479557037354,
+          1.2799999713897705,
+          0.4699999988079071
+        ]
+      ],
+      "budget": "mid",
+      "colors": {
+        "boot": [
+          70,
+          50,
+          35
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "camp": [
+          13,
+          105,
+          172
+        ],
+        "eye": [
+          28,
+          22,
+          20
+        ],
+        "gun": [
+          55,
+          50,
+          45
+        ],
+        "hat": [
+          120,
+          105,
+          70
+        ],
+        "leather": [
+          96,
+          64,
+          40
+        ],
+        "pants": [
+          120,
+          105,
+          70
+        ],
+        "shirt": [
+          176,
+          160,
+          110
+        ],
+        "skin": [
+          225,
+          185,
+          150
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "display": "Ranger",
+      "hash": "e051f888593358e1",
+      "kind": "ranger",
+      "look": "RangerLook",
+      "lookBox": [
+        [
+          -0.475,
+          -1.5,
+          -1.25
+        ],
+        [
+          0.475,
+          1.3,
+          0.475
+        ]
+      ],
+      "pieces": {
+        "boot": {
+          "group": "boot",
+          "role": null,
+          "tris": 88
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 44
+        },
+        "camp": {
+          "group": "camp",
+          "role": null,
+          "tris": 120
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 40
+        },
+        "gun": {
+          "group": "gun",
+          "role": null,
+          "tris": 92
+        },
+        "hat": {
+          "group": "hat",
+          "role": null,
+          "tris": 88
+        },
+        "head": {
+          "group": "skin",
+          "role": "head",
+          "tris": 100
+        },
+        "leather": {
+          "group": "leather",
+          "role": null,
+          "tris": 44
+        },
+        "muzzle": {
+          "group": "gun",
+          "role": "muzzle",
+          "tris": 36
+        },
+        "pants": {
+          "group": "pants",
+          "role": null,
+          "tris": 88
+        },
+        "shirt": {
+          "group": "shirt",
+          "role": null,
+          "tris": 196
+        },
+        "skin": {
+          "group": "skin",
+          "role": null,
+          "tris": 120
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 88
+        }
+      },
+      "scale": 1.0,
+      "tris": 1144,
+      "uploadedHash": null,
+      "walker": "ranger"
+    },
+    "walker/RANGER_HEAVY": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -0.5843679308891296,
+          -1.6500000953674316,
+          -1.6360526084899902
+        ],
+        [
+          0.6103327870368958,
+          1.4079999923706055,
+          0.5170000195503235
+        ]
+      ],
+      "budget": "mid",
+      "colors": {
+        "boot": [
+          70,
+          50,
+          35
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "camp": [
+          13,
+          105,
+          172
+        ],
+        "dark": [
+          35,
+          32,
+          30
+        ],
+        "eye": [
+          28,
+          22,
+          20
+        ],
+        "gun": [
+          55,
+          50,
+          45
+        ],
+        "hat": [
+          120,
+          105,
+          70
+        ],
+        "leather": [
+          96,
+          64,
+          40
+        ],
+        "pack": [
+          120,
+          105,
+          70
+        ],
+        "pants": [
+          120,
+          105,
+          70
+        ],
+        "shirt": [
+          176,
+          160,
+          110
+        ],
+        "skin": [
+          225,
+          185,
+          150
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "display": "Heavy Rifle Ranger",
+      "hash": "9249fcc1e4bd4a45",
+      "kind": "heavy",
+      "look": "RangerLook",
+      "lookBox": [
+        [
+          -0.522,
+          -1.65,
+          -1.65
+        ],
+        [
+          0.55,
+          1.43,
+          0.522
+        ]
+      ],
+      "pieces": {
+        "boot": {
+          "group": "boot",
+          "role": null,
+          "tris": 88
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 88
+        },
+        "camp": {
+          "group": "camp",
+          "role": null,
+          "tris": 120
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 56
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 40
+        },
+        "gun": {
+          "group": "gun",
+          "role": null,
+          "tris": 186
+        },
+        "hat": {
+          "group": "hat",
+          "role": null,
+          "tris": 88
+        },
+        "head": {
+          "group": "skin",
+          "role": "head",
+          "tris": 100
+        },
+        "leather": {
+          "group": "leather",
+          "role": null,
+          "tris": 44
+        },
+        "muzzle": {
+          "group": "gun",
+          "role": "muzzle",
+          "tris": 36
+        },
+        "pack": {
+          "group": "pack",
+          "role": null,
+          "tris": 44
+        },
+        "pants": {
+          "group": "pants",
+          "role": null,
+          "tris": 88
+        },
+        "shirt": {
+          "group": "shirt",
+          "role": null,
+          "tris": 176
+        },
+        "skin": {
+          "group": "skin",
+          "role": null,
+          "tris": 120
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 44
+        }
+      },
+      "scale": 1.1,
+      "tris": 1318,
+      "uploadedHash": null,
+      "walker": "ranger"
+    },
+    "walker/RANGER_LEGEND": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -0.7171788215637207,
+          -2.0250000953674316,
+          -1.6703827381134033
+        ],
+        [
+          0.7490447759628296,
+          1.7820000648498535,
+          0.6345000267028809
+        ]
+      ],
+      "budget": "mid",
+      "colors": {
+        "boot": [
+          70,
+          50,
+          35
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "camp": [
+          13,
+          105,
+          172
+        ],
+        "coat": [
+          98,
+          72,
+          46
+        ],
+        "eye": [
+          28,
+          22,
+          20
+        ],
+        "gun": [
+          55,
+          50,
+          45
+        ],
+        "hat": [
+          120,
+          105,
+          70
+        ],
+        "leather": [
+          96,
+          64,
+          40
+        ],
+        "pants": [
+          120,
+          105,
+          70
+        ],
+        "shirt": [
+          176,
+          160,
+          110
+        ],
+        "skin": [
+          225,
+          185,
+          150
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "display": "Legend Ranger",
+      "hash": "4d1ae308b25a5784",
+      "kind": "legend",
+      "look": "RangerLook",
+      "lookBox": [
+        [
+          -0.641,
+          -2.025,
+          -1.688
+        ],
+        [
+          0.641,
+          1.755,
+          0.641
+        ]
+      ],
+      "pieces": {
+        "boot": {
+          "group": "boot",
+          "role": null,
+          "tris": 88
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 146
+        },
+        "camp": {
+          "group": "camp",
+          "role": null,
+          "tris": 124
+        },
+        "coat": {
+          "group": "coat",
+          "role": null,
+          "tris": 130
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 40
+        },
+        "gun": {
+          "group": "gun",
+          "role": null,
+          "tris": 64
+        },
+        "hat": {
+          "group": "hat",
+          "role": null,
+          "tris": 88
+        },
+        "head": {
+          "group": "skin",
+          "role": "head",
+          "tris": 100
+        },
+        "leather": {
+          "group": "leather",
+          "role": null,
+          "tris": 88
+        },
+        "muzzle": {
+          "group": "gun",
+          "role": "muzzle",
+          "tris": 36
+        },
+        "pants": {
+          "group": "pants",
+          "role": null,
+          "tris": 88
+        },
+        "shirt": {
+          "group": "shirt",
+          "role": null,
+          "tris": 194
+        },
+        "skin": {
+          "group": "skin",
+          "role": null,
+          "tris": 120
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 88
+        }
+      },
+      "scale": 1.35,
+      "tris": 1394,
+      "uploadedHash": null,
+      "walker": "ranger"
+    },
     "walker/RAPTOR": {
       "asset": null,
       "batch": "11d2",
