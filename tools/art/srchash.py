@@ -14,6 +14,10 @@ def source_hash(kind, key):
     files += sorted((ART / "models" / kind).glob("_*.py"))
     if kind == "kit":  # kit props are built with the gun helpers (models/gun/_gun.py)
         files += sorted((ART / "models" / "gun").glob("_gun.py"))
+    if kind in ("walker", "projectile"):  # walkers / dino shots: models/walker/_walker.py on tower/_kit.py
+        files += [ART / "models" / "tower" / "_kit.py"]
+        if kind == "projectile":
+            files += sorted((ART / "models" / "walker").glob("_*.py"))
     h = hashlib.sha256()
     for f in files:
         h.update(f.name.encode())

@@ -12717,6 +12717,500 @@
       "tower": "VENT",
       "tris": 2396,
       "uploadedHash": null
+    },
+    "walker/RAPTOR": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -0.4835588037967682,
+          -1.2000000476837158,
+          -1.7471606731414795
+        ],
+        [
+          0.4877365529537201,
+          0.7967671751976013,
+          2.4501609802246094
+        ]
+      ],
+      "budget": "mid",
+      "colors": {
+        "belly": [
+          215,
+          195,
+          150
+        ],
+        "body": [
+          150,
+          120,
+          70
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "camp": [
+          13,
+          105,
+          172
+        ],
+        "claw": [
+          235,
+          230,
+          215
+        ],
+        "eye": [
+          28,
+          22,
+          20
+        ],
+        "leather": [
+          96,
+          64,
+          40
+        ]
+      },
+      "display": "Raptor",
+      "hash": "f9eafaf86027721c",
+      "kind": "raptor",
+      "look": "RaptorLook",
+      "lookBox": [
+        [
+          -0.45,
+          -1.3,
+          -1.8
+        ],
+        [
+          0.45,
+          0.875,
+          2.5
+        ]
+      ],
+      "pieces": {
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 48
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 345
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 20
+        },
+        "camp": {
+          "group": "camp",
+          "role": null,
+          "tris": 124
+        },
+        "claw": {
+          "group": "claw",
+          "role": null,
+          "tris": 48
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 40
+        },
+        "head": {
+          "group": "body",
+          "role": "head",
+          "tris": 120
+        },
+        "leather": {
+          "group": "leather",
+          "role": null,
+          "tris": 150
+        }
+      },
+      "scale": 1.0,
+      "tris": 895,
+      "uploadedHash": null,
+      "walker": "raptor"
+    },
+    "walker/RAPTOR_ALPHA": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -0.7736940979957581,
+          -1.9200000762939453,
+          -2.795457124710083
+        ],
+        [
+          0.780378520488739,
+          1.5520000457763672,
+          3.930710792541504
+        ]
+      ],
+      "budget": "mid",
+      "colors": {
+        "accent": [
+          58,
+          42,
+          28
+        ],
+        "belly": [
+          215,
+          195,
+          150
+        ],
+        "body": [
+          118,
+          98,
+          62
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "camp": [
+          13,
+          105,
+          172
+        ],
+        "claw": [
+          235,
+          230,
+          215
+        ],
+        "eye": [
+          28,
+          22,
+          20
+        ],
+        "leather": [
+          96,
+          64,
+          40
+        ],
+        "wood": [
+          122,
+          88,
+          56
+        ]
+      },
+      "display": "Alpha Raptor",
+      "hash": "d263649a4f998467",
+      "kind": "alpha",
+      "look": "RaptorLook",
+      "lookBox": [
+        [
+          -0.72,
+          -2.08,
+          -2.88
+        ],
+        [
+          0.72,
+          1.4,
+          4.0
+        ]
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 170
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 48
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 485
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 60
+        },
+        "camp": {
+          "group": "camp",
+          "role": null,
+          "tris": 136
+        },
+        "claw": {
+          "group": "claw",
+          "role": null,
+          "tris": 48
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 40
+        },
+        "head": {
+          "group": "body",
+          "role": "head",
+          "tris": 120
+        },
+        "leather": {
+          "group": "leather",
+          "role": null,
+          "tris": 222
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 16
+        }
+      },
+      "scale": 1.6,
+      "tris": 1345,
+      "uploadedHash": null,
+      "walker": "raptor"
+    },
+    "walker/RAPTOR_REX": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -1.0413978099822998,
+          -2.3158528804779053,
+          -3.558309316635132
+        ],
+        [
+          1.0413978099822998,
+          2.078674793243408,
+          4.673546314239502
+        ]
+      ],
+      "budget": "mid",
+      "colors": {
+        "accent": [
+          75,
+          80,
+          50
+        ],
+        "belly": [
+          178,
+          169,
+          124
+        ],
+        "body": [
+          110,
+          120,
+          75
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "camp": [
+          13,
+          105,
+          172
+        ],
+        "claw": [
+          235,
+          230,
+          215
+        ],
+        "eye": [
+          28,
+          22,
+          20
+        ],
+        "leather": [
+          96,
+          64,
+          40
+        ]
+      },
+      "display": "Tamed Rex",
+      "hash": "0d1ac4b7a338c7be",
+      "kind": "rex",
+      "look": "RaptorLook",
+      "lookBox": [
+        [
+          -0.95,
+          -2.47,
+          -3.705
+        ],
+        [
+          0.95,
+          2.28,
+          4.75
+        ]
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 24
+        },
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 48
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 520
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 140
+        },
+        "camp": {
+          "group": "camp",
+          "role": null,
+          "tris": 180
+        },
+        "claw": {
+          "group": "claw",
+          "role": null,
+          "tris": 72
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 40
+        },
+        "head": {
+          "group": "body",
+          "role": "head",
+          "tris": 200
+        },
+        "leather": {
+          "group": "leather",
+          "role": null,
+          "tris": 176
+        }
+      },
+      "scale": 1.9,
+      "tris": 1400,
+      "uploadedHash": null,
+      "walker": "raptor"
+    },
+    "walker/RAPTOR_SWARM": {
+      "asset": null,
+      "batch": "11d2",
+      "box": [
+        [
+          -0.2924669086933136,
+          -0.7200000286102295,
+          -1.04718017578125
+        ],
+        [
+          0.2931220829486847,
+          0.47947022318840027,
+          1.4700955152511597
+        ]
+      ],
+      "budget": "small",
+      "colors": {
+        "belly": [
+          215,
+          195,
+          150
+        ],
+        "body": [
+          160,
+          131,
+          80
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "camp": [
+          13,
+          105,
+          172
+        ],
+        "claw": [
+          235,
+          230,
+          215
+        ],
+        "eye": [
+          28,
+          22,
+          20
+        ],
+        "leather": [
+          96,
+          64,
+          40
+        ]
+      },
+      "display": "Swarm Raptor",
+      "hash": "2c41c727fd339872",
+      "kind": "swarm",
+      "look": "RaptorLook",
+      "lookBox": [
+        [
+          -0.27,
+          -0.78,
+          -1.08
+        ],
+        [
+          0.27,
+          0.525,
+          1.5
+        ]
+      ],
+      "pieces": {
+        "belly": {
+          "group": "belly",
+          "role": null,
+          "tris": 48
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 292
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 20
+        },
+        "camp": {
+          "group": "camp",
+          "role": null,
+          "tris": 116
+        },
+        "claw": {
+          "group": "claw",
+          "role": null,
+          "tris": 36
+        },
+        "eye": {
+          "group": "eye",
+          "role": null,
+          "tris": 40
+        },
+        "head": {
+          "group": "body",
+          "role": "head",
+          "tris": 100
+        },
+        "leather": {
+          "group": "leather",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "scale": 0.6,
+      "tris": 700,
+      "uploadedHash": null,
+      "walker": "raptor"
     }
   }
 }
