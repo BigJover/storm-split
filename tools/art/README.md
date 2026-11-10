@@ -183,6 +183,58 @@ Conventions (the contract for the runtime task):
   will add them to `ArtIds` (colours + `pieces` roles) — do it with the runtime commit
   (`write_ids.py --check` reports the difference until then). Nothing is uploaded or approved.
 
+## Pets, eggs, incubator (kinds `pet` and `egg`, PLAN 11f T156, batch `11f`) — models only, runtime not built
+
+```sh
+tools/art/build.sh pet HONKER                 # FBX + 3/4 (Common), side, _rare, _legendary, _mythic previews
+tools/art/build.sh egg INCUBATOR              # FBX + 3/4 + side (an egg in the nest, preview only)
+tools/art/build.sh --sheet pet,egg 11f 11f_pets   # previews/sheet_11f_pets.png: a rarity row per pet, then 2 eggs a row
+```
+
+| Key | Name (Config) | Tris | Notes |
+|---|---|---|---|
+| `pet/HONKER` | Honker (baby Parasaurolophus) | 786 | glow = the tube crest + 3 back spots |
+| `pet/FETCHER` | Fetcher (tiny Dimorphodon) | 786 | flies (`flies` meta): wings span ±1.7; glow = tail vane + a spot on each wing |
+| `pet/FERN_MUNCHER` | Fern Muncher (baby longneck) | 786 | fern sprig in its mouth (group `leaf`); glow = back + neck spots |
+| `pet/SHINY_SNATCHER` | Shiny Snatcher (baby Oviraptor) | 786 | hugs a coin (group `gold`, fixed); glow = casque + tail fan |
+| `pet/FRILL_GUARD` | Frill Guard (baby Protoceratops) | 776 | frill (group `frill`); glow = the frill's rim spots + nose bump |
+| `egg/MUD` | Mud Egg | 390 | `shell`, `mud`, `grass` |
+| `egg/SPECKLED` | Speckled Egg | 390 | `shell`, `spot` |
+| `egg/GOLDEN` | Golden Egg | 396 | `shell`, `band`, `glow` (3 amber gems, Neon) |
+| `egg/INCUBATOR` | the Hatchery Hut's egg warmer | 1,098 | `wood dark straw metal shade brass glow` (bulb); budget `mid` |
+
+Conventions (the contract for the runtime task):
+- **One model per species, rarity at runtime.** Every pet has paint groups `body belly eye shine
+  leaf accent glow` (+ `wing` / `gold` / `frill` per species). Suggested rule (what the previews show):
+  `accent` (the bandana) = the rarity colour (`Server/Pets` `RARITY_COLOURS`) at every rarity, so it
+  replaces today's Collar; `glow` (the species' markings) = its authored colour (a darker body tone,
+  SmoothPlastic) at Common / Uncommon, the rarity colour SmoothPlastic at Rare / Epic, the rarity
+  colour **Neon** at Legendary / Mythic (Mythic could add a small sparkle ParticleEmitter). The leaf
+  tag (`leaf`, Round 21) stays green. Every other group keeps its authored colour.
+  Previews `_rare` / `_legendary` / `_mythic` are preview-only recolours (`variants` in the model
+  dict, rendered by build.py; Neon is shown as the colour lifted 15 % toward white).
+- **Pivot = the ground.** Pets are authored about the ground under the pet's middle (feet at y 0,
+  front −Z), eggs about their base (resting point), the incubator about the ground under its tub.
+  Today's blocky pet pivots on its Body's centre (`FOLLOW` y −1.6 below the HumanoidRootPart, so it
+  floats ~0.7 studs); with art, follow at the HRP's ground (y −3 for the default rig, i.e. FOLLOW
+  y −3.0) so the feet touch the floor; the Fetcher keeps its +3.5 hover on top. Pet sizes match
+  today's looks (Honker 1.1 × 2.1 × 2.4, Fetcher 3.4 × 1.5 × 2.6 with wings, Fern Muncher 1.1 ×
+  2.3 × 3.0, Shiny Snatcher 1.0 × 2.1 × 1.9, Frill Guard 1.3 × 1.8 × 2.6; manifest `box`). Art is
+  visual only: no collisions, no queries (pets can't be targeted), no shadows, like today.
+- **Eggs** are 1.0 × 1.4 (`_egg.EGG_W/EGG_H`). Nothing draws eggs today (the Hatchery Hut panel is
+  2D); the runtime can show the warming egg in an incubator: egg origin at the incubator's
+  `eggSeat` (manifest meta, (0, 0.88, 0) above its origin) sinks it into the straw. Light the
+  incubator's `glow` bulb only while an egg is warming.
+- **Incubator** = one per warming slot (1, or 2 with the "Second Hatchery Hut" pass), 2.3 wide,
+  3.35 tall, placed inside / beside the Hatchery Hut block (`Server/Outpost`, 10 × 7 × 8).
+- Helpers: `models/pet/_pet.py` and `models/egg/_egg.py` (both author in Roblox axes and return the
+  art's real bounds as `box`, so fit-to-box is a no-op; both check their own caps: pets 800, eggs
+  400, incubator 1,500). Egg patterns use a fixed R2 layout (no RNG). Manifest meta: pets `pet`,
+  `display`, `species`, `origin`, `views`, `rarityGroups` (+ `flies`); eggs `egg`, `display`,
+  `origin`, `cap`; the incubator `eggSeat`, `lamp`, `front`.
+- **Not done (runtime task):** `write_ids.py` `KINDS` doesn't list `pet` / `egg`; nothing uploaded
+  or approved.
+
 ## What is verified vs assumed (2026-10-26)
 
 Verified here: Blender 5.2.3 headless runs these scripts; the FBX is written with +Y up / −Z forward,
