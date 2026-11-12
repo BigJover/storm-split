@@ -1294,7 +1294,7 @@
         0
       ],
       "gun": "PISTOL",
-      "hash": "2d080a278d2b79aa",
+      "hash": "0dd94796eee001e7",
       "muzzle": [
         0,
         0.25,
@@ -1365,7 +1365,7 @@
         ]
       },
       "gun": "PISTOL",
-      "hash": "18ce40a6234413c1",
+      "hash": "f9f949ffce8b91af",
       "pieces": {
         "brass": {
           "group": "brass",
@@ -1524,7 +1524,7 @@
         0
       ],
       "gun": "RIFLE",
-      "hash": "d391f9e1550baa11",
+      "hash": "2d7843535e756262",
       "muzzle": [
         0,
         0.25,
@@ -1605,7 +1605,7 @@
         ]
       },
       "gun": "RIFLE",
-      "hash": "29caa077074fda01",
+      "hash": "8b3866ea376ba621",
       "pieces": {
         "brass": {
           "group": "brass",
@@ -1774,7 +1774,7 @@
         0
       ],
       "gun": "SHOTGUN",
-      "hash": "195d9887402e9ab6",
+      "hash": "ef9282d16839cb9b",
       "muzzle": [
         0,
         0.25,
@@ -2081,7 +2081,7 @@
         ]
       },
       "gun": "SHOTGUN",
-      "hash": "9d7be78f105388fb",
+      "hash": "2df6ec07baf06b83",
       "pieces": {
         "brass": {
           "group": "brass",
@@ -2133,7 +2133,7 @@
         ]
       },
       "gun": "SHOTGUN",
-      "hash": "3949dea976f7ee9b",
+      "hash": "9448141649531c9c",
       "pieces": {
         "brass": {
           "group": "brass",
