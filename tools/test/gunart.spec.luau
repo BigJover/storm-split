@@ -542,3 +542,51 @@ test("real ArtIds: every gun, attachment and kit prop, no ids yet; the roles the
 	end
 	eq(ArtIds.gun.SHOTGUN_DOUBLE.pieces.muzzle2.role, "muzzle2", "double barrel's second muzzle")
 end)
+
+test("weapon skin variants (11e): <HERO>_<SKIN> replaces the gun when loaded; attachments still on top; else the base", function()
+	local art, ids = fakeArt()
+	local guns = art:FindFirstChild("gun") :: Instance
+	template("SHOTGUN_CROC_HIDE", { "steel", "accent", "scute", "muzzle" }).Parent = guns
+	ids.gun.SHOTGUN_CROC_HIDE = { model = ID, colors = table.clone(AUTHORED), pieces = { muzzle = { group = "steel", role = "muzzle" } } }
+	withArt(art, ids, function()
+		eq(GunArt.gunKey("SHOTGUN", "CROC_HIDE"), "SHOTGUN_CROC_HIDE", "loaded variant")
+		eq(GunArt.gunKey("SHOTGUN", "BAMBOO_BOOMSTICK"), "SHOTGUN", "no variant art: the base gun")
+		eq(GunArt.gunKey("SHOTGUN", nil), "SHOTGUN", "no skin")
+		eq(GunArt.gunKey("SHOTGUN", ""), "SHOTGUN", "blank skin")
+		local skinned = { accent = ACCENT, accentMaterial = Enum.Material.Neon, skin = "CROC_HIDE" }
+		local tool, handle = gunTool()
+		eq(GunArt.dressTool(tool, handle, "SHOTGUN", with(STATS, { shotsPerTrigger = 2 }), skinned, nil), true, "dressed")
+		local counts = keysOf(artPieces(tool, GunArt.FOLDER))
+		eq(counts.SHOTGUN_CROC_HIDE, 4, "the variant's pieces")
+		eq(counts.SHOTGUN, nil, "not the base gun's")
+		eq(counts.SHOTGUN_DOUBLE, 2, "the attachment still shows")
+		for _, p in artPieces(tool, GunArt.FOLDER) do
+			if p:GetAttribute("PaintGroup") == "accent" then
+				eq(p.Color, ACCENT, "accent = the skin's paint")
+			end
+		end
+		local starts = GunArt.muzzles(tool, 1)
+		ok(starts and (starts[1] - (AT * CFrame.new(MUZZLE)).Position).Magnitude < 1e-3, "tracers from the variant's muzzle")
+		-- base art gone: a variant alone never dresses (blocky Handle, as today)
+		ids.gun.SHOTGUN.model = nil
+		local tool2, handle2 = gunTool()
+		local before = fingerprint(tool2)
+		eq(GunArt.dressTool(tool2, handle2, "SHOTGUN", STATS, skinned, nil), false, "no base gun art")
+		eq(fingerprint(tool2), before, "Tool unchanged")
+	end)
+end)
+
+test("real ArtIds: each weapon skin variant is a gun/<HERO>_<SKIN> of a weapon skin for that hero", function()
+	local ArtIds = require(src.shared.ArtIds)
+	local found = 0
+	for key, entry in ArtIds.gun do
+		for skin, row in (Config :: any).Skins do
+			if row.kind == "weapon" and key == `{row.hero}_{skin}` then
+				found += 1
+				eq(entry.model, nil, `{key}: no id yet`)
+				eq(entry.pieces and entry.pieces.muzzle and entry.pieces.muzzle.role, "muzzle", `{key} muzzle role`)
+			end
+		end
+	end
+	eq(found, 6, "six weapon skin variants")
+end)

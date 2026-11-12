@@ -19,6 +19,10 @@
 	Handle at the art's muzzle piece centre; `muzzles(tool, side)` gives the tracer starts
 	(side -1 = the left gun's muzzle). nil = no art: Server/Hero keeps today's origin.
 	No template (no id, not loaded, ArtOff) = the blocky Handle exactly as today.
+	WEAPON SKINS (PLAN 11e, DECISIONS #456): a premium weapon skin has its own gun model,
+	`<HERO>_<SKIN KEY>` (Paint.skin = the worn skin's key); when that template is loaded it
+	replaces the base gun (same grip, same muzzle; attachments still go on top), else the
+	base gun is worn and only `accent` takes the skin's colour, as before.
 
 	KIT: `prop(hero, "melee" | "grenade")` = an anchored ghost copy of kind "kit"
 	`<HERO>_MELEE` / `<HERO>_GRENADE` with its origin (the grip / the ball's centre) at the
@@ -53,6 +57,7 @@ export type Paint = {
 	accent: Color3,
 	accentMaterial: Enum.Material,
 	gold: Color3?,
+	skin: string?, -- the worn weapon skin's key: its own gun model when loaded (11e)
 }
 
 GunArt.ATTACHMENTS = table.freeze({
@@ -148,10 +153,25 @@ local function pieces(kind: string, key: string, paint: Paint?): { BasePart }
 	return made
 end
 
--- The gun's pieces (base + showing attachments) about the grip, or nil when the base gun's
--- art isn't loaded. An attachment whose art isn't loaded is simply left off.
+-- The gun model to wear: the worn skin's own variant `<HERO>_<SKIN>` when it's loaded, else
+-- the hero's gun.
+function GunArt.gunKey(hero: string, skin: string?): string
+	if type(skin) == "string" and skin ~= "" then
+		local variant = `{hero}_{skin}`
+		if ArtSlot.template(GunArt.KIND, variant) then
+			return variant
+		end
+	end
+	return hero
+end
+
+-- The gun's pieces (gun or skin variant + showing attachments) about the grip, or nil when
+-- the base gun's art isn't loaded. An attachment whose art isn't loaded is simply left off.
 function GunArt.build(hero: string, stats: Shows, paint: Paint): { BasePart }?
-	local base = pieces(GunArt.KIND, hero, paint)
+	if not ArtSlot.template(GunArt.KIND, hero) then
+		return nil -- no base gun art: the blocky Handle (a variant alone never dresses)
+	end
+	local base = pieces(GunArt.KIND, GunArt.gunKey(hero, paint.skin), paint)
 	if #base == 0 then
 		return nil
 	end
@@ -228,7 +248,7 @@ function GunArt.dressTool(tool: Tool, handle: BasePart, hero: string, stats: Sho
 		local left = Instance.new("Model")
 		left.Name = GunArt.OFFHAND
 		local hold = grip.CFrame * tool.Grip:Inverse()
-		for _, piece in pieces(GunArt.KIND, hero, paint) do
+		for _, piece in pieces(GunArt.KIND, GunArt.gunKey(hero, paint.skin), paint) do
 			local rel = hold * piece.CFrame
 			piece.Anchored = false
 			piece.CFrame = leftHand.CFrame * rel

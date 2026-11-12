@@ -356,7 +356,8 @@ local function syncTool(player: Player)
 		local look = Cosmetics.gunLook(worn(player), HERO_COLORS[s.hero] or Color3.new(1, 1, 1), maxed, MASTERY_GOLD)
 		-- A weapon skin for this hero's gun (T142) wins over sets and tints; mastery 20's
 		-- gold stays its own. Colour and material only: the gun's size never changes.
-		local skin = Skins.look(player:GetAttribute(Skins.attribute(Skins.slot("weapon", s.hero))))
+		local skinKey = player:GetAttribute(Skins.attribute(Skins.slot("weapon", s.hero)))
+		local skin = Skins.look(skinKey)
 		local colour, material, set = Skins.gunPaint(skin, look, maxed)
 		handle.Color = colour
 		handle.Material = material
@@ -377,6 +378,8 @@ local function syncTool(player: Player)
 				accent = accent,
 				accentMaterial = accentMaterial,
 				gold = if maxed then MASTERY_GOLD else nil,
+				-- a premium skin's own gun model (11e, #456) when its art is loaded
+				skin = if skin and type(skinKey) == "string" then skinKey else nil,
 			}, if leftHand and leftHand:IsA("BasePart") then leftHand else nil)
 		end
 	end
