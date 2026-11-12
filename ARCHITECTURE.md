@@ -126,6 +126,8 @@ src/
 │   ├── Viewmodel.luau       First-person arms + gun on the camera (11c T151b, #435/#453), client only
 │   ├── PetLook.luau         Pets + eggs in 3D (10d blocks, 11f art): blocky hatchling or species art on the
 │   │                        ground with rarity paint (accent / glow / Neon / Mythic sparkle); incubators (art only)
+│   ├── PropArt.luau         Outpost props in their art (11f): art on the prop's anchor, replaced blocks kept but
+│   │                        hidden (restorable), `face` signs; used by Outpost, Decor and Wardrobe (pedestals)
 │   ├── Theme.luau           Title, currency and display names (Dino Hunters theme); `formatAmber` (K/M/B,
 │   │                        rounded down, Phase 10 T134)
 │   ├── HunterStats.luau     Phase 10: each hunter's body (Max HP, walk speed) + trained bonuses, caps; slows

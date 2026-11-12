@@ -23,7 +23,8 @@
 	Display Towers (T142, #384): the towers a player put on show stand on their Campsite
 	(the Campsite attribute Server/Pets gives), wearing that player's tower set. Built by
 	Shared/TowerLook with no range ring, never registered as towers (they never fire, take
-	no hits and can't be clicked), and gone when the player leaves.
+	no hits and can't be clicked), and gone when the player leaves. With the pedestal art
+	loaded (PLAN 11f) each stands on a pedestal deck (lifted 0.3) naming the tower.
 
 	Campsite decorations (T143c, #415): the decoration on each of the Campsite's three
 	decoration spots (Decor_<i> attributes) built by Shared/Decor — inert (anchored, no
@@ -41,6 +42,7 @@ local Skins = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Ski
 local TowerLook = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("TowerLook"))
 local OutpostRules = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Outpost"))
 local Decor = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Decor"))
+local PropArt = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("PropArt"))
 local HunterBody = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HunterBody"))
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Outpost = require(script.Parent.Outpost)
@@ -161,6 +163,14 @@ local function showDisplays(player: Player)
 		local key = player:GetAttribute(`{Skins.DECO_PREFIX}{i}`)
 		if type(key) == "string" and (Config.Towers :: any)[key] then
 			local at = ground.CFrame * CFrame.new(spot + Vector3.new(0, ground.Size.Y / 2, 0))
+			-- Art only (PLAN 11f): a pedestal under the tower, which stands on its deck.
+			local pedestal = PropArt.dress(displayFolder :: Folder, "DISPLAY_PEDESTAL", at, {})
+			if pedestal then
+				PropArt.face(pedestal, (Config.Towers :: any)[key].display)
+				pedestal:SetAttribute("Owner", player.UserId)
+				table.insert(displays[player], pedestal)
+				at += Vector3.new(0, OutpostRules.PEDESTAL_LIFT, 0)
+			end
 			local model = TowerLook.build(key, 0, at.Position) -- range 0: no ring
 			TowerLook.applySkin(model, Skins.look(player:GetAttribute(Skins.attribute(Skins.slot("tower", key)))))
 			for _, part in model:GetDescendants() do
@@ -294,6 +304,10 @@ function Wardrobe.init()
 			if added:IsA("Model") and added.Parent and added.Parent.Name == HunterBody.KIND then
 				for _, player in Players:GetPlayers() do
 					wearBody(player)
+				end
+			elseif added:IsA("Model") and added.Parent and added.Parent.Name == PropArt.KIND then
+				for _, player in Players:GetPlayers() do
+					showDisplays(player) -- pedestals and decoration art (PLAN 11f)
 				end
 			end
 		end)

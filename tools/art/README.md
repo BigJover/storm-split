@@ -246,7 +246,7 @@ Conventions (the contract for the runtime task):
   Incubators: client-only, the local player's own slots beside the hut door (`INCUBATOR_SPOTS`
   (∓4.4, 0, −8) from the hut's floor spot), egg at `EGG_SEAT`, bulb Neon only while warming.
 
-## Outpost props (kind `prop`, PLAN 11f T156, batch `11f`) — models only, runtime not built
+## Outpost props (kind `prop`, PLAN 11f T156, batch `11f`) — runtime: `Shared/PropArt` (#455)
 
 ```sh
 tools/art/build.sh prop HATCHERY_HUT              # FBX + 3/4 + side previews + manifest
@@ -300,7 +300,19 @@ Runtime contract (for the runtime task, after Jovan approves):
 - Group `glow` = Neon (fires, lit windows, lanterns); everything else SmoothPlastic, authored colours.
 - Manifest `meta`: `prop` (`station` / `decor` / `camp`), `station` / `decor` key, `replaces`, `cap`,
   `origin`, `faces`, `optional`. Budget classes `big` (2,500), `mid` (decorations, capped 1,200 by
-  `_camp`), `small`. `write_ids.py` `KINDS` doesn't list `prop` yet (add it with the runtime commit).
+  `_camp`), `small`.
+- **Runtime (#455, `Shared/PropArt`, spec `tools/test/propart.spec.luau`):** `Server/Outpost` registers
+  every prop (key, anchor, replaced blocks) and dresses them at boot, again when art arrives or `ArtOff`
+  flips; replaced blocks keep everything and only go Transparency 1 (old value in `ArtHidden`,
+  restored exactly by `undress`). Anchors: stations = `base`; targets `base * ((i−2)·3, 0, z)`; fence
+  posts `lookAt(edge, centre)` at y 0, rails `lookAt(mid, centre)` at y 0; camp fire `CENTRE + (0,
+  FLOOR_TOP, 12)` (its PointLight + sign stay on the hidden ball); hut / shop on their floor spots;
+  pen + tent + signpost on the Campsite ground's top (`FLOOR_TOP + 0.2`) at (−6, 5) / (−6, −5) /
+  (0, −10); Hunt Board `CENTRE + (0, FLOOR_TOP, −2)` turned to face +Z; decorations at Decor's `at`
+  (`Decor.dressArt`); the pedestal under each Display Tower (`Wardrobe`, tower lifted 0.3, plaque =
+  the tower's name). Signs on `face`: Hatchery Hut, Shop, Campsite *n*, Hunt Board ("press G"), the
+  tower name, and the Wanted Poster's own two SurfaceGuis (moved off the hidden Board). Optional props
+  are art-only and walk-through (no new collision).
 
 ## Walkers and dino projectiles (kinds `walker` and `projectile`, PLAN 11d2) — models only, runtime not built
 

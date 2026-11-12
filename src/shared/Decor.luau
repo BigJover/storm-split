@@ -13,9 +13,13 @@
 	  posterText(name, cleared, round)   the Wanted Poster: your name and best hunt, the
 	                                hardest difficulty you cleared (display name, or nil) and
 	                                your best round, from the saved profile.
+	  dressArt(model, key, look, at, extra)   (build calls it) the decoration's art when loaded
+	                                (PLAN 11f): blocks kept but hidden, art in the look's colours
 	  SIZE                          each model's footprint (studs, x by z) — specs keep all
 	                                three spots apart.
 ]]
+
+local PropArt = require(script.Parent.PropArt)
 
 local Decor = {}
 
@@ -121,7 +125,50 @@ function Decor.build(key: string, look: Look, at: CFrame, extra: Extra?): Model?
 	end
 	m.PrimaryPart = m:FindFirstChildWhichIsA("BasePart")
 	m:SetAttribute("Decoration", key)
+	Decor.dressArt(m, key, look, at, extra)
 	return m
+end
+
+-- The decoration's art (PLAN 11f, prop DECOR_<key>, Shared/PropArt), when it's loaded: the
+-- blocks stay (hidden), `body` = the look's colour and `accent` its accent in the look's
+-- material, `cloth` = the flag colour (else the accent), the Fire Pit's flames real Neon fire
+-- (#450), `glow` Neon, the rest authored; the Wanted Poster's signs move onto its `face`.
+function Decor.dressArt(m: Model, key: string, look: Look, at: CFrame, extra: Extra?): Model?
+	local artKey = `DECOR_{key}`
+	if not PropArt.loaded(artKey) then
+		return nil
+	end
+	local blocks: { BasePart } = {}
+	for _, d in m:GetChildren() do
+		if d:IsA("BasePart") then
+			table.insert(blocks, d)
+		end
+	end
+	local materials: { [string]: Enum.Material } = { body = look.material, accent = look.material }
+	if key == "FIRE_PIT" then
+		materials.accent = Enum.Material.Neon
+	end
+	local art = PropArt.dress(m, artKey, at, blocks, {
+		colors = { body = look.colour, accent = look.accent, cloth = if extra and extra.flag then extra.flag else look.accent },
+		materials = materials,
+	})
+	if art and key == "WANTED_POSTER" then
+		local face: BasePart? = nil
+		for _, d in art:GetDescendants() do
+			if d:IsA("BasePart") and d:GetAttribute("PaintGroup") == "face" then
+				face = d
+			end
+		end
+		local board = m:FindFirstChild("Board")
+		if face and board then
+			for _, gui in board:GetChildren() do
+				if gui:IsA("SurfaceGui") then
+					gui.Parent = face
+				end
+			end
+		end
+	end
+	return art
 end
 
 return Decor

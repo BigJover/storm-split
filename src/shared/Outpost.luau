@@ -22,6 +22,9 @@
 	  atShop(position)          standing at the shop counter (T142: E opens it), SHOP_RADIUS
 	  DECO_SPOTS                a Campsite's three Display Tower spots (T142), in its frame
 	  DECOR_SPOTS               its three decoration spots (T143c), beside them, in its frame
+	  CAMPFIRE, TENT_SPOT, MARKER_SPOT, HUNT_BOARD, PEDESTAL_LIFT   the art props' spots (11f,
+	                            art only: the tent, signpost, Hunt Board and pedestal exist only
+	                            with their art)
   assignCampsite(taken)     the lowest free Campsite for a new arrival (T141), else nil
   spawnPoint(i)             where the i-th arrival appears (a ring by the camp fire)
 	  inside(position)          is this point over the camp's floor (and not far above it)
@@ -66,6 +69,12 @@ Outpost.SHOP_RADIUS = 8 -- how near the shop counter counts as "at" it (flat; T1
 Outpost.HATCHERY_HUT = Vector3.new(0, 0, 30)
 Outpost.SHOP = Vector3.new(-24, 0, 26)
 Outpost.SPAWN_RING = 10
+-- Art-only props (PLAN 11f, #450/#455): nothing is built here unless their art is loaded.
+Outpost.CAMPFIRE = Vector3.new(0, 0, 12) -- the camp fire's spot on the floor (from CENTRE)
+Outpost.TENT_SPOT = Vector3.new(-6, 0, -5) -- a Campsite's tent, in its frame (the free corner)
+Outpost.MARKER_SPOT = Vector3.new(0, 0, -10) -- its name signpost, at the front edge (faces the camp)
+Outpost.HUNT_BOARD = Vector3.new(0, 0, -2) -- the camp Hunt Board by the spawn ring, facing it (+Z)
+Outpost.PEDESTAL_LIFT = 0.3 -- a Display Tower on its pedestal's deck
 Outpost.HUT_RADIUS = 12 -- how near the Hatchery Hut's centre counts as "at" it (flat)
 
 local function flat(v: Vector3): Vector3

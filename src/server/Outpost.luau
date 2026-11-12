@@ -10,6 +10,12 @@
 	Server/Training owns what happens at them), the Hatchery Hut and the shop counter
 	(placeholders until 10d / 10e).
 
+	ART (PLAN 11f, DECISIONS #450/#455, tools/art/README "Outpost props"): every prop registers
+	its art key and anchor; when the art is loaded (Shared/PropArt) it stands on the anchor and
+	the blocks it replaces turn invisible but stay (collision, the station Pads, the hut /
+	counter / pen parts and every sign unchanged). Art only, nothing without it: a tent and a
+	name signpost on each Campsite and the camp Hunt Board by the spawn ring.
+
 	IN AND OUT. Main calls enterAll() every time the server goes back to the Lobby (results
 	over, board reset: every character is new) and enter(player) for someone who belongs in
 	camp during a match (a Ranked late joiner waiting for the next hunt, T105; a camp
@@ -30,6 +36,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local OutpostRules = require(Shared:WaitForChild("Outpost"))
+local PropArt = require(Shared:WaitForChild("PropArt"))
 
 local Outpost = {}
 
@@ -47,10 +54,20 @@ local FIRE = Color3.fromRGB(255, 140, 50)
 local RAPTOR = Color3.fromRGB(150, 170, 80)
 local PAD = Color3.fromRGB(230, 190, 90)
 local FENCE_HEIGHT = 12
+local STATION_ART = { reach = "STATION_REACH", speed = "STATION_SPEED", health = "STATION_HEALTH", throw = "STATION_THROW" }
 
 local campSpawns = OutpostRules.campSpawns() -- which character is a camp arrival (F12)
 local arrivals = 0
 local model: Model? = nil
+
+-- Every prop the art can dress (PLAN 11f, Shared/PropArt): its art key, anchor (the art's
+-- origin), the blocky parts it replaces (kept, only hidden), where the art goes, and the
+-- sign its `face` pieces carry. Optional props have no parts: they exist only as art.
+type Prop = { key: string, anchor: CFrame, parts: { BasePart }, parent: Instance, title: string?, line: string? }
+local props: { Prop } = {}
+local function prop(key: string, anchor: CFrame, parts: { BasePart }, parent: Instance, title: string?, line: string?)
+	table.insert(props, { key = key, anchor = anchor, parts = parts, parent = parent, title = title, line = line })
+end
 
 local function part(name: string, size: Vector3, cframe: CFrame, color: Color3, parent: Instance, material: Enum.Material?): Part
 	local p = Instance.new("Part")
@@ -102,36 +119,43 @@ local function buildStation(row: OutpostRules.Station, parent: Instance)
 	pad.CFrame = at(row.offset, 0.1) * CFrame.Angles(0, 0, math.rad(90))
 	pad:SetAttribute("Station", row.key)
 	local base = at(row.offset, 0)
+	local parts: { BasePart } = {} -- the station's prop blocks (the Pad stays as it is)
+	local function add(p: Part): Part
+		table.insert(parts, p)
+		return p
+	end
 	if row.key == "reach" then
 		-- A padded raptor on a post.
-		part("Post", Vector3.new(0.8, 5, 0.8), base * CFrame.new(0, 2.5, -4), WOOD, folder)
-		part("Body", Vector3.new(2.4, 2.6, 3.6), base * CFrame.new(0, 5.5, -4), RAPTOR, folder, Enum.Material.Fabric)
-		part("Head", Vector3.new(1.6, 1.4, 2), base * CFrame.new(0, 7.2, -2.6), RAPTOR, folder, Enum.Material.Fabric)
-		part("Padding", Vector3.new(2.6, 1, 3.8), base * CFrame.new(0, 4.6, -4), ROPE, folder, Enum.Material.Fabric)
+		add(part("Post", Vector3.new(0.8, 5, 0.8), base * CFrame.new(0, 2.5, -4), WOOD, folder))
+		add(part("Body", Vector3.new(2.4, 2.6, 3.6), base * CFrame.new(0, 5.5, -4), RAPTOR, folder, Enum.Material.Fabric))
+		add(part("Head", Vector3.new(1.6, 1.4, 2), base * CFrame.new(0, 7.2, -2.6), RAPTOR, folder, Enum.Material.Fabric))
+		add(part("Padding", Vector3.new(2.6, 1, 3.8), base * CFrame.new(0, 4.6, -4), ROPE, folder, Enum.Material.Fabric))
 	elseif row.key == "speed" then
 		-- A running lane with the wind-up raptor at its end.
-		part("Lane", Vector3.new(4, 0.3, 14), base * CFrame.new(0, 0.25, 0), DIRT, folder, Enum.Material.Ground)
-		part("Raptor", Vector3.new(2, 2.4, 3), base * CFrame.new(0, 1.5, 6.5), RAPTOR, folder)
-		part("Key", Vector3.new(0.3, 1.6, 1.6), base * CFrame.new(1.2, 2.6, 6.5), Color3.fromRGB(200, 200, 210), folder, Enum.Material.Metal)
+		add(part("Lane", Vector3.new(4, 0.3, 14), base * CFrame.new(0, 0.25, 0), DIRT, folder, Enum.Material.Ground))
+		add(part("Raptor", Vector3.new(2, 2.4, 3), base * CFrame.new(0, 1.5, 6.5), RAPTOR, folder))
+		add(part("Key", Vector3.new(0.3, 1.6, 1.6), base * CFrame.new(1.2, 2.6, 6.5), Color3.fromRGB(200, 200, 210), folder, Enum.Material.Metal))
 	elseif row.key == "health" then
 		-- A table with a pot of fern smoothie.
-		part("Table", Vector3.new(6, 0.5, 3), base * CFrame.new(0, 3, -4), WOOD, folder, Enum.Material.Wood)
+		add(part("Table", Vector3.new(6, 0.5, 3), base * CFrame.new(0, 3, -4), WOOD, folder, Enum.Material.Wood))
 		for _, x in { -2.5, 2.5 } do
-			part("Leg", Vector3.new(0.5, 3, 0.5), base * CFrame.new(x, 1.5, -4), WOOD, folder, Enum.Material.Wood)
+			add(part("Leg", Vector3.new(0.5, 3, 0.5), base * CFrame.new(x, 1.5, -4), WOOD, folder, Enum.Material.Wood))
 		end
-		local pot = part("Pot", Vector3.new(2, 2, 2), base * CFrame.new(-1, 4.25, -4), Color3.fromRGB(80, 80, 90), folder, Enum.Material.Metal)
+		local pot = add(part("Pot", Vector3.new(2, 2, 2), base * CFrame.new(-1, 4.25, -4), Color3.fromRGB(80, 80, 90), folder, Enum.Material.Metal))
 		pot.Shape = Enum.PartType.Ball
-		part("Ferns", Vector3.new(1.6, 1.2, 1.2), base * CFrame.new(1.6, 3.85, -4), LEAF, folder, Enum.Material.Grass)
+		add(part("Ferns", Vector3.new(1.6, 1.2, 1.2), base * CFrame.new(1.6, 3.85, -4), LEAF, folder, Enum.Material.Grass))
 	else
 		-- A throwing line and far targets.
-		part("Line", Vector3.new(8, 0.25, 0.5), base * CFrame.new(0, 0.2, 2), Color3.new(1, 1, 1), folder)
+		add(part("Line", Vector3.new(8, 0.25, 0.5), base * CFrame.new(0, 0.2, 2), Color3.new(1, 1, 1), folder))
 		for i, z in { -10, -16, -22 } do
 			local target = part("Target", Vector3.new(0.4, 3, 3), base * CFrame.new((i - 2) * 3, 2, z) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(220, 70, 60), folder)
 			target.Shape = Enum.PartType.Cylinder
+			prop("THROW_TARGET", base * CFrame.new((i - 2) * 3, 0, z), { target }, folder) -- faces +Z, the line
 		end
-		local nut = part("Coconut", Vector3.new(1.2, 1.2, 1.2), base * CFrame.new(-3, 0.8, 3), Color3.fromRGB(110, 76, 44), folder)
+		local nut = add(part("Coconut", Vector3.new(1.2, 1.2, 1.2), base * CFrame.new(-3, 0.8, 3), Color3.fromRGB(110, 76, 44), folder))
 		nut.Shape = Enum.PartType.Ball
 	end
+	prop(STATION_ART[row.key], base, parts, folder)
 	label(pad, `{row.name} — {row.stat}`, row.line, 7)
 	folder.Parent = parent
 end
@@ -147,13 +171,16 @@ local function build(): Model
 		for i = 1, posts do
 			local angle = i * 2 * math.pi / posts
 			local edge = centre + Vector3.new(math.cos(angle), 0, math.sin(angle)) * (OutpostRules.RADIUS - 1)
-			part("FencePost", Vector3.new(1, 5, 1), CFrame.new(edge + Vector3.new(0, 2.5, 0)), WOOD, root, Enum.Material.Wood)
+			local post = part("FencePost", Vector3.new(1, 5, 1), CFrame.new(edge + Vector3.new(0, 2.5, 0)), WOOD, root, Enum.Material.Wood)
+			prop("FENCE_POST", CFrame.lookAt(edge, Vector3.new(centre.X, edge.Y, centre.Z)), { post }, root)
 			-- An invisible wall between posts keeps everyone inside (no falling off, no walking onto a track).
 			local chord = 2 * (OutpostRules.RADIUS - 1) * math.sin(math.pi / posts) + 1
 			local mid = centre + Vector3.new(math.cos(angle + math.pi / posts), 0, math.sin(angle + math.pi / posts)) * (OutpostRules.RADIUS - 1)
 			local wall = part("Fence", Vector3.new(chord, FENCE_HEIGHT, 1), CFrame.lookAt(mid + Vector3.new(0, FENCE_HEIGHT / 2, 0), centre + Vector3.new(0, FENCE_HEIGHT / 2, 0)), WOOD, root)
 			wall.Transparency = 1
-			part("Rail", Vector3.new(chord, 0.4, 0.4), CFrame.lookAt(mid + Vector3.new(0, 3.5, 0), centre + Vector3.new(0, 3.5, 0)), ROPE, root).CanCollide = false
+			local rail = part("Rail", Vector3.new(chord, 0.4, 0.4), CFrame.lookAt(mid + Vector3.new(0, 3.5, 0), centre + Vector3.new(0, 3.5, 0)), ROPE, root)
+			rail.CanCollide = false
+			prop("FENCE_RAIL", CFrame.lookAt(mid, Vector3.new(centre.X, mid.Y, centre.Z)), { rail }, root) -- the walls stay the fence
 		end
 		local fire = part("CampFire", Vector3.new(3, 1.2, 3), CFrame.new(centre + Vector3.new(0, 0.7, 12)), FIRE, root, Enum.Material.Neon)
 		fire.Shape = Enum.PartType.Ball
@@ -162,6 +189,9 @@ local function build(): Model
 		light.Range = 24
 		light.Parent = fire
 		label(fire, OutpostRules.NAME, nil, 8)
+		prop("CAMPFIRE", at(OutpostRules.CAMPFIRE, 0), { fire }, root) -- the light and sign stay on the hidden ball
+		-- Art only: the camp Hunt Board by the spawn ring, facing it (+Z).
+		prop("HUNT_BOARD", at(OutpostRules.HUNT_BOARD, 0) * CFrame.Angles(0, math.pi, 0), {}, root, "Hunt Board", "Bounties and the Daily Haul — press G")
 	end
 	do -- the four training stations
 		local stations = Instance.new("Folder")
@@ -184,22 +214,42 @@ local function build(): Model
 			local ground = part("Ground", Vector3.new(size, 0.2, size), facing + Vector3.new(0, OutpostRules.FLOOR_TOP + 0.1, 0), DIRT, site, Enum.Material.Ground)
 			ground:SetAttribute("Campsite", i)
 			local pen = part("HatchlingPen", Vector3.new(7, 0.25, 7), facing * CFrame.new(-6, OutpostRules.FLOOR_TOP + 0.3, 5), Color3.fromRGB(150, 120, 80), site, Enum.Material.WoodPlanks)
+			local penParts: { BasePart } = { pen }
 			for _, corner in { Vector3.new(-3.5, 0, -3.5), Vector3.new(3.5, 0, -3.5), Vector3.new(-3.5, 0, 3.5), Vector3.new(3.5, 0, 3.5) } do
-				part("PenPost", Vector3.new(0.5, 2, 0.5), pen.CFrame * CFrame.new(corner + Vector3.new(0, 1, 0)), WOOD, site, Enum.Material.Wood)
+				table.insert(penParts, part("PenPost", Vector3.new(0.5, 2, 0.5), pen.CFrame * CFrame.new(corner + Vector3.new(0, 1, 0)), WOOD, site, Enum.Material.Wood))
 			end
 			label(ground, `Campsite {i}`, "Hatchling Pen", 5) -- Server/Pets shows its owner and pets here
+			-- Art: the pen on the Campsite ground (its top), the tent and the name signpost (art only).
+			local floor = facing * CFrame.new(0, OutpostRules.FLOOR_TOP + 0.2, 0)
+			prop("HATCHLING_PEN", floor * CFrame.new(-6, 0, 5), penParts, site)
+			prop("CAMPSITE_TENT", floor * CFrame.new(OutpostRules.TENT_SPOT), {}, site)
+			prop("CAMPSITE_MARKER", floor * CFrame.new(OutpostRules.MARKER_SPOT), {}, site, `Campsite {i}`)
 			site.Parent = sites
 		end
 	end
 	do -- Hatchery Hut (10d: Client/Pets opens it with E nearby) and shop counter placeholder (10e)
 		local hut = part("HatcheryHut", Vector3.new(10, 7, 8), at(OutpostRules.HATCHERY_HUT, 3.5), Color3.fromRGB(170, 130, 80), root, Enum.Material.WoodPlanks)
-		part("HutRoof", Vector3.new(12, 1, 10), at(OutpostRules.HATCHERY_HUT, 7.5), LEAF, root, Enum.Material.Grass)
+		local roof = part("HutRoof", Vector3.new(12, 1, 10), at(OutpostRules.HATCHERY_HUT, 7.5), LEAF, root, Enum.Material.Grass)
 		label(hut, "Hatchery Hut", "Eggs and pets — press E here", 6)
+		prop("HATCHERY_HUT", at(OutpostRules.HATCHERY_HUT, 0), { hut, roof }, root, "Hatchery Hut")
 		local counter = part("ShopCounter", Vector3.new(8, 3, 2.5), at(OutpostRules.SHOP, 1.5), WOOD, root, Enum.Material.Wood)
 		label(counter, "Shop", "Skins and the store — press E here", 4)
+		prop("SHOP_STALL", at(OutpostRules.SHOP, 0), { counter }, root, "Shop")
 	end
 	root.Parent = workspace
 	return root
+end
+
+-- Dress every prop in its art (PLAN 11f, Shared/PropArt): blocky parts kept, only hidden;
+-- props without loaded art stay exactly as built. Run again when art arrives or ArtOff flips.
+local function dressAll(root: Model)
+	PropArt.undress(root)
+	for _, p in props do
+		local art = PropArt.dress(p.parent, p.key, p.anchor, p.parts)
+		if art and p.title then
+			PropArt.face(art, p.title, p.line)
+		end
+	end
 end
 
 ------------------------------------------------------------------ in and out
@@ -250,7 +300,20 @@ function Outpost.inCamp(player: Player): boolean
 end
 
 function Outpost.init()
-	model = build()
+	local root = build()
+	model = root
+	dressAll(root)
+	task.spawn(function()
+		local art = ReplicatedStorage:WaitForChild("Art")
+		art.DescendantAdded:Connect(function(added)
+			if added:IsA("Model") and added.Parent and added.Parent.Name == PropArt.KIND then
+				dressAll(root)
+			end
+		end)
+		art:GetAttributeChangedSignal("ArtOff"):Connect(function()
+			dressAll(root)
+		end)
+	end)
 	local function watch(player: Player)
 		player.CharacterAdded:Connect(function(character)
 			settle(player, character) -- a match spawn clears the flag; a camp arrival keeps it
