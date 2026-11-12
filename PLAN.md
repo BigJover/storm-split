@@ -117,6 +117,10 @@ flag / HP bar / Trampled tip-over / Display Towers all still work. Tester Run 19
 Weapon and tower `Skins` entries (hunter skins are done in T150b) get a mesh and/or texture variant (palette texture or extra paint groups)
 on top of #433 models; recolour stays the fallback. Uploading textures = image assets
 (moderation). Tester Run 20.
+**Built 2026-11-11 (#456):** 6 hunter variants (`hunter/<SKIN>`), 6 weapon variants
+(`gun/<HERO>_<SKIN>`, runtime `GunArt.gunKey`), 5 tower-set trims (`tower/SET_<SKIN>`, runtime
+`TowerLook.applySkin(..., setKey)`); recolour kept for the 8 cheaper skins; no textures. Sheets
+`sheet_11e_{hunter,gun,tower}_skins.png` wait on Jovan's approval (batch `11e`), then Tester Run 20.
 
 ### Batch 11f — pets + Outpost props (Builder; T156)
 5 pet species × 6 rarities (rarity by accent/material), eggs, Incubators, the four training

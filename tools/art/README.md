@@ -368,6 +368,65 @@ Conventions (the contract for the runtime task):
   rangers sit on the jeep art's seat tops (`WalkerArt.seat`). Projectiles: `DinoLook.dressShot`
   scales the art by `shot.Size.Y / SHOT_ART_HEIGHT[style]`. Spec `tools/test/walkerart.spec.luau`.
 
+## Skin variants (kinds `hunter`, `gun`, `tower`, PLAN 11e T155, batch `11e`, #456)
+
+```sh
+tools/art/build.sh hunter GOLD_RUSH_SAFARI         # a hunter skin variant (3 previews, like the class bodies)
+tools/art/build.sh gun SHOTGUN_CROC_HIDE           # a weapon skin variant (3/4 + side)
+tools/art/build.sh tower SET_MIDNIGHT              # a tower-set trim (3/4, side, _top), shown on one tower in the set
+tools/art/build.sh --pngs <name> <columns> <png,...>   # an explicit sheet layout -> previews/sheet_<name>.png
+```
+
+Premium skins get a mesh variant; level-ladder and 300K non-bundle skins stay recolours (#456).
+Sheets (base vs variant side by side): `sheet_11e_hunter_skins.png` (base 3/4 | variant 3/4, side,
+back), `sheet_11e_gun_skins.png` (base 3/4 | variant 3/4 | base side | variant side),
+`sheet_11e_tower_skins.png` (base tower `_top` | the set on it: top, 3/4, side).
+
+| Skin (Skins key) | Kind / runtime key | Tris | What changes |
+|---|---|---|---|
+| Night Prowler | `hunter/NIGHT_PROWLER` (Tracker) | 5,764 | hood + drape, mask, monocular, cloak, throwing knives |
+| Jungle Ghost | `hunter/JUNGLE_GHOST` (Tracker) | 5,766 | leaf ghillie hood, shoulder leaves, vine, face paint |
+| Gold Rush Safari | `hunter/GOLD_RUSH_SAFARI` (Big Game Hunter) | 5,666 | gold helmet + plume, fringed epaulettes, medals, sash, cuffs |
+| Croc Hide Crusher | `hunter/CROC_HIDE_CRUSHER` (Brush Beater) | 5,936 | croc-skull cap + teeth, scutes, shoulder spikes, tooth necklace |
+| Mountain Rescue | `hunter/MOUNTAIN_RESCUE` (Field Medic) | 5,572 | helmet + headlamp, rope coil, bedroll, reflective bands |
+| Lifeline | `hunter/LIFELINE` (Field Medic) | 5,802 | headset + mic, glasses, shoulder guard, heartbeat line, antenna |
+| Silver Spur | `gun/PISTOL_SILVER_SPUR` | 816 | nickel frame, pearl grips, spur rowels, engraved bands |
+| Engraved Gold | `gun/RIFLE_ENGRAVED_GOLD` | 820 | gold side plates, inlays, knob, second band; no sling |
+| Bamboo Boomstick | `gun/SHOTGUN_BAMBOO_BOOMSTICK` | 832 | lashed bamboo stock + pump, twine |
+| Croc Hide | `gun/SHOTGUN_CROC_HIDE` | 856 | croc hide on stock + pump, scutes, tooth charm; no side saddle |
+| Brass Saddle | `gun/MEDIC_BRASS_SADDLE` | 1,196 | brass plate + bands, double saddle ring, laced cheek piece + tacks |
+| Lifesaver | `gun/MEDIC_LIFESAVER` | 1,160 | orange / white wraps, white cross, life-ring charm |
+| Treehouse / Stone Age / Brass Gear / Midnight / Gold Rush | `tower/SET_<KEY>` (any tower) | 264–296 | footprint edge + left-corner pieces (see the scripts) |
+
+Recolour only: Swamp Stalker, Safari Classic, Safari Chief, Bamboo Basher, Swamp Smasher, Frontier Doc
+(hunter: `shirt` = colour, `pants` = accent on the class body); Snakeskin Grip, Walnut Classic (gun:
+`accent` = the skin's colour).
+
+Conventions (how the runtime maps them):
+- **Hunter** (`models/hunter/variants/_skins.py`): the approved class body (`<HERO>.py`, untouched) is
+  built again with `drop` = (R15 part, group, n-th `body.add` call) taken off, `extra` pieces added
+  and `colors` merged; same `<R15Part>__<group>` pieces, same envelope (#434), so `HunterBody` wears
+  `hunter/<SKIN KEY>` exactly like a class body, in its authored colours (no shirt / pants recolour;
+  `skin` still = the avatar's skin). Manifest meta: `skin`, `hero`, `display`, `base`.
+- **Gun** (`models/gun/variants/_skins.py`): the approved gun's `gun(g)` (untouched) with `drop` /
+  `move` (to another group) / `extra` primitives; grip (0, 0, 0) and the `muzzle` piece unchanged.
+  Cap = 1,200 − every attachment of that gun (they can all show): PISTOL 880, RIFLE 864, SHOTGUN
+  868, MEDIC 1,200. `accent` = the pieces that take the skin's colour + material (GunArt.paint);
+  `steel` / `brass` still go gold at max mastery. Runtime: `GunArt.gunKey(hero, Paint.skin)` wears
+  `gun/<HERO>_<SKIN KEY>` when loaded (both hands for Dual Pistols), attachments on top; no base gun
+  art = the blocky Handle.
+- **Tower sets** (`models/tower/variants/_sets.py`): one trim per set, `tower/SET_<SKIN KEY>`, in the
+  Body frame (origin = the Body's centre, like every tower), checked at build: <= 300 tris, a rim
+  <= 0.3 high round the footprint, raised pieces only on the left corners (x < −0.3) <= 1.1 high, the
+  flag corner (1.2, 1.2) and the Rescue Beacon (1.25, −1.25) clear. Manifest `tower` = `SET_<KEY>`,
+  meta `set`, `trim`, `preview` (the tower drawn under it, preview only). Runtime:
+  `TowerLook.applySkin(model, look, setKey)` dresses it over the art after the set's paint (authored
+  colours, attribute `SetTrim`), again after each stage re-dress; never on the blocky look or Tar
+  Pit; the crown ignores it.
+- `srchash.py`: a variant script's `# art-sources:` line adds its base / helper files to its hash
+  (the helpers live in `variants/`, outside the kind's `_*.py` glob, so approved models keep their
+  hash).
+
 ## What is verified vs assumed (2026-10-26)
 
 Verified here: Blender 5.2.3 headless runs these scripts; the FBX is written with +Y up / −Z forward,
