@@ -146,6 +146,8 @@ def main_rig(kind, key, model):
             },
         }
     )
+    if model.get("meta"):  # skin variants (11e): skin, hero, display, base
+        entry.update(model["meta"])
     entry.setdefault("asset", None)
     entry.setdefault("uploadedHash", None)
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
@@ -311,6 +313,11 @@ if __name__ == "__main__":
         out = ART / "previews" / f"sheet_{name}.png"
         render.contact_sheet(out, pngs, columns=4)  # two models a row: 3/4, side, 3/4, side
         print(f"ART OK sheet {out.relative_to(ART)} ({len(keys)} models)")
+    elif len(argv) == 4 and argv[0] == "--pngs":  # --pngs <name> <columns> <a.png,b.png,..>: an explicit layout
+        name, columns, pngs = argv[1], int(argv[2]), [ART / "previews" / p for p in argv[3].split(",")]
+        out = ART / "previews" / f"sheet_{name}.png"  # (11e: base vs skin variant side by side)
+        render.contact_sheet(out, pngs, columns=columns)
+        print(f"ART OK sheet {out.relative_to(ART)} ({len(pngs)} previews)")
     elif len(argv) == 2:
         main(*argv)
     else:

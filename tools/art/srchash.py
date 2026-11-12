@@ -18,6 +18,13 @@ def source_hash(kind, key):
         files += [ART / "models" / "tower" / "_kit.py"]
         if kind == "projectile":
             files += sorted((ART / "models" / "walker").glob("_*.py"))
+    # Skin variants (11e): a variant script names the other files it builds from on a line
+    # `# art-sources: PISTOL.py variants/_skins.py` (paths under models/<kind>/), so editing
+    # a variant helper re-hashes only the variants; approved base models have no such line.
+    text = files[0].read_text()
+    for line in text.splitlines():
+        if line.startswith("# art-sources:"):
+            files += [ART / "models" / kind / p for p in line.split(":", 1)[1].split()]
     h = hashlib.sha256()
     for f in files:
         h.update(f.name.encode())
