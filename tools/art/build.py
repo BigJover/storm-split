@@ -233,6 +233,9 @@ def main(kind, key):
     ground = tower_ground(lo) if kind == "tower" else None
     if kind == "kit":  # kit props: a little room round a squat grenade so the 3/4 view doesn't crop it
         framed = wide = pieces + [pad_frame(pieces, 0.12)]
+    elif context and ground is not None:  # 11e tower-set trims: the trim on a tower, framed like a tower
+        framed = pieces + context + [ground]
+        wide = framed + [tower_frame(pieces + context)]
     elif context:
         framed = wide = pieces + context
     elif ground is not None:  # towers: frame the footprint too, with room for a tall tower's

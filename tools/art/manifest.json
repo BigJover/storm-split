@@ -18578,6 +18578,351 @@
       "tris": 2636,
       "uploadedHash": null
     },
+    "tower/SET_BRASS_GEAR": {
+      "asset": null,
+      "batch": "11e",
+      "box": [
+        [
+          -1.5,
+          -2.5,
+          -1.5
+        ],
+        [
+          1.5,
+          -1.4066578149795532,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "cap": 300,
+      "colors": {
+        "brass": [
+          196,
+          154,
+          66
+        ],
+        "brass2": [
+          226,
+          182,
+          82
+        ],
+        "metal": [
+          90,
+          90,
+          95
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "76029e0ca6b2d5a2",
+      "pieces": {
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 144
+        },
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 92
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "preview": "COIL",
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR",
+      "trim": true,
+      "tris": 296,
+      "uploadedHash": null
+    },
+    "tower/SET_GOLD_RUSH": {
+      "asset": null,
+      "batch": "11e",
+      "box": [
+        [
+          -1.5,
+          -2.5066025257110596,
+          -1.5
+        ],
+        [
+          1.5,
+          -1.5334386825561523,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "cap": 300,
+      "colors": {
+        "gold": [
+          232,
+          186,
+          70
+        ],
+        "metal": [
+          92,
+          94,
+          98
+        ],
+        "timber": [
+          110,
+          76,
+          46
+        ]
+      },
+      "display": "Gold Rush",
+      "hash": "70a3cfa2193d1590",
+      "pieces": {
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 204
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 12
+        },
+        "timber": {
+          "group": "timber",
+          "role": null,
+          "tris": 68
+        }
+      },
+      "preview": "QUARTERMASTER",
+      "set": "GOLD_RUSH",
+      "stage": 0,
+      "tower": "SET_GOLD_RUSH",
+      "trim": true,
+      "tris": 284,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT": {
+      "asset": null,
+      "batch": "11e",
+      "box": [
+        [
+          -1.5,
+          -2.5,
+          -1.5
+        ],
+        [
+          1.5,
+          -1.4487090110778809,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "cap": 300,
+      "colors": {
+        "crystal": [
+          120,
+          220,
+          255
+        ],
+        "dark": [
+          30,
+          30,
+          44
+        ],
+        "metal": [
+          82,
+          84,
+          104
+        ],
+        "rock": [
+          56,
+          56,
+          74
+        ]
+      },
+      "display": "Midnight",
+      "hash": "711a1b0926fb1956",
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 156
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 48
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 44
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 32
+        }
+      },
+      "preview": "SNIPER",
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT",
+      "trim": true,
+      "tris": 280,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE": {
+      "asset": null,
+      "batch": "11e",
+      "box": [
+        [
+          -1.5,
+          -2.5,
+          -1.5
+        ],
+        [
+          1.5,
+          -1.5117466449737549,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "cap": 300,
+      "colors": {
+        "bone": [
+          228,
+          218,
+          192
+        ],
+        "moss": [
+          84,
+          114,
+          62
+        ],
+        "stone": [
+          130,
+          125,
+          120
+        ],
+        "stone2": [
+          108,
+          104,
+          100
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "fe2d06bc18844a1a",
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 40
+        },
+        "moss": {
+          "group": "moss",
+          "role": null,
+          "tris": 32
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 96
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 96
+        }
+      },
+      "preview": "TOTEM",
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE",
+      "trim": true,
+      "tris": 264,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE": {
+      "asset": null,
+      "batch": "11e",
+      "box": [
+        [
+          -1.5,
+          -2.5,
+          -1.5
+        ],
+        [
+          1.5,
+          -1.4287564754486084,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "cap": 300,
+      "colors": {
+        "leaf": [
+          84,
+          136,
+          62
+        ],
+        "leaf2": [
+          64,
+          110,
+          50
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "post": [
+          110,
+          78,
+          46
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "64cb505eb8a72d60",
+      "pieces": {
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 96
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 72
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 48
+        },
+        "post": {
+          "group": "post",
+          "role": null,
+          "tris": 20
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "preview": "SCOUT",
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE",
+      "trim": true,
+      "tris": 284,
+      "uploadedHash": null
+    },
     "tower/SNIPER": {
       "asset": null,
       "batch": "11d",
