@@ -301,6 +301,8 @@ Next: Tester Run 15 → fixes if any. Then it waits on Jovan (`RECAP.md` "Phase 
 need from you"): a private publish per `SETUP.md` with the Store ids filled, the feel of the
 kit / training / pets, his answers to the Phase 10 asks, his multi-client script, then T95/T96.
 
+Phase 11, art pass (2026-10-26 → 11-11, `RECAP.md` "Phase 11", calls `DECISIONS.md` #421–#455): every model approved and its runtime written (1019 specs, Studio smoke tests); **waits on Jovan's Open Cloud key** to upload, then a Tester run with the art on.
+
 ## Open issues
 
 - Leak cost is effective HP (BTD6-style); co-op non-boss leaks are now capped at 25% of the

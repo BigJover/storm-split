@@ -999,3 +999,11 @@ and the idle kick ending a training session.
 1. Run 15/15b done; nothing left open from them.
 2. Your answers above, a private publish with the store ids, then the published checks (T95)
    and the lobby place (T96).
+
+## Phase 11 — art pass (2026-10-26 → 11-11)
+
+Every model is a Blender script in `tools/art/models/` (smooth stylised, #433), approved by Jovan from preview sheets in `tools/art/previews/`:
+8 dinos (tier colours, glow on the top tiers), 4 full hunter bodies (R15, skin = the player's avatar colour), 18 towers × 3 stages (bolder upgrades, #443) + the flying blimp, guns + attachments + melee/grenade props, 5 pets (rarity colours, Mythic sparkle) + 3 eggs + Incubator, 22 Outpost props, tamed raptors / rangers / Patrol Jeep / Paratroopers + chute, 6 dino projectiles.
+The runtime is written for all of it (HunterBody, TowerLook stages, GunArt + Viewmodel, PetLook, PropArt, WalkerArt, DinoLook shots; #445–#455), 1019 headless specs green, smoke-tested in Studio. **With no uploaded ids the game looks exactly as before** — art switches on by itself when ids exist.
+
+**What I need from you:** an Open Cloud API key (Assets read + write) saved at `~/.config/dinohunters/opencloud_key` and your Roblox user id at `~/.config/dinohunters/creator_id` (folder mode 700). Then `python3 tools/art/upload.py` uploads the approved batches, `write_ids.py` fills `ArtIds`, and a Tester run checks everything in game (Tester items are in each Builder's DECISIONS entry). Later: the detailing pass, weapon/tower skin variants (11e). To change any model later, edit its script and re-upload — only changed models upload (#440, #444).
