@@ -172,7 +172,8 @@ local function showDisplays(player: Player)
 				at += Vector3.new(0, OutpostRules.PEDESTAL_LIFT, 0)
 			end
 			local model = TowerLook.build(key, 0, at.Position) -- range 0: no ring
-			TowerLook.applySkin(model, Skins.look(player:GetAttribute(Skins.attribute(Skins.slot("tower", key)))))
+			local setKey = player:GetAttribute(Skins.attribute(Skins.slot("tower", key)))
+			TowerLook.applySkin(model, Skins.look(setKey), if type(setKey) == "string" then setKey else nil)
 			for _, part in model:GetDescendants() do
 				if part:IsA("BasePart") then
 					part.CanQuery = false

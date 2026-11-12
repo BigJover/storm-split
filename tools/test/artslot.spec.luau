@@ -707,3 +707,79 @@ test("BLIMP_AIR: the flying blimp wears its stage art, beam from the lamp role; 
 		eq(s2:GetAttribute("ArtKey"), "BLIMP_AIR_S1", "built at a stage")
 	end)
 end)
+
+test("tower-set trims (11e): SET_<KEY> over the art in its own colours, re-dressed per stage; blocky / no trim art / Tar Pit unchanged", function()
+	local function addTrim(art: Instance, ids: any)
+		local towers = art:FindFirstChild("tower") :: Instance
+		local model = Instance.new("Model")
+		model.Name = "SET_GOLD_RUSH"
+		model:SetAttribute("ArtId", ID)
+		for i, name in { "gold", "timber" } do
+			local p = Instance.new("MeshPart")
+			p.Name = name
+			p.Size = Vector3.new(3, 0.2, 0.2)
+			p.CFrame = CFrame.new(0, -2.4, -1.4 + i * 0.1)
+			p.Parent = model
+		end
+		model.Parent = towers
+		ids.tower.SET_GOLD_RUSH = { model = ID, colors = { gold = Color3.fromRGB(232, 186, 70), timber = Color3.fromRGB(110, 76, 46) } }
+	end
+	local function trims(model: Instance): { BasePart }
+		local out = {}
+		for _, p in model:GetChildren() do
+			if p:IsA("BasePart") and p:GetAttribute("SetTrim") then
+				table.insert(out, p)
+			end
+		end
+		return out
+	end
+	local look = { colour = Color3.fromRGB(215, 175, 60), accent = Color3.fromRGB(235, 225, 200), material = Enum.Material.Metal }
+	local art, ids = stageArt("COIL", { 0, 1, 2 })
+	addTrim(art, ids)
+	withArt(art, ids, function()
+		local model = TowerLook.build("COIL", RANGE, BASE)
+		local body = model.PrimaryPart :: BasePart
+		local bodyBefore = fingerprint(body)
+		TowerLook.applySkin(model, look, "GOLD_RUSH")
+		local t = trims(model)
+		eq(#t, 2, "trim dressed")
+		eq(model:GetAttribute("ArtKey"), "COIL", "the stage's art key kept")
+		for _, p in t do
+			eq(p.Color, if p:GetAttribute("PaintGroup") == "gold" then Color3.fromRGB(232, 186, 70) else Color3.fromRGB(110, 76, 46), `{p.Name} authored, not the set's paint`)
+			eq(p.Anchored and not p.CanCollide and not p.CanQuery and not p.CanTouch, true, `{p.Name} ghost`)
+		end
+		eq(fingerprint(body), bodyBefore, "Body untouched")
+		stage(model, 1)
+		eq(model:GetAttribute("ArtKey"), "COIL_S1", "re-dressed")
+		eq(#trims(model), 2, "trim follows the stage (no duplicates)")
+		local crown = model:FindFirstChild("Crown") :: BasePart
+		ok(crown and crown.CFrame.Position.Y > BASE.Y + STAGE_HEIGHT[2], "crown on the art's top, not the trim")
+		TowerLook.applySkin(model, look, "GOLD_RUSH")
+		eq(#trims(model), 2, "applied again: still one trim")
+		-- no set key: today's paint only
+		local plain = TowerLook.build("COIL", RANGE, BASE)
+		TowerLook.applySkin(plain, look)
+		eq(#trims(plain), 0, "no set key, no trim")
+	end)
+	-- trim art without the tower's art: blocky look, no trim, byte-identical to applySkin without a key
+	local onlyTrim = Instance.new("Folder")
+	onlyTrim.Name = "Art"
+	local towers = Instance.new("Folder")
+	towers.Name = "tower"
+	towers.Parent = onlyTrim
+	local ids2: any = { dino = {}, tower = {} }
+	addTrim(onlyTrim, ids2)
+	withArt(onlyTrim, ids2, function()
+		local a, b = TowerLook.build("SCOUT", RANGE, BASE), TowerLook.build("SCOUT", RANGE, BASE)
+		TowerLook.applySkin(a, look, "GOLD_RUSH")
+		TowerLook.applySkin(b, look)
+		eq(fingerprint(a), fingerprint(b), "blocky: the trim never dresses")
+	end)
+	local art3, ids3 = stageArt("TARPIT", { 0 })
+	addTrim(art3, ids3)
+	withArt(art3, ids3, function()
+		local pit = TowerLook.build("TARPIT", RANGE, BASE)
+		TowerLook.applySkin(pit, look, "GOLD_RUSH")
+		eq(#trims(pit), 0, "Tar Pit: no trim (it lies on the track)")
+	end)
+end)

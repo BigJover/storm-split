@@ -918,7 +918,8 @@ function Towers.place(key: string, position: Vector3, owner: Player?, side: numb
 	local model = TowerLook.build(key, ringRange(def, stats), base)
 	-- The builder's tower set for this tower, if they wear one (colours only; T142).
 	if owner then
-		TowerLook.applySkin(model, Skins.look(owner:GetAttribute(Skins.attribute(Skins.slot("tower", key)))))
+		local setKey = owner:GetAttribute(Skins.attribute(Skins.slot("tower", key)))
+		TowerLook.applySkin(model, Skins.look(setKey), if type(setKey) == "string" then setKey else nil)
 	end
 	-- The builder's tower flag, if they wear one (a look only; Shared/Cosmetics).
 	local flag = if owner

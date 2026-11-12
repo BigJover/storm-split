@@ -26,6 +26,12 @@
 	small gold marker on the art's top, and stage 2 never turns the art Neon (the art carries
 	its own `glow` group). `muzzle()` is the art's `muzzle` piece centre; the flying blimp
 	(buildBlimp) dresses as BLIMP_AIR / _S1 / _S2 and aims its beam from the `lamp` piece.
+
+	Tower-set trims (PLAN 11e, DECISIONS #456): with a set worn (applySkin's `setKey`) and the
+	tower's art on, the set's add-on model `SET_<SKIN KEY>` is dressed over the art (a low edge
+	round the footprint + left-corner pieces, its own authored colours; the set still repaints
+	the tower's art). Re-dressed with each stage; never on the blocky look, never on Tar Pit
+	(it lies on the track); not counted for the crown.
 ]]
 
 local Skins = require(script.Parent.Skins)
@@ -66,6 +72,9 @@ local ART_CROWN = Vector3.new(1.1, 0.4, 1.1) -- with art, the tier-3 crown is a 
 -- blocky look stays byte-identical.
 local lookKeys: { [Model]: string } = setmetatable({}, { __mode = "k" }) :: any
 local lookSkins: { [Model]: Skins.Look } = setmetatable({}, { __mode = "k" }) :: any
+local lookSets: { [Model]: string } = setmetatable({}, { __mode = "k" }) :: any -- the worn set's key (trim)
+TowerLook.TRIM_PREFIX = "SET_" -- tower-set trim art: tower/SET_<SKIN KEY> (11e)
+TowerLook.TRIM_SKIP = table.freeze({ TARPIT = true }) -- lies on the track: no corner pieces there
 local RING_MAX_RANGE = 200 -- Sniper's "global" 999 range would draw a 2000-stud disc
 local RING_TRANSPARENCY = 0.85
 
@@ -429,11 +438,37 @@ end
 -- A tower set's paint on these look parts (colour and material only, #381).
 local function paintSet(parts: { Instance }, look: Skins.Look, towerColour: Color3)
 	for _, part in parts do
-		if part:IsA("BasePart") and part.Name ~= "Body" and typeof(part:GetAttribute("LookMaterial")) == "string" then
+		if part:IsA("BasePart") and part.Name ~= "Body" and typeof(part:GetAttribute("LookMaterial")) == "string" and not part:GetAttribute("SetTrim") then
 			local colour, material = Skins.paintTower(look, part.Color, towerColour)
 			part.Color = colour
 			part.Material = material
 			part:SetAttribute("LookMaterial", material.Name)
+		end
+	end
+end
+
+local function clearTrim(model: Model)
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") and part:GetAttribute("SetTrim") then
+			part:Destroy()
+		end
+	end
+end
+
+-- The worn set's trim over the tower's art (11e): only with art on and the trim's art loaded.
+-- Keeps the model's ArtKey (the stage's art) as it was.
+local function dressTrim(model: Model, body: BasePart)
+	clearTrim(model)
+	local setKey, artKey, key = lookSets[model], model:GetAttribute("ArtKey"), lookKeys[model]
+	if not setKey or type(artKey) ~= "string" or (key and TowerLook.TRIM_SKIP[key]) then
+		return
+	end
+	local dressed, parts = ArtSlot.dress(model, ART_KIND, TowerLook.TRIM_PREFIX .. setKey, 1, body, ArtSlot.paints(body.Color), { anchored = true })
+	model:SetAttribute("ArtKey", artKey)
+	if dressed then
+		for _, part in parts do
+			part:SetAttribute("LookMaterial", part.Material.Name) -- hit flash / trample restore it
+			part:SetAttribute("SetTrim", true)
 		end
 	end
 end
@@ -515,7 +550,8 @@ end
 -- material, which the tier-5 glow then restores to. Colour and material only: no block
 -- moves, resizes or changes shape, and the body (hitbox), range ring, tier label, crown,
 -- HP bar and owner flag are never touched (#381; spec: tools/test/skins.spec.luau).
-function TowerLook.applySkin(model: Model, look: Skins.Look?)
+-- `setKey` (the set's Skins key, optional) adds its trim over the art (11e, see the header).
+function TowerLook.applySkin(model: Model, look: Skins.Look?, setKey: string?)
 	if not look then
 		return
 	end
@@ -523,6 +559,11 @@ function TowerLook.applySkin(model: Model, look: Skins.Look?)
 	paintSet(model:GetChildren(), look, towerColour)
 	lookSkins[model] = look -- worn again by the next stage's art
 	model:SetAttribute("TowerSkin", true)
+	local body = model.PrimaryPart
+	if setKey and body and model:GetAttribute("ArtKey") ~= nil then
+		lookSets[model] = setKey
+		dressTrim(model, body)
+	end
 end
 
 -- The Spotter Blimp itself (PLAN 9h T125b, visual only): an envelope with fins, a gondola
@@ -744,6 +785,7 @@ local function restage(model: Model, body: BasePart, stage: number): boolean
 		if skin then
 			paintSet(art, skin, color)
 		end
+		dressTrim(model, body) -- the worn set's trim over the new stage (clearArt took the old)
 	end
 	local crown = model:FindFirstChild("Crown")
 	if crown then
@@ -763,7 +805,7 @@ end
 local function artCrownAt(model: Model, body: BasePart): CFrame
 	local top, x, z = -body.Size.Y / 2, 0, 0
 	for _, part in model:GetChildren() do
-		if part:IsA("BasePart") and part:GetAttribute("ArtPiece") then
+		if part:IsA("BasePart") and part:GetAttribute("ArtPiece") and not part:GetAttribute("SetTrim") then
 			local rel = body.CFrame:ToObjectSpace(part.CFrame)
 			local half = part.Size / 2
 			local reach = math.abs(rel.XVector.Y) * half.X + math.abs(rel.YVector.Y) * half.Y + math.abs(rel.ZVector.Y) * half.Z
