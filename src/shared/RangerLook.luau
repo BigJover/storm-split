@@ -5,7 +5,11 @@
 	longer, thicker barrel), "legend" (Legend Ranger: bigger, a long coat). The Patrol Jeep is
 	buildJeep's. Anchored and ghost-like to physics (no collision, touch or query): walkers
 	never block hunters (#315). The model's PrimaryPart is its body; it faces -Z.
+	With the kind's walker art loaded (Shared/WalkerArt, #450) the body is hidden and the art
+	replaces the blocks.
 ]]
+
+local WalkerArt = require(script.Parent.WalkerArt)
 
 local RangerLook = {}
 
@@ -39,6 +43,10 @@ function RangerLook.build(kind: string, camp: Color3): Model
 	local model = Instance.new("Model")
 	model.Name = if kind == "legend" then "LegendRanger" else "Ranger"
 	local body = part(model, "Body", Vector3.new(0.9, 1.1, 0.5), CFrame.new(0, 0, 0), KHAKI, scale)
+	model.PrimaryPart = body
+	if WalkerArt.dress(model, WalkerArt.RANGER_KEYS[kind] or "RANGER", scale, camp) then
+		return model
+	end
 	part(model, "Head", Vector3.new(0.55, 0.55, 0.55), CFrame.new(0, 0.85, 0), SKIN, scale)
 	part(model, "Hat", Vector3.new(0.95, 0.12, 0.95), CFrame.new(0, 1.15, 0), DARK_KHAKI, scale)
 	part(model, "HatBand", Vector3.new(0.6, 0.12, 0.6), CFrame.new(0, 1.24, 0), camp, scale)
@@ -60,6 +68,10 @@ function RangerLook.buildJeep(camp: Color3): Model
 	local model = Instance.new("Model")
 	model.Name = "PatrolJeep"
 	local body = part(model, "Body", Vector3.new(3, 0.9, 5), CFrame.new(0, 0, 0), KHAKI, 1)
+	model.PrimaryPart = body
+	if WalkerArt.dress(model, "PATROL_JEEP", 1, camp) then
+		return model
+	end
 	part(model, "Hood", Vector3.new(2.8, 0.3, 1.6), CFrame.new(0, 0.55, -1.6), DARK_KHAKI, 1)
 	part(model, "Stripe", Vector3.new(0.5, 0.05, 4.8), CFrame.new(0, 0.48, 0), camp, 1)
 	part(model, "Roll", Vector3.new(2.8, 0.2, 0.2), CFrame.new(0, 1.6, 0.6), GUN, 1)

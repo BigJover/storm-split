@@ -30,6 +30,7 @@
 
 local Skins = require(script.Parent.Skins)
 local ArtSlot = require(script.Parent.ArtSlot)
+local WalkerArt = require(script.Parent.WalkerArt)
 
 local TowerLook = {}
 
@@ -606,6 +607,12 @@ function TowerLook.buildRanger(camp: Color3): Model
 		return part
 	end
 	model.PrimaryPart = piece("Body", Vector3.new(1, 1.4, 0.6), Vector3.new(0, 0.9, 0), SAND, Enum.Material.Fabric)
+	-- Walker art (Shared/WalkerArt, #450, #454): the art replaces the blocks; the canopy (its own art)
+	-- hangs over either for the drop.
+	WalkerArt.addChute(model, camp)
+	if WalkerArt.dress(model, "PARATROOPER", 1, camp) then
+		return model
+	end
 	piece("Head", Vector3.new(0.7, 0.7, 0.7), Vector3.new(0, 1.95, 0), Color3.fromRGB(205, 160, 120), Enum.Material.SmoothPlastic)
 	piece("Hat", Vector3.new(0.9, 0.2, 0.9), Vector3.new(0, 2.35, 0), LEAF, Enum.Material.Fabric)
 	piece("Scarf", Vector3.new(1.05, 0.25, 0.65), Vector3.new(0, 1.55, 0), camp, Enum.Material.Fabric)

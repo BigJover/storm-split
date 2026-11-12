@@ -23,8 +23,10 @@
 	#445); an attribute on the template piece still wins. Every clone carries PaintGroup and,
 	when it has one, ArtRole (towers find `muzzle` / `lamp` by it).
 
-	Kinds: "dino" (DinoLook), "tower" (TowerLook). Hunters get full R15 bodies in 11c (#434),
-	a different mechanism (Shared/HunterBody), reading `template` and `colors` from here.
+	Kinds: "dino" (DinoLook), "tower" (TowerLook), "walker" (Shared/WalkerArt; `override`
+	paints group `camp` the camp colour over the authored preview blue), "projectile"
+	(DinoLook). Hunters get full R15 bodies in 11c (#434), a different mechanism
+	(Shared/HunterBody), reading `template` and `colors` from here.
 ]]
 
 local ArtIds = require(script.Parent.ArtIds)
@@ -37,6 +39,7 @@ export type Options = {
 	anchored: boolean?, -- towers anchor their look parts; dinos weld to the Root
 	castShadow: boolean?,
 	roles: { string }?, -- ArtRole values the template must have
+	override: { [string]: Color3 }?, -- colours that beat the authored ones (walkers' `camp`, #450)
 }
 
 local ids: { [string]: { [string]: ArtIds.Entry } } = ArtIds
@@ -154,6 +157,7 @@ function ArtSlot.dress(
 	end
 	local opts: Options = options or {}
 	local authored: { [string]: Color3 } = ArtSlot.colors(kind, key) or {}
+	local override: { [string]: Color3 } = opts.override or {}
 	local pieces: { BasePart } = {}
 	for _, d in template:GetDescendants() do
 		if d:IsA("BasePart") then
@@ -193,7 +197,7 @@ function ArtSlot.dress(
 		local rel = piece.CFrame -- authored about the origin = the gameplay part's centre
 		part.Size = piece.Size * scale
 		part.CFrame = gameplay.CFrame * CFrame.new(rel.Position * scale) * rel.Rotation
-		part.Color = authored[group] or paints[group] or paints.body or piece.Color
+		part.Color = override[group] or authored[group] or paints[group] or paints.body or piece.Color
 		part.Material = if group == "glow" then Enum.Material.Neon else Enum.Material.SmoothPlastic
 		part.Anchored = opts.anchored == true
 		part.Massless = true

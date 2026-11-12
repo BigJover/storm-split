@@ -533,6 +533,39 @@ local function shotPart(model: Model, name: string, size: Vector3, color: Color3
 	return part
 end
 
+-- Projectile art (kind "projectile", PLAN 11d2, #450): each style's art is authored about
+-- the Shot's centre at buildProjectile's s = 1 size; this is that Shot's height, so the art
+-- scales to the live Shot (tools/art/README.md).
+DinoLook.SHOT_ART_HEIGHT = table.freeze({ lob = 0.8, spike = 0.3, gravel = 0.75, drop = 1.2, roll = 2.5, capsule = 0.64 })
+
+-- Dress a built projectile in its style's art, if loaded: the art replaces the blocks, the
+-- Shot stays the (hidden) PrimaryPart with its Size, so Style, Height, the pose, the warning
+-- ring and the landing are unchanged. The art faces the model's pivot (the capsule's Shot is
+-- turned and its PivotOffset turns it back).
+local function dressShot(model: Model, shot: Part, style: string)
+	local key = string.upper(style)
+	local authored = DinoLook.SHOT_ART_HEIGHT[style]
+	if not authored or not ArtSlot.template("projectile", key) then
+		return
+	end
+	local frame = shot.CFrame * shot.PivotOffset
+	local paints = ArtSlot.paints(shot.Color)
+	local dressed, art = ArtSlot.dress(model, "projectile", key, shot.Size.Y / authored, shot, paints, { anchored = true })
+	if not dressed then
+		return
+	end
+	local undo = frame * shot.CFrame:Inverse()
+	for _, part in art do
+		part.CFrame = undo * part.CFrame
+	end
+	for _, child in model:GetChildren() do
+		if child:IsA("BasePart") and child ~= shot and not child:GetAttribute("ArtPiece") then
+			child:Destroy()
+		end
+	end
+	shot.Transparency = 1
+end
+
 -- A projectile model for this species' ranged attack. `radius` is the impact
 -- radius and `scale` the dino's size share (size / sizes): bigger dinos throw
 -- bigger shots. PrimaryPart "Shot".
@@ -571,6 +604,7 @@ function DinoLook.buildProjectile(key: string, radius: number, scale: number): M
 		shot = shotPart(model, "Shot", Vector3.one * math.max(base, 0.8 * s), ROCK, Enum.Material.Rock, Enum.PartType.Ball)
 	end
 	model.PrimaryPart = shot
+	dressShot(model, shot, style)
 	model:SetAttribute("Style", style)
 	model:SetAttribute("Height", shot.Size.Y) -- for rolling along the ground
 	return model

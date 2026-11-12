@@ -314,7 +314,7 @@ Runtime contract (for the runtime task, after Jovan approves):
   tower name, and the Wanted Poster's own two SurfaceGuis (moved off the hidden Board). Optional props
   are art-only and walk-through (no new collision).
 
-## Walkers and dino projectiles (kinds `walker` and `projectile`, PLAN 11d2) — models only, runtime not built
+## Walkers and dino projectiles (kinds `walker` and `projectile`, PLAN 11d2)
 
 ```sh
 tools/art/build.sh walker RAPTOR                              # FBX + 3/4 + side previews + manifest
@@ -361,8 +361,12 @@ Conventions (the contract for the runtime task):
 - `srchash.py` hashes `tower/_kit.py` (the primitives) for both kinds and `walker/_*.py` for
   `projectile`. Manifest `meta`: `walker`, `look`, `kind`, `display`, `lookBox`, `scale` (projectiles:
   `projectile` = the style). Previews pad the frame (preview-only `context`) so hats and tails aren't cropped.
-- **Not done (runtime task):** `write_ids.py` `KINDS` doesn't list `walker` / `projectile`; nothing is
-  uploaded or approved; no code reads these yet.
+- **Runtime (built, #454):** `Shared/WalkerArt` dresses RaptorLook / RangerLook / the jeep /
+  `TowerLook.buildRanger` (Body hidden, kept as PrimaryPart; `camp` = the camp colour via
+  `ArtSlot` option `override`; pivot (scale − 1) × 1.2 below the Body); ranger / paratrooper
+  tracers leave from `muzzle`; `PARATROOPER_CHUTE` rides a 1.5 s visual drop (Server/Walkers);
+  rangers sit on the jeep art's seat tops (`WalkerArt.seat`). Projectiles: `DinoLook.dressShot`
+  scales the art by `shot.Size.Y / SHOT_ART_HEIGHT[style]`. Spec `tools/test/walkerart.spec.luau`.
 
 ## What is verified vs assumed (2026-10-26)
 

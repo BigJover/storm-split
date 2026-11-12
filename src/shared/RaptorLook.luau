@@ -5,7 +5,11 @@
 	one big raptor), "rex" (Rex Tamer: a small tamed T. rex), "swarm" (Raptor Swarm: small
 	raptors). Anchored and ghost-like to physics (no collision, touch or query): walkers
 	never block hunters (#315). The model's PrimaryPart is its body; it faces -Z.
+	With the kind's walker art loaded (Shared/WalkerArt, #450) the body is hidden and the art
+	replaces the blocks.
 ]]
+
+local WalkerArt = require(script.Parent.WalkerArt)
 
 local RaptorLook = {}
 
@@ -40,6 +44,10 @@ function RaptorLook.build(kind: string, camp: Color3): Model
 	local model = Instance.new("Model")
 	model.Name = if rex then "TamedRex" elseif kind == "alpha" then "AlphaRaptor" else "Raptor"
 	local body = part(model, "Body", Vector3.new(0.9, 0.8, 1.8), CFrame.new(0, 0, 0), hide, scale)
+	model.PrimaryPart = body
+	if WalkerArt.dress(model, WalkerArt.RAPTOR_KEYS[kind] or "RAPTOR", scale, camp) then
+		return model
+	end
 	part(model, "Belly", Vector3.new(0.8, 0.3, 1.4), CFrame.new(0, -0.35, 0), BELLY, scale)
 	local head = if rex then Vector3.new(1, 0.9, 1.3) else Vector3.new(0.6, 0.55, 1)
 	part(model, "Head", head, CFrame.new(0, if rex then 0.75 else 0.6, -1.3), hide, scale)

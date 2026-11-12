@@ -138,6 +138,7 @@ local Raptor = require(Shared:WaitForChild("Raptor"))
 local RaptorLook = require(Shared:WaitForChild("RaptorLook"))
 local Ranger = require(Shared:WaitForChild("Ranger"))
 local RangerLook = require(Shared:WaitForChild("RangerLook"))
+local WalkerArt = require(Shared:WaitForChild("WalkerArt"))
 local BattleFlow = require(Shared:WaitForChild("BattleFlow"))
 local FourX = require(Shared:WaitForChild("FourX"))
 local AutoFire = require(Shared:WaitForChild("AutoFire"))
@@ -1664,8 +1665,9 @@ do -- block-scoped locals: the main chunk must stay under Luau's 200-register li
 		local from = Walkers.unitAt(tower, index)
 		local to = enemy.part.Position
 		hit(tower, enemy, stats.damage * (1 + tower.buff.damagePercent / 100) * levelScale * x, math.max(stats.sizeBreaks, breaks), true)
-		if from then
-			Effects.tracer(from + Vector3.new(0, 1, 0), to, campColour(tower))
+		if from then -- from its art's muzzle (#450), else 1 stud over where it stands
+			local muzzle = WalkerArt.muzzle(Walkers.modelAt(tower, index))
+			Effects.tracer(muzzle or from + Vector3.new(0, 1, 0), to, campColour(tower))
 		end
 	end
 
@@ -1687,6 +1689,13 @@ do -- block-scoped locals: the main chunk must stay under Luau's 200-register li
 		plain.rate = rate
 		local legend = Ranger.params(stats, tiersBought(tower), true)
 		legend.rate = rate
+		if stats.jeep and not state.jeep then
+			local jeep = RangerLook.buildJeep(colour)
+			jeep.Parent = tower.model
+			state.jeep = jeep
+		end
+		-- Rangers sit in the jeep's art seats (#450); the blocky jeep keeps today's formation.
+		local seated = state.jeep ~= nil and state.jeep:GetAttribute("ArtKey") ~= nil
 		Walkers.sync(tower, {
 			count = stats.walkers,
 			params = plain,
@@ -1717,13 +1726,14 @@ do -- block-scoped locals: the main chunk must stay under Luau's 200-register li
 				local _, slot = Ranger.postFor(i, state.posts)
 				return 1.6 * (slot - 1)
 			end,
+			seatFor = if seated
+				then function(i)
+					local heavy, leg = Ranger.roles(tower.stats)
+					return WalkerArt.seat(i, RangerLook.KINDS[if i == leg then "legend" elseif i == heavy then "heavy" else "ranger"])
+				end
+				else nil,
 		})
 		Walkers.showCap(tower.model.PrimaryPart, { tower }) -- the panel's short-pack line (#359)
-		if stats.jeep and not state.jeep then
-			local jeep = RangerLook.buildJeep(colour)
-			jeep.Parent = tower.model
-			state.jeep = jeep
-		end
 		showPosts(tower)
 		-- The posts UI (Shop.client, PLAN 9j T130) reads these.
 		local body = tower.model.PrimaryPart
@@ -2378,11 +2388,17 @@ do -- block-scoped locals: the main chunk must stay under Luau's 200-register li
 	end
 
 	-- A paratrooper's shot lands (ground dinos only; breaks 1).
-	local function paraShot(tower: Tower, enemy: Enemies.Enemy, x: number)
+	local function paraShot(tower: Tower, enemy: Enemies.Enemy, x: number, index: number)
 		if not enemy.alive or enemy.def.flying or not canTarget(tower, enemy) then
 			return
 		end
+		local to = enemy.part.Position
 		hit(tower, enemy, Blimp.paraDamage() * x * levelScale, 1, true)
+		-- With art the shot shows, from the trooper's muzzle (#450); blocky troopers: no tracer, as today.
+		local muzzle = WalkerArt.muzzle(Walkers.modelAt(tower.blimp and tower.blimp.paraKey, index))
+		if muzzle then
+			Effects.tracer(muzzle, to, campColour(tower))
+		end
 	end
 
 	-- Paratroopers: n walkers drop below the blimp and fight until the round ends (Shared/Walker,
@@ -2403,8 +2419,8 @@ do -- block-scoped locals: the main chunk must stay under Luau's 200-register li
 			look = function()
 				return TowerLook.buildRanger(colour)
 			end,
-			onHit = function(enemy, landed)
-				paraShot(tower, enemy, landed.x)
+			onHit = function(enemy, landed, i)
+				paraShot(tower, enemy, landed.x, i)
 			end,
 		})
 		Effects.disc(land + Vector3.new(0, 0.3, 0), 4, colour, 0.3, 0.8)

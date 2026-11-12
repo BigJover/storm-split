@@ -16,6 +16,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local Walker = require(Shared:WaitForChild("Walker"))
 local Ranger = require(Shared:WaitForChild("Ranger"))
+local WalkerArt = require(Shared:WaitForChild("WalkerArt"))
 
 local Enemies = require(script.Parent.Enemies)
 
@@ -44,6 +45,9 @@ export type Spec = {
 	paramsFor: ((index: number) -> Walker.Params)?,
 	biteHook: ((unit: Walker.Unit, amount: number) -> number)?,
 	offsetFor: ((index: number) -> number)?,
+	-- Patrol Jeep art (#450, visual): a riding ranger's pivot in the jeep's track frame (its
+	-- seat), or nil (today's formation on the track).
+	seatFor: ((index: number) -> CFrame?)?,
 }
 
 type Pack = {
@@ -56,6 +60,7 @@ type Pack = {
 }
 
 local packs: { [any]: Pack } = {}
+local falling: { [Model]: number } = {} -- paratroopers under their chute: sent at (walker clock)
 local folder: Instance? = nil
 local now = 0 -- the walkers' clock (s), advanced by step
 
@@ -87,6 +92,7 @@ end
 local function dropUnit(pack: Pack, i: number)
 	local model = pack.models[i]
 	if model then
+		falling[model] = nil
 		model:Destroy()
 	end
 	table.remove(pack.units, i)
@@ -111,6 +117,9 @@ function Walkers.sync(tower: any, spec: Spec)
 		local unit = Walker.new(spec.side, paramsOf(pack, index), spec.homeAt, if spec.postFor then spec.postFor(index) else nil)
 		table.insert(pack.units, unit)
 		local model = spec.look(index)
+		if model:GetAttribute("Chute") then
+			falling[model] = now -- drifts down under its canopy (visual, #450)
+		end
 		model.Parent = folder
 		table.insert(pack.models, model)
 	end
@@ -215,7 +224,27 @@ local function place(pack: Pack, i: number, unit: Walker.Unit)
 		end
 	end
 	local look = if (ahead - at).Magnitude > 1e-3 then CFrame.lookAt(at, Vector3.new(ahead.X, at.Y, ahead.Z)) else CFrame.new(at)
-	model:PivotTo(look + Vector3.new(0, if visible then 1.2 else -500, 0))
+	local lift = if visible then 1.2 else -500
+	local sent = falling[model]
+	if sent then
+		local high = WalkerArt.dropHeight(now - sent)
+		if high <= 0 then
+			falling[model] = nil
+			WalkerArt.dropChute(model)
+		end
+		lift += high
+	end
+	if visible and pack.ride ~= nil and unit.state == "post" and pack.spec.seatFor then
+		local seat = pack.spec.seatFor(i) -- in the jeep's frame: the track point it rides at
+		if seat then
+			local track = Enemies.pointAt(unit.at, pack.spec.side)
+			local front = Enemies.pointAt(unit.at + 1, pack.spec.side)
+			local frame = if (front - track).Magnitude > 1e-3 then CFrame.lookAt(track, Vector3.new(front.X, track.Y, front.Z)) else CFrame.new(track)
+			model:PivotTo(frame * seat)
+			return
+		end
+	end
+	model:PivotTo(look + Vector3.new(0, lift, 0))
 end
 
 -- One frame: every walker moves, lands its hits through its tower, and dinos trample it.
@@ -338,6 +367,12 @@ function Walkers.unitAt(tower: any, index: number): (Vector3?, Walker.Unit?)
 		return (homeOf(pack, index)), unit
 	end
 	return Enemies.pointAt(unit.at, pack.spec.side), unit
+end
+
+-- `tower`'s walker `index`'s look (its art muzzle, Shared/WalkerArt), or nil.
+function Walkers.modelAt(tower: any, index: number): Model?
+	local pack = packs[tower]
+	return pack and pack.models[index]
 end
 
 -- Bodyguards (PLAN 9j): `tower`'s walker `index`, standing at its post, takes a bite aimed
