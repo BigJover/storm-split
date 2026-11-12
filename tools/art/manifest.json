@@ -1033,6 +1033,222 @@
       "tris": 972,
       "uploadedHash": null
     },
+    "gun/MEDIC_BRASS_SADDLE": {
+      "asset": null,
+      "base": "gun/MEDIC",
+      "batch": "11e",
+      "box": [
+        [
+          -0.10700000077486038,
+          -0.17024165391921997,
+          -1.4499999284744263
+        ],
+        [
+          0.09986093640327454,
+          0.34098076820373535,
+          1.024999976158142
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          180,
+          140,
+          60
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "cloth": [
+          226,
+          218,
+          196
+        ],
+        "dark": [
+          44,
+          40,
+          38
+        ],
+        "leather": [
+          110,
+          70,
+          40
+        ],
+        "steel": [
+          64,
+          72,
+          86
+        ],
+        "wood": [
+          120,
+          74,
+          42
+        ]
+      },
+      "display": "Brass Saddle",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "MEDIC",
+      "hash": "640d3ae81286538f",
+      "muzzle": [
+        0,
+        0.25,
+        -1.43
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 396
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 132
+        },
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 36
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 36
+        },
+        "leather": {
+          "group": "leather",
+          "role": null,
+          "tris": 44
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 276
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 212
+        }
+      },
+      "skin": "BRASS_SADDLE",
+      "tris": 1196,
+      "uploadedHash": null
+    },
+    "gun/MEDIC_LIFESAVER": {
+      "asset": null,
+      "base": "gun/MEDIC",
+      "batch": "11e",
+      "box": [
+        [
+          -0.1274999976158142,
+          -0.17024165391921997,
+          -1.4499999284744263
+        ],
+        [
+          0.09986093640327454,
+          0.34098076820373535,
+          1.024999976158142
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          235,
+          120,
+          60
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          44,
+          40,
+          38
+        ],
+        "steel": [
+          64,
+          72,
+          86
+        ],
+        "white": [
+          240,
+          240,
+          240
+        ],
+        "wood": [
+          132,
+          86,
+          50
+        ]
+      },
+      "display": "Lifesaver",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "MEDIC",
+      "hash": "7e89cb8c217185dc",
+      "muzzle": [
+        0,
+        0.25,
+        -1.43
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 136
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 180
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 56
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 348
+        },
+        "white": {
+          "group": "white",
+          "role": null,
+          "tris": 164
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 212
+        }
+      },
+      "skin": "LIFESAVER",
+      "tris": 1160,
+      "uploadedHash": null
+    },
     "gun/PISTOL": {
       "asset": null,
       "batch": "11c2",
@@ -1169,6 +1385,89 @@
       },
       "shows": "HeroStats.scope (Marksman T3 Scope)",
       "tris": 320,
+      "uploadedHash": null
+    },
+    "gun/PISTOL_SILVER_SPUR": {
+      "asset": null,
+      "base": "gun/PISTOL",
+      "batch": "11e",
+      "box": [
+        [
+          -0.10651833564043045,
+          -0.26429569721221924,
+          -0.8700000047683716
+        ],
+        [
+          0.10651833564043045,
+          0.39423760771751404,
+          0.23035037517547607
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          200,
+          200,
+          210
+        ],
+        "brass": [
+          214,
+          216,
+          224
+        ],
+        "pearl": [
+          242,
+          230,
+          204
+        ],
+        "steel": [
+          150,
+          156,
+          168
+        ]
+      },
+      "display": "Silver Spur",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "PISTOL",
+      "hash": "d7451575b201be05",
+      "muzzle": [
+        0,
+        0.25,
+        -0.85
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 204
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 168
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "pearl": {
+          "group": "pearl",
+          "role": null,
+          "tris": 44
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 336
+        }
+      },
+      "skin": "SILVER_SPUR",
+      "tris": 816,
       "uploadedHash": null
     },
     "gun/RIFLE": {
@@ -1333,6 +1632,99 @@
       "tris": 336,
       "uploadedHash": null
     },
+    "gun/RIFLE_ENGRAVED_GOLD": {
+      "asset": null,
+      "base": "gun/RIFLE",
+      "batch": "11e",
+      "box": [
+        [
+          -0.09510565549135208,
+          -0.19917091727256775,
+          -1.75
+        ],
+        [
+          0.18125000596046448,
+          0.33500000834465027,
+          1.034386157989502
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          215,
+          175,
+          60
+        ],
+        "brass": [
+          226,
+          182,
+          70
+        ],
+        "dark": [
+          44,
+          40,
+          38
+        ],
+        "steel": [
+          40,
+          42,
+          52
+        ],
+        "wood": [
+          92,
+          48,
+          30
+        ]
+      },
+      "display": "Engraved Gold",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "RIFLE",
+      "hash": "8d041e1c370493f6",
+      "muzzle": [
+        0,
+        0.25,
+        -1.73
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 160
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 152
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 188
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 212
+        }
+      },
+      "skin": "ENGRAVED_GOLD",
+      "tris": 820,
+      "uploadedHash": null
+    },
     "gun/SHOTGUN": {
       "asset": null,
       "batch": "11c2",
@@ -1421,6 +1813,242 @@
         }
       },
       "tris": 836,
+      "uploadedHash": null
+    },
+    "gun/SHOTGUN_BAMBOO_BOOMSTICK": {
+      "asset": null,
+      "base": "gun/SHOTGUN",
+      "batch": "11e",
+      "box": [
+        [
+          -0.1469999998807907,
+          -0.1910439431667328,
+          -1.5299999713897705
+        ],
+        [
+          0.12990380823612213,
+          0.3516506552696228,
+          1.024999976158142
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          190,
+          175,
+          100
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          44,
+          40,
+          38
+        ],
+        "node": [
+          150,
+          138,
+          72
+        ],
+        "shell": [
+          255,
+          140,
+          50
+        ],
+        "steel": [
+          64,
+          72,
+          86
+        ],
+        "twine": [
+          176,
+          150,
+          100
+        ],
+        "wood": [
+          168,
+          140,
+          84
+        ]
+      },
+      "display": "Bamboo Boomstick",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "SHOTGUN",
+      "hash": "627c26e7f2e5751f",
+      "muzzle": [
+        0,
+        0.25,
+        -1.51
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 84
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 160
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "node": {
+          "group": "node",
+          "role": null,
+          "tris": 56
+        },
+        "shell": {
+          "group": "shell",
+          "role": null,
+          "tris": 80
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 196
+        },
+        "twine": {
+          "group": "twine",
+          "role": null,
+          "tris": 40
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 108
+        }
+      },
+      "skin": "BAMBOO_BOOMSTICK",
+      "tris": 832,
+      "uploadedHash": null
+    },
+    "gun/SHOTGUN_CROC_HIDE": {
+      "asset": null,
+      "base": "gun/SHOTGUN",
+      "batch": "11e",
+      "box": [
+        [
+          -0.08799999952316284,
+          -0.1910439431667328,
+          -1.5299999713897705
+        ],
+        [
+          0.08799999952316284,
+          0.3516506552696228,
+          1.024999976158142
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          80,
+          110,
+          70
+        ],
+        "bone": [
+          226,
+          216,
+          186
+        ],
+        "brass": [
+          214,
+          168,
+          70
+        ],
+        "dark": [
+          44,
+          40,
+          38
+        ],
+        "scute": [
+          50,
+          70,
+          45
+        ],
+        "steel": [
+          64,
+          72,
+          86
+        ],
+        "wood": [
+          132,
+          86,
+          50
+        ]
+      },
+      "display": "Croc Hide",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "SHOTGUN",
+      "hash": "4e96407dbf74d2be",
+      "muzzle": [
+        0,
+        0.25,
+        -1.51
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 80
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 24
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 116
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 92
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "scute": {
+          "group": "scute",
+          "role": null,
+          "tris": 72
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 152
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 256
+        }
+      },
+      "skin": "CROC_HIDE",
+      "tris": 856,
       "uploadedHash": null
     },
     "gun/SHOTGUN_DOUBLE": {
