@@ -18843,6 +18843,77 @@
       "tris": 668,
       "uploadedHash": null
     },
+    "tower/SET_GOLD_RUSH_BLIMP": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -0.7466000318527222,
+          -2.3400001525878906,
+          -1.3930000066757202
+        ],
+        [
+          0.9006000757217407,
+          -1.2089999914169312,
+          0.9123458862304688
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          255,
+          232,
+          128
+        ],
+        "gold": [
+          230,
+          172,
+          40
+        ],
+        "iron": [
+          62,
+          64,
+          70
+        ],
+        "timber": [
+          98,
+          64,
+          36
+        ]
+      },
+      "display": "Gold Rush",
+      "hash": "cece3fc7165abde7",
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 84
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 292
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 176
+        },
+        "timber": {
+          "group": "timber",
+          "role": null,
+          "tris": 128
+        }
+      },
+      "preview": "BLIMP",
+      "set": "GOLD_RUSH",
+      "setPiece": "BLIMP",
+      "stage": 0,
+      "tower": "SET_GOLD_RUSH_BLIMP",
+      "tris": 680,
+      "uploadedHash": null
+    },
     "tower/SET_GOLD_RUSH_CHILLER": {
       "asset": null,
       "batch": "11e2",
@@ -19198,6 +19269,77 @@
       "tris": 424,
       "uploadedHash": null
     },
+    "tower/SET_GOLD_RUSH_METEOR": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -0.8463000059127808,
+          -2.1600000858306885,
+          -1.3865000009536743
+        ],
+        [
+          1.394211769104004,
+          -1.124500036239624,
+          1.3639999628067017
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          255,
+          232,
+          128
+        ],
+        "gold": [
+          230,
+          172,
+          40
+        ],
+        "iron": [
+          62,
+          64,
+          70
+        ],
+        "timber": [
+          98,
+          64,
+          36
+        ]
+      },
+      "display": "Gold Rush",
+      "hash": "f1e7098a174a7ca1",
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 84
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 352
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 176
+        },
+        "timber": {
+          "group": "timber",
+          "role": null,
+          "tris": 148
+        }
+      },
+      "preview": "METEOR",
+      "set": "GOLD_RUSH",
+      "setPiece": "METEOR",
+      "stage": 0,
+      "tower": "SET_GOLD_RUSH_METEOR",
+      "tris": 760,
+      "uploadedHash": null
+    },
     "tower/SET_GOLD_RUSH_QUARTERMASTER": {
       "asset": null,
       "batch": "11e2",
@@ -19267,6 +19409,77 @@
       "stage": 0,
       "tower": "SET_GOLD_RUSH_QUARTERMASTER",
       "tris": 580,
+      "uploadedHash": null
+    },
+    "tower/SET_GOLD_RUSH_RANGER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4904999732971191,
+          -2.5,
+          -1.4651999473571777
+        ],
+        [
+          0.1250000298023224,
+          -1.0364999771118164,
+          0.29509997367858887
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          255,
+          232,
+          128
+        ],
+        "gold": [
+          230,
+          172,
+          40
+        ],
+        "iron": [
+          62,
+          64,
+          70
+        ],
+        "timber": [
+          98,
+          64,
+          36
+        ]
+      },
+      "display": "Gold Rush",
+      "hash": "09b61a2fbedb9684",
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 112
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 208
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 176
+        },
+        "timber": {
+          "group": "timber",
+          "role": null,
+          "tris": 96
+        }
+      },
+      "preview": "RANGER",
+      "set": "GOLD_RUSH",
+      "setPiece": "RANGER",
+      "stage": 0,
+      "tower": "SET_GOLD_RUSH_RANGER",
+      "tris": 592,
       "uploadedHash": null
     },
     "tower/SET_GOLD_RUSH_RAPTOR": {
@@ -19622,6 +19835,148 @@
       "stage": 0,
       "tower": "SET_GOLD_RUSH_TARPIT",
       "tris": 576,
+      "uploadedHash": null
+    },
+    "tower/SET_GOLD_RUSH_TOTEM": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -0.9100000262260437,
+          -2.4600000381469727,
+          -0.8930830955505371
+        ],
+        [
+          0.9100000262260437,
+          -0.6165000200271606,
+          0.8930830955505371
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          255,
+          232,
+          128
+        ],
+        "gold": [
+          230,
+          172,
+          40
+        ],
+        "iron": [
+          62,
+          64,
+          70
+        ],
+        "timber": [
+          98,
+          64,
+          36
+        ]
+      },
+      "display": "Gold Rush",
+      "hash": "da97d2902b0d0897",
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 144
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 320
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 48
+        },
+        "timber": {
+          "group": "timber",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "preview": "TOTEM",
+      "set": "GOLD_RUSH",
+      "setPiece": "TOTEM",
+      "stage": 0,
+      "tower": "SET_GOLD_RUSH_TOTEM",
+      "tris": 560,
+      "uploadedHash": null
+    },
+    "tower/SET_GOLD_RUSH_VENT": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4704999923706055,
+          -2.5,
+          -1.4829999208450317
+        ],
+        [
+          1.451088547706604,
+          -1.2864999771118164,
+          0.7651000022888184
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          255,
+          232,
+          128
+        ],
+        "gold": [
+          230,
+          172,
+          40
+        ],
+        "iron": [
+          62,
+          64,
+          70
+        ],
+        "timber": [
+          98,
+          64,
+          36
+        ]
+      },
+      "display": "Gold Rush",
+      "hash": "93cdbd5f081cdd79",
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 84
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 272
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 176
+        },
+        "timber": {
+          "group": "timber",
+          "role": null,
+          "tris": 128
+        }
+      },
+      "preview": "VENT",
+      "set": "GOLD_RUSH",
+      "setPiece": "VENT",
+      "stage": 0,
+      "tower": "SET_GOLD_RUSH_VENT",
+      "tris": 660,
       "uploadedHash": null
     },
     "tower/SET_MIDNIGHT": {
