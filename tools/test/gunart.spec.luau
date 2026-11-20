@@ -576,6 +576,54 @@ test("weapon skin variants (11e): <HERO>_<SKIN> replaces the gun when loaded; at
 	end)
 end)
 
+test("recolour-only weapon skins (11e2, #457): a skin worn on the base gun paints `wood` too; a variant or no skin leaves it authored", function()
+	local art, ids = fakeArt()
+	local guns = art:FindFirstChild("gun") :: Instance
+	template("SHOTGUN_CROC_HIDE", { "steel", "wood", "accent", "muzzle" }).Parent = guns
+	ids.gun.SHOTGUN_CROC_HIDE = { model = ID, colors = table.clone(AUTHORED), pieces = { muzzle = { group = "steel", role = "muzzle" } } }
+	local function woods(tool: Tool): { BasePart }
+		local out = {}
+		for _, p in artPieces(tool, GunArt.FOLDER) do
+			if p:GetAttribute("PaintGroup") == "wood" then
+				table.insert(out, p)
+			end
+		end
+		return out
+	end
+	withArt(art, ids, function()
+		for _, case in {
+			{ "RIFLE", "WALNUT_CLASSIC", true, "Walnut Classic (recolour only)" },
+			{ "PISTOL", "SNAKESKIN_GRIP", true, "Snakeskin Grip (recolour only)" },
+			{ "SHOTGUN", "BAMBOO_BOOMSTICK", true, "a premium skin whose model isn't loaded falls back to the recolour" },
+			{ "SHOTGUN", "CROC_HIDE", false, "a loaded variant keeps its own wood" },
+			{ "RIFLE", nil, false, "no skin: wood authored" },
+		} do
+			local hero, skin, recolour, what = case[1], case[2], case[3], case[4]
+			local paint = { accent = ACCENT, accentMaterial = Enum.Material.Wood, skin = skin }
+			local tool, handle = gunTool()
+			eq(GunArt.dressTool(tool, handle, hero, STATS, paint, nil), true, `{what}: dressed`)
+			local w = woods(tool)
+			ok(#w >= 1, `{what}: has wood`)
+			for _, p in w do
+				eq(p.Color, if recolour then ACCENT else AUTHORED.wood, `{what}: wood colour`)
+				eq(p.Material, if recolour then Enum.Material.Wood else Enum.Material.SmoothPlastic, `{what}: wood material`)
+			end
+			eq(paint.recolorWood, nil, `{what}: the caller's paint untouched`)
+		end
+		-- max mastery: steel + brass gold, wood = the skin's colour
+		local tool, handle = gunTool()
+		GunArt.dressTool(tool, handle, "RIFLE", STATS, { accent = ACCENT, accentMaterial = Enum.Material.SmoothPlastic, gold = GOLD, skin = "WALNUT_CLASSIC" }, nil)
+		for _, p in artPieces(tool, GunArt.FOLDER) do
+			local group = p:GetAttribute("PaintGroup")
+			if group == "wood" then
+				eq(p.Color, ACCENT, "mastery: wood keeps the skin colour")
+			elseif group == "steel" or group == "brass" then
+				eq(p.Color, GOLD, `mastery: {group} gold`)
+			end
+		end
+	end)
+end)
+
 test("real ArtIds: each weapon skin variant is a gun/<HERO>_<SKIN> of a weapon skin for that hero", function()
 	local ArtIds = require(src.shared.ArtIds)
 	local found = 0

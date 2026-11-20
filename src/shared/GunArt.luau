@@ -23,6 +23,9 @@
 	`<HERO>_<SKIN KEY>` (Paint.skin = the worn skin's key); when that template is loaded it
 	replaces the base gun (same grip, same muzzle; attachments still go on top), else the
 	base gun is worn and only `accent` takes the skin's colour, as before.
+	RECOLOUR-ONLY SKINS (11e2, #457): a weapon skin worn on the base gun (Walnut Classic, Snakeskin
+	Grip, or a premium skin whose own model isn't loaded) paints the gun's `wood` group too, in
+	the accent's colour + material; no skin (class colour / cosmetics) leaves `wood` authored.
 
 	KIT: `prop(hero, "melee" | "grenade")` = an anchored ghost copy of kind "kit"
 	`<HERO>_MELEE` / `<HERO>_GRENADE` with its origin (the grip / the ball's centre) at the
@@ -58,6 +61,7 @@ export type Paint = {
 	accentMaterial: Enum.Material,
 	gold: Color3?,
 	skin: string?, -- the worn weapon skin's key: its own gun model when loaded (11e)
+	recolorWood: boolean?, -- set by build: a skin worn on the base gun also paints `wood` (11e2)
 }
 
 GunArt.ATTACHMENTS = table.freeze({
@@ -95,7 +99,7 @@ end
 function GunArt.paint(group: string, authored: { [string]: Color3 }, paint: Paint, fallback: Color3): (Color3, Enum.Material)
 	if paint.gold and GunArt.GOLD_GROUPS[group] then
 		return paint.gold, Enum.Material.SmoothPlastic
-	elseif group == "accent" then
+	elseif group == "accent" or (group == "wood" and paint.recolorWood) then
 		return paint.accent, paint.accentMaterial
 	end
 	return authored[group] or fallback, if group == "glow" then Enum.Material.Neon else Enum.Material.SmoothPlastic
@@ -171,7 +175,12 @@ function GunArt.build(hero: string, stats: Shows, paint: Paint): { BasePart }?
 	if not ArtSlot.template(GunArt.KIND, hero) then
 		return nil -- no base gun art: the blocky Handle (a variant alone never dresses)
 	end
-	local base = pieces(GunArt.KIND, GunArt.gunKey(hero, paint.skin), paint)
+	local gun = GunArt.gunKey(hero, paint.skin)
+	if type(paint.skin) == "string" and paint.skin ~= "" and gun == hero then
+		paint = table.clone(paint) -- a recolour-only skin: `wood` takes it too (#457)
+		paint.recolorWood = true
+	end
+	local base = pieces(GunArt.KIND, gun, paint)
 	if #base == 0 then
 		return nil
 	end
