@@ -21709,6 +21709,1614 @@
       "tris": 264,
       "uploadedHash": null
     },
+    "tower/SET_STONE_AGE_ARMORY": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4607486724853516,
+          -2.4800000190734863,
+          -1.4319581985473633
+        ],
+        [
+          -0.1796015501022339,
+          1.9890131950378418,
+          0.6149938702583313
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ],
+        "stone2": [
+          150,
+          124,
+          92
+        ],
+        "stripe": [
+          88,
+          60,
+          38
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "9d62c7374cb779db",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 268
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 24
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 96
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 116
+        },
+        "stripe": {
+          "group": "stripe",
+          "role": null,
+          "tris": 24
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_ARMORY",
+      "towerKind": "ARMORY",
+      "tris": 568,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_BALLISTA": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4511704444885254,
+          -2.483290672302246,
+          -1.2600455284118652
+        ],
+        [
+          -0.1796015352010727,
+          2.1890134811401367,
+          1.465999960899353
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ],
+        "stone2": [
+          150,
+          124,
+          92
+        ],
+        "stripe": [
+          88,
+          60,
+          38
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "9c6da829f4d89bb2",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 228
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 24
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 148
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 192
+        },
+        "stripe": {
+          "group": "stripe",
+          "role": null,
+          "tris": 24
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_BALLISTA",
+      "towerKind": "BALLISTA",
+      "tris": 656,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_BLIMP": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4319581985473633,
+          -2.48514723777771,
+          -1.4420000314712524
+        ],
+        [
+          -0.23420146107673645,
+          1.8394708633422852,
+          0.4229583144187927
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ],
+        "stone2": [
+          150,
+          124,
+          92
+        ],
+        "stripe": [
+          88,
+          60,
+          38
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "7fae9e4780eea0f2",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 188
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 24
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 124
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 168
+        },
+        "stripe": {
+          "group": "stripe",
+          "role": null,
+          "tris": 24
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_BLIMP",
+      "towerKind": "BLIMP",
+      "tris": 568,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_CHILLER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4685317277908325,
+          -2.4800000190734863,
+          -0.3699999749660492
+        ],
+        [
+          0.4623590409755707,
+          2.239013195037842,
+          1.4319581985473633
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ],
+        "stone2": [
+          150,
+          124,
+          92
+        ],
+        "stripe": [
+          88,
+          60,
+          38
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "d876d81cd0375a65",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 284
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 48
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 120
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 140
+        },
+        "stripe": {
+          "group": "stripe",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_CHILLER",
+      "towerKind": "CHILLER",
+      "tris": 680,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_COIL": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4319581985473633,
+          -2.506448745727539,
+          -1.1005083322525024
+        ],
+        [
+          -0.2884787917137146,
+          1.4899287223815918,
+          1.3292803764343262
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "moss": [
+          100,
+          132,
+          60
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ],
+        "stone2": [
+          150,
+          124,
+          92
+        ],
+        "stripe": [
+          88,
+          60,
+          38
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "14aedfb2f56f9031",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 188
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 24
+        },
+        "moss": {
+          "group": "moss",
+          "role": null,
+          "tris": 28
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 168
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 168
+        },
+        "stripe": {
+          "group": "stripe",
+          "role": null,
+          "tris": 24
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_COIL",
+      "towerKind": "COIL",
+      "tris": 640,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_FALCON": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4319581985473633,
+          -2.4800000190734863,
+          -1.4559732675552368
+        ],
+        [
+          -0.04242542386054993,
+          1.4899287223815918,
+          -0.5860416293144226
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ],
+        "stone2": [
+          150,
+          124,
+          92
+        ],
+        "stripe": [
+          88,
+          60,
+          38
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "e3826c197aeca97f",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 228
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 24
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 96
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 116
+        },
+        "stripe": {
+          "group": "stripe",
+          "role": null,
+          "tris": 24
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_FALCON",
+      "towerKind": "FALCON",
+      "tris": 528,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_GRENADIER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4082211256027222,
+          -2.510995864868164,
+          -1.4234014749526978
+        ],
+        [
+          0.8007415533065796,
+          1.4420523643493652,
+          0.24400000274181366
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "moss": [
+          100,
+          132,
+          60
+        ],
+        "ochre": [
+          176,
+          70,
+          44
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "905ee60ecfd7786f",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 252
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "moss": {
+          "group": "moss",
+          "role": null,
+          "tris": 28
+        },
+        "ochre": {
+          "group": "ochre",
+          "role": null,
+          "tris": 12
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 44
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_GRENADIER",
+      "towerKind": "GRENADIER",
+      "tris": 376,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_HOSPITAL": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4335832595825195,
+          -2.5075695514678955,
+          -0.9660000205039978
+        ],
+        [
+          -0.5860416293144226,
+          1.940112590789795,
+          0.824173092842102
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "moss": [
+          100,
+          132,
+          60
+        ],
+        "ochre": [
+          176,
+          70,
+          44
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ],
+        "stone2": [
+          150,
+          124,
+          92
+        ],
+        "stripe": [
+          88,
+          60,
+          38
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "88c8de723fabbb96",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 188
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 24
+        },
+        "moss": {
+          "group": "moss",
+          "role": null,
+          "tris": 28
+        },
+        "ochre": {
+          "group": "ochre",
+          "role": null,
+          "tris": 12
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 140
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 116
+        },
+        "stripe": {
+          "group": "stripe",
+          "role": null,
+          "tris": 24
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_HOSPITAL",
+      "towerKind": "HOSPITAL",
+      "tris": 572,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_METEOR": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4117766618728638,
+          -2.5129899978637695,
+          -1.4471582174301147
+        ],
+        [
+          -0.6002232432365417,
+          1.2193546295166016,
+          -0.7265790700912476
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "moss": [
+          100,
+          132,
+          60
+        ],
+        "ochre": [
+          176,
+          70,
+          44
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "1086e16142a7164f",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 172
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "moss": {
+          "group": "moss",
+          "role": null,
+          "tris": 28
+        },
+        "ochre": {
+          "group": "ochre",
+          "role": null,
+          "tris": 60
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 44
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_METEOR",
+      "towerKind": "METEOR",
+      "tris": 344,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_QUARTERMASTER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.069521188735962,
+          -2.4814341068267822,
+          0.44684168696403503
+        ],
+        [
+          0.24843642115592957,
+          2.239013195037842,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ],
+        "stone2": [
+          150,
+          124,
+          92
+        ],
+        "stripe": [
+          88,
+          60,
+          38
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "415f8cb019736ce2",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 228
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 24
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 148
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 192
+        },
+        "stripe": {
+          "group": "stripe",
+          "role": null,
+          "tris": 24
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_QUARTERMASTER",
+      "towerKind": "QUARTERMASTER",
+      "tris": 656,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_RANGER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4685317277908325,
+          -2.4800000190734863,
+          -0.5699999332427979
+        ],
+        [
+          -0.1796015352010727,
+          2.3890132904052734,
+          1.4319581985473633
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ],
+        "stone2": [
+          150,
+          124,
+          92
+        ],
+        "stripe": [
+          88,
+          60,
+          38
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "3039992946cd9a09",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 204
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 48
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 120
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 140
+        },
+        "stripe": {
+          "group": "stripe",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_RANGER",
+      "towerKind": "RANGER",
+      "tris": 600,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_RAPTOR": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.475000023841858,
+          -2.358090400695801,
+          -0.699999988079071
+        ],
+        [
+          1.1539725065231323,
+          1.2447502613067627,
+          0.699999988079071
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "stripe": [
+          88,
+          60,
+          38
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "319f39a380217054",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 252
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 12
+        },
+        "stripe": {
+          "group": "stripe",
+          "role": null,
+          "tris": 12
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_RAPTOR",
+      "towerKind": "RAPTOR",
+      "tris": 316,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_RESIN": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4608004093170166,
+          -2.4800000190734863,
+          -0.9130599498748779
+        ],
+        [
+          -0.1796015352010727,
+          2.08901309967041,
+          1.3729583024978638
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ],
+        "stone2": [
+          150,
+          124,
+          92
+        ],
+        "stripe": [
+          88,
+          60,
+          38
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "7cdb1397795bb9f7",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 228
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 24
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 96
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 116
+        },
+        "stripe": {
+          "group": "stripe",
+          "role": null,
+          "tris": 24
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_RESIN",
+      "towerKind": "RESIN",
+      "tris": 528,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_SCOUT": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4319581985473633,
+          -2.4800000190734863,
+          -1.3551942110061646
+        ],
+        [
+          -0.12500159442424774,
+          2.4385557174682617,
+          1.4319581985473633
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ],
+        "stone2": [
+          150,
+          124,
+          92
+        ],
+        "stripe": [
+          88,
+          60,
+          38
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "939e12b0c49ea8b8",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 268
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 24
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 120
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 228
+        },
+        "stripe": {
+          "group": "stripe",
+          "role": null,
+          "tris": 24
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_SCOUT",
+      "towerKind": "SCOUT",
+      "tris": 704,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_SNIPER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4685317277908325,
+          -2.4777209758758545,
+          -1.4411582946777344
+        ],
+        [
+          -0.42044568061828613,
+          2.4901461601257324,
+          0.9153132438659668
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "moss": [
+          100,
+          132,
+          60
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ],
+        "stone2": [
+          150,
+          124,
+          92
+        ],
+        "stripe": [
+          88,
+          60,
+          38
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "770e768d3b65506a",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 204
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 48
+        },
+        "moss": {
+          "group": "moss",
+          "role": null,
+          "tris": 72
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 160
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 52
+        },
+        "stripe": {
+          "group": "stripe",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_SNIPER",
+      "towerKind": "SNIPER",
+      "tris": 624,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_TARPIT": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.440000057220459,
+          -2.4800000190734863,
+          -0.9569835066795349
+        ],
+        [
+          0.8956456184387207,
+          -1.781538486480713,
+          1.2608520984649658
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "stone2": [
+          150,
+          124,
+          92
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "798c25701d942b29",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 172
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 240
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_TARPIT",
+      "towerKind": "TARPIT",
+      "tris": 452,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_TOTEM": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4073820114135742,
+          -2.5144481658935547,
+          0.2328248769044876
+        ],
+        [
+          -0.2328248769044876,
+          1.8947501182556152,
+          1.4025022983551025
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "hide": [
+          160,
+          112,
+          70
+        ],
+        "moss": [
+          100,
+          132,
+          60
+        ],
+        "ochre": [
+          176,
+          70,
+          44
+        ],
+        "pole": [
+          112,
+          82,
+          52
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "1c21ed4f45e4ddae",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 172
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "hide": {
+          "group": "hide",
+          "role": null,
+          "tris": 36
+        },
+        "moss": {
+          "group": "moss",
+          "role": null,
+          "tris": 28
+        },
+        "ochre": {
+          "group": "ochre",
+          "role": null,
+          "tris": 12
+        },
+        "pole": {
+          "group": "pole",
+          "role": null,
+          "tris": 36
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 44
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_TOTEM",
+      "towerKind": "TOTEM",
+      "tris": 368,
+      "uploadedHash": null
+    },
+    "tower/SET_STONE_AGE_VENT": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4607982635498047,
+          -2.511235237121582,
+          -1.414926290512085
+        ],
+        [
+          -0.6811121106147766,
+          1.273958683013916,
+          1.4108147621154785
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          236,
+          226,
+          198
+        ],
+        "dark": [
+          46,
+          40,
+          36
+        ],
+        "moss": [
+          100,
+          132,
+          60
+        ],
+        "ochre": [
+          176,
+          70,
+          44
+        ],
+        "stone": [
+          196,
+          168,
+          118
+        ]
+      },
+      "display": "Stone Age",
+      "hash": "f75df17f64bd5487",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 212
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 40
+        },
+        "moss": {
+          "group": "moss",
+          "role": null,
+          "tris": 56
+        },
+        "ochre": {
+          "group": "ochre",
+          "role": null,
+          "tris": 24
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 88
+        }
+      },
+      "set": "STONE_AGE",
+      "stage": 0,
+      "tower": "SET_STONE_AGE_VENT",
+      "towerKind": "VENT",
+      "tris": 420,
+      "uploadedHash": null
+    },
     "tower/SET_TREEHOUSE": {
       "asset": null,
       "batch": "11e",
@@ -21788,6 +23396,1714 @@
       "tower": "SET_TREEHOUSE",
       "trim": true,
       "tris": 284,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_ARMORY": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.480155348777771,
+          -2.5087890625,
+          -1.4900000095367432
+        ],
+        [
+          -0.20384466648101807,
+          1.7772974967956543,
+          0.9201942682266235
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "carve": [
+          210,
+          172,
+          104
+        ],
+        "dark": [
+          58,
+          42,
+          28
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "3fa574f09c23d8f5",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 64
+        },
+        "carve": {
+          "group": "carve",
+          "role": null,
+          "tris": 40
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 130
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 44
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 64
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_ARMORY",
+      "towerKind": "ARMORY",
+      "tris": 470,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_BALLISTA": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4831804037094116,
+          -2.503072738647461,
+          -1.440000057220459
+        ],
+        [
+          -0.2842293381690979,
+          1.9443411827087402,
+          1.4574999809265137
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "caabe247f54bcd8b",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 128
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 130
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 176
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_BALLISTA",
+      "towerKind": "BALLISTA",
+      "tris": 566,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_BLIMP": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4831804037094116,
+          -2.503512382507324,
+          -1.4800000190734863
+        ],
+        [
+          -0.41820383071899414,
+          1.4394145011901855,
+          0.46778857707977295
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "carve": [
+          210,
+          172,
+          104
+        ],
+        "dark": [
+          58,
+          42,
+          28
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "38a7e23cdfca31b0",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 136
+        },
+        "carve": {
+          "group": "carve",
+          "role": null,
+          "tris": 40
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 106
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 220
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 48
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 32
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_BLIMP",
+      "towerKind": "BLIMP",
+      "tris": 710,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_CHILLER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4574999809265137,
+          -2.505596399307251,
+          -0.5284605026245117
+        ],
+        [
+          0.22801092267036438,
+          2.3772974014282227,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "65bf9e6b09e805be",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 64
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 130
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 44
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 24
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 64
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_CHILLER",
+      "towerKind": "CHILLER",
+      "tris": 410,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_COIL": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4831804037094116,
+          -2.5068492889404297,
+          -1.3894600868225098
+        ],
+        [
+          -0.29810649156570435,
+          1.6454730033874512,
+          1.4700000286102295
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "dark": [
+          58,
+          42,
+          28
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "f132a3e70657b5c4",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 180
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 20
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 130
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 112
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 220
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 48
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 64
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_COIL",
+      "towerKind": "COIL",
+      "tris": 774,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_FALCON": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4817960262298584,
+          -2.5066940784454346,
+          -1.4900000095367432
+        ],
+        [
+          0.5174999833106995,
+          1.339414358139038,
+          -0.4099999666213989
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "dark": [
+          58,
+          42,
+          28
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "4a9496506e2bbc9f",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 108
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 20
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 130
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 44
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 64
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_FALCON",
+      "towerKind": "FALCON",
+      "tris": 498,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_GRENADIER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4797451496124268,
+          -2.1077446937561035,
+          -1.4700000286102295
+        ],
+        [
+          0.3044392466545105,
+          1.6492681503295898,
+          0.5249999761581421
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "carve": [
+          210,
+          172,
+          104
+        ],
+        "dark": [
+          58,
+          42,
+          28
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "bdc3a3d430729b9b",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 40
+        },
+        "carve": {
+          "group": "carve",
+          "role": null,
+          "tris": 40
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 130
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 44
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 64
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_GRENADIER",
+      "towerKind": "GRENADIER",
+      "tris": 446,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_HOSPITAL": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4831804037094116,
+          -2.5045692920684814,
+          -1.4199999570846558
+        ],
+        [
+          -0.2771746516227722,
+          1.561385154724121,
+          0.6169999837875366
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "carve": [
+          210,
+          172,
+          104
+        ],
+        "dark": [
+          58,
+          42,
+          28
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "724d6a5048a27b29",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 80
+        },
+        "carve": {
+          "group": "carve",
+          "role": null,
+          "tris": 40
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 82
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 44
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_HOSPITAL",
+      "towerKind": "HOSPITAL",
+      "tris": 422,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_METEOR": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4831804037094116,
+          -2.5052578449249268,
+          -1.4900000095367432
+        ],
+        [
+          -0.36461400985717773,
+          1.6113853454589844,
+          -0.35600000619888306
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "dark": [
+          58,
+          42,
+          28
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "c6501823ff83bda0",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 108
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 20
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 82
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 44
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_METEOR",
+      "towerKind": "METEOR",
+      "tris": 338,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_QUARTERMASTER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4574999809265137,
+          -2.5049209594726562,
+          -0.49000000953674316
+        ],
+        [
+          0.27801093459129333,
+          2.2772974967956543,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "dark": [
+          58,
+          42,
+          28
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "71915a306fcff566",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 124
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 20
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 130
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 220
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_QUARTERMASTER",
+      "towerKind": "QUARTERMASTER",
+      "tris": 626,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_RANGER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4831804037094116,
+          -2.506193161010742,
+          -0.6275743842124939
+        ],
+        [
+          -0.3629904091358185,
+          2.3113856315612793,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "c0df4dcdeba6fb93",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 120
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 130
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 176
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 48
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_RANGER",
+      "towerKind": "RANGER",
+      "tris": 606,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_RAPTOR": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4185316562652588,
+          -2.5066606998443604,
+          -1.0134164094924927
+        ],
+        [
+          1.2325102090835571,
+          1.8943414688110352,
+          0.9128633141517639
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "6b9315f4f5052c19",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 64
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 82
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 64
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_RAPTOR",
+      "towerKind": "RAPTOR",
+      "tris": 294,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_RESIN": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4831804037094116,
+          -2.5049962997436523,
+          -0.7268328070640564
+        ],
+        [
+          -0.2842293381690979,
+          1.7943415641784668,
+          1.4075000286102295
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "carve": [
+          210,
+          172,
+          104
+        ],
+        "dark": [
+          58,
+          42,
+          28
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "bf707d871afd0581",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 64
+        },
+        "carve": {
+          "group": "carve",
+          "role": null,
+          "tris": 40
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 130
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 44
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_RESIN",
+      "towerKind": "RESIN",
+      "tris": 454,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_SCOUT": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.482754111289978,
+          -2.5078868865966797,
+          -1.1344826221466064
+        ],
+        [
+          -0.15025484561920166,
+          2.3492684364318848,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "carve": [
+          210,
+          172,
+          104
+        ],
+        "dark": [
+          58,
+          42,
+          28
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "3fce6d06fbc8b960",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 136
+        },
+        "carve": {
+          "group": "carve",
+          "role": null,
+          "tris": 40
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 130
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 220
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 48
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 64
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_SCOUT",
+      "towerKind": "SCOUT",
+      "tris": 766,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_SNIPER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.4088358879089355,
+          -1.4600000381469727
+        ],
+        [
+          -0.21000003814697266,
+          2.3999996185302734,
+          1.3336373567581177
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "carve": [
+          210,
+          172,
+          104
+        ],
+        "dark": [
+          58,
+          42,
+          28
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "9d0224f4a82f9bc4",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 44
+        },
+        "carve": {
+          "group": "carve",
+          "role": null,
+          "tris": 40
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 64
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 288
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 96
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 88
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 160
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_SNIPER",
+      "towerKind": "SNIPER",
+      "tris": 780,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_TARPIT": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4188624620437622,
+          -2.5,
+          -0.9700000286102295
+        ],
+        [
+          0.8275527954101562,
+          -1.7799999713897705,
+          1.1779999732971191
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "ffe1e024ccf6a19a",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 88
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 28
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 56
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 264
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 168
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_TARPIT",
+      "towerKind": "TARPIT",
+      "tris": 604,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_TOTEM": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4797451496124268,
+          -2.5028820037841797,
+          0.13999998569488525
+        ],
+        [
+          -0.15025484561920166,
+          2.249268054962158,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "dark": [
+          58,
+          42,
+          28
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "d2b5eb7e81f65603",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 180
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 20
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 82
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 84
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 220
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 48
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_TOTEM",
+      "towerKind": "TOTEM",
+      "tris": 682,
+      "uploadedHash": null
+    },
+    "tower/SET_TREEHOUSE_VENT": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4850776195526123,
+          -2.506917953491211,
+          -1.4900000095367432
+        ],
+        [
+          -0.7291051149368286,
+          1.324634075164795,
+          1.4875000715255737
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bark": [
+          104,
+          74,
+          44
+        ],
+        "leaf": [
+          124,
+          176,
+          66
+        ],
+        "leaf2": [
+          86,
+          146,
+          52
+        ],
+        "plank": [
+          150,
+          108,
+          64
+        ],
+        "rope": [
+          176,
+          150,
+          100
+        ],
+        "vine": [
+          72,
+          102,
+          46
+        ]
+      },
+      "display": "Treehouse",
+      "hash": "3b46f0df7be21d20",
+      "piece": true,
+      "pieces": {
+        "bark": {
+          "group": "bark",
+          "role": null,
+          "tris": 184
+        },
+        "leaf": {
+          "group": "leaf",
+          "role": null,
+          "tris": 164
+        },
+        "leaf2": {
+          "group": "leaf2",
+          "role": null,
+          "tris": 168
+        },
+        "plank": {
+          "group": "plank",
+          "role": null,
+          "tris": 176
+        },
+        "rope": {
+          "group": "rope",
+          "role": null,
+          "tris": 48
+        },
+        "vine": {
+          "group": "vine",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "set": "TREEHOUSE",
+      "stage": 0,
+      "tower": "SET_TREEHOUSE_VENT",
+      "towerKind": "VENT",
+      "tris": 788,
       "uploadedHash": null
     },
     "tower/SNIPER": {
