@@ -783,3 +783,99 @@ test("tower-set trims (11e): SET_<KEY> over the art in its own colours, re-dress
 		eq(#trims(pit), 0, "Tar Pit: no trim (it lies on the track)")
 	end)
 end)
+
+test("tower-set pieces (11e2): SET_<SET>_<TOWER> next to the trim at every stage, swapped / removed with the set; Tar Pit gets its piece; blocky / no ids unchanged", function()
+	local function addModel(art: Instance, ids: any, key: string, groups: { string })
+		local towers = art:FindFirstChild("tower") :: Instance
+		local model = Instance.new("Model")
+		model.Name = key
+		model:SetAttribute("ArtId", ID)
+		local colors = {}
+		for i, name in groups do
+			local p = Instance.new("MeshPart")
+			p.Name = name
+			p.Size = Vector3.new(0.4, 1.5, 0.4)
+			p.CFrame = CFrame.new(-1.1, -1.5, -0.6 + i * 0.4)
+			p.Parent = model
+			colors[name] = Color3.fromRGB(90 + i, 130, 60)
+		end
+		model.Parent = towers
+		ids.tower[key] = { model = ID, colors = colors }
+	end
+	local function marked(model: Instance, attr: string): { BasePart }
+		local out = {}
+		for _, p in model:GetChildren() do
+			if p:IsA("BasePart") and p:GetAttribute(attr) then
+				table.insert(out, p)
+			end
+		end
+		return out
+	end
+	eq(TowerLook.setPieceKey("TREEHOUSE", "SCOUT"), "SET_TREEHOUSE_SCOUT", "piece key")
+	local look = { colour = Color3.fromRGB(140, 100, 60), accent = Color3.fromRGB(80, 130, 60), material = Enum.Material.Wood }
+	local art, ids = stageArt("COIL", { 0, 1, 2 })
+	addModel(art, ids, "SET_TREEHOUSE", { "plank" })
+	addModel(art, ids, "SET_TREEHOUSE_COIL", { "trunk", "leaf" })
+	addModel(art, ids, "SET_STONE_AGE_COIL", { "stone" })
+	withArt(art, ids, function()
+		local model = TowerLook.build("COIL", RANGE, BASE)
+		local artBefore = #artParts(model)
+		TowerLook.applySkin(model, look, "TREEHOUSE")
+		eq(#marked(model, "SetPiece"), 2, "piece dressed")
+		eq(#marked(model, "SetTrim"), 3, "trim + piece (both SetTrim)")
+		eq(model:GetAttribute("ArtKey"), "COIL", "the stage's art key kept")
+		for _, p in marked(model, "SetPiece") do
+			eq(p.Color, ids.tower.SET_TREEHOUSE_COIL.colors[p:GetAttribute("PaintGroup")], `{p.Name} authored colour, not the set's paint`)
+			eq(p.Anchored and not p.CanCollide and not p.CanQuery and not p.CanTouch, true, `{p.Name} ghost`)
+			eq(p:GetAttribute("LookMaterial"), "SmoothPlastic", `{p.Name} restorable material`)
+		end
+		eq(#artParts(model), artBefore + 3, "added over the tower's art")
+		stage(model, 2)
+		eq(model:GetAttribute("ArtKey"), "COIL_S2", "re-dressed")
+		eq(#marked(model, "SetPiece"), 2, "piece follows the stage (no duplicates)")
+		for _, p in marked(model, "SetPiece") do
+			ok(p.Material ~= Enum.Material.Neon, "stage 2 never turns the piece Neon")
+		end
+		local crown = model:FindFirstChild("Crown") :: BasePart
+		ok(crown and crown.CFrame.Position.Y > BASE.Y + STAGE_HEIGHT[2], "crown on the art's top, not the piece")
+		-- another set: its piece (no trim art for it) replaces the old trim + piece
+		TowerLook.applySkin(model, look, "STONE_AGE")
+		eq(#marked(model, "SetTrim"), 1, "old set's trim + piece gone")
+		eq(marked(model, "SetPiece")[1]:GetAttribute("PaintGroup"), "stone", "the new set's piece")
+		-- the set comes off
+		TowerLook.applySkin(model, look)
+		eq(#marked(model, "SetTrim"), 0, "no set: no trim, no piece")
+		eq(#artParts(model), artBefore, "back to the tower's art only")
+		-- a set whose piece for this tower isn't loaded: just its trim
+		local scout = TowerLook.build("COIL", RANGE, BASE)
+		ids.tower.SET_TREEHOUSE_COIL = nil
+		ArtSlot.setIds(ids)
+		TowerLook.applySkin(scout, look, "TREEHOUSE")
+		eq(#marked(scout, "SetTrim"), 1, "trim only")
+		eq(#marked(scout, "SetPiece"), 0, "no piece art: no piece")
+	end)
+	-- piece art without the tower's art: blocky, byte-identical to no set key
+	local onlyPiece = Instance.new("Folder")
+	onlyPiece.Name = "Art"
+	local towers = Instance.new("Folder")
+	towers.Name = "tower"
+	towers.Parent = onlyPiece
+	local ids2: any = { dino = {}, tower = {} }
+	addModel(onlyPiece, ids2, "SET_TREEHOUSE_SCOUT", { "leaf" })
+	withArt(onlyPiece, ids2, function()
+		local a, b = TowerLook.build("SCOUT", RANGE, BASE), TowerLook.build("SCOUT", RANGE, BASE)
+		TowerLook.applySkin(a, look, "TREEHOUSE")
+		TowerLook.applySkin(b, look)
+		eq(fingerprint(a), fingerprint(b), "blocky: the piece never dresses")
+	end)
+	-- Tar Pit: its (flat) piece, never the trim
+	local art3, ids3 = stageArt("TARPIT", { 0 })
+	addModel(art3, ids3, "SET_TREEHOUSE", { "plank" })
+	addModel(art3, ids3, "SET_TREEHOUSE_TARPIT", { "log" })
+	withArt(art3, ids3, function()
+		local pit = TowerLook.build("TARPIT", RANGE, BASE)
+		TowerLook.applySkin(pit, look, "TREEHOUSE")
+		eq(#marked(pit, "SetPiece"), 1, "Tar Pit's piece")
+		eq(#marked(pit, "SetTrim"), 1, "and no trim")
+	end)
+end)

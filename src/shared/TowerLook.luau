@@ -32,6 +32,9 @@
 	round the footprint + left-corner pieces, its own authored colours; the set still repaints
 	the tower's art). Re-dressed with each stage; never on the blocky look, never on Tar Pit
 	(it lies on the track); not counted for the crown.
+	Set pieces (11e2, #457): the set's per-tower piece `SET_<SKIN KEY>_<TOWER>` (when loaded) is
+	dressed the same way next to the trim, at every stage, Tar Pit included (its piece is flat);
+	both go when the set changes or comes off.
 ]]
 
 local Skins = require(script.Parent.Skins)
@@ -74,6 +77,10 @@ local lookKeys: { [Model]: string } = setmetatable({}, { __mode = "k" }) :: any
 local lookSkins: { [Model]: Skins.Look } = setmetatable({}, { __mode = "k" }) :: any
 local lookSets: { [Model]: string } = setmetatable({}, { __mode = "k" }) :: any -- the worn set's key (trim)
 TowerLook.TRIM_PREFIX = "SET_" -- tower-set trim art: tower/SET_<SKIN KEY> (11e)
+-- A set's piece for one tower kind (11e2, #457): tower/SET_<SKIN KEY>_<TOWER>.
+function TowerLook.setPieceKey(setKey: string, towerKey: string): string
+	return `{TowerLook.TRIM_PREFIX}{setKey}_{towerKey}`
+end
 TowerLook.TRIM_SKIP = table.freeze({ TARPIT = true }) -- lies on the track: no corner pieces there
 local RING_MAX_RANGE = 200 -- Sniper's "global" 999 range would draw a 2000-stud disc
 local RING_TRANSPARENCY = 0.85
@@ -455,22 +462,37 @@ local function clearTrim(model: Model)
 	end
 end
 
--- The worn set's trim over the tower's art (11e): only with art on and the trim's art loaded.
--- Keeps the model's ArtKey (the stage's art) as it was.
+-- The worn set's trim over the tower's art (11e), and its piece for this tower
+-- (`SET_<SET>_<TOWER>`, 11e2): only with art on and that art loaded. Both are SetTrim parts (the
+-- set's paint, the crown and the stage glow skip them); the piece's also carry SetPiece. Keeps
+-- the model's ArtKey (the stage's art) as it was.
 local function dressTrim(model: Model, body: BasePart)
 	clearTrim(model)
 	local setKey, artKey, key = lookSets[model], model:GetAttribute("ArtKey"), lookKeys[model]
-	if not setKey or type(artKey) ~= "string" or (key and TowerLook.TRIM_SKIP[key]) then
+	if not setKey or type(artKey) ~= "string" then
 		return
 	end
-	local dressed, parts = ArtSlot.dress(model, ART_KIND, TowerLook.TRIM_PREFIX .. setKey, 1, body, ArtSlot.paints(body.Color), { anchored = true })
-	model:SetAttribute("ArtKey", artKey)
-	if dressed then
-		for _, part in parts do
-			part:SetAttribute("LookMaterial", part.Material.Name) -- hit flash / trample restore it
-			part:SetAttribute("SetTrim", true)
+	local wanted: { string } = {}
+	if not (key and TowerLook.TRIM_SKIP[key]) then
+		table.insert(wanted, TowerLook.TRIM_PREFIX .. setKey)
+	end
+	local pieceKey = if key then TowerLook.setPieceKey(setKey, key) else nil
+	if pieceKey then
+		table.insert(wanted, pieceKey)
+	end
+	for _, name in wanted do
+		local dressed, parts = ArtSlot.dress(model, ART_KIND, name, 1, body, ArtSlot.paints(body.Color), { anchored = true })
+		if dressed then
+			for _, part in parts do
+				part:SetAttribute("LookMaterial", part.Material.Name) -- hit flash / trample restore it
+				part:SetAttribute("SetTrim", true)
+				if name == pieceKey then
+					part:SetAttribute("SetPiece", true)
+				end
+			end
 		end
 	end
+	model:SetAttribute("ArtKey", artKey)
 end
 
 -- The art piece with this ArtRole (towers: "muzzle"; the blimp: "lamp", "muzzle"), or nil.
@@ -563,6 +585,9 @@ function TowerLook.applySkin(model: Model, look: Skins.Look?, setKey: string?)
 	if setKey and body and model:GetAttribute("ArtKey") ~= nil then
 		lookSets[model] = setKey
 		dressTrim(model, body)
+	elseif lookSets[model] then -- the set came off (or the art went): its trim and piece go too
+		lookSets[model] = nil
+		clearTrim(model)
 	end
 end
 
