@@ -263,3 +263,6 @@ reproducible (scripts, not hand-sculpting), and he'll approve from preview image
   what only he (multi-client) or real players (published) can test.
 - Be honest about what was and wasn't verified. Never claim something works in Studio
   unless it was run there.
+
+### 2026-11-20 — premium Robux skins (Jovan's answers to PREMIUM_SKINS.md)
+"keep the themes as i want them to be full sets yes make premium skins robux only possibly add animations to them to make them worth the robux I do not know the robux to usd rate but ranging from 0.99$ to 200$ USD sounds about right where the 20$ ones are animated 10$ and up should be animated with more detailed and better animations at the 20$ price point 15$ ahould be middle and 10$ should be minimum animations grenade and class ability is ok in a pack, although I want players to be able to buy what they want so let them buy everything seperate from packs as well as having them in packs, packs should be a full set towers, weapons hunter skin, and grenade/class ability in one package for a slight discount to what they would be all seperately these can fall in the 27$-40$ range depending on the pack limited time things will be our first update when its live so none for now those will come later yes cosemetic only as we have systems where players can "pay to win" in place already names look good to me"
