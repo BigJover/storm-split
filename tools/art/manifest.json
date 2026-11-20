@@ -18640,6 +18640,1594 @@
       "tris": 296,
       "uploadedHash": null
     },
+    "tower/SET_BRASS_GEAR_ARMORY": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -0.7269334197044373,
+          -2.5,
+          -0.304999977350235
+        ],
+        [
+          1.4659943580627441,
+          1.594250202178955,
+          1.4950000047683716
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "d257fdb84e9fc143",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 464
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 76
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 96
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 12
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_ARMORY",
+      "towerKind": "ARMORY",
+      "tris": 748,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_BALLISTA": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.402627944946289,
+          -2.5,
+          -1.2768696546554565
+        ],
+        [
+          1.402627944946289,
+          -1.7400000095367432,
+          1.4149999618530273
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "d4c3d3952fd7676b",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 352
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 20
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 12
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_BALLISTA",
+      "towerKind": "BALLISTA",
+      "tris": 412,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_BLIMP": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.3864084482192993,
+          -2.3400001525878906,
+          -0.7150000333786011
+        ],
+        [
+          1.3199999332427979,
+          0.5403749942779541,
+          0.7000000476837158
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "4049f15fb536337d",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 236
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 36
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 100
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 12
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_BLIMP",
+      "towerKind": "BLIMP",
+      "tris": 484,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_CHILLER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -0.29712507128715515,
+          -2.5,
+          -1.3438000679016113
+        ],
+        [
+          0.9459943771362305,
+          0.7942500114440918,
+          1.1749999523162842
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "03ee7aa50ca4f52b",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 396
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 96
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 84
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 88
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 36
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_CHILLER",
+      "towerKind": "CHILLER",
+      "tris": 772,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_COIL": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.3738787174224854,
+          -2.4800000190734863,
+          -0.3262089788913727
+        ],
+        [
+          1.4449999332427979,
+          0.2948751449584961,
+          0.6800000071525574
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "d35a9e0b6a8af1fa",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 328
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 116
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 76
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 12
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_COIL",
+      "towerKind": "COIL",
+      "tris": 632,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_FALCON": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4950000047683716,
+          -2.5,
+          -0.17500001192092896
+        ],
+        [
+          1.4459943771362305,
+          1.1942501068115234,
+          0.867316722869873
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "6a66ce42fc65cf14",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 340
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 76
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 76
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 12
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_FALCON",
+      "towerKind": "FALCON",
+      "tris": 604,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_GRENADIER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -0.9416439533233643,
+          -2.481961488723755,
+          -0.7416439652442932
+        ],
+        [
+          1.3259943723678589,
+          0.13425016403198242,
+          1.1416438817977905
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "0ba94bc7b14e22e9",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 400
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 76
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 80
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 60
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_GRENADIER",
+      "towerKind": "GRENADIER",
+      "tris": 716,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_HOSPITAL": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4950000047683716,
+          -2.5,
+          -0.30640849471092224
+        ],
+        [
+          -0.005768686532974243,
+          1.7942500114440918,
+          1.4790000915527344
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "a72679f80eeca3bd",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 308
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 76
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 76
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 12
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_HOSPITAL",
+      "towerKind": "HOSPITAL",
+      "tris": 572,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_METEOR": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.444231390953064,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          1.017951250076294,
+          -0.30574989318847656,
+          1.034999966621399
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "4e743928631de01e",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 464
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 76
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 56
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 68
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 24
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_METEOR",
+      "towerKind": "METEOR",
+      "tris": 760,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_QUARTERMASTER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4950000047683716,
+          -2.5,
+          -0.5468056797981262
+        ],
+        [
+          1.4259943962097168,
+          0.7000000476837158,
+          0.6638000011444092
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "1c6fc55a82681bba",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 340
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 76
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 100
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 60
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_QUARTERMASTER",
+      "towerKind": "QUARTERMASTER",
+      "tris": 676,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_RANGER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          0.8400000333786011,
+          -2.5,
+          -0.41499999165534973
+        ],
+        [
+          1.4649364948272705,
+          2.39424991607666,
+          0.817306399345398
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "c21abb15cc18bb87",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 336
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 96
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 56
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 76
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 24
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_RANGER",
+      "towerKind": "RANGER",
+      "tris": 660,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_RAPTOR": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.2673168182373047,
+          -2.5,
+          -1.4950000047683716
+        ],
+        [
+          1.4950000047683716,
+          2.1942501068115234,
+          0.8137999773025513
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "c4ae2074d7b6c036",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 496
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 76
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 96
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 12
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_RAPTOR",
+      "towerKind": "RAPTOR",
+      "tris": 780,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_RESIN": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          0.3807179629802704,
+          -2.5,
+          0.11500000208616257
+        ],
+        [
+          1.2949999570846558,
+          0.5942502021789551,
+          0.8209999799728394
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "18a1878a783c2308",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 328
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 116
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 76
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 12
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_RESIN",
+      "towerKind": "RESIN",
+      "tris": 632,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_SCOUT": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.409999966621399,
+          -2.4800000190734863,
+          -1.184999942779541
+        ],
+        [
+          1.2355999946594238,
+          1.805875301361084,
+          0.6145000457763672
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "6df9d0e8be793e5f",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 312
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 40
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 84
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 100
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 36
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_SCOUT",
+      "towerKind": "SCOUT",
+      "tris": 644,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_SNIPER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4449999332427979,
+          -2.5,
+          -1.4950000047683716
+        ],
+        [
+          0.36634698510169983,
+          1.0176055431365967,
+          0.635200023651123
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "a0f5910ac929b708",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 464
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 96
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 96
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 12
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_SNIPER",
+      "towerKind": "SNIPER",
+      "tris": 768,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_TARPIT": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.367316722869873,
+          -2.450000047683716,
+          -0.35499998927116394
+        ],
+        [
+          1.369999885559082,
+          -1.9840192794799805,
+          1.3700000047683716
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "7c908a062fd64787",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 204
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 40
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 56
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_TARPIT",
+      "towerKind": "TARPIT",
+      "tris": 388,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_TOTEM": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -0.6968933939933777,
+          -2.4800000190734863,
+          -0.6620000004768372
+        ],
+        [
+          0.6968933939933777,
+          1.8968935012817383,
+          0.6620000004768372
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "copper": [
+          192,
+          104,
+          56
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "36b7db5d52b5fe48",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 468
+        },
+        "copper": {
+          "group": "copper",
+          "role": null,
+          "tris": 40
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 44
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_TOTEM",
+      "towerKind": "TOTEM",
+      "tris": 640,
+      "uploadedHash": null
+    },
+    "tower/SET_BRASS_GEAR_VENT": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -0.5970070958137512,
+          -2.5,
+          -0.5149999856948853
+        ],
+        [
+          1.4847999811172485,
+          0.7387499809265137,
+          1.4649999141693115
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "brass2": [
+          238,
+          194,
+          92
+        ],
+        "cream": [
+          242,
+          234,
+          206
+        ],
+        "iron": [
+          46,
+          44,
+          50
+        ],
+        "red": [
+          178,
+          42,
+          34
+        ],
+        "steam": [
+          238,
+          238,
+          234
+        ]
+      },
+      "display": "Brass Gear",
+      "hash": "74013aa150245e4d",
+      "piece": true,
+      "pieces": {
+        "brass2": {
+          "group": "brass2",
+          "role": null,
+          "tris": 320
+        },
+        "cream": {
+          "group": "cream",
+          "role": null,
+          "tris": 28
+        },
+        "iron": {
+          "group": "iron",
+          "role": null,
+          "tris": 156
+        },
+        "red": {
+          "group": "red",
+          "role": null,
+          "tris": 60
+        },
+        "steam": {
+          "group": "steam",
+          "role": null,
+          "tris": 144
+        }
+      },
+      "set": "BRASS_GEAR",
+      "stage": 0,
+      "tower": "SET_BRASS_GEAR_VENT",
+      "towerKind": "VENT",
+      "tris": 708,
+      "uploadedHash": null
+    },
     "tower/SET_GOLD_RUSH": {
       "asset": null,
       "batch": "11e",
