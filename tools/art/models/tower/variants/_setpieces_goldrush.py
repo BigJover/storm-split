@@ -269,7 +269,10 @@ def _rbx(v):
 
 def _check(lp, key, tower, pieces, arts):
     import bpy
+    from mathutils import Vector
     from mathutils.bvhtree import BVHTree
+
+    AXES = [Vector(d) for d in ((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1))]
 
     total = sum(lp.tris(o) for o in pieces)
     assert total <= CAP, f"{key}: {total} tris > the set-piece cap {CAP}"
@@ -294,15 +297,13 @@ def _check(lp, key, tower, pieces, arts):
                 if m[2] < -0.9:  # a front-firing muzzle: nothing in its lane
                     assert not (abs(x - m[0]) < 0.3 and abs(y - m[1]) < 0.3 and z < m[2]), f"{key}: in front of the muzzle"
         trees = [BVHTree.FromObject(o, deps) for o in art["pieces"]]
-        inside = 0
-        for o in pieces:
+        inside, by = 0, {}
+        for o in pieces:  # inside a stage piece = rays along all six axes hit it (normals may be flipped)
             for v in o.data.vertices:
-                for tr in trees:
-                    loc, nrm, _, dist = tr.find_nearest(v.co)
-                    if loc is not None and dist > 0.03 and (v.co - loc).dot(nrm) < 0:
-                        inside += 1
-                        break
-        fit.append(f"s{stage} {100 * inside / max(1, len(verts)):.0f}%")
+                if any(all(tr.ray_cast(v.co, d)[0] is not None for d in AXES) for tr in trees):
+                    inside += 1
+                    by[o.name] = by.get(o.name, 0) + 1
+        fit.append(f"s{stage} {100 * inside / max(1, len(verts)):.0f}%" + (f" {by}" if by else ""))
     print(f"ART set piece {key}: {total} tris, top {top:.2f}, inside the tower art: {', '.join(fit)}")
     return total
 
