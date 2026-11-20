@@ -446,3 +446,7 @@ baked transforms, triangles, normals and smoothing groups; budgets fail the buil
   unit; Open Cloud may not — if the model arrives scaled, fix the export scale in `lowpoly.export_fbx`).
 - `InsertService:LoadAsset` returns the uploaded Model with one MeshPart per object, named after it.
 - Moderation delay (minutes to hours).
+
+## Tower set pieces (11e2, #457, #458)
+
+One themed add-on per set per tower kind: `tower/SET_<SET>_<TOWER>` (sets TREEHOUSE, STONE_AGE, BRASS_GEAR, MIDNIGHT, GOLD_RUSH × the 18 towers = 90 models, ≤ 800 tris each). Worn over the tower's art at every stage, on top of the `SET_<SET>` trim; keeps its own authored colours (`glow` = Neon). Built with `models/tower/variants/_setpiece_common.py` (`setpiece()` checks all three stages: 3×5×3 box, flag column (1.2, 1.2) and Rescue Beacon column (1.25, −1.25) clear, muzzle + its front lane clear, Tar Pit ≤ 0.8, Vent r 1.1 clear, ≤ 35 % inside the tower by a six-axis ray test) and renders stage-0 and `_s2` previews. Designs: `_setpieces_treehouse.py`, `_setpieces_stone_age.py`, `_setpieces_brass.py` + `_setpieces_midnight.py` (shapes in `_setpieces_bm_shapes.py`), `_setpieces_goldrush.py`; each wrapper's `# art-sources:` line puts its helpers in the source hash. Runtime: `TowerLook.setPieceKey` / `applySkin` (Display Towers too; Tar Pit gets its piece but no trim). Sheets: `previews/sheet_11e_set_<set>.png`.
