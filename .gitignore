@@ -23,3 +23,4 @@ ideas/
 # Art pass (PLAN 11a): exported FBX files are rebuilt by tools/art/build.sh; keys never committed (#437)
 tools/art/out/
 tools/art/.key*
+tools/art/DinoHunters_showcase.blend*
