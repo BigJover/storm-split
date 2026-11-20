@@ -23187,7 +23187,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "9d62c7374cb779db",
+      "hash": "e5bc000cc76769d6",
       "piece": true,
       "pieces": {
         "bone": {
@@ -23278,7 +23278,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "9c6da829f4d89bb2",
+      "hash": "2204f20ee0efa735",
       "piece": true,
       "pieces": {
         "bone": {
@@ -23369,7 +23369,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "7fae9e4780eea0f2",
+      "hash": "54eabfca6711d806",
       "piece": true,
       "pieces": {
         "bone": {
@@ -23460,7 +23460,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "d876d81cd0375a65",
+      "hash": "b95be60654d28b2d",
       "piece": true,
       "pieces": {
         "bone": {
@@ -23556,7 +23556,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "14aedfb2f56f9031",
+      "hash": "2adfff5045ab47c0",
       "piece": true,
       "pieces": {
         "bone": {
@@ -23652,7 +23652,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "e3826c197aeca97f",
+      "hash": "5541687d7fc12f28",
       "piece": true,
       "pieces": {
         "bone": {
@@ -23738,7 +23738,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "905ee60ecfd7786f",
+      "hash": "738dd948619418cd",
       "piece": true,
       "pieces": {
         "bone": {
@@ -23834,7 +23834,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "88c8de723fabbb96",
+      "hash": "db9ee527f2ccd828",
       "piece": true,
       "pieces": {
         "bone": {
@@ -23930,7 +23930,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "1086e16142a7164f",
+      "hash": "86d635c56f10dba1",
       "piece": true,
       "pieces": {
         "bone": {
@@ -24016,7 +24016,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "415f8cb019736ce2",
+      "hash": "01d7108075369b9f",
       "piece": true,
       "pieces": {
         "bone": {
@@ -24107,7 +24107,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "3039992946cd9a09",
+      "hash": "9816a441bcdbc7fb",
       "piece": true,
       "pieces": {
         "bone": {
@@ -24154,11 +24154,11 @@
       "box": [
         [
           -1.475000023841858,
-          -2.358090400695801,
+          -2.5,
           -0.699999988079071
         ],
         [
-          1.1539725065231323,
+          1.2144840955734253,
           1.2447502613067627,
           0.699999988079071
         ]
@@ -24181,6 +24181,11 @@
           112,
           70
         ],
+        "stone2": [
+          150,
+          124,
+          92
+        ],
         "stripe": [
           88,
           60,
@@ -24188,7 +24193,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "319f39a380217054",
+      "hash": "2409a03e3118374d",
       "piece": true,
       "pieces": {
         "bone": {
@@ -24206,6 +24211,11 @@
           "role": null,
           "tris": 12
         },
+        "stone2": {
+          "group": "stone2",
+          "role": null,
+          "tris": 48
+        },
         "stripe": {
           "group": "stripe",
           "role": null,
@@ -24216,7 +24226,7 @@
       "stage": 0,
       "tower": "SET_STONE_AGE_RAPTOR",
       "towerKind": "RAPTOR",
-      "tris": 316,
+      "tris": 364,
       "uploadedHash": null
     },
     "tower/SET_STONE_AGE_RESIN": {
@@ -24269,7 +24279,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "7cdb1397795bb9f7",
+      "hash": "1adf9b86c2b9e2c1",
       "piece": true,
       "pieces": {
         "bone": {
@@ -24360,7 +24370,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "939e12b0c49ea8b8",
+      "hash": "8014efca445ff1aa",
       "piece": true,
       "pieces": {
         "bone": {
@@ -24456,7 +24466,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "770e768d3b65506a",
+      "hash": "3669a194ea252d78",
       "piece": true,
       "pieces": {
         "bone": {
@@ -24537,7 +24547,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "798c25701d942b29",
+      "hash": "4151e19a59172de7",
       "piece": true,
       "pieces": {
         "bone": {
@@ -24618,7 +24628,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "1c21ed4f45e4ddae",
+      "hash": "02a99da1c43c81a3",
       "piece": true,
       "pieces": {
         "bone": {
@@ -24709,7 +24719,7 @@
         ]
       },
       "display": "Stone Age",
-      "hash": "f75df17f64bd5487",
+      "hash": "1996672e40d34f30",
       "piece": true,
       "pieces": {
         "bone": {
@@ -24881,7 +24891,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "3fa574f09c23d8f5",
+      "hash": "87c5d5e1236ae9d6",
       "piece": true,
       "pieces": {
         "bark": {
@@ -24972,7 +24982,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "caabe247f54bcd8b",
+      "hash": "6ad2e35e212d1222",
       "piece": true,
       "pieces": {
         "bark": {
@@ -25068,7 +25078,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "38a7e23cdfca31b0",
+      "hash": "da3136284545fd32",
       "piece": true,
       "pieces": {
         "bark": {
@@ -25169,7 +25179,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "65bf9e6b09e805be",
+      "hash": "28bcf8d181b9a181",
       "piece": true,
       "pieces": {
         "bark": {
@@ -25265,7 +25275,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "f132a3e70657b5c4",
+      "hash": "35aa662cfd21c889",
       "piece": true,
       "pieces": {
         "bark": {
@@ -25366,7 +25376,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "4a9496506e2bbc9f",
+      "hash": "393c9c5158194c2e",
       "piece": true,
       "pieces": {
         "bark": {
@@ -25417,8 +25427,8 @@
       "batch": "11e2",
       "box": [
         [
-          -1.4797451496124268,
-          -2.1077446937561035,
+          -1.4831804037094116,
+          -2.506807804107666,
           -1.4700000286102295
         ],
         [
@@ -25467,13 +25477,13 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "bdc3a3d430729b9b",
+      "hash": "b2d53c061c769890",
       "piece": true,
       "pieces": {
         "bark": {
           "group": "bark",
           "role": null,
-          "tris": 40
+          "tris": 64
         },
         "carve": {
           "group": "carve",
@@ -25510,7 +25520,7 @@
       "stage": 0,
       "tower": "SET_TREEHOUSE_GRENADIER",
       "towerKind": "GRENADIER",
-      "tris": 446,
+      "tris": 470,
       "uploadedHash": null
     },
     "tower/SET_TREEHOUSE_HOSPITAL": {
@@ -25568,7 +25578,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "724d6a5048a27b29",
+      "hash": "3540c2901686e38e",
       "piece": true,
       "pieces": {
         "bark": {
@@ -25659,7 +25669,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "c6501823ff83bda0",
+      "hash": "1747777bf31ae9b8",
       "piece": true,
       "pieces": {
         "bark": {
@@ -25745,7 +25755,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "71915a306fcff566",
+      "hash": "67d933bd573d945c",
       "piece": true,
       "pieces": {
         "bark": {
@@ -25836,7 +25846,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "c0df4dcdeba6fb93",
+      "hash": "9b6bd8f48db5a992",
       "piece": true,
       "pieces": {
         "bark": {
@@ -25917,7 +25927,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "6b9315f4f5052c19",
+      "hash": "9be4c8a0da0b0b36",
       "piece": true,
       "pieces": {
         "bark": {
@@ -26003,7 +26013,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "bf707d871afd0581",
+      "hash": "ea9af4c683d25b5b",
       "piece": true,
       "pieces": {
         "bark": {
@@ -26109,7 +26119,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "3fce6d06fbc8b960",
+      "hash": "d969ce94b913666a",
       "piece": true,
       "pieces": {
         "bark": {
@@ -26166,13 +26176,13 @@
       "box": [
         [
           -1.4900000095367432,
-          -2.4088358879089355,
+          -2.4736313819885254,
           -1.4600000381469727
         ],
         [
           -0.21000003814697266,
           2.3999996185302734,
-          1.3336373567581177
+          1.3019238710403442
         ]
       ],
       "budget": "tower",
@@ -26215,7 +26225,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "9d0224f4a82f9bc4",
+      "hash": "f9620a915e15b87e",
       "piece": true,
       "pieces": {
         "bark": {
@@ -26236,12 +26246,12 @@
         "leaf": {
           "group": "leaf",
           "role": null,
-          "tris": 288
+          "tris": 240
         },
         "leaf2": {
           "group": "leaf2",
           "role": null,
-          "tris": 96
+          "tris": 124
         },
         "plank": {
           "group": "plank",
@@ -26251,14 +26261,14 @@
         "vine": {
           "group": "vine",
           "role": null,
-          "tris": 160
+          "tris": 128
         }
       },
       "set": "TREEHOUSE",
       "stage": 0,
       "tower": "SET_TREEHOUSE_SNIPER",
       "towerKind": "SNIPER",
-      "tris": 780,
+      "tris": 728,
       "uploadedHash": null
     },
     "tower/SET_TREEHOUSE_TARPIT": {
@@ -26306,7 +26316,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "ffe1e024ccf6a19a",
+      "hash": "93ca8f7ed5bf6c2f",
       "piece": true,
       "pieces": {
         "bark": {
@@ -26397,7 +26407,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "d2b5eb7e81f65603",
+      "hash": "2b5c7a16ae5ca9c8",
       "piece": true,
       "pieces": {
         "bark": {
@@ -26493,7 +26503,7 @@
         ]
       },
       "display": "Treehouse",
-      "hash": "3b46f0df7be21d20",
+      "hash": "e82dccdd490a5f0a",
       "piece": true,
       "pieces": {
         "bark": {

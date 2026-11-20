@@ -191,15 +191,16 @@ def sniper(k, K):
     k.add("leaf2", K.ell(fit((-0.55, 4.66, -1.12), 0.34, 0.34), (0.34, 0.24, 0.34), 8, 4))
     k.add("leaf", *[K.ell((-1.43, 4.2, z), (0.06, 0.34, 0.22), 6, 3) for z in (-0.6, 0.6)])
     for z in (-1.0, 1.0):
-        vine(k, K, spiral((-1.34, z * 1.12), 0.13, 0.1, 3.3, 1.5, 5), every=2)
+        vine(k, K, spiral((-1.34, z * 1.12), 0.13, 0.1, 3.3, 1.5, 4), every=2)
     birdhouse(k, K, (-1.2, 2.2, 1.0), yaw=90)
     crest(k, K, (-1.38, 2.75, 0.0), "-x", w=0.7, h=0.52)
+    k.add("leaf2", K.ell((-0.9, 0.12, 0.0), (0.3, 0.12, 0.3), 7, 3))  # a fern clump on the ground under the stand
 
 
 def grenadier(k, K):
     # a leafy tree rooted in the left sandbags with a crest on its trunk; a vine draped over
     # the front sandbags
-    tree(k, K, (-1.25, 0.4, 0.05), (-1.15, 3.3, -0.05), (-1.0, 3.6, -0.15), r=0.5,
+    tree(k, K, (-1.25, 0.0, 0.05), (-1.15, 3.3, -0.05), (-1.0, 3.6, -0.15), r=0.5,
          branches=[((-1.18, 2.6, -0.02), (-0.7, 3.2, 0.25))])
     crest(k, K, (-1.18, 1.55, -0.2), "-z", w=0.42, h=0.38)
     vine(k, K, [(-1.3, 0.55, -0.7), (-0.95, 0.62, -1.15), (-0.5, 0.6, -1.32), (-0.1, 0.58, -1.38),
