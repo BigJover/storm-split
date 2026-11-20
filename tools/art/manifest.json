@@ -21638,6 +21638,1434 @@
       "tris": 280,
       "uploadedHash": null
     },
+    "tower/SET_MIDNIGHT_ARMORY": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -0.8849999904632568,
+          -2.5,
+          -0.31999996304512024
+        ],
+        [
+          1.2325832843780518,
+          1.0325713157653809,
+          1.470310926437378
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "2a5e1918a3207388",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 52
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 192
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 160
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 180
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_ARMORY",
+      "towerKind": "ARMORY",
+      "tris": 604,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_BALLISTA": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.2793021202087402,
+          -2.5,
+          -1.2565757036209106
+        ],
+        [
+          1.2793021202087402,
+          -1.5103087425231934,
+          1.4730000495910645
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "10ea2f315f0945b2",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 288
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 112
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 132
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_BALLISTA",
+      "towerKind": "BALLISTA",
+      "tris": 552,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_BLIMP": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.2709999084472656,
+          -2.3400001525878906,
+          -0.7400000095367432
+        ],
+        [
+          1.2903108596801758,
+          0.19257140159606934,
+          0.7899332046508789
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "18540a0d65f350aa",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 52
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 192
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 176
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 180
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_BLIMP",
+      "towerKind": "BLIMP",
+      "tris": 620,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_CHILLER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -0.4475000202655792,
+          -2.5,
+          -1.1100000143051147
+        ],
+        [
+          1.0399999618530273,
+          0.23257136344909668,
+          1.12031090259552
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "092aa7973a39eb88",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 88
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 256
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 160
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 276
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_CHILLER",
+      "towerKind": "CHILLER",
+      "tris": 800,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_COIL": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.3709999322891235,
+          -2.5,
+          -0.43503880500793457
+        ],
+        [
+          1.4503108263015747,
+          -0.027112483978271484,
+          0.5350388288497925
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "163bf86a92d01e9b",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 36
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 64
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 112
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 132
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_COIL",
+      "towerKind": "COIL",
+      "tris": 364,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_FALCON": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.470310926437378,
+          -2.5,
+          -0.18999996781349182
+        ],
+        [
+          1.212583303451538,
+          0.6325714588165283,
+          0.9825916290283203
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "0bf3ae633bacf950",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 52
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 192
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 160
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 180
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_FALCON",
+      "towerKind": "FALCON",
+      "tris": 604,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_GRENADIER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -0.7799999713897705,
+          -2.4659807682037354,
+          -0.6470820307731628
+        ],
+        [
+          1.4199999570846558,
+          -0.4274284839630127,
+          1.0699999332427979
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "afc88ed922b08a99",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 16
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 344
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 136
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 156
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_GRENADIER",
+      "towerKind": "GRENADIER",
+      "tris": 672,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_HOSPITAL": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.470310926437378,
+          -2.505000114440918,
+          -0.4112623929977417
+        ],
+        [
+          0.18999996781349182,
+          1.2325713634490967,
+          1.350000023841858
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "89348b82c9744f84",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 52
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 192
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 160
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 180
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_HOSPITAL",
+      "towerKind": "HOSPITAL",
+      "tris": 604,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_METEOR": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4210000038146973,
+          -2.5,
+          -1.4603108167648315
+        ],
+        [
+          0.9918123483657837,
+          -0.8271124362945557,
+          0.9976855516433716
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "7ac570b3d90a788e",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 36
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 352
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 112
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 228
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_METEOR",
+      "towerKind": "METEOR",
+      "tris": 748,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_QUARTERMASTER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.470310926437378,
+          -2.5,
+          -0.6776973009109497
+        ],
+        [
+          1.1925833225250244,
+          0.8600001335144043,
+          0.7400000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "fbf2910dea0d6c84",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 52
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 192
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 160
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 180
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_QUARTERMASTER",
+      "towerKind": "QUARTERMASTER",
+      "tris": 604,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_RANGER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          0.6847689151763916,
+          -2.5,
+          -0.4899999797344208
+        ],
+        [
+          1.2925832271575928,
+          1.8325715065002441,
+          0.9042685627937317
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "1c0af03467819fc8",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 52
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 192
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 160
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 180
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_RANGER",
+      "towerKind": "RANGER",
+      "tris": 604,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_RAPTOR": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4100000858306885,
+          -2.5,
+          -1.470310926437378
+        ],
+        [
+          1.470310926437378,
+          1.6325716972351074,
+          0.5799999833106995
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "277201e1494f677a",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 88
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 256
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 160
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 276
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_RAPTOR",
+      "towerKind": "RAPTOR",
+      "tris": 800,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_RESIN": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          0.4800000488758087,
+          -2.5,
+          -0.6625000238418579
+        ],
+        [
+          1.3624999523162842,
+          0.03257131576538086,
+          0.6299999952316284
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "3728ef8f9e891416",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 16
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 128
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 136
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 84
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_RESIN",
+      "towerKind": "RESIN",
+      "tris": 384,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_SCOUT": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.4433012008666992,
+          -2.5,
+          -1.1303108930587769
+        ],
+        [
+          1.3899999856948853,
+          1.2025713920593262,
+          0.6112624406814575
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "8586819b37ca469f",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 88
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 256
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 84
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 240
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_SCOUT",
+      "towerKind": "SCOUT",
+      "tris": 668,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_SNIPER": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.5,
+          -2.5,
+          -1.5
+        ],
+        [
+          0.23800000548362732,
+          0.6800000667572021,
+          0.4880000054836273
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "aa7f25dc5747d15f",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 32
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 128
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 136
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 108
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_SNIPER",
+      "towerKind": "SNIPER",
+      "tris": 424,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_TARPIT": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -1.3494436740875244,
+          -2.450000047683716,
+          -1.190796971321106
+        ],
+        [
+          1.3669999837875366,
+          -1.7537105083465576,
+          1.3700000047683716
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "b1ec6c59d1bce305",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 36
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 244
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 72
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 72
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_TARPIT",
+      "towerKind": "TARPIT",
+      "tris": 444,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_TOTEM": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -0.7670081853866577,
+          -2.5,
+          -0.6470820307731628
+        ],
+        [
+          0.7670081853866577,
+          1.6774287223815918,
+          0.6700000166893005
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "58ec273bfd00ee99",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 72
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 408
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 40
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 264
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_TOTEM",
+      "towerKind": "TOTEM",
+      "tris": 784,
+      "uploadedHash": null
+    },
+    "tower/SET_MIDNIGHT_VENT": {
+      "asset": null,
+      "batch": "11e2",
+      "box": [
+        [
+          -0.5899999141693115,
+          -2.5,
+          -0.5899999141693115
+        ],
+        [
+          1.437000036239624,
+          0.6325714588165283,
+          1.409999966621399
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "cloth": [
+          108,
+          70,
+          204
+        ],
+        "glow": [
+          255,
+          224,
+          140
+        ],
+        "moon": [
+          246,
+          222,
+          140
+        ],
+        "night": [
+          30,
+          28,
+          46
+        ],
+        "silver": [
+          216,
+          224,
+          242
+        ]
+      },
+      "display": "Midnight",
+      "hash": "6e78c7df6db0770e",
+      "piece": true,
+      "pieces": {
+        "cloth": {
+          "group": "cloth",
+          "role": null,
+          "tris": 32
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 20
+        },
+        "moon": {
+          "group": "moon",
+          "role": null,
+          "tris": 256
+        },
+        "night": {
+          "group": "night",
+          "role": null,
+          "tris": 200
+        },
+        "silver": {
+          "group": "silver",
+          "role": null,
+          "tris": 132
+        }
+      },
+      "set": "MIDNIGHT",
+      "stage": 0,
+      "tower": "SET_MIDNIGHT_VENT",
+      "towerKind": "VENT",
+      "tris": 640,
+      "uploadedHash": null
+    },
     "tower/SET_STONE_AGE": {
       "asset": null,
       "batch": "11e",
