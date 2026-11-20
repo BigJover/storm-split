@@ -19,8 +19,9 @@ the Body's 3 x 5 x 3 box). setpiece() then checks it against all three stages of
   * TARPIT pieces <= TARPIT_MAX (0.8) tall (it lies on the track);
   * VENT keeps its middle (radius VENT_R about the centre) clear above RIM (the basalt column /
     Fire Mountain cone);
-  * clipping: the share of the piece's vertices inside each stage's art is printed (`ART clip`)
-    and must stay <= CLIP_MAX (pieces may wrap a post or hang on a wall, not sink into it).
+  * clipping: the share of the piece's vertices inside each stage's art (enclosed by one of its
+    pieces: rays along all six axes hit it) is printed (`ART clip`) and must stay <= CLIP_MAX
+    (pieces may wrap a post or hang on a wall, not sink into it).
 Previews: build.py renders the piece on the tower's stage 0 (context: the stage-0 art in the
 set's paint + the set's trim); setpiece() also renders it on stage 2 itself, to
 previews/tower/<KEY>_s2.png and <KEY>_s2_top.png. Manifest meta: set, display, piece, towerKind.
@@ -81,13 +82,14 @@ def _trees(obj_list):
 
 
 def _inside(p, trees):
-    """p inside any tree's mesh: its nearest face's normal points away from p."""
+    """p inside any tree's mesh: rays from p along all six axes hit that mesh (enclosed). Robust
+    to flipped normals (kit rings) and open pieces, unlike a nearest-face normal test."""
     from mathutils import Vector
 
     p = Vector(p)
+    dirs = [Vector(d) for d in ((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1))]
     for tree in trees:
-        loc, normal, _, dist = tree.find_nearest(p)
-        if loc is not None and dist > 1e-4 and (p - loc).dot(normal) < 0:
+        if all(tree.ray_cast(p, d)[0] is not None for d in dirs):
             return True
     return False
 
