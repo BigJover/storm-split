@@ -1727,6 +1727,111 @@
       "tris": 820,
       "uploadedHash": null
     },
+    "gun/RIFLE_LAVA_LANCE": {
+      "asset": null,
+      "base": "gun/RIFLE",
+      "batch": "11p1",
+      "box": [
+        [
+          -0.09510565549135208,
+          -0.19917091727256775,
+          -1.8827614784240723
+        ],
+        [
+          0.14256271719932556,
+          0.3349999785423279,
+          1.034386157989502
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          236,
+          96,
+          28
+        ],
+        "brass": [
+          150,
+          84,
+          44
+        ],
+        "dark": [
+          28,
+          24,
+          30
+        ],
+        "glow": [
+          255,
+          112,
+          20
+        ],
+        "steel": [
+          62,
+          58,
+          66
+        ],
+        "wood": [
+          40,
+          34,
+          42
+        ]
+      },
+      "display": "Lava Lance",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "RIFLE",
+      "hash": "d832e9d11049d1f9",
+      "muzzle": [
+        0,
+        0.25,
+        -1.73
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 32
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 124
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 100
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 184
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 144
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 212
+        }
+      },
+      "premium": true,
+      "skin": "LAVA_LANCE",
+      "theme": "LAVA_LORD",
+      "tris": 860,
+      "uploadedHash": null
+    },
     "gun/SHOTGUN": {
       "asset": null,
       "batch": "11c2",
