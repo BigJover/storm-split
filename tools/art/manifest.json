@@ -11044,6 +11044,82 @@
       "tris": 560,
       "uploadedHash": null
     },
+    "kit/RIFLE_GRENADE_LAVA_LOB": {
+      "asset": null,
+      "base": "kit/RIFLE_GRENADE",
+      "batch": "11p1",
+      "box": [
+        [
+          -0.3052903711795807,
+          -0.32965248823165894,
+          -0.3100000023841858
+        ],
+        [
+          0.3141440153121948,
+          0.42179086804389954,
+          0.3100000023841858
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "body": [
+          40,
+          34,
+          42
+        ],
+        "brass": [
+          120,
+          70,
+          42
+        ],
+        "glow": [
+          255,
+          112,
+          20
+        ],
+        "steel": [
+          52,
+          48,
+          54
+        ]
+      },
+      "display": "Lava Lob",
+      "hash": "4ea218f830628be8",
+      "hero": "RIFLE",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 90
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 148
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 280
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 28
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "LAVA_LOB",
+      "theme": "LAVA_LORD",
+      "tris": 546,
+      "uploadedHash": null
+    },
     "kit/RIFLE_MELEE": {
       "asset": null,
       "batch": "11c2",
