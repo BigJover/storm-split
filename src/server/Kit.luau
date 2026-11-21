@@ -255,6 +255,9 @@ end
 
 function Kit.marker(player: Player, killed: boolean)
 	kitEvent:FireClient(player, "hit", killed)
+	if killed then -- visual tag for the pack tier's take-down burst (Client/SkinFx, #462)
+		player:SetAttribute(SkinFx.TAKEDOWN_ATTRIBUTE, workspace:GetServerTimeNow())
+	end
 end
 
 ------------------------------------------------------------------ melee (T136)
@@ -426,9 +429,17 @@ local function throw(player: Player, rayOrigin: unknown, rayDirection: unknown)
 	local start = from + Vector3.new(0, HEAD_UP, 0)
 	local flight = Grenade.flightTime(start, landing)
 	-- The hunter's grenade art (T151, kind "kit") when loaded, tumbling; else today's ball.
-	local prop = GunArt.prop(key :: string, "grenade", SkinFx.grenadeArtKey(key :: string, player:GetAttribute(SkinFx.attribute("grenade", key :: string))))
+	local grenadeSkin = player:GetAttribute(SkinFx.attribute("grenade", key :: string))
+	local prop = GunArt.prop(key :: string, "grenade", SkinFx.grenadeArtKey(key :: string, grenadeSkin))
+	-- A premium grenade skin: tag the thrown object so clients can draw the pack tier's trail and
+	-- splash (Client/SkinFx, #462). Visual only; blank / basic skins stay untagged.
+	local premium = SkinFx.grenadeArtKey(key :: string, grenadeSkin) ~= nil
 	local ball: Instance
 	if prop then
+		if premium then
+			prop:SetAttribute(SkinFx.GRENADE_ATTRIBUTE, grenadeSkin)
+			prop:SetAttribute(SkinFx.OWNER_ATTRIBUTE, player.UserId)
+		end
 		prop:PivotTo(CFrame.new(start))
 		prop.Parent = workspace
 		task.delay(flight + 0.1, prop.Destroy, prop)
@@ -436,6 +447,10 @@ local function throw(player: Player, rayOrigin: unknown, rayDirection: unknown)
 	else
 		local part = Effects.part(Vector3.new(0.9, 0.9, 0.9), CFrame.new(start), KIT_COLORS[key :: string] or Color3.new(1, 1, 1), flight + 0.1, Enum.PartType.Ball)
 		part.Material = Enum.Material.SmoothPlastic
+		if premium then
+			part:SetAttribute(SkinFx.GRENADE_ATTRIBUTE, grenadeSkin)
+			part:SetAttribute(SkinFx.OWNER_ATTRIBUTE, player.UserId)
+		end
 		ball = part
 	end
 	local mySide = sideOf(player)

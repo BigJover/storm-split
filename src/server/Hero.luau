@@ -903,6 +903,9 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 	if outcome.hit then
 		fireEvent:FireClient(player, outcome.killed)
 	end
+	if outcome.killed then -- visual tag for the pack tier's take-down burst (Client/SkinFx, #462)
+		player:SetAttribute(SkinFx.TAKEDOWN_ATTRIBUTE, workspace:GetServerTimeNow())
+	end
 end
 
 ------------------------------------------------------------------ ability

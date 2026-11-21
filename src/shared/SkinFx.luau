@@ -12,6 +12,8 @@
 	  2  >= R$1,200 ($15): pulse + a few ember particles drifting up
 	  3  >= R$1,600 ($20): multi-layer: pulse + a colour wave flowing along the seams + embers +
 	     an aura (low heat glow, a light, a short trail when moving) + idle flares
+	  4  "pack" (#462): the wearer owns the item's whole class pack - tier 3 + the theme element's
+	     pack layer (see "pack tier" below)
 	`fxTier` on each item is the tier its planned price gives; `tierForPrice` is the rule, so when
 	the Store sheet gets the real prices the tier can be read from them instead.
 
@@ -98,7 +100,267 @@ SkinFx.ITEMS = table.freeze({
 	VOLCANO_ROAR = table.freeze({ kind = "ability", hero = "RIFLE", theme = "LAVA_LORD", display = "Volcano Roar", fxTier = 0 }),
 } :: { [string]: Item })
 
+------------------------------------------------------------------ pack tier (#462)
+--[[
+	Tier 4, "pack": the player owns a theme's FULL class pack (#459: tower set + that class's weapon +
+	hunter skin + grenade + ability). Every item of that pack then also draws the theme ELEMENT's
+	pack-only layer, on top of tier 3's: an elemental aura on the hunter, short-lived footstep
+	marks, a take-down burst, a reactive weapon (heat per shot, decaying: the `glow` ramps cool ->
+	white-hot, a muzzle burst when hot, a puff when it cools or reloads) and a reactive grenade (a
+	trail in flight, a short splash where it lands). Visual only, like every tier: no hit, radius,
+	timing or sound changes.
+
+	Data-driven per element (ELEMENTS): Lava Lord = "fire" (built); "electric" (Cyber Raptor),
+	"primal" (Tyrant King), "cosmic" (Nebula) and "crystal" (Geode) have their param slots filled
+	with placeholder colours and `stub = true` until their themes are built; Client/SkinFx reads
+	only these params, so a new theme is a data change (+ its `behaviour` if it's a new motion).
+
+	Ownership: `ownedPacks(ownedKeys)` is the pure rule (a pack counts only when EVERY item in it
+	is owned). The server will publish the result as the player attribute PACKS_ATTRIBUTE (comma
+	list of pack keys) from the saved skins - that store / save wiring is a later task (nothing sets
+	it yet), so in play nobody has tier 4. Studio: the `SkinFxTier` override now takes 0..4.
+]]
+
+SkinFx.PACK_TIER = 4
+SkinFx.PACKS_ATTRIBUTE = "SkinFxPacks" -- player attribute: "LAVA_LORD_RIFLE,..." (set by the store wiring, later)
+SkinFx.TAKEDOWN_ATTRIBUTE = "SkinFxTakedownAt" -- player attribute (server time), stamped on a take-down
+SkinFx.GRENADE_ATTRIBUTE = "SkinFxGrenade" -- on a thrown grenade: the worn premium grenade skin key
+SkinFx.OWNER_ATTRIBUTE = "SkinFxOwner" -- on a thrown grenade: the thrower's UserId
+SkinFx.PACK_RATE_CAP = 10 -- particles a second from one hunter's pack aura
+SkinFx.MARK_CAP = 16 -- footstep marks on screen at once (all hunters; the oldest goes first)
+SkinFx.SPLASH_CAP = 4 -- grenade splashes at once
+SkinFx.PACK_DISTANCE = 120 -- studs: pack emitters / marks / bursts only this close to the camera
+SkinFx.HEAT_REF_RATE = 8 -- shots a second `perShot` is tuned for (the Big Game Hunter's auto rifle)
+
+export type Element = {
+	display: string,
+	stub: boolean, -- true = placeholder params until the theme is built
+	behaviour: string, -- how the client moves it: "flicker" (fire) | "crackle" | "shockwave" | "drift" | "shards"
+	aura: Emitter, -- round the hunter's torso
+	mark: { colour: Color3, rim: Color3, size: number, lifetime: number, every: number }, -- footsteps
+	takedown: { count: number, colour: { Color3 }, size: number, speed: number },
+	heat: { cool: Color3, hot: Color3, white: Color3, perShot: number, decay: number, burstAt: number, puffFrom: number },
+	muzzle: { count: number, colour: { Color3 }, size: number, speed: number },
+	puff: { count: number, colour: { Color3 }, size: number, speed: number }, -- steam / embers when cooling
+	trail: { colour: { Color3 }, lifetime: number, width: number, rate: number },
+	splash: { colour: Color3, radius: number, lifetime: number, count: number },
+}
+
+local function stubElement(display: string, behaviour: string, a: Color3, b: Color3, c: Color3): Element
+	return table.freeze({
+		display = display,
+		stub = true,
+		behaviour = behaviour,
+		aura = table.freeze({ rate = 6, lifetime = { 0.5, 0.9 }, speed = { 0.5, 1.2 }, size = { 0.5, 0 }, spread = 40,
+			colour = { a, b }, lightEmission = 0.6, rise = 2 }),
+		mark = table.freeze({ colour = b, rim = a, size = 1.1, lifetime = 2.5, every = 2.2 }),
+		takedown = table.freeze({ count = 18, colour = { a, b }, size = 0.5, speed = 9 }),
+		heat = table.freeze({ cool = b, hot = a, white = c, perShot = 0.08, decay = 0.25, burstAt = 0.7, puffFrom = 0.45 }),
+		muzzle = table.freeze({ count = 8, colour = { c, a }, size = 0.35, speed = 6 }),
+		puff = table.freeze({ count = 6, colour = { c, b }, size = 0.45, speed = 1.5 }),
+		trail = table.freeze({ colour = { a, b }, lifetime = 0.35, width = 0.5, rate = 12 }),
+		splash = table.freeze({ colour = a, radius = 2.2, lifetime = 1.2, count = 14 }),
+	})
+end
+
+SkinFx.ELEMENTS = table.freeze({
+	fire = table.freeze({
+		display = "Fire",
+		stub = false,
+		behaviour = "flicker",
+		aura = table.freeze({ -- flames licking up round the torso
+			rate = 8, lifetime = { 0.45, 0.8 }, speed = { 0.8, 1.8 }, size = { 0.7, 0.05 }, spread = 30,
+			colour = { Color3.fromRGB(255, 214, 110), Color3.fromRGB(220, 50, 10) }, lightEmission = 0.75, rise = 4,
+		}),
+		mark = table.freeze({ colour = Color3.fromRGB(40, 22, 18), rim = Color3.fromRGB(255, 104, 20), size = 0.8, lifetime = 2.4, every = 2.4 }),
+		takedown = table.freeze({ count = 22, colour = { Color3.fromRGB(255, 226, 140), Color3.fromRGB(230, 60, 10) }, size = 0.6, speed = 10 }),
+		heat = table.freeze({
+			cool = Color3.fromRGB(150, 26, 6), -- cold magma: deep red
+			hot = Color3.fromRGB(255, 112, 20), -- the authored glow
+			white = Color3.fromRGB(255, 246, 214), -- white-hot
+			perShot = 0.08, -- heat a shot adds (0..1) at HEAT_REF_RATE shots a second (slower guns: more a shot)
+			decay = 0.25, -- heat lost a second
+			burstAt = 0.7, -- a muzzle flame burst from this heat up
+			puffFrom = 0.45, -- cooling below this from above (or a reload while above it): a steam / ember puff
+		}),
+		muzzle = table.freeze({ count = 7, colour = { Color3.fromRGB(255, 240, 180), Color3.fromRGB(255, 90, 10) }, size = 0.35, speed = 7 }),
+		puff = table.freeze({ count = 6, colour = { Color3.fromRGB(230, 226, 220), Color3.fromRGB(120, 110, 110) }, size = 0.5, speed = 1.6 }),
+		trail = table.freeze({ colour = { Color3.fromRGB(255, 200, 90), Color3.fromRGB(200, 40, 8) }, lifetime = 0.35, width = 0.55, rate = 14 }),
+		splash = table.freeze({ colour = Color3.fromRGB(255, 104, 20), radius = 2.4, lifetime = 1.3, count = 16 }),
+	}),
+	electric = stubElement("Electric", "crackle", Color3.fromRGB(60, 230, 255), Color3.fromRGB(230, 60, 255), Color3.fromRGB(240, 255, 255)),
+	primal = stubElement("Primal", "shockwave", Color3.fromRGB(220, 30, 30), Color3.fromRGB(110, 10, 14), Color3.fromRGB(255, 214, 110)),
+	cosmic = stubElement("Cosmic", "drift", Color3.fromRGB(150, 110, 255), Color3.fromRGB(40, 200, 200), Color3.fromRGB(250, 250, 255)),
+	crystal = stubElement("Crystal", "shards", Color3.fromRGB(190, 110, 255), Color3.fromRGB(90, 70, 110), Color3.fromRGB(245, 230, 255)),
+} :: { [string]: Element })
+
+-- Each theme's element (#462: themes differ by element, not by recolour). Only Lava Lord is built.
+SkinFx.THEME_ELEMENTS = table.freeze({
+	LAVA_LORD = "fire",
+	CYBER_RAPTOR = "electric",
+	TYRANT_KING = "primal",
+	NEBULA = "cosmic",
+	GEODE = "crystal",
+} :: { [string]: string })
+
+-- Class packs (#459): a theme's tower set + one class's hunter, weapon, grenade and ability.
+export type Pack = { theme: string, hero: string, display: string, items: { string } }
+SkinFx.PACKS = table.freeze({
+	LAVA_LORD_RIFLE = table.freeze({
+		theme = "LAVA_LORD",
+		hero = "RIFLE",
+		display = "Lava Lord - Big Game Hunter Pack",
+		items = table.freeze({ "MAGMA_MONARCH", "LAVA_LANCE", "LAVA_LORD", "LAVA_LOB", "VOLCANO_ROAR" }),
+	}),
+} :: { [string]: Pack })
+
 local HEROES = { "PISTOL", "RIFLE", "SHOTGUN", "MEDIC" }
+
+-- The element a theme draws its pack layer with, or nil.
+function SkinFx.element(themeKey: unknown): Element?
+	local e = if type(themeKey) == "string" then SkinFx.THEME_ELEMENTS[themeKey] else nil
+	return if e then SkinFx.ELEMENTS[e] else nil
+end
+
+-- The pure ownership rule: the packs whose EVERY item is in `owned` (a set {key = true} or a
+-- list of keys), sorted. Partial packs never count.
+function SkinFx.ownedPacks(owned: unknown): { string }
+	local have: { [string]: boolean } = {}
+	if type(owned) == "table" then
+		for k, v in owned :: { [any]: any } do
+			if type(k) == "string" and v == true then
+				have[k] = true
+			elseif type(v) == "string" then
+				have[v] = true
+			end
+		end
+	end
+	local out = {}
+	for key, pack in SkinFx.PACKS do
+		local all = #pack.items > 0
+		for _, item in pack.items do
+			if not have[item] then
+				all = false
+				break
+			end
+		end
+		if all then
+			table.insert(out, key)
+		end
+	end
+	table.sort(out)
+	return out
+end
+
+-- The attribute value the server publishes, and the client's reading of it (unknown keys dropped).
+function SkinFx.packsValue(packs: { string }): string
+	return table.concat(packs, ",")
+end
+
+function SkinFx.parsePacks(value: unknown): { [string]: boolean }
+	local out: { [string]: boolean } = {}
+	if type(value) == "string" then
+		for key in string.gmatch(value, "[^,%s]+") do
+			if SkinFx.PACKS[key] then
+				out[key] = true
+			end
+		end
+	end
+	return out
+end
+
+-- Does this premium item belong to one of the owned packs?
+function SkinFx.inOwnedPack(itemKey: unknown, packs: { [string]: boolean }?): boolean
+	if type(itemKey) ~= "string" or not packs then
+		return false
+	end
+	for key in packs do
+		local pack = SkinFx.PACKS[key]
+		if pack then
+			for _, item in pack.items do
+				if item == itemKey then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
+-- The pack layer's parts for a tier (all from tier 4).
+export type PackLayers = { aura: boolean, marks: boolean, takedown: boolean, heat: boolean, trail: boolean, splash: boolean }
+function SkinFx.packLayers(tier: number): PackLayers
+	local on = tier >= SkinFx.PACK_TIER
+	return { aura = on, marks = on, takedown = on, heat = on, trail = on, splash = on }
+end
+
+-- The pack aura emitter (rate capped), or nil below tier 4 / on low graphics.
+function SkinFx.packAura(element: Element, tier: number, lowGraphics: boolean?): Emitter?
+	if tier < SkinFx.PACK_TIER or lowGraphics then
+		return nil
+	end
+	local a = element.aura
+	return {
+		rate = math.min(a.rate, SkinFx.PACK_RATE_CAP),
+		lifetime = a.lifetime,
+		speed = a.speed,
+		size = a.size,
+		spread = a.spread,
+		colour = a.colour,
+		lightEmission = a.lightEmission,
+		rise = a.rise,
+	}
+end
+
+-- Reactive weapon heat, 0..1: up per shot, down over time. `rate` = the gun's shots a second
+-- (Config Heroes `rate`): a slow gun heats more a shot, so every class can reach white-hot.
+function SkinFx.shotHeat(element: Element, rate: number?): number
+	local r = if type(rate) == "number" and rate > 0 then rate else SkinFx.HEAT_REF_RATE
+	return element.heat.perShot * math.clamp(SkinFx.HEAT_REF_RATE / r, 1, 6)
+end
+
+function SkinFx.heatAfterShots(element: Element, heat: number, shots: number, rate: number?): number
+	return math.clamp(heat + SkinFx.shotHeat(element, rate) * math.max(0, shots), 0, 1)
+end
+
+function SkinFx.heatAfter(element: Element, heat: number, dt: number): number
+	return math.clamp(heat - element.heat.decay * math.max(0, dt), 0, 1)
+end
+
+-- The weapon's `glow` colour at this heat: cool (0) -> the authored glow (0.5) -> white-hot (1).
+function SkinFx.heatColour(element: Element, heat: number): Color3
+	local h = element.heat
+	local x = math.clamp(heat, 0, 1)
+	if x < 0.5 then
+		return h.cool:Lerp(h.hot, x * 2)
+	end
+	return h.hot:Lerp(h.white, (x - 0.5) * 2)
+end
+
+-- A shot at this heat (after the shot) throws a muzzle burst?
+function SkinFx.muzzleBurst(element: Element, heat: number): boolean
+	return heat >= element.heat.burstAt
+end
+
+-- A cooling puff: heat fell through `puffFrom` since the last look, or a reload just started
+-- while the gun was at least that hot.
+function SkinFx.coolPuff(element: Element, before: number, after: number, reloadStarted: boolean?): boolean
+	local from = element.heat.puffFrom
+	if reloadStarted then
+		return before >= from
+	end
+	return before >= from and after < from
+end
+
+-- Footsteps: a mark when the hunter has walked `every` studs on the ground since the last one.
+function SkinFx.markDue(element: Element, walked: number, grounded: boolean): boolean
+	return grounded and walked >= element.mark.every
+end
+
+-- Within the pack layer's distance (and not on low graphics)?
+function SkinFx.packVisible(distance: number, lowGraphics: boolean?): boolean
+	return not lowGraphics and distance <= SkinFx.PACK_DISTANCE
+end
 
 -- The premium item for a key, or nil (blank / basic / unknown = no effects).
 function SkinFx.item(key: unknown): Item?
@@ -124,14 +386,18 @@ function SkinFx.tierForPrice(robux: unknown): number
 	return tier
 end
 
--- The tier to draw: the item's, or (Studio only) the comparison override 0..3.
-function SkinFx.tier(key: unknown, override: unknown, isStudio: boolean?): number
+-- The tier to draw: PACK_TIER when the item is in one of the wearer's owned packs (#462), else
+-- the item's; (Studio only) the comparison override 0..PACK_TIER wins over both.
+function SkinFx.tier(key: unknown, override: unknown, isStudio: boolean?, packs: { [string]: boolean }?): number
 	local item = SkinFx.item(key)
 	if not item then
 		return 0
 	end
-	if isStudio and type(override) == "number" and override >= 0 and override <= SkinFx.MAX_TIER then
+	if isStudio and type(override) == "number" and override >= 0 and override <= SkinFx.PACK_TIER then
 		return math.floor(override)
+	end
+	if SkinFx.inOwnedPack(key, packs) then
+		return SkinFx.PACK_TIER
 	end
 	return item.fxTier
 end
