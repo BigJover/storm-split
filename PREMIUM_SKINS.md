@@ -208,6 +208,9 @@ towers are already budgeted per tower.
 Performance caps (client): at most ~20 premium tower emitters active (nearest first), hunter auras
 ≤ 4 particles a second, everything off in the hunter's own first-person view and dropped first on
 low graphics settings. Nothing new replicates from the server except a colour.
+Pack tier (#464, v3 #465): one hunter's whole pack layer <= 30 particles a second; pooled world pieces
+(marks 16, drips 6, ground rings 6, tracer bolts 8, take-down sets 3, grenade splashes 4); rates scale
+with graphics quality; within 120 studs only.
 
 ### Order of work (each step is a preview batch Jovan approves, like 11e)
 

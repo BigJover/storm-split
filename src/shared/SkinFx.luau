@@ -68,8 +68,57 @@ SkinFx.FX_DISTANCE = 160 -- studs from the camera: farther models keep their sta
 SkinFx.TOWER_EMITTER_CAP = 20 -- premium tower emitters on at once, nearest first
 SkinFx.HUNTER_RATE_CAP = 4 -- particles a second on one hunter (PREMIUM_SKINS caps)
 SkinFx.TOWER_RATE_CAP = 6
-SkinFx.IDLE_FLARE_SECONDS = 6 -- tier 3: a small flare from the seams this often
-SkinFx.IDLE_FLARE_COUNT = 5
+SkinFx.IDLE_FLARE_SECONDS = 6 -- tier 3: a flare from the seams (+ a light pop) this often
+SkinFx.IDLE_FLARE_COUNT = 8
+
+-- Built-in particle textures that ship with every Roblox client (content/textures/particles):
+-- no upload needed. None is a flipbook sheet, so flames "lick" through size / squash / spin.
+SkinFx.TEXTURES = table.freeze({
+	fire = "rbxasset://textures/particles/fire_main.dds",
+	sparks = "rbxasset://textures/particles/fire_sparks_main.dds",
+	smoke = "rbxasset://textures/particles/smoke_main.dds",
+	plume = "rbxasset://textures/particles/explosion01_smoke_main.dds",
+	core = "rbxasset://textures/particles/explosion01_core_main.dds",
+	shock = "rbxasset://textures/particles/explosion01_shockwave_main.dds",
+	sparkles = "rbxasset://textures/particles/sparkles_main.dds",
+})
+
+-- Graphics quality (UserGameSettings.SavedQualityLevel: 0 = Automatic, 1..10) -> the share of
+-- particle rates / burst counts to draw: 0 = none (1-3, "low graphics"), else 0.5 / 0.75 / 1.
+function SkinFx.qualityScale(level: unknown): number
+	if type(level) ~= "number" then
+		return 0.75
+	end
+	if level <= 0 then
+		return 0.75 -- Automatic: middle ground
+	elseif level <= 3 then
+		return 0
+	elseif level <= 5 then
+		return 0.5
+	elseif level <= 7 then
+		return 0.75
+	end
+	return 1
+end
+
+-- A burst count at this quality: 0 when the quality draws nothing, else at least 1.
+function SkinFx.scaleCount(count: number, quality: number): number
+	if quality <= 0 or count <= 0 then
+		return 0
+	end
+	return math.max(1, math.floor(count * math.min(quality, 1) + 0.5))
+end
+
+-- Tier 3's hunter trail (lifetime, width; richer than tier 2's none) and the pack tier's longer,
+-- wider one; nil below tier 3.
+function SkinFx.hunterTrail(tier: number): (number?, number?)
+	if tier >= 4 then
+		return 0.55, 1.3
+	elseif tier >= 3 then
+		return 0.4, 0.9
+	end
+	return nil, nil
+end
 SkinFx.OVERRIDE_ATTRIBUTE = "SkinFxTier" -- Studio-only aid (ReplicatedStorage): force a tier to compare
 
 SkinFx.THEMES = table.freeze({
@@ -119,6 +168,14 @@ SkinFx.ITEMS = table.freeze({
 	is owned). The server will publish the result as the player attribute PACKS_ATTRIBUTE (comma
 	list of pack keys) from the saved skins - that store / save wiring is a later task (nothing sets
 	it yet), so in play nobody has tier 4. Studio: the `SkinFxTier` override now takes 0..4.
+
+	v3 (#465, "premium paid-skin" pass): each element also carries flame tongues off the helm horns +
+	pauldrons, swirling embers, a flickering heat light, lava drips, a standing-still ground ring,
+	molten footprints that crust, a layered take-down (fireball, shockwave ring, ground crack, light
+	flash), per-shot muzzle flash / casings / tracer bolts, heat haze, the overheat moment, reload
+	steam, and a layered grenade impact. The pure rules for those are below ("pack layer v3"); every
+	texture / sound is a built-in rbxasset path (TEXTURES, `sound`): nothing to upload. Rates and burst
+	counts scale with the graphics quality (`qualityScale`, `scaleCount`).
 ]]
 
 SkinFx.PACK_TIER = 4
@@ -126,24 +183,49 @@ SkinFx.PACKS_ATTRIBUTE = "SkinFxPacks" -- player attribute: "LAVA_LORD_RIFLE,...
 SkinFx.TAKEDOWN_ATTRIBUTE = "SkinFxTakedownAt" -- player attribute (server time), stamped on a take-down
 SkinFx.GRENADE_ATTRIBUTE = "SkinFxGrenade" -- on a thrown grenade: the worn premium grenade skin key
 SkinFx.OWNER_ATTRIBUTE = "SkinFxOwner" -- on a thrown grenade: the thrower's UserId
-SkinFx.PACK_RATE_CAP = 10 -- particles a second from one hunter's pack aura
+SkinFx.PACK_RATE_CAP = 30 -- particles a second from one hunter's whole pack layer (flames + embers + aura)
 SkinFx.MARK_CAP = 16 -- footstep marks on screen at once (all hunters; the oldest goes first)
 SkinFx.SPLASH_CAP = 4 -- grenade splashes at once
+SkinFx.DRIP_CAP = 6 -- lava drips falling at once (all hunters)
+SkinFx.RING_CAP = 6 -- standing-still ground rings at once (nearest hunters)
+SkinFx.BOLT_CAP = 8 -- glowing tracer bolts in flight at once
+SkinFx.TAKEDOWN_CAP = 3 -- take-down shockwave + ground crack sets at once
+SkinFx.HAZE_RATE_CAP = 8 -- heat-haze smoke a second from one hot gun
 SkinFx.PACK_DISTANCE = 120 -- studs: pack emitters / marks / bursts only this close to the camera
 SkinFx.HEAT_REF_RATE = 8 -- shots a second `perShot` is tuned for (the Big Game Hunter's auto rifle)
 
+export type Burst = { count: number, colour: { Color3 }, size: number, speed: number }
 export type Element = {
 	display: string,
 	stub: boolean, -- true = placeholder params until the theme is built
 	behaviour: string, -- how the client moves it: "flicker" (fire) | "crackle" | "shockwave" | "drift" | "shards"
 	aura: Emitter, -- round the hunter's torso
-	mark: { colour: Color3, rim: Color3, size: number, lifetime: number, every: number }, -- footsteps
-	takedown: { count: number, colour: { Color3 }, size: number, speed: number },
-	heat: { cool: Color3, hot: Color3, white: Color3, perShot: number, decay: number, burstAt: number, puffFrom: number },
-	muzzle: { count: number, colour: { Color3 }, size: number, speed: number },
-	puff: { count: number, colour: { Color3 }, size: number, speed: number }, -- steam / embers when cooling
-	trail: { colour: { Color3 }, lifetime: number, width: number, rate: number },
-	splash: { colour: Color3, radius: number, lifetime: number, count: number },
+	-- tongues licking up off the hunter's `hosts` (R15 parts: helm horns + pauldrons); `colour` is
+	-- the colour over life (white-yellow -> orange -> red -> smoke), `size` start / peak / end
+	flames: { rate: number, lifetime: { number }, speed: { number }, size: { number }, spread: number, rise: number,
+		colour: { Color3 }, hosts: { string } },
+	rising: { rate: number, lifetime: { number }, speed: { number }, size: number, spread: number, rise: number,
+		drag: number, colour: { Color3 } }, -- slow embers drifting / swirling up off the body
+	glow: { colour: Color3, brightness: number, range: number, flicker: number }, -- the flickering heat light
+	drip: { every: { number }, colour: Color3, crust: Color3, size: number, hiss: number }, -- off the pauldrons
+	ring: { after: number, fade: number, radius: number, rate: number, scorch: Color3 }, -- standing still
+	-- footsteps: a molten print `hot` -> `rim` -> crusts to `colour` while it fades, + a small flame lick
+	mark: { colour: Color3, rim: Color3, hot: Color3, size: number, lifetime: number, every: number, lick: number },
+	takedown: { count: number, colour: { Color3 }, size: number, speed: number, fireball: number, shower: number,
+		ring: { radius: number, seconds: number }, crack: { arms: number, length: number, seconds: number },
+		flash: { brightness: number, range: number, seconds: number } },
+	heat: { cool: Color3, hot: Color3, white: Color3, perShot: number, decay: number, burstAt: number, puffFrom: number,
+		hazeFrom: number, hazeRate: number, overheatAt: number, rearmBelow: number },
+	-- per-shot flash: `min`..`max` particles by heat (+ a light flash), the flame burst from burstAt
+	muzzle: { count: number, colour: { Color3 }, size: number, speed: number, min: number, max: number,
+		light: number, lightHot: number, range: number },
+	puff: Burst, -- steam / embers when cooling
+	shell: { count: number, colour: { Color3 }, speed: number }, -- molten casing / ember kicked out a shot
+	steam: { overheat: number, reloadRate: number, size: number, colour: { Color3 } }, -- overheat blast / reload steam
+	trail: { colour: { Color3 }, lifetime: number, width: number, rate: number, smoke: Color3, smokeLifetime: number },
+	splash: { colour: Color3, radius: number, lifetime: number, count: number, fireball: number, plume: number,
+		linger: number, bubbles: number, crust: Color3, flash: { brightness: number, range: number, seconds: number } },
+	sound: { boom: string?, volume: number }, -- built-in client sounds only (crackle / hiss / whoosh need an upload)
 }
 
 local function stubElement(display: string, behaviour: string, a: Color3, b: Color3, c: Color3): Element
@@ -153,45 +235,98 @@ local function stubElement(display: string, behaviour: string, a: Color3, b: Col
 		behaviour = behaviour,
 		aura = table.freeze({ rate = 6, lifetime = { 0.5, 0.9 }, speed = { 0.5, 1.2 }, size = { 0.5, 0 }, spread = 40,
 			colour = { a, b }, lightEmission = 0.6, rise = 2 }),
-		mark = table.freeze({ colour = b, rim = a, size = 1.1, lifetime = 2.5, every = 2.2 }),
-		takedown = table.freeze({ count = 18, colour = { a, b }, size = 0.5, speed = 9 }),
-		heat = table.freeze({ cool = b, hot = a, white = c, perShot = 0.08, decay = 0.25, burstAt = 0.7, puffFrom = 0.45 }),
-		muzzle = table.freeze({ count = 8, colour = { c, a }, size = 0.35, speed = 6 }),
+		flames = table.freeze({ rate = 6, lifetime = { 0.3, 0.5 }, speed = { 1, 2 }, size = { 0.3, 0.7, 0.1 }, spread = 20,
+			rise = 4, colour = { c, a, b, b }, hosts = { "Head", "LeftUpperArm", "RightUpperArm" } }),
+		rising = table.freeze({ rate = 4, lifetime = { 1.4, 2.2 }, speed = { 0.5, 1.2 }, size = 0.15, spread = 60, rise = 1,
+			drag = 0.8, colour = { c, a } }),
+		glow = table.freeze({ colour = a, brightness = 1.2, range = 10, flicker = 0.3 }),
+		drip = table.freeze({ every = { 2, 4 }, colour = a, crust = b, size = 0.2, hiss = 3 }),
+		ring = table.freeze({ after = 0.7, fade = 0.5, radius = 2.4, rate = 8, scorch = b }),
+		mark = table.freeze({ colour = b, rim = a, hot = c, size = 1.1, lifetime = 2.5, every = 2.2, lick = 2 }),
+		takedown = table.freeze({ count = 18, colour = { a, b }, size = 0.5, speed = 9, fireball = 4, shower = 18,
+			ring = { radius = 6, seconds = 0.5 }, crack = { arms = 6, length = 3, seconds = 2 },
+			flash = { brightness = 5, range = 16, seconds = 0.3 } }),
+		heat = table.freeze({ cool = b, hot = a, white = c, perShot = 0.08, decay = 0.25, burstAt = 0.7, puffFrom = 0.45,
+			hazeFrom = 0.55, hazeRate = 5, overheatAt = 0.95, rearmBelow = 0.6 }),
+		muzzle = table.freeze({ count = 8, colour = { c, a }, size = 0.35, speed = 6, min = 3, max = 10,
+			light = 2, lightHot = 6, range = 10 }),
 		puff = table.freeze({ count = 6, colour = { c, b }, size = 0.45, speed = 1.5 }),
-		trail = table.freeze({ colour = { a, b }, lifetime = 0.35, width = 0.5, rate = 12 }),
-		splash = table.freeze({ colour = a, radius = 2.2, lifetime = 1.2, count = 14 }),
+		shell = table.freeze({ count = 1, colour = { c, a }, speed = 7 }),
+		steam = table.freeze({ overheat = 18, reloadRate = 14, size = 1, colour = { c, b } }),
+		trail = table.freeze({ colour = { a, b }, lifetime = 0.35, width = 0.5, rate = 12, smoke = b, smokeLifetime = 0.8 }),
+		splash = table.freeze({ colour = a, radius = 2.2, lifetime = 1.8, count = 14, fireball = 5, plume = 5, linger = 1.5,
+			bubbles = 8, crust = b, flash = { brightness = 5, range = 16, seconds = 0.35 } }),
+		sound = table.freeze({ boom = nil, volume = 0 }),
 	})
 end
 
+local rgb = Color3.fromRGB
 SkinFx.ELEMENTS = table.freeze({
 	fire = table.freeze({
 		display = "Fire",
 		stub = false,
 		behaviour = "flicker",
-		aura = table.freeze({ -- flames licking up round the torso
-			rate = 8, lifetime = { 0.45, 0.8 }, speed = { 0.8, 1.8 }, size = { 0.7, 0.05 }, spread = 30,
-			colour = { Color3.fromRGB(255, 214, 110), Color3.fromRGB(220, 50, 10) }, lightEmission = 0.75, rise = 4,
+		aura = table.freeze({ -- low flames licking round the torso
+			rate = 4, lifetime = { 0.4, 0.7 }, speed = { 0.8, 1.6 }, size = { 0.8, 0.1 }, spread = 30,
+			colour = { rgb(255, 214, 110), rgb(220, 50, 10) }, lightEmission = 0.75, rise = 4,
 		}),
-		mark = table.freeze({ colour = Color3.fromRGB(40, 22, 18), rim = Color3.fromRGB(255, 104, 20), size = 0.8, lifetime = 2.4, every = 2.4 }),
-		takedown = table.freeze({ count = 22, colour = { Color3.fromRGB(255, 226, 140), Color3.fromRGB(230, 60, 10) }, size = 0.6, speed = 10 }),
+		flames = table.freeze({ -- tongues off the helm horns + pauldrons
+			rate = 7, lifetime = { 0.32, 0.6 }, speed = { 1.4, 2.8 }, size = { 0.35, 1.0, 0.2 }, spread = 12, rise = 7,
+			colour = { rgb(255, 250, 215), rgb(255, 196, 70), rgb(255, 108, 18), rgb(190, 32, 8), rgb(70, 60, 60) },
+			hosts = { "Head", "LeftUpperArm", "RightUpperArm" },
+		}),
+		rising = table.freeze({ -- slow embers swirling up
+			rate = 5, lifetime = { 1.8, 2.8 }, speed = { 0.6, 1.5 }, size = 0.16, spread = 70, rise = 1.6, drag = 0.9,
+			colour = { rgb(255, 226, 130), rgb(255, 84, 10) },
+		}),
+		glow = table.freeze({ colour = rgb(255, 128, 44), brightness = 1.6, range = 12, flicker = 0.45 }),
+		drip = table.freeze({ every = { 1.4, 3 }, colour = rgb(255, 156, 40), crust = rgb(60, 26, 16), size = 0.24, hiss = 4 }),
+		ring = table.freeze({ after = 0.7, fade = 0.5, radius = 2.6, rate = 10, scorch = rgb(22, 14, 12) }),
+		mark = table.freeze({
+			colour = rgb(40, 22, 18), rim = rgb(255, 104, 20), hot = rgb(255, 236, 170),
+			size = 0.8, lifetime = 2.6, every = 2.4, lick = 3,
+		}),
+		takedown = table.freeze({
+			count = 22, colour = { rgb(255, 226, 140), rgb(230, 60, 10) }, size = 0.6, speed = 10,
+			fireball = 6, shower = 26,
+			ring = { radius = 7, seconds = 0.55 }, crack = { arms = 7, length = 3.4, seconds = 2.2 },
+			flash = { brightness = 7, range = 18, seconds = 0.35 },
+		}),
 		heat = table.freeze({
-			cool = Color3.fromRGB(150, 26, 6), -- cold magma: deep red
-			hot = Color3.fromRGB(255, 112, 20), -- the authored glow
-			white = Color3.fromRGB(255, 246, 214), -- white-hot
+			cool = rgb(150, 26, 6), -- cold magma: deep red
+			hot = rgb(255, 112, 20), -- the authored glow
+			white = rgb(255, 246, 214), -- white-hot
 			perShot = 0.08, -- heat a shot adds (0..1) at HEAT_REF_RATE shots a second (slower guns: more a shot)
 			decay = 0.25, -- heat lost a second
 			burstAt = 0.7, -- a muzzle flame burst from this heat up
 			puffFrom = 0.45, -- cooling below this from above (or a reload while above it): a steam / ember puff
+			hazeFrom = 0.55, -- heat haze / smoke curls from the vents from this heat up
+			hazeRate = 7, -- ... at this rate a second at full heat
+			overheatAt = 0.95, -- the overheat moment (vents flare + steam blast) ...
+			rearmBelow = 0.6, -- ... once, until the gun cools below this
 		}),
-		muzzle = table.freeze({ count = 7, colour = { Color3.fromRGB(255, 240, 180), Color3.fromRGB(255, 90, 10) }, size = 0.35, speed = 7 }),
-		puff = table.freeze({ count = 6, colour = { Color3.fromRGB(230, 226, 220), Color3.fromRGB(120, 110, 110) }, size = 0.5, speed = 1.6 }),
-		trail = table.freeze({ colour = { Color3.fromRGB(255, 200, 90), Color3.fromRGB(200, 40, 8) }, lifetime = 0.35, width = 0.55, rate = 14 }),
-		splash = table.freeze({ colour = Color3.fromRGB(255, 104, 20), radius = 2.4, lifetime = 1.3, count = 16 }),
+		muzzle = table.freeze({
+			count = 7, colour = { rgb(255, 240, 180), rgb(255, 90, 10) }, size = 0.35, speed = 7,
+			min = 3, max = 12, light = 2.5, lightHot = 8, range = 12,
+		}),
+		puff = table.freeze({ count = 8, colour = { rgb(236, 232, 228), rgb(120, 110, 110) }, size = 0.6, speed = 1.8 }),
+		shell = table.freeze({ count = 1, colour = { rgb(255, 230, 150), rgb(255, 80, 10) }, speed = 8 }),
+		steam = table.freeze({ overheat = 26, reloadRate = 20, size = 1.3, colour = { rgb(244, 242, 240), rgb(150, 146, 146) } }),
+		trail = table.freeze({
+			colour = { rgb(255, 210, 100), rgb(200, 40, 8) }, lifetime = 0.4, width = 0.6, rate = 16,
+			smoke = rgb(70, 62, 62), smokeLifetime = 0.9,
+		}),
+		splash = table.freeze({
+			colour = rgb(255, 104, 20), radius = 2.6, lifetime = 2, count = 18,
+			fireball = 7, plume = 7, linger = 1.8, bubbles = 10, crust = rgb(55, 24, 14),
+			flash = { brightness = 7, range = 20, seconds = 0.4 },
+		}),
+		sound = table.freeze({ boom = "rbxasset://sounds/impact_explosion_03.mp3", volume = 0.35 }),
 	}),
-	electric = stubElement("Electric", "crackle", Color3.fromRGB(60, 230, 255), Color3.fromRGB(230, 60, 255), Color3.fromRGB(240, 255, 255)),
-	primal = stubElement("Primal", "shockwave", Color3.fromRGB(220, 30, 30), Color3.fromRGB(110, 10, 14), Color3.fromRGB(255, 214, 110)),
-	cosmic = stubElement("Cosmic", "drift", Color3.fromRGB(150, 110, 255), Color3.fromRGB(40, 200, 200), Color3.fromRGB(250, 250, 255)),
-	crystal = stubElement("Crystal", "shards", Color3.fromRGB(190, 110, 255), Color3.fromRGB(90, 70, 110), Color3.fromRGB(245, 230, 255)),
+	electric = stubElement("Electric", "crackle", rgb(60, 230, 255), rgb(230, 60, 255), rgb(240, 255, 255)),
+	primal = stubElement("Primal", "shockwave", rgb(220, 30, 30), rgb(110, 10, 14), rgb(255, 214, 110)),
+	cosmic = stubElement("Cosmic", "drift", rgb(150, 110, 255), rgb(40, 200, 200), rgb(250, 250, 255)),
+	crystal = stubElement("Crystal", "shards", rgb(190, 110, 255), rgb(90, 70, 110), rgb(245, 230, 255)),
 } :: { [string]: Element })
 
 -- Each theme's element (#462: themes differ by element, not by recolour). Only Lava Lord is built.
@@ -362,6 +497,108 @@ function SkinFx.packVisible(distance: number, lowGraphics: boolean?): boolean
 	return not lowGraphics and distance <= SkinFx.PACK_DISTANCE
 end
 
+------------------------------------------------------------------ pack layer v3 (#465): the rules
+
+-- The pack hunter's continuous rates at this quality (0..1): flames per host, rising embers and
+-- the torso aura, scaled down together so the whole layer stays <= PACK_RATE_CAP.
+export type PackRates = { flames: number, rising: number, aura: number, total: number }
+function SkinFx.packRates(element: Element, quality: number): PackRates
+	local q = math.clamp(quality, 0, 1)
+	local hosts = math.max(1, #element.flames.hosts)
+	local flames, rising, aura = element.flames.rate * q, element.rising.rate * q, element.aura.rate * q
+	local total = flames * hosts + rising + aura
+	if total > SkinFx.PACK_RATE_CAP then
+		local k = SkinFx.PACK_RATE_CAP / total
+		flames, rising, aura = flames * k, rising * k, aura * k
+		total = SkinFx.PACK_RATE_CAP
+	end
+	return { flames = flames, rising = rising, aura = aura, total = total }
+end
+
+-- A footprint's colour `u` (0..1) into its life: molten `hot` -> glowing `rim` (by 0.25) ->
+-- crusted `colour` (by 0.6), then it only fades.
+function SkinFx.markColour(element: Element, u: number): Color3
+	local m = element.mark
+	local x = math.clamp(u, 0, 1)
+	if x < 0.25 then
+		return m.hot:Lerp(m.rim, x / 0.25)
+	elseif x < 0.6 then
+		return m.rim:Lerp(m.colour, (x - 0.25) / 0.35)
+	end
+	return m.colour
+end
+
+-- The standing-still ground ring's strength 0..1: nothing while moving / in the air, then it fades
+-- in over `fade` seconds once the hunter has stood still `after` seconds.
+function SkinFx.ringAlpha(element: Element, still: number, grounded: boolean): number
+	if not grounded then
+		return 0
+	end
+	local r = element.ring
+	return math.clamp((still - r.after) / math.max(r.fade, 1e-3), 0, 1)
+end
+
+-- The overheat moment: fires once when the heat reaches `overheatAt` while armed, then re-arms
+-- only after the gun cools below `rearmBelow`. Returns (fire now, armed next).
+function SkinFx.overheat(element: Element, armed: boolean, heat: number): (boolean, boolean)
+	local h = element.heat
+	if armed and heat >= h.overheatAt then
+		return true, false
+	end
+	if not armed and heat < h.rearmBelow then
+		return false, true
+	end
+	return false, armed
+end
+
+-- A shot's muzzle flash at this heat (after the shot): particle count min..max and the light
+-- flash's brightness, both growing with the heat.
+function SkinFx.muzzleFlash(element: Element, heat: number): (number, number)
+	local m = element.muzzle
+	local x = math.clamp(heat, 0, 1)
+	return math.floor(m.min + (m.max - m.min) * x + 0.5), m.light + (m.lightHot - m.light) * x
+end
+
+-- Heat-haze smoke a second from the vents: none below `hazeFrom`, up to `hazeRate` at full heat
+-- (<= HAZE_RATE_CAP).
+function SkinFx.hazeRate(element: Element, heat: number): number
+	local h = element.heat
+	if heat < h.hazeFrom then
+		return 0
+	end
+	local x = (math.clamp(heat, 0, 1) - h.hazeFrom) / math.max(1 - h.hazeFrom, 1e-3)
+	return math.min(h.hazeRate * x, SkinFx.HAZE_RATE_CAP)
+end
+
+-- The take-down shockwave ring `u` (0..1) into its life: (radius, transparency); eases out.
+function SkinFx.shockwave(element: Element, u: number): (number, number)
+	local x = math.clamp(u, 0, 1)
+	local eased = 1 - (1 - x) ^ 3
+	return element.takedown.ring.radius * (0.15 + 0.85 * eased), 0.05 + 0.95 * x ^ 1.5
+end
+
+-- The ground crack `u` (0..1) into its life: white-hot -> the glow -> cooled crust; (colour,
+-- transparency): solid while it cools, fading out over the last 40%.
+function SkinFx.crackColour(element: Element, u: number): (Color3, number)
+	local h = element.heat
+	local x = math.clamp(u, 0, 1)
+	local colour
+	if x < 0.15 then
+		colour = h.white:Lerp(h.hot, x / 0.15)
+	elseif x < 0.6 then
+		colour = h.hot:Lerp(element.mark.colour, (x - 0.15) / 0.45)
+	else
+		colour = element.mark.colour
+	end
+	return colour, if x < 0.6 then 0 else (x - 0.6) / 0.4
+end
+
+-- Seconds to the hunter's next lava drip for a random r (0..1): between the element's bounds.
+function SkinFx.dripDelay(element: Element, r: number): number
+	local e = element.drip.every
+	return e[1] + (e[2] - e[1]) * math.clamp(r, 0, 1)
+end
+
 -- The premium item for a key, or nil (blank / basic / unknown = no effects).
 function SkinFx.item(key: unknown): Item?
 	return if type(key) == "string" then SkinFx.ITEMS[key] else nil
@@ -474,7 +711,7 @@ function SkinFx.embers(theme: Theme, tier: number, where: string, stage: number?
 	end
 	local rate
 	if where == "hunter" then
-		rate = math.min(if tier >= 3 then 3 else 2, SkinFx.HUNTER_RATE_CAP)
+		rate = math.min(if tier >= 3 then 4 else 2, SkinFx.HUNTER_RATE_CAP)
 	elseif where == "weapon" then
 		rate = if tier >= 3 then 2 else 1.5
 	else
@@ -500,10 +737,10 @@ function SkinFx.aura(theme: Theme, tier: number, where: string, stage: number?, 
 		return nil
 	end
 	return {
-		rate = if where == "hunter" then 1.5 else 2,
-		lifetime = { 1.0, 1.4 },
-		speed = { 0.2, 0.5 },
-		size = { if where == "hunter" then 1.1 else 1.6, 0.2 },
+		rate = 2,
+		lifetime = { 0.8, 1.2 },
+		speed = { 0.3, 0.7 },
+		size = { if where == "hunter" then 1.2 else 1.6, 0.2 },
 		spread = 180,
 		colour = { theme.glow, theme.deep },
 		lightEmission = 0.6,

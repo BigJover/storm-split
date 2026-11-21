@@ -7,6 +7,9 @@
 	3. Looks: the glow animates from tier 1, flows by phase only at tier 3, a stage-2 tower is
 	   hotter; embers from tier 2 within the caps, aura / light only at tier 3 (towers: stage 2).
 	4. Kinds: ability / grenade colours only for their own hero; attributes use Skins' naming.
+	5. Pack layer v3 (#465): quality scaling, the whole-layer rate cap, footprint crusting, the
+	   standing-still ring, overheat once per heat-up, muzzle flash / haze growing with heat, the
+	   take-down shockwave + crack, drip timing, built-in textures only, tier 3 vs pack trail.
 ]]
 
 local SkinFx = require(src.shared.SkinFx)
@@ -225,7 +228,8 @@ test("elements: every theme has one, data in every slot; only fire is built", fu
 		ok(e ~= nil, `{theme} element`)
 		ok(not seen[e], `{theme}: its own element (not a reskin)`)
 		seen[e] = true
-		for _, slot in { "aura", "mark", "takedown", "heat", "muzzle", "puff", "trail", "splash" } do
+		for _, slot in { "aura", "flames", "rising", "glow", "drip", "ring", "mark", "takedown", "heat", "muzzle", "puff",
+			"shell", "steam", "trail", "splash", "sound" } do
 			ok(e[slot] ~= nil, `{theme} {slot}`)
 		end
 		ok(type(e.behaviour) == "string", `{theme} behaviour`)
@@ -302,4 +306,165 @@ test("pack perf caps: aura rate, marks, splashes, distance, low graphics", funct
 	eq(SkinFx.packVisible(SkinFx.PACK_DISTANCE, false), true)
 	eq(SkinFx.packVisible(SkinFx.PACK_DISTANCE + 1, false), false, "culled by distance")
 	eq(SkinFx.packVisible(5, true), false, "off on low graphics")
+end)
+
+------------------------------------------------------------------ pack layer v3 (#465)
+
+test("graphics quality: low = nothing, otherwise a share of the rates; counts never 0 when drawn", function()
+	for level = 1, 3 do
+		eq(SkinFx.qualityScale(level), 0, `level {level} draws nothing`)
+	end
+	local prev = 0
+	for level = 4, 10 do
+		local q = SkinFx.qualityScale(level)
+		ok(q > 0 and q <= 1 and q >= prev, `level {level} scale {q}`)
+		prev = q
+	end
+	eq(SkinFx.qualityScale(10), 1)
+	ok(SkinFx.qualityScale(0) > 0, "Automatic draws")
+	ok(SkinFx.qualityScale(nil) > 0, "unknown draws")
+	eq(SkinFx.scaleCount(10, 0), 0, "low: no burst")
+	eq(SkinFx.scaleCount(10, 1), 10)
+	eq(SkinFx.scaleCount(10, 0.5), 5)
+	eq(SkinFx.scaleCount(1, 0.25), 1, "a drawn burst keeps one")
+	eq(SkinFx.scaleCount(0, 1), 0)
+end)
+
+test("pack hunter rates: the whole layer <= PACK_RATE_CAP, scaled by quality", function()
+	for name, e in SkinFx.ELEMENTS do
+		for _, q in { 0, 0.5, 0.75, 1, 3 } do
+			local r = SkinFx.packRates(e, q)
+			local total = r.flames * #e.flames.hosts + r.rising + r.aura
+			near(total, r.total, `{name} total adds up at {q}`, 1e-6)
+			ok(r.total <= SkinFx.PACK_RATE_CAP + 1e-9, `{name} capped at {q}`)
+		end
+		eq(SkinFx.packRates(e, 0).total, 0, `{name}: nothing at quality 0`)
+		ok(SkinFx.packRates(e, 0.5).total < SkinFx.packRates(e, 1).total, `{name}: lower quality, fewer`)
+		ok(#e.flames.hosts >= 1 and #e.flames.colour >= 2, `{name} flames have hosts + a colour ramp`)
+	end
+	local f = FIRE.flames.colour
+	ok(sum(f[1]) > sum(f[3]) and sum(f[3]) > sum(f[4]), "fire: white-yellow -> orange -> red over life")
+end)
+
+test("footprints: molten -> glowing rim -> crust, never brighter as they age", function()
+	ok(same(SkinFx.markColour(FIRE, 0), FIRE.mark.hot), "starts molten")
+	ok(same(SkinFx.markColour(FIRE, 0.25), FIRE.mark.rim), "then the glow")
+	ok(same(SkinFx.markColour(FIRE, 0.6), FIRE.mark.colour), "crusted")
+	ok(same(SkinFx.markColour(FIRE, 5), FIRE.mark.colour), "clamped")
+	local prev = math.huge
+	for i = 0, 20 do
+		local s = sum(SkinFx.markColour(FIRE, i / 20))
+		ok(s <= prev + 1e-9, `cooling {i}`)
+		prev = s
+	end
+end)
+
+test("standing-still ring: only grounded and still, fades in after the wait", function()
+	local r = FIRE.ring
+	eq(SkinFx.ringAlpha(FIRE, 0, true), 0, "moving: none")
+	eq(SkinFx.ringAlpha(FIRE, r.after, true), 0, "just stopped: none yet")
+	near(SkinFx.ringAlpha(FIRE, r.after + r.fade / 2, true), 0.5, "fading in", 1e-9)
+	eq(SkinFx.ringAlpha(FIRE, r.after + r.fade, true), 1, "full")
+	eq(SkinFx.ringAlpha(FIRE, 60, true), 1, "clamped")
+	eq(SkinFx.ringAlpha(FIRE, 60, false), 0, "in the air: none")
+	ok(SkinFx.RING_CAP <= 10, "ring cap")
+end)
+
+test("overheat: once at max heat, re-armed only after cooling", function()
+	local h = FIRE.heat
+	local fire, armed = SkinFx.overheat(FIRE, true, h.overheatAt - 0.01)
+	eq(fire, false, "not yet")
+	eq(armed, true)
+	fire, armed = SkinFx.overheat(FIRE, true, h.overheatAt)
+	eq(fire, true, "the moment")
+	eq(armed, false, "spent")
+	fire, armed = SkinFx.overheat(FIRE, false, 1)
+	eq(fire, false, "held at max: no repeat")
+	fire, armed = SkinFx.overheat(FIRE, false, h.rearmBelow + 0.01)
+	eq(fire or armed, false, "still warm: not re-armed")
+	fire, armed = SkinFx.overheat(FIRE, false, h.rearmBelow - 0.01)
+	eq(fire, false)
+	eq(armed, true, "cooled: re-armed")
+	-- a full Big Game Hunter magazine reaches the overheat moment
+	local Config = require(src.shared.Config)
+	local row = (Config.Heroes :: any).RIFLE
+	local heat, hit = 0, false
+	armed = true
+	for _ = 1, row.magazine do
+		heat = SkinFx.heatAfter(FIRE, SkinFx.heatAfterShots(FIRE, heat, 1, row.rate), 1 / row.rate)
+		local f
+		f, armed = SkinFx.overheat(FIRE, armed, heat)
+		hit = hit or f
+	end
+	ok(hit, "a full magazine overheats")
+end)
+
+test("muzzle flash and heat haze grow with heat, within caps", function()
+	local c0, b0 = SkinFx.muzzleFlash(FIRE, 0)
+	local c1, b1 = SkinFx.muzzleFlash(FIRE, 1)
+	eq(c0, FIRE.muzzle.min)
+	eq(c1, FIRE.muzzle.max)
+	ok(b1 > b0 and c1 > c0, "bigger and brighter when hot")
+	local prevC, prevB = -1, -1
+	for i = 0, 10 do
+		local c, b = SkinFx.muzzleFlash(FIRE, i / 10)
+		ok(c >= prevC and b >= prevB, `monotonic {i}`)
+		prevC, prevB = c, b
+	end
+	eq(SkinFx.hazeRate(FIRE, FIRE.heat.hazeFrom - 0.01), 0, "no haze cool")
+	ok(SkinFx.hazeRate(FIRE, 1) > SkinFx.hazeRate(FIRE, (1 + FIRE.heat.hazeFrom) / 2), "more haze hotter")
+	for name, e in SkinFx.ELEMENTS do
+		ok(SkinFx.hazeRate(e, 1) <= SkinFx.HAZE_RATE_CAP, `{name} haze cap`)
+		ok(e.muzzle.max <= 16, `{name} flash count small`)
+	end
+end)
+
+test("take-down: the shockwave grows and fades; the crack cools then fades", function()
+	local prevR, prevT = -1, -1
+	for i = 0, 10 do
+		local r, tr = SkinFx.shockwave(FIRE, i / 10)
+		ok(r > prevR and tr >= prevT, `ring grows + fades {i}`)
+		prevR, prevT = r, tr
+	end
+	local rEnd, tEnd = SkinFx.shockwave(FIRE, 1)
+	near(rEnd, FIRE.takedown.ring.radius, "full radius", 1e-9)
+	near(tEnd, 1, "gone", 1e-9)
+	local c0, t0 = SkinFx.crackColour(FIRE, 0)
+	ok(same(c0, FIRE.heat.white) and t0 == 0, "white-hot and solid")
+	local c5, t5 = SkinFx.crackColour(FIRE, 0.5)
+	ok(sum(c5) < sum(c0) and t5 == 0, "cooling, still solid")
+	local _, t1 = SkinFx.crackColour(FIRE, 1)
+	near(t1, 1, "faded", 1e-9)
+	ok(FIRE.takedown.crack.arms <= 9, "crack arms fit the pooled set")
+	ok(SkinFx.TAKEDOWN_CAP <= 4 and SkinFx.BOLT_CAP <= 10 and SkinFx.DRIP_CAP <= 8, "pool caps")
+end)
+
+test("drips: delay within the element's bounds", function()
+	local e = FIRE.drip.every
+	near(SkinFx.dripDelay(FIRE, 0), e[1], "min", 1e-9)
+	near(SkinFx.dripDelay(FIRE, 1), e[2], "max", 1e-9)
+	near(SkinFx.dripDelay(FIRE, 7), e[2], "clamped", 1e-9)
+	ok(e[1] >= 1, "not a stream")
+end)
+
+test("built-in assets only: rbxasset textures + sounds (nothing to upload)", function()
+	for name, path in SkinFx.TEXTURES do
+		ok(string.sub(path, 1, 30) == "rbxasset://textures/particles/", `{name} texture is built in`)
+	end
+	for name, e in SkinFx.ELEMENTS do
+		local boom = e.sound.boom
+		ok(boom == nil or string.sub(boom, 1, 18) == "rbxasset://sounds/", `{name} sound is built in`)
+		ok(e.sound.volume <= 0.5, `{name} sound is quiet`)
+	end
+end)
+
+test("tier 3 is richer than tier 2; the pack tier richer than tier 3", function()
+	eq(SkinFx.hunterTrail(2), nil, "no trail at tier 2")
+	local l3, w3 = SkinFx.hunterTrail(3)
+	local l4, w4 = SkinFx.hunterTrail(4)
+	ok(l3 ~= nil and w3 ~= nil and l4 ~= nil and w4 ~= nil, "trails from tier 3")
+	ok((l4 :: number) > (l3 :: number) and (w4 :: number) > (w3 :: number), "pack trail longer + wider")
+	ok((SkinFx.embers(LAVA, 3, "hunter") :: any).rate > (SkinFx.embers(LAVA, 2, "hunter") :: any).rate, "tier 3 more embers")
+	ok(SkinFx.packRates(FIRE, 1).total > (SkinFx.embers(LAVA, 3, "hunter") :: any).rate + (SkinFx.aura(LAVA, 3, "hunter") :: any).rate,
+		"the pack layer draws more than tier 3")
 end)
