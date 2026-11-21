@@ -13,10 +13,10 @@ _spec.loader.exec_module(L)
 
 
 def design(k, K):
-    L.spire(k, K, (-1.05, 0.0, -1.0), h=1.5, w=0.4, yaw=20)
-    L.spire(k, K, (-1.2, 0.0, 1.05), h=1.0, w=0.32, yaw=-30)
-    L.pool(k, K, (0.15, 0.0, -1.15), r=0.28, rocks=1)
-    L.brazier(k, K, (1.26, 0.0, -0.6), s=0.85, legs=0.45)
+    L.erupting(k, K, (-1.08, 0.0, -1.06), h=1.2, r=0.38)  # v2: an erupting cone
+    L.spire(k, K, (-1.2, 0.0, 1.05), h=1.2, w=0.34, yaw=-30)
+    L.lavafall(k, K, (0.15, 0.0, -1.2), h=0.75, w=0.36, yaw=180)  # v2: a lava fall (pool inside, under the rim)
+    L.brazier(k, K, (1.26, 0.0, -0.6), s=0.85, legs=0.5)
 
 
 def build(lp):

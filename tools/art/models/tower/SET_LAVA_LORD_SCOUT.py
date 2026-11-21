@@ -15,6 +15,8 @@ _spec.loader.exec_module(L)
 def design(k, K):
     L.spire(k, K, (-1.16, 0.55, 0.15), h=1.3, w=0.34, yaw=90)
     L.brazier(k, K, (0.85, 2.42, -0.8), s=1.1)
+    L.lavafall(k, K, (-1.1, 0.0, 0.88), h=0.95, w=0.36, yaw=180)  # v2: lava pouring off a ledge
+    L.columns(k, K, (-1.12, 0.0, -1.12))  # v2: basalt columns
 
 
 def build(lp):

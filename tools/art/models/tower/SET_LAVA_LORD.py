@@ -1,6 +1,7 @@
 """SET_LAVA_LORD - the Lava Lord premium tower set's trim (PREMIUM_SKINS.md, batch 11p1): an obsidian
 rim round the footprint with a lava seam glowing along its top, a cluster of jagged obsidian shards
-with glowing cracks on the front-left corner and a small lava pool in an obsidian lip at the back-left.
+with glowing cracks on the front-left corner and (v2, #462) lava pouring off a small obsidian ledge
+into a pool at the back-left.
 `glow` = Neon in game (Shared/SkinFx pulses it; brighter, with embers, at stage 2). Over any tower's
 art (variants/_sets.py checks: <= 300 tris, rim <= 0.3, raised pieces only on the left corners
 <= 1.1, flag + Rescue Beacon corners clear).
@@ -35,10 +36,12 @@ def design(k, K):
           K.rod((-1.06, 0.12, -1.3), (-1.1, 0.42, -1.29), 0.025, 3),
           K.rod((-1.1, 0.42, -1.29), (-1.05, 0.68, -1.25), 0.022, 3),
           K.rod((-0.95, 0.06, -0.8), (-0.98, 0.3, -0.78), 0.022, 3))
-    # back-left: a lava pool in an obsidian lip, one shard beside it
-    k.add("obsidian", K.cyl((-1.0, 0.1, 1.0), 0.36, 0.2, 9, bevel=0.0),
-          shard(K, (-1.3, 0.0, 0.62), 0.55, 0.22, (8, 0, 10)))
-    k.add("glow", K.cyl((-1.0, 0.2, 1.0), 0.28, 0.04, 9, bevel=0.0))
+    # back-left (v2, #462): lava pouring off a small obsidian ledge into a pool in an obsidian lip
+    k.add("obsidian", K.rbox((-1.2, 0.48, 1.2), (0.4, 0.96, 0.36), bevel=0.0, rot=(0, 45, 0), taper=(0.7, 0.7)),
+          K.cyl((-0.92, 0.08, 0.92), 0.32, 0.16, 7, bevel=0.0))
+    k.add("glow",
+          K.rbox((-1.06, 0.5, 1.06), (0.18, 0.9, 0.04), bevel=0.0, rot=(0, 45, 0), taper=(0.6, 1.0)),  # the fall
+          K.cyl((-0.92, 0.165, 0.92), 0.25, 0.02, 7, bevel=0.0))
 
 
 def build(lp):

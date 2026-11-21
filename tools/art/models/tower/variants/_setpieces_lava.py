@@ -75,6 +75,52 @@ def pool(k, K, at, r=0.38, rocks=2):
                       for a in (0.8, 3.6)[:rocks]])
 
 
+def erupting(k, K, at, h=1.2, r=0.42):
+    """v2 (#462): a small erupting obsidian cone - a glowing crater, lava rivulets running down
+    its sides, a magma burst and two molten drops flung above the crater."""
+    x, y, z = at
+    k.add("obsidian", K.cyl((x, y + h / 2, z), r, h, 7, top=0.32, bevel=0.0))
+    k.add("basalt", *[K.ell((x + r * 0.9 * math.cos(a), y + 0.07, z + r * 0.9 * math.sin(a)), (0.11, 0.07, 0.1), 5, 3)
+                      for a in (0.4, 2.5, 4.4)])
+    top = y + h
+    k.add("glow",
+          K.cyl((x, top + 0.01, z), r * 0.26, 0.04, 7, bevel=0.0),  # crater
+          K.ell((x, top + 0.2, z), (0.12, 0.16, 0.12), 6, 4),  # the burst
+          K.ell((x + 0.16, top + 0.42, z - 0.04), (0.05, 0.07, 0.05), 5, 3),
+          K.ell((x - 0.12, top + 0.5, z + 0.06), (0.04, 0.06, 0.04), 5, 3),
+          *[K.rod((x + r * 0.3 * math.cos(a), top - 0.02, z + r * 0.3 * math.sin(a)),
+                  (x + r * 0.95 * math.cos(a + 0.25), y + 0.08, z + r * 0.95 * math.sin(a + 0.25)), 0.035, 3)
+            for a in (0.9, 3.0, 5.0)])
+
+
+def lavafall(k, K, at, h=1.0, w=0.4, yaw=0.0):
+    """v2 (#462): lava pouring off an obsidian ledge into a pool: a rock block, a glowing sheet down
+    its face (facing -Z before `yaw`), the pool it lands in."""
+    x, y, z = at
+    c, s = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
+
+    def p(dx, dz):
+        return (x + dx * c + dz * s, z - dx * s + dz * c)
+
+    bx, bz = p(0, 0.12)
+    k.add("obsidian", K.rbox((bx, y + h / 2, bz), (w + 0.16, h, 0.3), bevel=0.0, rot=(0, yaw, 0), taper=(0.8, 0.8)))
+    fx, fz = p(0, -0.06)
+    k.add("glow", K.rbox((fx, y + h / 2 + 0.04, fz), (w * 0.5, h * 0.95, 0.04), bevel=0.0, rot=(0, yaw, 0), taper=(0.7, 1.0)))
+    px, pz = p(0, -0.3)
+    k.add("obsidian", K.cyl((px, y + 0.05, pz), w * 0.62, 0.1, 7, bevel=0.0))
+    k.add("glow", K.cyl((px, y + 0.105, pz), w * 0.5, 0.02, 7, bevel=0.0))
+
+
+def columns(k, K, at, heights=(0.9, 0.6, 0.45), r=0.14):
+    """v2 (#462): a cluster of hexagonal basalt columns, lava glowing in the cracks of their tops."""
+    x, y, z = at
+    for i, hh in enumerate(heights):
+        a = i * 2.1
+        cx, cz = x + (0.16 if i else 0) * math.cos(a), z + (0.16 if i else 0) * math.sin(a)
+        k.add("basalt", K.cyl((cx, y + hh / 2, cz), r, hh, 6, bevel=0.0))
+        k.add("glow", K.cyl((cx, y + hh + 0.01, cz), r * 0.6, 0.02, 6, bevel=0.0))
+
+
 def build(lp, tower, design):
     """design(k, K) with this module's props; the batch 11p1 entry."""
     model = C.setpiece(lp, "LAVA_LORD", tower, design, COLORS)

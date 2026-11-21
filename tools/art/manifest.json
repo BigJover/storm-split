@@ -22645,17 +22645,17 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "7c548150ec9eedd7",
+      "hash": "248bf6c0c0fcf874",
       "pieces": {
         "glow": {
           "group": "glow",
           "role": null,
-          "tris": 104
+          "tris": 108
         },
         "obsidian": {
           "group": "obsidian",
           "role": null,
-          "tris": 140
+          "tris": 132
         }
       },
       "premium": true,
@@ -22665,7 +22665,7 @@
       "theme": "LAVA_LORD",
       "tower": "SET_LAVA_LORD",
       "trim": true,
-      "tris": 244,
+      "tris": 240,
       "uploadedHash": null
     },
     "tower/SET_LAVA_LORD_GRENADIER": {
@@ -22673,14 +22673,14 @@
       "batch": "11p1",
       "box": [
         [
-          -1.371726155281067,
+          -1.465246558189392,
           -2.5045270919799805,
-          -1.3300000429153442
+          -1.4768344163894653
         ],
         [
-          1.2924039363861084,
-          -0.7322500944137573,
-          1.3527179956436157
+          1.0299999713897705,
+          -0.6480385065078735,
+          1.3734402656555176
         ]
       ],
       "budget": "tower",
@@ -22703,23 +22703,23 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "fc07114752e920de",
+      "hash": "81a6caa747a37cf1",
       "piece": true,
       "pieces": {
         "basalt": {
           "group": "basalt",
           "role": null,
-          "tris": 116
+          "tris": 112
         },
         "glow": {
           "group": "glow",
           "role": null,
-          "tris": 256
+          "tris": 334
         },
         "obsidian": {
           "group": "obsidian",
           "role": null,
-          "tris": 168
+          "tris": 160
         }
       },
       "premium": true,
@@ -22728,7 +22728,7 @@
       "theme": "LAVA_LORD",
       "tower": "SET_LAVA_LORD_GRENADIER",
       "towerKind": "GRENADIER",
-      "tris": 540,
+      "tris": 606,
       "uploadedHash": null
     },
     "tower/SET_LAVA_LORD_SCOUT": {
@@ -22737,13 +22737,13 @@
       "box": [
         [
           -1.4086065292358398,
-          -1.9500000476837158,
-          -1.097000002861023
+          -2.5,
+          -1.3994520902633667
         ],
         [
           1.1470000743865967,
           1.1407885551452637,
-          0.41200000047683716
+          1.3810962438583374
         ]
       ],
       "budget": "tower",
@@ -22766,23 +22766,23 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "37dff345fdf62d8d",
+      "hash": "a023dddaf1316548",
       "piece": true,
       "pieces": {
         "basalt": {
           "group": "basalt",
           "role": null,
-          "tris": 52
+          "tris": 112
         },
         "glow": {
           "group": "glow",
           "role": null,
-          "tris": 174
+          "tris": 270
         },
         "obsidian": {
           "group": "obsidian",
           "role": null,
-          "tris": 100
+          "tris": 136
         }
       },
       "premium": true,
@@ -22791,7 +22791,7 @@
       "theme": "LAVA_LORD",
       "tower": "SET_LAVA_LORD_SCOUT",
       "towerKind": "SCOUT",
-      "tris": 326,
+      "tris": 518,
       "uploadedHash": null
     },
     "tower/SET_LAVA_LORD_VENT": {
@@ -22799,14 +22799,14 @@
       "batch": "11p1",
       "box": [
         [
-          -1.4834097623825073,
-          -2.5039315223693848,
-          -1.4299999475479126
+          -1.4989607334136963,
+          -2.503544330596924,
+          -1.485447883605957
         ],
         [
           1.4895000457763672,
-          -0.9730179309844971,
-          1.385267734527588
+          -0.7480384111404419,
+          1.4001994132995605
         ]
       ],
       "budget": "tower",
@@ -22829,23 +22829,23 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "f583cb1889d75567",
+      "hash": "530e5a563d0ea3c5",
       "piece": true,
       "pieces": {
         "basalt": {
           "group": "basalt",
           "role": null,
-          "tris": 96
+          "tris": 112
         },
         "glow": {
           "group": "glow",
           "role": null,
-          "tris": 256
+          "tris": 334
         },
         "obsidian": {
           "group": "obsidian",
           "role": null,
-          "tris": 168
+          "tris": 160
         }
       },
       "premium": true,
@@ -22854,7 +22854,7 @@
       "theme": "LAVA_LORD",
       "tower": "SET_LAVA_LORD_VENT",
       "towerKind": "VENT",
-      "tris": 520,
+      "tris": 606,
       "uploadedHash": null
     },
     "tower/SET_MIDNIGHT": {
