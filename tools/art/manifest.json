@@ -1733,14 +1733,14 @@
       "batch": "11p1",
       "box": [
         [
-          -0.09510565549135208,
-          -0.19917091727256775,
-          -1.8827614784240723
+          -0.09994663298130035,
+          -0.2199999988079071,
+          -1.75
         ],
         [
           0.14256271719932556,
-          0.3349999785423279,
-          1.034386157989502
+          0.34994664788246155,
+          1.059999942779541
         ]
       ],
       "budget": "gun",
@@ -1783,7 +1783,7 @@
         0
       ],
       "gun": "RIFLE",
-      "hash": "d832e9d11049d1f9",
+      "hash": "24c28ab2fd28095c",
       "muzzle": [
         0,
         0.25,
@@ -1793,22 +1793,22 @@
         "accent": {
           "group": "accent",
           "role": null,
-          "tris": 32
+          "tris": 24
         },
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 124
+          "tris": 112
         },
         "dark": {
           "group": "dark",
           "role": null,
-          "tris": 100
+          "tris": 108
         },
         "glow": {
           "group": "glow",
           "role": null,
-          "tris": 184
+          "tris": 252
         },
         "muzzle": {
           "group": "steel",
@@ -1823,14 +1823,15 @@
         "wood": {
           "group": "wood",
           "role": null,
-          "tris": 212
+          "tris": 116
         }
       },
       "premium": true,
       "skin": "LAVA_LANCE",
       "theme": "LAVA_LORD",
-      "tris": 860,
-      "uploadedHash": null
+      "tris": 820,
+      "uploadedHash": null,
+      "version": 2
     },
     "gun/SHOTGUN": {
       "asset": null,
@@ -11072,14 +11073,14 @@
       "batch": "11p1",
       "box": [
         [
-          -0.3052903711795807,
-          -0.32965248823165894,
-          -0.3100000023841858
+          -0.3082032799720764,
+          -0.5099999904632568,
+          -0.30905881524086
         ],
         [
-          0.3141440153121948,
-          0.42179086804389954,
-          0.3100000023841858
+          0.30970144271850586,
+          0.44600000977516174,
+          0.2771786153316498
         ]
       ],
       "budget": "small",
@@ -11090,14 +11091,19 @@
       ],
       "colors": {
         "body": [
-          40,
           34,
-          42
+          30,
+          38
         ],
         "brass": [
           120,
           70,
           42
+        ],
+        "crust": [
+          58,
+          44,
+          44
         ],
         "glow": [
           255,
@@ -11111,36 +11117,42 @@
         ]
       },
       "display": "Lava Lob",
-      "hash": "4ea218f830628be8",
+      "hash": "c09cff3d60177a41",
       "hero": "RIFLE",
       "pieces": {
         "body": {
           "group": "body",
           "role": null,
-          "tris": 90
+          "tris": 244
         },
         "brass": {
           "group": "brass",
           "role": null,
-          "tris": 148
+          "tris": 136
+        },
+        "crust": {
+          "group": "crust",
+          "role": null,
+          "tris": 100
         },
         "glow": {
           "group": "glow",
           "role": null,
-          "tris": 280
+          "tris": 88
         },
         "steel": {
           "group": "steel",
           "role": null,
-          "tris": 28
+          "tris": 24
         }
       },
       "premium": true,
       "prop": "grenade",
       "skin": "LAVA_LOB",
       "theme": "LAVA_LORD",
-      "tris": 546,
-      "uploadedHash": null
+      "tris": 592,
+      "uploadedHash": null,
+      "version": 2
     },
     "kit/RIFLE_MELEE": {
       "asset": null,
