@@ -5381,32 +5381,37 @@
       "batch": "11p1",
       "box": [
         [
-          -1.815,
+          -2.043,
           -3.0,
-          -0.959
+          -0.764
         ],
         [
-          1.815,
-          3.147,
-          0.999
+          2.043,
+          3.06,
+          0.831
         ]
       ],
       "budget": "hero",
       "colors": {
+        "cape": [
+          120,
+          26,
+          18
+        ],
         "dark": [
-          70,
           40,
-          30
+          30,
+          32
         ],
         "eye": [
           32,
           26,
           26
         ],
-        "gear": [
+        "gaunt": [
+          40,
           34,
-          30,
-          36
+          46
         ],
         "glow": [
           255,
@@ -5414,56 +5419,50 @@
           20
         ],
         "hair": [
-          200,
-          86,
-          34
+          214,
+          92,
+          30
         ],
         "pants": [
           46,
-          40,
-          44
+          36,
+          40
         ],
         "plate": [
-          44,
-          38,
-          48
+          40,
+          34,
+          46
         ],
         "shirt": [
-          54,
-          48,
-          52
+          52,
+          40,
+          44
         ],
         "skin": [
           236,
           188,
           150
-        ],
-        "sock": [
-          80,
-          70,
-          70
         ]
       },
       "display": "Magma Monarch",
-      "hash": "e6744ffdf942d4c2",
+      "hash": "d6f1fd898ef086e5",
       "hero": "RIFLE",
       "parts": {
         "Head": {
           "box": [
             [
-              -0.84,
+              -1.309,
               0.68,
-              -0.959
+              -0.764
             ],
             [
-              0.84,
-              3.147,
-              0.999
+              1.309,
+              3.06,
+              0.809
             ]
           ],
           "groups": [
             "eye",
-            "gear",
             "glow",
             "hair",
             "plate",
@@ -5487,7 +5486,7 @@
             [
               -0.886,
               -3.0,
-              -0.665
+              -0.667
             ],
             [
               -0.114,
@@ -5518,16 +5517,17 @@
             [
               -1.614,
               -1.026,
-              -0.29
+              -0.31
             ],
             [
-              -1.084,
+              -1.085,
               -0.574,
               0.234
             ]
           ],
           "groups": [
-            "skin"
+            "gaunt",
+            "glow"
           ],
           "r15": {
             "centre": [
@@ -5545,21 +5545,20 @@
         "LeftLowerArm": {
           "box": [
             [
-              -1.75,
-              -0.873,
-              -0.402
+              -1.94,
+              -0.89,
+              -0.362
             ],
             [
-              -1.01,
-              0.33,
-              0.372
+              -1.042,
+              0.35,
+              0.355
             ]
           ],
           "groups": [
             "glow",
             "plate",
-            "shirt",
-            "skin"
+            "shirt"
           ],
           "r15": {
             "centre": [
@@ -5577,21 +5576,21 @@
         "LeftLowerLeg": {
           "box": [
             [
-              -0.883,
+              -0.915,
               -2.969,
-              -0.428
+              -0.62
             ],
             [
-              -0.118,
-              -1.624,
-              0.391
+              -0.085,
+              -1.46,
+              0.409
             ]
           ],
           "groups": [
             "dark",
             "glow",
-            "plate",
-            "sock"
+            "pants",
+            "plate"
           ],
           "r15": {
             "centre": [
@@ -5609,14 +5608,14 @@
         "LeftUpperArm": {
           "box": [
             [
-              -1.815,
-              -0.262,
-              -0.52
+              -2.043,
+              -0.28,
+              -0.6
             ],
             [
-              -0.889,
-              1.093,
-              0.52
+              -0.844,
+              1.52,
+              0.6
             ]
           ],
           "groups": [
@@ -5640,19 +5639,20 @@
         "LeftUpperLeg": {
           "box": [
             [
-              -0.913,
-              -2.173,
-              -0.413
+              -0.909,
+              -2.195,
+              -0.48
             ],
             [
-              -0.087,
-              -0.526,
-              0.413
+              -0.091,
+              -0.53,
+              0.409
             ]
           ],
           "groups": [
+            "glow",
             "pants",
-            "skin"
+            "plate"
           ],
           "r15": {
             "centre": [
@@ -5671,16 +5671,17 @@
           "box": [
             [
               -0.95,
-              -1.03,
-              -0.55
+              -1.81,
+              -0.6
             ],
             [
               0.95,
-              -0.52,
+              -0.49,
               0.495
             ]
           ],
           "groups": [
+            "cape",
             "dark",
             "glow",
             "pants",
@@ -5704,7 +5705,7 @@
             [
               0.114,
               -3.0,
-              -0.665
+              -0.667
             ],
             [
               0.886,
@@ -5733,9 +5734,9 @@
         "RightHand": {
           "box": [
             [
-              1.084,
+              1.085,
               -1.026,
-              -0.29
+              -0.31
             ],
             [
               1.614,
@@ -5744,7 +5745,8 @@
             ]
           ],
           "groups": [
-            "skin"
+            "gaunt",
+            "glow"
           ],
           "r15": {
             "centre": [
@@ -5762,21 +5764,20 @@
         "RightLowerArm": {
           "box": [
             [
-              1.01,
-              -0.873,
-              -0.402
+              1.042,
+              -0.89,
+              -0.362
             ],
             [
-              1.75,
-              0.33,
-              0.372
+              1.94,
+              0.35,
+              0.355
             ]
           ],
           "groups": [
             "glow",
             "plate",
-            "shirt",
-            "skin"
+            "shirt"
           ],
           "r15": {
             "centre": [
@@ -5794,21 +5795,21 @@
         "RightLowerLeg": {
           "box": [
             [
-              0.118,
+              0.085,
               -2.969,
-              -0.428
+              -0.62
             ],
             [
-              0.883,
-              -1.624,
-              0.391
+              0.915,
+              -1.46,
+              0.409
             ]
           ],
           "groups": [
             "dark",
             "glow",
-            "plate",
-            "sock"
+            "pants",
+            "plate"
           ],
           "r15": {
             "centre": [
@@ -5826,14 +5827,14 @@
         "RightUpperArm": {
           "box": [
             [
-              0.889,
-              -0.262,
-              -0.52
+              0.844,
+              -0.28,
+              -0.6
             ],
             [
-              1.815,
-              1.093,
-              0.52
+              2.043,
+              1.52,
+              0.6
             ]
           ],
           "groups": [
@@ -5857,19 +5858,20 @@
         "RightUpperLeg": {
           "box": [
             [
-              0.087,
-              -2.173,
-              -0.413
+              0.091,
+              -2.195,
+              -0.48
             ],
             [
-              0.913,
-              -0.526,
-              0.413
+              0.909,
+              -0.53,
+              0.409
             ]
           ],
           "groups": [
+            "glow",
             "pants",
-            "skin"
+            "plate"
           ],
           "r15": {
             "centre": [
@@ -5887,19 +5889,20 @@
         "UpperTorso": {
           "box": [
             [
-              -1.011,
-              -0.535,
-              -0.605
+              -1.043,
+              -1.976,
+              -0.72
             ],
             [
-              1.011,
-              1.095,
-              0.547
+              1.043,
+              2.08,
+              0.831
             ]
           ],
           "groups": [
-            "dark",
+            "cape",
             "glow",
+            "plate",
             "shirt"
           ],
           "r15": {
@@ -5921,37 +5924,31 @@
           "group": "eye",
           "part": "Head",
           "role": null,
-          "tris": 170
-        },
-        "Head__gear": {
-          "group": "gear",
-          "part": "Head",
-          "role": null,
-          "tris": 342
+          "tris": 132
         },
         "Head__glow": {
           "group": "glow",
           "part": "Head",
           "role": null,
-          "tris": 376
+          "tris": 148
         },
         "Head__hair": {
           "group": "hair",
           "part": "Head",
           "role": null,
-          "tris": 312
+          "tris": 184
         },
         "Head__plate": {
           "group": "plate",
           "part": "Head",
           "role": null,
-          "tris": 88
+          "tris": 474
         },
         "Head__skin": {
           "group": "skin",
           "part": "Head",
           "role": null,
-          "tris": 340
+          "tris": 264
         },
         "LeftFoot__dark": {
           "group": "dark",
@@ -5971,11 +5968,17 @@
           "role": null,
           "tris": 44
         },
-        "LeftHand__skin": {
-          "group": "skin",
+        "LeftHand__gaunt": {
+          "group": "gaunt",
           "part": "LeftHand",
           "role": null,
-          "tris": 130
+          "tris": 110
+        },
+        "LeftHand__glow": {
+          "group": "glow",
+          "part": "LeftHand",
+          "role": null,
+          "tris": 60
         },
         "LeftLowerArm__glow": {
           "group": "glow",
@@ -5987,16 +5990,10 @@
           "group": "plate",
           "part": "LeftLowerArm",
           "role": null,
-          "tris": 92
+          "tris": 98
         },
         "LeftLowerArm__shirt": {
           "group": "shirt",
-          "part": "LeftLowerArm",
-          "role": null,
-          "tris": 112
-        },
-        "LeftLowerArm__skin": {
-          "group": "skin",
           "part": "LeftLowerArm",
           "role": null,
           "tris": 110
@@ -6005,37 +6002,37 @@
           "group": "dark",
           "part": "LeftLowerLeg",
           "role": null,
-          "tris": 212
+          "tris": 166
         },
         "LeftLowerLeg__glow": {
           "group": "glow",
           "part": "LeftLowerLeg",
           "role": null,
-          "tris": 24
+          "tris": 40
+        },
+        "LeftLowerLeg__pants": {
+          "group": "pants",
+          "part": "LeftLowerLeg",
+          "role": null,
+          "tris": 110
         },
         "LeftLowerLeg__plate": {
           "group": "plate",
           "part": "LeftLowerLeg",
           "role": null,
-          "tris": 42
-        },
-        "LeftLowerLeg__sock": {
-          "group": "sock",
-          "part": "LeftLowerLeg",
-          "role": null,
-          "tris": 196
+          "tris": 142
         },
         "LeftUpperArm__glow": {
           "group": "glow",
           "part": "LeftUpperArm",
           "role": null,
-          "tris": 64
+          "tris": 160
         },
         "LeftUpperArm__plate": {
           "group": "plate",
           "part": "LeftUpperArm",
           "role": null,
-          "tris": 84
+          "tris": 150
         },
         "LeftUpperArm__shirt": {
           "group": "shirt",
@@ -6043,17 +6040,29 @@
           "role": null,
           "tris": 110
         },
+        "LeftUpperLeg__glow": {
+          "group": "glow",
+          "part": "LeftUpperLeg",
+          "role": null,
+          "tris": 32
+        },
         "LeftUpperLeg__pants": {
           "group": "pants",
           "part": "LeftUpperLeg",
           "role": null,
           "tris": 110
         },
-        "LeftUpperLeg__skin": {
-          "group": "skin",
+        "LeftUpperLeg__plate": {
+          "group": "plate",
           "part": "LeftUpperLeg",
           "role": null,
-          "tris": 110
+          "tris": 24
+        },
+        "LowerTorso__cape": {
+          "group": "cape",
+          "part": "LowerTorso",
+          "role": null,
+          "tris": 68
         },
         "LowerTorso__dark": {
           "group": "dark",
@@ -6065,7 +6074,7 @@
           "group": "glow",
           "part": "LowerTorso",
           "role": null,
-          "tris": 44
+          "tris": 36
         },
         "LowerTorso__pants": {
           "group": "pants",
@@ -6097,11 +6106,17 @@
           "role": null,
           "tris": 44
         },
-        "RightHand__skin": {
-          "group": "skin",
+        "RightHand__gaunt": {
+          "group": "gaunt",
           "part": "RightHand",
           "role": null,
-          "tris": 130
+          "tris": 110
+        },
+        "RightHand__glow": {
+          "group": "glow",
+          "part": "RightHand",
+          "role": null,
+          "tris": 60
         },
         "RightLowerArm__glow": {
           "group": "glow",
@@ -6113,16 +6128,10 @@
           "group": "plate",
           "part": "RightLowerArm",
           "role": null,
-          "tris": 92
+          "tris": 98
         },
         "RightLowerArm__shirt": {
           "group": "shirt",
-          "part": "RightLowerArm",
-          "role": null,
-          "tris": 112
-        },
-        "RightLowerArm__skin": {
-          "group": "skin",
           "part": "RightLowerArm",
           "role": null,
           "tris": 110
@@ -6131,37 +6140,37 @@
           "group": "dark",
           "part": "RightLowerLeg",
           "role": null,
-          "tris": 212
+          "tris": 166
         },
         "RightLowerLeg__glow": {
           "group": "glow",
           "part": "RightLowerLeg",
           "role": null,
-          "tris": 24
+          "tris": 40
+        },
+        "RightLowerLeg__pants": {
+          "group": "pants",
+          "part": "RightLowerLeg",
+          "role": null,
+          "tris": 110
         },
         "RightLowerLeg__plate": {
           "group": "plate",
           "part": "RightLowerLeg",
           "role": null,
-          "tris": 42
-        },
-        "RightLowerLeg__sock": {
-          "group": "sock",
-          "part": "RightLowerLeg",
-          "role": null,
-          "tris": 196
+          "tris": 142
         },
         "RightUpperArm__glow": {
           "group": "glow",
           "part": "RightUpperArm",
           "role": null,
-          "tris": 64
+          "tris": 160
         },
         "RightUpperArm__plate": {
           "group": "plate",
           "part": "RightUpperArm",
           "role": null,
-          "tris": 84
+          "tris": 150
         },
         "RightUpperArm__shirt": {
           "group": "shirt",
@@ -6169,43 +6178,56 @@
           "role": null,
           "tris": 110
         },
+        "RightUpperLeg__glow": {
+          "group": "glow",
+          "part": "RightUpperLeg",
+          "role": null,
+          "tris": 32
+        },
         "RightUpperLeg__pants": {
           "group": "pants",
           "part": "RightUpperLeg",
           "role": null,
           "tris": 110
         },
-        "RightUpperLeg__skin": {
-          "group": "skin",
+        "RightUpperLeg__plate": {
+          "group": "plate",
           "part": "RightUpperLeg",
           "role": null,
-          "tris": 110
+          "tris": 24
         },
-        "UpperTorso__dark": {
-          "group": "dark",
+        "UpperTorso__cape": {
+          "group": "cape",
           "part": "UpperTorso",
           "role": null,
-          "tris": 224
+          "tris": 150
         },
         "UpperTorso__glow": {
           "group": "glow",
           "part": "UpperTorso",
           "role": null,
-          "tris": 300
+          "tris": 392
+        },
+        "UpperTorso__plate": {
+          "group": "plate",
+          "part": "UpperTorso",
+          "role": null,
+          "tris": 404
         },
         "UpperTorso__shirt": {
           "group": "shirt",
           "part": "UpperTorso",
           "role": null,
-          "tris": 224
+          "tris": 108
         }
       },
       "premium": true,
       "rig": "r15",
       "skin": "MAGMA_MONARCH",
       "theme": "LAVA_LORD",
-      "tris": 5928,
-      "uploadedHash": null
+      "tris": 5920,
+      "uploadedHash": null,
+      "version": 2
     },
     "hunter/MEDIC": {
       "asset": null,
