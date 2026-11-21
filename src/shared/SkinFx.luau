@@ -219,10 +219,10 @@ function SkinFx.embers(theme: Theme, tier: number, where: string, stage: number?
 		rate = rate,
 		lifetime = { 0.9, 1.6 },
 		speed = { 0.6, 1.4 },
-		size = { if where == "weapon" then 0.07 else 0.12, 0 },
+		size = { if where == "weapon" then 0.12 elseif where == "hunter" then 0.22 else 0.3, 0 },
 		spread = 25,
 		colour = { theme.ember, theme.emberEnd },
-		lightEmission = 1,
+		lightEmission = 0.35, -- not fully additive: embers must read against a bright sky too
 		rise = 1.2,
 	}
 end

@@ -80,6 +80,7 @@ local function emitter(spec: SkinFx.Emitter, parent: Instance, name: string): Pa
 	e.Acceleration = Vector3.new(0, spec.rise, 0)
 	e.Transparency = NumberSequence.new(0.1, 1)
 	e.EmissionDirection = Enum.NormalId.Top
+	e.LightInfluence = 0
 	e.Parent = parent
 	return mark(e) :: ParticleEmitter
 end
@@ -124,10 +125,17 @@ local function dress(t: Target)
 	end
 	local aura = SkinFx.aura(t.theme, t.tier, t.where, t.stage)
 	if aura then
+		-- low and round the feet / the tower's base: from the lowest glow piece
+		local low = anchor
+		for _, p in t.glow do
+			if p.Position.Y < low.Position.Y then
+				low = p
+			end
+		end
 		local foot = mark(Instance.new("Attachment")) :: Attachment
 		foot.Name = "SkinFxAura"
-		foot.Position = Vector3.new(0, -anchor.Size.Y / 2, 0)
-		foot.Parent = anchor
+		foot.Position = Vector3.new(0, -low.Size.Y / 2, 0)
+		foot.Parent = low
 		table.insert(t.made, foot)
 		table.insert(t.emitters, emitter(aura, foot, "SkinFxAura"))
 	end
