@@ -22581,6 +22581,248 @@
       "tris": 660,
       "uploadedHash": null
     },
+    "tower/SET_LAVA_LORD": {
+      "asset": null,
+      "batch": "11p1",
+      "box": [
+        [
+          -1.5,
+          -2.5,
+          -1.5
+        ],
+        [
+          1.5,
+          -1.4146568775177002,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "cap": 300,
+      "colors": {
+        "glow": [
+          255,
+          112,
+          20
+        ],
+        "obsidian": [
+          34,
+          30,
+          38
+        ]
+      },
+      "display": "Lava Lord",
+      "hash": "7c548150ec9eedd7",
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 104
+        },
+        "obsidian": {
+          "group": "obsidian",
+          "role": null,
+          "tris": 140
+        }
+      },
+      "premium": true,
+      "preview": "SCOUT",
+      "set": "LAVA_LORD",
+      "stage": 0,
+      "theme": "LAVA_LORD",
+      "tower": "SET_LAVA_LORD",
+      "trim": true,
+      "tris": 244,
+      "uploadedHash": null
+    },
+    "tower/SET_LAVA_LORD_GRENADIER": {
+      "asset": null,
+      "batch": "11p1",
+      "box": [
+        [
+          -1.371726155281067,
+          -2.5045270919799805,
+          -1.3300000429153442
+        ],
+        [
+          1.2924039363861084,
+          -0.7322500944137573,
+          1.3527179956436157
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "basalt": [
+          74,
+          64,
+          68
+        ],
+        "glow": [
+          255,
+          112,
+          20
+        ],
+        "obsidian": [
+          34,
+          30,
+          38
+        ]
+      },
+      "display": "Lava Lord",
+      "hash": "fc07114752e920de",
+      "piece": true,
+      "pieces": {
+        "basalt": {
+          "group": "basalt",
+          "role": null,
+          "tris": 116
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 256
+        },
+        "obsidian": {
+          "group": "obsidian",
+          "role": null,
+          "tris": 168
+        }
+      },
+      "premium": true,
+      "set": "LAVA_LORD",
+      "stage": 0,
+      "theme": "LAVA_LORD",
+      "tower": "SET_LAVA_LORD_GRENADIER",
+      "towerKind": "GRENADIER",
+      "tris": 540,
+      "uploadedHash": null
+    },
+    "tower/SET_LAVA_LORD_SCOUT": {
+      "asset": null,
+      "batch": "11p1",
+      "box": [
+        [
+          -1.4086065292358398,
+          -1.9500000476837158,
+          -1.097000002861023
+        ],
+        [
+          1.1470000743865967,
+          1.1407885551452637,
+          0.41200000047683716
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "basalt": [
+          74,
+          64,
+          68
+        ],
+        "glow": [
+          255,
+          112,
+          20
+        ],
+        "obsidian": [
+          34,
+          30,
+          38
+        ]
+      },
+      "display": "Lava Lord",
+      "hash": "37dff345fdf62d8d",
+      "piece": true,
+      "pieces": {
+        "basalt": {
+          "group": "basalt",
+          "role": null,
+          "tris": 52
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 174
+        },
+        "obsidian": {
+          "group": "obsidian",
+          "role": null,
+          "tris": 100
+        }
+      },
+      "premium": true,
+      "set": "LAVA_LORD",
+      "stage": 0,
+      "theme": "LAVA_LORD",
+      "tower": "SET_LAVA_LORD_SCOUT",
+      "towerKind": "SCOUT",
+      "tris": 326,
+      "uploadedHash": null
+    },
+    "tower/SET_LAVA_LORD_VENT": {
+      "asset": null,
+      "batch": "11p1",
+      "box": [
+        [
+          -1.4834097623825073,
+          -2.5039315223693848,
+          -1.4299999475479126
+        ],
+        [
+          1.4895000457763672,
+          -0.9730179309844971,
+          1.385267734527588
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "basalt": [
+          74,
+          64,
+          68
+        ],
+        "glow": [
+          255,
+          112,
+          20
+        ],
+        "obsidian": [
+          34,
+          30,
+          38
+        ]
+      },
+      "display": "Lava Lord",
+      "hash": "f583cb1889d75567",
+      "piece": true,
+      "pieces": {
+        "basalt": {
+          "group": "basalt",
+          "role": null,
+          "tris": 96
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 256
+        },
+        "obsidian": {
+          "group": "obsidian",
+          "role": null,
+          "tris": 168
+        }
+      },
+      "premium": true,
+      "set": "LAVA_LORD",
+      "stage": 0,
+      "theme": "LAVA_LORD",
+      "tower": "SET_LAVA_LORD_VENT",
+      "towerKind": "VENT",
+      "tris": 520,
+      "uploadedHash": null
+    },
     "tower/SET_MIDNIGHT": {
       "asset": null,
       "batch": "11e",
