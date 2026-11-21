@@ -299,10 +299,16 @@ function GunArt.muzzles(tool: Instance, side: number?): { Vector3 }?
 end
 
 -- A kit prop ("melee" / "grenade") as an anchored ghost Model, its origin at the pivot
--- (Model:PivotTo places it), or nil (no art: the caller draws today's look).
-function GunArt.prop(hero: string, which: string): Model?
+-- (Model:PivotTo places it), or nil (no art: the caller draws today's look). `variant` = a premium
+-- grenade skin's own model (`<HERO>_GRENADE_<SKIN>`, Shared/SkinFx), used when its art is loaded.
+function GunArt.prop(hero: string, which: string, variant: string?): Model?
 	local key = `{hero}_{if which == "melee" then "MELEE" else "GRENADE"}`
-	local made = pieces(GunArt.KIT, key, nil)
+	local made: { BasePart } = if variant then pieces(GunArt.KIT, variant, nil) else {}
+	if #made > 0 then
+		key = variant :: string
+	else
+		made = pieces(GunArt.KIT, key, nil)
+	end
 	if #made == 0 then
 		return nil
 	end

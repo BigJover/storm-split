@@ -48,6 +48,7 @@ local HunterKit = require(Shared:WaitForChild("HunterKit"))
 local Melee = require(Shared:WaitForChild("Melee"))
 local Grenade = require(Shared:WaitForChild("Grenade"))
 local GunArt = require(Shared:WaitForChild("GunArt"))
+local SkinFx = require(Shared:WaitForChild("SkinFx"))
 
 local Enemies = require(script.Parent.Enemies)
 local Effects = require(script.Parent.Effects)
@@ -338,8 +339,13 @@ local function burst(player: Player, row: any, key: string, mySide: number, scal
 	if not canAct(player) then
 		return -- out (or game over) by the time it landed: no damage
 	end
-	local color = KIT_COLORS[key] or Color3.new(1, 1, 1)
+	-- A premium grenade skin recolours the blast and adds a dark puff (Shared/SkinFx); the
+	-- radius and timing never change. No skin worn = today's colour, no puff.
+	local color, smoke = SkinFx.blastColours(player:GetAttribute(SkinFx.attribute("grenade", key)), key, KIT_COLORS[key] or Color3.new(1, 1, 1))
 	Effects.disc(at, row.splash, color, 0.35, 0.5)
+	if smoke then
+		Effects.part(Vector3.one * 1.6, CFrame.new(at + Vector3.new(0, 1, 0)), smoke, 0.45, Enum.PartType.Ball).Transparency = 0.35
+	end
 	local effect = HunterKit.dinoEffect(row.grenadeEffect, row.grenadeEffectPercent, row.grenadeEffectSeconds)
 	local slowPercent, slowSeconds = HunterKit.hunterSlow(row.grenadeHunterEffect, row.grenadeHunterPercent, row.grenadeHunterSeconds)
 	local damage = row.grenadeDamage * scale
@@ -420,7 +426,7 @@ local function throw(player: Player, rayOrigin: unknown, rayDirection: unknown)
 	local start = from + Vector3.new(0, HEAD_UP, 0)
 	local flight = Grenade.flightTime(start, landing)
 	-- The hunter's grenade art (T151, kind "kit") when loaded, tumbling; else today's ball.
-	local prop = GunArt.prop(key :: string, "grenade")
+	local prop = GunArt.prop(key :: string, "grenade", SkinFx.grenadeArtKey(key :: string, player:GetAttribute(SkinFx.attribute("grenade", key :: string))))
 	local ball: Instance
 	if prop then
 		prop:PivotTo(CFrame.new(start))

@@ -455,6 +455,7 @@ local function paintSet(parts: { Instance }, look: Skins.Look, towerColour: Colo
 end
 
 local function clearTrim(model: Model)
+	model:SetAttribute("SkinSet", nil)
 	for _, part in model:GetChildren() do
 		if part:IsA("BasePart") and part:GetAttribute("SetTrim") then
 			part:Destroy()
@@ -490,6 +491,7 @@ local function dressTrim(model: Model, body: BasePart)
 					part:SetAttribute("SetPiece", true)
 				end
 			end
+			model:SetAttribute("SkinSet", setKey) -- the worn set, for Client/SkinFx (premium sets animate)
 		end
 	end
 	model:SetAttribute("ArtKey", artKey)

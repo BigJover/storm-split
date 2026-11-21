@@ -75,6 +75,7 @@ local Skins = require(Shared:WaitForChild("Skins"))
 local Sides = require(Shared:WaitForChild("Sides"))
 local BattleRules = require(Shared:WaitForChild("BattleRules"))
 local GunArt = require(Shared:WaitForChild("GunArt"))
+local SkinFx = require(Shared:WaitForChild("SkinFx"))
 
 local Economy = require(script.Parent.Economy)
 local Progression = require(script.Parent.Progression)
@@ -839,7 +840,11 @@ local function trigger(player: Player, rayOrigin: unknown, rayDirection: unknown
 	-- Gun art (T151): tracers leave from the art's muzzle (the double barrel alternates its
 	-- two); no art = the origin above. Visual only.
 	local barrels = GunArt.muzzles(tool, if stats.guns > 1 then s.gunSide else 1)
-	local color = Cosmetics.tracerColour(worn(player), HERO_COLORS[s.hero or ""] or Color3.new(1, 1, 1))
+	-- A premium weapon skin brings its own tracer colour (Shared/SkinFx); else today's rule.
+	local color = SkinFx.tracerColour(
+		player:GetAttribute(Skins.attribute(Skins.slot("weapon", s.hero or ""))),
+		Cosmetics.tracerColour(worn(player), HERO_COLORS[s.hero or ""] or Color3.new(1, 1, 1))
+	)
 	-- Your own side's dinos only (Shared/BattleRules, #228): pierce, ricochet, splash, muzzle
 	-- rounds and burns all pick from this list. Co-op: every dino.
 	local mySide = sideOf(player)
@@ -923,7 +928,9 @@ local function ability(player: Player, rayOrigin: unknown, rayDirection: unknown
 		local readyAt = GunRules.readyAt(s.abilityFullAt, now, stats.abilityCharges, cooldown)
 		return false, `{hero.ability} ready in {math.ceil(readyAt - now)}s`
 	end
-	local color = HERO_COLORS[s.hero] or Color3.new(1, 1, 1)
+	-- A premium ability skin recolours the VFX only (Shared/SkinFx): same radius, shape, timing,
+	-- sound and warning. No skin worn = the hero's colour, as today.
+	local color = SkinFx.abilityColour(player:GetAttribute(SkinFx.attribute("ability", s.hero)), s.hero, HERO_COLORS[s.hero] or Color3.new(1, 1, 1))
 
 	if hero.abilityKind == "MARK" then
 		-- Marks ignore armour and air limits: it's a paint, not a bullet.
