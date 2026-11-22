@@ -1148,6 +1148,111 @@
       "tris": 1196,
       "uploadedHash": null
     },
+    "gun/MEDIC_CIRCUIT_CARBINE": {
+      "asset": null,
+      "base": "gun/MEDIC",
+      "batch": "11p3",
+      "box": [
+        [
+          -0.09399999678134918,
+          -0.20000000298023224,
+          -1.4499999284744263
+        ],
+        [
+          0.09399999678134918,
+          0.4449999928474426,
+          1.0
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          230,
+          60,
+          220
+        ],
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ],
+        "steel": [
+          70,
+          74,
+          88
+        ],
+        "white": [
+          226,
+          232,
+          240
+        ]
+      },
+      "display": "Circuit Carbine",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "MEDIC",
+      "hash": "bf63fffea1700022",
+      "muzzle": [
+        0,
+        0.25,
+        -1.43
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 24
+        },
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 60
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 392
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 52
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 160
+        },
+        "white": {
+          "group": "white",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "premium": true,
+      "skin": "CIRCUIT_CARBINE",
+      "theme": "CYBER_RAPTOR",
+      "tris": 800,
+      "uploadedHash": null
+    },
     "gun/MEDIC_LIFESAVER": {
       "asset": null,
       "base": "gun/MEDIC",
@@ -1435,6 +1540,101 @@
       "skin": "MOLTEN_MAGNUM",
       "theme": "LAVA_LORD",
       "tris": 736,
+      "uploadedHash": null
+    },
+    "gun/PISTOL_PLASMA_SIX": {
+      "asset": null,
+      "base": "gun/PISTOL",
+      "batch": "11p3",
+      "box": [
+        [
+          -0.11691343039274216,
+          -0.30000001192092896,
+          -0.8700000047683716
+        ],
+        [
+          0.11691343039274216,
+          0.5049999952316284,
+          0.3154628276824951
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          230,
+          60,
+          220
+        ],
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ],
+        "steel": [
+          70,
+          74,
+          88
+        ]
+      },
+      "display": "Plasma Six",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "PISTOL",
+      "hash": "4857ecf9085c1452",
+      "muzzle": [
+        0,
+        0.25,
+        -0.85
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 24
+        },
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 160
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 288
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 48
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 80
+        }
+      },
+      "premium": true,
+      "skin": "PLASMA_SIX",
+      "theme": "CYBER_RAPTOR",
+      "tris": 664,
       "uploadedHash": null
     },
     "gun/PISTOL_SCOPE": {
@@ -1937,6 +2137,101 @@
       "tris": 820,
       "uploadedHash": null,
       "version": 2
+    },
+    "gun/RIFLE_RAIL_RIFLE": {
+      "asset": null,
+      "base": "gun/RIFLE",
+      "batch": "11p3",
+      "box": [
+        [
+          -0.1679999977350235,
+          -0.22530004382133484,
+          -1.75
+        ],
+        [
+          0.1735316962003708,
+          0.445000022649765,
+          1.034999966621399
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          230,
+          60,
+          220
+        ],
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ],
+        "steel": [
+          70,
+          74,
+          88
+        ]
+      },
+      "display": "Rail Rifle",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "RIFLE",
+      "hash": "2bff14147055a287",
+      "muzzle": [
+        0,
+        0.25,
+        -1.73
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 24
+        },
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 180
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 284
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 80
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 80
+        }
+      },
+      "premium": true,
+      "skin": "RAIL_RIFLE",
+      "theme": "CYBER_RAPTOR",
+      "tris": 712,
+      "uploadedHash": null
     },
     "gun/SHOTGUN": {
       "asset": null,
@@ -2476,6 +2771,101 @@
       },
       "shows": "HeroStats.fireMode == 'auto' (Buckshot T5 Thicket Sweeper)",
       "tris": 144,
+      "uploadedHash": null
+    },
+    "gun/SHOTGUN_SCATTER_BYTE": {
+      "asset": null,
+      "base": "gun/SHOTGUN",
+      "batch": "11p3",
+      "box": [
+        [
+          -0.1599999964237213,
+          -0.2199999988079071,
+          -1.5299999713897705
+        ],
+        [
+          0.14000000059604645,
+          0.4099999964237213,
+          1.0600000619888306
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          230,
+          60,
+          220
+        ],
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ],
+        "steel": [
+          70,
+          74,
+          88
+        ]
+      },
+      "display": "Scatter Byte",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "SHOTGUN",
+      "hash": "0841b377135359f0",
+      "muzzle": [
+        0,
+        0.25,
+        -1.51
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 12
+        },
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 108
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 444
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 108
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 80
+        }
+      },
+      "premium": true,
+      "skin": "SCATTER_BYTE",
+      "theme": "CYBER_RAPTOR",
+      "tris": 816,
       "uploadedHash": null
     },
     "hunter/CROC_HIDE_CRUSHER": {
