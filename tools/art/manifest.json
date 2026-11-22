@@ -19950,6 +19950,92 @@
       "tris": 536,
       "uploadedHash": null
     },
+    "kit/MEDIC_GRENADE_SLEEP_MODE": {
+      "asset": null,
+      "base": "kit/MEDIC_GRENADE",
+      "batch": "11p3",
+      "box": [
+        [
+          -0.23186758160591125,
+          -0.36000001430511475,
+          -0.25200000405311584
+        ],
+        [
+          0.24500000476837158,
+          0.5300000309944153,
+          0.24500000476837158
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "accent": [
+          230,
+          60,
+          220
+        ],
+        "body": [
+          226,
+          232,
+          240
+        ],
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Sleep Mode",
+      "hash": "1c159833689ff05b",
+      "hero": "MEDIC",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 36
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 36
+        },
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 76
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 204
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 108
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "SLEEP_MODE",
+      "theme": "CYBER_RAPTOR",
+      "tris": 460,
+      "uploadedHash": null
+    },
     "kit/MEDIC_MELEE": {
       "asset": null,
       "batch": "11c2",
@@ -20168,6 +20254,82 @@
       "skin": "BRIMSTONE_STINKER",
       "theme": "LAVA_LORD",
       "tris": 436,
+      "uploadedHash": null
+    },
+    "kit/PISTOL_GRENADE_GLITCH_BOMB": {
+      "asset": null,
+      "base": "kit/PISTOL_GRENADE",
+      "batch": "11p3",
+      "box": [
+        [
+          -0.3400000035762787,
+          -0.28999999165534973,
+          -0.4050000011920929
+        ],
+        [
+          0.4350000023841858,
+          0.5103108882904053,
+          0.30000001192092896
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "accent": [
+          230,
+          60,
+          220
+        ],
+        "body": [
+          30,
+          32,
+          44
+        ],
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ]
+      },
+      "display": "Glitch Bomb",
+      "hash": "ac968d9b2be967c4",
+      "hero": "PISTOL",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 24
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 60
+        },
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 120
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "GLITCH_BOMB",
+      "theme": "CYBER_RAPTOR",
+      "tris": 276,
       "uploadedHash": null
     },
     "kit/PISTOL_MELEE": {
@@ -20410,6 +20572,82 @@
       "tris": 592,
       "uploadedHash": null,
       "version": 2
+    },
+    "kit/RIFLE_GRENADE_PULSE_PUCK": {
+      "asset": null,
+      "base": "kit/RIFLE_GRENADE",
+      "batch": "11p3",
+      "box": [
+        [
+          -0.438728392124176,
+          -0.30078786611557007,
+          -0.3999999761581421
+        ],
+        [
+          0.438728392124176,
+          0.414000004529953,
+          0.5039165616035461
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "accent": [
+          230,
+          60,
+          220
+        ],
+        "body": [
+          30,
+          32,
+          44
+        ],
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ]
+      },
+      "display": "Pulse Puck",
+      "hash": "9b36f473aac5b9b9",
+      "hero": "RIFLE",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 12
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 88
+        },
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 268
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 200
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "PULSE_PUCK",
+      "theme": "CYBER_RAPTOR",
+      "tris": 568,
+      "uploadedHash": null
     },
     "kit/RIFLE_MELEE": {
       "asset": null,
@@ -20659,6 +20897,82 @@
       "skin": "MAGMA_CHERRY",
       "theme": "LAVA_LORD",
       "tris": 552,
+      "uploadedHash": null
+    },
+    "kit/SHOTGUN_GRENADE_NEON_CHERRY": {
+      "asset": null,
+      "base": "kit/SHOTGUN_GRENADE",
+      "batch": "11p3",
+      "box": [
+        [
+          -0.3893499970436096,
+          -0.3987232446670532,
+          -0.2893500030040741
+        ],
+        [
+          0.44894999265670776,
+          0.4749999940395355,
+          0.2893500030040741
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "accent": [
+          230,
+          60,
+          220
+        ],
+        "body": [
+          30,
+          32,
+          44
+        ],
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ]
+      },
+      "display": "Neon Cherry",
+      "hash": "39a8ea862dfc588c",
+      "hero": "SHOTGUN",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 36
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 200
+        },
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 68
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 264
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "NEON_CHERRY",
+      "theme": "CYBER_RAPTOR",
+      "tris": 568,
       "uploadedHash": null
     },
     "kit/SHOTGUN_MELEE": {
