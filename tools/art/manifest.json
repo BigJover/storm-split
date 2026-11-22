@@ -1461,6 +1461,131 @@
       "tris": 1160,
       "uploadedHash": null
     },
+    "gun/MEDIC_ROYAL_RATTLER": {
+      "asset": null,
+      "base": "gun/MEDIC",
+      "batch": "11p4",
+      "box": [
+        [
+          -0.11020000278949738,
+          -0.5601547956466675,
+          -1.4499999284744263
+        ],
+        [
+          0.11020000278949738,
+          0.44603613018989563,
+          1.0199999809265137
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          156,
+          22,
+          36
+        ],
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "brass": [
+          190,
+          160,
+          100
+        ],
+        "crimson2": [
+          96,
+          16,
+          26
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ],
+        "steel": [
+          70,
+          56,
+          58
+        ]
+      },
+      "display": "Royal Rattler",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "MEDIC",
+      "hash": "7ac507634eafbd94",
+      "muzzle": [
+        0,
+        0.25,
+        -1.43
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 20
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 396
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 160
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 156
+        },
+        "crimson2": {
+          "group": "crimson2",
+          "role": null,
+          "tris": 12
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 96
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 52
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 232
+        }
+      },
+      "premium": true,
+      "skin": "ROYAL_RATTLER",
+      "theme": "TYRANT_KING",
+      "tris": 1188,
+      "uploadedHash": null
+    },
     "gun/PISTOL": {
       "asset": null,
       "batch": "11c2",
@@ -1540,6 +1665,121 @@
         }
       },
       "tris": 844,
+      "uploadedHash": null
+    },
+    "gun/PISTOL_CROWN_FANG": {
+      "asset": null,
+      "base": "gun/PISTOL",
+      "batch": "11p4",
+      "box": [
+        [
+          -0.11400000005960464,
+          -0.2745220363140106,
+          -0.8700000047683716
+        ],
+        [
+          0.11400000005960464,
+          0.4563538432121277,
+          0.24141420423984528
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          156,
+          22,
+          36
+        ],
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "brass": [
+          176,
+          140,
+          70
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ],
+        "steel": [
+          70,
+          56,
+          58
+        ]
+      },
+      "display": "Crown Fang",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "PISTOL",
+      "hash": "c9417b306d9db5ee",
+      "muzzle": [
+        0,
+        0.25,
+        -0.85
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 28
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 176
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 100
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 64
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 104
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 76
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 212
+        }
+      },
+      "premium": true,
+      "skin": "CROWN_FANG",
+      "theme": "TYRANT_KING",
+      "tris": 824,
       "uploadedHash": null
     },
     "gun/PISTOL_MOLTEN_MAGNUM": {
@@ -2135,6 +2375,141 @@
       },
       "skin": "ENGRAVED_GOLD",
       "tris": 820,
+      "uploadedHash": null
+    },
+    "gun/RIFLE_KINGS_CLAW": {
+      "asset": null,
+      "base": "gun/RIFLE",
+      "batch": "11p4",
+      "box": [
+        [
+          -0.11599999666213989,
+          -0.21602821350097656,
+          -1.75
+        ],
+        [
+          0.14256271719932556,
+          0.44603613018989563,
+          1.0549999475479126
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          156,
+          22,
+          36
+        ],
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "brass": [
+          176,
+          140,
+          70
+        ],
+        "crimson2": [
+          96,
+          16,
+          26
+        ],
+        "dark": [
+          52,
+          34,
+          32
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ],
+        "steel": [
+          70,
+          56,
+          58
+        ]
+      },
+      "display": "King's Claw",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "RIFLE",
+      "hash": "58f748cb8cb3604a",
+      "muzzle": [
+        0,
+        0.25,
+        -1.73
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 24
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 296
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 100
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 64
+        },
+        "crimson2": {
+          "group": "crimson2",
+          "role": null,
+          "tris": 20
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 12
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 84
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 28
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 144
+        }
+      },
+      "premium": true,
+      "skin": "KINGS_CLAW",
+      "theme": "TYRANT_KING",
+      "tris": 836,
       "uploadedHash": null
     },
     "gun/RIFLE_LAVA_LANCE": {
@@ -2876,6 +3251,141 @@
       },
       "shows": "HeroStats.fireMode == 'auto' (Buckshot T5 Thicket Sweeper)",
       "tris": 144,
+      "uploadedHash": null
+    },
+    "gun/SHOTGUN_REX_ROARER": {
+      "asset": null,
+      "base": "gun/SHOTGUN",
+      "batch": "11p4",
+      "box": [
+        [
+          -0.16732051968574524,
+          -0.2904110848903656,
+          -1.5299999713897705
+        ],
+        [
+          0.16732051968574524,
+          0.4220666289329529,
+          1.024999976158142
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          156,
+          22,
+          36
+        ],
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "brass": [
+          176,
+          140,
+          70
+        ],
+        "dark": [
+          52,
+          34,
+          32
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ],
+        "steel": [
+          70,
+          56,
+          58
+        ],
+        "wood": [
+          196,
+          180,
+          150
+        ]
+      },
+      "display": "Rex Roarer",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "SHOTGUN",
+      "hash": "e9fc80d5aec0a522",
+      "muzzle": [
+        0,
+        0.25,
+        -1.51
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 40
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 188
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 144
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 92
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 84
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 12
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 152
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 44
+        }
+      },
+      "premium": true,
+      "skin": "REX_ROARER",
+      "theme": "TYRANT_KING",
+      "tris": 864,
       "uploadedHash": null
     },
     "gun/SHOTGUN_SCATTER_BYTE": {
@@ -20913,6 +21423,102 @@
       "tris": 536,
       "uploadedHash": null
     },
+    "kit/MEDIC_GRENADE_ROYAL_NAP": {
+      "asset": null,
+      "base": "kit/MEDIC_GRENADE",
+      "batch": "11p4",
+      "box": [
+        [
+          -0.2999999523162842,
+          -0.46000000834465027,
+          -0.30000001192092896
+        ],
+        [
+          0.29999998211860657,
+          0.5149999856948853,
+          0.30000001192092896
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "accent": [
+          156,
+          22,
+          36
+        ],
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "dark": [
+          40,
+          26,
+          26
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Royal Nap",
+      "hash": "a1fd63e0888da6f2",
+      "hero": "MEDIC",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 48
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 284
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 40
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 42
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 112
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "ROYAL_NAP",
+      "theme": "TYRANT_KING",
+      "tris": 598,
+      "uploadedHash": null
+    },
     "kit/MEDIC_GRENADE_SLEEP_MODE": {
       "asset": null,
       "base": "kit/MEDIC_GRENADE",
@@ -21381,6 +21987,102 @@
       "tris": 276,
       "uploadedHash": null
     },
+    "kit/PISTOL_GRENADE_REX_REEKER": {
+      "asset": null,
+      "base": "kit/PISTOL_GRENADE",
+      "batch": "11p4",
+      "box": [
+        [
+          -0.3328697979450226,
+          -0.42706307768821716,
+          -0.4475000202655792
+        ],
+        [
+          0.3328697979450226,
+          0.5046409964561462,
+          0.49000000953674316
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "accent": [
+          156,
+          22,
+          36
+        ],
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "cork": [
+          176,
+          136,
+          90
+        ],
+        "dark": [
+          40,
+          26,
+          26
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ]
+      },
+      "display": "Rex Reeker",
+      "hash": "fa27b897fda61596",
+      "hero": "PISTOL",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 60
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 156
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 116
+        },
+        "cork": {
+          "group": "cork",
+          "role": null,
+          "tris": 20
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 102
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "REX_REEKER",
+      "theme": "TYRANT_KING",
+      "tris": 526,
+      "uploadedHash": null
+    },
     "kit/PISTOL_MELEE": {
       "asset": null,
       "batch": "11c2",
@@ -21533,6 +22235,82 @@
       },
       "prop": "grenade",
       "tris": 560,
+      "uploadedHash": null
+    },
+    "kit/RIFLE_GRENADE_CROWN_JEWEL": {
+      "asset": null,
+      "base": "kit/RIFLE_GRENADE",
+      "batch": "11p4",
+      "box": [
+        [
+          -0.28999999165534973,
+          -0.41999998688697815,
+          -0.28999999165534973
+        ],
+        [
+          0.3017677664756775,
+          0.4359999895095825,
+          0.28999999165534973
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ],
+        "steel": [
+          70,
+          56,
+          58
+        ]
+      },
+      "display": "Crown Jewel",
+      "hash": "da0cc33b957e5e1f",
+      "hero": "RIFLE",
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 188
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 64
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 140
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 20
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "CROWN_JEWEL",
+      "theme": "TYRANT_KING",
+      "tris": 412,
       "uploadedHash": null
     },
     "kit/RIFLE_GRENADE_LAVA_LOB": {
@@ -22022,6 +22800,102 @@
       "skin": "NEON_CHERRY",
       "theme": "CYBER_RAPTOR",
       "tris": 568,
+      "uploadedHash": null
+    },
+    "kit/SHOTGUN_GRENADE_RUBY_BOMB": {
+      "asset": null,
+      "base": "kit/SHOTGUN_GRENADE",
+      "batch": "11p4",
+      "box": [
+        [
+          -0.37999996542930603,
+          -0.4200000464916229,
+          -0.3799999952316284
+        ],
+        [
+          0.37999996542930603,
+          0.5133012533187866,
+          0.3799999952316284
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "accent": [
+          156,
+          22,
+          36
+        ],
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "dark": [
+          40,
+          26,
+          26
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Ruby Bomb",
+      "hash": "c2acdb510a8afdf1",
+      "hero": "SHOTGUN",
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 100
+        },
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 220
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 40
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 96
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 64
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "RUBY_BOMB",
+      "theme": "TYRANT_KING",
+      "tris": 580,
       "uploadedHash": null
     },
     "kit/SHOTGUN_MELEE": {
