@@ -79,7 +79,7 @@ def on_ell(centre, radii, yaw, pitch, lift=1.0):
             cz - rz * lift * math.cos(p) * math.cos(y))
 
 
-PROTECTED = ("__glow", "__plate", "__chrome", "__eye")
+PROTECTED = ("__glow", "__plate", "__chrome", "__eye", "__white")
 
 
 class protect:
