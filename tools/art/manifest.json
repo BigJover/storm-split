@@ -1148,6 +1148,111 @@
       "tris": 1196,
       "uploadedHash": null
     },
+    "gun/MEDIC_CINDER_CARBINE": {
+      "asset": null,
+      "base": "gun/MEDIC",
+      "batch": "11p2",
+      "box": [
+        [
+          -0.12303658574819565,
+          -0.2014365792274475,
+          -1.4499999284744263
+        ],
+        [
+          0.12303658574819565,
+          0.4300000071525574,
+          1.024999976158142
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          236,
+          96,
+          28
+        ],
+        "brass": [
+          150,
+          84,
+          44
+        ],
+        "dark": [
+          28,
+          24,
+          30
+        ],
+        "glow": [
+          255,
+          112,
+          20
+        ],
+        "steel": [
+          62,
+          58,
+          66
+        ],
+        "wood": [
+          40,
+          34,
+          42
+        ]
+      },
+      "display": "Cinder Carbine",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "MEDIC",
+      "hash": "8ee72af1a82d4b50",
+      "muzzle": [
+        0,
+        0.25,
+        -1.43
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 24
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 24
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 256
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 260
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 196
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 160
+        }
+      },
+      "premium": true,
+      "skin": "CINDER_CARBINE",
+      "theme": "LAVA_LORD",
+      "tris": 984,
+      "uploadedHash": null
+    },
     "gun/MEDIC_CIRCUIT_CARBINE": {
       "asset": null,
       "base": "gun/MEDIC",
@@ -10139,6 +10244,864 @@
       },
       "rig": "r15",
       "tris": 5832,
+      "uploadedHash": null
+    },
+    "hunter/MOLTEN_MENDER": {
+      "asset": null,
+      "base": "hunter/MEDIC",
+      "batch": "11p2",
+      "box": [
+        [
+          -1.904,
+          -3.0,
+          -0.729
+        ],
+        [
+          1.745,
+          2.19,
+          1.242
+        ]
+      ],
+      "budget": "hero",
+      "colors": {
+        "coat": [
+          112,
+          60,
+          38
+        ],
+        "dark": [
+          46,
+          34,
+          30
+        ],
+        "eye": [
+          32,
+          26,
+          26
+        ],
+        "gaunt": [
+          78,
+          52,
+          40
+        ],
+        "glow": [
+          255,
+          112,
+          20
+        ],
+        "hair": [
+          150,
+          60,
+          34
+        ],
+        "obs": [
+          30,
+          26,
+          34
+        ],
+        "pants": [
+          56,
+          44,
+          42
+        ],
+        "plate": [
+          40,
+          34,
+          46
+        ],
+        "shirt": [
+          64,
+          48,
+          44
+        ],
+        "skin": [
+          226,
+          176,
+          140
+        ]
+      },
+      "display": "Molten Mender",
+      "hash": "ff009fb353fbecc5",
+      "hero": "MEDIC",
+      "parts": {
+        "Head": {
+          "box": [
+            [
+              -0.618,
+              0.681,
+              -0.729
+            ],
+            [
+              0.618,
+              2.19,
+              0.586
+            ]
+          ],
+          "groups": [
+            "coat",
+            "eye",
+            "glow",
+            "hair",
+            "plate",
+            "skin"
+          ],
+          "r15": {
+            "centre": [
+              0,
+              1.586,
+              0
+            ],
+            "size": [
+              1.2,
+              1.2,
+              1.2
+            ]
+          }
+        },
+        "LeftFoot": {
+          "box": [
+            [
+              -0.886,
+              -3.0,
+              -0.7
+            ],
+            [
+              -0.114,
+              -2.64,
+              0.384
+            ]
+          ],
+          "groups": [
+            "dark",
+            "glow"
+          ],
+          "r15": {
+            "centre": [
+              -0.5,
+              -2.85,
+              0
+            ],
+            "size": [
+              1,
+              0.3,
+              1
+            ]
+          }
+        },
+        "LeftHand": {
+          "box": [
+            [
+              -1.594,
+              -1.026,
+              -0.289
+            ],
+            [
+              -1.065,
+              -0.574,
+              0.234
+            ]
+          ],
+          "groups": [
+            "gaunt",
+            "glow"
+          ],
+          "r15": {
+            "centre": [
+              -1.5,
+              -0.85,
+              0
+            ],
+            "size": [
+              1,
+              0.3,
+              1
+            ]
+          }
+        },
+        "LeftLowerArm": {
+          "box": [
+            [
+              -1.745,
+              -0.864,
+              -0.385
+            ],
+            [
+              -0.975,
+              0.32,
+              0.385
+            ]
+          ],
+          "groups": [
+            "coat",
+            "gaunt",
+            "glow",
+            "shirt"
+          ],
+          "r15": {
+            "centre": [
+              -1.5,
+              -0.224,
+              0
+            ],
+            "size": [
+              1,
+              1.052,
+              1
+            ]
+          }
+        },
+        "LeftLowerLeg": {
+          "box": [
+            [
+              -0.887,
+              -2.97,
+              -0.447
+            ],
+            [
+              -0.113,
+              -1.48,
+              0.386
+            ]
+          ],
+          "groups": [
+            "dark",
+            "glow",
+            "pants",
+            "plate"
+          ],
+          "r15": {
+            "centre": [
+              -0.5,
+              -2.201,
+              0
+            ],
+            "size": [
+              1,
+              1.193,
+              1
+            ]
+          }
+        },
+        "LeftUpperArm": {
+          "box": [
+            [
+              -1.904,
+              -0.3,
+              -0.5
+            ],
+            [
+              -0.99,
+              1.111,
+              0.5
+            ]
+          ],
+          "groups": [
+            "coat",
+            "glow",
+            "plate",
+            "shirt"
+          ],
+          "r15": {
+            "centre": [
+              -1.5,
+              0.369,
+              0
+            ],
+            "size": [
+              1,
+              1.169,
+              1
+            ]
+          }
+        },
+        "LeftUpperLeg": {
+          "box": [
+            [
+              -0.88,
+              -2.167,
+              -0.38
+            ],
+            [
+              -0.12,
+              -0.56,
+              0.38
+            ]
+          ],
+          "groups": [
+            "pants"
+          ],
+          "r15": {
+            "centre": [
+              -0.5,
+              -1.421,
+              0
+            ],
+            "size": [
+              1,
+              1.217,
+              1
+            ]
+          }
+        },
+        "LowerTorso": {
+          "box": [
+            [
+              -1.052,
+              -2.153,
+              -0.584
+            ],
+            [
+              1.138,
+              -0.505,
+              0.618
+            ]
+          ],
+          "groups": [
+            "coat",
+            "dark",
+            "glow",
+            "obs",
+            "pants",
+            "plate"
+          ],
+          "r15": {
+            "centre": [
+              0,
+              -0.8,
+              0
+            ],
+            "size": [
+              2,
+              0.4,
+              1
+            ]
+          }
+        },
+        "RightFoot": {
+          "box": [
+            [
+              0.114,
+              -3.0,
+              -0.7
+            ],
+            [
+              0.886,
+              -2.64,
+              0.384
+            ]
+          ],
+          "groups": [
+            "dark",
+            "glow"
+          ],
+          "r15": {
+            "centre": [
+              0.5,
+              -2.85,
+              0
+            ],
+            "size": [
+              1,
+              0.3,
+              1
+            ]
+          }
+        },
+        "RightHand": {
+          "box": [
+            [
+              1.065,
+              -1.026,
+              -0.289
+            ],
+            [
+              1.594,
+              -0.574,
+              0.234
+            ]
+          ],
+          "groups": [
+            "gaunt",
+            "glow"
+          ],
+          "r15": {
+            "centre": [
+              1.5,
+              -0.85,
+              0
+            ],
+            "size": [
+              1,
+              0.3,
+              1
+            ]
+          }
+        },
+        "RightLowerArm": {
+          "box": [
+            [
+              0.975,
+              -0.864,
+              -0.385
+            ],
+            [
+              1.745,
+              0.32,
+              0.385
+            ]
+          ],
+          "groups": [
+            "coat",
+            "gaunt",
+            "glow",
+            "shirt"
+          ],
+          "r15": {
+            "centre": [
+              1.5,
+              -0.224,
+              0
+            ],
+            "size": [
+              1,
+              1.052,
+              1
+            ]
+          }
+        },
+        "RightLowerLeg": {
+          "box": [
+            [
+              0.113,
+              -2.97,
+              -0.447
+            ],
+            [
+              0.887,
+              -1.48,
+              0.396
+            ]
+          ],
+          "groups": [
+            "dark",
+            "glow",
+            "pants",
+            "plate"
+          ],
+          "r15": {
+            "centre": [
+              0.5,
+              -2.201,
+              0
+            ],
+            "size": [
+              1,
+              1.193,
+              1
+            ]
+          }
+        },
+        "RightUpperArm": {
+          "box": [
+            [
+              0.99,
+              -0.3,
+              -0.37
+            ],
+            [
+              1.73,
+              1.02,
+              0.37
+            ]
+          ],
+          "groups": [
+            "coat",
+            "shirt"
+          ],
+          "r15": {
+            "centre": [
+              1.5,
+              0.369,
+              0
+            ],
+            "size": [
+              1,
+              1.169,
+              1
+            ]
+          }
+        },
+        "RightUpperLeg": {
+          "box": [
+            [
+              0.12,
+              -2.167,
+              -0.38
+            ],
+            [
+              0.88,
+              -0.56,
+              0.38
+            ]
+          ],
+          "groups": [
+            "pants"
+          ],
+          "r15": {
+            "centre": [
+              0.5,
+              -1.421,
+              0
+            ],
+            "size": [
+              1,
+              1.217,
+              1
+            ]
+          }
+        },
+        "UpperTorso": {
+          "box": [
+            [
+              -0.98,
+              -0.902,
+              -0.72
+            ],
+            [
+              1.091,
+              1.3,
+              1.242
+            ]
+          ],
+          "groups": [
+            "coat",
+            "dark",
+            "glow",
+            "obs",
+            "plate",
+            "shirt"
+          ],
+          "r15": {
+            "centre": [
+              0,
+              0.2,
+              0
+            ],
+            "size": [
+              2,
+              1.6,
+              1
+            ]
+          }
+        }
+      },
+      "pieces": {
+        "Head__coat": {
+          "group": "coat",
+          "part": "Head",
+          "role": null,
+          "tris": 110
+        },
+        "Head__eye": {
+          "group": "eye",
+          "part": "Head",
+          "role": null,
+          "tris": 110
+        },
+        "Head__glow": {
+          "group": "glow",
+          "part": "Head",
+          "role": null,
+          "tris": 64
+        },
+        "Head__hair": {
+          "group": "hair",
+          "part": "Head",
+          "role": null,
+          "tris": 142
+        },
+        "Head__plate": {
+          "group": "plate",
+          "part": "Head",
+          "role": null,
+          "tris": 228
+        },
+        "Head__skin": {
+          "group": "skin",
+          "part": "Head",
+          "role": null,
+          "tris": 162
+        },
+        "LeftFoot__dark": {
+          "group": "dark",
+          "part": "LeftFoot",
+          "role": null,
+          "tris": 108
+        },
+        "LeftFoot__glow": {
+          "group": "glow",
+          "part": "LeftFoot",
+          "role": null,
+          "tris": 12
+        },
+        "LeftHand__gaunt": {
+          "group": "gaunt",
+          "part": "LeftHand",
+          "role": null,
+          "tris": 110
+        },
+        "LeftHand__glow": {
+          "group": "glow",
+          "part": "LeftHand",
+          "role": null,
+          "tris": 12
+        },
+        "LeftLowerArm__coat": {
+          "group": "coat",
+          "part": "LeftLowerArm",
+          "role": null,
+          "tris": 104
+        },
+        "LeftLowerArm__gaunt": {
+          "group": "gaunt",
+          "part": "LeftLowerArm",
+          "role": null,
+          "tris": 92
+        },
+        "LeftLowerArm__glow": {
+          "group": "glow",
+          "part": "LeftLowerArm",
+          "role": null,
+          "tris": 64
+        },
+        "LeftLowerArm__shirt": {
+          "group": "shirt",
+          "part": "LeftLowerArm",
+          "role": null,
+          "tris": 110
+        },
+        "LeftLowerLeg__dark": {
+          "group": "dark",
+          "part": "LeftLowerLeg",
+          "role": null,
+          "tris": 110
+        },
+        "LeftLowerLeg__glow": {
+          "group": "glow",
+          "part": "LeftLowerLeg",
+          "role": null,
+          "tris": 16
+        },
+        "LeftLowerLeg__pants": {
+          "group": "pants",
+          "part": "LeftLowerLeg",
+          "role": null,
+          "tris": 110
+        },
+        "LeftLowerLeg__plate": {
+          "group": "plate",
+          "part": "LeftLowerLeg",
+          "role": null,
+          "tris": 36
+        },
+        "LeftUpperArm__coat": {
+          "group": "coat",
+          "part": "LeftUpperArm",
+          "role": null,
+          "tris": 110
+        },
+        "LeftUpperArm__glow": {
+          "group": "glow",
+          "part": "LeftUpperArm",
+          "role": null,
+          "tris": 56
+        },
+        "LeftUpperArm__plate": {
+          "group": "plate",
+          "part": "LeftUpperArm",
+          "role": null,
+          "tris": 104
+        },
+        "LeftUpperArm__shirt": {
+          "group": "shirt",
+          "part": "LeftUpperArm",
+          "role": null,
+          "tris": 110
+        },
+        "LeftUpperLeg__pants": {
+          "group": "pants",
+          "part": "LeftUpperLeg",
+          "role": null,
+          "tris": 110
+        },
+        "LowerTorso__coat": {
+          "group": "coat",
+          "part": "LowerTorso",
+          "role": null,
+          "tris": 110
+        },
+        "LowerTorso__dark": {
+          "group": "dark",
+          "part": "LowerTorso",
+          "role": null,
+          "tris": 110
+        },
+        "LowerTorso__glow": {
+          "group": "glow",
+          "part": "LowerTorso",
+          "role": null,
+          "tris": 220
+        },
+        "LowerTorso__obs": {
+          "group": "obs",
+          "part": "LowerTorso",
+          "role": null,
+          "tris": 110
+        },
+        "LowerTorso__pants": {
+          "group": "pants",
+          "part": "LowerTorso",
+          "role": null,
+          "tris": 108
+        },
+        "LowerTorso__plate": {
+          "group": "plate",
+          "part": "LowerTorso",
+          "role": null,
+          "tris": 44
+        },
+        "RightFoot__dark": {
+          "group": "dark",
+          "part": "RightFoot",
+          "role": null,
+          "tris": 108
+        },
+        "RightFoot__glow": {
+          "group": "glow",
+          "part": "RightFoot",
+          "role": null,
+          "tris": 12
+        },
+        "RightHand__gaunt": {
+          "group": "gaunt",
+          "part": "RightHand",
+          "role": null,
+          "tris": 110
+        },
+        "RightHand__glow": {
+          "group": "glow",
+          "part": "RightHand",
+          "role": null,
+          "tris": 12
+        },
+        "RightLowerArm__coat": {
+          "group": "coat",
+          "part": "RightLowerArm",
+          "role": null,
+          "tris": 104
+        },
+        "RightLowerArm__gaunt": {
+          "group": "gaunt",
+          "part": "RightLowerArm",
+          "role": null,
+          "tris": 92
+        },
+        "RightLowerArm__glow": {
+          "group": "glow",
+          "part": "RightLowerArm",
+          "role": null,
+          "tris": 64
+        },
+        "RightLowerArm__shirt": {
+          "group": "shirt",
+          "part": "RightLowerArm",
+          "role": null,
+          "tris": 110
+        },
+        "RightLowerLeg__dark": {
+          "group": "dark",
+          "part": "RightLowerLeg",
+          "role": null,
+          "tris": 110
+        },
+        "RightLowerLeg__glow": {
+          "group": "glow",
+          "part": "RightLowerLeg",
+          "role": null,
+          "tris": 16
+        },
+        "RightLowerLeg__pants": {
+          "group": "pants",
+          "part": "RightLowerLeg",
+          "role": null,
+          "tris": 110
+        },
+        "RightLowerLeg__plate": {
+          "group": "plate",
+          "part": "RightLowerLeg",
+          "role": null,
+          "tris": 36
+        },
+        "RightUpperArm__coat": {
+          "group": "coat",
+          "part": "RightUpperArm",
+          "role": null,
+          "tris": 110
+        },
+        "RightUpperArm__shirt": {
+          "group": "shirt",
+          "part": "RightUpperArm",
+          "role": null,
+          "tris": 110
+        },
+        "RightUpperLeg__pants": {
+          "group": "pants",
+          "part": "RightUpperLeg",
+          "role": null,
+          "tris": 110
+        },
+        "UpperTorso__coat": {
+          "group": "coat",
+          "part": "UpperTorso",
+          "role": null,
+          "tris": 110
+        },
+        "UpperTorso__dark": {
+          "group": "dark",
+          "part": "UpperTorso",
+          "role": null,
+          "tris": 110
+        },
+        "UpperTorso__glow": {
+          "group": "glow",
+          "part": "UpperTorso",
+          "role": null,
+          "tris": 276
+        },
+        "UpperTorso__obs": {
+          "group": "obs",
+          "part": "UpperTorso",
+          "role": null,
+          "tris": 110
+        },
+        "UpperTorso__plate": {
+          "group": "plate",
+          "part": "UpperTorso",
+          "role": null,
+          "tris": 156
+        },
+        "UpperTorso__shirt": {
+          "group": "shirt",
+          "part": "UpperTorso",
+          "role": null,
+          "tris": 108
+        }
+      },
+      "premium": true,
+      "rig": "r15",
+      "skin": "MOLTEN_MENDER",
+      "theme": "LAVA_LORD",
+      "tris": 4976,
       "uploadedHash": null
     },
     "hunter/MOUNTAIN_RESCUE": {
@@ -20034,6 +20997,92 @@
       "skin": "SLEEP_MODE",
       "theme": "CYBER_RAPTOR",
       "tris": 460,
+      "uploadedHash": null
+    },
+    "kit/MEDIC_GRENADE_SULFUR_SNOOZE": {
+      "asset": null,
+      "base": "kit/MEDIC_GRENADE",
+      "batch": "11p2",
+      "box": [
+        [
+          -0.2658911347389221,
+          -0.37999996542930603,
+          -0.2532050609588623
+        ],
+        [
+          0.2658911347389221,
+          0.5400000214576721,
+          0.2532050609588623
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "body": [
+          62,
+          54,
+          56
+        ],
+        "cloud": [
+          240,
+          226,
+          140
+        ],
+        "dark": [
+          30,
+          26,
+          34
+        ],
+        "glow": [
+          255,
+          112,
+          20
+        ],
+        "sulfur": [
+          232,
+          204,
+          64
+        ]
+      },
+      "display": "Sulfur Snooze",
+      "hash": "fcd8a0157e00b8fc",
+      "hero": "MEDIC",
+      "pieces": {
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 40
+        },
+        "cloud": {
+          "group": "cloud",
+          "role": null,
+          "tris": 126
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 60
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 232
+        },
+        "sulfur": {
+          "group": "sulfur",
+          "role": null,
+          "tris": 120
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "SULFUR_SNOOZE",
+      "theme": "LAVA_LORD",
+      "tris": 578,
       "uploadedHash": null
     },
     "kit/MEDIC_MELEE": {
