@@ -41556,6 +41556,1693 @@
       "tris": 788,
       "uploadedHash": null
     },
+    "tower/SET_TYRANT_KING": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.5,
+          -2.519637107849121,
+          -1.5
+        ],
+        [
+          1.5,
+          -1.4000000953674316,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "cap": 300,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "916b3504d6e904db",
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 120
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 60
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 80
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 32
+        }
+      },
+      "premium": true,
+      "preview": "SCOUT",
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING",
+      "trim": true,
+      "tris": 292,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_ARMORY": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          -0.6169300675392151,
+          -1.1134604215621948,
+          0.8999999761581421
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "7b19e4dca745e44c",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 316
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 140
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 44
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 40
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 12
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_ARMORY",
+      "towerKind": "ARMORY",
+      "tris": 624,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_BALLISTA": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.2000000476837158
+        ],
+        [
+          -0.5587254166603088,
+          -0.9743578433990479,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "c9da17725097009f",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 316
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 140
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 44
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 40
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 12
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_BALLISTA",
+      "towerKind": "BALLISTA",
+      "tris": 624,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_BLIMP": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4697133302688599
+        ],
+        [
+          0.3999999761581421,
+          -0.8701097965240479,
+          0.6193609833717346
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "b7eb5cfd01c928a2",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 352
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 108
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 24
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 40
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 12
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_BLIMP",
+      "towerKind": "BLIMP",
+      "tris": 608,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_CHILLER": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5121076107025146,
+          -0.4099999666213989
+        ],
+        [
+          0.46381327509880066,
+          0.340442419052124,
+          1.4325833320617676
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "daa5e7318dadda7f",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 240
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 36
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 40
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 68
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_CHILLER",
+      "towerKind": "CHILLER",
+      "tris": 384,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_COIL": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          -0.6751347184181213,
+          0.6404426097869873,
+          0.9200000166893005
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "cd3a745afb0ff299",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 324
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 128
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 80
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 60
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_COIL",
+      "towerKind": "COIL",
+      "tris": 724,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_FALCON": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.409999966621399,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          0.6000000238418579,
+          0.9481291770935059,
+          -0.372056782245636
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "dc2e1fda7d112ef9",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 388
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 96
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 36
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 60
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_FALCON",
+      "towerKind": "FALCON",
+      "tris": 700,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_GRENADIER": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4457134008407593
+        ],
+        [
+          0.7014355659484863,
+          -0.9352551698684692,
+          0.793099582195282
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "2217947b346e07b8",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 332
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 140
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 44
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 40
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 12
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_GRENADIER",
+      "towerKind": "GRENADIER",
+      "tris": 640,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_HOSPITAL": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          -0.7333393692970276,
+          1.040442705154419,
+          0.6100000143051147
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "4722324206741b59",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 324
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 128
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 80
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 60
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_HOSPITAL",
+      "towerKind": "HOSPITAL",
+      "tris": 724,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_METEOR": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          -0.5587254166603088,
+          0.7404425144195557,
+          0.7899999618530273
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "75ac534a77374dee",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 324
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 128
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 80
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 60
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_METEOR",
+      "towerKind": "METEOR",
+      "tris": 724,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_QUARTERMASTER": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.2000000476837158
+        ],
+        [
+          0.7200000286102295,
+          1.1404426097869873,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "4f6e4d85b3e71e23",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 388
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 140
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 80
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 60
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_QUARTERMASTER",
+      "towerKind": "QUARTERMASTER",
+      "tris": 800,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_RANGER": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          -0.7007720470428467,
+          1.4404428005218506,
+          1.3700000047683716
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "21524e7292b4eb12",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 388
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 96
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 36
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 60
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_RANGER",
+      "towerKind": "RANGER",
+      "tris": 700,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_RAPTOR": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.508976697921753,
+          -1.190000057220459
+        ],
+        [
+          1.077892541885376,
+          0.6559998989105225,
+          0.5398494005203247
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "0452aca791c55d39",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 240
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 36
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 40
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 68
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_RAPTOR",
+      "towerKind": "RAPTOR",
+      "tris": 384,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_RESIN": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -0.8899999856948853
+        ],
+        [
+          -0.5587254166603088,
+          0.340442419052124,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "d518a5a38061d70c",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 324
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 128
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 80
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 60
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_RESIN",
+      "towerKind": "RESIN",
+      "tris": 724,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_SCOUT": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4700000286102295,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          -0.5891311168670654,
+          1.4404428005218506,
+          1.3700000047683716
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "967128340a2639f6",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 388
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 96
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 36
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 60
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_SCOUT",
+      "towerKind": "SCOUT",
+      "tris": 700,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_SNIPER": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          -0.1961875557899475,
+          2.3404431343078613,
+          0.9199999570846558
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "5034d0ebc2b535eb",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 388
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 96
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 36
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 60
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_SNIPER",
+      "towerKind": "SNIPER",
+      "tris": 700,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_TARPIT": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.507793426513672,
+          -0.31086888909339905
+        ],
+        [
+          0.800000011920929,
+          -1.7571158409118652,
+          1.3000000715255737
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "366ae1fd35957bfd",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 316
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 96
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 40
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_TARPIT",
+      "towerKind": "TARPIT",
+      "tris": 524,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_TOTEM": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.2000000476837158
+        ],
+        [
+          -0.32220959663391113,
+          -0.4352552890777588,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "3aabe81003ded9cd",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 316
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 140
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 44
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 40
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 12
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_TOTEM",
+      "towerKind": "TOTEM",
+      "tris": 624,
+      "uploadedHash": null
+    },
+    "tower/SET_TYRANT_KING_VENT": {
+      "asset": null,
+      "batch": "11p4",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.3700000047683716
+        ],
+        [
+          -0.8694374561309814,
+          0.540442705154419,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "bone": [
+          234,
+          224,
+          198
+        ],
+        "bone2": [
+          196,
+          180,
+          150
+        ],
+        "crimson": [
+          156,
+          22,
+          36
+        ],
+        "dark": [
+          46,
+          30,
+          30
+        ],
+        "glow": [
+          255,
+          34,
+          44
+        ],
+        "gold": [
+          214,
+          170,
+          64
+        ]
+      },
+      "display": "Tyrant King",
+      "hash": "7e1bdde57a5e34e3",
+      "piece": true,
+      "pieces": {
+        "bone": {
+          "group": "bone",
+          "role": null,
+          "tris": 324
+        },
+        "bone2": {
+          "group": "bone2",
+          "role": null,
+          "tris": 108
+        },
+        "crimson": {
+          "group": "crimson",
+          "role": null,
+          "tris": 36
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 60
+        },
+        "gold": {
+          "group": "gold",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "premium": true,
+      "set": "TYRANT_KING",
+      "stage": 0,
+      "theme": "TYRANT_KING",
+      "tower": "SET_TYRANT_KING_VENT",
+      "towerKind": "VENT",
+      "tris": 648,
+      "uploadedHash": null
+    },
     "tower/SNIPER": {
       "asset": null,
       "batch": "11d",
