@@ -48058,6 +48058,1683 @@
       "tris": 640,
       "uploadedHash": null
     },
+    "tower/SET_NEBULA": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.5,
+          -2.5,
+          -1.5
+        ],
+        [
+          1.5,
+          -1.409999966621399,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "cap": 300,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "67aa48eb6cab20d6",
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 140
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 42
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 36
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 80
+        }
+      },
+      "premium": true,
+      "preview": "SCOUT",
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA",
+      "trim": true,
+      "tris": 298,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_ARMORY": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.442403793334961,
+          -2.369999885559082,
+          -1.418580412864685
+        ],
+        [
+          0.5907678604125977,
+          1.1499998569488525,
+          1.3959999084472656
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "72c418fbbffed9c3",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 324
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 28
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 106
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 178
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 64
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_ARMORY",
+      "towerKind": "ARMORY",
+      "tris": 724,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_BALLISTA": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.3811404705047607,
+          -2.5,
+          -1.3811533451080322
+        ],
+        [
+          0.4099999964237213,
+          0.5199999809265137,
+          1.2379999160766602
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "47ad20be6b172b5c",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 240
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 28
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 64
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 178
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 64
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_BALLISTA",
+      "towerKind": "BALLISTA",
+      "tris": 598,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_BLIMP": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.442403793334961,
+          -2.5,
+          -1.418580412864685
+        ],
+        [
+          0.5392290949821472,
+          0.8199999332427979,
+          1.3869999647140503
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "54f69b77cdef0584",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 324
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 28
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 106
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 178
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 64
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_BLIMP",
+      "towerKind": "BLIMP",
+      "tris": 724,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_CHILLER": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.4800000190734863,
+          -2.5,
+          -1.4500000476837158
+        ],
+        [
+          0.789229154586792,
+          0.619999885559082,
+          1.3869999647140503
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "d9819da46cd017bf",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 340
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 84
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 82
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 134
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_CHILLER",
+      "towerKind": "CHILLER",
+      "tris": 712,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_COIL": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.4552903175354004,
+          -2.5,
+          -1.4025483131408691
+        ],
+        [
+          0.039229124784469604,
+          1.2200000286102295,
+          1.4369999170303345
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "ad598f8515222d3e",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 340
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 84
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 82
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 134
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_COIL",
+      "towerKind": "COIL",
+      "tris": 712,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_FALCON": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.2751665115356445,
+          -2.5065269470214844,
+          -1.3600000143051147
+        ],
+        [
+          1.1100000143051147,
+          0.4199998378753662,
+          0.7879999876022339
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "48a8f54e3a12b264",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 152
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 168
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 40
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 96
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_FALCON",
+      "towerKind": "FALCON",
+      "tris": 480,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_GRENADIER": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.4023977518081665,
+          -2.5,
+          -1.4024097919464111
+        ],
+        [
+          0.9876904487609863,
+          0.5600001811981201,
+          1.277999997138977
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "9b97ef2996ac929b",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 208
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 148
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 64
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 178
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 76
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_GRENADIER",
+      "towerKind": "GRENADIER",
+      "tris": 674,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_HOSPITAL": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.469077706336975,
+          -2.5,
+          -1.3600000143051147
+        ],
+        [
+          0.48399999737739563,
+          1.4199998378753662,
+          1.3869999647140503
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "52374ebab6d5c380",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 264
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 120
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 42
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 142
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_HOSPITAL",
+      "towerKind": "HOSPITAL",
+      "tris": 652,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_METEOR": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.365548849105835,
+          -2.5065269470214844,
+          -1.4380000829696655
+        ],
+        [
+          0.4599999785423279,
+          0.4199998378753662,
+          1.3880000114440918
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "71210fef5ef78222",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 156
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 48
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 122
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 132
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_METEOR",
+      "towerKind": "METEOR",
+      "tris": 482,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_QUARTERMASTER": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.3847813606262207,
+          -2.5061123371124268,
+          -1.370213270187378
+        ],
+        [
+          0.789229154586792,
+          0.7200000286102295,
+          1.3869999647140503
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "f7d5433daf3d93ee",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 184
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 76
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 64
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 158
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 148
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_QUARTERMASTER",
+      "towerKind": "QUARTERMASTER",
+      "tris": 630,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_RANGER": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.4250434637069702,
+          -2.5061123371124268,
+          -1.3987005949020386
+        ],
+        [
+          0.4599999785423279,
+          0.2200000286102295,
+          1.440000057220459
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "84718f4c77303759",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 212
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 76
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 64
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 76
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 100
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_RANGER",
+      "towerKind": "RANGER",
+      "tris": 552,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_RAPTOR": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.3274999856948853,
+          -2.5,
+          -1.3199999332427979
+        ],
+        [
+          0.7800000309944153,
+          0.4199998378753662,
+          1.1869999170303345
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "3f5332291a042ba0",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 256
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 84
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 40
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 134
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 48
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_RAPTOR",
+      "towerKind": "RAPTOR",
+      "tris": 586,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_RESIN": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.442403793334961,
+          -2.5,
+          -1.418580412864685
+        ],
+        [
+          0.5892291069030762,
+          1.0199999809265137,
+          1.4369999170303345
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "d2a00f6f1f05a7e3",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 264
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 120
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 42
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 142
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_RESIN",
+      "towerKind": "RESIN",
+      "tris": 652,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_SCOUT": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.4458980560302734,
+          -2.5,
+          -1.4499999284744263
+        ],
+        [
+          0.8805230259895325,
+          1.4199998378753662,
+          1.1459999084472656
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "da5de5315e99733b",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 240
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 48
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 42
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 122
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 132
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_SCOUT",
+      "towerKind": "SCOUT",
+      "tris": 608,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_SNIPER": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.4552903175354004,
+          -2.5,
+          -1.4600000381469727
+        ],
+        [
+          0.42000001668930054,
+          1.4199998378753662,
+          0.8134669065475464
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "3c00ed9fbb6964eb",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 396
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 112
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 146
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 88
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 16
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_SNIPER",
+      "towerKind": "SNIPER",
+      "tris": 782,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_TARPIT": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.2949999570846558,
+          -2.4923205375671387,
+          -1.4479999542236328
+        ],
+        [
+          0.6100000143051147,
+          -2.151052951812744,
+          1.255000114440918
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "1560a14f636c95e2",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 216
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 204
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 96
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_TARPIT",
+      "towerKind": "TARPIT",
+      "tris": 516,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_TOTEM": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.4431633949279785,
+          -2.5,
+          -1.421722412109375
+        ],
+        [
+          0.6859999895095825,
+          2.2200002670288086,
+          1.409999966621399
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "47ffe3c46b4c3152",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 320
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 148
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 106
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 96
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 28
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_TOTEM",
+      "towerKind": "TOTEM",
+      "tris": 722,
+      "uploadedHash": null
+    },
+    "tower/SET_NEBULA_VENT": {
+      "asset": null,
+      "batch": "11p5",
+      "box": [
+        [
+          -1.495166540145874,
+          -2.5,
+          -1.4080063104629517
+        ],
+        [
+          1.4907677173614502,
+          0.8199999332427979,
+          1.309999942779541
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "metal": [
+          186,
+          182,
+          222
+        ],
+        "nebula": [
+          214,
+          88,
+          184
+        ],
+        "rock": [
+          96,
+          78,
+          140
+        ],
+        "stone": [
+          206,
+          198,
+          242
+        ],
+        "void": [
+          34,
+          30,
+          80
+        ]
+      },
+      "display": "Nebula",
+      "hash": "b88371e18ed0c8be",
+      "piece": true,
+      "pieces": {
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 264
+        },
+        "metal": {
+          "group": "metal",
+          "role": null,
+          "tris": 120
+        },
+        "nebula": {
+          "group": "nebula",
+          "role": null,
+          "tris": 42
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 142
+        },
+        "stone": {
+          "group": "stone",
+          "role": null,
+          "tris": 24
+        },
+        "void": {
+          "group": "void",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "NEBULA",
+      "stage": 0,
+      "theme": "NEBULA",
+      "tower": "SET_NEBULA_VENT",
+      "towerKind": "VENT",
+      "tris": 652,
+      "uploadedHash": null
+    },
     "tower/SET_STONE_AGE": {
       "asset": null,
       "batch": "11e",
