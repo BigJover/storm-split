@@ -220,7 +220,7 @@ test("every pack's items exist, share its theme, and cover the five kinds once",
 	end
 end)
 
-test("elements: every theme has one, data in every slot; only fire is built", function()
+test("elements: every theme has one, data in every slot; all five built", function()
 	local themes = { "LAVA_LORD", "CYBER_RAPTOR", "TYRANT_KING", "NEBULA", "GEODE" }
 	local seen = {}
 	for _, theme in themes do
@@ -233,7 +233,7 @@ test("elements: every theme has one, data in every slot; only fire is built", fu
 			ok(e[slot] ~= nil, `{theme} {slot}`)
 		end
 		ok(type(e.behaviour) == "string", `{theme} behaviour`)
-		eq(e.stub, theme ~= "LAVA_LORD", `{theme} stub flag`)
+		eq(e.stub, false, `{theme} built`)
 	end
 	eq(SkinFx.element("NOPE"), nil)
 	eq(SkinFx.element(nil), nil)
@@ -334,7 +334,7 @@ test("pack hunter rates: the whole layer <= PACK_RATE_CAP, scaled by quality", f
 	for name, e in SkinFx.ELEMENTS do
 		for _, q in { 0, 0.5, 0.75, 1, 3 } do
 			local r = SkinFx.packRates(e, q)
-			local total = r.flames * #e.flames.hosts + r.rising + r.aura
+			local total = r.flames * #e.flames.hosts + r.rising + r.aura + r.extra
 			near(total, r.total, `{name} total adds up at {q}`, 1e-6)
 			ok(r.total <= SkinFx.PACK_RATE_CAP + 1e-9, `{name} capped at {q}`)
 		end
@@ -467,4 +467,193 @@ test("tier 3 is richer than tier 2; the pack tier richer than tier 3", function(
 	ok((SkinFx.embers(LAVA, 3, "hunter") :: any).rate > (SkinFx.embers(LAVA, 2, "hunter") :: any).rate, "tier 3 more embers")
 	ok(SkinFx.packRates(FIRE, 1).total > (SkinFx.embers(LAVA, 3, "hunter") :: any).rate + (SkinFx.aura(LAVA, 3, "hunter") :: any).rate,
 		"the pack layer draws more than tier 3")
+end)
+
+------------------------------------------------------------------ element behaviours (#466)
+
+local ELEMENT_THEMES = { fire = "LAVA_LORD", electric = "CYBER_RAPTOR", primal = "TYRANT_KING", cosmic = "NEBULA", crystal = "GEODE" }
+
+test("elements differ in behaviour, not just colour (#462)", function()
+	local seen = { behaviour = {}, charge = {}, shape = {}, takedown = {}, splash = {} }
+	local function once(kind: string, v: string, name: string)
+		ok(not seen[kind][v], `{name}: own {kind} ({v})`)
+		seen[kind][v] = true
+	end
+	for name, e in SkinFx.ELEMENTS do
+		once("behaviour", e.behaviour, name)
+		once("charge", e.charge, name)
+		once("splash", e.splash.style, name)
+		ok(SkinFx.THEME_ELEMENTS[ELEMENT_THEMES[name]] == name, `{name} is {ELEMENT_THEMES[name]}'s element`)
+	end
+	-- footprints / take-downs: at most one shared look (fire + cosmic both draw a disc; fire + primal both crack)
+	local shapes, styles = {}, {}
+	for _, e in SkinFx.ELEMENTS do
+		shapes[e.mark.shape] = (shapes[e.mark.shape] or 0) + 1
+		styles[e.takedown.style] = (styles[e.takedown.style] or 0) + 1
+	end
+	for k, n in shapes do
+		ok(n <= 2, `mark shape {k} used by {n}`)
+	end
+	for k, n in styles do
+		ok(n <= 2, `take-down style {k} used by {n}`)
+	end
+end)
+
+test("element data: textures built in, world kinds known, styles known, caps", function()
+	local kinds = {}
+	for _, k in SkinFx.WORLD_KINDS do
+		kinds[k] = true
+	end
+	local styles = {
+		behaviour = { flicker = true, crackle = true, heartbeat = true, drift = true, shards = true },
+		mark = { disc = true, hex = true, crack = true, spike = true },
+		takedown = { crack = true, traces = true, spikes = true, none = true },
+		splash = { lava = true, emp = true, roar = true, implode = true, shatter = true },
+		tracer = { bolt = true, chain = true, comet = true, prism = true },
+		seams = { scroll = true, beat = true, drift = true },
+	}
+	for name, e in SkinFx.ELEMENTS do
+		for slot, tex in e.look :: any do
+			ok(SkinFx.TEXTURES[tex] ~= nil, `{name} look.{slot} = {tex} is a built-in texture`)
+		end
+		ok(kinds[e.drip.puff] and kinds[e.takedown.blast] and kinds[e.takedown.rain], `{name} world kinds known`)
+		ok(styles.behaviour[e.behaviour], `{name} behaviour`)
+		ok(styles.mark[e.mark.shape], `{name} mark shape`)
+		ok(styles.takedown[e.takedown.style], `{name} take-down style`)
+		ok(styles.splash[e.splash.style], `{name} splash style`)
+		ok(styles.tracer[e.tracer.style], `{name} tracer style`)
+		ok(e.seams == nil or styles.seams[e.seams.mode], `{name} seams mode`)
+		ok(e.takedown.crack.arms <= 9, `{name} take-down arms fit the pool`)
+		ok(e.orbit == nil or e.orbit.count <= 6, `{name} orbit small`)
+		ok(e.arcs == nil or e.arcs.count <= 3, `{name} arcs few`)
+		ok(e.sound.pitch > 0 and e.sound.pitch <= 2, `{name} pitch`)
+		ok(e.extra >= 0, `{name} extra`)
+	end
+	eq(SkinFx.ELEMENTS.fire.seams, nil, "fire keeps tier 3's flow")
+	eq(SkinFx.ELEMENTS.fire.extra, 0)
+end)
+
+test("every theme is a full Big Game Hunter pack with tier-4 items", function()
+	for name, theme in ELEMENT_THEMES do
+		ok(SkinFx.THEMES[theme] ~= nil, `{theme} theme`)
+		local found = false
+		for _, pack in SkinFx.PACKS do
+			if pack.theme == theme and pack.hero == "RIFLE" then
+				found = true
+				local packs = SkinFx.parsePacks(SkinFx.packsValue(SkinFx.ownedPacks(pack.items)))
+				for _, item in pack.items do
+					eq(SkinFx.tier(item, nil, false, packs), SkinFx.PACK_TIER, `{name}: {item} reaches the pack tier`)
+					eq(SkinFx.element(SkinFx.ITEMS[item].theme), SkinFx.ELEMENTS[name], `{item} draws {name}`)
+				end
+			end
+		end
+		ok(found, `{theme} has a pack`)
+	end
+	local wk, wi = SkinFx.fromArt("weapon", "RIFLE_RAIL_RIFLE")
+	ok(wk == "RAIL_RIFLE" and wi ~= nil, "a Cyber Raptor gun is read from its art key")
+	local gk = SkinFx.grenadeArtKey("RIFLE", "MOON_ROCK")
+	eq(gk, "RIFLE_GRENADE_MOON_ROCK")
+end)
+
+test("heartbeat: lub at the beat, softer dub, quiet between, periodic", function()
+	near(SkinFx.heartbeat(0, 1), 1, "lub", 1e-6)
+	near(SkinFx.heartbeat(0.3, 1), 0.7, "dub", 1e-3)
+	ok(SkinFx.heartbeat(0.65, 1) < 0.05, "rest")
+	near(SkinFx.heartbeat(2.3, 1), SkinFx.heartbeat(0.3, 1), "periodic", 1e-6)
+	for i = 0, 40 do
+		local k = SkinFx.heartbeat(i / 17, 0.83)
+		ok(k >= 0 and k <= 1, `bounded {i}`)
+	end
+end)
+
+test("seams: scroll moves along the seams, beat throbs, drift is slow; fire none", function()
+	local E, P, C = SkinFx.ELEMENTS.electric, SkinFx.ELEMENTS.primal, SkinFx.ELEMENTS.cosmic
+	eq(SkinFx.seamColour(SkinFx.ELEMENTS.fire, 1, 0), nil)
+	local s = E.seams :: any
+	ok(same(SkinFx.seamColour(E, 0, 0) :: Color3, s.colours[1]), "electric starts cyan")
+	ok(same(SkinFx.seamColour(E, s.cycle / 2, 0) :: Color3, s.colours[3]), "magenta half a cycle on")
+	ok(same(SkinFx.seamColour(E, s.cycle * 0.25, 0.25) :: Color3, s.colours[1]), "the wave travels with phase")
+	local p = P.seams :: any
+	ok(same(SkinFx.seamColour(P, 0, 0) :: Color3, p.colours[3]), "primal flashes on the beat")
+	ok(same(SkinFx.seamColour(P, p.cycle * 0.65, 0) :: Color3, p.colours[1]:Lerp(p.colours[2], SkinFx.heartbeat(p.cycle * 0.65, p.cycle) / 0.7)), "rests dark between")
+	local a, b = SkinFx.seamColour(C, 0, 0) :: Color3, SkinFx.seamColour(C, 0.1, 0) :: Color3
+	ok(math.abs(sum(a) - sum(b)) < 0.1, "cosmic drifts slowly")
+end)
+
+test("orbit, glitch, arcs: within their bounds", function()
+	local C = SkinFx.ELEMENTS.cosmic
+	local o = C.orbit :: any
+	for i = 1, o.count do
+		local v = SkinFx.orbitOffset(C, i, o.count, 1.7)
+		near(Vector3.new(v.X, 0, v.Z).Magnitude, o.radius, `orbit radius {i}`, 1e-6)
+		ok(math.abs(v.Y) <= o.bob + 1e-9, `bob {i}`)
+	end
+	local a, b = SkinFx.orbitOffset(C, 1, 3, 0), SkinFx.orbitOffset(C, 2, 3, 0)
+	near(math.atan2(b.Z, b.X) - math.atan2(a.Z, a.X), 2 * math.pi / 3, "evenly spaced", 1e-6)
+	eq(SkinFx.orbitOffset(SkinFx.ELEMENTS.fire, 1, 1, 0), Vector3.zero, "no orbit for fire")
+	local E = SkinFx.ELEMENTS.electric
+	local g = E.glitch :: any
+	local on, hits = 0, 0
+	local steps = 20000
+	local period = (g.every[1] + g.every[2]) / 2
+	for i = 0, steps - 1 do
+		local pop, off = SkinFx.glitch(E, i * 0.002, 0.3)
+		if pop then
+			on += 1
+			ok(math.abs(off) == g.offset, "offset")
+		end
+	end
+	hits = on * 0.002
+	ok(hits <= (steps * 0.002 / period + 1) * g.seconds + 1e-6, "pops are brief")
+	ok(hits > 0, "it does pop")
+	local pop = SkinFx.glitch(SkinFx.ELEMENTS.fire, 1, 0)
+	eq(pop, false, "fire never glitches")
+	for _ = 1, 20 do
+		local c0, c1 = SkinFx.arcCurve(E, math.random(), math.random())
+		ok(math.abs(c0) <= (E.arcs :: any).jitter and math.abs(c1) <= (E.arcs :: any).jitter, "arc jitter bounded")
+	end
+end)
+
+test("primal fury: take-downs feed it; the others don't", function()
+	local P = SkinFx.ELEMENTS.primal
+	near(SkinFx.heatAfterKill(P, 0.2), 0.2 + P.heat.perKill, "a take-down adds fury", 1e-9)
+	eq(SkinFx.heatAfterKill(P, 0.95), 1, "capped")
+	for name, e in SkinFx.ELEMENTS do
+		if name ~= "primal" then
+			eq(SkinFx.heatAfterKill(e, 0.4), 0.4, `{name}: no kill charge`)
+		end
+	end
+	-- every element's build-up still reaches its burst within a Big Game Hunter magazine
+	local Config = require(src.shared.Config)
+	local row = (Config.Heroes :: any).RIFLE
+	for name, e in SkinFx.ELEMENTS do
+		local heat, burst = 0, false
+		for _ = 1, row.magazine do
+			heat = SkinFx.heatAfter(e, SkinFx.heatAfterShots(e, heat, 1, row.rate), 1 / row.rate)
+			burst = burst or SkinFx.muzzleBurst(e, heat)
+		end
+		ok(burst, `{name}: a magazine reaches the burst`)
+	end
+end)
+
+test("spikes and grenade shapes", function()
+	eq(SkinFx.spike(0), 0, "sprouts from nothing")
+	eq(SkinFx.spike(0.18), 1, "full")
+	eq(SkinFx.spike(0.5), 1, "holds")
+	near(SkinFx.spike(1), 0, "shattered", 1e-9)
+	for name, e in SkinFx.ELEMENTS do
+		local _, tEnd = SkinFx.splashShape(e, 1)
+		near(tEnd, 1, `{name} splash gone at the end`, 1e-9)
+		for i = 0, 10 do
+			local r, tr = SkinFx.splashShape(e, i / 10)
+			ok(r >= 0 and tr >= 0 and tr <= 1, `{name} shape bounded {i}`)
+		end
+	end
+	local C = SkinFx.ELEMENTS.cosmic
+	local r1 = SkinFx.splashShape(C, 0.12)
+	local r2 = SkinFx.splashShape(C, 0.4)
+	ok(r1 > r2 and r2 > 0, "the black hole collapses")
+	eq(SkinFx.splashShape(C, SkinFx.IMPLODE_AT), 0, "gone at the implosion")
+	local E = SkinFx.ELEMENTS.electric
+	ok(SkinFx.splashShape(E, 0.5) > SkinFx.splashShape(E, 0.2), "the EMP ring races out")
 end)

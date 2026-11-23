@@ -38,6 +38,20 @@
 	BOLT_CAP, TAKEDOWN_CAP, SPLASH_CAP; the oldest is reused), bursts from one shared set of world
 	emitters, animation in this loop (no tweens, no per-frame Instance.new). Your own aura, drips
 	and ring are off in first person; your take-down burst and heat show on the viewmodel.
+
+	Elements (#466): the layout above is fire's. Every element fills the same slots from its own
+	params (Shared/SkinFx.ELEMENTS) and moves its own way, through small handlers keyed by name:
+	  BEHAVIOURS[element.behaviour]  hunter extras: crackle (electric: jittering arc Beams between
+	                                 body points + glitch pops), heartbeat (primal: crimson eyes, the
+	                                 light throbs on the beat), drift (cosmic: stars orbiting with comet
+	                                 tails), shards (crystal: pooled shard Parts orbiting); seams per
+	                                 element (scroll / beat / drift) and glints (crystal, cosmic twinkle)
+	  MARK_SHAPES[mark.shape]        disc (fire, cosmic) | hex (circuit print) | crack (stomp) | spike
+	  takedown.style                 crack | traces | spikes | none (+ the element's blast / rain bursts)
+	  SPLASHES[splash.style]         lava | emp | roar | implode | shatter
+	  tracer.style                   bolt | chain (electric, Beams) | comet | prism
+	World bursts are made once per (kind, element) and recoloured from `element.fx`. The demo's
+	stand-in follows ReplicatedStorage `SkinFxElement` (fire / electric / primal / cosmic / crystal).
 ]]
 
 local Players = game:GetService("Players")
@@ -100,6 +114,12 @@ type Target = {
 	flash: number,
 	flareUntil: number,
 	steamUntil: number,
+	-- tier 4, the element's behaviour (BEHAVIOURS): its own instances + state
+	fx: { [string]: any },
+	glintIdx: number, -- the seam piece glinting now (0 = none)
+	glintUntil: number,
+	glintAt: number,
+	arc: Beam?, -- tier 4 weapon (electric): the arcing muzzle
 }
 
 local targets: { [Instance]: Target } = {}
@@ -314,11 +334,24 @@ worldPart.Size = Vector3.new(0.4, 0.4, 0.4)
 worldPart.Parent = fxFolder
 local world: { [string]: ParticleEmitter } = {}
 
+-- Each kind's recipe; the emitter for (kind, element) is made on first use (once) and recoloured
+-- from the element's `fx` colours + its texture swaps (WORLD_TEX). Fire uses the recipes as is.
+local RECIPES: { [string]: { [string]: any } } = {}
 local function worldEmitter(name: string, props: { [string]: any })
+	RECIPES[name] = props
 	world[name] = pe(worldPart, name, props)
 end
 
 local FIRE_LIFE = { Color3.fromRGB(255, 250, 215), Color3.fromRGB(255, 196, 70), Color3.fromRGB(255, 108, 18), Color3.fromRGB(190, 32, 8), Color3.fromRGB(70, 60, 60) }
+local FIRE = SkinFx.ELEMENTS.fire
+
+-- Per element display name: the texture (TEXTURES key) a world kind uses instead of the recipe's.
+local WORLD_TEX: { [string]: { [string]: string } } = {
+	Electric = { blast = "square", rain = "square", puff = "sparks", lick = "sparks", sparks = "sparks", zap = "sparks" },
+	Primal = { blast = "core", rain = "smoke", puff = "smoke", lick = "smoke" },
+	Cosmic = { blast = "sparkles", rain = "sparkles", puff = "sparkles", lick = "sparkles", sparks = "sparkles" },
+	Crystal = { blast = "sparkles", rain = "sparks", puff = "sparkles", lick = "sparkles" },
+}
 
 worldEmitter("fireball", {
 	Rate = 0, Texture = TEX.core, Lifetime = NumberRange.new(0.35, 0.6), Speed = NumberRange.new(3, 8),
@@ -364,8 +397,67 @@ worldEmitter("hiss", { -- a lava drip's steam where it lands
 	EmissionDirection = Enum.NormalId.Top, Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-60, 60),
 })
 
-local function emitAt(name: string, pos: Vector3, count: number)
-	local e = world[name]
+-- The other elements' kinds (recoloured per element): a bright burst, a falling rain, a puff and
+-- a quick crackle.
+worldEmitter("blast", {
+	Rate = 0, Texture = TEX.sparkles, Lifetime = NumberRange.new(0.3, 0.6), Speed = NumberRange.new(6, 14),
+	SpreadAngle = Vector2.new(180, 180), Size = seq({ { 0, 0.6 }, { 0.3, 0.9 }, { 1, 0 } }),
+	Color = ColorSequence.new(Color3.new(1, 1, 1)), Transparency = seq({ { 0, 0 }, { 1, 0.6 } }), LightEmission = 1, Drag = 4,
+	Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-180, 180), ZOffset = 1,
+})
+worldEmitter("rain", {
+	Rate = 0, Texture = TEX.sparkles, Lifetime = NumberRange.new(1, 1.8), Speed = NumberRange.new(5, 11),
+	SpreadAngle = Vector2.new(80, 80), Size = seq({ { 0, 0.3 }, { 0.7, 0.22 }, { 1, 0 } }),
+	Color = ColorSequence.new(Color3.new(1, 1, 1)), Transparency = seq({ { 0, 0 }, { 1, 0.6 } }), LightEmission = 1, Drag = 2.5,
+	Acceleration = Vector3.new(0, -8, 0), EmissionDirection = Enum.NormalId.Top,
+	Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-150, 150),
+})
+worldEmitter("puff", {
+	Rate = 0, Texture = TEX.smoke, Lifetime = NumberRange.new(0.6, 1.1), Speed = NumberRange.new(1.5, 3.5),
+	SpreadAngle = Vector2.new(60, 60), Size = seq({ { 0, 0.4 }, { 1, 1.4 } }),
+	Color = ColorSequence.new(Color3.new(1, 1, 1)), Transparency = seq({ { 0, 0.3 }, { 1, 1 } }), LightEmission = 0.4, Drag = 2,
+	Acceleration = Vector3.new(0, 1.5, 0), EmissionDirection = Enum.NormalId.Top,
+	Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-60, 60),
+})
+worldEmitter("zap", {
+	Rate = 0, Texture = TEX.sparks, Lifetime = NumberRange.new(0.08, 0.2), Speed = NumberRange.new(8, 16),
+	SpreadAngle = Vector2.new(180, 180), Size = seq({ { 0, 0.3 }, { 1, 0 } }),
+	Color = ColorSequence.new(Color3.new(1, 1, 1)), LightEmission = 1, Drag = 6,
+	Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-400, 400),
+})
+
+-- The world emitter for a kind as this element draws it (made once, then reused).
+local function worldFx(name: string, element: SkinFx.Element?): ParticleEmitter?
+	if not element or element == FIRE then
+		return world[name]
+	end
+	local key = name .. "/" .. element.display
+	local e = world[key]
+	if e then
+		return e
+	end
+	local recipe = RECIPES[name]
+	if not recipe then
+		return nil
+	end
+	local props = table.clone(recipe)
+	local fx = element.fx[name]
+	if fx then
+		props.Color = colours(fx)
+	end
+	local tex = WORLD_TEX[element.display]
+	if tex and tex[name] then
+		props.Texture = TEX[tex[name]]
+	end
+	if props.Squash and tex and tex[name] then
+		props.Squash = nil -- only flames are squashed into tongues
+	end
+	world[key] = pe(worldPart, key, props)
+	return world[key]
+end
+
+local function emitAt(name: string, pos: Vector3, count: number, element: SkinFx.Element?)
+	local e = worldFx(name, element)
 	local n = SkinFx.scaleCount(count, quality)
 	if e and n > 0 then
 		worldPart.CFrame = CFrame.new(pos)
@@ -423,6 +515,7 @@ local function clear(t: Target)
 	end
 	t.made, t.emitters, t.light, t.burst, t.puff = {}, {}, nil, nil, nil
 	t.ring, t.core, t.haze, t.steam, t.shell, t.flashLight = nil, nil, nil, nil, nil, nil
+	t.fx, t.arc, t.glintIdx = {}, nil, 0
 	for i, part in t.glow do -- back to the authored glow
 		if part.Parent then
 			part.Color = t.authored[i]
@@ -460,13 +553,28 @@ local function attachment(parent: Instance, name: string, pos: Vector3, made: { 
 	return a
 end
 
--- Tier 4 hunter: flame tongues, swirling embers, the torso aura, the heat light, the ground ring.
+-- The element behaviours (filled in below "element behaviours"): extra hunter pieces made once at
+-- dress time, stepped in the Heartbeat loop.
+type Behaviour = {
+	dress: ((t: Target, element: SkinFx.Element, host: BasePart, rates: SkinFx.PackRates) -> ())?,
+	step: ((t: Target, element: SkinFx.Element, now: number, dt: number, visible: boolean) -> ())?,
+}
+local BEHAVIOURS: { [string]: Behaviour } = {}
+
+local function isFire(element: SkinFx.Element): boolean
+	return element.look.flames == "fire"
+end
+
+-- Tier 4 hunter: flame tongues, swirling embers, the torso aura, the heat light, the ground ring
+-- (each from the element's look), then the element's own behaviour pieces.
 local function dressPackHunter(t: Target, element: SkinFx.Element, anchor: BasePart)
 	local character = t.root.Parent
 	local torso = character and character:FindFirstChild("UpperTorso")
 	local host: BasePart = if torso and torso:IsA("BasePart") then torso else anchor
 	local rates = SkinFx.packRates(element, quality)
 	local f = element.flames
+	local look = element.look
+	local fire = isFire(element)
 	-- flame tongues: two off the helm's horns (top corners of the head), one off each pauldron
 	local spots: { { any } } = {}
 	for _, name in f.hosts do
@@ -486,32 +594,38 @@ local function dressPackHunter(t: Target, element: SkinFx.Element, anchor: BaseP
 		local outward = if part.Name:find("Left") then -0.15 elseif part.Name:find("Right") then 0.15 else 0
 		local at = attachment(part, "SkinFxFlame", Vector3.new(side * part.Size.X * 0.42 + outward, part.Size.Y * 0.5 + (if side ~= 0 then 0.25 else 0.05), 0), t.made)
 		table.insert(t.emitters, pe(at, "SkinFxFlames", {
-			Rate = rates.flames * share, Texture = TEX.fire,
+			Rate = rates.flames * share, Texture = TEX[look.flames],
 			Lifetime = NumberRange.new(f.lifetime[1], f.lifetime[2]), Speed = NumberRange.new(f.speed[1], f.speed[2]),
 			SpreadAngle = Vector2.new(f.spread, f.spread), Acceleration = Vector3.new(0, f.rise, 0),
 			Size = seq({ { 0, f.size[1] }, { 0.35, f.size[2] }, { 1, f.size[3] } }),
 			Color = colours(f.colour), Transparency = seq({ { 0, 0.15 }, { 0.55, 0.3 }, { 1, 1 } }),
-			Squash = seq({ { 0, 0.6 }, { 0.5, 0.35 }, { 1, -0.1 } }), LightEmission = 0.85, Brightness = 1.4,
+			Squash = if fire then seq({ { 0, 0.6 }, { 0.5, 0.35 }, { 1, -0.1 } }) else NumberSequence.new(0),
+			LightEmission = if look.flames == "smoke" then 0.2 else 0.85, Brightness = 1.4,
 			Rotation = NumberRange.new(-15, 15), RotSpeed = NumberRange.new(-45, 45), Drag = 1, ZOffset = 0.3,
 			EmissionDirection = Enum.NormalId.Top,
 		}))
 	end
 	local r = element.rising
 	local rise = attachment(host, "SkinFxRising", Vector3.zero, t.made)
+	local pixels = look.rising == "square"
 	table.insert(t.emitters, pe(rise, "SkinFxRising", {
-		Rate = rates.rising, Texture = TEX.sparks,
+		Rate = rates.rising, Texture = TEX[look.rising],
 		Lifetime = NumberRange.new(r.lifetime[1], r.lifetime[2]), Speed = NumberRange.new(r.speed[1], r.speed[2]),
 		SpreadAngle = Vector2.new(r.spread, r.spread), Acceleration = Vector3.new(0, r.rise, 0), Drag = r.drag,
 		Size = seq({ { 0, r.size }, { 0.5, r.size * 1.25 }, { 1, 0 } }), Color = ColorSequence.new(r.colour[1], r.colour[2]),
-		Transparency = seq({ { 0, 0 }, { 0.8, 0.25 }, { 1, 1 } }), LightEmission = 1,
-		Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-260, 260), EmissionDirection = Enum.NormalId.Top,
+		-- pixels blink out in steps; stars twinkle; embers fade
+		Transparency = if pixels then seq({ { 0, 0 }, { 0.5, 0 }, { 0.51, 0.6 }, { 0.75, 0.6 }, { 0.76, 1 }, { 1, 1 } })
+			else seq({ { 0, 0 }, { 0.8, 0.25 }, { 1, 1 } }),
+		LightEmission = 1,
+		Rotation = if pixels then NumberRange.new(0, 0) else NumberRange.new(0, 360),
+		RotSpeed = if pixels then NumberRange.new(0, 0) else NumberRange.new(-260, 260), EmissionDirection = Enum.NormalId.Top,
 	}))
 	local packAura = SkinFx.packAura(element, t.tier)
-	if packAura then -- emitted from the torso part's box: low flames round the body
-		local e = emitter(packAura, host, "SkinFxPackAura", TEX.fire)
+	if packAura then -- emitted from the torso part's box: low flames / static / runes / clouds round the body
+		local e = emitter(packAura, host, "SkinFxPackAura", TEX[look.aura])
 		e.Rate = rates.aura
-		e.Transparency = seq({ { 0, 0.35 }, { 0.6, 0.55 }, { 1, 1 } })
-		e.Squash = seq({ { 0, 0.4 }, { 1, 0 } })
+		e.Transparency = seq({ { 0, if fire then 0.35 else 0.5 }, { 0.6, if fire then 0.55 else 0.7 }, { 1, 1 } })
+		e.Squash = if fire then seq({ { 0, 0.4 }, { 1, 0 } }) else NumberSequence.new(0)
 		table.insert(t.emitters, e)
 	end
 	-- the heat light moves to the torso and flickers (replaces tier 3's pulsing light)
@@ -526,30 +640,35 @@ local function dressPackHunter(t: Target, element: SkinFx.Element, anchor: BaseP
 	ring.Size = Vector3.new(element.ring.radius * 2.2, 0.05, element.ring.radius * 2.2)
 	local scorch = topDecal(ring, TEX.smoke, "Scorch")
 	scorch.Color3 = element.ring.scorch
-	local glow = topDecal(ring, TEX.smoke, "Glow") -- embers smouldering in the scorch
-	glow.Color3 = element.heat.hot
+	local glow = topDecal(ring, TEX.smoke, "Glow") -- embers smouldering in the scorch / a charged pool
+	glow.Color3 = element.ring.glow
 	glow.ZIndex = 2
 	local edgePart = fxPart("SkinFxRingEdge")
 	local edgeSize = element.ring.radius * 2 / SHOCK_FILL
 	edgePart.Size = Vector3.new(edgeSize, 0.05, edgeSize)
 	local edge = topDecal(edgePart, TEX.shock, "Edge")
-	edge.Color3 = element.heat.hot
+	edge.Color3 = element.ring.edge
 	edgePart.Parent = fxFolder
 	table.insert(t.made, edgePart)
 	local at = mark(Instance.new("Attachment")) :: Attachment
 	at.Parent = ring
 	local fx = pe(at, "SkinFxRingFlames", {
-		Rate = 0, Texture = TEX.fire, Lifetime = NumberRange.new(0.35, 0.6), Speed = NumberRange.new(0.8, 1.8),
-		SpreadAngle = Vector2.new(10, 10), Acceleration = Vector3.new(0, 4, 0),
+		Rate = 0, Texture = TEX[look.ring], Lifetime = NumberRange.new(0.35, 0.6), Speed = NumberRange.new(0.8, 1.8),
+		SpreadAngle = Vector2.new(10, 10), Acceleration = Vector3.new(0, if fire then 4 else 1.5, 0),
 		Size = seq({ { 0, 0.25 }, { 0.35, 0.7 }, { 1, 0.1 } }), Color = colours(f.colour),
-		Transparency = seq({ { 0, 0.25 }, { 0.6, 0.4 }, { 1, 1 } }), Squash = seq({ { 0, 0.5 }, { 1, 0 } }),
+		Transparency = seq({ { 0, 0.25 }, { 0.6, 0.4 }, { 1, 1 } }),
+		Squash = if fire then seq({ { 0, 0.5 }, { 1, 0 } }) else NumberSequence.new(0),
 		LightEmission = 0.85, EmissionDirection = Enum.NormalId.Top, Rotation = NumberRange.new(-12, 12),
 	})
 	ring.Parent = fxFolder
 	table.insert(t.made, ring)
 	t.ring = { part = ring, edgePart = edgePart, scorch = scorch, glow = glow, edge = edge, at = at, fx = fx }
-	t.burst = burster(element.takedown, host, "SkinFxTakedown", 3, TEX.sparks)
+	t.burst = burster(element.takedown, host, "SkinFxTakedown", if fire then 3 else 0, TEX[look.rising])
 	table.insert(t.made, t.burst :: ParticleEmitter)
+	local b = BEHAVIOURS[element.behaviour]
+	if b and b.dress then
+		b.dress(t, element, host, rates)
+	end
 end
 
 -- Tier 4 weapon: muzzle flash + light, flame burst, heat haze, steam, casings, the cooling puff.
@@ -562,34 +681,73 @@ local function dressPackWeapon(t: Target, element: SkinFx.Element, anchor: BaseP
 	end
 	t.muzzle = muzzle
 	local m = element.muzzle
+	local look = element.look
+	local fire = isFire(element)
 	local mp: BasePart = muzzle or anchor
 	t.burst = pe(mp, "SkinFxMuzzle", {
-		Rate = 0, Texture = TEX.fire, Lifetime = NumberRange.new(0.07, 0.16), Speed = NumberRange.new(2, m.speed),
+		Rate = 0, Texture = TEX[look.muzzle], Lifetime = NumberRange.new(0.07, 0.16), Speed = NumberRange.new(2, m.speed),
 		SpreadAngle = Vector2.new(180, 180), Size = seq({ { 0, m.size }, { 0.4, m.size * 2.6 }, { 1, 0 } }),
 		Color = ColorSequence.new(m.colour[1], m.colour[2]), Transparency = seq({ { 0, 0 }, { 1, 0.8 } }),
 		LightEmission = 1, Brightness = 2, Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-200, 200),
 		Drag = 6, ZOffset = 0.5,
 	})
+	-- the hot-shot burst: fire's flame ball, electric's charge flare, primal's shockwave puff, a
+	-- gravity implosion, a crystal shard spray
+	local shard = look.core == "sparks"
 	t.core = pe(mp, "SkinFxFlameBurst", {
-		Rate = 0, Texture = TEX.core, Lifetime = NumberRange.new(0.15, 0.3), Speed = NumberRange.new(1, 3),
-		SpreadAngle = Vector2.new(180, 180), Size = seq({ { 0, 0.4 }, { 0.3, 1.3 }, { 1, 1.6 } }), Color = colours(FIRE_LIFE),
+		Rate = 0, Texture = TEX[look.core], Lifetime = NumberRange.new(0.15, 0.3), Speed = NumberRange.new(1, if shard then 9 else 3),
+		SpreadAngle = Vector2.new(if shard then 35 else 180, if shard then 35 else 180),
+		Size = if shard then seq({ { 0, 0.3 }, { 1, 0 } }) else seq({ { 0, 0.4 }, { 0.3, 1.3 }, { 1, 1.6 } }),
+		Color = if fire then colours(FIRE_LIFE) else colours({ element.heat.white, element.heat.hot }),
 		Transparency = seq({ { 0, 0 }, { 0.6, 0.35 }, { 1, 1 } }), LightEmission = 0.9, Drag = 4,
 		Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-120, 120), ZOffset = 0.5,
+		EmissionDirection = if shard then Enum.NormalId.Front else Enum.NormalId.Top,
 	})
 	local light = mark(Instance.new("PointLight")) :: PointLight
 	light.Brightness, light.Range, light.Color, light.Shadows = 0, m.range, m.colour[2], false
 	light.Parent = mp
 	t.flashLight = light
-	t.haze = pe(anchor, "SkinFxHaze", {
-		Rate = 0, Texture = TEX.smoke, Lifetime = NumberRange.new(1, 1.6), Speed = NumberRange.new(0.4, 0.9),
-		SpreadAngle = Vector2.new(20, 20), Size = seq({ { 0, 0.25 }, { 1, 1.4 } }),
-		Color = ColorSequence.new(Color3.fromRGB(210, 200, 196), Color3.fromRGB(120, 112, 112)),
-		Transparency = seq({ { 0, 0.75 }, { 0.4, 0.7 }, { 1, 1 } }), LightEmission = 0.05, Acceleration = Vector3.new(0.6, 2.6, 0),
-		Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-70, 70), EmissionDirection = Enum.NormalId.Top,
-	})
+	if look.haze == "vortex" then -- gravity: a swirl locked on the muzzle, faster as it builds
+		t.haze = pe(mp, "SkinFxHaze", {
+			Rate = 0, Texture = TEX.vortex, Lifetime = NumberRange.new(0.5, 0.8), Speed = NumberRange.new(0, 0),
+			Size = seq({ { 0, 1.1 }, { 1, 0.1 } }), Color = ColorSequence.new(element.heat.white, element.heat.hot),
+			Transparency = seq({ { 0, 1 }, { 0.3, 0.35 }, { 1, 1 } }), LightEmission = 1, LockedToPart = true,
+			Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(260, 420), ZOffset = 0.4,
+		})
+	elseif fire then
+		t.haze = pe(anchor, "SkinFxHaze", {
+			Rate = 0, Texture = TEX.smoke, Lifetime = NumberRange.new(1, 1.6), Speed = NumberRange.new(0.4, 0.9),
+			SpreadAngle = Vector2.new(20, 20), Size = seq({ { 0, 0.25 }, { 1, 1.4 } }),
+			Color = ColorSequence.new(Color3.fromRGB(210, 200, 196), Color3.fromRGB(120, 112, 112)),
+			Transparency = seq({ { 0, 0.75 }, { 0.4, 0.7 }, { 1, 1 } }), LightEmission = 0.05, Acceleration = Vector3.new(0.6, 2.6, 0),
+			Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-70, 70), EmissionDirection = Enum.NormalId.Top,
+		})
+	else -- sparks crawling over the vents (charge), embers (fury), glints growing (resonance)
+		t.haze = pe(anchor, "SkinFxHaze", {
+			Rate = 0, Texture = TEX[look.haze], Lifetime = NumberRange.new(0.2, 0.5), Speed = NumberRange.new(0.2, 1),
+			SpreadAngle = Vector2.new(180, 180), Size = seq({ { 0, 0.08 }, { 0.5, 0.3 }, { 1, 0 } }),
+			Color = ColorSequence.new(element.heat.white, element.heat.hot), LightEmission = 1, LockedToPart = look.haze == "sparkles",
+			Acceleration = Vector3.new(0, if look.haze == "sparks" and element.charge == "fury" then 3 else 0, 0),
+			Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-200, 200),
+		})
+	end
+	if element.arcs then -- the arcing muzzle: a jittering Beam across the muzzle while charged
+		local a0 = attachment(mp, "SkinFxArc0", Vector3.new(0.18, 0.05, 0.1), t.made)
+		local a1 = attachment(mp, "SkinFxArc1", Vector3.new(-0.18, 0.05, -0.25), t.made)
+		local beam = mark(Instance.new("Beam")) :: Beam
+		beam.Attachment0, beam.Attachment1 = a0, a1
+		beam.Color = colours(element.arcs.colour)
+		beam.LightEmission, beam.LightInfluence, beam.FaceCamera = 1, 0, true
+		beam.Width0, beam.Width1, beam.Segments = 0.06, 0.06, 6
+		beam.Enabled = false
+		beam.Parent = mp
+		t.arc = beam
+		table.insert(t.made, beam)
+	end
 	local s = element.steam
+	local smoke = look.haze == "smoke" or element.charge == "fury" or element.charge == "gravity"
 	t.steam = pe(anchor, "SkinFxSteam", {
-		Rate = 0, Texture = TEX.smoke, Lifetime = NumberRange.new(0.8, 1.4), Speed = NumberRange.new(2, 4.5),
+		Rate = 0, Texture = if smoke then TEX.smoke else TEX[look.haze], Lifetime = NumberRange.new(0.8, 1.4), Speed = NumberRange.new(2, 4.5),
 		SpreadAngle = Vector2.new(40, 40), Size = seq({ { 0, 0.35 }, { 1, s.size * 1.6 } }),
 		Color = ColorSequence.new(s.colour[1], s.colour[2]), Transparency = seq({ { 0, 0.3 }, { 1, 1 } }),
 		LightEmission = 0.15, Acceleration = Vector3.new(0, 3, 0), Drag = 1.5,
@@ -602,7 +760,7 @@ local function dressPackWeapon(t: Target, element: SkinFx.Element, anchor: BaseP
 		Color = ColorSequence.new(sh.colour[1], sh.colour[2]), LightEmission = 1, Acceleration = Vector3.new(0, -45, 0),
 		EmissionDirection = Enum.NormalId.Right, Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-300, 300),
 	})
-	t.puff = burster(element.puff, anchor, "SkinFxPuff", 2.5, TEX.smoke)
+	t.puff = burster(element.puff, anchor, "SkinFxPuff", if smoke then 2.5 else 0, if smoke then TEX.smoke else TEX[look.haze])
 	for _, inst: any in { t.burst, t.core, light, t.haze, t.steam, t.shell, t.puff } :: { any } do
 		table.insert(t.made, inst)
 	end
@@ -711,6 +869,7 @@ local function makeTarget(root: Instance, where: string, key: string, item: Skin
 		player = player, element = SkinFx.element(item.theme), walked = 0, stepSide = 1,
 		still = 0, ringAlpha = 0, ringCheck = 0, nextDrip = now + 1 + math.random() * 2,
 		flash = 0, flareUntil = 0, steamUntil = 0,
+		fx = {}, glintIdx = 0, glintUntil = 0, glintAt = now + math.random(),
 	}
 	dress(t)
 	return t
@@ -829,32 +988,113 @@ local function characterOf(t: Target): (Instance?, BasePart?)
 	return character, if root and root:IsA("BasePart") then root else nil
 end
 
--- Footprints: a flat molten disc (white-yellow -> orange -> crust) that fades, + a flame lick.
+-- Footprints: a flat disc + three bars per pooled mark, laid out by the element's `mark.shape`:
+--   disc   fire: a molten print that crusts (Neon -> Slate); cosmic: a starlight print that twinkles out
+--   hex    electric: a glowing hex (three bars at 60 degrees make a hexagon) on a dark pad
+--   crack  primal: a dust stomp - a dark blot with three glowing cracks + a dust puff
+--   spike  crystal: three crystal spikes that sprout, hold, then shatter (a glint burst)
 local markPool = newPool(SkinFx.MARK_CAP, function(): Item
 	local part = fxPart("SkinFxMark", Enum.PartType.Cylinder)
 	part.Parent = fxFolder
-	return { part = part, token = 0, free = true, used = 0 }
+	local bars = {}
+	for i = 1, 3 do
+		local bar = fxPart("SkinFxMarkBar" .. i)
+		bar.Parent = fxFolder
+		bars[i] = bar
+	end
+	return { part = part, token = 0, free = true, used = 0, bars = bars }
 end)
+
+local LICK: { [string]: string } = { crack = "puff", spike = "blast" } -- the burst a print kicks up (else "lick")
 
 local function dropMark(element: SkinFx.Element, at: Vector3, normal: Vector3)
 	local m = element.mark
+	local shape = m.shape
 	local it = acquire(markPool)
-	local part = it.part
+	local part, bars = it.part, it.bars :: { BasePart }
+	local s3 = 1 / math.sqrt(3)
+	local yaw = math.random() * 2 * math.pi
+	local base = CFrame.new(at + normal * 0.04) * CFrame.Angles(0, yaw, 0)
+	local spikes: { { number } } = {} -- crystal: per bar (height share, tilt, angle)
 	part.Size = Vector3.new(0.06, m.size, m.size)
 	part.CFrame = CFrame.lookAt(at + normal * 0.04, at + normal * 2) * CFrame.Angles(0, math.rad(90), 0)
 	part.Material = Enum.Material.Neon
-	part.Transparency = 0
-	emitAt("lick", at, m.lick)
-	animate(m.lifetime, it, function(u)
-		part.Color = SkinFx.markColour(element, u)
-		if u > 0.55 and part.Material ~= Enum.Material.Slate then
-			part.Material = Enum.Material.Slate -- crusted over
+	part.Transparency = if shape == "spike" or shape == "hex" then 1 else 0
+	for i, bar in bars do
+		bar.Material = Enum.Material.Neon
+		bar.Transparency = 1
+		bar.CFrame = FAR
+		if shape == "hex" then
+			bar.Size = Vector3.new(m.size * s3, 0.05, m.size)
+			bar.CFrame = base * CFrame.Angles(0, math.rad(60 * i), 0) * CFrame.new(0, 0.01, 0)
+			bar.Transparency = 0
+		elseif shape == "crack" then
+			local len = m.size * (0.5 + 0.3 * math.random())
+			local a = (i / 3) * 2 * math.pi + (math.random() - 0.5) * 0.8
+			bar.Size = Vector3.new(0.1, 0.05, len)
+			bar.CFrame = base * CFrame.Angles(0, a, 0) * CFrame.new(0, 0.02, -len / 2)
+			bar.Transparency = 0
+		elseif shape == "spike" then
+			spikes[i] = { 0.6 + 0.4 * math.random(), math.rad(14 + 18 * math.random()), (i / 3) * 2 * math.pi + math.random() }
 		end
-		part.Transparency = if u < 0.6 then 0 else (u - 0.6) / 0.4
+	end
+	if shape == "hex" then -- the dark pad under the glowing hex
+		part.Size = Vector3.new(0.05, m.size * 1.25, m.size * 1.25)
+		part.Transparency = 0.2
+	end
+	emitAt(LICK[shape] or "lick", at, m.lick, element)
+	local shattered = false
+	animate(m.lifetime, it, function(u)
+		local colour = SkinFx.markColour(element, u)
+		if shape == "disc" then
+			part.Color = colour
+			if isFire(element) then
+				if u > 0.55 and part.Material ~= Enum.Material.Slate then
+					part.Material = Enum.Material.Slate -- crusted over
+				end
+				part.Transparency = if u < 0.6 then 0 else (u - 0.6) / 0.4
+			else -- starlight: twinkles while it fades
+				local fade = if u < 0.4 then 0 else (u - 0.4) / 0.6
+				part.Transparency = math.min(1, fade + (if u > 0.3 then 0.35 * math.random() else 0))
+			end
+		elseif shape == "hex" then
+			part.Color = m.colour
+			for _, bar in bars do
+				bar.Color = colour
+				bar.Transparency = if u < 0.5 then 0 else (u - 0.5) / 0.5
+			end
+			part.Transparency = 0.2 + 0.8 * u
+		elseif shape == "crack" then
+			part.Color = m.colour
+			part.Material = Enum.Material.Slate
+			part.Transparency = if u < 0.5 then 0.15 else 0.15 + 0.85 * (u - 0.5) / 0.5
+			for _, bar in bars do
+				bar.Color = colour
+				bar.Transparency = if u < 0.6 then 0 else (u - 0.6) / 0.4
+			end
+		elseif shape == "spike" then
+			local h = SkinFx.spike(u)
+			for i, bar in bars do
+				local sp = spikes[i]
+				local height = math.max(0.05, m.size * 1.2 * sp[1] * h)
+				bar.Size = Vector3.new(0.2, height, 0.2)
+				bar.CFrame = base * CFrame.Angles(0, sp[3], 0) * CFrame.new(0, 0, -0.12) * CFrame.Angles(-sp[2], 0, 0) * CFrame.new(0, height / 2, 0)
+				bar.Color = colour
+				bar.Transparency = if u < 0.65 then 0.1 else 0.1 + 0.9 * (u - 0.65) / 0.35
+			end
+			if u >= 0.65 and not shattered then
+				shattered = true
+				emitAt("blast", at + Vector3.new(0, 0.4, 0), 3, element)
+			end
+		end
 	end, function()
 		release(it, function()
 			part.Transparency = 1
 			part.CFrame = FAR
+			for _, bar in bars do
+				bar.Transparency = 1
+				bar.CFrame = FAR
+			end
 		end)
 	end)
 end
@@ -936,7 +1176,7 @@ local function drip(t: Target)
 		end
 		drop.Transparency = 1
 		drop.CFrame = FAR
-		emitAt("hiss", hit.Position, d.hiss)
+		emitAt(d.puff, hit.Position, d.hiss, element)
 		spot.Size = Vector3.new(0.05, d.size * 2.4, d.size * 2.4)
 		spot.CFrame = CFrame.lookAt(hit.Position + hit.Normal * 0.03, hit.Position + hit.Normal * 2) * CFrame.Angles(0, math.rad(90), 0)
 		spot.Material = Enum.Material.Neon
@@ -1009,7 +1249,10 @@ local takedownPool = newPool(SkinFx.TAKEDOWN_CAP, function(): Item
 	return { part = ring, token = 0, free = true, used = 0, shock = shock, arms = arms }
 end)
 
-local function groundBurst(element: SkinFx.Element, centre: Vector3, character: Instance?)
+-- `ringOnly` = just the shockwave (primal fury's rage moment). The arms by `takedown.style`: a
+-- ground crack that cools (fire, primal), circuit traces at 45-degree steps that blink out
+-- (electric), a ring of crystals erupting then shattering (crystal), none (cosmic).
+local function groundBurst(element: SkinFx.Element, centre: Vector3, character: Instance?, ringOnly: boolean?)
 	local ignore: { Instance } = { fxFolder }
 	if character then
 		table.insert(ignore, character)
@@ -1020,9 +1263,11 @@ local function groundBurst(element: SkinFx.Element, centre: Vector3, character: 
 	end
 	local ground = hit.Position + Vector3.new(0, 0.03, 0)
 	local td = element.takedown
+	local style = if ringOnly then "none" else td.style
 	local it = acquire(takedownPool)
 	local ring, shock, arms = it.part, it.shock :: Decal, it.arms :: { BasePart }
-	shock.Color3 = element.heat.hot
+	it.shattered = false
+	shock.Color3 = element.ring.edge
 	animate(td.ring.seconds, it, function(u)
 		local radius, transparency = SkinFx.shockwave(element, u)
 		ring.Size = Vector3.new(radius * 2 / SHOCK_FILL, 0.05, radius * 2 / SHOCK_FILL)
@@ -1032,15 +1277,29 @@ local function groundBurst(element: SkinFx.Element, centre: Vector3, character: 
 		shock.Transparency = 1
 		ring.CFrame = FAR
 	end)
-	local n = math.min(td.crack.arms, #arms)
+	local n = if style == "none" then 0 else math.min(td.crack.arms, #arms)
 	local spin = math.random() * 2 * math.pi
+	local w = td.crack.width
+	local spikes: { { any } } = {}
 	for i = 1, #arms do
 		local arm = arms[i]
+		arm.Transparency = 1
 		if i <= n then
 			local len = td.crack.length * (0.55 + 0.45 * math.random())
 			local angle = spin + (i / n) * 2 * math.pi + (math.random() - 0.5) * 0.5
-			arm.Size = Vector3.new(0.16 + math.random() * 0.1, 0.05, len)
-			arm.CFrame = CFrame.new(ground) * CFrame.Angles(0, angle, 0) * CFrame.new(0, 0, -len / 2 - 0.25)
+			if style == "traces" then
+				angle = math.floor(angle / (math.pi / 4) + 0.5) * (math.pi / 4) -- circuit: 45-degree steps
+				arm.Size = Vector3.new(w, 0.05, len)
+				arm.CFrame = CFrame.new(ground) * CFrame.Angles(0, angle + (i % 2) * math.pi / 8, 0) * CFrame.new(0, 0, -len / 2 - 0.4)
+			elseif style == "spikes" then
+				local r = td.ring.radius * (0.3 + 0.15 * math.random())
+				spikes[i] = { CFrame.new(ground) * CFrame.Angles(0, angle, 0) * CFrame.new(0, 0, -r) * CFrame.Angles(-math.rad(20 + 20 * math.random()), 0, 0), len }
+				arm.Size = Vector3.new(w, 0.05, w)
+				arm.CFrame = FAR
+			else
+				arm.Size = Vector3.new(w + math.random() * 0.1, 0.05, len)
+				arm.CFrame = CFrame.new(ground) * CFrame.Angles(0, angle, 0) * CFrame.new(0, 0, -len / 2 - 0.25)
+			end
 			arm.Material = Enum.Material.Neon
 		else
 			arm.CFrame = FAR
@@ -1049,11 +1308,29 @@ local function groundBurst(element: SkinFx.Element, centre: Vector3, character: 
 	animate(td.crack.seconds, it, function(u)
 		local colour, transparency = SkinFx.crackColour(element, u)
 		for i = 1, n do
-			arms[i].Color = colour
-			arms[i].Transparency = transparency
-			if u > 0.6 and arms[i].Material ~= Enum.Material.Slate then
-				arms[i].Material = Enum.Material.Slate
+			local arm = arms[i]
+			if style == "spikes" then
+				local sp = spikes[i]
+				local h = math.max(0.05, (sp[2] :: number) * SkinFx.spike(u))
+				arm.Size = Vector3.new(w, h, w)
+				arm.CFrame = (sp[1] :: CFrame) * CFrame.new(0, h / 2, 0)
+				arm.Color = element.heat.white:Lerp(element.heat.hot, math.min(1, u * 3))
+				arm.Transparency = if u < 0.65 then 0.1 else 0.1 + 0.9 * (u - 0.65) / 0.35
+			elseif style == "traces" then
+				arm.Color = colour
+				-- the trace races out, then blinks off in steps
+				arm.Transparency = if u < 0.5 then 0 elseif u < 0.8 then (if math.floor(u * 20) % 2 == 0 then 0.2 else 0.7) else 1
+			else
+				arm.Color = colour
+				arm.Transparency = transparency
+				if u > 0.6 and arm.Material ~= Enum.Material.Slate then
+					arm.Material = Enum.Material.Slate
+				end
 			end
+		end
+		if style == "spikes" and u >= 0.65 and not it.shattered then
+			it.shattered = true
+			emitAt(td.rain, ground + Vector3.new(0, 1, 0), td.shower, element)
 		end
 	end, function()
 		release(it, function()
@@ -1066,6 +1343,186 @@ local function groundBurst(element: SkinFx.Element, centre: Vector3, character: 
 		end)
 	end)
 end
+
+------------------------------------------------------------------ element behaviours (#466)
+
+local BODY_POINTS = { "Head", "UpperTorso", "LowerTorso", "LeftUpperArm", "RightUpperArm", "LeftHand", "RightHand" }
+
+-- Electric: arcs (Beams) snapping between body points and jittering, glitch slices.
+BEHAVIOURS.crackle = {
+	dress = function(t, element, host)
+		local arcs = element.arcs
+		local character = t.root.Parent
+		local points: { Attachment } = {}
+		for _, name in BODY_POINTS do
+			local p = character and character:FindFirstChild(name)
+			if p and p:IsA("BasePart") then
+				table.insert(points, attachment(p, "SkinFxArcPoint", Vector3.new(0, p.Size.Y * 0.3, -p.Size.Z * 0.4), t.made))
+			end
+		end
+		local beams = {}
+		if arcs and #points >= 2 then
+			for i = 1, arcs.count do
+				local beam = mark(Instance.new("Beam")) :: Beam
+				beam.Color = colours(arcs.colour)
+				beam.LightEmission, beam.LightInfluence, beam.FaceCamera, beam.Segments = 1, 0, true, 8
+				beam.Width0, beam.Width1 = arcs.width, arcs.width * 0.4
+				beam.Enabled = false
+				beam.Parent = host
+				table.insert(t.made, beam)
+				beams[i] = { beam = beam, at = os.clock() + math.random(), till = 0 }
+			end
+		end
+		local slabs = {}
+		if element.glitch then
+			for i = 1, 2 do -- displaced scanline slices of the body
+				local slab = fxPart("SkinFxGlitch" .. i)
+				slab.Color = element.glitch.colour
+				slab.Parent = fxFolder
+				table.insert(t.made, slab)
+				slabs[i] = slab
+			end
+		end
+		t.fx.points, t.fx.beams, t.fx.slabs, t.fx.host = points, beams, slabs, host
+	end,
+	step = function(t, element, now, _dt, visible)
+		local arcs, points = element.arcs, t.fx.points :: { Attachment }?
+		if arcs and points then
+			for _, a in t.fx.beams :: { any } do
+				local beam = a.beam :: Beam
+				if not visible then
+					beam.Enabled = false
+				elseif now >= a.at then -- a new arc between two random body points
+					a.at = now + arcs.every[1] + (arcs.every[2] - arcs.every[1]) * math.random()
+					a.till = now + arcs.life
+					local i = math.random(1, #points)
+					local j = (i + math.random(1, #points - 1) - 1) % #points + 1
+					beam.Attachment0, beam.Attachment1 = points[i], points[j]
+					beam.Enabled = true
+				end
+				if beam.Enabled then
+					if now >= a.till then
+						beam.Enabled = false
+					else -- jitter every frame
+						local c0, c1 = SkinFx.arcCurve(element, math.random(), math.random())
+						beam.CurveSize0, beam.CurveSize1 = c0, c1
+					end
+				end
+			end
+		end
+		local slabs, host = t.fx.slabs :: { BasePart }?, t.fx.host :: BasePart?
+		if slabs and host then
+			local on, offset = SkinFx.glitch(element, now, t.seed)
+			local storm = now - (t.fx.burstAt or -10) < 0.4 -- a take-down: glitch storm
+			if storm and not on then
+				on, offset = math.random() < 0.5, (math.random() - 0.5) * 1.2
+			end
+			t.fx.glitching = on and visible
+			for i, slab in slabs do
+				if on and visible then
+					local y = (math.random() - 0.5) * host.Size.Y * 2.2
+					slab.Size = Vector3.new(host.Size.X * (0.8 + 0.6 * math.random()), 0.12 + 0.2 * math.random(), host.Size.Z * 1.05)
+					slab.CFrame = host.CFrame * CFrame.new(offset * (if i == 1 then 1 else -0.6), y, 0)
+					slab.Transparency = 0.25
+				elseif slab.Transparency < 1 then
+					slab.Transparency = 1
+					slab.CFrame = FAR
+				end
+			end
+			if on and visible and not t.fx.wasOn then
+				emitAt("zap", host.Position, 3, element)
+			end
+			t.fx.wasOn = on and visible
+		end
+	end,
+}
+
+-- Primal: crimson eyes (a locked glow on each eye) + wisps; the beat is in the seams and the light.
+BEHAVIOURS.heartbeat = {
+	dress = function(t, element, _host, rates)
+		local eyes = element.eyes
+		local character = t.root.Parent
+		local head = character and character:FindFirstChild("Head")
+		if not eyes or not head or not head:IsA("BasePart") then
+			return
+		end
+		local share = if element.extra > 0 then rates.extra / element.extra else 0
+		for _, side in { -1, 1 } do
+			local at = attachment(head, "SkinFxEye", Vector3.new(side * head.Size.X * 0.18, head.Size.Y * 0.08, -head.Size.Z * 0.5), t.made)
+			table.insert(t.emitters, pe(at, "SkinFxEye", {
+				Rate = eyes.rate * share, Texture = TEX.glow, Lifetime = NumberRange.new(0.9, 1.3), Speed = NumberRange.new(0, 0),
+				Size = seq({ { 0, eyes.size * 2.5 }, { 1, eyes.size * 1.5 } }), Color = ColorSequence.new(eyes.colour),
+				Transparency = seq({ { 0, 1 }, { 0.15, 0.1 }, { 0.8, 0.2 }, { 1, 1 } }), LightEmission = 1, LockedToPart = true,
+				Brightness = eyes.brightness, ZOffset = 0.5,
+			}))
+		end
+	end,
+}
+
+-- Cosmic: stars orbiting the torso, leaving comet tails (their emitters stay in the world).
+BEHAVIOURS.drift = {
+	dress = function(t, element, host, rates)
+		local o = element.orbit
+		if not o then
+			return
+		end
+		local share = if element.extra > 0 then rates.extra / element.extra else 0
+		local stars = {}
+		for i = 1, o.count do
+			local at = attachment(host, "SkinFxStar", Vector3.zero, t.made)
+			table.insert(t.emitters, pe(at, "SkinFxStar", {
+				Rate = o.rate * share, Texture = TEX.sparkles, Lifetime = NumberRange.new(0.5, 0.8), Speed = NumberRange.new(0, 0.2),
+				Size = seq({ { 0, o.size }, { 1, 0 } }), Color = ColorSequence.new(o.colour[1], o.colour[2]),
+				Transparency = seq({ { 0, 0 }, { 1, 0.5 } }), LightEmission = 1, Rotation = NumberRange.new(0, 360),
+			}))
+			stars[i] = at
+		end
+		t.fx.stars = stars
+	end,
+	step = function(t, element, now)
+		local stars = t.fx.stars :: { Attachment }?
+		if stars then
+			for i, at in stars do
+				at.Position = SkinFx.orbitOffset(element, i, #stars, now + t.seed)
+			end
+		end
+	end,
+}
+
+-- Crystal: shard Parts orbiting the torso (made once, moved every frame), spinning.
+BEHAVIOURS.shards = {
+	dress = function(t, element, host)
+		local o = element.orbit
+		if not o then
+			return
+		end
+		local shards = {}
+		for i = 1, o.count do
+			local shard = fxPart("SkinFxOrbitShard" .. i)
+			shard.Size = Vector3.new(o.size * 0.55, o.size * (1.3 + 0.6 * math.random()), o.size * 0.55)
+			shard.Color = o.colour[1]:Lerp(o.colour[2], math.random())
+			shard.Transparency = 0.1
+			shard.Parent = fxFolder
+			table.insert(t.made, shard)
+			shards[i] = shard
+		end
+		t.fx.shards, t.fx.host = shards, host
+	end,
+	step = function(t, element, now, _dt, visible)
+		local shards, host = t.fx.shards :: { BasePart }?, t.fx.host :: BasePart?
+		if not shards or not host then
+			return
+		end
+		for i, shard in shards do
+			if visible then
+				local off = SkinFx.orbitOffset(element, i, #shards, now + t.seed)
+				shard.CFrame = CFrame.new(host.Position + off) * CFrame.Angles(0.4, now * 1.7 + i, 0.3 * math.sin(now + i))
+			elseif shard.CFrame ~= FAR then
+				shard.CFrame = FAR
+			end
+		end
+	end,
+}
 
 ------------------------------------------------------------------ tier 4 weapon: heat
 
@@ -1173,6 +1630,20 @@ local function stepHeat(dt: number)
 				if gun.core then
 					(gun.core :: ParticleEmitter):Emit(SkinFx.scaleCount(5, quality))
 				end
+				if element.charge == "fury" then -- full fury: the hunter's red aura flares + a roar ring
+					for _, ht in targets do
+						if ht.where == "hunter" and ht.player == player and ht.tier >= SkinFx.PACK_TIER and ht.burst then
+							local character, root = characterOf(ht)
+							if root and not (player == Players.LocalPlayer and firstPerson) then
+								(ht.burst :: ParticleEmitter):Emit(SkinFx.scaleCount(element.takedown.count, quality))
+								flashAt(root.Position + Vector3.new(0, 2, 0), element.heat.hot, 4, 16, 0.4)
+							end
+							if root then
+								groundBurst(element, root.Position, character, true)
+							end
+						end
+					end
+				end
 			end
 			if visible and gun and gun.puff and SkinFx.coolPuff(element, before, h.heat, reloadStarted) then
 				(gun.puff :: ParticleEmitter):Emit(SkinFx.scaleCount(element.puff.count, quality))
@@ -1219,6 +1690,64 @@ local boltPool = newPool(SkinFx.BOLT_CAP, function(): Item
 	return { part = part, token = 0, free = true, used = 0, trail = trail }
 end)
 
+-- Electric: chain lightning muzzle -> hit, a jagged Beam that re-bends every frame + a fork off
+-- its middle, flickering for its short life (BOLT_CAP sets, oldest reused).
+local chainPool = newPool(SkinFx.BOLT_CAP, function(): Item
+	local part = fxPart("SkinFxChain")
+	part.Size = Vector3.new(0.1, 0.1, 0.1)
+	local function at(): Attachment
+		local a = mark(Instance.new("Attachment")) :: Attachment
+		a.Parent = part
+		return a
+	end
+	local a0, a1, a2, a3 = at(), at(), at(), at()
+	local function beam(b0: Attachment, b1: Attachment): Beam
+		local b = mark(Instance.new("Beam")) :: Beam
+		b.Attachment0, b.Attachment1 = b0, b1
+		b.LightEmission, b.LightInfluence, b.FaceCamera, b.Segments = 1, 0, true, 10
+		b.Enabled = false
+		b.Parent = part
+		return b
+	end
+	local main, mid, fork = beam(a0, a1), beam(a1, a2), beam(a1, a3)
+	part.Parent = fxFolder
+	return { part = part, token = 0, free = true, used = 0, a = { a0, a1, a2, a3 }, beams = { main, mid, fork } }
+end)
+
+local function chainBolt(element: SkinFx.Element, start: Vector3, to: Vector3)
+	local tr = element.tracer
+	local it = acquire(chainPool)
+	local a, beams = it.a :: { Attachment }, it.beams :: { Beam }
+	it.part.CFrame = CFrame.new(start)
+	local dir = to - start
+	local side = dir:Cross(Vector3.yAxis)
+	side = if side.Magnitude > 1e-3 then side.Unit else Vector3.xAxis
+	local midPoint = start + dir * (0.45 + 0.1 * math.random()) + side * (math.random() - 0.5) * 1.2
+	local forkTo = start + dir * 0.75 + side * (math.random() - 0.5) * dir.Magnitude * 0.25 + Vector3.new(0, (math.random() - 0.5) * 2, 0)
+	a[1].WorldPosition, a[2].WorldPosition, a[3].WorldPosition, a[4].WorldPosition = start, midPoint, to, forkTo
+	local colour = colours(tr.colour)
+	for i, b in beams do
+		b.Color = colour
+		b.Width0, b.Width1 = tr.width * (if i == 3 then 0.6 else 1), tr.width * (if i == 3 then 0.1 else 0.7)
+		b.Enabled = true
+	end
+	emitAt("zap", to, 4, element)
+	animate(tr.lifetime + 0.06, it, function(u)
+		for i, b in beams do
+			local c0, c1 = SkinFx.arcCurve(element, math.random(), math.random())
+			b.CurveSize0, b.CurveSize1 = c0, c1
+			b.Transparency = NumberSequence.new(math.min(1, u * 0.8 + (if math.random() < 0.25 then 0.5 else 0) + (if i == 3 then 0.2 else 0)))
+		end
+	end, function()
+		release(it, function()
+			for _, b in beams do
+				b.Enabled = false
+			end
+			it.part.CFrame = FAR
+		end)
+	end)
+end
+
 local function onTracer(part: BasePart)
 	if math.abs(part.Size.X - 0.15) > 0.02 or part.Size.Z < 1 then
 		return
@@ -1243,10 +1772,16 @@ local function onTracer(part: BasePart)
 	local h = heats[owner.player :: Player]
 	local heat = if h then h.heat else 0.5
 	local hot = SkinFx.heatColour(element, math.max(heat, 0.5))
-	part.Color = hot -- this screen only: the server's tracer glows with the heat
+	part.Color = hot -- this screen only: the server's tracer glows with the heat / charge / fury...
 	part.Material = Enum.Material.Neon
 	local gun = shownGun(weaponTargets(owner.player :: Player), owner.player :: Player)
 	local start = if gun and gun.muzzle then (gun.muzzle :: BasePart).Position elseif gun and gun.anchor then (gun.anchor :: BasePart).Position else from
+	local tr = element.tracer
+	if tr.style == "chain" then
+		part.Transparency = 1 -- this screen only: the chain lightning replaces the straight line
+		chainBolt(element, start, to)
+		return
+	end
 	local it = acquire(boltPool)
 	local bolt, trail = it.part, it.trail :: Trail
 	trail.Enabled = false
@@ -1254,13 +1789,22 @@ local function onTracer(part: BasePart)
 	bolt.Transparency = 0
 	bolt.CFrame = CFrame.new(start)
 	trail:Clear()
-	trail.Color = ColorSequence.new(hot, element.trail.colour[2])
+	-- bolt (fire, primal: the heat colour into the element's trail), comet (a long white tail),
+	-- prism (a rainbow tail)
+	trail.Color = if tr.style == "bolt" and isFire(element) then ColorSequence.new(hot, element.trail.colour[2])
+		elseif tr.style == "bolt" then colours({ hot, tr.colour[2], tr.colour[#tr.colour] })
+		else colours(tr.colour)
+	trail.Lifetime = tr.lifetime
+	trail.WidthScale = seq({ { 0, tr.width / 0.3 }, { 1, 0.1 } })
 	trail.Enabled = true
 	local dur = math.clamp((to - start).Magnitude / 450, 0.05, 0.14)
 	animate(dur, it, function(u)
 		bolt.CFrame = CFrame.new(start:Lerp(to, u))
 	end, function()
-		emitAt("sparks", to, 2)
+		emitAt("sparks", to, 2, element)
+		if tr.style == "comet" then
+			emitAt("rain", to, 3, element) -- the comet's sparkle trail spills at the hit
+		end
 		bolt.Transparency = 1
 		animate(trail.Lifetime, it, function() end, function()
 			release(it, function()
@@ -1275,10 +1819,16 @@ end
 
 -- A take-down: the wearer's burst (your own in first person: from the viewmodel gun).
 local function takedown(player: Player)
+	local h = heats[player] -- primal fury: a take-down feeds the gun (perKill; 0 for the others)
+	local guns = weaponTargets(player)
+	if h and guns[1] and guns[1].element then
+		h.heat = SkinFx.heatAfterKill(guns[1].element :: SkinFx.Element, h.heat)
+	end
 	for _, t in targets do
 		if t.where == "hunter" and t.player == player and t.tier >= SkinFx.PACK_TIER and t.element and t.burst then
 			local element = t.element :: SkinFx.Element
 			local td = element.takedown
+			t.fx.burstAt = os.clock() -- behaviours react (electric: a glitch storm)
 			if player == Players.LocalPlayer and firstPerson then
 				local gun = shownGun(weaponTargets(player), player)
 				if gun and gun.burst then
@@ -1291,9 +1841,15 @@ local function takedown(player: Player)
 				local character, root = characterOf(t)
 				local centre = if root then root.Position else (t.anchor :: BasePart).Position
 				;(t.burst :: ParticleEmitter):Emit(SkinFx.scaleCount(td.count, quality))
-				emitAt("fireball", centre + Vector3.new(0, 0.5, 0), td.fireball)
-				emitAt("shower", centre + Vector3.new(0, 1.5, 0), td.shower)
-				flashAt(centre + Vector3.new(0, 2, 0), element.heat.hot, td.flash.brightness, td.flash.range, td.flash.seconds)
+				emitAt(td.blast, centre + Vector3.new(0, 0.5, 0), td.fireball, element)
+				if td.style ~= "spikes" then -- crystal's shard rain falls when its spikes shatter
+					emitAt(td.rain, centre + Vector3.new(0, 1.5, 0), td.shower, element)
+				end
+				if td.style == "crack" and not isFire(element) then -- the roar's dust
+					emitAt("plume", centre + Vector3.new(0, 0.5, 0), 4, element)
+				end
+				local flashColour = if td.style == "none" then td.colour[1] else element.heat.hot
+				flashAt(centre + Vector3.new(0, 2, 0), flashColour, td.flash.brightness, td.flash.range, td.flash.seconds)
 				groundBurst(element, centre, character)
 			end
 		end
@@ -1337,65 +1893,207 @@ local splashPool = newPool(SkinFx.SPLASH_CAP, function(): Item
 	local sound = mark(Instance.new("Sound")) :: Sound
 	sound.Parent = disc
 	disc.Parent = fxFolder
-	return { part = disc, token = 0, free = true, used = 0, at = at, bubbles = bubbles, flames = flames, sound = sound }
+	-- the other styles' pieces: a black hole + the shell its stars are pulled in from (cosmic), a
+	-- flat ring (EMP pulse, dust ring, the supernova ring) and six crystal shards
+	local hole = fxPart("SkinFxHole", Enum.PartType.Ball)
+	hole.Material = Enum.Material.SmoothPlastic
+	local pull = fxPart("SkinFxPull", Enum.PartType.Ball)
+	local inward = pe(pull, "SkinFxInward", {
+		Rate = 0, Texture = TEX.sparkles, Shape = Enum.ParticleEmitterShape.Sphere,
+		ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface, ShapeInOut = Enum.ParticleEmitterShapeInOut.Inward,
+		Lifetime = NumberRange.new(0.35, 0.5), Speed = NumberRange.new(4, 7), Size = seq({ { 0, 0.3 }, { 1, 0.05 } }),
+		Color = ColorSequence.new(Color3.new(1, 1, 1)), LightEmission = 1, Rotation = NumberRange.new(0, 360),
+	})
+	local flat = fxPart("SkinFxSplashRing")
+	local shock = topDecal(flat, TEX.shock, "Shock")
+	local shards = {}
+	for i = 1, 6 do
+		local shard = fxPart("SkinFxShard" .. i)
+		shard.Parent = fxFolder
+		shards[i] = shard
+	end
+	hole.Parent, pull.Parent, flat.Parent = fxFolder, fxFolder, fxFolder
+	return { part = disc, token = 0, free = true, used = 0, at = at, bubbles = bubbles, flames = flames, sound = sound,
+		hole = hole, pull = pull, inward = inward, flat = flat, shock = shock, shards = shards }
 end)
+
+local LAVA_BUBBLES = ColorSequence.new(Color3.fromRGB(255, 236, 160), Color3.fromRGB(255, 110, 20))
+local LINGER_SQUASH = seq({ { 0, 0.5 }, { 1, 0 } })
 
 local function splash(element: SkinFx.Element, at: Vector3)
 	if not near(at) then
 		return
 	end
 	local s = element.splash
+	local style = s.style
+	local fire = isFire(element)
 	local hit = groundBelow(at + Vector3.new(0, 1.5, 0), { fxFolder })
 	local ground = if hit then hit.Position else at
-	emitAt("fireball", ground + Vector3.new(0, 1, 0), s.fireball)
-	emitAt("plume", ground + Vector3.new(0, 1.5, 0), s.plume)
-	emitAt("sparks", ground + Vector3.new(0, 0.5, 0), s.count)
-	flashAt(ground + Vector3.new(0, 2.5, 0), element.heat.hot, s.flash.brightness, s.flash.range, s.flash.seconds)
+	local function bursts(scale: number)
+		emitAt(if fire then "fireball" else "blast", ground + Vector3.new(0, 1, 0), s.fireball * scale, element)
+		if s.plume > 0 then
+			emitAt("plume", ground + Vector3.new(0, 1.5, 0), s.plume, element)
+		end
+		emitAt(if style == "emp" then "zap" elseif style == "implode" or style == "shatter" then "rain" else "sparks",
+			ground + Vector3.new(0, 0.5, 0), s.count, element)
+		flashAt(ground + Vector3.new(0, 2.5, 0), if style == "implode" then element.heat.white else element.heat.hot,
+			s.flash.brightness, s.flash.range, s.flash.seconds)
+	end
+	if style ~= "implode" then -- the black hole bursts when it has collapsed
+		bursts(1)
+	end
 	local it = acquire(splashPool)
 	local disc, ember = it.part, it.at :: Attachment
 	local bubbles, flames, sound = it.bubbles :: ParticleEmitter, it.flames :: ParticleEmitter, it.sound :: Sound
+	local hole, pull, inward = it.hole :: BasePart, it.pull :: BasePart, it.inward :: ParticleEmitter
+	local flat, shock, shards = it.flat :: BasePart, it.shock :: Decal, it.shards :: { BasePart }
+	-- this splash's looks on the pooled emitters (set once per splash)
+	bubbles.Texture = if fire then TEX.sparkles else TEX[element.look.rising]
+	bubbles.Color = if fire then LAVA_BUBBLES else colours({ element.heat.white, element.heat.hot })
+	flames.Texture = if fire then TEX.fire else TEX[element.look.ring]
+	flames.Color = if fire then colours(FIRE_LIFE) else colours(element.flames.colour)
+	flames.Squash = if fire then LINGER_SQUASH else NumberSequence.new(0)
+	inward.Color = colours({ element.heat.white, element.heat.hot })
+	shock.Color3 = if style == "roar" then (element.fx.plume or { s.crust })[1] else s.colour
+	if style == "implode" then
+		shock.Color3 = element.ring.edge
+	end
 	disc.CFrame = CFrame.new(ground + Vector3.new(0, 0.05, 0)) * CFrame.Angles(0, 0, math.rad(90))
 	disc.Material = Enum.Material.Neon
 	disc.Color = element.heat.white
-	disc.Transparency = 0.05
+	disc.Transparency = if style == "lava" then 0.05 else 0.3
 	disc.Size = Vector3.new(0.08, s.radius * 0.6, s.radius * 0.6)
 	local boom = element.sound.boom
-	if boom and element.sound.volume > 0 then
-		sound.SoundId = boom
-		sound.Volume = element.sound.volume
-		sound.RollOffMaxDistance = SkinFx.PACK_DISTANCE
-		sound:Play()
-	end
-	animate(s.lifetime, it, function(u, t)
-		local grow = math.min(1, u / 0.12)
-		local size = s.radius * (0.6 + 1.4 * (1 - (1 - grow) ^ 3))
-		disc.Size = Vector3.new(0.08, size, size)
-		if u < 0.08 then
-			disc.Color = element.heat.white:Lerp(s.colour, u / 0.08)
-		elseif u < 0.55 then -- bubbling: the molten pool throbs
-			local throb = 0.5 + 0.5 * math.sin(t * 18)
-			disc.Color = s.colour:Lerp(element.heat.white, 0.25 * throb)
-		else
-			disc.Color = s.colour:Lerp(s.crust, math.min(1, (u - 0.55) / 0.25))
-			if u > 0.75 and disc.Material ~= Enum.Material.Slate then
-				disc.Material = Enum.Material.Slate
-			end
+	local function playBoom()
+		if boom and element.sound.volume > 0 then
+			sound.SoundId = boom
+			sound.Volume = element.sound.volume
+			sound.PlaybackSpeed = element.sound.pitch
+			sound.RollOffMaxDistance = SkinFx.PACK_DISTANCE
+			sound:Play()
 		end
-		disc.Transparency = if u < 0.7 then 0.05 else 0.05 + 0.95 * (u - 0.7) / 0.3
-		bubbles.Rate = if u < 0.6 then s.bubbles * quality else 0
+	end
+	if style ~= "implode" then
+		playBoom()
+	end
+	local holeAt = ground + Vector3.new(0, 1.3, 0)
+	if style == "implode" then -- the black hole + the shell its stars fall in from
+		hole.Color = Color3.fromRGB(6, 2, 14)
+		hole.Transparency = 0
+		pull.Size = Vector3.one * s.radius * 3.2
+		pull.CFrame = CFrame.new(holeAt)
+		inward.Rate = 30 * quality
+	end
+	local shardSpec: { { any } } = {}
+	if style == "shatter" then
+		for i = 1, #shards do
+			local a = (i / #shards) * 2 * math.pi + math.random() * 0.6
+			local r = s.radius * (0.15 + 0.4 * math.random())
+			shardSpec[i] = {
+				CFrame.new(ground) * CFrame.Angles(0, a, 0) * CFrame.new(0, 0, -r) * CFrame.Angles(-math.rad(15 + 25 * math.random()), 0, math.rad((math.random() - 0.5) * 30)),
+				0.8 + 0.9 * math.random(),
+			}
+			shards[i].Material = Enum.Material.Neon
+			shards[i].Color = element.heat.hot:Lerp(element.heat.white, math.random() * 0.5)
+		end
+	end
+	local burst, shattered = false, false
+	animate(s.lifetime, it, function(u, t)
+		local radius, transparency = SkinFx.splashShape(element, u)
 		local lingering = t < s.linger
+		local edge = radius -- where lingering pops appear (from the centre)
+		if style == "lava" then
+			local size = radius
+			edge = size * 0.4
+			disc.Size = Vector3.new(0.08, size, size)
+			if u < 0.08 then
+				disc.Color = element.heat.white:Lerp(s.colour, u / 0.08)
+			elseif u < 0.55 then -- bubbling: the molten pool throbs
+				local throb = 0.5 + 0.5 * math.sin(t * 18)
+				disc.Color = s.colour:Lerp(element.heat.white, 0.25 * throb)
+			else
+				disc.Color = s.colour:Lerp(s.crust, math.min(1, (u - 0.55) / 0.25))
+				if u > 0.75 and disc.Material ~= Enum.Material.Slate then
+					disc.Material = Enum.Material.Slate
+				end
+			end
+			disc.Transparency = transparency
+		elseif style == "emp" or style == "roar" then -- a ring racing / rolling out over a flash or stain
+			flat.Size = Vector3.new(radius * 2 / SHOCK_FILL, 0.05, radius * 2 / SHOCK_FILL)
+			flat.CFrame = CFrame.new(ground + Vector3.new(0, 0.06, 0))
+			shock.Transparency = transparency
+			edge = radius * 0.9
+			if style == "emp" then -- the core flickers like a shorted screen, then dies
+				disc.Color = s.colour:Lerp(Color3.new(1, 1, 1), math.random() * 0.6)
+				disc.Transparency = if u < 0.35 then 0.15 + 0.5 * math.random() else math.min(1, 0.4 + (u - 0.35) * 2)
+			else -- a red flash cooling to a dust stain
+				disc.Color = s.colour:Lerp(s.crust, math.min(1, u / 0.3))
+				if u > 0.3 and disc.Material ~= Enum.Material.Slate then
+					disc.Material = Enum.Material.Slate
+				end
+				disc.Size = Vector3.new(0.08, s.radius * 1.4, s.radius * 1.4)
+				disc.Transparency = if u < 0.6 then 0.2 else 0.2 + 0.8 * (u - 0.6) / 0.4
+			end
+		elseif style == "implode" then
+			if radius > 0 then
+				hole.Size = Vector3.one * math.max(0.05, radius * 2)
+				hole.CFrame = CFrame.new(holeAt)
+				disc.Color = s.crust
+				disc.Transparency = 0.5
+			elseif not burst then -- collapsed: the star burst + a ring
+				burst = true
+				hole.CFrame = FAR
+				inward.Rate = 0
+				bursts(1.5)
+				playBoom()
+			end
+			if burst then
+				local k = (u - SkinFx.IMPLODE_AT) / (1 - SkinFx.IMPLODE_AT)
+				local r = s.radius * 2.5 * (1 - (1 - k) ^ 2)
+				flat.Size = Vector3.new(r * 2 / SHOCK_FILL, 0.05, r * 2 / SHOCK_FILL)
+				flat.CFrame = CFrame.new(ground + Vector3.new(0, 0.06, 0))
+				shock.Transparency = k
+				disc.Transparency = math.min(1, 0.5 + k)
+			end
+			edge = s.radius * 0.6
+			lingering = burst and lingering
+		elseif style == "shatter" then
+			for i, shard in shards do
+				local sp = shardSpec[i]
+				local h = math.max(0.05, (sp[2] :: number) * radius / s.radius)
+				shard.Size = Vector3.new(0.3, h, 0.3)
+				shard.CFrame = (sp[1] :: CFrame) * CFrame.new(0, h / 2, 0)
+				shard.Transparency = math.max(0.08, transparency)
+			end
+			disc.Color = s.colour
+			disc.Size = Vector3.new(0.08, s.radius * 1.3, s.radius * 1.3)
+			disc.Transparency = 0.45 + 0.55 * u
+			if u >= 0.65 and not shattered then
+				shattered = true
+				emitAt("rain", ground + Vector3.new(0, 1, 0), s.count, element)
+				emitAt("blast", ground + Vector3.new(0, 0.8, 0), s.fireball, element)
+			end
+			edge = s.radius * 0.6
+		end
+		bubbles.Rate = if u < 0.6 and (style ~= "implode" or burst) then s.bubbles * quality else 0
 		flames.Rate = if lingering then 12 * quality * (1 - t / s.linger) else 0
 		if lingering then
-			local r = size * 0.4 * math.sqrt(math.random())
+			local r = edge * (if style == "lava" then math.sqrt(math.random()) else 0.85 + 0.15 * math.random())
 			local a = math.random() * 2 * math.pi
 			ember.Position = Vector3.new(0, math.cos(a) * r, math.sin(a) * r) -- the disc's YZ is the ground
 			ember.WorldCFrame = CFrame.new(ember.WorldPosition) -- emit straight up in the world
 		end
 	end, function()
 		release(it, function()
-			bubbles.Rate, flames.Rate = 0, 0
+			bubbles.Rate, flames.Rate, inward.Rate = 0, 0, 0
 			disc.Transparency = 1
 			disc.CFrame = FAR
+			hole.CFrame, pull.CFrame, flat.CFrame = FAR, FAR, FAR
+			shock.Transparency = 1
+			for _, shard in shards do
+				shard.Transparency = 1
+				shard.CFrame = FAR
+			end
 		end)
 	end)
 end
@@ -1433,14 +2131,16 @@ local function grenadeThrown(obj: Instance)
 	end
 	trail(a0, a1, colours({ element.heat.white, tr.colour[1], tr.colour[2] }), tr.lifetime, 0.9, seq({ { 0, 0 }, { 1, 1 } }), seq({ { 0, 1 }, { 1, 0.2 } }))
 	trail(s0, s1, ColorSequence.new(tr.smoke), tr.smokeLifetime, 0, seq({ { 0, 0.5 }, { 1, 1 } }), seq({ { 0, 0.4 }, { 1, 1.6 } }))
-	pe(part, "SkinFxGrenadeEmbers", {
-		Rate = tr.rate * quality, Texture = TEX.sparks, Lifetime = NumberRange.new(0.3, 0.6), Speed = NumberRange.new(0.5, 2),
+	local fire = isFire(element)
+	pe(part, "SkinFxGrenadeEmbers", { -- embers / pixels / bone dust / star dust / glints
+		Rate = tr.rate * quality, Texture = TEX[element.look.rising], Lifetime = NumberRange.new(0.3, 0.6), Speed = NumberRange.new(0.5, 2),
 		SpreadAngle = Vector2.new(180, 180), Size = seq({ { 0, 0.3 }, { 1, 0 } }), Color = ColorSequence.new(tr.colour[1], tr.colour[2]),
 		LightEmission = 1, Acceleration = Vector3.new(0, 2, 0), Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-400, 400),
 	})
-	pe(part, "SkinFxGrenadeFlame", {
-		Rate = 22 * quality, Texture = TEX.fire, Lifetime = NumberRange.new(0.12, 0.22), Speed = NumberRange.new(0.2, 0.6),
-		SpreadAngle = Vector2.new(180, 180), Size = seq({ { 0, 0.7 }, { 1, 0.2 } }), Color = colours(FIRE_LIFE),
+	pe(part, "SkinFxGrenadeFlame", { -- the ball's own glow: a flame / crackle / red halo / nebula / prism glow
+		Rate = 22 * quality, Texture = if fire then TEX.fire else TEX[element.look.aura], Lifetime = NumberRange.new(0.12, 0.22),
+		Speed = NumberRange.new(0.2, 0.6), SpreadAngle = Vector2.new(180, 180), Size = seq({ { 0, 0.7 }, { 1, 0.2 } }),
+		Color = if fire then colours(FIRE_LIFE) else colours({ element.heat.white, element.heat.hot }),
 		Transparency = seq({ { 0, 0.1 }, { 1, 1 } }), LightEmission = 0.9, Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-200, 200),
 	})
 	local last = part.Position
@@ -1516,11 +2216,46 @@ end
 	  8.3-12   standing still: the scorched ground ring with flames; forced lava drips at 9 + 10.5
 	Flames, embers and the heat light run the whole time (third person: in first person your own
 	aura is off by design). Clearing the attribute removes the stand-ins. Real effects code, fake art.
+	ReplicatedStorage `SkinFxElement` = "electric" / "primal" / "cosmic" / "crystal" swaps the stand-in
+	to that element's Big Game Hunter pack (Mecha Marksman / Rex Royal / Cosmic Captain / Gem
+	Gamekeeper); blank or "fire" = Magma Monarch. Changing it rebuilds the stand-in.
 ]]
 
 local DEMO = "SkinFxDemo"
+local DEMO_ELEMENT = "SkinFxElement" -- "fire" (default) / "electric" / "primal" / "cosmic" / "crystal"
 local DEMO_CYCLE = 12
 local demoParts: { Instance } = {}
+
+-- The demo's pack for the chosen element: the first Big Game Hunter pack whose theme draws it.
+type DemoKeys = { element: string, theme: SkinFx.Theme, hunter: string, weapon: string, grenade: string }
+local function demoKeys(): DemoKeys
+	local want = ReplicatedStorage:GetAttribute(DEMO_ELEMENT)
+	want = if type(want) == "string" and SkinFx.ELEMENTS[string.lower(want)] then string.lower(want) else "fire"
+	local names = {}
+	for key in SkinFx.PACKS do
+		table.insert(names, key)
+	end
+	table.sort(names)
+	for _, key in names do
+		local pack = SkinFx.PACKS[key]
+		if SkinFx.THEME_ELEMENTS[pack.theme] == want and pack.hero == "RIFLE" then
+			local out: DemoKeys = { element = want, theme = SkinFx.THEMES[pack.theme], hunter = "", weapon = "", grenade = "" }
+			for _, item in pack.items do
+				local kind = SkinFx.ITEMS[item].kind
+				if kind == "hunter" then
+					out.hunter = item
+				elseif kind == "weapon" then
+					out.weapon = item
+				elseif kind == "grenade" then
+					out.grenade = item
+				end
+			end
+			return out
+		end
+	end
+	return { element = "fire", theme = SkinFx.THEMES.LAVA_LORD, hunter = "MAGMA_MONARCH", weapon = "LAVA_LANCE", grenade = "LAVA_LOB" }
+end
+local demoBuiltFor = ""
 
 local function demoClear()
 	for _, inst in demoParts do
@@ -1535,10 +2270,12 @@ local function demoBuild(): boolean
 	if not character or not camera or not character:FindFirstChild("UpperTorso") then
 		return false
 	end
-	local OBS, LAVA = Color3.fromRGB(40, 34, 46), Color3.fromRGB(255, 112, 20)
+	local keys = demoKeys()
+	demoBuiltFor = keys.element
+	local OBS, LAVA = Color3.fromRGB(40, 34, 46), keys.theme.glow
 	local body = Instance.new("Model")
 	body.Name = HunterBody.FOLDER
-	body:SetAttribute("HunterKey", "MAGMA_MONARCH")
+	body:SetAttribute("HunterKey", keys.hunter)
 	local function piece(partName: string, size: Vector3, offset: CFrame, glow: boolean)
 		local host = character:FindFirstChild(partName)
 		if not host or not host:IsA("BasePart") then
@@ -1582,7 +2319,7 @@ local function demoBuild(): boolean
 		part.Size, part.Color = size, colour
 		part.Material = if group == "glow" then Enum.Material.Neon else Enum.Material.SmoothPlastic
 		part.CFrame = hand.CFrame * CFrame.new(0, -0.1, -0.9) * offset
-		part:SetAttribute("ArtKey", "RIFLE_LAVA_LANCE")
+		part:SetAttribute("ArtKey", "RIFLE_" .. keys.weapon)
 		part:SetAttribute("PaintGroup", group)
 		if role then
 			part:SetAttribute("ArtRole", role)
@@ -1623,7 +2360,7 @@ local function demoTracer()
 	part.Material = Enum.Material.Neon
 	part.Size = Vector3.new(0.15, 0.15, (to - from).Magnitude)
 	part.CFrame = CFrame.lookAt((from + to) / 2, to)
-	part.Color = SkinFx.THEMES.LAVA_LORD.tracer
+	part.Color = demoKeys().theme.tracer
 	part.Parent = fxFolder
 	task.delay(0.06, function()
 		part:Destroy()
@@ -1646,7 +2383,7 @@ local function demoThrow()
 	ball.Anchored, ball.CanCollide, ball.CanQuery, ball.CanTouch = true, false, false, false
 	ball.Color = Color3.fromRGB(40, 34, 42)
 	ball.CFrame = CFrame.new(start)
-	ball:SetAttribute(SkinFx.GRENADE_ATTRIBUTE, "LAVA_LOB")
+	ball:SetAttribute(SkinFx.GRENADE_ATTRIBUTE, demoKeys().grenade)
 	ball:SetAttribute(SkinFx.OWNER_ATTRIBUTE, Players.LocalPlayer.UserId)
 	ball.Parent = fxFolder
 	grenadeThrown(ball)
@@ -1682,7 +2419,7 @@ if IS_STUDIO then
 		while true do
 			task.wait(0.125)
 			if ReplicatedStorage:GetAttribute(DEMO) == true then
-				if not built or not (demoParts[1] and demoParts[1].Parent) then
+				if not built or not (demoParts[1] and demoParts[1].Parent) or demoKeys().element ~= demoBuiltFor then
 					demoClear()
 					built = demoBuild()
 					cycle = 0
@@ -1754,6 +2491,12 @@ RunService.Heartbeat:Connect(function(dt)
 			local ok2, err2 = pcall(function()
 				stepMarks(t)
 				ringsOn = stepRing(t, dt, now, ringsOn)
+				local element = t.element :: SkinFx.Element
+				local b = if element then BEHAVIOURS[element.behaviour] else nil
+				if b and b.step then
+					local visible = not (t.own and firstPerson) and anchor ~= nil and near(anchor.Position)
+					b.step(t, element, now, dt, visible)
+				end
 				if now >= t.nextDrip then
 					t.nextDrip = now + SkinFx.dripDelay(t.element :: SkinFx.Element, math.random())
 					if not (t.own and firstPerson) then
@@ -1771,12 +2514,38 @@ RunService.Heartbeat:Connect(function(dt)
 				then heats[t.player :: Player]
 				else nil
 			local flaring = now < t.flareUntil
+			local element = t.element
+			local packSeams = t.tier >= SkinFx.PACK_TIER and element ~= nil and element.seams ~= nil and not heat
+			-- glints (crystal) / twinkles (cosmic): one seam piece flashes at a time
+			if t.tier >= SkinFx.PACK_TIER and element and element.glint and #t.glow > 0 and now >= t.glintAt then
+				local g = element.glint
+				t.glintAt = now + g.every[1] + (g.every[2] - g.every[1]) * math.random()
+				t.glintIdx, t.glintUntil = math.random(1, #t.glow), now + 0.12
+			end
+			local glitching = t.fx.glitching == true
 			for i, part in t.glow do
-				if heat and t.element then -- the reactive weapon: cool -> white-hot with the shots
-					local element = t.element :: SkinFx.Element
+				if heat and element then -- the reactive weapon: cool -> white-hot with the shots / charge / fury...
 					part.Color = if flaring then element.heat.white else SkinFx.heatColour(element, heat.heat)
+				elseif packSeams and element then
+					local c = SkinFx.seamColour(element, now + t.seed * 0.1, t.phases[i]) :: Color3
+					if glitching and element.glitch and i % 2 == 0 then
+						c = element.glitch.colour
+					elseif i == t.glintIdx and now < t.glintUntil and element.glint then
+						c = element.glint.colour
+					end
+					part.Color = c
 				else
 					part.Color = SkinFx.glowColour(t.theme, t.tier, now, t.phases[i], boost)
+				end
+			end
+			local arc = t.arc
+			if arc and heat and element then -- electric: the muzzle arcs once charged
+				local on = heat.heat >= element.heat.hazeFrom
+				arc.Enabled = on
+				if on then
+					local c0, c1 = SkinFx.arcCurve(element, math.random(), math.random())
+					arc.CurveSize0, arc.CurveSize1 = c0 * 0.3, c1 * 0.3
+					arc.Width0 = 0.04 + 0.1 * heat.heat
 				end
 			end
 			local light = t.light
@@ -1785,7 +2554,10 @@ RunService.Heartbeat:Connect(function(dt)
 				if t.tier >= SkinFx.PACK_TIER and t.element and t.where == "hunter" then
 					local g = (t.element :: SkinFx.Element).glow
 					local n = math.noise(now * 7, t.seed) + 0.5 * math.noise(now * 17, t.seed + 3)
-					light.Brightness = math.max(0.2, g.brightness * (1 + g.flicker * n) + 2 * pop)
+					local s = (t.element :: SkinFx.Element).seams
+					local beat = if s and s.mode == "beat" then 0.5 + 0.9 * SkinFx.heartbeat(now + t.seed * 0.1, s.cycle) else 1
+					light.Brightness = math.max(0.2, g.brightness * beat * (1 + g.flicker * n) + 2 * pop
+						+ (if t.fx.glitching then 1.5 else 0))
 				else
 					local base, pulse = SkinFx.light(t.tier, t.where, t.stage)
 					if base and pulse then

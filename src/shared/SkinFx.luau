@@ -81,6 +81,10 @@ SkinFx.TEXTURES = table.freeze({
 	core = "rbxasset://textures/particles/explosion01_core_main.dds",
 	shock = "rbxasset://textures/particles/explosion01_shockwave_main.dds",
 	sparkles = "rbxasset://textures/particles/sparkles_main.dds",
+	square = "rbxasset://textures/particles/SquareParticle.png", -- pixels (electric)
+	implosion = "rbxasset://textures/particles/explosion01_implosion_main.dds", -- black hole (cosmic)
+	vortex = "rbxasset://textures/particles/forcefield_vortex_main.dds", -- gravity swirl (cosmic)
+	glow = "rbxasset://textures/particles/forcefield_glow_main.dds", -- soft halo (primal runes, charge)
 })
 
 -- Graphics quality (UserGameSettings.SavedQualityLevel: 0 = Automatic, 1..10) -> the share of
@@ -137,6 +141,68 @@ SkinFx.THEMES = table.freeze({
 		flowSeconds = 2.4,
 		flowLength = 3,
 	}),
+	-- The other four themes (PREMIUM_SKINS "The themes"; #462: each its own element). Colours for
+	-- tiers 0-3; their art lands batch by batch, and until then nothing wears them.
+	CYBER_RAPTOR = table.freeze({
+		display = "Cyber Raptor",
+		glow = Color3.fromRGB(60, 230, 255),
+		hot = Color3.fromRGB(235, 255, 255),
+		deep = Color3.fromRGB(230, 60, 255), -- the flow runs cyan <-> magenta
+		ember = Color3.fromRGB(120, 240, 255),
+		emberEnd = Color3.fromRGB(230, 60, 255),
+		tracer = Color3.fromRGB(80, 240, 255),
+		blast = Color3.fromRGB(90, 230, 255),
+		blastSmoke = Color3.fromRGB(30, 34, 52),
+		ability = Color3.fromRGB(60, 230, 255),
+		pulseSeconds = 2,
+		flowSeconds = 1.6,
+		flowLength = 2,
+	}),
+	TYRANT_KING = table.freeze({
+		display = "Tyrant King",
+		glow = Color3.fromRGB(220, 30, 30),
+		hot = Color3.fromRGB(255, 200, 110),
+		deep = Color3.fromRGB(90, 6, 10),
+		ember = Color3.fromRGB(255, 120, 60),
+		emberEnd = Color3.fromRGB(120, 10, 10),
+		tracer = Color3.fromRGB(230, 40, 30),
+		blast = Color3.fromRGB(210, 30, 30),
+		blastSmoke = Color3.fromRGB(96, 78, 62),
+		ability = Color3.fromRGB(220, 30, 30),
+		pulseSeconds = 1.6,
+		flowSeconds = 3,
+		flowLength = 3,
+	}),
+	NEBULA = table.freeze({
+		display = "Nebula",
+		glow = Color3.fromRGB(150, 110, 255),
+		hot = Color3.fromRGB(250, 244, 255),
+		deep = Color3.fromRGB(40, 20, 110),
+		ember = Color3.fromRGB(225, 215, 255),
+		emberEnd = Color3.fromRGB(90, 60, 200),
+		tracer = Color3.fromRGB(245, 245, 255),
+		blast = Color3.fromRGB(160, 120, 255),
+		blastSmoke = Color3.fromRGB(30, 20, 60),
+		ability = Color3.fromRGB(150, 110, 255),
+		pulseSeconds = 4,
+		flowSeconds = 3.5,
+		flowLength = 4,
+	}),
+	GEODE = table.freeze({
+		display = "Geode",
+		glow = Color3.fromRGB(190, 110, 255),
+		hot = Color3.fromRGB(250, 236, 255),
+		deep = Color3.fromRGB(90, 40, 150),
+		ember = Color3.fromRGB(232, 204, 255),
+		emberEnd = Color3.fromRGB(140, 80, 220),
+		tracer = Color3.fromRGB(210, 150, 255),
+		blast = Color3.fromRGB(190, 110, 255),
+		blastSmoke = Color3.fromRGB(80, 76, 84),
+		ability = Color3.fromRGB(190, 110, 255),
+		pulseSeconds = 2.6,
+		flowSeconds = 2,
+		flowLength = 2.5,
+	}),
 } :: { [string]: Theme })
 
 -- Tiers here are the planned ones for the sample (hunter $20, gun $15, set $20; grenade and
@@ -147,6 +213,28 @@ SkinFx.ITEMS = table.freeze({
 	LAVA_LORD = table.freeze({ kind = "tower", theme = "LAVA_LORD", display = "Lava Lord", fxTier = 3 }),
 	LAVA_LOB = table.freeze({ kind = "grenade", hero = "RIFLE", theme = "LAVA_LORD", display = "Lava Lob", fxTier = 0 }),
 	VOLCANO_ROAR = table.freeze({ kind = "ability", hero = "RIFLE", theme = "LAVA_LORD", display = "Volcano Roar", fxTier = 0 }),
+	-- The Big Game Hunter's pieces of the other four themes (PREMIUM_SKINS names), same planned
+	-- tiers as the Lava Lord sample; not in the Skins sheet yet, so nobody wears them in play.
+	MECHA_MARKSMAN = table.freeze({ kind = "hunter", hero = "RIFLE", theme = "CYBER_RAPTOR", display = "Mecha Marksman", fxTier = 3 }),
+	RAIL_RIFLE = table.freeze({ kind = "weapon", hero = "RIFLE", theme = "CYBER_RAPTOR", display = "Rail Rifle", fxTier = 2 }),
+	CYBER_RAPTOR = table.freeze({ kind = "tower", theme = "CYBER_RAPTOR", display = "Cyber Raptor", fxTier = 3 }),
+	PULSE_PUCK = table.freeze({ kind = "grenade", hero = "RIFLE", theme = "CYBER_RAPTOR", display = "Pulse Puck", fxTier = 0 }),
+	OVERCLOCK = table.freeze({ kind = "ability", hero = "RIFLE", theme = "CYBER_RAPTOR", display = "Overclock", fxTier = 0 }),
+	REX_ROYAL = table.freeze({ kind = "hunter", hero = "RIFLE", theme = "TYRANT_KING", display = "Rex Royal", fxTier = 3 }),
+	KINGS_CLAW = table.freeze({ kind = "weapon", hero = "RIFLE", theme = "TYRANT_KING", display = "King's Claw", fxTier = 2 }),
+	TYRANT_KING = table.freeze({ kind = "tower", theme = "TYRANT_KING", display = "Tyrant King", fxTier = 3 }),
+	CROWN_JEWEL = table.freeze({ kind = "grenade", hero = "RIFLE", theme = "TYRANT_KING", display = "Crown Jewel", fxTier = 0 }),
+	TYRANT_ROAR = table.freeze({ kind = "ability", hero = "RIFLE", theme = "TYRANT_KING", display = "Tyrant Roar", fxTier = 0 }),
+	COSMIC_CAPTAIN = table.freeze({ kind = "hunter", hero = "RIFLE", theme = "NEBULA", display = "Cosmic Captain", fxTier = 3 }),
+	STAR_GAZER = table.freeze({ kind = "weapon", hero = "RIFLE", theme = "NEBULA", display = "Star Gazer", fxTier = 2 }),
+	NEBULA = table.freeze({ kind = "tower", theme = "NEBULA", display = "Nebula", fxTier = 3 }),
+	MOON_ROCK = table.freeze({ kind = "grenade", hero = "RIFLE", theme = "NEBULA", display = "Moon Rock", fxTier = 0 }),
+	COSMIC_CALL = table.freeze({ kind = "ability", hero = "RIFLE", theme = "NEBULA", display = "Cosmic Call", fxTier = 0 }),
+	GEM_GAMEKEEPER = table.freeze({ kind = "hunter", hero = "RIFLE", theme = "GEODE", display = "Gem Gamekeeper", fxTier = 3 }),
+	PRISM_RIFLE = table.freeze({ kind = "weapon", hero = "RIFLE", theme = "GEODE", display = "Prism Rifle", fxTier = 2 }),
+	GEODE = table.freeze({ kind = "tower", theme = "GEODE", display = "Geode", fxTier = 3 }),
+	GEODE_GRENADE = table.freeze({ kind = "grenade", hero = "RIFLE", theme = "GEODE", display = "Geode Grenade", fxTier = 0 }),
+	CRYSTAL_CHIME = table.freeze({ kind = "ability", hero = "RIFLE", theme = "GEODE", display = "Crystal Chime", fxTier = 0 }),
 } :: { [string]: Item })
 
 ------------------------------------------------------------------ pack tier (#462)
@@ -159,10 +247,14 @@ SkinFx.ITEMS = table.freeze({
 	trail in flight, a short splash where it lands). Visual only, like every tier: no hit, radius,
 	timing or sound changes.
 
-	Data-driven per element (ELEMENTS): Lava Lord = "fire" (built); "electric" (Cyber Raptor),
-	"primal" (Tyrant King), "cosmic" (Nebula) and "crystal" (Geode) have their param slots filled
-	with placeholder colours and `stub = true` until their themes are built; Client/SkinFx reads
-	only these params, so a new theme is a data change (+ its `behaviour` if it's a new motion).
+	Data-driven per element (ELEMENTS): Lava Lord = "fire", Cyber Raptor = "electric", Tyrant King
+	= "primal", Nebula = "cosmic", Geode = "crystal" - all built (#466). Every element fills the same
+	slots (aura, flames, rising, drips, ring, footprints, take-down, the reactive weapon, grenade),
+	but each moves differently: `behaviour` picks a small client handler (flicker / crackle / heartbeat
+	/ drift / shards) and the style fields pick how a slot is drawn (mark.shape, takedown.style,
+	splash.style, tracer.style, look = textures). The reactive weapon's `heat` is the element's own
+	build-up, named by `charge`: fire heat, electric charge, primal fury (kills add `perKill`),
+	cosmic gravity, crystal resonance.
 
 	Ownership: `ownedPacks(ownedKeys)` is the pure rule (a pack counts only when EVERY item in it
 	is owned). The server will publish the result as the player attribute PACKS_ATTRIBUTE (comma
@@ -179,6 +271,9 @@ SkinFx.ITEMS = table.freeze({
 ]]
 
 SkinFx.PACK_TIER = 4
+-- The client's world bursts (Client/SkinFx recipes): every element's drip.puff / takedown.blast /
+-- takedown.rain names one of these.
+SkinFx.WORLD_KINDS = table.freeze({ "fireball", "plume", "sparks", "shower", "lick", "hiss", "blast", "rain", "puff", "zap" })
 SkinFx.PACKS_ATTRIBUTE = "SkinFxPacks" -- player attribute: "LAVA_LORD_RIFLE,..." (set by the store wiring, later)
 SkinFx.TAKEDOWN_ATTRIBUTE = "SkinFxTakedownAt" -- player attribute (server time), stamped on a take-down
 SkinFx.GRENADE_ATTRIBUTE = "SkinFxGrenade" -- on a thrown grenade: the worn premium grenade skin key
@@ -198,7 +293,20 @@ export type Burst = { count: number, colour: { Color3 }, size: number, speed: nu
 export type Element = {
 	display: string,
 	stub: boolean, -- true = placeholder params until the theme is built
-	behaviour: string, -- how the client moves it: "flicker" (fire) | "crackle" | "shockwave" | "drift" | "shards"
+	behaviour: string, -- the client handler: "flicker" (fire) | "crackle" | "heartbeat" | "drift" | "shards"
+	charge: string, -- what the reactive weapon builds: "heat" | "charge" | "fury" | "gravity" | "resonance"
+	-- built-in textures (TEXTURES keys) per slot: the flames / rising / aura emitters, the standing
+	-- ring's pops, the muzzle flash, the hot-shot burst and the vents' haze
+	look: { flames: string, rising: string, aura: string, ring: string, muzzle: string, core: string, haze: string },
+	tracer: { style: string, colour: { Color3 }, lifetime: number, width: number }, -- "bolt" | "chain" | "comet" | "prism"
+	fx: { [string]: { Color3 } }, -- world burst colours by kind (blast, rain, puff...), start -> end
+	-- the pack tier's own seam animation ("scroll" | "beat" | "drift"), nil = tier 3's flow (fire)
+	seams: { mode: string, colours: { Color3 }, cycle: number }?,
+	arcs: { count: number, every: { number }, life: number, width: number, jitter: number, colour: { Color3 } }?, -- electric
+	glitch: { every: { number }, seconds: number, offset: number, colour: Color3 }?, -- electric
+	eyes: { colour: Color3, size: number, brightness: number, rate: number }?, -- primal
+	orbit: { kind: string, count: number, radius: number, speed: number, bob: number, size: number, colour: { Color3 }, rate: number }?,
+	glint: { every: { number }, colour: Color3 }?, -- a seam piece flashes (crystal glints, cosmic twinkle)
 	aura: Emitter, -- round the hunter's torso
 	-- tongues licking up off the hunter's `hosts` (R15 parts: helm horns + pauldrons); `colour` is
 	-- the colour over life (white-yellow -> orange -> red -> smoke), `size` start / peak / end
@@ -207,15 +315,20 @@ export type Element = {
 	rising: { rate: number, lifetime: { number }, speed: { number }, size: number, spread: number, rise: number,
 		drag: number, colour: { Color3 } }, -- slow embers drifting / swirling up off the body
 	glow: { colour: Color3, brightness: number, range: number, flicker: number }, -- the flickering heat light
-	drip: { every: { number }, colour: Color3, crust: Color3, size: number, hiss: number }, -- off the pauldrons
-	ring: { after: number, fade: number, radius: number, rate: number, scorch: Color3 }, -- standing still
-	-- footsteps: a molten print `hot` -> `rim` -> crusts to `colour` while it fades, + a small flame lick
-	mark: { colour: Color3, rim: Color3, hot: Color3, size: number, lifetime: number, every: number, lick: number },
+	-- off the pauldrons; `puff` = the world burst where it lands
+	drip: { every: { number }, colour: Color3, crust: Color3, size: number, hiss: number, puff: string },
+	ring: { after: number, fade: number, radius: number, rate: number, scorch: Color3, glow: Color3, edge: Color3 }, -- standing still
+	-- footsteps: a print `hot` -> `rim` -> `colour` while it fades, + a small lick; `shape` = "disc" |
+	-- "hex" (circuit print) | "crack" (stomp) | "spike" (crystal spikes that sprout and shatter)
+	mark: { colour: Color3, rim: Color3, hot: Color3, size: number, lifetime: number, every: number, lick: number, shape: string },
+	-- `style` = "crack" (ground crack) | "traces" (circuit traces) | "spikes" (crystal eruption) | "none";
+	-- `blast` / `rain` = the world bursts (fireball + ember shower for fire)
 	takedown: { count: number, colour: { Color3 }, size: number, speed: number, fireball: number, shower: number,
-		ring: { radius: number, seconds: number }, crack: { arms: number, length: number, seconds: number },
+		style: string, blast: string, rain: string,
+		ring: { radius: number, seconds: number }, crack: { arms: number, length: number, seconds: number, width: number },
 		flash: { brightness: number, range: number, seconds: number } },
 	heat: { cool: Color3, hot: Color3, white: Color3, perShot: number, decay: number, burstAt: number, puffFrom: number,
-		hazeFrom: number, hazeRate: number, overheatAt: number, rearmBelow: number },
+		hazeFrom: number, hazeRate: number, overheatAt: number, rearmBelow: number, perKill: number },
 	-- per-shot flash: `min`..`max` particles by heat (+ a light flash), the flame burst from burstAt
 	muzzle: { count: number, colour: { Color3 }, size: number, speed: number, min: number, max: number,
 		light: number, lightHot: number, range: number },
@@ -223,49 +336,28 @@ export type Element = {
 	shell: { count: number, colour: { Color3 }, speed: number }, -- molten casing / ember kicked out a shot
 	steam: { overheat: number, reloadRate: number, size: number, colour: { Color3 } }, -- overheat blast / reload steam
 	trail: { colour: { Color3 }, lifetime: number, width: number, rate: number, smoke: Color3, smokeLifetime: number },
+	-- `style` = "lava" | "emp" (pulse ring) | "roar" (dust ring) | "implode" (black hole, then stars) | "shatter"
 	splash: { colour: Color3, radius: number, lifetime: number, count: number, fireball: number, plume: number,
-		linger: number, bubbles: number, crust: Color3, flash: { brightness: number, range: number, seconds: number } },
-	sound: { boom: string?, volume: number }, -- built-in client sounds only (crackle / hiss / whoosh need an upload)
+		linger: number, bubbles: number, crust: Color3, flash: { brightness: number, range: number, seconds: number }, style: string },
+	-- built-in client sounds only (crackle / hiss / whoosh need an upload): `pitch` reshapes the one
+	-- explosion (high = a snap / shatter, low = a deep thrum)
+	sound: { boom: string?, volume: number, pitch: number },
+	extra: number, -- particles a second from the behaviour's own emitters (eyes, orbiting stars), inside PACK_RATE_CAP
 }
 
-local function stubElement(display: string, behaviour: string, a: Color3, b: Color3, c: Color3): Element
-	return table.freeze({
-		display = display,
-		stub = true,
-		behaviour = behaviour,
-		aura = table.freeze({ rate = 6, lifetime = { 0.5, 0.9 }, speed = { 0.5, 1.2 }, size = { 0.5, 0 }, spread = 40,
-			colour = { a, b }, lightEmission = 0.6, rise = 2 }),
-		flames = table.freeze({ rate = 6, lifetime = { 0.3, 0.5 }, speed = { 1, 2 }, size = { 0.3, 0.7, 0.1 }, spread = 20,
-			rise = 4, colour = { c, a, b, b }, hosts = { "Head", "LeftUpperArm", "RightUpperArm" } }),
-		rising = table.freeze({ rate = 4, lifetime = { 1.4, 2.2 }, speed = { 0.5, 1.2 }, size = 0.15, spread = 60, rise = 1,
-			drag = 0.8, colour = { c, a } }),
-		glow = table.freeze({ colour = a, brightness = 1.2, range = 10, flicker = 0.3 }),
-		drip = table.freeze({ every = { 2, 4 }, colour = a, crust = b, size = 0.2, hiss = 3 }),
-		ring = table.freeze({ after = 0.7, fade = 0.5, radius = 2.4, rate = 8, scorch = b }),
-		mark = table.freeze({ colour = b, rim = a, hot = c, size = 1.1, lifetime = 2.5, every = 2.2, lick = 2 }),
-		takedown = table.freeze({ count = 18, colour = { a, b }, size = 0.5, speed = 9, fireball = 4, shower = 18,
-			ring = { radius = 6, seconds = 0.5 }, crack = { arms = 6, length = 3, seconds = 2 },
-			flash = { brightness = 5, range = 16, seconds = 0.3 } }),
-		heat = table.freeze({ cool = b, hot = a, white = c, perShot = 0.08, decay = 0.25, burstAt = 0.7, puffFrom = 0.45,
-			hazeFrom = 0.55, hazeRate = 5, overheatAt = 0.95, rearmBelow = 0.6 }),
-		muzzle = table.freeze({ count = 8, colour = { c, a }, size = 0.35, speed = 6, min = 3, max = 10,
-			light = 2, lightHot = 6, range = 10 }),
-		puff = table.freeze({ count = 6, colour = { c, b }, size = 0.45, speed = 1.5 }),
-		shell = table.freeze({ count = 1, colour = { c, a }, speed = 7 }),
-		steam = table.freeze({ overheat = 18, reloadRate = 14, size = 1, colour = { c, b } }),
-		trail = table.freeze({ colour = { a, b }, lifetime = 0.35, width = 0.5, rate = 12, smoke = b, smokeLifetime = 0.8 }),
-		splash = table.freeze({ colour = a, radius = 2.2, lifetime = 1.8, count = 14, fireball = 5, plume = 5, linger = 1.5,
-			bubbles = 8, crust = b, flash = { brightness = 5, range = 16, seconds = 0.35 } }),
-		sound = table.freeze({ boom = nil, volume = 0 }),
-	})
-end
-
 local rgb = Color3.fromRGB
+local HOSTS = { "Head", "LeftUpperArm", "RightUpperArm" } -- helm + pauldrons (R15 parts)
+local BOOM = "rbxasset://sounds/impact_explosion_03.mp3" -- the only fitting built-in sound
 SkinFx.ELEMENTS = table.freeze({
 	fire = table.freeze({
 		display = "Fire",
 		stub = false,
 		behaviour = "flicker",
+		charge = "heat",
+		look = table.freeze({ flames = "fire", rising = "sparks", aura = "fire", ring = "fire", muzzle = "fire", core = "core", haze = "smoke" }),
+		tracer = table.freeze({ style = "bolt", colour = { rgb(255, 240, 190), rgb(200, 40, 8) }, lifetime = 0.14, width = 0.36 }),
+		fx = table.freeze({}), -- fire keeps the base world bursts' own colours
+		extra = 0,
 		aura = table.freeze({ -- low flames licking round the torso
 			rate = 4, lifetime = { 0.4, 0.7 }, speed = { 0.8, 1.6 }, size = { 0.8, 0.1 }, spread = 30,
 			colour = { rgb(255, 214, 110), rgb(220, 50, 10) }, lightEmission = 0.75, rise = 4,
@@ -280,16 +372,16 @@ SkinFx.ELEMENTS = table.freeze({
 			colour = { rgb(255, 226, 130), rgb(255, 84, 10) },
 		}),
 		glow = table.freeze({ colour = rgb(255, 128, 44), brightness = 1.6, range = 12, flicker = 0.45 }),
-		drip = table.freeze({ every = { 1.4, 3 }, colour = rgb(255, 156, 40), crust = rgb(60, 26, 16), size = 0.24, hiss = 4 }),
-		ring = table.freeze({ after = 0.7, fade = 0.5, radius = 2.6, rate = 10, scorch = rgb(22, 14, 12) }),
+		drip = table.freeze({ every = { 1.4, 3 }, colour = rgb(255, 156, 40), crust = rgb(60, 26, 16), size = 0.24, hiss = 4, puff = "hiss" }),
+		ring = table.freeze({ after = 0.7, fade = 0.5, radius = 2.6, rate = 10, scorch = rgb(22, 14, 12), glow = rgb(255, 112, 20), edge = rgb(255, 112, 20) }),
 		mark = table.freeze({
 			colour = rgb(40, 22, 18), rim = rgb(255, 104, 20), hot = rgb(255, 236, 170),
-			size = 0.8, lifetime = 2.6, every = 2.4, lick = 3,
+			size = 0.8, lifetime = 2.6, every = 2.4, lick = 3, shape = "disc",
 		}),
 		takedown = table.freeze({
 			count = 22, colour = { rgb(255, 226, 140), rgb(230, 60, 10) }, size = 0.6, speed = 10,
-			fireball = 6, shower = 26,
-			ring = { radius = 7, seconds = 0.55 }, crack = { arms = 7, length = 3.4, seconds = 2.2 },
+			fireball = 6, shower = 26, style = "crack", blast = "fireball", rain = "shower",
+			ring = { radius = 7, seconds = 0.55 }, crack = { arms = 7, length = 3.4, seconds = 2.2, width = 0.16 },
 			flash = { brightness = 7, range = 18, seconds = 0.35 },
 		}),
 		heat = table.freeze({
@@ -304,6 +396,7 @@ SkinFx.ELEMENTS = table.freeze({
 			hazeRate = 7, -- ... at this rate a second at full heat
 			overheatAt = 0.95, -- the overheat moment (vents flare + steam blast) ...
 			rearmBelow = 0.6, -- ... once, until the gun cools below this
+			perKill = 0, -- heat a take-down adds (fire: none)
 		}),
 		muzzle = table.freeze({
 			count = 7, colour = { rgb(255, 240, 180), rgb(255, 90, 10) }, size = 0.35, speed = 7,
@@ -319,17 +412,286 @@ SkinFx.ELEMENTS = table.freeze({
 		splash = table.freeze({
 			colour = rgb(255, 104, 20), radius = 2.6, lifetime = 2, count = 18,
 			fireball = 7, plume = 7, linger = 1.8, bubbles = 10, crust = rgb(55, 24, 14),
-			flash = { brightness = 7, range = 20, seconds = 0.4 },
+			flash = { brightness = 7, range = 20, seconds = 0.4 }, style = "lava",
 		}),
-		sound = table.freeze({ boom = "rbxasset://sounds/impact_explosion_03.mp3", volume = 0.35 }),
+		sound = table.freeze({ boom = BOOM, volume = 0.35, pitch = 1 }),
 	}),
-	electric = stubElement("Electric", "crackle", rgb(60, 230, 255), rgb(230, 60, 255), rgb(240, 255, 255)),
-	primal = stubElement("Primal", "shockwave", rgb(220, 30, 30), rgb(110, 10, 14), rgb(255, 214, 110)),
-	cosmic = stubElement("Cosmic", "drift", rgb(150, 110, 255), rgb(40, 200, 200), rgb(250, 250, 255)),
-	crystal = stubElement("Crystal", "shards", rgb(190, 110, 255), rgb(90, 70, 110), rgb(245, 230, 255)),
+
+	-- Cyber Raptor: circuit seams scrolling cyan -> magenta, crackling arcs between body points,
+	-- glitch pops (seams flash + displaced scanline slices), pixel sparks. The gun CHARGES: a
+	-- capacitor glow that whines up, an arcing muzzle and chain-lightning tracers; the grenade is
+	-- an EMP pulse ring.
+	electric = table.freeze({
+		display = "Electric",
+		stub = false,
+		behaviour = "crackle",
+		charge = "charge",
+		look = table.freeze({ flames = "sparks", rising = "square", aura = "sparkles", ring = "sparks", muzzle = "sparks", core = "glow", haze = "sparks" }),
+		tracer = table.freeze({ style = "chain", colour = { rgb(245, 255, 255), rgb(60, 230, 255), rgb(230, 60, 255) }, lifetime = 0.12, width = 0.22 }),
+		fx = table.freeze({
+			blast = { rgb(245, 255, 255), rgb(60, 230, 255) }, rain = { rgb(120, 240, 255), rgb(230, 60, 255) },
+			puff = { rgb(200, 250, 255), rgb(60, 230, 255) }, sparks = { rgb(245, 255, 255), rgb(60, 230, 255) },
+			lick = { rgb(245, 255, 255), rgb(60, 230, 255) }, plume = { rgb(60, 80, 130), rgb(20, 24, 44) },
+		}),
+		seams = table.freeze({ mode = "scroll", colours = { rgb(60, 230, 255), rgb(120, 130, 255), rgb(230, 60, 255), rgb(120, 130, 255) }, cycle = 2.2 }),
+		arcs = table.freeze({ count = 2, every = { 0.3, 0.8 }, life = 0.12, width = 0.14, jitter = 1.4, colour = { rgb(245, 255, 255), rgb(60, 230, 255) } }),
+		glitch = table.freeze({ every = { 2.4, 4.2 }, seconds = 0.1, offset = 0.45, colour = rgb(230, 60, 255) }),
+		extra = 0,
+		aura = table.freeze({ -- static crackle hugging the torso
+			rate = 3, lifetime = { 0.12, 0.25 }, speed = { 0.2, 0.6 }, size = { 0.5, 0.1 }, spread = 180,
+			colour = { rgb(200, 250, 255), rgb(230, 60, 255) }, lightEmission = 1, rise = 0,
+		}),
+		flames = table.freeze({ -- spark crackle snapping off the visor + shoulder plates
+			rate = 5, lifetime = { 0.1, 0.22 }, speed = { 3, 6 }, size = { 0.18, 0.35, 0 }, spread = 70, rise = 0,
+			colour = { rgb(255, 255, 255), rgb(60, 230, 255), rgb(230, 60, 255) }, hosts = HOSTS,
+		}),
+		rising = table.freeze({ -- square pixels drifting off and fading
+			rate = 4, lifetime = { 0.6, 1.1 }, speed = { 0.4, 1 }, size = 0.13, spread = 90, rise = 0.8, drag = 1.5,
+			colour = { rgb(120, 240, 255), rgb(230, 60, 255) },
+		}),
+		glow = table.freeze({ colour = rgb(60, 230, 255), brightness = 1.4, range = 11, flicker = 0.6 }),
+		drip = table.freeze({ every = { 1.8, 3.4 }, colour = rgb(200, 250, 255), crust = rgb(20, 44, 70), size = 0.15, hiss = 5, puff = "zap" }),
+		ring = table.freeze({ after = 0.7, fade = 0.4, radius = 2.6, rate = 8, scorch = rgb(10, 14, 30), glow = rgb(60, 230, 255), edge = rgb(230, 60, 255) }),
+		mark = table.freeze({
+			colour = rgb(30, 40, 80), rim = rgb(60, 230, 255), hot = rgb(245, 255, 255),
+			size = 0.9, lifetime = 2.2, every = 2.4, lick = 3, shape = "hex",
+		}),
+		takedown = table.freeze({ -- digital dissolve: a pixel burst, a shock ring, circuit traces racing out
+			count = 24, colour = { rgb(245, 255, 255), rgb(230, 60, 255) }, size = 0.4, speed = 12,
+			fireball = 14, shower = 18, style = "traces", blast = "blast", rain = "rain",
+			ring = { radius = 7.5, seconds = 0.35 }, crack = { arms = 8, length = 3.6, seconds = 1.2, width = 0.08 },
+			flash = { brightness = 8, range = 18, seconds = 0.2 },
+		}),
+		heat = table.freeze({ -- CHARGE: the capacitor whines up, bleeds off fast
+			cool = rgb(16, 56, 84), hot = rgb(60, 230, 255), white = rgb(255, 225, 255),
+			perShot = 0.08, decay = 0.3, burstAt = 0.7, puffFrom = 0.45, hazeFrom = 0.5, hazeRate = 7,
+			overheatAt = 0.95, rearmBelow = 0.6, perKill = 0,
+		}),
+		muzzle = table.freeze({
+			count = 8, colour = { rgb(255, 255, 255), rgb(60, 230, 255) }, size = 0.24, speed = 10,
+			min = 4, max = 14, light = 3, lightHot = 9, range = 12,
+		}),
+		puff = table.freeze({ count = 8, colour = { rgb(200, 250, 255), rgb(230, 60, 255) }, size = 0.3, speed = 4 }), -- discharge
+		shell = table.freeze({ count = 1, colour = { rgb(255, 255, 255), rgb(60, 230, 255) }, speed = 9 }), -- a spent cell spark
+		steam = table.freeze({ overheat = 24, reloadRate = 16, size = 0.5, colour = { rgb(255, 255, 255), rgb(60, 230, 255) } }),
+		trail = table.freeze({
+			colour = { rgb(60, 230, 255), rgb(230, 60, 255) }, lifetime = 0.3, width = 0.5, rate = 14,
+			smoke = rgb(50, 40, 100), smokeLifetime = 0.4,
+		}),
+		splash = table.freeze({ -- EMP: a fast pulse ring + spark and pixel bursts
+			colour = rgb(60, 230, 255), radius = 3.2, lifetime = 1.2, count = 20, fireball = 12, plume = 0,
+			linger = 0.8, bubbles = 12, crust = rgb(20, 30, 50), flash = { brightness = 8, range = 22, seconds = 0.25 }, style = "emp",
+		}),
+		sound = table.freeze({ boom = BOOM, volume = 0.2, pitch = 1.9 }),
+	}),
+
+	-- Tyrant King: red runes that throb like a heartbeat, crimson eyes, bone dust + red embers; a
+	-- roar shockwave on a take-down. The gun builds FURY (shots + take-downs): a red aura flare,
+	-- shockwave puffs at the muzzle, blood-red tracer trails (no gore); a roaring dust-ring grenade.
+	primal = table.freeze({
+		display = "Primal",
+		stub = false,
+		behaviour = "heartbeat",
+		charge = "fury",
+		look = table.freeze({ flames = "smoke", rising = "sparks", aura = "glow", ring = "smoke", muzzle = "fire", core = "shock", haze = "sparks" }),
+		tracer = table.freeze({ style = "bolt", colour = { rgb(255, 210, 150), rgb(200, 12, 12), rgb(80, 0, 0) }, lifetime = 0.3, width = 0.4 }),
+		fx = table.freeze({
+			blast = { rgb(255, 190, 120), rgb(200, 20, 20) }, rain = { rgb(232, 220, 196), rgb(120, 100, 86) },
+			puff = { rgb(220, 200, 170), rgb(110, 90, 76) }, sparks = { rgb(255, 200, 140), rgb(200, 20, 20) },
+			lick = { rgb(255, 120, 80), rgb(150, 10, 10) }, plume = { rgb(150, 126, 100), rgb(80, 64, 52) },
+		}),
+		seams = table.freeze({ mode = "beat", colours = { rgb(90, 6, 10), rgb(255, 36, 30), rgb(255, 196, 120) }, cycle = 60 / 72 }),
+		eyes = table.freeze({ colour = rgb(255, 30, 20), size = 0.14, brightness = 2.2, rate = 1.5 }),
+		extra = 3, -- two eyes x 1.5 wisps a second
+		aura = table.freeze({ -- the red runic glow round the torso (soft halo)
+			rate = 4, lifetime = { 0.6, 1 }, speed = { 0.2, 0.5 }, size = { 1.3, 0.4 }, spread = 180,
+			colour = { rgb(255, 40, 30), rgb(90, 0, 0) }, lightEmission = 0.7, rise = 0.5,
+		}),
+		flames = table.freeze({ -- bone dust shaking off the helm + pauldrons
+			rate = 3, lifetime = { 0.8, 1.4 }, speed = { 0.6, 1.2 }, size = { 0.3, 0.8, 1.1 }, spread = 40, rise = 0.5,
+			colour = { rgb(236, 224, 200), rgb(200, 180, 150), rgb(120, 100, 90) }, hosts = HOSTS,
+		}),
+		rising = table.freeze({ -- red embers
+			rate = 6, lifetime = { 1.2, 2 }, speed = { 0.8, 1.6 }, size = 0.14, spread = 60, rise = 1.4, drag = 0.8,
+			colour = { rgb(255, 96, 50), rgb(160, 10, 10) },
+		}),
+		glow = table.freeze({ colour = rgb(255, 40, 30), brightness = 1.5, range = 12, flicker = 0.15 }),
+		drip = table.freeze({ every = { 2.2, 4 }, colour = rgb(255, 64, 40), crust = rgb(60, 40, 32), size = 0.14, hiss = 5, puff = "puff" }),
+		ring = table.freeze({ after = 0.7, fade = 0.6, radius = 3, rate = 6, scorch = rgb(40, 26, 20), glow = rgb(220, 30, 30), edge = rgb(255, 190, 110) }),
+		mark = table.freeze({
+			colour = rgb(60, 42, 34), rim = rgb(220, 30, 30), hot = rgb(255, 180, 120),
+			size = 1.3, lifetime = 3, every = 2.8, lick = 5, shape = "crack",
+		}),
+		takedown = table.freeze({ -- the roar: a huge ground shockwave, dust, a cracked crater
+			count = 20, colour = { rgb(255, 200, 150), rgb(200, 20, 20) }, size = 0.6, speed = 11,
+			fireball = 6, shower = 18, style = "crack", blast = "blast", rain = "rain",
+			ring = { radius = 11, seconds = 0.7 }, crack = { arms = 8, length = 4.2, seconds = 2.4, width = 0.2 },
+			flash = { brightness = 6, range = 20, seconds = 0.3 },
+		}),
+		heat = table.freeze({ -- FURY: builds with shots and take-downs, lingers
+			cool = rgb(70, 6, 8), hot = rgb(220, 30, 30), white = rgb(255, 200, 120),
+			perShot = 0.07, decay = 0.15, burstAt = 0.7, puffFrom = 0.45, hazeFrom = 0.55, hazeRate = 6,
+			overheatAt = 0.95, rearmBelow = 0.55, perKill = 0.18,
+		}),
+		muzzle = table.freeze({
+			count = 6, colour = { rgb(255, 210, 160), rgb(200, 20, 20) }, size = 0.4, speed = 6,
+			min = 3, max = 10, light = 2, lightHot = 7, range = 12,
+		}),
+		puff = table.freeze({ count = 8, colour = { rgb(230, 214, 190), rgb(110, 90, 80) }, size = 0.7, speed = 2 }), -- dust
+		shell = table.freeze({ count = 1, colour = { rgb(255, 200, 150), rgb(200, 30, 20) }, speed = 7 }),
+		steam = table.freeze({ overheat = 20, reloadRate = 12, size = 1.4, colour = { rgb(230, 214, 190), rgb(120, 100, 90) } }),
+		trail = table.freeze({
+			colour = { rgb(255, 60, 40), rgb(110, 0, 0) }, lifetime = 0.5, width = 0.6, rate = 12,
+			smoke = rgb(120, 100, 84), smokeLifetime = 1,
+		}),
+		splash = table.freeze({ -- a roaring crimson burst with a dust ring
+			colour = rgb(220, 30, 30), radius = 3, lifetime = 1.8, count = 16, fireball = 8, plume = 8, linger = 1,
+			bubbles = 0, crust = rgb(60, 40, 32), flash = { brightness = 7, range = 20, seconds = 0.35 }, style = "roar",
+		}),
+		sound = table.freeze({ boom = BOOM, volume = 0.4, pitch = 0.7 }),
+	}),
+
+	-- Nebula: star speckles that twinkle on the seams, slow nebula clouds, stars orbiting the
+	-- hunter with comet tails. The gun builds GRAVITY: a vortex swirling at the muzzle, comet
+	-- tracers; the grenade is a mini black hole that implodes, then bursts into stars.
+	cosmic = table.freeze({
+		display = "Cosmic",
+		stub = false,
+		behaviour = "drift",
+		charge = "gravity",
+		look = table.freeze({ flames = "sparkles", rising = "sparkles", aura = "smoke", ring = "sparkles", muzzle = "sparkles", core = "implosion", haze = "vortex" }),
+		tracer = table.freeze({ style = "comet", colour = { rgb(255, 255, 255), rgb(180, 160, 255), rgb(80, 50, 200) }, lifetime = 0.35, width = 0.45 }),
+		fx = table.freeze({
+			blast = { rgb(255, 255, 255), rgb(150, 110, 255) }, rain = { rgb(255, 255, 255), rgb(160, 130, 255) },
+			puff = { rgb(255, 255, 255), rgb(170, 150, 255) }, sparks = { rgb(255, 255, 255), rgb(150, 110, 255) },
+			lick = { rgb(255, 255, 255), rgb(170, 150, 255) }, plume = { rgb(110, 60, 200), rgb(220, 90, 180) },
+		}),
+		seams = table.freeze({ mode = "drift", colours = { rgb(90, 60, 220), rgb(150, 110, 255), rgb(80, 200, 220), rgb(230, 120, 220) }, cycle = 6 }),
+		orbit = table.freeze({ kind = "stars", count = 3, radius = 1.7, speed = 1.4, bob = 0.4, size = 0.25,
+			colour = { rgb(255, 255, 255), rgb(160, 130, 255) }, rate = 4 }),
+		glint = table.freeze({ every = { 0.15, 0.4 }, colour = rgb(255, 255, 255) }), -- star twinkle
+		extra = 12, -- three orbiting stars x 4 a second (their comet tails)
+		aura = table.freeze({ -- slow nebula clouds, indigo -> pink
+			rate = 3, lifetime = { 1.6, 2.4 }, speed = { 0.2, 0.5 }, size = { 1.4, 2.4 }, spread = 180,
+			colour = { rgb(110, 60, 200), rgb(230, 90, 180) }, lightEmission = 0.45, rise = 0.2,
+		}),
+		flames = table.freeze({ -- little comet streaks off the helm + shoulders
+			rate = 2.5, lifetime = { 0.5, 0.9 }, speed = { 1, 2 }, size = { 0.25, 0.4, 0 }, spread = 30, rise = 0.5,
+			colour = { rgb(255, 255, 255), rgb(180, 160, 255), rgb(90, 60, 200) }, hosts = HOSTS,
+		}),
+		rising = table.freeze({ -- star speckles that hang and twinkle
+			rate = 5, lifetime = { 0.8, 1.6 }, speed = { 0.1, 0.4 }, size = 0.16, spread = 180, rise = 0, drag = 1,
+			colour = { rgb(255, 255, 255), rgb(170, 150, 255) },
+		}),
+		glow = table.freeze({ colour = rgb(150, 110, 255), brightness = 1.3, range = 12, flicker = 0.2 }),
+		drip = table.freeze({ every = { 1.8, 3.6 }, colour = rgb(240, 236, 255), crust = rgb(60, 40, 140), size = 0.14, hiss = 4, puff = "rain" }),
+		ring = table.freeze({ after = 0.7, fade = 0.8, radius = 2.8, rate = 6, scorch = rgb(14, 8, 40), glow = rgb(150, 110, 255), edge = rgb(240, 160, 255) }),
+		mark = table.freeze({
+			colour = rgb(70, 50, 170), rim = rgb(170, 140, 255), hot = rgb(255, 255, 255),
+			size = 0.8, lifetime = 2.4, every = 2.4, lick = 3, shape = "disc",
+		}),
+		takedown = table.freeze({ -- supernova: a white flash, a star burst, a ring
+			count = 26, colour = { rgb(255, 255, 255), rgb(160, 120, 255) }, size = 0.5, speed = 12,
+			fireball = 8, shower = 20, style = "none", blast = "blast", rain = "rain",
+			ring = { radius = 9, seconds = 0.6 }, crack = { arms = 0, length = 0, seconds = 1, width = 0.1 },
+			flash = { brightness = 12, range = 24, seconds = 0.45 },
+		}),
+		heat = table.freeze({ -- GRAVITY: pulls in from early, eases off
+			cool = rgb(30, 20, 80), hot = rgb(150, 110, 255), white = rgb(250, 245, 255),
+			perShot = 0.08, decay = 0.2, burstAt = 0.7, puffFrom = 0.45, hazeFrom = 0.35, hazeRate = 8,
+			overheatAt = 0.95, rearmBelow = 0.6, perKill = 0,
+		}),
+		muzzle = table.freeze({
+			count = 6, colour = { rgb(255, 255, 255), rgb(150, 110, 255) }, size = 0.3, speed = 5,
+			min = 3, max = 12, light = 2, lightHot = 7, range = 12,
+		}),
+		puff = table.freeze({ count = 8, colour = { rgb(200, 180, 255), rgb(60, 30, 140) }, size = 0.5, speed = 1.5 }),
+		shell = table.freeze({ count = 1, colour = { rgb(255, 255, 255), rgb(150, 110, 255) }, speed = 6 }),
+		steam = table.freeze({ overheat = 22, reloadRate = 14, size = 1.2, colour = { rgb(160, 110, 255), rgb(230, 90, 180) } }),
+		trail = table.freeze({
+			colour = { rgb(255, 255, 255), rgb(120, 90, 255) }, lifetime = 0.6, width = 0.5, rate = 14,
+			smoke = rgb(70, 40, 140), smokeLifetime = 1,
+		}),
+		splash = table.freeze({ -- a mini black hole: pulls in, collapses, bursts into stars
+			colour = rgb(20, 10, 40), radius = 2.4, lifetime = 1.8, count = 24, fireball = 8, plume = 4, linger = 0.6,
+			bubbles = 10, crust = rgb(40, 20, 90), flash = { brightness = 10, range = 24, seconds = 0.4 }, style = "implode",
+		}),
+		sound = table.freeze({ boom = BOOM, volume = 0.3, pitch = 0.55 }),
+	}),
+
+	-- Geode: amethyst glints popping on the facets, crystal shards orbiting the hunter (pooled
+	-- Parts), refracted colours drifting through the seams. The gun builds RESONANCE: glints
+	-- growing at the vents, a shard-burst muzzle and prism tracers; the grenade shatters into
+	-- shards that grow then fade.
+	crystal = table.freeze({
+		display = "Crystal",
+		stub = false,
+		behaviour = "shards",
+		charge = "resonance",
+		look = table.freeze({ flames = "sparkles", rising = "sparkles", aura = "glow", ring = "sparkles", muzzle = "sparkles", core = "sparks", haze = "sparkles" }),
+		tracer = table.freeze({ style = "prism",
+			colour = { rgb(255, 255, 255), rgb(255, 110, 120), rgb(255, 210, 90), rgb(120, 255, 150), rgb(100, 180, 255), rgb(190, 110, 255) },
+			lifetime = 0.25, width = 0.4 }),
+		fx = table.freeze({
+			blast = { rgb(255, 255, 255), rgb(190, 110, 255) }, rain = { rgb(240, 220, 255), rgb(150, 90, 230) },
+			puff = { rgb(255, 255, 255), rgb(200, 150, 255) }, sparks = { rgb(255, 255, 255), rgb(190, 110, 255) },
+			lick = { rgb(255, 255, 255), rgb(200, 150, 255) }, plume = { rgb(170, 160, 190), rgb(90, 84, 100) },
+		}),
+		seams = table.freeze({ mode = "drift", colours = { rgb(190, 110, 255), rgb(140, 170, 255), rgb(255, 150, 230), rgb(220, 190, 255) }, cycle = 4 }),
+		orbit = table.freeze({ kind = "shards", count = 5, radius = 1.7, speed = 0.9, bob = 0.35, size = 0.55,
+			colour = { rgb(200, 130, 255), rgb(245, 230, 255) }, rate = 0 }),
+		glint = table.freeze({ every = { 0.35, 0.8 }, colour = rgb(255, 255, 255) }),
+		extra = 0, -- the shards are Parts, not particles
+		aura = table.freeze({ -- refracted light motes (soft halo)
+			rate = 3, lifetime = { 0.6, 1 }, speed = { 0.2, 0.5 }, size = { 0.7, 0.1 }, spread = 180,
+			colour = { rgb(255, 170, 240), rgb(140, 200, 255) }, lightEmission = 0.8, rise = 0.4,
+		}),
+		flames = table.freeze({ -- glints popping on the helm + pauldron facets
+			rate = 3, lifetime = { 0.2, 0.35 }, speed = { 0, 0.2 }, size = { 0.1, 0.55, 0 }, spread = 180, rise = 0,
+			colour = { rgb(255, 255, 255), rgb(220, 180, 255), rgb(190, 110, 255) }, hosts = HOSTS,
+		}),
+		rising = table.freeze({
+			rate = 3, lifetime = { 1, 1.6 }, speed = { 0.3, 0.8 }, size = 0.12, spread = 60, rise = 0.6, drag = 1,
+			colour = { rgb(240, 220, 255), rgb(150, 90, 230) },
+		}),
+		glow = table.freeze({ colour = rgb(190, 110, 255), brightness = 1.2, range = 11, flicker = 0.1 }),
+		drip = table.freeze({ every = { 2.4, 4.2 }, colour = rgb(220, 170, 255), crust = rgb(90, 70, 110), size = 0.16, hiss = 4, puff = "blast" }),
+		ring = table.freeze({ after = 0.7, fade = 0.6, radius = 2.6, rate = 6, scorch = rgb(50, 40, 64), glow = rgb(190, 110, 255), edge = rgb(240, 220, 255) }),
+		mark = table.freeze({
+			colour = rgb(120, 80, 170), rim = rgb(190, 110, 255), hot = rgb(250, 240, 255),
+			size = 0.9, lifetime = 2.6, every = 2.6, lick = 4, shape = "spike",
+		}),
+		takedown = table.freeze({ -- a ring of crystals erupting from the ground, then shattering
+			count = 20, colour = { rgb(255, 255, 255), rgb(190, 110, 255) }, size = 0.45, speed = 10,
+			fireball = 8, shower = 16, style = "spikes", blast = "blast", rain = "rain",
+			ring = { radius = 7, seconds = 0.5 }, crack = { arms = 9, length = 1.8, seconds = 1.8, width = 0.35 },
+			flash = { brightness = 7, range = 18, seconds = 0.3 },
+		}),
+		heat = table.freeze({ -- RESONANCE: the crystal hums brighter
+			cool = rgb(90, 60, 130), hot = rgb(190, 110, 255), white = rgb(250, 240, 255),
+			perShot = 0.08, decay = 0.22, burstAt = 0.7, puffFrom = 0.45, hazeFrom = 0.5, hazeRate = 6,
+			overheatAt = 0.95, rearmBelow = 0.6, perKill = 0,
+		}),
+		muzzle = table.freeze({
+			count = 6, colour = { rgb(255, 255, 255), rgb(190, 110, 255) }, size = 0.3, speed = 9,
+			min = 3, max = 12, light = 2, lightHot = 7, range = 11,
+		}),
+		puff = table.freeze({ count = 8, colour = { rgb(240, 220, 255), rgb(150, 90, 230) }, size = 0.35, speed = 3 }),
+		shell = table.freeze({ count = 1, colour = { rgb(255, 255, 255), rgb(190, 110, 255) }, speed = 7 }),
+		steam = table.freeze({ overheat = 20, reloadRate = 12, size = 0.6, colour = { rgb(255, 255, 255), rgb(190, 110, 255) } }),
+		trail = table.freeze({
+			colour = { rgb(250, 240, 255), rgb(150, 90, 230) }, lifetime = 0.4, width = 0.45, rate = 10,
+			smoke = rgb(160, 140, 200), smokeLifetime = 0.5,
+		}),
+		splash = table.freeze({ -- crystal shatter: shards grow from the ground, then fade
+			colour = rgb(190, 110, 255), radius = 2.6, lifetime = 1.9, count = 16, fireball = 8, plume = 3, linger = 0.8,
+			bubbles = 8, crust = rgb(90, 70, 110), flash = { brightness = 7, range = 18, seconds = 0.35 }, style = "shatter",
+		}),
+		sound = table.freeze({ boom = BOOM, volume = 0.22, pitch = 1.6 }),
+	}),
 } :: { [string]: Element })
 
--- Each theme's element (#462: themes differ by element, not by recolour). Only Lava Lord is built.
+-- Each theme's element (#462: themes differ by element, not by recolour).
 SkinFx.THEME_ELEMENTS = table.freeze({
 	LAVA_LORD = "fire",
 	CYBER_RAPTOR = "electric",
@@ -346,6 +708,30 @@ SkinFx.PACKS = table.freeze({
 		hero = "RIFLE",
 		display = "Lava Lord - Big Game Hunter Pack",
 		items = table.freeze({ "MAGMA_MONARCH", "LAVA_LANCE", "LAVA_LORD", "LAVA_LOB", "VOLCANO_ROAR" }),
+	}),
+	CYBER_RAPTOR_RIFLE = table.freeze({
+		theme = "CYBER_RAPTOR",
+		hero = "RIFLE",
+		display = "Cyber Raptor - Big Game Hunter Pack",
+		items = table.freeze({ "MECHA_MARKSMAN", "RAIL_RIFLE", "CYBER_RAPTOR", "PULSE_PUCK", "OVERCLOCK" }),
+	}),
+	TYRANT_KING_RIFLE = table.freeze({
+		theme = "TYRANT_KING",
+		hero = "RIFLE",
+		display = "Tyrant King - Big Game Hunter Pack",
+		items = table.freeze({ "REX_ROYAL", "KINGS_CLAW", "TYRANT_KING", "CROWN_JEWEL", "TYRANT_ROAR" }),
+	}),
+	NEBULA_RIFLE = table.freeze({
+		theme = "NEBULA",
+		hero = "RIFLE",
+		display = "Nebula - Big Game Hunter Pack",
+		items = table.freeze({ "COSMIC_CAPTAIN", "STAR_GAZER", "NEBULA", "MOON_ROCK", "COSMIC_CALL" }),
+	}),
+	GEODE_RIFLE = table.freeze({
+		theme = "GEODE",
+		hero = "RIFLE",
+		display = "Geode - Big Game Hunter Pack",
+		items = table.freeze({ "GEM_GAMEKEEPER", "PRISM_RIFLE", "GEODE", "GEODE_GRENADE", "CRYSTAL_CHIME" }),
 	}),
 } :: { [string]: Pack })
 
@@ -501,18 +887,150 @@ end
 
 -- The pack hunter's continuous rates at this quality (0..1): flames per host, rising embers and
 -- the torso aura, scaled down together so the whole layer stays <= PACK_RATE_CAP.
-export type PackRates = { flames: number, rising: number, aura: number, total: number }
+-- `extra` = the behaviour's own emitters (primal eyes, cosmic orbiting stars), in the same cap.
+export type PackRates = { flames: number, rising: number, aura: number, extra: number, total: number }
 function SkinFx.packRates(element: Element, quality: number): PackRates
 	local q = math.clamp(quality, 0, 1)
 	local hosts = math.max(1, #element.flames.hosts)
 	local flames, rising, aura = element.flames.rate * q, element.rising.rate * q, element.aura.rate * q
-	local total = flames * hosts + rising + aura
+	local extra = (element.extra or 0) * q
+	local total = flames * hosts + rising + aura + extra
 	if total > SkinFx.PACK_RATE_CAP then
 		local k = SkinFx.PACK_RATE_CAP / total
-		flames, rising, aura = flames * k, rising * k, aura * k
+		flames, rising, aura, extra = flames * k, rising * k, aura * k, extra * k
 		total = SkinFx.PACK_RATE_CAP
 	end
-	return { flames = flames, rising = rising, aura = aura, total = total }
+	return { flames = flames, rising = rising, aura = aura, extra = extra, total = total }
+end
+
+------------------------------------------------------------------ element behaviours (#466): the rules
+
+-- A heartbeat 0..1 with period `period` seconds: a strong "lub" at the start of each beat, a
+-- softer "dub" (0.7) at 30 %, near 0 for the rest.
+function SkinFx.heartbeat(t: number, period: number): number
+	local u = (t / math.max(period, 1e-3)) % 1
+	local lubD = math.min(u, 1 - u) / 0.06
+	local dubD = (u - 0.3) / 0.06
+	return math.clamp(math.max(math.exp(-lubD * lubD), 0.7 * math.exp(-dubD * dubD)), 0, 1)
+end
+
+local function loopLerp(colours: { Color3 }, x: number, smooth: boolean): Color3
+	local n = #colours
+	if n == 1 then
+		return colours[1]
+	end
+	local p = (x % 1) * n
+	local i = math.floor(p)
+	local f = p - i
+	if smooth then
+		f = f * f * (3 - 2 * f)
+	end
+	return colours[i % n + 1]:Lerp(colours[(i + 1) % n + 1], f)
+end
+
+-- The pack tier's own seam colour `t` seconds in for a piece at `phase` (0..1), or nil (fire: tier
+-- 3's flow stays). "scroll" runs the colours along the seams (circuit lines), "beat" throbs rest ->
+-- peak -> flash on the heartbeat (runes), "drift" fades slowly through them (nebula, refraction).
+function SkinFx.seamColour(element: Element, t: number, phase: number?): Color3?
+	local s = element.seams
+	if not s then
+		return nil
+	end
+	local c, cycle = s.colours, math.max(s.cycle, 1e-3)
+	if s.mode == "beat" then
+		local k = SkinFx.heartbeat(t, cycle)
+		if k < 0.7 then
+			return c[1]:Lerp(c[2], k / 0.7)
+		end
+		return c[2]:Lerp(c[3] or c[2], (k - 0.7) / 0.3)
+	elseif s.mode == "scroll" then
+		return loopLerp(c, t / cycle - (phase or 0), false)
+	end
+	return loopLerp(c, t / cycle + 0.5 * (phase or 0), true)
+end
+
+-- Orbiting item `i` of `n` `t` seconds in: its offset from the torso (evenly spaced round a
+-- horizontal circle of the orbit's radius, each bobbing up and down).
+function SkinFx.orbitOffset(element: Element, i: number, n: number, t: number): Vector3
+	local o = element.orbit
+	if not o then
+		return Vector3.zero
+	end
+	local a = t * o.speed + (i - 1) / math.max(n, 1) * 2 * math.pi
+	return Vector3.new(math.cos(a) * o.radius, math.sin(t * 1.3 + i * 2.1) * o.bob, math.sin(a) * o.radius)
+end
+
+-- Electric glitch: (popping now, sideways offset). One pop of `seconds` per window of the mean
+-- `every`, at a start that moves window to window; the offset flips side each window. Never for
+-- an element without `glitch`.
+function SkinFx.glitch(element: Element, t: number, seed: number?): (boolean, number)
+	local g = element.glitch
+	if not g then
+		return false, 0
+	end
+	local period = math.max((g.every[1] + g.every[2]) / 2, g.seconds * 2)
+	local x = t + (seed or 0)
+	local k = math.floor(x / period)
+	local start = ((k * 7919) % 97) / 97 * (period - g.seconds)
+	local within = x - k * period
+	local on = within >= start and within < start + g.seconds
+	return on, if on then g.offset * (if k % 2 == 0 then 1 else -1) else 0
+end
+
+-- An arc's bend for two randoms (0..1): the Beam's CurveSize0 / CurveSize1, within +-jitter.
+function SkinFx.arcCurve(element: Element, r1: number, r2: number): (number, number)
+	local j = if element.arcs then element.arcs.jitter else 0
+	return (math.clamp(r1, 0, 1) * 2 - 1) * j, (math.clamp(r2, 0, 1) * 2 - 1) * j
+end
+
+-- Primal fury: a take-down adds `perKill` to the reactive weapon (0 for the other elements).
+function SkinFx.heatAfterKill(element: Element, heat: number): number
+	return math.clamp(heat + (element.heat.perKill or 0), 0, 1)
+end
+
+-- A crystal spike (footprint spikes, the eruption, grenade shards) `u` into its life, 0..1 tall:
+-- sprouts fast (ease out by 18 %), holds, then shatters away over the last 35 %.
+function SkinFx.spike(u: number): number
+	local x = math.clamp(u, 0, 1)
+	if x < 0.18 then
+		local g = x / 0.18
+		return 1 - (1 - g) ^ 3
+	elseif x < 0.65 then
+		return 1
+	end
+	return 1 - (x - 0.65) / 0.35
+end
+
+SkinFx.IMPLODE_AT = 0.55 -- cosmic grenade: the black hole has collapsed (the star burst) at this share of its life
+
+-- The grenade splash's main shape `u` into its life by the element's style: (radius, transparency).
+--   lava     the molten pool grows fast (ease out by 12 %), solid, fades over the last 30 %
+--   emp      a pulse ring racing out to 2.2x, fading as it goes
+--   roar     a dust ring rolling out to 2x, ease out, fading
+--   implode  the black hole swells (by 12 %) then collapses to nothing at IMPLODE_AT
+--   shatter  shards grow out of the ground, hold, then shatter away (`spike`)
+function SkinFx.splashShape(element: Element, u: number): (number, number)
+	local s = element.splash
+	local x = math.clamp(u, 0, 1)
+	local style = s.style
+	if style == "emp" then
+		return s.radius * 2.2 * (1 - (1 - x) ^ 2), x ^ 0.8
+	elseif style == "roar" then
+		return s.radius * 2 * (1 - (1 - x) ^ 3), 0.1 + 0.9 * x ^ 1.5
+	elseif style == "implode" then
+		if x < 0.12 then
+			return s.radius * 0.8 * (1 - (1 - x / 0.12) ^ 2), 0
+		elseif x < SkinFx.IMPLODE_AT then
+			local k = (x - 0.12) / (SkinFx.IMPLODE_AT - 0.12)
+			return s.radius * 0.8 * (1 - k * k), 0
+		end
+		return 0, 1
+	elseif style == "shatter" then
+		local h = SkinFx.spike(x)
+		return s.radius * h, if x < 0.65 then 0 else (x - 0.65) / 0.35
+	end
+	local grow = math.min(1, x / 0.12)
+	return s.radius * (0.6 + 1.4 * (1 - (1 - grow) ^ 3)), if x < 0.7 then 0.05 else math.min(1, 0.05 + 0.95 * (x - 0.7) / 0.3)
 end
 
 -- A footprint's colour `u` (0..1) into its life: molten `hot` -> glowing `rim` (by 0.25) ->
