@@ -32856,6 +32856,1203 @@
       "tris": 708,
       "uploadedHash": null
     },
+    "tower/SET_CYBER_RAPTOR": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.5,
+          -2.5,
+          -1.5
+        ],
+        [
+          1.5,
+          -1.4900000095367432,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "cap": 300,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "a37ab66816bc8972",
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 40
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 96
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 108
+        }
+      },
+      "premium": true,
+      "preview": "SCOUT",
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR",
+      "trim": true,
+      "tris": 244,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_ARMORY": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4620000123977661,
+          -2.5,
+          -1.4303531646728516
+        ],
+        [
+          -0.7399999499320984,
+          0.780393123626709,
+          0.9349460601806641
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "71a16afe22a3fe13",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 188
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 336
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 40
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_ARMORY",
+      "towerKind": "ARMORY",
+      "tris": 564,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_BALLISTA": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4695875644683838,
+          -2.5,
+          -1.3893319368362427
+        ],
+        [
+          -0.385287344455719,
+          1.3879873752593994,
+          1.4000000953674316
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "cb9d7f96f9485cfb",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 248
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 252
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 32
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_BALLISTA",
+      "towerKind": "BALLISTA",
+      "tris": 532,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_BLIMP": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4800000190734863,
+          -2.5,
+          -1.4619665145874023
+        ],
+        [
+          -0.4974844753742218,
+          0.720393180847168,
+          0.23999999463558197
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "dc8e04b5cc3cbfad",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 176
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 228
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 100
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_BLIMP",
+      "towerKind": "BLIMP",
+      "tris": 504,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_CHILLER": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4619766473770142,
+          -2.5,
+          -0.5398468971252441
+        ],
+        [
+          -0.07370418310165405,
+          1.6479873657226562,
+          1.4700000286102295
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "fe2bdd0e45e71662",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 248
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 276
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 32
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_CHILLER",
+      "towerKind": "CHILLER",
+      "tris": 556,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_COIL": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4800000190734863,
+          -2.5,
+          -0.8400000333786011
+        ],
+        [
+          -0.29748448729515076,
+          1.1203932762145996,
+          1.4419665336608887
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "79d0f378b2a6cfb8",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 164
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 240
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 28
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_COIL",
+      "towerKind": "COIL",
+      "tris": 432,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_FALCON": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4529999494552612,
+          -2.5,
+          -1.4619590044021606
+        ],
+        [
+          0.45593971014022827,
+          0.8879873752593994,
+          -0.48000001907348633
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "66e4dacb184eefd0",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 236
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 204
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 92
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_FALCON",
+      "towerKind": "FALCON",
+      "tris": 532,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_GRENADIER": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4600000381469727,
+          -2.5,
+          -1.4215364456176758
+        ],
+        [
+          0.30621495842933655,
+          0.720393180847168,
+          0.28999999165534973
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "97651ce692c61041",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 164
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 252
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 28
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_GRENADIER",
+      "towerKind": "GRENADIER",
+      "tris": 444,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_HOSPITAL": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.440000057220459,
+          -2.5,
+          -1.4620000123977661
+        ],
+        [
+          -0.2664000391960144,
+          1.1879875659942627,
+          0.44999998807907104
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "76505b6250d570e6",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 252
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 204
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 112
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_HOSPITAL",
+      "towerKind": "HOSPITAL",
+      "tris": 568,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_METEOR": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4619896411895752,
+          -2.5,
+          -1.3287781476974487
+        ],
+        [
+          -0.6937041282653809,
+          1.0879874229431152,
+          0.9009330868721008
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "325e35abf16b4ade",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 260
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 204
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 20
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_METEOR",
+      "towerKind": "METEOR",
+      "tris": 484,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_QUARTERMASTER": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4619828462600708,
+          -2.5,
+          -0.43901318311691284
+        ],
+        [
+          0.07629582285881042,
+          1.5879874229431152,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "15d539369c34d1fc",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 236
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 204
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 92
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_QUARTERMASTER",
+      "towerKind": "QUARTERMASTER",
+      "tris": 532,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_RANGER": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4930000305175781,
+          -2.5,
+          -0.6386041641235352
+        ],
+        [
+          -0.873704195022583,
+          1.6879873275756836,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "198d7c8abf8db15e",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 236
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 192
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 92
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_RANGER",
+      "towerKind": "RANGER",
+      "tris": 520,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_RAPTOR": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4719663858413696,
+          -2.5,
+          -1.0187950134277344
+        ],
+        [
+          1.2751319408416748,
+          0.4679677486419678,
+          1.1340755224227905
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "69931ac689aef9fa",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 180
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 288
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 84
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_RAPTOR",
+      "towerKind": "RAPTOR",
+      "tris": 552,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_RESIN": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.471994161605835,
+          -2.5,
+          -0.7375669479370117
+        ],
+        [
+          -0.8899999856948853,
+          0.8803935050964355,
+          1.2300000190734863
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "e0711c935e79c993",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 200
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 348
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 112
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_RESIN",
+      "towerKind": "RESIN",
+      "tris": 660,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_SCOUT": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4895875453948975,
+          -2.51200008392334,
+          -1.100000023841858
+        ],
+        [
+          -0.873704195022583,
+          1.6879873275756836,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "01e0fdbee2da0209",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 236
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 192
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 92
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_SCOUT",
+      "towerKind": "SCOUT",
+      "tris": 520,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_SNIPER": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.475000023841858,
+          -2.5,
+          -1.274999976158142
+        ],
+        [
+          -0.6899999380111694,
+          0.5199999809265137,
+          1.274999976158142
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "cb790abea31e1148",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 36
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 360
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 84
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_SNIPER",
+      "towerKind": "SNIPER",
+      "tris": 480,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_TARPIT": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4700000286102295,
+          -2.5,
+          -1.2100000381469727
+        ],
+        [
+          0.9599999785423279,
+          -1.7200000286102295,
+          1.1800000667572021
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "c11dda18b92c5bff",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 160
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 476
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 88
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_TARPIT",
+      "towerKind": "TARPIT",
+      "tris": 724,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_TOTEM": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.309807538986206,
+          -2.5,
+          0.29966869950294495
+        ],
+        [
+          -0.3369879722595215,
+          1.6879873275756836,
+          1.3499999046325684
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "d359b82ec3010b8f",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 224
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 212
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 40
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_TOTEM",
+      "towerKind": "TOTEM",
+      "tris": 476,
+      "uploadedHash": null
+    },
+    "tower/SET_CYBER_RAPTOR_VENT": {
+      "asset": null,
+      "batch": "11p3",
+      "box": [
+        [
+          -1.4619998931884766,
+          -2.5,
+          -1.244999885559082
+        ],
+        [
+          -1.0478605031967163,
+          0.32039308547973633,
+          1.244999885559082
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "chrome": [
+          138,
+          148,
+          166
+        ],
+        "glow": [
+          0,
+          236,
+          255
+        ],
+        "plate": [
+          30,
+          32,
+          44
+        ]
+      },
+      "display": "Cyber Raptor",
+      "hash": "064bba293faa86ce",
+      "piece": true,
+      "pieces": {
+        "chrome": {
+          "group": "chrome",
+          "role": null,
+          "tris": 232
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 420
+        },
+        "plate": {
+          "group": "plate",
+          "role": null,
+          "tris": 56
+        }
+      },
+      "premium": true,
+      "set": "CYBER_RAPTOR",
+      "stage": 0,
+      "theme": "CYBER_RAPTOR",
+      "tower": "SET_CYBER_RAPTOR_VENT",
+      "towerKind": "VENT",
+      "tris": 708,
+      "uploadedHash": null
+    },
     "tower/SET_GOLD_RUSH": {
       "asset": null,
       "batch": "11e",
