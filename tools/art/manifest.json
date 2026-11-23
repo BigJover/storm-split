@@ -4173,6 +4173,1014 @@
       "tris": 804,
       "uploadedHash": null
     },
+    "gun/SHOTGUN_SUPERNOVA": {
+      "asset": null,
+      "base": "gun/SHOTGUN",
+      "batch": "11p5",
+      "box": [
+        [
+          -0.17531093955039978,
+          -0.23999999463558197,
+          -1.5299999713897705
+        ],
+        [
+          0.17531093955039978,
+          0.42531096935272217,
+          1.0399999618530273
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          214,
+          88,
+          184
+        ],
+        "brass": [
+          190,
+          186,
+          224
+        ],
+        "crater": [
+          50,
+          42,
+          84
+        ],
+        "dark": [
+          26,
+          24,
+          54
+        ],
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "steel": [
+          64,
+          60,
+          104
+        ],
+        "wood": [
+          86,
+          76,
+          122
+        ]
+      },
+      "display": "Supernova",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "SHOTGUN",
+      "hash": "22af9ab71514295e",
+      "muzzle": [
+        0,
+        0.25,
+        -1.51
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 16
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 160
+        },
+        "crater": {
+          "group": "crater",
+          "role": null,
+          "tris": 36
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 44
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 224
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 124
+        },
+        "wood": {
+          "group": "wood",
+          "role": null,
+          "tris": 184
+        }
+      },
+      "premium": true,
+      "skin": "SUPERNOVA",
+      "theme": "NEBULA",
+      "tris": 852,
+      "uploadedHash": null
+    },
+    "hunter/BIG_BANG_BRAWLER": {
+      "asset": null,
+      "base": "hunter/SHOTGUN",
+      "batch": "11p5",
+      "box": [
+        [
+          -2.138,
+          -3.0,
+          -0.78
+        ],
+        [
+          2.138,
+          2.88,
+          1.14
+        ]
+      ],
+      "budget": "hero",
+      "colors": {
+        "crater": [
+          52,
+          44,
+          86
+        ],
+        "dark": [
+          28,
+          24,
+          52
+        ],
+        "eye": [
+          32,
+          26,
+          40
+        ],
+        "glow": [
+          150,
+          236,
+          240
+        ],
+        "hair": [
+          70,
+          46,
+          90
+        ],
+        "pants": [
+          44,
+          36,
+          88
+        ],
+        "planet": [
+          214,
+          88,
+          184
+        ],
+        "planet2": [
+          70,
+          176,
+          196
+        ],
+        "rock": [
+          88,
+          78,
+          124
+        ],
+        "shirt": [
+          52,
+          40,
+          100
+        ],
+        "skin": [
+          198,
+          140,
+          104
+        ]
+      },
+      "display": "Big Bang Brawler",
+      "hash": "eb9d115559d84dc1",
+      "hero": "SHOTGUN",
+      "parts": {
+        "Head": {
+          "box": [
+            [
+              -0.866,
+              0.681,
+              -0.778
+            ],
+            [
+              0.866,
+              2.88,
+              0.95
+            ]
+          ],
+          "groups": [
+            "crater",
+            "eye",
+            "glow",
+            "hair",
+            "rock",
+            "skin"
+          ],
+          "r15": {
+            "centre": [
+              0,
+              1.586,
+              0
+            ],
+            "size": [
+              1.2,
+              1.2,
+              1.2
+            ]
+          }
+        },
+        "LeftFoot": {
+          "box": [
+            [
+              -0.948,
+              -3.0,
+              -0.78
+            ],
+            [
+              -0.052,
+              -2.52,
+              0.384
+            ]
+          ],
+          "groups": [
+            "dark",
+            "glow",
+            "rock"
+          ],
+          "r15": {
+            "centre": [
+              -0.5,
+              -2.85,
+              0
+            ],
+            "size": [
+              1,
+              0.3,
+              1
+            ]
+          }
+        },
+        "LeftHand": {
+          "box": [
+            [
+              -2.032,
+              -1.28,
+              -0.639
+            ],
+            [
+              -0.808,
+              -0.44,
+              0.599
+            ]
+          ],
+          "groups": [
+            "dark",
+            "glow",
+            "planet",
+            "skin"
+          ],
+          "r15": {
+            "centre": [
+              -1.5,
+              -0.85,
+              0
+            ],
+            "size": [
+              1,
+              0.3,
+              1
+            ]
+          }
+        },
+        "LeftLowerArm": {
+          "box": [
+            [
+              -1.835,
+              -0.917,
+              -0.426
+            ],
+            [
+              -1.005,
+              0.38,
+              0.383
+            ]
+          ],
+          "groups": [
+            "glow",
+            "rock",
+            "skin"
+          ],
+          "r15": {
+            "centre": [
+              -1.5,
+              -0.224,
+              0
+            ],
+            "size": [
+              1,
+              1.052,
+              1
+            ]
+          }
+        },
+        "LeftLowerLeg": {
+          "box": [
+            [
+              -0.972,
+              -2.962,
+              -0.504
+            ],
+            [
+              -0.028,
+              -1.44,
+              0.45
+            ]
+          ],
+          "groups": [
+            "dark",
+            "glow",
+            "pants",
+            "rock"
+          ],
+          "r15": {
+            "centre": [
+              -0.5,
+              -2.201,
+              0
+            ],
+            "size": [
+              1,
+              1.193,
+              1
+            ]
+          }
+        },
+        "LeftUpperArm": {
+          "box": [
+            [
+              -2.138,
+              -0.308,
+              -0.581
+            ],
+            [
+              -0.901,
+              1.5,
+              1.14
+            ]
+          ],
+          "groups": [
+            "crater",
+            "glow",
+            "rock",
+            "skin"
+          ],
+          "r15": {
+            "centre": [
+              -1.5,
+              0.369,
+              0
+            ],
+            "size": [
+              1,
+              1.169,
+              1
+            ]
+          }
+        },
+        "LeftUpperLeg": {
+          "box": [
+            [
+              -0.967,
+              -2.214,
+              -0.52
+            ],
+            [
+              -0.071,
+              -0.51,
+              0.429
+            ]
+          ],
+          "groups": [
+            "pants",
+            "rock"
+          ],
+          "r15": {
+            "centre": [
+              -0.5,
+              -1.421,
+              0
+            ],
+            "size": [
+              1,
+              1.217,
+              1
+            ]
+          }
+        },
+        "LowerTorso": {
+          "box": [
+            [
+              -0.998,
+              -1.03,
+              -0.72
+            ],
+            [
+              0.998,
+              -0.47,
+              0.525
+            ]
+          ],
+          "groups": [
+            "crater",
+            "dark",
+            "glow",
+            "pants"
+          ],
+          "r15": {
+            "centre": [
+              0,
+              -0.8,
+              0
+            ],
+            "size": [
+              2,
+              0.4,
+              1
+            ]
+          }
+        },
+        "RightFoot": {
+          "box": [
+            [
+              0.052,
+              -3.0,
+              -0.78
+            ],
+            [
+              0.948,
+              -2.52,
+              0.384
+            ]
+          ],
+          "groups": [
+            "dark",
+            "glow",
+            "rock"
+          ],
+          "r15": {
+            "centre": [
+              0.5,
+              -2.85,
+              0
+            ],
+            "size": [
+              1,
+              0.3,
+              1
+            ]
+          }
+        },
+        "RightHand": {
+          "box": [
+            [
+              1.0,
+              -1.28,
+              -0.44
+            ],
+            [
+              1.86,
+              -0.44,
+              0.4
+            ]
+          ],
+          "groups": [
+            "crater",
+            "glow",
+            "planet2",
+            "skin"
+          ],
+          "r15": {
+            "centre": [
+              1.5,
+              -0.85,
+              0
+            ],
+            "size": [
+              1,
+              0.3,
+              1
+            ]
+          }
+        },
+        "RightLowerArm": {
+          "box": [
+            [
+              1.005,
+              -0.917,
+              -0.426
+            ],
+            [
+              1.835,
+              0.38,
+              0.383
+            ]
+          ],
+          "groups": [
+            "glow",
+            "rock",
+            "skin"
+          ],
+          "r15": {
+            "centre": [
+              1.5,
+              -0.224,
+              0
+            ],
+            "size": [
+              1,
+              1.052,
+              1
+            ]
+          }
+        },
+        "RightLowerLeg": {
+          "box": [
+            [
+              0.028,
+              -2.972,
+              -0.504
+            ],
+            [
+              0.972,
+              -1.44,
+              0.461
+            ]
+          ],
+          "groups": [
+            "dark",
+            "glow",
+            "pants",
+            "rock"
+          ],
+          "r15": {
+            "centre": [
+              0.5,
+              -2.201,
+              0
+            ],
+            "size": [
+              1,
+              1.193,
+              1
+            ]
+          }
+        },
+        "RightUpperArm": {
+          "box": [
+            [
+              0.901,
+              -0.308,
+              -0.581
+            ],
+            [
+              2.138,
+              1.5,
+              1.14
+            ]
+          ],
+          "groups": [
+            "crater",
+            "glow",
+            "rock",
+            "skin"
+          ],
+          "r15": {
+            "centre": [
+              1.5,
+              0.369,
+              0
+            ],
+            "size": [
+              1,
+              1.169,
+              1
+            ]
+          }
+        },
+        "RightUpperLeg": {
+          "box": [
+            [
+              0.071,
+              -2.214,
+              -0.52
+            ],
+            [
+              0.967,
+              -0.51,
+              0.429
+            ]
+          ],
+          "groups": [
+            "pants",
+            "rock"
+          ],
+          "r15": {
+            "centre": [
+              0.5,
+              -1.421,
+              0
+            ],
+            "size": [
+              1,
+              1.217,
+              1
+            ]
+          }
+        },
+        "UpperTorso": {
+          "box": [
+            [
+              -1.112,
+              -0.535,
+              -0.7
+            ],
+            [
+              1.112,
+              1.121,
+              0.68
+            ]
+          ],
+          "groups": [
+            "crater",
+            "dark",
+            "glow",
+            "rock",
+            "shirt"
+          ],
+          "r15": {
+            "centre": [
+              0,
+              0.2,
+              0
+            ],
+            "size": [
+              2,
+              1.6,
+              1
+            ]
+          }
+        }
+      },
+      "pieces": {
+        "Head__crater": {
+          "group": "crater",
+          "part": "Head",
+          "role": null,
+          "tris": 110
+        },
+        "Head__eye": {
+          "group": "eye",
+          "part": "Head",
+          "role": null,
+          "tris": 110
+        },
+        "Head__glow": {
+          "group": "glow",
+          "part": "Head",
+          "role": null,
+          "tris": 192
+        },
+        "Head__hair": {
+          "group": "hair",
+          "part": "Head",
+          "role": null,
+          "tris": 110
+        },
+        "Head__rock": {
+          "group": "rock",
+          "part": "Head",
+          "role": null,
+          "tris": 110
+        },
+        "Head__skin": {
+          "group": "skin",
+          "part": "Head",
+          "role": null,
+          "tris": 136
+        },
+        "LeftFoot__dark": {
+          "group": "dark",
+          "part": "LeftFoot",
+          "role": null,
+          "tris": 108
+        },
+        "LeftFoot__glow": {
+          "group": "glow",
+          "part": "LeftFoot",
+          "role": null,
+          "tris": 8
+        },
+        "LeftFoot__rock": {
+          "group": "rock",
+          "part": "LeftFoot",
+          "role": null,
+          "tris": 42
+        },
+        "LeftHand__dark": {
+          "group": "dark",
+          "part": "LeftHand",
+          "role": null,
+          "tris": 24
+        },
+        "LeftHand__glow": {
+          "group": "glow",
+          "part": "LeftHand",
+          "role": null,
+          "tris": 108
+        },
+        "LeftHand__planet": {
+          "group": "planet",
+          "part": "LeftHand",
+          "role": null,
+          "tris": 110
+        },
+        "LeftHand__skin": {
+          "group": "skin",
+          "part": "LeftHand",
+          "role": null,
+          "tris": 110
+        },
+        "LeftLowerArm__glow": {
+          "group": "glow",
+          "part": "LeftLowerArm",
+          "role": null,
+          "tris": 8
+        },
+        "LeftLowerArm__rock": {
+          "group": "rock",
+          "part": "LeftLowerArm",
+          "role": null,
+          "tris": 24
+        },
+        "LeftLowerArm__skin": {
+          "group": "skin",
+          "part": "LeftLowerArm",
+          "role": null,
+          "tris": 110
+        },
+        "LeftLowerLeg__dark": {
+          "group": "dark",
+          "part": "LeftLowerLeg",
+          "role": null,
+          "tris": 110
+        },
+        "LeftLowerLeg__glow": {
+          "group": "glow",
+          "part": "LeftLowerLeg",
+          "role": null,
+          "tris": 8
+        },
+        "LeftLowerLeg__pants": {
+          "group": "pants",
+          "part": "LeftLowerLeg",
+          "role": null,
+          "tris": 110
+        },
+        "LeftLowerLeg__rock": {
+          "group": "rock",
+          "part": "LeftLowerLeg",
+          "role": null,
+          "tris": 60
+        },
+        "LeftUpperArm__crater": {
+          "group": "crater",
+          "part": "LeftUpperArm",
+          "role": null,
+          "tris": 72
+        },
+        "LeftUpperArm__glow": {
+          "group": "glow",
+          "part": "LeftUpperArm",
+          "role": null,
+          "tris": 26
+        },
+        "LeftUpperArm__rock": {
+          "group": "rock",
+          "part": "LeftUpperArm",
+          "role": null,
+          "tris": 100
+        },
+        "LeftUpperArm__skin": {
+          "group": "skin",
+          "part": "LeftUpperArm",
+          "role": null,
+          "tris": 110
+        },
+        "LeftUpperLeg__pants": {
+          "group": "pants",
+          "part": "LeftUpperLeg",
+          "role": null,
+          "tris": 110
+        },
+        "LeftUpperLeg__rock": {
+          "group": "rock",
+          "part": "LeftUpperLeg",
+          "role": null,
+          "tris": 36
+        },
+        "LowerTorso__crater": {
+          "group": "crater",
+          "part": "LowerTorso",
+          "role": null,
+          "tris": 36
+        },
+        "LowerTorso__dark": {
+          "group": "dark",
+          "part": "LowerTorso",
+          "role": null,
+          "tris": 108
+        },
+        "LowerTorso__glow": {
+          "group": "glow",
+          "part": "LowerTorso",
+          "role": null,
+          "tris": 8
+        },
+        "LowerTorso__pants": {
+          "group": "pants",
+          "part": "LowerTorso",
+          "role": null,
+          "tris": 108
+        },
+        "RightFoot__dark": {
+          "group": "dark",
+          "part": "RightFoot",
+          "role": null,
+          "tris": 108
+        },
+        "RightFoot__glow": {
+          "group": "glow",
+          "part": "RightFoot",
+          "role": null,
+          "tris": 8
+        },
+        "RightFoot__rock": {
+          "group": "rock",
+          "part": "RightFoot",
+          "role": null,
+          "tris": 42
+        },
+        "RightHand__crater": {
+          "group": "crater",
+          "part": "RightHand",
+          "role": null,
+          "tris": 96
+        },
+        "RightHand__glow": {
+          "group": "glow",
+          "part": "RightHand",
+          "role": null,
+          "tris": 24
+        },
+        "RightHand__planet2": {
+          "group": "planet2",
+          "part": "RightHand",
+          "role": null,
+          "tris": 110
+        },
+        "RightHand__skin": {
+          "group": "skin",
+          "part": "RightHand",
+          "role": null,
+          "tris": 110
+        },
+        "RightLowerArm__glow": {
+          "group": "glow",
+          "part": "RightLowerArm",
+          "role": null,
+          "tris": 8
+        },
+        "RightLowerArm__rock": {
+          "group": "rock",
+          "part": "RightLowerArm",
+          "role": null,
+          "tris": 24
+        },
+        "RightLowerArm__skin": {
+          "group": "skin",
+          "part": "RightLowerArm",
+          "role": null,
+          "tris": 110
+        },
+        "RightLowerLeg__dark": {
+          "group": "dark",
+          "part": "RightLowerLeg",
+          "role": null,
+          "tris": 110
+        },
+        "RightLowerLeg__glow": {
+          "group": "glow",
+          "part": "RightLowerLeg",
+          "role": null,
+          "tris": 8
+        },
+        "RightLowerLeg__pants": {
+          "group": "pants",
+          "part": "RightLowerLeg",
+          "role": null,
+          "tris": 110
+        },
+        "RightLowerLeg__rock": {
+          "group": "rock",
+          "part": "RightLowerLeg",
+          "role": null,
+          "tris": 60
+        },
+        "RightUpperArm__crater": {
+          "group": "crater",
+          "part": "RightUpperArm",
+          "role": null,
+          "tris": 72
+        },
+        "RightUpperArm__glow": {
+          "group": "glow",
+          "part": "RightUpperArm",
+          "role": null,
+          "tris": 26
+        },
+        "RightUpperArm__rock": {
+          "group": "rock",
+          "part": "RightUpperArm",
+          "role": null,
+          "tris": 100
+        },
+        "RightUpperArm__skin": {
+          "group": "skin",
+          "part": "RightUpperArm",
+          "role": null,
+          "tris": 110
+        },
+        "RightUpperLeg__pants": {
+          "group": "pants",
+          "part": "RightUpperLeg",
+          "role": null,
+          "tris": 110
+        },
+        "RightUpperLeg__rock": {
+          "group": "rock",
+          "part": "RightUpperLeg",
+          "role": null,
+          "tris": 36
+        },
+        "UpperTorso__crater": {
+          "group": "crater",
+          "part": "UpperTorso",
+          "role": null,
+          "tris": 110
+        },
+        "UpperTorso__dark": {
+          "group": "dark",
+          "part": "UpperTorso",
+          "role": null,
+          "tris": 110
+        },
+        "UpperTorso__glow": {
+          "group": "glow",
+          "part": "UpperTorso",
+          "role": null,
+          "tris": 136
+        },
+        "UpperTorso__rock": {
+          "group": "rock",
+          "part": "UpperTorso",
+          "role": null,
+          "tris": 110
+        },
+        "UpperTorso__shirt": {
+          "group": "shirt",
+          "part": "UpperTorso",
+          "role": null,
+          "tris": 108
+        }
+      },
+      "premium": true,
+      "rig": "r15",
+      "skin": "BIG_BANG_BRAWLER",
+      "theme": "NEBULA",
+      "tris": 4378,
+      "uploadedHash": null
+    },
     "hunter/COMET_CHASER": {
       "asset": null,
       "base": "hunter/PISTOL",
@@ -28965,6 +29973,102 @@
       },
       "prop": "grenade",
       "tris": 328,
+      "uploadedHash": null
+    },
+    "kit/SHOTGUN_GRENADE_CHERRY_COMET": {
+      "asset": null,
+      "base": "kit/SHOTGUN_GRENADE",
+      "batch": "11p5",
+      "box": [
+        [
+          -0.32767945528030396,
+          -0.35247838497161865,
+          -0.33500000834465027
+        ],
+        [
+          0.32767945528030396,
+          0.5399999618530273,
+          0.5429760217666626
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "band": [
+          62,
+          30,
+          104
+        ],
+        "body": [
+          222,
+          64,
+          132
+        ],
+        "brass": [
+          190,
+          186,
+          224
+        ],
+        "crater": [
+          150,
+          40,
+          100
+        ],
+        "dark": [
+          40,
+          30,
+          60
+        ],
+        "glow": [
+          150,
+          236,
+          240
+        ]
+      },
+      "display": "Cherry Comet",
+      "hash": "387b4ab19c19dc44",
+      "hero": "SHOTGUN",
+      "pieces": {
+        "band": {
+          "group": "band",
+          "role": null,
+          "tris": 72
+        },
+        "body": {
+          "group": "body",
+          "role": null,
+          "tris": 120
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 24
+        },
+        "crater": {
+          "group": "crater",
+          "role": null,
+          "tris": 60
+        },
+        "dark": {
+          "group": "dark",
+          "role": null,
+          "tris": 24
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 208
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "CHERRY_COMET",
+      "theme": "NEBULA",
+      "tris": 508,
       "uploadedHash": null
     },
     "kit/SHOTGUN_GRENADE_CRYSTAL_CHERRY": {
