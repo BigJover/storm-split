@@ -120,6 +120,34 @@ def cloud(B, c, r, t=0.02, tilt=0.0, n=4):
     return out
 
 
+def ribbon(B, pts, widths, t=0.04, side=(1, 0, 0)):
+    """A flat flowing strip (scarf / tail) through pts, widths[i] wide at pts[i] across `side`
+    (kept perpendicular to the strip's direction), t thick. A closed slab mesh."""
+    side0 = Vector(side)
+    top, bot = [], []
+    bm = bmesh.new()
+    n = len(pts)
+    for i, p in enumerate(pts):
+        p = Vector(p)
+        d = (Vector(pts[min(i + 1, n - 1)]) - Vector(pts[max(i - 1, 0)])).normalized()
+        sd = (side0 - d * side0.dot(d)).normalized()
+        nm = d.cross(sd).normalized()
+        w = widths[i] / 2
+        top.append((bm.verts.new(p - sd * w + nm * t / 2), bm.verts.new(p + sd * w + nm * t / 2)))
+        bot.append((bm.verts.new(p - sd * w - nm * t / 2), bm.verts.new(p + sd * w - nm * t / 2)))
+    for i in range(n - 1):
+        a, b = top[i], top[i + 1]
+        c, d = bot[i], bot[i + 1]
+        bm.faces.new((a[0], a[1], b[1], b[0]))
+        bm.faces.new((c[0], d[0], d[1], c[1]))
+        bm.faces.new((a[0], b[0], d[0], c[0]))
+        bm.faces.new((a[1], c[1], d[1], b[1]))
+    bm.faces.new((top[0][0], bot[0][0], bot[0][1], top[0][1]))
+    bm.faces.new((top[-1][0], top[-1][1], bot[-1][1], bot[-1][0]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    return B._obj(bm, "ribbon")
+
+
 def ring_point(centre, R, deg, rot):
     """The point at angle deg on a torus(centre, R, rot=rot) ring's centre line."""
     Rx, Rz = R if isinstance(R, (tuple, list)) else (R, R)
