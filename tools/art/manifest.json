@@ -42646,6 +42646,1393 @@
       "tris": 708,
       "uploadedHash": null
     },
+    "tower/SET_GEODE": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.5,
+          -2.5,
+          -1.5
+        ],
+        [
+          1.5,
+          -1.4399998188018799,
+          1.5
+        ]
+      ],
+      "budget": "tower",
+      "cap": 300,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "432e63e174ed2f1b",
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 36
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 104
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 120
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 18
+        }
+      },
+      "premium": true,
+      "preview": "SCOUT",
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE",
+      "trim": true,
+      "tris": 278,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_ARMORY": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          -0.33113956451416016,
+          -1.1999998092651367,
+          1.0
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "8c422da957c9d063",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 66
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 90
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 96
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 22
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_ARMORY",
+      "towerKind": "ARMORY",
+      "tris": 274,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_BALLISTA": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.2000000476837158
+        ],
+        [
+          -0.21525345742702484,
+          -1.070000171661377,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "692182aedc974d65",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 66
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 90
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 96
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 22
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_BALLISTA",
+      "towerKind": "BALLISTA",
+      "tris": 274,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_BLIMP": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          0.3999999761581421,
+          0.8999998569488525,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "282e62949d3b19ca",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 174
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 88
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 92
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_BLIMP",
+      "towerKind": "BLIMP",
+      "tris": 414,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_CHILLER": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.472583293914795,
+          -0.9227196574211121
+        ],
+        [
+          -0.27237045764923096,
+          0.4999990463256836,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "c75e942327f2378e",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 152
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 44
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 80
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_CHILLER",
+      "towerKind": "CHILLER",
+      "tris": 336,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_COIL": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.4780666828155518,
+          -1.4900000095367432
+        ],
+        [
+          -0.39554548263549805,
+          0.4999990463256836,
+          0.9323179721832275
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "7e0174467326941f",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 152
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 44
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 80
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_COIL",
+      "towerKind": "COIL",
+      "tris": 336,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_FALCON": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          0.6000000238418579,
+          0.6500000953674316,
+          1.0589317083358765
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "36c469b26eea2953",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 174
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 88
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 64
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_FALCON",
+      "towerKind": "FALCON",
+      "tris": 386,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_GRENADIER": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.489972710609436
+        ],
+        [
+          0.702666163444519,
+          -1.005000114440918,
+          0.875
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "da3caf5ba64f9256",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 88
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 90
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 96
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 22
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_GRENADIER",
+      "towerKind": "GRENADIER",
+      "tris": 296,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_HOSPITAL": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.473954200744629,
+          -1.4348233938217163
+        ],
+        [
+          -0.3325755000114441,
+          0.6999998092651367,
+          1.0022602081298828
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "rose": [
+          232,
+          112,
+          172
+        ]
+      },
+      "display": "Geode",
+      "hash": "e9af6857c4c9358c",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 152
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 44
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 80
+        },
+        "rose": {
+          "group": "rose",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_HOSPITAL",
+      "towerKind": "HOSPITAL",
+      "tris": 336,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_METEOR": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.475324869155884,
+          -1.4900000095367432
+        ],
+        [
+          -0.15731047093868256,
+          0.4999990463256836,
+          1.1708896160125732
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "eb97ce562e57635d",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 130
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 68
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 136
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_METEOR",
+      "towerKind": "METEOR",
+      "tris": 394,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_QUARTERMASTER": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.475000023841858
+        ],
+        [
+          0.8059670925140381,
+          0.6999998092651367,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "06a4688f12c93a0f",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 152
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 112
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 148
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_QUARTERMASTER",
+      "towerKind": "QUARTERMASTER",
+      "tris": 472,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_RANGER": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          1.4900000095367432,
+          1.0999996662139893,
+          0.75
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "aa4cdba0e762ba89",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 174
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 88
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 92
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_RANGER",
+      "towerKind": "RANGER",
+      "tris": 414,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_RAPTOR": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.475324869155884,
+          -1.4152019023895264
+        ],
+        [
+          1.155967116355896,
+          0.6999998092651367,
+          0.7708896398544312
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "85300bebde548681",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 152
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 44
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 80
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_RAPTOR",
+      "towerKind": "RAPTOR",
+      "tris": 336,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_RESIN": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.4766957759857178,
+          -1.0710127353668213
+        ],
+        [
+          -0.21525345742702484,
+          0.2999997138977051,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "3be4487a40e74b8d",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 130
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 68
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 136
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_RESIN",
+      "towerKind": "RESIN",
+      "tris": 394,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_SCOUT": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          -0.367829293012619,
+          1.25,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "56cfe289fed353b6",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 174
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 88
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 12
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_SCOUT",
+      "towerKind": "SCOUT",
+      "tris": 334,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_SNIPER": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          1.2749102115631104,
+          2.0999999046325684,
+          1.2749874591827393
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "85ce6620731bc863",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 206
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 120
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 64
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 92
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_SNIPER",
+      "towerKind": "SNIPER",
+      "tris": 482,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_TARPIT": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4897453784942627,
+          -2.5,
+          -0.5
+        ],
+        [
+          0.800000011920929,
+          -1.7200000286102295,
+          1.3600000143051147
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "d4e47d2afc0a3edf",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 44
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 90
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 68
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 44
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_TARPIT",
+      "towerKind": "TARPIT",
+      "tris": 246,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_TOTEM": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.469841718673706,
+          -1.4530980587005615
+        ],
+        [
+          0.9455829858779907,
+          2.1550002098083496,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "9c1e72de78a04db2",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 184
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 76
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 80
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 92
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_TOTEM",
+      "towerKind": "TOTEM",
+      "tris": 432,
+      "uploadedHash": null
+    },
+    "tower/SET_GEODE_VENT": {
+      "asset": null,
+      "batch": "11p6",
+      "box": [
+        [
+          -1.4900000095367432,
+          -2.5,
+          -1.4900000095367432
+        ],
+        [
+          -0.7681876420974731,
+          0.4999990463256836,
+          1.4900000095367432
+        ]
+      ],
+      "budget": "tower",
+      "cap": 800,
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode",
+      "hash": "0404cd6df18f22e3",
+      "piece": true,
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 130
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 88
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 12
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 60
+        }
+      },
+      "premium": true,
+      "set": "GEODE",
+      "stage": 0,
+      "theme": "GEODE",
+      "tower": "SET_GEODE_VENT",
+      "towerKind": "VENT",
+      "tris": 290,
+      "uploadedHash": null
+    },
     "tower/SET_GOLD_RUSH": {
       "asset": null,
       "batch": "11e",
