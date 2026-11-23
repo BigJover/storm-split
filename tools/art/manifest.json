@@ -8785,7 +8785,7 @@
         ]
       },
       "display": "Gem Gamekeeper",
-      "hash": "379e9b37426fb92b",
+      "hash": "c72396df920b6329",
       "hero": "RIFLE",
       "parts": {
         "Head": {
@@ -9596,13 +9596,13 @@
           "group": "crystal",
           "part": "UpperTorso",
           "role": null,
-          "tris": 252
+          "tris": 162
         },
         "UpperTorso__glow": {
           "group": "glow",
           "part": "UpperTorso",
           "role": null,
-          "tris": 200
+          "tris": 290
         },
         "UpperTorso__rock": {
           "group": "rock",
@@ -41547,7 +41547,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "71a16afe22a3fe13",
+      "hash": "b0ecc7bc9feda2d0",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -41610,7 +41610,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "cb9d7f96f9485cfb",
+      "hash": "0e80226b874839be",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -41673,7 +41673,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "dc8e04b5cc3cbfad",
+      "hash": "da2ed6eb24550d84",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -41736,7 +41736,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "fe2bdd0e45e71662",
+      "hash": "e78e4c5430daba02",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -41799,7 +41799,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "79d0f378b2a6cfb8",
+      "hash": "605b7bcdbce33ba5",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -41862,7 +41862,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "66e4dacb184eefd0",
+      "hash": "ffb42afb9205d39f",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -41925,7 +41925,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "97651ce692c61041",
+      "hash": "5fd53246692702d6",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -41988,7 +41988,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "76505b6250d570e6",
+      "hash": "9e0d6bc1219bd722",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -42051,7 +42051,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "325e35abf16b4ade",
+      "hash": "a6c544a28833c231",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -42114,7 +42114,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "15d539369c34d1fc",
+      "hash": "653d6cb1a6d1c6f8",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -42177,7 +42177,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "198d7c8abf8db15e",
+      "hash": "a8a41ada65b12b37",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -42240,7 +42240,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "69931ac689aef9fa",
+      "hash": "376aabdd28c13b14",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -42366,7 +42366,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "01e0fdbee2da0209",
+      "hash": "97bb7e9df8aecd22",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -42429,7 +42429,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "cb790abea31e1148",
+      "hash": "04bb1a90c52b31d1",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -42492,7 +42492,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "c11dda18b92c5bff",
+      "hash": "9b93f2c15676addb",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -42555,7 +42555,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "d359b82ec3010b8f",
+      "hash": "3bf7d0d6d9ff911b",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -42618,7 +42618,7 @@
         ]
       },
       "display": "Cyber Raptor",
-      "hash": "064bba293faa86ce",
+      "hash": "c1fbc8830fef71e8",
       "piece": true,
       "pieces": {
         "chrome": {
@@ -42759,7 +42759,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "8c422da957c9d063",
+      "hash": "f7e78c90c35bac7c",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -42832,7 +42832,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "692182aedc974d65",
+      "hash": "728c099044ee0e3b",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -42905,7 +42905,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "282e62949d3b19ca",
+      "hash": "99285c30fdfc6d8d",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -42978,7 +42978,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "c75e942327f2378e",
+      "hash": "e86e1d348227288d",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -43051,7 +43051,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "7e0174467326941f",
+      "hash": "dc12d8f175b8b4dc",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -43197,7 +43197,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "da3caf5ba64f9256",
+      "hash": "efd60a1a442eeaa9",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -43270,7 +43270,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "e9af6857c4c9358c",
+      "hash": "80497e1b55fd58b6",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -43343,7 +43343,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "eb97ce562e57635d",
+      "hash": "2067efb77ffeb753",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -43416,7 +43416,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "06a4688f12c93a0f",
+      "hash": "868177a6652f8d83",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -43489,7 +43489,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "aa4cdba0e762ba89",
+      "hash": "94bd12ceae0a345b",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -43562,7 +43562,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "85300bebde548681",
+      "hash": "be96a3c151266b5b",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -43635,7 +43635,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "3be4487a40e74b8d",
+      "hash": "43ca7d2dee6c9fcb",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -43708,7 +43708,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "56cfe289fed353b6",
+      "hash": "07cc470d96b2db00",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -43781,7 +43781,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "85ce6620731bc863",
+      "hash": "d76b3cde453ffd3a",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -43854,7 +43854,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "d4e47d2afc0a3edf",
+      "hash": "60f00f6f4d4a4da0",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -43927,7 +43927,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "9c1e72de78a04db2",
+      "hash": "d23fe0a3675ce467",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -44000,7 +44000,7 @@
         ]
       },
       "display": "Geode",
-      "hash": "0404cd6df18f22e3",
+      "hash": "e33c4c702ee31b45",
       "piece": true,
       "pieces": {
         "crystal": {
@@ -45460,7 +45460,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "2bb5179c3b9c86f3",
+      "hash": "5b8b89fc56ae87e1",
       "piece": true,
       "pieces": {
         "basalt": {
@@ -45523,7 +45523,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "930c1c211f55c483",
+      "hash": "810756d77b5e3caf",
       "piece": true,
       "pieces": {
         "basalt": {
@@ -45586,7 +45586,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "943bbaabb807c908",
+      "hash": "15bd1fffde7b2363",
       "piece": true,
       "pieces": {
         "basalt": {
@@ -45649,7 +45649,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "63db8b5d2147c438",
+      "hash": "7af9cb1091cd37bf",
       "piece": true,
       "pieces": {
         "basalt": {
@@ -45712,7 +45712,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "9ef567fbd77084b1",
+      "hash": "7920d0b90c5ecbc8",
       "piece": true,
       "pieces": {
         "basalt": {
@@ -45775,7 +45775,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "6f81736dc2c27e50",
+      "hash": "438e11e36b647d36",
       "piece": true,
       "pieces": {
         "basalt": {
@@ -45901,7 +45901,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "93b4bb2b1ecedcd3",
+      "hash": "c8056735eda200c8",
       "piece": true,
       "pieces": {
         "basalt": {
@@ -45964,7 +45964,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "dd23b9f85ea7c281",
+      "hash": "20b87f9ffd0afb37",
       "piece": true,
       "pieces": {
         "basalt": {
@@ -46027,7 +46027,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "58d8e78203801310",
+      "hash": "289ba62d8a95d4cf",
       "piece": true,
       "pieces": {
         "basalt": {
@@ -46153,7 +46153,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "bbd25aebd2823720",
+      "hash": "c426bcac36ec92a6",
       "piece": true,
       "pieces": {
         "basalt": {
@@ -46216,7 +46216,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "4a73702aadbb353b",
+      "hash": "c866c5f7e5eae571",
       "piece": true,
       "pieces": {
         "basalt": {
@@ -46342,7 +46342,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "2a5fbc830f47ee77",
+      "hash": "3c0ece1abac1047c",
       "piece": true,
       "pieces": {
         "basalt": {
@@ -46405,7 +46405,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "005323482d5517e9",
+      "hash": "b7192cc6d644d4e7",
       "piece": true,
       "pieces": {
         "basalt": {
@@ -46468,7 +46468,7 @@
         ]
       },
       "display": "Lava Lord",
-      "hash": "359b24b275c9b081",
+      "hash": "892299a7d39bad96",
       "piece": true,
       "pieces": {
         "basalt": {
