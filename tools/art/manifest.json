@@ -1358,6 +1358,111 @@
       "tris": 800,
       "uploadedHash": null
     },
+    "gun/MEDIC_CRYSTAL_CARBINE": {
+      "asset": null,
+      "base": "gun/MEDIC",
+      "batch": "11p6",
+      "box": [
+        [
+          -0.13999995589256287,
+          -0.320000022649765,
+          -1.4499999284744263
+        ],
+        [
+          0.14118891954421997,
+          0.4399999976158142,
+          1.0449999570846558
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          236,
+          150,
+          190
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "rock2": [
+          96,
+          92,
+          104
+        ],
+        "rose": [
+          232,
+          112,
+          172
+        ],
+        "steel": [
+          70,
+          66,
+          80
+        ]
+      },
+      "display": "Crystal Carbine",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "MEDIC",
+      "hash": "52ec29e3323ff807",
+      "muzzle": [
+        0,
+        0.25,
+        -1.43
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 20
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 92
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 224
+        },
+        "rock2": {
+          "group": "rock2",
+          "role": null,
+          "tris": 120
+        },
+        "rose": {
+          "group": "rose",
+          "role": null,
+          "tris": 132
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 232
+        }
+      },
+      "premium": true,
+      "skin": "CRYSTAL_CARBINE",
+      "theme": "GEODE",
+      "tris": 884,
+      "uploadedHash": null
+    },
     "gun/MEDIC_LIFESAVER": {
       "asset": null,
       "base": "gun/MEDIC",
@@ -1665,6 +1770,131 @@
         }
       },
       "tris": 844,
+      "uploadedHash": null
+    },
+    "gun/PISTOL_AMETHYST_ACE": {
+      "asset": null,
+      "base": "gun/PISTOL",
+      "batch": "11p6",
+      "box": [
+        [
+          -0.11691343039274216,
+          -0.2882535457611084,
+          -0.8700000047683716
+        ],
+        [
+          0.11691343039274216,
+          0.5600000619888306,
+          0.25999996066093445
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          150,
+          84,
+          220
+        ],
+        "brass": [
+          176,
+          150,
+          200
+        ],
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "rock2": [
+          96,
+          92,
+          104
+        ],
+        "steel": [
+          70,
+          66,
+          80
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Amethyst Ace",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "PISTOL",
+      "hash": "74d2e525314838b7",
+      "muzzle": [
+        0,
+        0.25,
+        -0.85
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 20
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 64
+        },
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 36
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 102
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 268
+        },
+        "rock2": {
+          "group": "rock2",
+          "role": null,
+          "tris": 44
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 80
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 18
+        }
+      },
+      "premium": true,
+      "skin": "AMETHYST_ACE",
+      "theme": "GEODE",
+      "tris": 696,
       "uploadedHash": null
     },
     "gun/PISTOL_CROWN_FANG": {
@@ -2723,6 +2953,131 @@
       "uploadedHash": null,
       "version": 2
     },
+    "gun/RIFLE_PRISM_RIFLE": {
+      "asset": null,
+      "base": "gun/RIFLE",
+      "batch": "11p6",
+      "box": [
+        [
+          -0.2800000011920929,
+          -0.2199999988079071,
+          -1.75
+        ],
+        [
+          0.2800000011920929,
+          0.4350000023841858,
+          1.0549999475479126
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          150,
+          84,
+          220
+        ],
+        "brass": [
+          176,
+          150,
+          200
+        ],
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "rock2": [
+          96,
+          92,
+          104
+        ],
+        "steel": [
+          70,
+          66,
+          80
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Prism Rifle",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "RIFLE",
+      "hash": "4c452153e50d39e9",
+      "muzzle": [
+        0,
+        0.25,
+        -1.73
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 20
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 64
+        },
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 126
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 86
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 212
+        },
+        "rock2": {
+          "group": "rock2",
+          "role": null,
+          "tris": 56
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 100
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 36
+        }
+      },
+      "premium": true,
+      "skin": "PRISM_RIFLE",
+      "theme": "GEODE",
+      "tris": 764,
+      "uploadedHash": null
+    },
     "gun/RIFLE_RAIL_RIFLE": {
       "asset": null,
       "base": "gun/RIFLE",
@@ -3691,6 +4046,131 @@
       "skin": "SCATTER_BYTE",
       "theme": "CYBER_RAPTOR",
       "tris": 816,
+      "uploadedHash": null
+    },
+    "gun/SHOTGUN_SHARD_SPITTER": {
+      "asset": null,
+      "base": "gun/SHOTGUN",
+      "batch": "11p6",
+      "box": [
+        [
+          -0.15445636212825775,
+          -0.2199999988079071,
+          -1.5299999713897705
+        ],
+        [
+          0.15445636212825775,
+          0.4400000274181366,
+          1.0449999570846558
+        ]
+      ],
+      "budget": "gun",
+      "colors": {
+        "accent": [
+          150,
+          84,
+          220
+        ],
+        "brass": [
+          176,
+          150,
+          200
+        ],
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "rock2": [
+          96,
+          92,
+          104
+        ],
+        "steel": [
+          70,
+          66,
+          80
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Shard Spitter",
+      "grip": [
+        0,
+        0,
+        0
+      ],
+      "gun": "SHOTGUN",
+      "hash": "f0a982b34caa9fed",
+      "muzzle": [
+        0,
+        0.25,
+        -1.51
+      ],
+      "pieces": {
+        "accent": {
+          "group": "accent",
+          "role": null,
+          "tris": 20
+        },
+        "brass": {
+          "group": "brass",
+          "role": null,
+          "tris": 64
+        },
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 90
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 152
+        },
+        "muzzle": {
+          "group": "steel",
+          "role": "muzzle",
+          "tris": 64
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 196
+        },
+        "rock2": {
+          "group": "rock2",
+          "role": null,
+          "tris": 56
+        },
+        "steel": {
+          "group": "steel",
+          "role": null,
+          "tris": 108
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 54
+        }
+      },
+      "premium": true,
+      "skin": "SHARD_SPITTER",
+      "theme": "GEODE",
+      "tris": 804,
       "uploadedHash": null
     },
     "hunter/COMET_CHASER": {
@@ -26830,6 +27310,82 @@
       "tris": 536,
       "uploadedHash": null
     },
+    "kit/MEDIC_GRENADE_DREAM_QUARTZ": {
+      "asset": null,
+      "base": "kit/MEDIC_GRENADE",
+      "batch": "11p6",
+      "box": [
+        [
+          -0.4302322268486023,
+          -0.3871053457260132,
+          -0.4308396577835083
+        ],
+        [
+          0.3742269277572632,
+          0.47999995946884155,
+          0.4308395981788635
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "crystal": [
+          196,
+          160,
+          236
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock2": [
+          96,
+          92,
+          104
+        ],
+        "rose": [
+          232,
+          112,
+          172
+        ]
+      },
+      "display": "Dream Quartz",
+      "hash": "14cbdd9229ca682a",
+      "hero": "MEDIC",
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 108
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 60
+        },
+        "rock2": {
+          "group": "rock2",
+          "role": null,
+          "tris": 20
+        },
+        "rose": {
+          "group": "rose",
+          "role": null,
+          "tris": 126
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "DREAM_QUARTZ",
+      "theme": "GEODE",
+      "tris": 314,
+      "uploadedHash": null
+    },
     "kit/MEDIC_GRENADE_ROYAL_NAP": {
       "asset": null,
       "base": "kit/MEDIC_GRENADE",
@@ -27586,6 +28142,92 @@
       "tris": 600,
       "uploadedHash": null
     },
+    "kit/PISTOL_GRENADE_STINKY_GEODE": {
+      "asset": null,
+      "base": "kit/PISTOL_GRENADE",
+      "batch": "11p6",
+      "box": [
+        [
+          -0.3233592212200165,
+          -0.34727469086647034,
+          -0.3400000035762787
+        ],
+        [
+          0.3233592212200165,
+          0.5146409869194031,
+          0.4564032554626465
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          138,
+          134,
+          120
+        ],
+        "rock2": [
+          96,
+          92,
+          104
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Stinky Geode",
+      "hash": "eacde62b2787af79",
+      "hero": "PISTOL",
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 54
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 102
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 96
+        },
+        "rock2": {
+          "group": "rock2",
+          "role": null,
+          "tris": 48
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 42
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "STINKY_GEODE",
+      "theme": "GEODE",
+      "tris": 342,
+      "uploadedHash": null
+    },
     "kit/PISTOL_MELEE": {
       "asset": null,
       "batch": "11c2",
@@ -27814,6 +28456,92 @@
       "skin": "CROWN_JEWEL",
       "theme": "TYRANT_KING",
       "tris": 412,
+      "uploadedHash": null
+    },
+    "kit/RIFLE_GRENADE_GEODE_GRENADE": {
+      "asset": null,
+      "base": "kit/RIFLE_GRENADE",
+      "batch": "11p6",
+      "box": [
+        [
+          -0.3939231038093567,
+          -0.38999998569488525,
+          -0.3939231038093567
+        ],
+        [
+          0.3939231038093567,
+          0.4359999895095825,
+          0.3939231038093567
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "rock2": [
+          96,
+          92,
+          104
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Geode Grenade",
+      "hash": "6a41af9e880ac5e8",
+      "hero": "RIFLE",
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 72
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 100
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 96
+        },
+        "rock2": {
+          "group": "rock2",
+          "role": null,
+          "tris": 68
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 18
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "GEODE_GRENADE",
+      "theme": "GEODE",
+      "tris": 354,
       "uploadedHash": null
     },
     "kit/RIFLE_GRENADE_LAVA_LOB": {
@@ -28237,6 +28965,92 @@
       },
       "prop": "grenade",
       "tris": 328,
+      "uploadedHash": null
+    },
+    "kit/SHOTGUN_GRENADE_CRYSTAL_CHERRY": {
+      "asset": null,
+      "base": "kit/SHOTGUN_GRENADE",
+      "batch": "11p6",
+      "box": [
+        [
+          -0.3449999988079071,
+          -0.34531697630882263,
+          -0.3449999988079071
+        ],
+        [
+          0.3449999988079071,
+          0.5278280973434448,
+          0.3449999988079071
+        ]
+      ],
+      "budget": "small",
+      "centre": [
+        0,
+        0,
+        0
+      ],
+      "colors": {
+        "crystal": [
+          122,
+          58,
+          196
+        ],
+        "glow": [
+          226,
+          156,
+          255
+        ],
+        "rock": [
+          150,
+          146,
+          158
+        ],
+        "rock2": [
+          96,
+          92,
+          104
+        ],
+        "teal": [
+          52,
+          196,
+          186
+        ]
+      },
+      "display": "Crystal Cherry",
+      "hash": "3f6a28085039dcf4",
+      "hero": "SHOTGUN",
+      "pieces": {
+        "crystal": {
+          "group": "crystal",
+          "role": null,
+          "tris": 28
+        },
+        "glow": {
+          "group": "glow",
+          "role": null,
+          "tris": 64
+        },
+        "rock": {
+          "group": "rock",
+          "role": null,
+          "tris": 28
+        },
+        "rock2": {
+          "group": "rock2",
+          "role": null,
+          "tris": 72
+        },
+        "teal": {
+          "group": "teal",
+          "role": null,
+          "tris": 18
+        }
+      },
+      "premium": true,
+      "prop": "grenade",
+      "skin": "CRYSTAL_CHERRY",
+      "theme": "GEODE",
+      "tris": 210,
       "uploadedHash": null
     },
     "kit/SHOTGUN_GRENADE_MAGMA_CHERRY": {
