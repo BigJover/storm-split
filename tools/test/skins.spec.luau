@@ -28,13 +28,27 @@ local function withRow(key: string, fields: { [string]: any }, body: () -> ())
 	assert(ok, err)
 end
 
-test("the catalogue is Round 22: 3 hunter skins per hunter, 2 weapon skins per gun, 5 tower sets", function()
+local function basic(keys: { string }): { string }
+	local out = {}
+	for _, key in keys do
+		if not (Skins.row(key) :: any).robuxOnly then
+			table.insert(out, key)
+		end
+	end
+	return out
+end
+
+test("the catalogue is Round 22: 3 hunter skins per hunter, 2 weapon skins per gun, 5 tower sets (+ #467 premium)", function()
 	local names = {}
 	for _, hero in Config.HeroOrder do
-		eq(#Skins.catalogue("hunter", hero), 3, `{hero} hunter skins`)
-		eq(#Skins.catalogue("weapon", hero), 2, `{hero} weapon skins`)
+		eq(#basic(Skins.catalogue("hunter", hero)), 3, `{hero} hunter skins`)
+		eq(#basic(Skins.catalogue("weapon", hero)), 2, `{hero} weapon skins`)
+		for _, kind in { "hunter", "weapon", "grenade", "ability" } do
+			eq(#Skins.catalogue(kind, hero) - #basic(Skins.catalogue(kind, hero)), 5, `{hero} premium {kind} skins: one per theme`)
+		end
+		eq(#basic(Skins.catalogue("grenade", hero)) + #basic(Skins.catalogue("ability", hero)), 0, "grenade / ability skins are premium only")
 	end
-	local sets = Skins.catalogue("tower", nil)
+	local sets = basic(Skins.catalogue("tower", nil))
 	for _, key in sets do
 		table.insert(names, Skins.row(key).display)
 	end
@@ -279,8 +293,8 @@ test("T143b numbers: level skins at 15/25/35/45/55/65 never sold; every other sk
 	local n = 0
 	for _, key in Config.SkinOrder do
 		local row = Skins.row(key) :: any
-		if row.kind == "deco" then
-			continue -- T143c (decor.spec)
+		if row.kind == "deco" or row.robuxOnly then
+			continue -- T143c (decor.spec); premium (#467: premium.spec)
 		end
 		n += 1
 		if levels[key] then

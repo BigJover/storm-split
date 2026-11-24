@@ -90,6 +90,7 @@ local HunterKit = require(Shared:WaitForChild("HunterKit"))
 local Pets = require(Shared:WaitForChild("Pets"))
 local Skins = require(Shared:WaitForChild("Skins"))
 local StoreRules = require(Shared:WaitForChild("Store"))
+local SkinFx = require(Shared:WaitForChild("SkinFx"))
 
 local Progression = {}
 
@@ -200,12 +201,12 @@ local function publishSkins(player: Player)
 		return
 	end
 	local level = PlayerLevel.level(profile.playerXp)
-	for _, hero in Config.HeroOrder do
-		for _, kind in { "hunter", "weapon" } do
-			local slot = Skins.slot(kind, hero)
-			player:SetAttribute(Skins.attribute(slot), Skins.worn(profile.skins, slot, level))
-		end
+	-- hunter, weapon, grenade and ability skins per hero (grenade / ability: premium, #467)
+	for _, slot in Skins.heroSlots(Config.HeroOrder) do
+		player:SetAttribute(Skins.attribute(slot), Skins.worn(profile.skins, slot, level))
 	end
+	-- The premium class packs owned whole (#464/#467): their items draw the FX pack tier.
+	player:SetAttribute(SkinFx.PACKS_ATTRIBUTE, SkinFx.packsValue(SkinFx.ownedPacks(profile.skins.owned)))
 	for _, tower in Config.TowerOrder do
 		local slot = Skins.slot("tower", tower)
 		player:SetAttribute(Skins.attribute(slot), Skins.worn(profile.skins, slot, level))
@@ -818,13 +819,24 @@ local function skinAction(player: Player, action: unknown, a: unknown, b: unknow
 			return owns(player, "tower", tower)
 		end)
 	elseif action == "studioSkins" then
-		-- Studio test aid (StudioOnly skins): every skin owned, saving off like J.
+		-- Studio test aid (StudioOnly skins): every skin owned, or (a = a Store skins product,
+		-- e.g. a premium pack) just that product's items, as its grant would; saving off like J.
+		-- No receipt, no ledger: the real path stays storeReceipt only (#388).
 		if not StudioOnly.allowed(RunService:IsStudio(), "skins") then
 			return false, "Studio only"
 		end
+		local row = if type(a) == "string" then StoreRules.row(a) else nil
+		if type(a) == "string" and not (row and row.grant == "skins") then
+			return false, "Unknown product"
+		end
 		canSave[player] = false
-		Skins.grant(profile.skins, Config.SkinOrder)
-		ok, message = true, "Studio: every skin (saving off)"
+		if row then
+			Skins.grant(profile.skins, row.items)
+			ok, message = true, `Studio: {row.display} granted (saving off)`
+		else
+			Skins.grant(profile.skins, Config.SkinOrder)
+			ok, message = true, "Studio: every skin (saving off)"
+		end
 	else
 		return false, "Unknown request"
 	end
@@ -874,6 +886,13 @@ end
 function Progression.trainingActive(player: Player): { string }
 	local profile = profiles[player]
 	return if profile then table.clone(profile.training.active) else {}
+end
+
+-- Is skin `key` already this player's (Server/Store: a product whose items are all yours isn't
+-- prompted again, #467)?
+function Progression.ownsSkin(player: Player, key: string): boolean
+	local profile = profiles[player]
+	return profile ~= nil and Skins.owns(profile.skins, key, PlayerLevel.level(profile.playerXp))
 end
 
 function Progression.storeView(player: Player): { [string]: number }
@@ -1191,7 +1210,7 @@ function Progression.init(
 	-- Cosmetics:  ("equip", slot, itemId | "") -> ok, message
 	-- Skins (T142): ("skins") -> true, view | ("buySkin", key) | ("wearSkin", slot, key | "")
 	--             | ("setDeco", 1..3, towerKey | "") | ("setDecor", 1..3, decorKey | "")
-	--             | ("studioSkins") Studio only -> ok, message
+	--             | ("studioSkins", storeKey?) Studio only -> ok, message
 	request.OnServerInvoke = function(player: Player, action: unknown, a: unknown, b: unknown)
 		local ok, success, message, detail = pcall(function(): (boolean, any, any)
 			if action == "mastery" then

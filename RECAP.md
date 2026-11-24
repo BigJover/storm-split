@@ -1007,3 +1007,32 @@ Every model is a Blender script in `tools/art/models/` (smooth stylised, #433), 
 The runtime is written for all of it (HunterBody, TowerLook stages, GunArt + Viewmodel, PetLook, PropArt, WalkerArt, DinoLook shots; #445–#455), 1019 headless specs green, smoke-tested in Studio. **With no uploaded ids the game looks exactly as before** — art switches on by itself when ids exist.
 
 **What I need from you:** an Open Cloud API key (Assets read + write) saved at `~/.config/dinohunters/opencloud_key` and your Roblox user id at `~/.config/dinohunters/creator_id` (folder mode 700). Then `python3 tools/art/upload.py` uploads the approved batches, `write_ids.py` fills `ArtIds`, and a Tester run checks everything in game (Tester items are in each Builder's DECISIONS entry). Later: the detailing pass, weapon/tower skin variants (11e). To change any model later, edit its script and re-upload — only changed models upload (#440, #444).
+
+## Premium skins (2026-11-24, #467 / #468)
+
+The 5 approved premium themes (Lava Lord, Cyber Raptor, Tyrant King, Nebula, Geode) are in the game as
+**Robux-only, cosmetic-only** items. 85 items on the Skins sheet (per theme: 4 hunter skins, 4 gun skins,
+1 tower set, 4 grenade skins, 4 ability skins; `Robux only` = yes, no Amber price, FX tier hunter 3 /
+gun 1 / tower set 1 / grenade 0 / ability 0, theme + element) and **110 Store products** (Premium tab):
+85 singles (hunter R$1,600, gun R$800, tower set R$800, grenade R$240, ability R$240), 20 class packs
+(R$3,200: hunter + gun + grenade + ability + the tower set; saves R$480) and 5 theme bundles (R$9,600:
+all 4 packs, tower set once; saves R$800 against the packs). Packs and bundles grant everything you don't
+own yet through the normal receipt (once per purchase); owning a whole class pack (bought as a pack,
+a bundle or five singles) turns on the pack FX (tier 4) on its items. New wear slots: a grenade skin
+and an ability skin per hunter (shop counter tabs "Grenade skins" / "Ability skins"; older saves just
+start with none). The exporter refuses an Amber price on a premium item, a pack not cheaper than its
+singles, a bundle not cheaper than its packs, and any premium item without its art in the manifest.
+Shots: `tools/art/previews/ui/premium_*.png` (Studio, store closed: prices show, nothing can be bought).
+
+**At publish — create these 110 Developer Products on Creator Hub and paste each id into the Store
+sheet's Id column (key = the sheet's Key; price = its Robux), then re-export:**
+- **Lava Lord** (22): bundle `LAVA_LORD_BUNDLE` R$9,600 · packs `LAVA_LORD_PISTOL_PACK`, `LAVA_LORD_RIFLE_PACK`, `LAVA_LORD_SHOTGUN_PACK`, `LAVA_LORD_MEDIC_PACK` R$3,200 each · singles `LAVA_LORD` 800, `LAVA_LURKER` 1,600, `MOLTEN_MAGNUM` 800, `BRIMSTONE_STINKER` 240, `MAGMA_DART` 240, `MAGMA_MONARCH` 1,600, `LAVA_LANCE` 800, `LAVA_LOB` 240, `VOLCANO_ROAR` 240, `MAGMA_MAULER` 1,600, `BLAST_FURNACE` 800, `MAGMA_CHERRY` 240, `LAVA_FALL` 240, `MOLTEN_MENDER` 1,600, `CINDER_CARBINE` 800, `SULFUR_SNOOZE` 240, `WARM_SPRINGS` 240
+- **Cyber Raptor** (22): bundle `CYBER_RAPTOR_BUNDLE` R$9,600 · packs `CYBER_RAPTOR_PISTOL_PACK`, `CYBER_RAPTOR_RIFLE_PACK`, `CYBER_RAPTOR_SHOTGUN_PACK`, `CYBER_RAPTOR_MEDIC_PACK` R$3,200 each · singles `CYBER_RAPTOR` 800, `PIXEL_PREDATOR` 1,600, `PLASMA_SIX` 800, `GLITCH_BOMB` 240, `LASER_TAG` 240, `MECHA_MARKSMAN` 1,600, `RAIL_RIFLE` 800, `PULSE_PUCK` 240, `OVERCLOCK` 240, `ROBO_RUMBLER` 1,600, `SCATTER_BYTE` 800, `NEON_CHERRY` 240, `ORBITAL_STRIKE` 240, `NANO_MEDIC` 1,600, `CIRCUIT_CARBINE` 800, `SLEEP_MODE` 240, `REBOOT` 240
+- **Tyrant King** (22): bundle `TYRANT_KING_BUNDLE` R$9,600 · packs `TYRANT_KING_PISTOL_PACK`, `TYRANT_KING_RIFLE_PACK`, `TYRANT_KING_SHOTGUN_PACK`, `TYRANT_KING_MEDIC_PACK` R$3,200 each · singles `TYRANT_KING` 800, `REX_ROGUE` 1,600, `CROWN_FANG` 800, `REX_REEKER` 240, `FANG_MARK` 240, `REX_ROYAL` 1,600, `KINGS_CLAW` 800, `CROWN_JEWEL` 240, `TYRANT_ROAR` 240, `REX_WRECKER` 1,600, `REX_ROARER` 800, `RUBY_BOMB` 240, `REX_STOMP` 240, `ROYAL_REMEDY` 1,600, `ROYAL_RATTLER` 800, `ROYAL_NAP` 240, `ROYAL_BALM` 240
+- **Nebula** (22): bundle `NEBULA_BUNDLE` R$9,600 · packs `NEBULA_PISTOL_PACK`, `NEBULA_RIFLE_PACK`, `NEBULA_SHOTGUN_PACK`, `NEBULA_MEDIC_PACK` R$3,200 each · singles `NEBULA` 800, `COMET_CHASER` 1,600, `MOONSHOT` 800, `SPACE_STINK` 240, `NORTH_STAR` 240, `COSMIC_CAPTAIN` 1,600, `STAR_GAZER` 800, `MOON_ROCK` 240, `COSMIC_CALL` 240, `BIG_BANG_BRAWLER` 1,600, `SUPERNOVA` 800, `CHERRY_COMET` 240, `FALLING_STAR` 240, `MOON_MEDIC` 1,600, `MOONBEAM` 800, `STARDUST_SNOOZE` 240, `MOON_GLOW` 240
+- **Geode** (22): bundle `GEODE_BUNDLE` R$9,600 · packs `GEODE_PISTOL_PACK`, `GEODE_RIFLE_PACK`, `GEODE_SHOTGUN_PACK`, `GEODE_MEDIC_PACK` R$3,200 each · singles `GEODE` 800, `CRYSTAL_CREEPER` 1,600, `AMETHYST_ACE` 800, `STINKY_GEODE` 240, `PRISM_DART` 240, `GEM_GAMEKEEPER` 1,600, `PRISM_RIFLE` 800, `GEODE_GRENADE` 240, `CRYSTAL_CHIME` 240, `GEM_GOLEM` 1,600, `SHARD_SPITTER` 800, `CRYSTAL_CHERRY` 240, `SHARD_STORM` 240, `QUARTZ_HEALER` 1,600, `CRYSTAL_CARBINE` 800, `DREAM_QUARTZ` 240, `HEALING_CRYSTAL` 240
+
+Only a published place with ids sells anything; the first real purchase of a pack is the check that
+matters (receipt → items owned → pack FX on). The art itself still needs the Open Cloud upload (Phase 11).
+**Rojo:** the Rojo server restarted during this task and Studio's plugin is disconnected; Studio's copy
+was pushed by hand for the test — reconnect the Rojo plugin before your next Studio session.

@@ -141,10 +141,12 @@ src/
 │   │                        elsewhere, tick clamp), slots, Finish price; pure
 │   ├── Pets.luau            Eggs and pets: buy, real-time hatch, Warm it up price, roll at hatch (6 rarities),
 │   │                        fuse 3→1, inventory, equip, pet effects incl. the Honker's honk target; pure
-│   ├── Skins.luau           Skin catalogue (hunter / weapon / tower set / deco): own by level or Amber, wear,
+│   ├── Skins.luau           Skin catalogue (hunter / weapon / tower set / deco; premium grenade / ability):
+│   │                        own by level, Amber or Robux (premium = Robux only, #467), wear per slot,
 │   │                        bundles, the gun-look order (mastery gold > weapon skin > set/tint); pure
 │   ├── Decor.luau           Campsite decoration models and footprints, the 3 spots (visual + pure checks)
-│   ├── Store.luau           Robux store: catalogue (blank id = hidden), pass effects, receipt ledger
+│   ├── Store.luau           Robux store: catalogue (blank id = hidden), pass effects, receipt ledger,
+│   │                        the Premium tab rules (single / class pack / theme bundle, savings, card text)
 │   │                        (duplicate PurchaseId granted once), trainFinish credits; pure
 │   ├── SafeArea.luau        Where clickable UI may start: under Roblox's top bar and clear of the chat
 │   │                        window (F13/F13b); every panel and the home column use it

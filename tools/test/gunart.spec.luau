@@ -626,15 +626,20 @@ end)
 
 test("real ArtIds: each weapon skin variant is a gun/<HERO>_<SKIN> of a weapon skin for that hero", function()
 	local ArtIds = require(src.shared.ArtIds)
-	local found = 0
+	local found, premium = 0, 0
 	for key, entry in ArtIds.gun do
 		for skin, row in (Config :: any).Skins do
 			if row.kind == "weapon" and key == `{row.hero}_{skin}` then
-				found += 1
+				if row.robuxOnly then
+					premium += 1
+				else
+					found += 1
+				end
 				eq(entry.model, nil, `{key}: no id yet`)
 				eq(entry.pieces and entry.pieces.muzzle and entry.pieces.muzzle.role, "muzzle", `{key} muzzle role`)
 			end
 		end
 	end
 	eq(found, 6, "six weapon skin variants")
+	eq(premium, 20, "twenty premium gun variants (#467: 5 themes x 4 guns)")
 end)

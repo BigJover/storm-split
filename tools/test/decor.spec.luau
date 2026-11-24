@@ -179,5 +179,12 @@ test("source guards: only Wardrobe builds decorations, on Outpost Campsites; Pro
 	ok(prog:find("Skins.setDecor(profile.skins, a, b, level)", 1, true) ~= nil, "setDecor through skinAction (between matches, saved)")
 	ok(prog:find("Skins.decorAt(profile.skins, i, level)", 1, true) ~= nil, "published only while owned")
 	ok(prog:find("Profile.recordClear(profile, result.difficulty)", 1, true) ~= nil, "a clear is recorded")
-	eq(Config.SkinOrder[#Config.SkinOrder], "DINO_STATUE", "rows 30-36 at the end of the sheet")
+	-- rows 30-36 end the basic line; the #467 premium rows (Robux only) were appended after them
+	local last = 0
+	for i, key in Config.SkinOrder do
+		if not (Config :: any).Skins[key].robuxOnly then
+			last = i
+		end
+	end
+	eq(Config.SkinOrder[last], "DINO_STATUE", "rows 30-36 at the end of the basic line")
 end)

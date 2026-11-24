@@ -20,6 +20,14 @@
 	spawn, appearance load, hero / skin change and when the art arrives; no art = the avatar
 	(and the skin paint above) exactly as before. Spec: tools/test/bodies.spec.luau.
 
+	Premium skins (#467): worn through the same attributes Server/Progression publishes: a premium
+	hunter skin is its own body variant here (HunterBody), a gun skin its own gun (Server/Hero ->
+	GunArt), a tower set its trim + pieces (Server/Towers and the Display Towers below ->
+	TowerLook.applySkin); a grenade skin (`Skin_grenade_<HERO>`) is read by Server/Kit when thrown
+	(kit art + blast colours + the FX tag), an ability skin (`Skin_ability_<HERO>`) by Server/Hero
+	(ability VFX colour only). The FX (tiers, and tier 4 for owned whole packs, `SkinFxPacks`) are
+	Client/SkinFx's.
+
 	Display Towers (T142, #384): the towers a player put on show stand on their Campsite
 	(the Campsite attribute Server/Pets gives), wearing that player's tower set. Built by
 	Shared/TowerLook with no range ring, never registered as towers (they never fire, take

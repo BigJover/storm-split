@@ -14,19 +14,21 @@
 	     an aura (low heat glow, a light, a short trail when moving) + idle flares
 	  4  "pack" (#462): the wearer owns the item's whole class pack - tier 3 + the theme element's
 	     pack layer (see "pack tier" below)
-	`fxTier` on each item is the tier its planned price gives; `tierForPrice` is the rule, so when
-	the Store sheet gets the real prices the tier can be read from them instead.
+	`fxTier` on each item is the Skins sheet's FX tier (#467: hunter 3, gun 1, tower set 1,
+	grenade 0, ability 0), the tier its single's Robux price buys (`tierForPrice`; the exporter
+	checks they agree).
 
 	Keys: premium items use their Skins key (hunter MAGMA_MONARCH, weapon LAVA_LANCE, tower set
-	LAVA_LORD, grenade LAVA_LOB, ability VOLCANO_ROAR). They are NOT in the Skins sheet yet (prices
-	wait for Jovan's look at the sample), so nothing in play wears them: a blank or unknown key is
+	LAVA_LORD, grenade LAVA_LOB, ability VOLCANO_ROAR): ITEMS is every Robux-only Skins row and
+	PACKS every complete class pack, both built from Config at load. A blank or unknown key is
 	always today's behaviour (every lookup falls back to what the caller passes).
 
-	Grenade and ability skins are new skin kinds (slots `grenade:<HERO>`, `ability:<HERO>`, read
-	from the player's `Skin_grenade_<HERO>` / `Skin_ability_<HERO>` attributes like the other
-	kinds). The rules are here and the server reads the attributes; owning, wearing, saving and the
-	Store wiring come later (nothing sets those attributes yet).
+	Grenade and ability skins are skin kinds (slots `grenade:<HERO>`, `ability:<HERO>`, published by
+	Server/Progression as the player's `Skin_grenade_<HERO>` / `Skin_ability_<HERO>` attributes like
+	the other kinds; owned through the Store, worn from the shop counter).
 ]]
+
+local Config = require(script.Parent.Config)
 
 local SkinFx = {}
 
@@ -205,37 +207,25 @@ SkinFx.THEMES = table.freeze({
 	}),
 } :: { [string]: Theme })
 
--- Tiers here are the planned ones for the sample (hunter $20, gun $15, set $20; grenade and
--- ability are under $10: static glow); Jovan's prices may move them (`tierForPrice`).
-SkinFx.ITEMS = table.freeze({
-	MAGMA_MONARCH = table.freeze({ kind = "hunter", hero = "RIFLE", theme = "LAVA_LORD", display = "Magma Monarch", fxTier = 3 }),
-	LAVA_LANCE = table.freeze({ kind = "weapon", hero = "RIFLE", theme = "LAVA_LORD", display = "Lava Lance", fxTier = 2 }),
-	LAVA_LORD = table.freeze({ kind = "tower", theme = "LAVA_LORD", display = "Lava Lord", fxTier = 3 }),
-	LAVA_LOB = table.freeze({ kind = "grenade", hero = "RIFLE", theme = "LAVA_LORD", display = "Lava Lob", fxTier = 0 }),
-	VOLCANO_ROAR = table.freeze({ kind = "ability", hero = "RIFLE", theme = "LAVA_LORD", display = "Volcano Roar", fxTier = 0 }),
-	-- The Big Game Hunter's pieces of the other four themes (PREMIUM_SKINS names), same planned
-	-- tiers as the Lava Lord sample; not in the Skins sheet yet, so nobody wears them in play.
-	MECHA_MARKSMAN = table.freeze({ kind = "hunter", hero = "RIFLE", theme = "CYBER_RAPTOR", display = "Mecha Marksman", fxTier = 3 }),
-	RAIL_RIFLE = table.freeze({ kind = "weapon", hero = "RIFLE", theme = "CYBER_RAPTOR", display = "Rail Rifle", fxTier = 2 }),
-	CYBER_RAPTOR = table.freeze({ kind = "tower", theme = "CYBER_RAPTOR", display = "Cyber Raptor", fxTier = 3 }),
-	PULSE_PUCK = table.freeze({ kind = "grenade", hero = "RIFLE", theme = "CYBER_RAPTOR", display = "Pulse Puck", fxTier = 0 }),
-	OVERCLOCK = table.freeze({ kind = "ability", hero = "RIFLE", theme = "CYBER_RAPTOR", display = "Overclock", fxTier = 0 }),
-	REX_ROYAL = table.freeze({ kind = "hunter", hero = "RIFLE", theme = "TYRANT_KING", display = "Rex Royal", fxTier = 3 }),
-	KINGS_CLAW = table.freeze({ kind = "weapon", hero = "RIFLE", theme = "TYRANT_KING", display = "King's Claw", fxTier = 2 }),
-	TYRANT_KING = table.freeze({ kind = "tower", theme = "TYRANT_KING", display = "Tyrant King", fxTier = 3 }),
-	CROWN_JEWEL = table.freeze({ kind = "grenade", hero = "RIFLE", theme = "TYRANT_KING", display = "Crown Jewel", fxTier = 0 }),
-	TYRANT_ROAR = table.freeze({ kind = "ability", hero = "RIFLE", theme = "TYRANT_KING", display = "Tyrant Roar", fxTier = 0 }),
-	COSMIC_CAPTAIN = table.freeze({ kind = "hunter", hero = "RIFLE", theme = "NEBULA", display = "Cosmic Captain", fxTier = 3 }),
-	STAR_GAZER = table.freeze({ kind = "weapon", hero = "RIFLE", theme = "NEBULA", display = "Star Gazer", fxTier = 2 }),
-	NEBULA = table.freeze({ kind = "tower", theme = "NEBULA", display = "Nebula", fxTier = 3 }),
-	MOON_ROCK = table.freeze({ kind = "grenade", hero = "RIFLE", theme = "NEBULA", display = "Moon Rock", fxTier = 0 }),
-	COSMIC_CALL = table.freeze({ kind = "ability", hero = "RIFLE", theme = "NEBULA", display = "Cosmic Call", fxTier = 0 }),
-	GEM_GAMEKEEPER = table.freeze({ kind = "hunter", hero = "RIFLE", theme = "GEODE", display = "Gem Gamekeeper", fxTier = 3 }),
-	PRISM_RIFLE = table.freeze({ kind = "weapon", hero = "RIFLE", theme = "GEODE", display = "Prism Rifle", fxTier = 2 }),
-	GEODE = table.freeze({ kind = "tower", theme = "GEODE", display = "Geode", fxTier = 3 }),
-	GEODE_GRENADE = table.freeze({ kind = "grenade", hero = "RIFLE", theme = "GEODE", display = "Geode Grenade", fxTier = 0 }),
-	CRYSTAL_CHIME = table.freeze({ kind = "ability", hero = "RIFLE", theme = "GEODE", display = "Crystal Chime", fxTier = 0 }),
-} :: { [string]: Item })
+-- The premium items: every Robux-only row of the Skins sheet (#467: 5 themes x 17 items), with
+-- the sheet's FX tier (hunter 3, gun 1, tower set 1, grenade 0, ability 0 - the tier each single's
+-- price buys, `tierForPrice`; the exporter checks they agree).
+local function sheetItems(): { [string]: Item }
+	local out: { [string]: Item } = {}
+	for key, row in ((Config :: any).Skins or {}) :: { [string]: any } do
+		if row.robuxOnly and row.theme and SkinFx.THEMES[row.theme] then
+			out[key] = table.freeze({
+				kind = row.kind,
+				hero = row.hero,
+				theme = row.theme,
+				display = row.display,
+				fxTier = math.clamp(math.floor(row.fxTier or 0), 0, SkinFx.MAX_TIER),
+			})
+		end
+	end
+	return out
+end
+SkinFx.ITEMS = table.freeze(sheetItems())
 
 ------------------------------------------------------------------ pack tier (#462)
 --[[
@@ -257,9 +247,9 @@ SkinFx.ITEMS = table.freeze({
 	cosmic gravity, crystal resonance.
 
 	Ownership: `ownedPacks(ownedKeys)` is the pure rule (a pack counts only when EVERY item in it
-	is owned). The server will publish the result as the player attribute PACKS_ATTRIBUTE (comma
-	list of pack keys) from the saved skins - that store / save wiring is a later task (nothing sets
-	it yet), so in play nobody has tier 4. Studio: the `SkinFxTier` override now takes 0..4.
+	is owned). Server/Progression publishes the result as the player attribute PACKS_ATTRIBUTE (comma
+	list of pack keys) from the saved skins, on load and after every grant (#467). Studio: the
+	`SkinFxTier` override takes 0..4.
 
 	v3 (#465, "premium paid-skin" pass): each element also carries flame tongues off the helm horns +
 	pauldrons, swirling embers, a flickering heat light, lava drips, a standing-still ground ring,
@@ -274,7 +264,7 @@ SkinFx.PACK_TIER = 4
 -- The client's world bursts (Client/SkinFx recipes): every element's drip.puff / takedown.blast /
 -- takedown.rain names one of these.
 SkinFx.WORLD_KINDS = table.freeze({ "fireball", "plume", "sparks", "shower", "lick", "hiss", "blast", "rain", "puff", "zap" })
-SkinFx.PACKS_ATTRIBUTE = "SkinFxPacks" -- player attribute: "LAVA_LORD_RIFLE,..." (set by the store wiring, later)
+SkinFx.PACKS_ATTRIBUTE = "SkinFxPacks" -- player attribute: "LAVA_LORD_RIFLE,..." (Server/Progression, from the saved skins)
 SkinFx.TAKEDOWN_ATTRIBUTE = "SkinFxTakedownAt" -- player attribute (server time), stamped on a take-down
 SkinFx.GRENADE_ATTRIBUTE = "SkinFxGrenade" -- on a thrown grenade: the worn premium grenade skin key
 SkinFx.OWNER_ATTRIBUTE = "SkinFxOwner" -- on a thrown grenade: the thrower's UserId
@@ -700,40 +690,40 @@ SkinFx.THEME_ELEMENTS = table.freeze({
 	GEODE = "crystal",
 } :: { [string]: string })
 
--- Class packs (#459): a theme's tower set + one class's hunter, weapon, grenade and ability.
+-- Class packs (#459): a theme's tower set + one class's hunter, weapon, grenade and ability, built
+-- from the premium items (key "<THEME>_<HERO>", e.g. LAVA_LORD_RIFLE): 5 themes x 4 classes.
 export type Pack = { theme: string, hero: string, display: string, items: { string } }
-SkinFx.PACKS = table.freeze({
-	LAVA_LORD_RIFLE = table.freeze({
-		theme = "LAVA_LORD",
-		hero = "RIFLE",
-		display = "Lava Lord - Big Game Hunter Pack",
-		items = table.freeze({ "MAGMA_MONARCH", "LAVA_LANCE", "LAVA_LORD", "LAVA_LOB", "VOLCANO_ROAR" }),
-	}),
-	CYBER_RAPTOR_RIFLE = table.freeze({
-		theme = "CYBER_RAPTOR",
-		hero = "RIFLE",
-		display = "Cyber Raptor - Big Game Hunter Pack",
-		items = table.freeze({ "MECHA_MARKSMAN", "RAIL_RIFLE", "CYBER_RAPTOR", "PULSE_PUCK", "OVERCLOCK" }),
-	}),
-	TYRANT_KING_RIFLE = table.freeze({
-		theme = "TYRANT_KING",
-		hero = "RIFLE",
-		display = "Tyrant King - Big Game Hunter Pack",
-		items = table.freeze({ "REX_ROYAL", "KINGS_CLAW", "TYRANT_KING", "CROWN_JEWEL", "TYRANT_ROAR" }),
-	}),
-	NEBULA_RIFLE = table.freeze({
-		theme = "NEBULA",
-		hero = "RIFLE",
-		display = "Nebula - Big Game Hunter Pack",
-		items = table.freeze({ "COSMIC_CAPTAIN", "STAR_GAZER", "NEBULA", "MOON_ROCK", "COSMIC_CALL" }),
-	}),
-	GEODE_RIFLE = table.freeze({
-		theme = "GEODE",
-		hero = "RIFLE",
-		display = "Geode - Big Game Hunter Pack",
-		items = table.freeze({ "GEM_GAMEKEEPER", "PRISM_RIFLE", "GEODE", "GEODE_GRENADE", "CRYSTAL_CHIME" }),
-	}),
-} :: { [string]: Pack })
+local function sheetPacks(): { [string]: Pack }
+	local out: { [string]: Pack } = {}
+	local heroes = ((Config :: any).Heroes or {}) :: { [string]: any }
+	for theme, look in SkinFx.THEMES do
+		local tower: string? = nil
+		local byHero: { [string]: { [string]: string } } = {}
+		for key, item in SkinFx.ITEMS do
+			if item.theme == theme then
+				if item.kind == "tower" then
+					tower = key
+				elseif item.hero then
+					byHero[item.hero] = byHero[item.hero] or {}
+					byHero[item.hero][item.kind] = key
+				end
+			end
+		end
+		for hero, kinds in byHero do
+			if tower and kinds.hunter and kinds.weapon and kinds.grenade and kinds.ability then
+				local def = heroes[hero]
+				out[`{theme}_{hero}`] = table.freeze({
+					theme = theme,
+					hero = hero,
+					display = `{look.display} - {if def then def.display else hero} Pack`,
+					items = table.freeze({ kinds.hunter, kinds.weapon, tower :: string, kinds.grenade, kinds.ability }),
+				})
+			end
+		end
+	end
+	return out
+end
+SkinFx.PACKS = table.freeze(sheetPacks())
 
 local HEROES = { "PISTOL", "RIFLE", "SHOTGUN", "MEDIC" }
 

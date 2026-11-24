@@ -95,6 +95,13 @@ local function buy(player: Player, open: boolean, key: unknown, stat: unknown): 
 		MarketplaceService:PromptGamePassPurchase(player, row.id :: number)
 		return true, ""
 	end
+	-- Skins (bundles, premium singles / packs / theme bundles, #467): a product whose every item
+	-- is already yours isn't prompted again; one you partly own still grants the rest.
+	if row.grant == "skins" and StoreRules.hasAll(key, function(item: string): boolean
+		return Progression.ownsSkin(player, item)
+	end) then
+		return false, "Already yours"
+	end
 	if row.grant == "hatch" and not Progression.hasWarmingEgg(player, row.items[1]) then
 		return false, "No egg of that kind is warming"
 	end

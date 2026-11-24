@@ -1,6 +1,8 @@
 # Premium Skins — a Robux line above the basic sets (proposal)
 
-Status: **proposal, waiting on Jovan.** Nothing here is built. Director + Dino agent, 2026-11-20.
+Status: **built.** Approved by Jovan (#459), models approved (#467), wired in as Robux-only items on the
+Skins / Store sheets with the #467 price schedule (#468; the prices below are the first proposal, superseded).
+Director + Dino agent, 2026-11-20.
 
 Jovan (2026-11-20): *"I like all of the sets they look good as basic skins we still need some
 cooler looking ones for skins that cost robux for the hunters, towers, and weapons grenades and

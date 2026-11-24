@@ -1999,16 +1999,23 @@ def read_pets(ws):
     return pets, order
 
 
-SKIN_KINDS = ("hunter", "weapon", "tower", "deco")
+SKIN_KINDS = ("hunter", "weapon", "tower", "deco", "grenade", "ability")
 SKIN_MATERIALS = ("SmoothPlastic", "Plastic", "Fabric", "Wood", "WoodPlanks", "Metal", "DiamondPlate",
                   "Slate", "Concrete", "Brick", "Granite", "Marble", "Pebble", "Sand", "Grass", "Ice", "Leather")
+# Premium themes (#459/#462/#467) and the FX element each draws (Shared/SkinFx THEME_ELEMENTS).
+PREMIUM_ELEMENTS = {"LAVA_LORD": "fire", "CYBER_RAPTOR": "electric", "TYRANT_KING": "primal",
+                    "NEBULA": "cosmic", "GEODE": "crystal"}
+PREMIUM_KINDS = ("hunter", "weapon", "tower", "grenade", "ability")  # the 17 items of a theme: kinds
+FX_TIER_ROBUX = (800, 1200, 1600)  # #459: tier 1 / 2 / 3 from this single price up (Shared/SkinFx TIER_ROBUX)
+ART_MANIFEST = os.path.join(ROOT, "tools", "art", "manifest.json")
 
 
 def read_skins(ws):
-    """Skins: Key, Kind, For, Skin, Price (Amber), Level, R, G, B, Accent R/G/B, Material (PLAN 10e T142).
+    """Skins: Key, Kind, For, Skin, Price (Amber), Level, R, G, B, Accent R/G/B, Material (PLAN 10e T142),
+    Theme, Element, Robux only, FX tier (premium, #467).
     Blank price = not in the Amber skin shop; blank level = not on the level ladder."""
     heads = ("Key", "Kind", "For", "Skin", "Price (Amber)", "Level", "R", "G", "B",
-             "Accent R", "Accent G", "Accent B", "Material")
+             "Accent R", "Accent G", "Accent B", "Material", "Theme", "Element", "Robux only", "FX tier")
     cols = _headed(ws, heads, "PLAN 10e T142")
     skins, order, r = {}, [], 5
     while v(ws, r, cols["Key"]):
@@ -2023,13 +2030,17 @@ def read_skins(ws):
                       "level": num(v(ws, r, cols["Level"]), None),
                       "colour": [num(v(ws, r, cols[c]), None) for c in ("R", "G", "B")],
                       "accent": [num(v(ws, r, cols[c]), None) for c in ("Accent R", "Accent G", "Accent B")],
-                      "material": str(v(ws, r, cols["Material"]) or "").strip()}
+                      "material": str(v(ws, r, cols["Material"]) or "").strip(),
+                      "theme": str(v(ws, r, cols["Theme"])).strip().upper() if v(ws, r, cols["Theme"]) not in (None, "") else None,
+                      "element": str(v(ws, r, cols["Element"])).strip().lower() if v(ws, r, cols["Element"]) not in (None, "") else None,
+                      "robuxOnly": yes(v(ws, r, cols["Robux only"])),
+                      "fxTier": num(v(ws, r, cols["FX tier"]), None)}
         order.append(key)
         r += 1
     return skins, order
 
 
-def validate_skins(data, problems, notes):
+def validate_skins(data, problems, notes, art=None):
     """Skins are looks only and readable (#380/#381): a known kind; hunter and weapon skins name
     a hero, tower sets none; colours 0-255; no glowing or see-through material; one name per
     kind and hero; a price (once set) a whole multiple of the Amber scale; a level (once set)
@@ -2056,10 +2067,23 @@ def validate_skins(data, problems, notes):
     ['Skins A: a Campsite decoration fits any Campsite: For must be blank (got PISTOL)']
     >>> d["Skins"]["A"].update(kind="hunter", level=15); p = []; validate_skins(d, p, []); p
     ['Skins A: a level skin is earned by level, never sold: Price must be blank (#409)']
+    >>> d["Skins"]["A"].update(level=None, price=None, theme="LAVA_LORD", element="fire", robuxOnly=True, fxTier=3)
+    >>> p = []; validate_skins(d, p, [], art={"hunter/A"}); p
+    []
+    >>> p = []; validate_skins(d, p, [], art=set()); p
+    ['Skins A: premium item has no art in tools/art/manifest.json (hunter/A)']
+    >>> d["Skins"]["A"].update(price=5000, element="cosmic"); p = []; validate_skins(d, p, [], art={"hunter/A"}); p
+    ['Skins A: Robux only: no Amber price (supersedes #410 for premium, #467)', "Skins A: theme LAVA_LORD draws element 'fire', not 'cosmic'"]
+    >>> d["Skins"]["A"].update(price=None, element="fire", kind="grenade"); p = []; validate_skins(d, p, [], art={"kit/PISTOL_GRENADE_A"}); p
+    []
+    >>> d["Skins"]["A"].update(robuxOnly=False); p = []; validate_skins(d, p, [], art=set()); p
+    ['Skins A: a grenade skin is premium only: Robux only must be yes (#467)', 'Skins A: Theme / Element / FX tier are for Robux-only items (blank on the basic line)']
     """
     scale = amber_scale(data)
+    if art is None:
+        art = art_keys()
     seen = {}
-    sold = ladder = 0
+    sold = ladder = premium = 0
     for key in data["SkinOrder"]:
         s = data["Skins"][key]
         where = f"Skins {key}"
@@ -2067,6 +2091,14 @@ def validate_skins(data, problems, notes):
         if kind not in SKIN_KINDS:
             problems.append(f"{where}: kind '{kind}' must be one of {', '.join(SKIN_KINDS)}")
             continue
+        if s.get("robuxOnly"):
+            premium += 1
+            validate_premium_skin(data, key, s, problems, art)
+        else:
+            if kind in ("grenade", "ability"):
+                problems.append(f"{where}: a {kind} skin is premium only: Robux only must be yes (#467)")
+            if s.get("theme") or s.get("element") or s.get("fxTier") is not None:
+                problems.append(f"{where}: Theme / Element / FX tier are for Robux-only items (blank on the basic line)")
         if kind == "tower":
             if s["hero"] is not None:
                 problems.append(f"{where}: a tower set fits every tower: For must be blank (got {s['hero']})")
@@ -2100,10 +2132,68 @@ def validate_skins(data, problems, notes):
                 problems.append(f"{where}: level {level:g} must be a whole number >= 1")
             if price is not None:
                 problems.append(f"{where}: a level skin is earned by level, never sold: Price must be blank (#409)")
-    notes.append(f"skins: {len(data['SkinOrder'])} ({sold} in the Amber shop, {ladder} on the level ladder; blank = not yet)")
+    notes.append(f"skins: {len(data['SkinOrder'])} ({sold} in the Amber shop, {ladder} on the level ladder, "
+                 f"{premium} premium Robux only; blank = not yet)")
 
 
-STORE_TABS = ("Amber", "Passes", "Hatchery", "Skins")
+def art_keys():
+    """Every model key in tools/art/manifest.json (empty when the file is missing)."""
+    if not os.path.exists(ART_MANIFEST):
+        return set()
+    import json
+    with open(ART_MANIFEST, encoding="utf-8") as f:
+        return set(json.load(f).get("models", {}))
+
+
+def premium_art_key(key, s):
+    """The art a premium item wears (#456/#458/#460): hunter/<KEY>, gun/<HERO>_<KEY>, tower/SET_<KEY>
+    (the trim; its 18 pieces are SET_<KEY>_<TOWER>), kit/<HERO>_GRENADE_<KEY>; an ability is effects only (None).
+
+    >>> premium_art_key("LAVA_LOB", {"kind": "grenade", "hero": "RIFLE"})
+    'kit/RIFLE_GRENADE_LAVA_LOB'
+    >>> premium_art_key("VOLCANO_ROAR", {"kind": "ability", "hero": "RIFLE"}) is None
+    True
+    """
+    kind, hero = s["kind"], s.get("hero")
+    if kind == "hunter":
+        return f"hunter/{key}"
+    if kind == "weapon":
+        return f"gun/{hero}_{key}"
+    if kind == "tower":
+        return f"tower/SET_{key}"
+    if kind == "grenade":
+        return f"kit/{hero}_GRENADE_{key}"
+    return None
+
+
+def validate_premium_skin(data, key, s, problems, art):
+    """One Robux-only item (#459/#467): a premium kind, no Amber price and no level (Robux only,
+    supersedes #410 for premium), a known theme with its own element, an FX tier 0-3, and its art
+    in the manifest."""
+    where = f"Skins {key}"
+    if s["kind"] not in PREMIUM_KINDS:
+        problems.append(f"{where}: a {s['kind']} can't be Robux only (premium kinds: {', '.join(PREMIUM_KINDS)})")
+        return
+    if s["price"] is not None:
+        problems.append(f"{where}: Robux only: no Amber price (supersedes #410 for premium, #467)")
+    if s["level"] is not None:
+        problems.append(f"{where}: Robux only: not on the level ladder (Level must be blank)")
+    theme = s.get("theme")
+    if theme not in PREMIUM_ELEMENTS:
+        problems.append(f"{where}: theme {theme} must be one of {', '.join(PREMIUM_ELEMENTS)}")
+    elif s.get("element") != PREMIUM_ELEMENTS[theme]:
+        problems.append(f"{where}: theme {theme} draws element '{PREMIUM_ELEMENTS[theme]}', not '{s.get('element')}'")
+    tier = s.get("fxTier")
+    if tier is None or tier != int(tier) or not 0 <= tier <= len(FX_TIER_ROBUX):
+        problems.append(f"{where}: FX tier {tier} must be a whole number 0-{len(FX_TIER_ROBUX)}")
+    art_key = premium_art_key(key, s)
+    if art_key and art_key not in art:
+        problems.append(f"{where}: premium item has no art in tools/art/manifest.json ({art_key})")
+    if s["kind"] == "tower" and art_key in art and not any(a.startswith(f"tower/SET_{key}_") for a in art):
+        problems.append(f"{where}: premium tower set has its trim but no per-tower pieces (tower/SET_{key}_<TOWER>)")
+
+
+STORE_TABS = ("Amber", "Passes", "Hatchery", "Skins", "Premium")
 STORE_GRANTS = {"amber": "product", "hatch": "product", "skins": "product", "trainFinish": "product",
                 "trainRate": "pass", "trainSlots": "pass", "incubators": "pass"}
 
@@ -2214,9 +2304,13 @@ def validate_store(data, problems, notes):
             problems.append(f"{where}: a hatch is a paid random item: Random must be yes (#388)")
         if g == "amber" and amount is not None and not row["line"].startswith(f"{int(amount):,} {CURRENCY_WORD}"):
             problems.append(f"{where}: the card line must start with the exact Amber ('{int(amount):,} {CURRENCY_WORD}', #411)")
-        if g == "skins" and row["items"]:
+        premium = g == "skins" and any(data["Skins"].get(i, {}).get("robuxOnly") for i in row["items"])
+        if (row["tab"] == "Premium") != premium:
+            problems.append(f"{where}: the Premium tab is for Robux-only skin products, and they go there only (#467)")
+        if g == "skins" and row["items"] and not premium:
             validate_bundle(data, key, row, problems)
     validate_packs(data, problems)
+    validate_premium_store(data, problems, notes)
     notes.append(f"store: {len(data['StoreOrder'])} rows, {shown} with an id (blank id = hidden until published)")
 
 
@@ -2286,6 +2380,136 @@ def validate_packs(data, problems):
             problems.append(f"Store {key}: {int(rate):,} Amber per Robux, less than a smaller pack ({int(best):,}): "
                             "a bigger pack must never be a worse deal")
         best = max(best, rate)
+
+
+def tier_for_price(robux):
+    """#459: the FX tier a single item's Robux price buys (Shared/SkinFx.tierForPrice).
+
+    >>> [tier_for_price(r) for r in (240, 800, 1200, 1600)]
+    [0, 1, 2, 3]
+    """
+    return sum(1 for start in FX_TIER_ROBUX if robux is not None and robux >= start)
+
+
+def premium_catalogue(data):
+    """{theme: {"items": [keys], "tower": key, "packs": {hero: [keys]}}} from the Robux-only Skins rows:
+    a class pack = that hero's hunter + weapon + grenade + ability skins + the theme's tower set (#459)."""
+    themes = {}
+    for key in data.get("SkinOrder", []):
+        s = data["Skins"][key]
+        if not s.get("robuxOnly") or not s.get("theme"):
+            continue
+        t = themes.setdefault(s["theme"], {"items": [], "tower": None, "packs": {}})
+        t["items"].append(key)
+        if s["kind"] == "tower":
+            t["tower"] = key
+        elif s.get("hero"):
+            t["packs"].setdefault(s["hero"], []).append(key)
+    for t in themes.values():
+        for hero, keys in t["packs"].items():
+            t["packs"][hero] = sorted(keys + ([t["tower"]] if t["tower"] else []))
+    return themes
+
+
+def validate_premium_store(data, problems, notes):
+    """The premium Store rows (#467): every Robux-only product is one item (a single), one class pack
+    or one theme bundle, never a mix with basic skins. Per theme: each item has exactly one single,
+    each class has a pack, there is one bundle; a theme has all 17 items (4 per class + the tower set),
+    each class all four kinds; a single's FX tier is the tier its price buys (#459); a pack costs less
+    than its singles; a bundle less than its packs minus the tower set counted more than once.
+
+    >>> sk = lambda kind, hero=None: {"kind": kind, "hero": hero, "theme": "T", "robuxOnly": True, "fxTier": 0}
+    >>> skins = {"S": dict(sk("tower"), fxTier=1), "H": dict(sk("hunter", "P"), fxTier=3), "W": dict(sk("weapon", "P"), fxTier=1),
+    ...          "G": sk("grenade", "P"), "A": sk("ability", "P")}
+    >>> one = lambda k, r: {"grant": "skins", "items": [k], "robux": r, "tab": "Premium"}
+    >>> store = {"S1": one("S", 800), "H1": one("H", 1600), "W1": one("W", 800), "G1": one("G", 240), "A1": one("A", 240),
+    ...          "PK": {"grant": "skins", "items": ["H", "W", "S", "G", "A"], "robux": 3200, "tab": "Premium"},
+    ...          "BU": {"grant": "skins", "items": ["S", "H", "W", "G", "A"], "robux": 3100, "tab": "Premium"}}
+    >>> d = {"Skins": skins, "SkinOrder": list(skins), "Store": store, "StoreOrder": list(store)}
+    >>> p = []; validate_premium_store(d, p, []); p[:1]
+    ['Store BU: a premium product is one item, one class pack or one theme bundle (#467): the same items as PK']
+    >>> del store["BU"]; d["StoreOrder"].remove("BU"); p = []; validate_premium_store(d, p, []); p
+    ['Premium T: no theme bundle', 'Premium T: 5 items, a theme has 17 (4 classes x hunter, weapon, grenade, ability + the tower set)']
+    >>> store["PK"]["robux"] = 3680; p = []; validate_premium_store(d, p, []); [x for x in p if x.startswith("Store")]
+    ['Store PK: R$3,680 is not less than its singles (R$3,680): a pack must save']
+    >>> store["PK"]["robux"] = 3200; store["W1"]["robux"] = 1200; p = []; validate_premium_store(d, p, []); [x for x in p if x.startswith("Store")]
+    ['Store W1: FX tier 1 but R$1,200 buys tier 2 (#459)']
+    """
+    themes = premium_catalogue(data)
+    if not themes:
+        return
+    singles, packs, bundles = {}, {}, {}
+    for key in data["StoreOrder"]:
+        row = data["Store"][key]
+        items = row.get("items") or []
+        if row.get("grant") != "skins" or not any(data["Skins"].get(i, {}).get("robuxOnly") for i in items):
+            continue
+        where = f"Store {key}"
+        rows = [data["Skins"].get(i) for i in items]
+        if any(r is None or not r.get("robuxOnly") for r in rows):
+            problems.append(f"{where}: a premium product holds Robux-only skins only (no basic skin)")
+            continue
+        theme_keys = {r["theme"] for r in rows}
+        if len(theme_keys) != 1:
+            problems.append(f"{where}: a premium product is one theme (got {', '.join(sorted(theme_keys))})")
+            continue
+        theme = themes[theme_keys.pop()]
+        got = sorted(items)
+        if len(items) != len(set(items)):
+            problems.append(f"{where}: an item is listed twice")
+        kind = None
+        if len(items) == 1:
+            kind, bucket, slot = "single", singles, items[0]
+        elif got in theme["packs"].values():
+            kind, bucket = "pack", packs
+            slot = next(h for h, keys in theme["packs"].items() if keys == got)
+            slot = (rows[0]["theme"], slot)
+        elif got == sorted(theme["items"]):
+            kind, bucket, slot = "bundle", bundles, rows[0]["theme"]
+        if kind is None:
+            problems.append(f"{where}: a premium product is one item, one class pack or one theme bundle (#467)")
+            continue
+        if slot in bucket:
+            problems.append(f"{where}: a premium product is one item, one class pack or one theme bundle (#467): "
+                            f"the same items as {bucket[slot]}")
+            continue
+        bucket[slot] = key
+    price = lambda k: data["Store"][k]["robux"]
+    for name, theme in themes.items():
+        if not any(b == name for b in bundles):
+            problems.append(f"Premium {name}: no theme bundle")
+        if len(theme["items"]) != 17:
+            problems.append(f"Premium {name}: {len(theme['items'])} items, a theme has 17 "
+                            "(4 classes x hunter, weapon, grenade, ability + the tower set)")
+        for hero, keys in theme["packs"].items():
+            kinds = sorted(data["Skins"][k]["kind"] for k in keys)
+            if kinds != sorted(PREMIUM_KINDS):
+                problems.append(f"Premium {name} {hero}: a class has one of each of {', '.join(PREMIUM_KINDS)} (got {', '.join(kinds)})")
+            if (name, hero) not in packs:
+                problems.append(f"Premium {name} {hero}: no class pack product")
+        for item in theme["items"]:
+            if item not in singles:
+                problems.append(f"Skins {item}: no single product in the Store (everything is sold separately too, #459)")
+    for item, key in singles.items():
+        s, robux = data["Skins"][item], price(key)
+        if robux is not None and s.get("fxTier") is not None and tier_for_price(robux) != s["fxTier"]:
+            problems.append(f"Store {key}: FX tier {s['fxTier']:g} but R${robux:,.0f} buys tier {tier_for_price(robux)} (#459)")
+    for (name, hero), key in packs.items():
+        parts = [price(singles[i]) for i in data["Store"][key]["items"] if i in singles]
+        if price(key) is not None and len(parts) == len(data["Store"][key]["items"]) and None not in parts \
+                and price(key) >= sum(parts):
+            problems.append(f"Store {key}: R${price(key):,.0f} is not less than its singles (R${sum(parts):,.0f}): a pack must save")
+    for name, key in bundles.items():
+        mine = [k for (t, _), k in packs.items() if t == name]
+        tower = themes[name]["tower"]
+        if price(key) is None or not mine or None in [price(k) for k in mine] or tower not in singles:
+            continue
+        worth = sum(price(k) for k in mine) - (len(mine) - 1) * price(singles[tower])
+        if price(key) >= worth:
+            problems.append(f"Store {key}: R${price(key):,.0f} is not less than its {len(mine)} packs minus the tower set "
+                            f"counted {len(mine) - 1} more time(s) (R${worth:,.0f}): a bundle must save")
+    notes.append(f"premium: {len(themes)} themes, {len(singles)} singles, {len(packs)} class packs, {len(bundles)} bundles "
+                 "(Robux only, cosmetic only; ids blank until published)")
 
 
 def pet_worth(pet, mult):

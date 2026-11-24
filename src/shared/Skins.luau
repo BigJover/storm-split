@@ -11,11 +11,18 @@
 	           (by level), Wanted Poster, Hammock, Rope Swing, Dino Statue (Amber). Cosmetic
 	           only: placed on one of DECOR_SPOTS beside the Display Towers (`setDecor`), one
 	           of each kind, only ones you own; built inert by Shared/Decor, never in matches.
+		  grenade  a grenade skin for one hero's grenade (premium only, #467)
+	  ability  an ability skin for one hero's ability: VFX colour only (premium only, #467)
 	A skin is yours once it's in `owned` (bought with Amber, or from a bundle: Shared/Store) or
 	your player level reaches its Level (derived, never stored). A blank price = not in the
 	shop yet; a blank level = not on the ladder (the Director fills them in).
 
-	Slots (`wear`): "hunter:<HERO>", "weapon:<HERO>", "tower:<TOWER>" -> skin key. Each slot
+	Premium (#459/#467): the five themes' rows are `robuxOnly` (no Amber price, no level: only
+	the Store's Robux products grant them), with their `theme`, FX `element` and `fxTier`.
+
+	Slots (`wear`): "hunter:<HERO>", "weapon:<HERO>", "grenade:<HERO>", "ability:<HERO>",
+	"tower:<TOWER>" -> skin key. A save from before #467 has no grenade / ability slots: they
+	start empty (the saved shape is unchanged, so no version bump). Each slot
 	takes only a skin of its kind (and its hero). Display Towers (`deco`): up to DECO_SLOTS
 	towers you own, shown on your Campsite for show only (they never shoot).
 
@@ -35,8 +42,18 @@ local Theme = require(script.Parent.Theme)
 
 local Skins = {}
 
-Skins.KINDS = table.freeze({ "hunter", "weapon", "tower", "deco" })
-Skins.KIND_LABELS = table.freeze({ hunter = "Hunter skins", weapon = "Weapon skins", tower = "Tower sets", deco = "Decorations" })
+Skins.KINDS = table.freeze({ "hunter", "weapon", "tower", "deco", "grenade", "ability" })
+Skins.KIND_LABELS = table.freeze({
+	hunter = "Hunter skins",
+	weapon = "Weapon skins",
+	tower = "Tower sets",
+	deco = "Decorations",
+	grenade = "Grenade skins",
+	ability = "Ability skins",
+})
+-- Kinds worn per hero (slot "<kind>:<HERO>"); grenade and ability skins are premium only (#467).
+Skins.HERO_KINDS = table.freeze({ "hunter", "weapon", "grenade", "ability" })
+Skins.ROBUX_ONLY_LINE = "Robux only" -- a premium skin is never sold for Amber (#467, supersedes #410 for premium)
 Skins.DECOR_SPOTS = 3 -- Campsite decoration spots (T143c), beside the 3 Display Towers
 Skins.DECOR_PREFIX = "Decor_" -- Decor_1 .. Decor_3: the decoration on each spot
 Skins.DECO_SLOTS = 3
@@ -53,6 +70,11 @@ export type Row = {
 	colour: { number },
 	accent: { number },
 	material: string,
+	-- premium (#467): the theme + its FX element, Robux only (no Amber price, no level), the FX tier
+	theme: string?,
+	element: string?,
+	robuxOnly: boolean?,
+	fxTier: number?,
 }
 export type State = { owned: { [string]: boolean }, wear: { [string]: string }, deco: { string }, decor: { string } }
 export type Look = { colour: Color3, accent: Color3, material: Enum.Material }
@@ -92,7 +114,7 @@ function Skins.parseSlot(slot: unknown): (string?, string?)
 		return nil, nil
 	end
 	local kind, forKey = string.match(slot, "^(%a+):([%w_]+)$")
-	if (kind == "hunter" or kind == "weapon") and isHero(forKey) then
+	if kind and table.find(Skins.HERO_KINDS, kind) and isHero(forKey) then
 		return kind, forKey
 	elseif kind == "tower" and isTower(forKey) then
 		return kind, forKey
@@ -203,6 +225,9 @@ function Skins.canBuy(state: State, key: unknown, level: number): (number?, stri
 	end
 	if Skins.owns(state, key, level) then
 		return nil, "Already yours"
+	end
+	if row.robuxOnly then
+		return nil, `{Skins.ROBUX_ONLY_LINE}: it's in the Store's Premium tab`
 	end
 	if row.price == nil then
 		return nil, if row.level then `Reach level {row.level}` else "Not for sale yet"
@@ -397,19 +422,80 @@ end
 
 -- The shop line for one skin: "Swamp Stalker — 25K Amber" / "— yours" / "— not for sale yet"
 -- / "— Reach level 15" (a level skin: earned, never sold, #409).
-function Skins.line(state: State, key: string, level: number): string
+-- A premium skin (#467): "Magma Monarch — Robux only: R$1,600" (`robux` = its single's price in
+-- the Store, when known).
+function Skins.line(state: State, key: string, level: number, robux: number?): string
 	local row = Skins.row(key)
 	if not row then
 		return key
 	end
 	if Skins.owns(state, key, level) then
 		return `{row.display} — yours`
+	elseif row.robuxOnly then
+		return if robux then `{row.display} — {Skins.ROBUX_ONLY_LINE}: R${Theme.amberExact(robux)}` else `{row.display} — {Skins.ROBUX_ONLY_LINE}`
 	elseif row.price then
 		return `{row.display} — {Theme.formatAmber(row.price)} {Theme.Currency}`
 	elseif row.level then
 		return `{row.display} — Reach level {row.level}`
 	end
 	return `{row.display} — not for sale yet`
+end
+
+------------------------------------------------------------------ premium (#467)
+
+-- Is `key` a premium (Robux-only) skin?
+function Skins.isPremium(key: unknown): boolean
+	local row = Skins.row(key)
+	return row ~= nil and row.robuxOnly == true
+end
+
+-- The premium themes in sheet order (LAVA_LORD, CYBER_RAPTOR, ...).
+function Skins.themes(): { string }
+	local out = {}
+	for _, key in order() do
+		local row = rows()[key]
+		if row and row.robuxOnly and row.theme and not table.find(out, row.theme) then
+			table.insert(out, row.theme)
+		end
+	end
+	return out
+end
+
+-- A theme's items in sheet order, optionally only one kind (and hero).
+function Skins.themeItems(theme: string, kind: string?, hero: string?): { string }
+	local out = {}
+	for _, key in order() do
+		local row = rows()[key]
+		if row and row.robuxOnly and row.theme == theme and (kind == nil or row.kind == kind) and (hero == nil or row.hero == hero) then
+			table.insert(out, key)
+		end
+	end
+	return out
+end
+
+-- The class pack of a theme for one hero (#459): hunter + weapon + the theme's tower set + grenade
+-- + ability; nil when the theme lacks any of them.
+function Skins.classPack(theme: string, hero: string): { string }?
+	local out = {}
+	for _, kind in { "hunter", "weapon", "tower", "grenade", "ability" } do
+		local keys = Skins.themeItems(theme, kind, if kind == "tower" then nil else hero)
+		if #keys ~= 1 then
+			return nil
+		end
+		table.insert(out, keys[1])
+	end
+	return out
+end
+
+-- Every hero slot and tower slot a player's state publishes: { slot, ... } (Progression).
+function Skins.heroSlots(heroOrder: { string }): { string }
+	local out = {}
+	for _, hero in heroOrder do
+		for _, kind in Skins.HERO_KINDS do
+			table.insert(out, Skins.slot(kind, hero))
+		end
+	end
+	return out
 end
 
 return Skins

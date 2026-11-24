@@ -30,11 +30,12 @@
 
 local Config = require(script.Parent.Config)
 local Theme = require(script.Parent.Theme)
+local Skins = require(script.Parent.Skins)
 
 local Store = {}
 
 Store.CLOSED_LINE = "The store opens when the game is published"
-Store.TABS = table.freeze({ "Amber", "Passes", "Hatchery", "Skins" })
+Store.TABS = table.freeze({ "Amber", "Passes", "Hatchery", "Skins", "Premium" })
 Store.LEDGER_MAX = 200 -- receipts remembered (Roblox only re-sends unacknowledged ones)
 Store.GRANTED = "PurchaseGranted"
 Store.NOT_YET = "NotProcessedYet"
@@ -281,10 +282,240 @@ function Store.cardLine(
 	return row.line
 end
 
--- The price label: "R$49" (Round 22/23 spelling).
+-- The price label: "R$49", "R$1,600" (Round 22/23 spelling).
 function Store.priceLabel(key: string): string
 	local row = Store.row(key)
-	return if row and row.robux then `R${row.robux}` else ""
+	return if row and row.robux then Store.robuxLabel(row.robux) else ""
+end
+
+function Store.robuxLabel(robux: number): string
+	return `R${Theme.amberExact(robux)}`
+end
+
+------------------------------------------------------------------ premium (#467)
+--[[
+	The Premium tab: the five themes' Robux-only skins (Shared/Skins `robuxOnly`), each sold as a
+	single, in a class pack (hunter + gun + grenade + ability + the theme's tower set) and in a
+	theme bundle (all four packs, the tower set once). Cosmetic only. Granting is the ordinary
+	`skins` grant: Skins.grant adds every item not owned yet, so a pack bought over items you
+	already have still grants the rest; the receipt ledger makes it once per PurchaseId.
+	Owning a whole class pack lifts its items to the FX pack tier (Shared/SkinFx.ownedPacks,
+	published by Server/Progression as SkinFxPacks).
+]]
+
+Store.PREMIUM_TAB = "Premium"
+
+local function skinRow(key: string): any
+	return Skins.row(key)
+end
+
+-- Is `key` a premium product: a Premium-tab skins grant.
+function Store.isPremium(key: unknown): boolean
+	local row = Store.row(key)
+	return row ~= nil and row.tab == Store.PREMIUM_TAB and row.grant == "skins" and #row.items > 0
+end
+
+-- "single" (one item), "pack" (a class pack: 5 items with the tower set) or "bundle" (a whole theme).
+function Store.premiumKind(key: unknown): string?
+	if not Store.isPremium(key) then
+		return nil
+	end
+	local items = (Store.row(key) :: Row).items
+	if #items == 1 then
+		return "single"
+	end
+	local first = skinRow(items[1])
+	local hero = nil
+	for _, item in items do
+		local r = skinRow(item)
+		hero = hero or (r and r.hero)
+	end
+	local pack = if first and first.theme and hero then Skins.classPack(first.theme, hero) else nil
+	if pack and #pack == #items then
+		local same = true
+		for _, item in items do
+			if not table.find(pack, item) then
+				same = false
+			end
+		end
+		if same then
+			return "pack"
+		end
+	end
+	return "bundle"
+end
+
+-- The theme a premium product belongs to (its first item's).
+function Store.premiumTheme(key: unknown): string?
+	if not Store.isPremium(key) then
+		return nil
+	end
+	local row = skinRow((Store.row(key) :: Row).items[1])
+	return row and row.theme
+end
+
+-- The single product that sells skin `item` alone, or nil.
+function Store.singleFor(item: string): string?
+	for _, key in Store.order() do
+		local row = rows()[key]
+		if row and row.grant == "skins" and #row.items == 1 and row.items[1] == item then
+			return key
+		end
+	end
+	return nil
+end
+
+-- A theme's products: its bundle, its class packs (in hero order) and its singles (sheet order).
+export type Premium = { bundle: string?, packs: { string }, singles: { string } }
+function Store.premiumProducts(theme: string, heroOrder: { string }): Premium
+	local out: Premium = { bundle = nil, packs = {}, singles = {} }
+	local byHero: { [string]: string } = {}
+	for _, key in Store.order() do
+		if Store.premiumTheme(key) == theme then
+			local kind = Store.premiumKind(key)
+			if kind == "bundle" then
+				out.bundle = key
+			elseif kind == "pack" then
+				local hunter = nil
+				for _, item in (Store.row(key) :: Row).items do
+					local r = skinRow(item)
+					if r and r.hero then
+						hunter = r.hero
+					end
+				end
+				if hunter then
+					byHero[hunter] = key
+				end
+			else
+				table.insert(out.singles, key)
+			end
+		end
+	end
+	for _, hero in heroOrder do
+		if byHero[hero] then
+			table.insert(out.packs, byHero[hero])
+		end
+	end
+	return out
+end
+
+-- The Robux the items would cost one by one (their singles), or nil when one isn't sold alone.
+function Store.singlesTotal(key: string): number?
+	local row = Store.row(key)
+	if not row then
+		return nil
+	end
+	local total = 0
+	for _, item in row.items do
+		local single = Store.singleFor(item)
+		local r = single and Store.row(single)
+		if not r or not r.robux then
+			return nil
+		end
+		total += r.robux
+	end
+	return total
+end
+
+-- What a pack or bundle saves: a pack against its singles; a bundle against its class packs
+-- (the tower set counted once). (saved Robux, "singles" | "packs"), or nil.
+function Store.savings(key: string, heroOrder: { string }): (number?, string?)
+	local row = Store.row(key)
+	local kind = Store.premiumKind(key)
+	if not row or not row.robux or (kind ~= "pack" and kind ~= "bundle") then
+		return nil, nil
+	end
+	if kind == "pack" then
+		local total = Store.singlesTotal(key)
+		return if total then total - row.robux else nil, "singles"
+	end
+	local theme = Store.premiumTheme(key) :: string
+	local products = Store.premiumProducts(theme, heroOrder)
+	local tower = Skins.themeItems(theme, "tower")[1]
+	local single = tower and Store.singleFor(tower)
+	local towerPrice = single and (Store.row(single) :: Row).robux
+	local packs = 0
+	for _, pack in products.packs do
+		local r = Store.row(pack) :: Row
+		if not r.robux then
+			return nil, nil
+		end
+		packs += r.robux
+	end
+	if #products.packs == 0 or not towerPrice then
+		return nil, nil
+	end
+	return packs - (#products.packs - 1) * towerPrice - row.robux, "packs"
+end
+
+-- Does the player already have every item inside (a fully owned product isn't sold again)?
+function Store.hasAll(key: string, owns: (string) -> boolean): boolean
+	local row = Store.row(key)
+	if not row or #row.items == 0 then
+		return false
+	end
+	for _, item in row.items do
+		if not owns(item) then
+			return false
+		end
+	end
+	return true
+end
+
+local KIND_WORDS = { hunter = "hunter skin", weapon = "gun skin", tower = "tower set", grenade = "grenade skin", ability = "ability skin" }
+
+-- A premium card's text: what's inside (and what you have), the saving, the FX it brings.
+-- `heroName(hero)` names a class ("Big Game Hunter"); `owns(item)` = already yours.
+function Store.premiumLine(key: string, heroOrder: { string }, heroName: (string) -> string, owns: (string) -> boolean): string
+	local row = Store.row(key)
+	local kind = Store.premiumKind(key)
+	if not row or not kind then
+		return ""
+	end
+	if kind == "single" then
+		local s = skinRow(row.items[1])
+		if not s then
+			return ""
+		end
+		local who = if s.hero then ` for the {heroName(s.hero)}` else " for every tower"
+		local fx = if (s.fxTier or 0) >= 3
+			then "animated glow, particles and trail"
+			elseif (s.fxTier or 0) >= 1 then "animated glow"
+			elseif s.kind == "ability" then "recoloured effects"
+			else "glowing"
+		return `{string.upper(string.sub(KIND_WORDS[s.kind] or s.kind, 1, 1))}{string.sub(KIND_WORDS[s.kind] or s.kind, 2)}{who} · {fx} · cosmetic only`
+	end
+	local new, have = {}, {}
+	for _, item in row.items do
+		local s = skinRow(item)
+		local name = if s then s.display else item
+		table.insert(if owns(item) then have else new, name)
+	end
+	local saved, against = Store.savings(key, heroOrder)
+	local save = if saved and saved > 0 then ` · saves {Store.robuxLabel(saved)} vs {against}` else ""
+	local inside = if kind == "bundle"
+		then `All {#Store.premiumProducts(Store.premiumTheme(key) :: string, heroOrder).packs} class packs, {#row.items} items (tower set once)`
+		else `Inside: {table.concat(new, ", ")}`
+	if #new == 0 then
+		return `You have everything inside`
+	elseif #have > 0 then
+		inside = `New for you: {#new} of {#row.items} (you have {#have})`
+	end
+	local fx = if kind == "pack" then " · unlocks the full pack effects" else " · every pack's full effects"
+	return `{inside}{save}{fx}`
+end
+
+-- The card's button: (text, can buy). Yours -> "Yours"; the store closed (Studio / unpublished)
+-- or the product without its Creator Hub id yet -> the price, not buyable; else "Buy R$...".
+function Store.premiumButton(key: string, open: boolean, restricted: boolean, owns: (string) -> boolean): (string, boolean)
+	if Store.hasAll(key, owns) then
+		return "Yours", false
+	end
+	local price = Store.priceLabel(key)
+	if not open or not Store.shown(key, restricted) then
+		return price, false
+	end
+	return `Buy {price}`, true
 end
 
 return Store

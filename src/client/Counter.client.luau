@@ -8,7 +8,11 @@
 	  Weapon skins   the same, per gun
 	  Tower sets     each tower you own: which set it wears (a button cycles your sets)
 	  Campsite       your three Display Tower spots: which owned tower stands on each
-	  Store (T143)   Amber · Passes · Hatchery · Skins: Robux items (Shared/Store). Only in a
+	  Grenade / Ability skins (#467)   per hunter: the premium grenade and ability skins you own,
+	                 Wear / Take off; the ones you don't show their Robux price and open Premium
+	  Store (T143)   Amber · Passes · Hatchery · Skins · Premium: Robux items (Shared/Store). Premium
+	                 (#467): pick a theme; its bundle, 4 class packs (contents + savings) and
+	                 every single, Robux prices; Robux only, cosmetic only. Only in a
 	                 published game; otherwise every store tab says "The store opens when
 	                 the game is published" and nothing can be bought. Buy asks the server,
 	                 which checks and shows Roblox's own purchase prompt.
@@ -37,6 +41,7 @@ local request = remotes:WaitForChild("ProgressRequest") :: RemoteFunction
 local storeRequest = remotes:WaitForChild("StoreRequest") :: RemoteFunction
 local StoreRules = require(Shared:WaitForChild("Store"))
 local Training = require(Shared:WaitForChild("Training"))
+local SkinFx = require(Shared:WaitForChild("SkinFx"))
 
 local player = Players.LocalPlayer
 
@@ -170,13 +175,17 @@ do
 	l.Parent = tabsRow
 end
 
+local kitRow = tabsRow:Clone() -- grenade and ability skins (premium, #467)
+kitRow.Position = UDim2.fromOffset(10, 74)
+kitRow.Parent = panel
+
 local storeRow = tabsRow:Clone()
-storeRow.Position = UDim2.fromOffset(10, 74)
+storeRow.Position = UDim2.fromOffset(10, 104)
 storeRow.Parent = panel
 
 local list = Instance.new("ScrollingFrame")
-list.Position = UDim2.fromOffset(10, 108)
-list.Size = UDim2.new(1, -20, 1, -118)
+list.Position = UDim2.fromOffset(10, 138)
+list.Size = UDim2.new(1, -20, 1, -148)
 list.BackgroundTransparency = 1
 list.BorderSizePixel = 0
 list.ScrollBarThickness = 6
@@ -195,7 +204,15 @@ local tab = "hunter"
 local order = 0
 
 local TABS = { { "hunter", "Hunter skins" }, { "weapon", "Weapon skins" }, { "tower", "Tower sets" }, { "campsite", "Campsite" } }
-local STORE_TABS = { { "store:Amber", "Amber" }, { "store:Passes", "Passes" }, { "store:Hatchery", "Hatchery" }, { "store:Skins", "Skins" } }
+local KIT_TABS = { { "grenade", "Grenade skins" }, { "ability", "Ability skins" } }
+local STORE_TABS = {
+	{ "store:Amber", "Amber" },
+	{ "store:Passes", "Passes" },
+	{ "store:Hatchery", "Hatchery" },
+	{ "store:Skins", "Skins" },
+	{ "store:Premium", "Premium" },
+}
+local premiumTheme: string? = nil -- the theme the Premium tab shows (#467)
 type StoreView = { open: boolean, restricted: boolean, passes: { [string]: boolean }, credits: { [string]: number }, trainCredits: number? }
 local storeView: StoreView? = nil
 local tabButtons: { [string]: TextButton } = {}
@@ -229,6 +246,14 @@ local function heading(text: string)
 end
 
 local load: () -> ()
+local render: () -> ()
+
+-- Switch tab (or Premium theme): the list starts at its top. A refresh (load) keeps the scroll.
+local function showTab(name: string)
+	tab = name
+	list.CanvasPosition = Vector2.zero
+	render()
+end
 
 local function act(action: string, a: any?, b: any?)
 	local ok, message = request:InvokeServer(action, a, b)
@@ -253,6 +278,25 @@ local function swatch(parent: Instance, key: string)
 	end
 end
 
+-- A premium skin's single price in the Store (#467), or nil.
+local function robuxOf(key: string): number?
+	local single = StoreRules.singleFor(key)
+	local row = single and StoreRules.row(single)
+	return row and row.robux
+end
+
+-- A premium skin you don't own: its price, on a button that opens the Premium tab at its theme.
+local function premiumJump(f: Frame, key: string): TextButton
+	local row = Skins.row(key)
+	local robux = robuxOf(key)
+	local b = button(f, if robux then StoreRules.robuxLabel(robux) else "Store", GREY, 90)
+	b.Activated:Connect(function()
+		premiumTheme = row and row.theme
+		showTab("store:Premium")
+	end)
+	return b
+end
+
 -- One skin row: swatches, its line, Buy and / or Wear / Take off for `slot`.
 local function skinRow(v: View, key: string, slot: string)
 	local f = card(32)
@@ -261,7 +305,7 @@ local function skinRow(v: View, key: string, slot: string)
 	local line = textLabel(f, 14, Enum.Font.Gotham, if owned then TEXT else TEXT_DIM)
 	line.Position = UDim2.fromOffset(46, 0)
 	line.Size = UDim2.new(1, -150, 1, 0)
-	line.Text = Skins.line({ owned = v.owned, wear = {}, deco = {}, decor = {} }, key, v.level)
+	line.Text = Skins.line({ owned = v.owned, wear = {}, deco = {}, decor = {} }, key, v.level, robuxOf(key))
 	local action: TextButton
 	if owned then
 		local wearing = v.wear[slot] == key
@@ -269,6 +313,8 @@ local function skinRow(v: View, key: string, slot: string)
 		action.Activated:Connect(function()
 			act("wearSkin", slot, if wearing then "" else key)
 		end)
+	elseif Skins.isPremium(key) then
+		action = premiumJump(f, key) -- Robux only (#467): never an Amber Buy
 	else
 		local row = Skins.row(key)
 		local price = row and row.price
@@ -379,11 +425,134 @@ local function renderStore(tabName: string)
 	end
 end
 
-local function render()
+-- The Premium tab (#467): a theme picker, then that theme's bundle, its four class packs (contents
+-- + savings) and every single item, with Robux prices. Robux only, cosmetic only. Unpublished /
+-- Studio: the catalogue shows with its prices under "The store opens when the game is published"
+-- and nothing can be bought (Store.premiumButton). Nothing here grants: Buy asks the server.
+local ELEMENT_WORDS = { fire = "fire", electric = "electric", primal = "primal roar", cosmic = "cosmic", crystal = "crystal" }
+local function heroName(hero: string): string
+	local def = (Config.Heroes :: any)[hero]
+	return if def then def.display else hero
+end
+
+local function renderPremium()
+	local sv = storeView
+	local isOpen = sv ~= nil and sv.open
+	if not isOpen then
+		heading(StoreRules.CLOSED_LINE)
+	end
+	local themes = Skins.themes()
+	if #themes == 0 then
+		heading("Nothing here yet")
+		return
+	end
+	if not premiumTheme or not table.find(themes, premiumTheme) then
+		premiumTheme = themes[1]
+	end
+	local theme = premiumTheme :: string
+	local owns = function(item: string): boolean
+		return view ~= nil and view.owned[item] == true
+	end
+	-- Theme row: one button per theme, the shown one lit.
+	local picker = card(34)
+	picker.BackgroundTransparency = 1
+	local pl = Instance.new("UIListLayout")
+	pl.FillDirection = Enum.FillDirection.Horizontal
+	pl.Padding = UDim.new(0, 4)
+	pl.VerticalAlignment = Enum.VerticalAlignment.Center
+	pl.Parent = picker
+	for _, t in themes do
+		local look = SkinFx.THEMES[t]
+		local b = button(picker, if look then look.display else t, if t == theme then AMBER else GREY, 82)
+		b.TextSize = 11
+		b.Activated:Connect(function()
+			premiumTheme = t
+			showTab(tab)
+		end)
+	end
+	local look = SkinFx.THEMES[theme]
+	local first = Skins.row(Skins.themeItems(theme)[1]) :: any
+	heading(`{if look then look.display else theme} · {ELEMENT_WORDS[first and first.element or ""] or ""} effects · Robux only, cosmetic only`)
+
+	local function premiumCard(key: string, tag: string?)
+		local row = StoreRules.row(key)
+		if not row then
+			return
+		end
+		local studio = RunService:IsStudio() and tag ~= nil
+		local f = card(if tag then 62 else 46)
+		local glow = Instance.new("Frame")
+		glow.Size = UDim2.new(0, 6, 1, -12)
+		glow.Position = UDim2.fromOffset(6, 6)
+		glow.BackgroundColor3 = if look then look.glow else AMBER
+		glow.Parent = f
+		corner(glow, 3)
+		local y = 4
+		if tag then
+			local t = textLabel(f, 11, Enum.Font.GothamBold, AMBER)
+			t.Position = UDim2.fromOffset(18, 3)
+			t.Size = UDim2.new(1, -140, 0, 14)
+			t.Text = tag
+			y = 16
+		end
+		local name = textLabel(f, 15, Enum.Font.GothamBold, TEXT)
+		name.Position = UDim2.fromOffset(18, y)
+		name.Size = UDim2.new(1, -140, 0, 18)
+		name.Text = row.display
+		local line = textLabel(f, 11, Enum.Font.Gotham, TEXT_DIM)
+		line.Position = UDim2.fromOffset(18, y + 18)
+		line.Size = UDim2.new(1, -140, 0, 26)
+		line.TextYAlignment = Enum.TextYAlignment.Top
+		line.Text = StoreRules.premiumLine(key, Config.HeroOrder, heroName, owns)
+		local text, can = StoreRules.premiumButton(key, isOpen, if sv then sv.restricted else true, owns)
+		local b = button(f, text, if can then AMBER else GREY, 110)
+		b.AnchorPoint = Vector2.new(1, if studio then 0 else 0.5)
+		b.Position = if studio then UDim2.new(1, -8, 0, 6) else UDim2.new(1, -8, 0.5, 0)
+		b.Active = can
+		b.AutoButtonColor = can
+		if can then
+			b.Activated:Connect(function()
+				local ok, message = storeRequest:InvokeServer("buy", key)
+				if not ok then
+					say(tostring(message))
+				end
+			end)
+		end
+		if studio then
+			-- Studio test aid: grant this pack / bundle's items as its receipt would (saving off).
+			local s = button(f, "Studio: grant", GREY, 110)
+			s.AnchorPoint = Vector2.new(1, 1)
+			s.Position = UDim2.new(1, -8, 1, -6)
+			s.Size = UDim2.fromOffset(110, 20)
+			s.TextSize = 11
+			s.Activated:Connect(function()
+				act("studioSkins", key)
+			end)
+		end
+	end
+
+	local products = StoreRules.premiumProducts(theme, Config.HeroOrder)
+	if products.bundle then
+		premiumCard(products.bundle, "THEME BUNDLE")
+	end
+	for _, pack in products.packs do
+		premiumCard(pack, "CLASS PACK")
+	end
+	heading("Single items")
+	for _, single in products.singles do
+		premiumCard(single, nil)
+	end
+end
+
+render = function()
 	clear()
 	for key, b in tabButtons do
 		b.BackgroundColor3 = if key == tab then AMBER else GREY
 		b.TextColor3 = if key == tab then PANEL else TEXT
+	end
+	if tab == "store:Premium" then
+		renderPremium()
+		return
 	end
 	if string.sub(tab, 1, 6) == "store:" then
 		renderStore(string.sub(tab, 7))
@@ -394,12 +563,20 @@ local function render()
 		heading("Your skins couldn't be loaded right now")
 		return
 	end
-	if tab == "hunter" or tab == "weapon" then
+	if tab == "hunter" or tab == "weapon" or tab == "grenade" or tab == "ability" then
+		if tab == "grenade" or tab == "ability" then
+			heading(`{Skins.KIND_LABELS[tab]} are premium: in the Store's Premium tab`)
+		end
 		for _, hero in Config.HeroOrder do
 			local def = Config.Heroes[hero]
 			local keys = Skins.catalogue(tab, hero)
 			if #keys > 0 then
-				heading(if tab == "hunter" then def.display else (def.weapon ~= "" and def.weapon or def.display))
+				local kit = (Config :: any).HunterKit and (Config :: any).HunterKit[hero]
+				heading(if tab == "hunter"
+					then def.display
+					elseif tab == "grenade" then `{def.display} · {if kit then kit.grenadeName else "Grenade"}`
+					elseif tab == "ability" then `{def.display} · {def.ability}`
+					else (def.weapon ~= "" and def.weapon or def.display))
 				for _, key in keys do
 					skinRow(v, key, Skins.slot(tab, hero))
 				end
@@ -415,9 +592,13 @@ local function render()
 			local line = textLabel(f, 14, Enum.Font.Gotham, if owned then TEXT else TEXT_DIM)
 			line.Position = UDim2.fromOffset(46, 0)
 			line.Size = UDim2.new(1, -150, 1, 0)
-			line.Text = Skins.line({ owned = v.owned, wear = {}, deco = {}, decor = {} }, key, v.level)
+			line.Text = Skins.line({ owned = v.owned, wear = {}, deco = {}, decor = {} }, key, v.level, robuxOf(key))
 			local row = Skins.row(key)
-			if not owned and row and row.price then
+			if not owned and Skins.isPremium(key) then
+				local jump = premiumJump(f, key) -- Robux only (#467)
+				jump.AnchorPoint = Vector2.new(1, 0.5)
+				jump.Position = UDim2.new(1, -8, 0.5, 0)
+			elseif not owned and row and row.price then
 				local buy = button(f, `Buy {Theme.formatAmber(row.price)} {Theme.Currency}`, AMBER, 90)
 				buy.AnchorPoint = Vector2.new(1, 0.5)
 				buy.Position = UDim2.new(1, -8, 0.5, 0)
@@ -508,8 +689,14 @@ for _, t in TABS do
 	local b = button(tabsRow, t[2], GREY, 104)
 	tabButtons[t[1]] = b
 	b.Activated:Connect(function()
-		tab = t[1]
-		render()
+		showTab(t[1])
+	end)
+end
+for _, t in KIT_TABS do
+	local b = button(kitRow, t[2], GREY, 104)
+	tabButtons[t[1]] = b
+	b.Activated:Connect(function()
+		showTab(t[1])
 	end)
 end
 do
@@ -517,11 +704,10 @@ do
 	label.Size = UDim2.fromOffset(44, 26)
 	label.Text = "Store"
 	for _, t in STORE_TABS do
-		local b = button(storeRow, t[2], GREY, 88)
+		local b = button(storeRow, t[2], GREY, 72)
 		tabButtons[t[1]] = b
 		b.Activated:Connect(function()
-			tab = t[1]
-			render()
+			showTab(t[1])
 		end)
 	end
 end
